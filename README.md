@@ -54,7 +54,29 @@ cp .env.example .env
 
 # 4. Check health
 .\deploy.ps1 -Action health
+
+# 5. Run tests
+.\deploy.ps1 -Action test
+
+# 6. Start monitoring (optional)
+.\deploy.ps1 -Action opik
 ```
+
+## DevOps Commands
+
+| Command | Description |
+|---------|-------------|
+| `.\deploy.ps1 -Action up` | Start all services |
+| `.\deploy.ps1 -Action down` | Stop all services |
+| `.\deploy.ps1 -Action status` | Show container status |
+| `.\deploy.ps1 -Action logs` | Tail service logs |
+| `.\deploy.ps1 -Action health` | Run health checks |
+| `.\deploy.ps1 -Action test` | Run pytest suite |
+| `.\deploy.ps1 -Action pull-models` | Pull Ollama models |
+| `.\deploy.ps1 -Action opik` | Start Opik dashboard |
+| `.\deploy.ps1 -Action rebuild` | Rebuild containers |
+
+See `docs/DEPLOYMENT.md` for detailed deployment guide.
 
 ## Services
 

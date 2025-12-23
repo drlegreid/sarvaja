@@ -24,19 +24,34 @@
 4. **Tests First**: Run `pytest tests/ -v` before claiming completion
 5. **Credential Safety**: Never commit `.env` - use `.env.example` template
 
-## Running Services
+## Running Services (via deploy.ps1)
 ```powershell
 # Start stack
-docker compose --profile cpu up -d
+.\deploy.ps1 -Action up -Profile cpu
 
 # Check status
-docker ps --format "table {{.Names}}\t{{.Status}}"
+.\deploy.ps1 -Action status
 
 # View logs
-docker compose --profile cpu logs -f
+.\deploy.ps1 -Action logs
+
+# Health check
+.\deploy.ps1 -Action health
 
 # Run tests
-pytest tests/ -v --tb=short
+.\deploy.ps1 -Action test
+
+# Pull Ollama models
+.\deploy.ps1 -Action pull-models
+
+# Start Opik dashboard
+.\deploy.ps1 -Action opik
+
+# Rebuild containers
+.\deploy.ps1 -Action rebuild
+
+# Stop stack
+.\deploy.ps1 -Action down
 ```
 
 ## Key Files
@@ -72,11 +87,14 @@ Invoke-WebRequest -Uri "http://localhost:7777/health"
 
 ## Quick Commands
 ```powershell
-# Start Opik dashboard
-cd opik; .\opik.ps1
+# Full deployment sequence
+.\deploy.ps1 -Action up
+.\deploy.ps1 -Action pull-models
+.\deploy.ps1 -Action health
+.\deploy.ps1 -Action test
 
-# Pull Ollama model
-docker exec sim-ai-ollama-1 ollama pull gemma3:4b
+# Start monitoring
+.\deploy.ps1 -Action opik
 
 # Push to GitHub (excludes credentials)
 git add -A; git commit -m "message"; git push origin master

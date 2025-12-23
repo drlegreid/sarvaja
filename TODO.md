@@ -209,6 +209,45 @@ Enable visual chat interface with agents.
 
 ---
 
+### 10. 🔐 Add Pre-commit Hooks for Rules Enforcement
+
+**Priority:** Medium  
+**Effort:** Low (1 hour)  
+**Status:** 📋 Not Started
+
+#### Objective
+Enforce RULE-001 and RULE-002 via pre-commit hooks.
+
+#### Tasks
+- [ ] Install pre-commit framework
+- [ ] Create `.pre-commit-config.yaml`
+- [ ] Add check for `.env` not committed
+- [ ] Add check for session log in ./docs/
+- [ ] Test hooks work correctly
+
+#### Success Criteria
+- [ ] Credentials blocked from commit
+- [ ] Session evidence validated
+
+---
+
+### 11. 📊 Add CI/CD Pipeline
+
+**Priority:** Low  
+**Effort:** Medium (2 hours)  
+**Status:** 📋 Not Started
+
+#### Objective
+Automate testing and deployment via GitHub Actions.
+
+#### Tasks
+- [ ] Create `.github/workflows/ci.yml`
+- [ ] Add test step using `deploy.ps1 -Action test`
+- [ ] Add health check step
+- [ ] Configure secrets for API keys
+
+---
+
 ## Completed Tasks ✅
 
 ### Docker Stack Deployment
@@ -232,6 +271,13 @@ Enable visual chat interface with agents.
 ### GitHub Integration
 - ✅ Pushed to drlegreid/platform-gai
 - ✅ Credentials excluded via .gitignore
+
+### DevOps Scripts
+- ✅ Created deploy.ps1 with 9 actions (up, down, status, logs, health, test, pull-models, opik, rebuild)
+- ✅ Fixed ChromaDB v2 API endpoint in health check
+- ✅ Created docs/DEPLOYMENT.md with full deployment guide
+- ✅ Updated CLAUDE.md to reference deploy.ps1
+- ✅ Updated README.md with DevOps commands table
 
 ---
 
@@ -263,6 +309,7 @@ Enable visual chat interface with agents.
 2. Pull Ollama model (Task #4)
 3. Fix Opik tracing (Task #2)
 4. Fix ChromaDB knowledge (Task #1)
+5. Add pre-commit hooks (Task #10)
 
 ---
 

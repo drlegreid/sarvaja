@@ -16,7 +16,7 @@ param(
     [ValidateSet('cpu', 'full')]
     [string]$Profile = 'cpu',
     
-    [ValidateSet('up', 'down', 'status', 'logs', 'pull-models', 'health')]
+    [ValidateSet('up', 'down', 'status', 'logs', 'pull-models', 'health', 'test', 'opik', 'rebuild')]
     [string]$Action = 'up'
 )
 
@@ -138,7 +138,7 @@ function Test-Health {
     
     $endpoints = @{
         'LiteLLM' = 'http://localhost:4000/health'
-        'ChromaDB' = 'http://localhost:8001/api/v1/heartbeat'
+        'ChromaDB' = 'http://localhost:8001/api/v2/heartbeat'
         'Ollama' = 'http://localhost:11434/api/tags'
         'Agents' = 'http://localhost:7777/health'
     }
@@ -153,6 +153,36 @@ function Test-Health {
     }
 }
 
+# Run tests
+function Invoke-Tests {
+    Write-Host "`n=== Running Tests ===" -ForegroundColor Cyan
+    Push-Location $ScriptDir
+    pytest tests/ -v --tb=short
+    Pop-Location
+}
+
+# Start Opik
+function Start-Opik {
+    Write-Host "`n=== Starting Opik Dashboard ===" -ForegroundColor Cyan
+    $opikDir = Join-Path $ScriptDir "opik"
+    if (-not (Test-Path $opikDir)) {
+        Write-Host "  Cloning Opik..." -ForegroundColor Yellow
+        git clone https://github.com/comet-ml/opik.git $opikDir
+    }
+    Push-Location $opikDir
+    Write-Host "  Starting Opik (this may take a while)..." -ForegroundColor Yellow
+    .\opik.ps1
+    Pop-Location
+}
+
+# Rebuild containers
+function Invoke-Rebuild {
+    Write-Host "`n=== Rebuilding Containers ===" -ForegroundColor Cyan
+    docker compose --profile $Profile build --no-cache
+    docker compose --profile $Profile up -d
+    Show-Status
+}
+
 # Main
 switch ($Action) {
     'up' { Start-Stack }
@@ -161,6 +191,9 @@ switch ($Action) {
     'logs' { Show-Logs }
     'pull-models' { Install-OllamaModels }
     'health' { Test-Health }
+    'test' { Invoke-Tests }
+    'opik' { Start-Opik }
+    'rebuild' { Invoke-Rebuild }
 }
 
 Write-Host "`nDone." -ForegroundColor Cyan
