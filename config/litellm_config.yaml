@@ -1,0 +1,73 @@
+# LiteLLM Configuration
+# Routes requests to Claude (remote/R&D) or Ollama (local/simple tasks)
+
+model_list:
+  # Primary: Claude Opus for complex R&D tasks
+  - model_name: claude-opus
+    litellm_params:
+      model: anthropic/claude-opus-4-20250514
+      api_key: os.environ/ANTHROPIC_API_KEY
+      max_tokens: 4096
+    model_info:
+      description: "Claude Opus - Primary model for complex reasoning and R&D"
+      
+  # Claude Sonnet for balanced tasks
+  - model_name: claude-sonnet
+    litellm_params:
+      model: anthropic/claude-sonnet-4-20250514
+      api_key: os.environ/ANTHROPIC_API_KEY
+      max_tokens: 4096
+    model_info:
+      description: "Claude Sonnet - Balanced speed/quality for general tasks"
+
+  # Grok (xAI) for fast reasoning
+  - model_name: grok
+    litellm_params:
+      model: xai/grok-beta
+      api_key: os.environ/XAI_API_KEY
+      max_tokens: 4096
+    model_info:
+      description: "Grok - xAI model for fast reasoning tasks"
+
+  - model_name: grok-vision
+    litellm_params:
+      model: xai/grok-vision-beta
+      api_key: os.environ/XAI_API_KEY
+      max_tokens: 4096
+    model_info:
+      description: "Grok Vision - xAI multimodal model"
+
+  # Local: Ollama Gemma for simple tasks (CPU-friendly)
+  - model_name: gemma-local
+    litellm_params:
+      model: ollama/gemma3:4b
+      api_base: http://ollama:11434
+      stream: true
+    model_info:
+      description: "Gemma 3 4B - Local CPU inference for simple tasks"
+
+  # Local: Ollama Llama for medium tasks
+  - model_name: llama-local
+    litellm_params:
+      model: ollama/llama3.1:8b
+      api_base: http://ollama:11434
+      stream: true
+    model_info:
+      description: "Llama 3.1 8B - Local inference for medium complexity"
+
+# Router settings
+router_settings:
+  routing_strategy: simple-shuffle
+  num_retries: 2
+  timeout: 120
+  
+# General settings
+general_settings:
+  master_key: os.environ/LITELLM_MASTER_KEY
+  drop_params: true  # Drop unsupported params instead of erroring
+  
+# Callbacks for observability (Opik integration)
+litellm_settings:
+  success_callback: ["opik"]
+  failure_callback: ["opik"]
+  service_callback: ["opik"]

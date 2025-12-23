@@ -1,0 +1,38 @@
+# Environment
+.env
+*.env.local
+
+# Data volumes
+data/
+*.db
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# IDE
+.idea/
+.vscode/
+*.iml
+*.ipr
+*.iws
+
+# Docker
+.docker/
+
+# Logs
+*.log
+logs/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Cloned repos (don't push submodules)
+opik/
+
+# Sync data
+sync_data/
+skillbooks/

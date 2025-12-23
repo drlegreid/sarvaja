@@ -1,0 +1,49 @@
+# Sync Agent Configuration
+# Synchronizes skills, sessions, rules, and memories across environments
+
+sync:
+  enabled: true
+  interval_seconds: 300  # 5 minutes
+  
+  # Collections to sync
+  collections:
+    - skills      # ACE skillbooks
+    - sessions    # Task execution logs
+    - rules       # Agent directives
+    - memories    # Agent context/preferences
+
+  # Sync transports
+  transports:
+    # Local filesystem backup
+    local:
+      base_path: "./sync_data"
+    
+    # Git for version-controlled assets (skillbooks, rules)
+    git:
+      repo_path: "./skillbooks"
+      remote: "origin"
+      branch: "main"
+    
+    # ClearML for MLOps integration (sessions)
+    # Uncomment when ClearML is configured
+    # clearml:
+    #   project: "sim-ai-poc"
+    
+    # WebDAV for local network sync
+    # Uncomment when NAS/server is available
+    # webdav:
+    #   url: "${WEBDAV_URL}"
+    #   username: "${WEBDAV_USER}"
+    #   password: "${WEBDAV_PASS}"
+
+  # Conflict resolution strategies
+  conflict_strategies:
+    skills: merge_latest      # Combine, prefer newest
+    sessions: local_wins      # Local sessions authoritative
+    rules: remote_wins        # Governance repo wins
+    memories: merge_dedupe    # Merge and deduplicate
+
+  # Retry configuration
+  retry:
+    max_attempts: 3
+    backoff_seconds: 30

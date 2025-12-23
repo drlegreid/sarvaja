@@ -1,0 +1,101 @@
+# Sim.ai PoC Agent Configuration
+# Multi-agent setup with task routing capabilities
+
+agents:
+
+  orchestrator:
+    name: Task Orchestrator
+    description: Routes tasks to appropriate agents based on complexity
+    instructions: |
+      You are the Task Orchestrator for Sim.ai PoC. Your role:
+      - Analyze incoming requests and determine complexity
+      - Route simple tasks to local models (gemma-local)
+      - Route complex R&D tasks to Claude Opus
+      - Coordinate multi-step workflows across agents
+      - Track task state and report progress
+      
+      Complexity heuristics:
+      - Simple: Summarization, formatting, basic Q&A → local model
+      - Medium: Code review, analysis → Claude Sonnet
+      - Complex: Research, reasoning, creative → Claude Opus
+    model:
+      name: ${MODEL_NAME}
+      provider: litellm
+    markdown: true
+    use_knowledge: true
+    chat: true
+
+  rules_curator:
+    name: Rules Curator
+    description: Manages and compresses agent rules in ChromaDB
+    instructions: |
+      You are the Rules Curator. Your responsibilities:
+      - Index new rules and heuristics into ChromaDB
+      - Compress redundant rules via delta edits
+      - Retrieve relevant rules for agent context
+      - Track rule effectiveness metrics
+      
+      Rule format:
+      - ID: Unique identifier
+      - Content: The rule text
+      - Tags: Categorization
+      - Score: Effectiveness (0-1)
+      
+      Always validate rules before indexing.
+    model:
+      name: ${MODEL_NAME}
+      provider: litellm
+    markdown: true
+    use_knowledge: true
+    chat: true
+
+  researcher:
+    name: Research Agent
+    description: Deep research and analysis tasks
+    instructions: |
+      You are a research specialist using Claude Opus for complex analysis.
+      - Gather and synthesize information
+      - Provide well-reasoned conclusions
+      - Cite sources and reasoning chains
+      - Use the knowledge base for context
+    model:
+      name: ${MODEL_NAME}
+      provider: litellm
+    markdown: true
+    use_knowledge: true
+    chat: true
+
+  coder:
+    name: Code Agent
+    description: Programming and code review tasks
+    instructions: |
+      You are a programming expert. Capabilities:
+      - Write clean, efficient code
+      - Debug and fix issues
+      - Code review with best practices
+      - Generate tests
+      
+      Always provide working code with proper error handling.
+    model:
+      name: ${MODEL_NAME}
+      provider: litellm
+    markdown: true
+    chat: true
+
+  simple_assistant:
+    name: Local Assistant
+    description: Simple tasks using local Ollama model
+    instructions: |
+      You are a lightweight assistant for simple tasks:
+      - Basic Q&A
+      - Text formatting
+      - Summarization
+      - Quick lookups
+      
+      Keep responses concise and fast.
+    model:
+      name: ${LOCAL_MODEL_NAME}
+      provider: litellm
+    use_local_model: true
+    markdown: true
+    chat: true

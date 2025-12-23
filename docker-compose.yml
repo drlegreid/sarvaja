@@ -1,0 +1,147 @@
+# Unified PoC: Agno + Opik + LiteLLM + Ollama + ChromaDB
+# For i7/16GB laptop with CPU-only inference
+# Run: docker compose --profile cpu up -d
+
+services:
+  # =============================================================================
+  # INFERENCE LAYER
+  # =============================================================================
+  
+  # LiteLLM Proxy - Routes requests to Claude (remote) or Ollama (local)
+  litellm:
+    image: ghcr.io/berriai/litellm:main-latest
+    ports:
+      - "4000:4000"
+    volumes:
+      - ./config/litellm_config.yaml:/app/config.yaml
+    environment:
+      - LITELLM_MASTER_KEY=${LITELLM_MASTER_KEY:-sk-litellm-master-key}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - XAI_API_KEY=${XAI_API_KEY:-}
+    command: ["--config", "/app/config.yaml", "--port", "4000"]
+    depends_on:
+      ollama:
+        condition: service_started
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:4000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+
+  # Ollama - Local CPU inference (gemma3:4b for lightweight tasks)
+  ollama:
+    image: ollama/ollama:latest
+    profiles: ["cpu", "full"]
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    environment:
+      - OLLAMA_NUM_PARALLEL=1
+      - OLLAMA_MAX_LOADED_MODELS=1
+    deploy:
+      resources:
+        limits:
+          memory: 4G
+          cpus: '2'
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:11434/api/tags"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  # =============================================================================
+  # OBSERVABILITY LAYER (Optional - requires separate Opik deployment)
+  # =============================================================================
+  # Opik requires cloning: git clone https://github.com/comet-ml/opik.git
+  # Then run: cd opik && ./opik.sh
+  # This will start Opik on ports 5173 (UI) and 5174 (API)
+  # Configure agents to connect: OPIK_BASE_URL=http://host.docker.internal:5174
+
+  # =============================================================================
+  # STORAGE LAYER
+  # =============================================================================
+  
+  # ChromaDB - Vector database for rules/memories embeddings
+  chromadb:
+    image: chromadb/chroma:latest
+    ports:
+      - "8001:8000"
+    volumes:
+      - chromadb_data:/chroma/chroma
+    environment:
+      - IS_PERSISTENT=TRUE
+      - ANONYMIZED_TELEMETRY=FALSE
+      - CHROMA_SERVER_AUTH_PROVIDER=chromadb.auth.token_authn.TokenAuthenticationServerProvider
+      - CHROMA_SERVER_AUTH_TOKEN_TRANSPORT_HEADER=X-Chroma-Token
+      - CHROMA_AUTH_TOKEN=${CHROMA_AUTH_TOKEN:-chroma-token-dev}
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/heartbeat"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # =============================================================================
+  # AGENT LAYER
+  # =============================================================================
+  
+  # Agno Agents - Multi-agent orchestration with Opik tracing
+  agents:
+    build:
+      context: ./agent
+      dockerfile: Dockerfile
+    ports:
+      - "7777:7777"
+    environment:
+      - LITELLM_BASE_URL=http://litellm:4000
+      - LITELLM_API_KEY=${LITELLM_MASTER_KEY:-sk-litellm-master-key}
+      - OPIK_BASE_URL=${OPIK_BASE_URL:-http://host.docker.internal:5174}
+      - OPIK_PROJECT_NAME=sim-ai-poc
+      - CHROMADB_HOST=chromadb
+      - CHROMADB_PORT=8000
+      - CHROMA_AUTH_TOKEN=${CHROMA_AUTH_TOKEN:-chroma-token-dev}
+      - MODEL_NAME=${MODEL_NAME:-claude-sonnet-4-20250514}
+      - LOCAL_MODEL_NAME=${LOCAL_MODEL_NAME:-gemma3:4b}
+    depends_on:
+      - litellm
+      - chromadb
+    volumes:
+      - ./agents.yaml:/agents.yaml
+      - ./data:/app/data
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+
+  # Agent UI - Web interface
+  agent-ui:
+    image: agnohq/agent-ui:latest
+    profiles: ["full"]
+    ports:
+      - "3000:3000"
+    environment:
+      - NEXT_PUBLIC_API_URL=http://localhost:7777
+    depends_on:
+      - agents
+
+# =============================================================================
+# VOLUMES
+# =============================================================================
+volumes:
+  ollama_data:
+  chromadb_data:
+
+# =============================================================================
+# NETWORKS
+# =============================================================================
+networks:
+  default:
+    name: sim-ai-network
