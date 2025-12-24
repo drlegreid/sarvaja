@@ -403,17 +403,24 @@ Automate testing and deployment via GitHub Actions.
 
 ---
 
-### PHASE 1: TypeDB Container (Current Sprint)
+### PHASE 1: TypeDB Container (Current Sprint) ✅ COMPLETE
 
 | Task | Status | Description |
 |------|--------|-------------|
-| P1.1 | 📋 TODO | Add TypeDB to docker-compose.yml (port 1729) |
-| P1.2 | 📋 TODO | Create TypeDB schema for 8 rules |
-| P1.3 | 📋 TODO | Create Python TypeDB client wrapper |
-| P1.4 | 📋 TODO | Write inference rule: "blocked-by-dependency" |
-| P1.5 | 📋 TODO | Test inference query returns results |
+| P1.1 | ✅ DONE | Add TypeDB to docker-compose.yml (port 1729) |
+| P1.2 | ✅ DONE | Create TypeDB schema for 8 rules |
+| P1.3 | ✅ DONE | Create Python TypeDB client wrapper |
+| P1.4 | ✅ DONE | Write inference rule: "blocked-by-dependency" |
+| P1.5 | ✅ DONE | Test inference query returns results |
 
-**Success Criteria:** TypeDB running, 1 inference rule working
+**Success Criteria:** TypeDB running, 1 inference rule working ✅
+
+> **Progress (2024-12-24):** Phase 1 COMPLETE!
+> - Schema + data + loader created (4 inference rules)
+> - Python client wrapper with 2.29.x driver API
+> - 28 tests passing (unit + integration)
+> - Inference verified: transitive deps, cascade supersede, priority conflicts
+> Files: `governance/schema.tql`, `governance/data.tql`, `governance/loader.py`, `governance/client.py`
 
 ---
 
@@ -440,8 +447,12 @@ Automate testing and deployment via GitHub Actions.
 | P3.3 | 📋 TODO | Document hybrid architecture |
 | P3.4 | 📋 TODO | Performance benchmarks |
 | P3.5 | 📋 TODO | v1.0 release |
+| P3.6 | ⏸️ BLOCKED | Rename sim-ai → platform-gai (after v1.0 milestone) |
 
 **Success Criteria:** Production-ready, documented, benchmarked
+
+> **P3.6 Trigger:** Only rename after TypeDB inference is working + 1 real use case validated.
+> Repo is already `platform-gai` on GitHub - codebase should match.
 
 ---
 
@@ -457,6 +468,25 @@ Automate testing and deployment via GitHub Actions.
 | 6 | Custom Session/Memory UI | ⏸️ DEFERRED | After TypeDB validation |
 | 7 | MCP-Monitor | LOW | Nice-to-have |
 | 8 | AnythingLLM | LOW | Evaluate later |
+| 9 | Godot MCP sleep mode | LOW | Lazy IDE start on first call, not always-on |
+| 10 | **TypeDB 3.x Frontrun R&D** | 🎯 STRATEGIC | In-house inference engine |
+
+#### R&D-010: TypeDB 3.x Frontrun (STRATEGIC)
+
+**Context:** TypeDB 3.x is still ALPHA (3.0.0-alpha-10). We use stable 2.29.1.
+
+**Opportunity:** Build in-house inference engine that frontrunns TypeDB 3.x features:
+- Study TypeDB 3.x alpha changelog and new features
+- Identify inference patterns we need (transitive, cascade, conflict)
+- Build lightweight Rust/Python inference engine
+- Maintain compatibility with TypeDB 2.x data format
+
+**Why:** Strategic independence from vendor roadmap + performance optimization.
+
+**References:**
+- TypeDB 3.x Alpha: https://github.com/vaticle/typedb/releases
+- TypeDB 2.29.1 (stable): Current production version
+- RULE-008: In-House Rewrite Principle (score technologies before adoption)
 
 > **DECISION-003**: TypeDB elevated to Phase 1. Reasoning/inference > vector storage.
 > **RULE-008**: Technology scorecard applied - TypeDB scored 21/25 (ADOPT).

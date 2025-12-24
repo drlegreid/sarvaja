@@ -2,6 +2,7 @@
 TypeDB Schema and Data Loader
 Loads governance schema and initial data into TypeDB.
 Created: 2024-12-24 (DECISION-003)
+Updated: 2024-12-24 - Uses typedb-driver 2.29.x API for TypeDB Core 2.29.1 (RULE-009)
 """
 import os
 from pathlib import Path
@@ -9,7 +10,7 @@ from pathlib import Path
 try:
     from typedb.driver import TypeDB, SessionType, TransactionType
 except ImportError:
-    print("TypeDB driver not installed. Run: pip install typedb-driver")
+    print("TypeDB driver not installed. Run: pip install typedb-driver==2.29.2")
     exit(1)
 
 # Configuration
@@ -24,7 +25,7 @@ DATA_FILE = SCRIPT_DIR / "data.tql"
 
 
 def connect():
-    """Connect to TypeDB server."""
+    """Connect to TypeDB server using typedb-driver 2.29.x API."""
     address = f"{TYPEDB_HOST}:{TYPEDB_PORT}"
     print(f"Connecting to TypeDB at {address}...")
     return TypeDB.core_driver(address)
@@ -99,11 +100,15 @@ def verify_load(driver):
 
 def test_inference(driver):
     """Test inference rules work."""
+    from typedb.driver import TypeDBOptions
+
     print("Testing inference...")
+    options = TypeDBOptions()
+    options.infer = True
 
     with driver.session(DATABASE_NAME, SessionType.DATA) as session:
-        with session.transaction(TransactionType.READ) as tx:
-            # Test transitive dependency
+        with session.transaction(TransactionType.READ, options) as tx:
+            # Test rule dependency query
             query = """
                 match
                     $r1 isa rule-entity, has rule-id "RULE-006";
@@ -112,7 +117,8 @@ def test_inference(driver):
                 get $id2;
             """
             results = list(tx.query.get(query))
-            print(f"  RULE-006 dependencies: {[r.get('id2').as_attribute().get_value() for r in results]}")
+            deps = [r.get('id2').as_attribute().get_value() for r in results]
+            print(f"  RULE-006 dependencies: {deps}")
 
             # Test decision affects
             query = """
@@ -123,7 +129,8 @@ def test_inference(driver):
                 get $rid;
             """
             results = list(tx.query.get(query))
-            print(f"  DECISION-003 affects rules: {[r.get('rid').as_attribute().get_value() for r in results]}")
+            affected = [r.get('rid').as_attribute().get_value() for r in results]
+            print(f"  DECISION-003 affects rules: {affected}")
 
     print("Inference tests complete.")
 
@@ -131,7 +138,7 @@ def test_inference(driver):
 def main():
     """Main loader function."""
     print("=" * 60)
-    print("TypeDB Governance Loader")
+    print("TypeDB Governance Loader (2.29.x API)")
     print("=" * 60)
 
     try:
@@ -141,10 +148,10 @@ def main():
         load_data(driver)
 
         if verify_load(driver):
-            print("\n✅ All data loaded and verified!")
+            print("\n[OK] All data loaded and verified!")
             test_inference(driver)
         else:
-            print("\n❌ Data verification failed!")
+            print("\n[FAIL] Data verification failed!")
             return 1
 
         driver.close()
@@ -156,7 +163,9 @@ def main():
         return 0
 
     except Exception as e:
-        print(f"\n❌ Error: {e}")
+        print(f"\n[ERROR] {e}")
+        import traceback
+        traceback.print_exc()
         return 1
 
 

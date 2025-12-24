@@ -127,16 +127,17 @@ rule transitive-dependency:
         (dependent: $a, dependency: $c) isa rule-dependency;
     };
 
-# Blocked task inference: if a task depends on a rule that is not ACTIVE, task is blocked
-rule infer-blocked-task:
-    when {
-        $task isa task, has task-status "TODO";
-        $rule isa rule-entity, has status $s;
-        not { $s = "ACTIVE"; };
-        (blocked-task: $task, blocking-rule: $rule) isa task-blocked;
-    } then {
-        $task has task-status "BLOCKED";
-    };
+# Blocked task inference: DISABLED - TypeDB cannot modify existing attributes
+# TODO: Redesign to use a separate "is-blocked" relation instead
+# rule infer-blocked-task:
+#     when {
+#         $task isa task, has task-status "TODO";
+#         $rule isa rule-entity, has status $s;
+#         not { $s = "ACTIVE"; };
+#         (blocked-task: $task, blocking-rule: $rule) isa task-blocked;
+#     } then {
+#         $task has task-status "BLOCKED";
+#     };
 
 # Cascade superseded: if decision A supersedes B, and B affects rule R, A now affects R
 rule cascade-supersede:

@@ -5,7 +5,7 @@
 This document defines mandatory rules for the Sim.ai PoC agent platform.
 Rules are indexed in ChromaDB (`sim_ai_rules` collection) and enforced by agents.
 
-**Quick Reference:** 8 active rules, 7 categories, automated enforcement via pre-commit + CI/CD.
+**Quick Reference:** 10 active rules (9 ACTIVE, 1 DRAFT), 8 categories, automated enforcement via pre-commit + CI/CD.
 
 ---
 
@@ -21,6 +21,8 @@ Rules are indexed in ChromaDB (`sim_ai_rules` collection) and enforced by agents
 | RULE-006 | governance | MEDIUM | ACTIVE | Decision logging |
 | RULE-007 | productivity | HIGH | ACTIVE | MCP Usage Protocol |
 | RULE-008 | strategic | CRITICAL | ACTIVE | Technology scorecard |
+| RULE-009 | devops | CRITICAL | ACTIVE | Version compatibility |
+| RULE-010 | strategic | CRITICAL | ACTIVE | Evidence-based wisdom |
 
 ---
 
@@ -649,6 +651,142 @@ technology_evaluation:
 - [ ] License verified compatible with enterprise use
 - [ ] Rewrite path documented if critical component
 - [ ] OctoCode research performed (not just web search)
+
+---
+
+## RULE-009: DevOps Version Compatibility Protocol
+
+**Category:** `devops`
+**Priority:** CRITICAL
+**Status:** ACTIVE
+**Source:** Session 2024-12-24 (TypeDB version mismatch incident)
+
+### Directive
+
+Before installing ANY package, container, or dependency:
+1. **Check container/service version FIRST** (docker logs, --version)
+2. **Use OctoCode to find compatible client versions**
+3. **Use llm-sandbox or isolated env for testing** (never pollute global Python)
+4. **Verify version matrix** (client vs server compatibility)
+
+### The Mistake That Created This Rule
+
+```
+WRONG: pip install typedb-driver  # Blindly install latest
+RIGHT:
+  1. docker logs sim-ai-typedb-1 | grep version  # → 2.29.1
+  2. OctoCode: find compatible Python client for TypeDB 2.29.x
+  3. pip install typedb-client==2.18.2  # Matched version
+```
+
+### Version Check Protocol
+
+| Step | Tool | Command |
+|------|------|---------|
+| 1. Container version | Bash/PowerShell | `docker logs <container> \| grep version` |
+| 2. Client compatibility | OctoCode | Search repo for version matrix/requirements |
+| 3. Isolated testing | llm-sandbox | Test import/connection before global install |
+| 4. Dependency conflicts | pip | `pip check` after install |
+
+### MCP Usage for DevOps
+
+| Task | Use This MCP | NOT This |
+|------|--------------|----------|
+| Check versions | powershell, Bash | Manual typing |
+| Find compatible packages | OctoCode | Web search guess |
+| Test Python imports | llm-sandbox | Global Python |
+| Container inspection | desktop-commander | Manual docker |
+
+### Anti-Patterns
+
+| Anti-Pattern | Consequence | Correct Approach |
+|--------------|-------------|------------------|
+| `pip install <pkg>` without version | Version mismatch | Check server version first |
+| Installing to global Python | Dependency conflicts | Use venv or llm-sandbox |
+| Guessing package names | Wrong package | OctoCode search |
+| Skipping `pip check` | Silent breaks | Always verify after install |
+
+### Validation
+
+- [ ] Container version checked before client install
+- [ ] OctoCode used to find version compatibility
+- [ ] llm-sandbox used for isolated testing
+- [ ] `pip check` run after any install
+- [ ] No global Python pollution for experiments
+
+---
+
+## RULE-010: Evidence-Based Wisdom Accumulation
+
+**Category:** `strategic`
+**Priority:** CRITICAL
+**Status:** ACTIVE
+**Source:** Session 2024-12-24 (MCP usage philosophy)
+
+### Directive
+
+Every experiment, decision, and action MUST produce traceable evidence that contributes to accumulated wisdom:
+
+1. **Use MCPs for detailed evidence** - MCPs provide structured, queryable output that feeds evidence pipelines
+2. **Hypothesis-based approach** - Form hypothesis → test → collect evidence → validate/refute
+3. **Logical decision making** - Decisions based on facts, not assumptions
+4. **Multiplier effect** - Each experiment multiplies wisdom (or exposes stupidity via tests)
+5. **Test-caught failures** - Failed hypotheses caught by tests are learning opportunities
+
+### Evidence Pipeline
+
+```
+MCP Output → Evidence Collection → Logical Analysis → Decision → TypeDB Rule
+     ↓              ↓                    ↓               ↓           ↓
+Structured   ChromaDB Memory      Hypothesis Test    DECISION-xxx   Inference
+  Data        (claude-mem)         (pytest)          Documented    Available
+```
+
+### The Wisdom Accumulation Principle
+
+```
+Wisdom = Σ(Evidence × Validation)
+Stupidity = Σ(Assumptions × Untested)
+
+As platform grows:
+- Each validated experiment → multiplies wisdom
+- Each untested assumption → accumulates technical debt
+- Tests catch stupidity early → prevents debt multiplication
+```
+
+### MCP Usage for Evidence
+
+| Evidence Type | MCP Tool | Output |
+|---------------|----------|--------|
+| API exploration | llm-sandbox | Structured Python output |
+| Version checks | powershell | Package/container versions |
+| Code patterns | OctoCode | GitHub search results |
+| File operations | desktop-commander | Detailed file metadata |
+| Memory storage | claude-mem | ChromaDB documents |
+
+### Anti-Patterns
+
+| Anti-Pattern | Consequence | Correct Approach |
+|--------------|-------------|------------------|
+| Manual typing instead of MCP | No evidence trail | Use MCPs for all operations |
+| Skip hypothesis validation | Untested assumptions | Write tests for hypotheses |
+| Ad-hoc decisions | No rationale | Document in DECISION-xxx |
+| Ignoring test failures | Stupidity multiplies | Fix tests immediately |
+
+### Integration Points
+
+- **Memory (claude-mem)**: Store evidence documents with metadata
+- **Governance (TypeDB)**: Encode validated rules for inference
+- **Documentation (./docs)**: Human-readable decision logs
+- **GitHub Issues**: Track gaps and R&D progress
+
+### Validation
+
+- [ ] MCPs used instead of manual operations
+- [ ] Hypothesis documented before testing
+- [ ] Evidence collected in structured format
+- [ ] Failed tests investigated (not ignored)
+- [ ] Successful patterns encoded as rules
 
 ---
 
