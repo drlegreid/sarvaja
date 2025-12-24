@@ -17,6 +17,13 @@ from agno.db.sqlite import SqliteDb
 from agno.knowledge.knowledge import Knowledge
 from agno.vectordb.chroma import ChromaDb
 
+# Import hybrid layer for TypeDB + ChromaDB integration
+try:
+    from agent.hybrid_vectordb import HybridVectorDb
+    HYBRID_AVAILABLE = True
+except ImportError:
+    HYBRID_AVAILABLE = False
+
 
 def init_opik():
     """Initialize Opik for tracing.
@@ -97,17 +104,67 @@ def create_chromadb_knowledge() -> Optional[Knowledge]:
         return None
 
 
+def create_hybrid_knowledge() -> Optional[Knowledge]:
+    """Create hybrid knowledge base using TypeDB + ChromaDB.
+
+    Routes queries intelligently:
+    - Inference queries (dependencies, conflicts) → TypeDB
+    - Semantic queries (search, find, about) → ChromaDB
+
+    Per RULE-004: TDD Implementation for P3.4
+    """
+    if not HYBRID_AVAILABLE:
+        print("Hybrid layer not available, falling back to ChromaDB")
+        return create_chromadb_knowledge()
+
+    chromadb_host = os.getenv("CHROMADB_HOST")
+    chromadb_port = os.getenv("CHROMADB_PORT", "8001")
+    typedb_host = os.getenv("TYPEDB_HOST", "localhost")
+    typedb_port = os.getenv("TYPEDB_PORT", "1729")
+
+    if not chromadb_host:
+        print("ChromaDB not configured, skipping hybrid knowledge")
+        return None
+
+    try:
+        # Create hybrid vector DB that wraps both backends
+        hybrid_db = HybridVectorDb(
+            chromadb_host=chromadb_host,
+            chromadb_port=int(chromadb_port),
+            typedb_host=typedb_host,
+            typedb_port=int(typedb_port),
+            collection_name="sim_ai_knowledge",
+            auto_connect=True
+        )
+
+        # Create Agno Knowledge wrapper
+        # Note: HybridVectorDb implements search() compatible with Agno VectorDb
+        knowledge = Knowledge(vector_db=hybrid_db)
+        print(f"Hybrid knowledge connected: TypeDB({typedb_host}:{typedb_port}) + ChromaDB({chromadb_host}:{chromadb_port})")
+        return knowledge
+
+    except Exception as e:
+        print(f"Hybrid knowledge init failed: {e}, falling back to ChromaDB")
+        return create_chromadb_knowledge()
+
+
 def create_agents(config: dict) -> list[Agent]:
-    """Create agents from configuration."""
+    """Create agents from configuration.
+
+    Supports two knowledge modes:
+    - use_knowledge: Basic ChromaDB knowledge
+    - use_hybrid_knowledge: Hybrid TypeDB + ChromaDB (P3.4)
+    """
     agents = []
-    knowledge = create_chromadb_knowledge()
+    chromadb_knowledge = None
+    hybrid_knowledge = None
     init_opik()
-    
+
     model_name = os.getenv("MODEL_NAME", "claude-sonnet-4-20250514")
-    
+
     for agent_id, agent_data in config.get("agents", {}).items():
         model = create_model(model_name)
-        
+
         agent_kwargs = {
             "name": agent_data["name"],
             "description": agent_data.get("description"),
@@ -117,9 +174,20 @@ def create_agents(config: dict) -> list[Agent]:
             "add_history_to_context": True,
             "db": SqliteDb(db_file="/app/data/agents.db"),
         }
-        
-        if knowledge and agent_data.get("use_knowledge", False):
-            agent_kwargs["knowledge"] = knowledge
+
+        # Determine knowledge type
+        if agent_data.get("use_hybrid_knowledge", False):
+            # Lazy init hybrid knowledge
+            if hybrid_knowledge is None:
+                hybrid_knowledge = create_hybrid_knowledge()
+            if hybrid_knowledge:
+                agent_kwargs["knowledge"] = hybrid_knowledge
+        elif agent_data.get("use_knowledge", False):
+            # Lazy init ChromaDB knowledge
+            if chromadb_knowledge is None:
+                chromadb_knowledge = create_chromadb_knowledge()
+            if chromadb_knowledge:
+                agent_kwargs["knowledge"] = chromadb_knowledge
         
         agent = Agent(**agent_kwargs)
         
