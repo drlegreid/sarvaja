@@ -48,8 +48,8 @@ LiteLLM (4000) → Ollama (11434) → ChromaDB (8001) → Agents (7777)
 
 ## Phase 2: Knowledge + Custom UI 📋
 
-**Status:** Not Started  
-**Timeline:** Jan 2025 (1-2 days)  
+**Status:** 50% Complete  
+**Timeline:** Dec 2024 - Jan 2025  
 **Priority:** #1
 
 ### Objective
@@ -57,17 +57,19 @@ LiteLLM (4000) → Ollama (11434) → ChromaDB (8001) → Agents (7777)
 2. Build custom session/memory UI (replaces Opik per DECISION-001)
 
 ### Data Sources
-| Source | Docs | Content |
-|--------|------|---------|
-| claude-mem | 114 | Governance, sessions, workflows |
-| angelgai | ~10 | Crash recovery, MCP stability |
-| localgai | ~20 | EBMSF, DSM, scripts |
+| Source | Docs | Migrated | Content |
+|--------|------|----------|---------|
+| claude-mem | 114 | **53** | Governance, sessions, workflows |
+| angelgai | ~10 | 0 | Crash recovery, MCP stability |
+| localgai | ~20 | 0 | EBMSF, DSM, scripts |
 
 ### Deliverables
-- [ ] Export claude-mem → sim-ai ChromaDB
+- [x] Export claude-mem -> sim-ai ChromaDB (53 high-value docs)
+- [x] Migration script: `scripts/migrate_claude_mem.py`
 - [ ] Import governance docs as agent knowledge
 - [ ] Migrate scripts (dsm_tracker, memory_audit)
 - [ ] Update agent instructions with inherited patterns
+- [ ] Build custom session/memory UI
 
 ---
 

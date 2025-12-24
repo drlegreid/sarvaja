@@ -323,7 +323,7 @@ Automate testing and deployment via GitHub Actions.
 
 | # | Item | Priority | Business Value |
 |---|------|----------|----------------|
-| 1 | **Inherit Experience Data Lakes** | HIGH | 114 docs, proven patterns, institutional knowledge |
+| 1 | **Inherit Experience Data Lakes** | ✅ DONE | 53 docs migrated to sim-ai ChromaDB |
 | 2 | **Custom Session/Memory UI** | HIGH | Replace Opik, aligned with actual needs (DECISION-001) |
 | 3 | **Session Data Dump Workflow** | HIGH | Preserve learnings, enable continuity |
 | 4 | TypeDB In-House Solution | HIGH | Upsell potential, differentiation |
