@@ -55,12 +55,12 @@
 - Document cross-referencing (RULE-013)
 - Rule dependencies tracked
 
-### Phase 3: Stabilization (TODO)
+### Phase 3: Stabilization (IN PROGRESS)
 
 | Task | Status | Description |
 |------|--------|-------------|
-| P3.1 | 📋 TODO | Hybrid query router (TypeDB + ChromaDB) |
-| P3.2 | 📋 TODO | Integration tests for MCP-TypeDB |
+| P3.1 | ✅ DONE | Hybrid query router (TypeDB + ChromaDB) |
+| P3.2 | ✅ DONE | Integration tests for MCP-TypeDB |
 | P3.3 | 📋 TODO | Update agents to use hybrid layer |
 | P3.4 | 📋 TODO | Performance benchmarks |
 | P3.5 | 📋 TODO | v1.0 release |

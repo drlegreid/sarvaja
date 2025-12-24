@@ -21,8 +21,8 @@
 | # | Task | Status | Effort | GAP |
 |---|------|--------|--------|-----|
 | 1 | Opik Dashboard startup | 📋 TODO | 30min | - |
-| 2 | Hybrid query router (TypeDB + ChromaDB) | 📋 TODO | 4h | P2.6 |
-| 3 | Integration tests for MCP-TypeDB | 📋 TODO | 2h | P2.7 |
+| 2 | Hybrid query router (TypeDB + ChromaDB) | ✅ DONE | 4h | P3.1 |
+| 3 | Integration tests for MCP-TypeDB | ✅ DONE | 2h | P3.2 |
 
 ### Medium Priority
 
@@ -49,8 +49,8 @@
 | Phase | Description | Status |
 |-------|-------------|--------|
 | **Phase 1** | TypeDB Container | ✅ COMPLETE |
-| **Phase 2** | Governance MCP | ✅ PARTIAL (P2.6, P2.7 TODO) |
-| **Phase 3** | Stabilization & v1.0 | 📋 TODO |
+| **Phase 2** | Governance MCP | ✅ COMPLETE |
+| **Phase 3** | Stabilization & v1.0 | 🚧 IN PROGRESS (P3.1, P3.2 done) |
 
 > Details: [R&D-BACKLOG.md](docs/backlog/R&D-BACKLOG.md)
 
