@@ -330,9 +330,10 @@ Automate testing and deployment via GitHub Actions.
 | 5 | Replace Agno with Memory MCP | HIGH | Simpler, proven, more powerful |
 | 6 | OctoCode MCP | ✅ CONFIGURED | GITHUB_PAT in .env (GAP-011) |
 | 7 | MCP Workflow Integration | LOW | Nice-to-have |
-| 8 | **Mem0 / OpenMemory MCP** | 🔥 PRIORITY | DECISION-002: Knowledge governance (needs OPENAI_API_KEY for embeddings) |
+| 8 | **Mem0 / OpenMemory MCP** | 🔥 PRIORITY | DECISION-002: Knowledge governance (can use Ollama - no OpenAI!) |
 | 9 | **AnythingLLM** | MEDIUM | All-in-one AI app, local LLMs, document RAG |
 | 10 | **Awesome MCP Memory Servers** | RESEARCH | Curated alternatives: Arc Memory, CogniGraph, Obsidian MCP |
+| 11 | **MCP-Monitor** | HIGH | System metrics via MCP - prevent crashes by monitoring memory/CPU |
 
 ---
 
@@ -637,12 +638,20 @@ Private, local memory layer for MCP clients with vector-backed storage. Works wi
 
 #### Requirements (discovered 2024-12-24)
 - `pip install mem0ai` ✅ Installed
-- **OPENAI_API_KEY required** for embeddings (text-embedding-3-small)
-- Can use Anthropic for LLM but needs OpenAI for vectors
+- ~~OPENAI_API_KEY required~~ **CAN USE OLLAMA INSTEAD!**
+- Config: `"ollama_base_url": "http://localhost:11434"`
+
+#### Ollama Config (no OpenAI needed)
+```python
+config = {
+    'llm': {'provider': 'ollama', 'config': {'model': 'gemma3:4b', 'ollama_base_url': 'http://localhost:11434'}},
+    'embedder': {'provider': 'ollama', 'config': {'model': 'nomic-embed-text', 'ollama_base_url': 'http://localhost:11434'}}
+}
+```
 
 #### Next Steps
-- [ ] Add OPENAI_API_KEY to .env
-- [ ] Test basic memory add/search
+- [ ] Pull Ollama embedding model: `ollama pull nomic-embed-text`
+- [ ] Test Mem0 with Ollama embeddings
 - [ ] Deploy OpenMemory MCP server
 - [ ] Integrate with Windsurf/Cascade
 - [ ] Migrate 53 ChromaDB docs if successful
@@ -693,6 +702,39 @@ All-in-one AI application for document chat, local LLM hosting, and RAG.
 - [ ] Survey top 5 projects
 - [ ] Identify best fit for sim-ai use case
 - [ ] Consider Arc Memory for TypeDB alternative
+
+---
+
+### 22. 🖥️ MCP-Monitor (Crash Prevention)
+
+**Priority:** HIGH  
+**Effort:** Low (1 hour)  
+**Status:** 📋 RESEARCH  
+**Source:** https://github.com/seekrays/mcp-monitor
+
+#### What It Is
+System monitoring tool that exposes metrics via MCP protocol. LLMs can query real-time system info.
+
+#### Available Tools
+| Tool | Purpose |
+|------|---------|
+| `get_cpu_info` | CPU usage, core count |
+| `get_memory_info` | Virtual/swap memory usage |
+| `get_disk_info` | Disk usage, partitions |
+| `get_network_info` | Network interfaces, traffic |
+| `get_host_info` | System details, uptime |
+| `get_process_info` | Process listing, sorting by CPU/memory |
+
+#### Use Case for sim-ai
+- **Prevent crashes** by monitoring memory before heavy operations
+- **Auto-scale** model selection based on available resources
+- **Debug** memory leaks in long sessions
+
+#### Next Steps
+- [ ] Install mcp-monitor: `npx @anthropic-ai/create-mcp-server`
+- [ ] Add to Windsurf MCP config
+- [ ] Create workflow: check memory before model calls
+- [ ] Alert if memory < threshold
 
 ---
 
