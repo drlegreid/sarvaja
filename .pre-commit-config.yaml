@@ -1,0 +1,79 @@
+# Sim.ai Pre-commit Configuration
+# Per RULE-004: Exploratory Testing & Executable Spec
+# Per GAP-009: Pre-commit Hooks
+
+repos:
+  # General hooks
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.5.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+        args: ['--unsafe']  # Allow custom tags
+      - id: check-json
+      - id: check-added-large-files
+        args: ['--maxkb=500']
+      - id: check-merge-conflict
+      - id: detect-private-key
+      - id: no-commit-to-branch
+        args: ['--branch', 'main', '--branch', 'master']
+        stages: [commit]
+
+  # Python formatting
+  - repo: https://github.com/psf/black
+    rev: 24.3.0
+    hooks:
+      - id: black
+        language_version: python3.12
+        args: ['--line-length=100']
+        files: ^(agent|governance|tests)/
+
+  # Python imports sorting
+  - repo: https://github.com/pycqa/isort
+    rev: 5.13.2
+    hooks:
+      - id: isort
+        args: ['--profile=black', '--line-length=100']
+        files: ^(agent|governance|tests)/
+
+  # Python linting
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.3.4
+    hooks:
+      - id: ruff
+        args: ['--fix', '--exit-non-zero-on-fix']
+        files: ^(agent|governance|tests)/
+
+  # Security checks
+  - repo: https://github.com/Yelp/detect-secrets
+    rev: v1.4.0
+    hooks:
+      - id: detect-secrets
+        args: ['--baseline', '.secrets.baseline']
+        exclude: \.env\.example$
+
+  # TypeQL validation (custom local hook)
+  - repo: local
+    hooks:
+      - id: typeql-syntax
+        name: TypeQL Syntax Check
+        entry: python -c "import sys; [print(f) for f in sys.argv[1:] if open(f).read()]"
+        language: system
+        files: \.tql$
+        pass_filenames: true
+
+      - id: no-hardcoded-secrets
+        name: No Hardcoded Secrets (RULE-002)
+        entry: python -c "import sys, re; files=[f for f in sys.argv[1:] if re.search(r'(sk-|api[_-]?key|password|secret).*=.*['\"][^'\"]{10,}['\"]', open(f).read(), re.I)]; sys.exit(1) if files else sys.exit(0)"
+        language: system
+        files: \.(py|yaml|yml|json)$
+        exclude: \.env\.example$
+
+# CI configuration
+ci:
+  autofix_commit_msg: |
+    [pre-commit.ci] auto fixes from pre-commit hooks
+  autofix_prs: true
+  autoupdate_commit_msg: '[pre-commit.ci] pre-commit autoupdate'
+  autoupdate_schedule: weekly

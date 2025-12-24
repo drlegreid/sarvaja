@@ -31,7 +31,7 @@
 | 4 | Grok/xAI API Key | ⏳ Pending | 15min | GAP-004 |
 | 5 | Agent Task Backlog UI | 📋 TODO | 3h | GAP-005 |
 | 6 | Sync Agent Implementation | 📋 TODO | 4h | GAP-006 |
-| 7 | Pre-commit Hooks | 📋 TODO | 1h | GAP-009 |
+| 7 | Pre-commit Hooks | ✅ DONE | 1h | GAP-009 |
 | 8 | MCP usage documentation | 📋 TODO | 1h | GAP-019 |
 
 ### Low Priority
