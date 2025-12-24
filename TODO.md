@@ -325,7 +325,7 @@ Automate testing and deployment via GitHub Actions.
 |---|------|----------|----------------|
 | 1 | **Inherit Experience Data Lakes** | ✅ DONE | 53 docs migrated to sim-ai ChromaDB |
 | 2 | **Custom Session/Memory UI** | HIGH | Replace Opik, aligned with actual needs (DECISION-001) |
-| 3 | **Session Data Dump Workflow** | HIGH | Preserve learnings, enable continuity |
+| 3 | **Session Data Dump Workflow** | ✅ DONE | scripts/session_dump.py created |
 | 4 | TypeDB In-House Solution | HIGH | Upsell potential, differentiation |
 | 5 | Replace Agno with Memory MCP | HIGH | Simpler, proven, more powerful |
 | 6 | OctoCode MCP | MEDIUM | Developer productivity |
