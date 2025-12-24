@@ -71,12 +71,23 @@ Every session MUST log decisions in:
 
 ## Action Items for Next Session
 
-- [ ] Check Ollama model status
-- [ ] Check Opik UI accessibility  
+- [x] Check Ollama model status → gemma3:4b downloaded ✅
+- [x] Check Opik UI accessibility → localhost:5173 returns 200 ✅
+- [ ] Fix LiteLLM "No connected db" error (Opik callback issue)
 - [ ] Clean up unused MCPs from config
 - [ ] Add OctoCode MCP with GitHub PAT
-- [ ] Update gap index (GAP-001, GAP-002 now FIXED)
+- [x] Update gap index (GAP-001, GAP-002, GAP-003 now FIXED) ✅
 - [ ] Consider adding RULE-006 for decision logging
+
+### Known Issue: LiteLLM DB Connection
+```
+Error: {"error":{"message":"No connected db.","type":"no_db_connection"}}
+Cause: Opik callbacks in litellm_config.yaml require DB
+Fix options:
+  1. Disable Opik callbacks temporarily
+  2. Configure LiteLLM database connection
+  3. Ensure Opik backend is properly connected
+```
 
 ---
 
