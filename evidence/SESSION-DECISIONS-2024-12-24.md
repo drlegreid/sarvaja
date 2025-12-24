@@ -77,7 +77,7 @@ Every session MUST log decisions in:
 - [ ] Clean up unused MCPs from config
 - [ ] Add OctoCode MCP with GitHub PAT
 - [x] Update gap index (GAP-001, GAP-002, GAP-003 now FIXED) ✅
-- [ ] Consider adding RULE-006 for decision logging
+- [x] Add RULE-006 for decision logging → ✅ ADDED (commit a2efccb)
 
 ### ~~Known Issue: LiteLLM DB Connection~~ ✅ FIXED
 ```
