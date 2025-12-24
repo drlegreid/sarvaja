@@ -1,7 +1,7 @@
 # Sim.ai Governance Data
-# Initial load: 14 rules + 4 decisions + 3 agents
+# Initial load: 15 rules + 4 decisions + 3 agents
 # Created: 2024-12-24
-# Updated: 2024-12-24 (RULE-014) - Added Autonomous Task Sequencing
+# Updated: 2024-12-24 (RULE-015) - R&D Workflow, Enhanced RULE-004 with Executable Spec
 
 insert
 
@@ -38,11 +38,11 @@ $rule003 isa rule-entity,
 
 $rule004 isa rule-entity,
     has rule-id "RULE-004",
-    has rule-name "Exploratory Test Automation",
+    has rule-name "Exploratory Test Automation & Executable Specification",
     has category "testing",
     has priority "HIGH",
     has status "ACTIVE",
-    has directive "Use Playwright MCP with heuristics for exploratory testing",
+    has directive "Domain-specific heuristics (UI/API/Shell/Docker/Safety) with executable spec, evidence capture for audit, TDD cycle integration",
     has created-date 2024-12-24T00:00:00;
 
 $rule005 isa rule-entity,

@@ -4,39 +4,165 @@ Rules governing testing, stability, maintenance, and task execution.
 
 ---
 
-## RULE-004: Exploratory Test Automation with Playwright MCP
+## RULE-004: Exploratory Test Automation & Executable Specification
 
 **Category:** `testing` | **Priority:** HIGH | **Status:** ACTIVE
 
 ### Directive
 
-All UI/web components MUST be testable via Playwright MCP with heuristics:
+All components MUST be testable via domain-specific heuristics. Exploratory testing complements TDD cycle to ensure proper coverage and evidence capture for audit.
 
-### Test Automation Heuristics
+### Test Strategy Integration
+
+```
+TDD Spec (What) ←→ Exploratory (How) ←→ Executable Spec (Verify)
+     ↓                    ↓                      ↓
+  Coverage Map    Heuristic Discovery      Healthcheck Suite
+```
+
+---
+
+### Domain Heuristics
+
+#### UI Testing (Playwright MCP)
 
 | Heuristic | Description | Priority |
 |-----------|-------------|----------|
-| `BOUNDARY` | Test edge cases, limits, empty states | HIGH |
-| `NAVIGATION` | Verify all links, routes, redirects | HIGH |
-| `STATE` | Check state transitions, persistence | MEDIUM |
-| `ERROR` | Trigger and verify error handling | HIGH |
-| `ACCESSIBILITY` | Check a11y compliance | MEDIUM |
-| `PERFORMANCE` | Measure load times | LOW |
+| `BOUNDARY` | Edge cases, limits, empty states, max input | HIGH |
+| `NAVIGATION` | All links, routes, redirects, back button | HIGH |
+| `STATE` | State transitions, persistence, refresh | MEDIUM |
+| `ERROR` | Error handling, validation messages | HIGH |
+| `ACCESSIBILITY` | a11y compliance, keyboard nav, screen reader | MEDIUM |
+| `PERFORMANCE` | Load times, LCP, FID, CLS metrics | LOW |
+| `RESPONSIVE` | Breakpoints, mobile/tablet/desktop views | MEDIUM |
+| `INTERRUPTIBLE` | Mid-action cancellation, timeout recovery | HIGH |
 
-### Playwright MCP Tools
+#### API Testing (PowerShell/llm-sandbox)
 
-| Tool | Purpose |
-|------|---------|
-| `browser_navigate` | Navigate to URL |
-| `browser_screenshot` | Capture current state |
-| `browser_click` | Click element |
-| `browser_fill` | Fill form field |
-| `browser_evaluate` | Run JavaScript |
+| Heuristic | Description | Priority |
+|-----------|-------------|----------|
+| `CONTRACT` | Schema validation, required fields | HIGH |
+| `IDEMPOTENCY` | Repeated calls same result | HIGH |
+| `AUTH` | Token validation, expiry, refresh | CRITICAL |
+| `RATE_LIMIT` | Throttling, 429 handling | MEDIUM |
+| `PAYLOAD` | Empty, malformed, oversized requests | HIGH |
+| `VERSIONING` | API version compatibility | MEDIUM |
+| `TIMEOUT` | Long-running request handling | HIGH |
+
+#### Shell/CLI Testing (PowerShell MCP)
+
+| Heuristic | Description | Priority |
+|-----------|-------------|----------|
+| `EXIT_CODE` | Proper return codes (0=success) | HIGH |
+| `STDERR` | Error output to correct stream | HIGH |
+| `PIPE` | Piping and chaining behavior | MEDIUM |
+| `ENCODING` | UTF-8, special characters | MEDIUM |
+| `PATH_SAFETY` | Spaces, special chars in paths | HIGH |
+| `PRIVILEGE` | Admin/elevated permission handling | CRITICAL |
+
+#### Docker Testing (Container Inspection)
+
+| Heuristic | Description | Priority |
+|-----------|-------------|----------|
+| `HEALTHCHECK` | Container health endpoint responds | CRITICAL |
+| `RESTART` | Restart policy works correctly | HIGH |
+| `VOLUME` | Data persistence across restarts | HIGH |
+| `NETWORK` | Inter-container communication | HIGH |
+| `RESOURCE` | Memory/CPU limits respected | MEDIUM |
+| `LOG` | Logs accessible, not overflowing | MEDIUM |
+| `GRACEFUL` | Clean shutdown, signal handling | HIGH |
+
+#### Safety & Security Heuristics
+
+| Heuristic | Description | Priority |
+|-----------|-------------|----------|
+| `INJECTION` | SQL, command, XSS prevention | CRITICAL |
+| `SECRETS` | No hardcoded credentials | CRITICAL |
+| `AUDIT_TRAIL` | Actions logged with timestamp | HIGH |
+| `ISOLATION` | Process/container isolation | HIGH |
+| `ROLLBACK` | Failure recovery, state restore | HIGH |
+| `TIMEOUT_SAFE` | No hanging processes | HIGH |
+
+---
+
+### Executable Specification
+
+```yaml
+executable_spec:
+  purpose: Living documentation that runs as tests
+  components:
+    - healthcheck_suite: Quick smoke tests (< 30s)
+    - contract_tests: API schema validation
+    - integration_probes: Cross-service verification
+
+  healthcheck_endpoints:
+    - GET /health → 200 {"status": "ok"}
+    - GET /ready → 200 when dependencies up
+    - GET /metrics → Prometheus format
+
+  execution:
+    on_deploy: healthcheck_suite (P0)
+    on_commit: contract_tests (P1)
+    on_release: full_suite (P0+P1+P2)
+```
+
+### MCP Tools by Domain
+
+| Domain | MCP | Tools |
+|--------|-----|-------|
+| **UI** | playwright | browser_navigate, browser_click, browser_screenshot |
+| **API** | powershell, llm-sandbox | Invoke-WebRequest, pytest |
+| **Shell** | powershell | Start-Process, Get-Process |
+| **Docker** | desktop-commander | docker ps, docker logs, docker stats |
+| **Evidence** | filesystem, claude-mem | Write results, store findings |
+
+### Evidence Capture Protocol
+
+```yaml
+evidence_capture:
+  per_test:
+    - timestamp: ISO 8601
+    - heuristic: Which heuristic applied
+    - domain: UI/API/Shell/Docker
+    - input: What was tested
+    - expected: What should happen
+    - actual: What happened
+    - screenshot: If UI test
+    - logs: Relevant log snippet
+
+  on_failure:
+    - full_trace: Stack trace or error
+    - reproduction: Steps to reproduce
+    - context: Environment state
+
+  audit_log:
+    location: evidence/test-runs/
+    retention: 30 days
+    format: JSON + screenshots
+```
+
+### DevOps Wisdom Capture (RULE-010)
+
+```yaml
+wisdom_capture:
+  on_discovery:
+    - Pattern identified → Document in session log
+    - Failure cluster → Create GAP entry
+    - Workaround found → Add to knowledge base
+
+  encoding:
+    - Successful patterns → TypeDB rule
+    - Common failures → Checklist item
+    - Tool quirks → MCP notes
+```
 
 ### Validation
-- [ ] Playwright MCP configured
-- [ ] At least 3 heuristics applied per test session
-- [ ] Screenshots captured for each state
+- [ ] At least 3 heuristics per domain tested
+- [ ] Evidence captured for all test runs
+- [ ] Healthcheck suite runs in < 30 seconds
+- [ ] Executable spec updated when API changes
+- [ ] Safety heuristics applied to all external inputs
+- [ ] Audit trail maintained for 30 days
 
 ---
 

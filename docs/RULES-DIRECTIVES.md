@@ -21,7 +21,7 @@
 | RULE-001 | Session Evidence Logging | governance | CRITICAL | ACTIVE |
 | RULE-002 | Architectural Best Practices | architecture | HIGH | ACTIVE |
 | RULE-003 | Sync Protocol | governance | HIGH | DRAFT |
-| RULE-004 | Exploratory Test Automation | testing | HIGH | ACTIVE |
+| RULE-004 | Exploratory Testing & Executable Spec | testing | HIGH | ACTIVE |
 | RULE-005 | Memory & MCP Stability | stability | HIGH | ACTIVE |
 | RULE-006 | Decision Logging | governance | MEDIUM | ACTIVE |
 | RULE-007 | MCP Usage Protocol | productivity | HIGH | ACTIVE |
