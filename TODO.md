@@ -319,7 +319,84 @@ Automate testing and deployment via GitHub Actions.
 
 ## R&D Backlog
 
-### 12. 🔬 TypeDB Local Deployment (GAP-012)
+### 🎯 PRIORITY ORDER
+
+| # | Item | Priority | Business Value |
+|---|------|----------|----------------|
+| 1 | TypeDB In-House Solution | HIGH | Upsell potential, differentiation |
+| 2 | Replace Agno with Memory MCP | HIGH | Simpler, proven, more powerful |
+| 3 | OctoCode MCP | MEDIUM | Developer productivity |
+| 4 | MCP Workflow Integration | LOW | Nice-to-have |
+
+---
+
+### 15. 🏆 TypeDB In-House Solution (UPSELL)
+
+**Priority:** HIGH  
+**Effort:** High (weeks)  
+**Status:** 📋 R&D Planning  
+**Business Value:** Differentiation, upsell to enterprise clients
+
+#### Strategic Vision
+Build in-house TypeDB-based rules engine with:
+- **Inference engine** - Auto-derive facts from rules
+- **Type safety** - Compile-time validation (Haskell magic)
+- **Symbolic reasoning** - Logic-based querying
+- **Enterprise features** - Audit trail, compliance
+
+#### Why TypeDB > ChromaDB for Rules?
+| Feature | ChromaDB | TypeDB |
+|---------|----------|--------|
+| Storage | Vector similarity | Graph + Types |
+| Queries | Semantic search | Logic inference |
+| Rules | Manual evaluation | Auto-derivation |
+| Types | None | Strong polymorphic |
+| Reasoning | None | Symbolic |
+
+#### Upsell Potential
+- Enterprise compliance (audit trails)
+- Complex rule chains (auto-inference)
+- Type-safe integrations (Haskell client)
+- On-premise deployment (no cloud dependency)
+
+#### Phase Plan
+1. **Phase 1:** Prototype TypeDB rules schema
+2. **Phase 2:** Build inference rules for governance
+3. **Phase 3:** Haskell client integration (type-safe)
+4. **Phase 4:** Migration path from ChromaDB
+5. **Phase 5:** Enterprise packaging for upsell
+
+---
+
+### 16. 🔄 Replace Agno ChromaDb with Memory MCP
+
+**Priority:** HIGH  
+**Effort:** Medium (1-2 days)  
+**Status:** 📋 Not Started
+
+#### Why Replace Agno?
+| Aspect | Agno ChromaDb | Memory MCP (Existing) |
+|--------|---------------|----------------------|
+| Maturity | New, undocumented | Proven in localgai (114 docs) |
+| Integration | Hacky (_client injection) | Clean MCP protocol |
+| Features | Basic vector search | Knowledge graph, relations |
+| Governance | None | Bicameral model built-in |
+| Stability | Unknown | Production-tested |
+
+#### Agno's Actual Value
+- **AgentOS** - FastAPI serving (keep this)
+- **Agent orchestration** - Multi-agent patterns (keep this)
+- **ChromaDb wrapper** - REMOVE (use memory MCP instead)
+
+#### Migration Plan
+1. Keep Agno for agent orchestration only
+2. Replace `create_chromadb_knowledge()` with memory MCP calls
+3. Use existing claude-mem patterns from localgai
+4. Preserve bicameral governance model
+
+---
+
+### 12. 🔬 TypeDB Technical Research (GAP-012)
 
 **Priority:** Medium  
 **Effort:** High (research + implementation)  
