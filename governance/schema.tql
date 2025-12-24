@@ -2,6 +2,7 @@
 # TypeDB schema for rules, decisions, and inference
 # Created: 2024-12-24 (DECISION-003)
 # Updated: 2024-12-24 (RULE-011) - Added multi-agent governance entities
+# Updated: 2024-12-24 (RULE-013) - Added document entity and gap-rule cross-referencing
 
 define
 
@@ -22,7 +23,9 @@ rule-entity sub entity,
     plays decision-affects:affected-rule,
     plays rule-conflict:conflicting-rule,
     plays proposal-affects:affected-rule,   # RULE-011: proposals can affect rules
-    plays agent-action:action-target;       # RULE-011: agents act on rules
+    plays agent-action:action-target,       # RULE-011: agents act on rules
+    plays gap-rule-reference:governing-rule,       # RULE-013: rules govern gaps
+    plays document-references-rule:referenced-rule; # RULE-013: rules referenced by docs
 
 decision sub entity,
     owns decision-id,
@@ -33,7 +36,8 @@ decision sub entity,
     owns decision-date,
     plays decision-affects:affecting-decision,
     plays decision-supersedes:superseding,
-    plays decision-supersedes:superseded;
+    plays decision-supersedes:superseded,
+    plays document-references-decision:referenced-decision; # RULE-013: decisions referenced by docs
 
 task sub entity,
     owns task-id,
@@ -48,8 +52,29 @@ gap sub entity,
     owns gap-name,
     owns gap-status,
     owns severity,
+    owns location,              # file:line or doc:section (RULE-013)
     plays gap-requires:requiring-gap,
-    plays gap-requires:required-rule;
+    plays gap-requires:required-rule,
+    plays gap-rule-reference:referencing-gap,  # RULE-013: gaps reference rules
+    plays document-references-gap:referenced-gap; # RULE-013: gaps referenced by docs
+
+# =============================================================================
+# DOCUMENT CROSS-REFERENCING ENTITIES (RULE-013)
+# =============================================================================
+
+# Document entity for cross-referencing
+document sub entity,
+    owns document-id,
+    owns document-title,
+    owns document-path,         # Local path: docs/RULES.md
+    owns document-url,          # Remote: webdav://... or github://...
+    owns document-type,         # markdown, yaml, json, code
+    owns document-storage,      # local, webdav, github
+    owns last-modified,
+    owns content-hash,
+    plays document-references-rule:referencing-document,
+    plays document-references-decision:referencing-document,
+    plays document-references-gap:referencing-document;
 
 # =============================================================================
 # MULTI-AGENT GOVERNANCE ENTITIES (RULE-011)
@@ -115,6 +140,17 @@ gap-id sub attribute, value string;
 gap-name sub attribute, value string;
 gap-status sub attribute, value string;  # OPEN, RESOLVED, DEFERRED
 severity sub attribute, value string;
+location sub attribute, value string;    # file:line or doc:section (RULE-013)
+
+# Document attributes (RULE-013)
+document-id sub attribute, value string;
+document-title sub attribute, value string;
+document-path sub attribute, value string;   # Local path: docs/RULES.md
+document-url sub attribute, value string;    # Remote: webdav://... or github://...
+document-type sub attribute, value string;   # markdown, yaml, json, code
+document-storage sub attribute, value string; # local, webdav, github
+last-modified sub attribute, value datetime;
+content-hash sub attribute, value string;
 
 # Agent attributes (RULE-011)
 agent-id sub attribute, value string;
@@ -179,6 +215,30 @@ task-blocked sub relation,
 gap-requires sub relation,
     relates requiring-gap,
     relates required-rule;
+
+# =============================================================================
+# DOCUMENT CROSS-REFERENCING RELATIONS (RULE-013)
+# =============================================================================
+
+# Gap references a governing rule (for meta-referencing per RULE-013)
+gap-rule-reference sub relation,
+    relates referencing-gap,
+    relates governing-rule;
+
+# Document references a rule
+document-references-rule sub relation,
+    relates referencing-document,
+    relates referenced-rule;
+
+# Document references a decision
+document-references-decision sub relation,
+    relates referencing-document,
+    relates referenced-decision;
+
+# Document references a gap
+document-references-gap sub relation,
+    relates referencing-document,
+    relates referenced-gap;
 
 # Rules that conflict with each other
 rule-conflict sub relation,
@@ -306,3 +366,16 @@ rule proposal-cascade:
 # NOTE: Vote weight is computed externally based on trust-score
 # Low trust agents (< 0.5) have vote-weight = trust-score
 # High trust agents (>= 0.5) have vote-weight = 1.0
+
+# =============================================================================
+# DOCUMENT CROSS-REFERENCING INFERENCE RULES (RULE-013)
+# =============================================================================
+
+# NOTE: Orphan detection queries (not inference rules):
+# 1. Find gaps without rule references:
+#    match $g isa gap, has gap-id $id; not { (referencing-gap: $g) isa gap-rule-reference; }; get $id;
+# 2. Find rules not referenced by any document:
+#    match $r isa rule-entity, has rule-id $id; not { (referenced-rule: $r) isa document-references-rule; }; get $id;
+# 3. Find documents referencing deprecated rules:
+#    match $d isa document, has document-id $did; $r isa rule-entity, has rule-id $rid, has status "DEPRECATED";
+#    (referencing-document: $d, referenced-rule: $r) isa document-references-rule; get $did, $rid;

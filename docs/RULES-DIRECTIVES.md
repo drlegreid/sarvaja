@@ -5,7 +5,7 @@
 This document defines mandatory rules for the Sim.ai PoC agent platform.
 Rules are indexed in ChromaDB (`sim_ai_rules` collection) and enforced by agents.
 
-**Quick Reference:** 11 active rules (10 ACTIVE, 1 DRAFT), 8 categories, automated enforcement via pre-commit + CI/CD.
+**Quick Reference:** 13 active rules (12 ACTIVE, 1 DRAFT), 9 categories, automated enforcement via pre-commit + CI/CD.
 
 ---
 
@@ -24,6 +24,8 @@ Rules are indexed in ChromaDB (`sim_ai_rules` collection) and enforced by agents
 | RULE-009 | devops | CRITICAL | ACTIVE | Version compatibility |
 | RULE-010 | strategic | CRITICAL | ACTIVE | Evidence-based wisdom |
 | RULE-011 | governance | CRITICAL | ACTIVE | Multi-agent governance |
+| RULE-012 | maintenance | HIGH | ACTIVE | Deep Sleep Protocol (DSP) |
+| RULE-013 | governance | HIGH | ACTIVE | Rules Applicability Convention |
 
 ---
 
@@ -934,6 +936,214 @@ Based on research (arxiv.org/html/2508.18765v2, arxiv.org/html/2501.06322v1):
 
 ---
 
+## RULE-012: Deep Sleep Protocol (DSP)
+
+**Category:** `maintenance`
+**Priority:** HIGH
+**Status:** ACTIVE
+**Source:** Session 2024-12-24 (localgai DSM protocol adaptation)
+
+### Directive
+
+Periodically invoke **Deep Sleep Protocol (DSP)** for deliberate technical backlog hygiene, separate from aggressive business navigation.
+
+### What DSP Is
+
+DSP is a methodical, deliberate process for maintaining technical quality:
+- **Not** rushing toward business goals
+- **Not** reactive firefighting
+- **Is** systematic cleanup and hygiene
+- **Is** entropy prevention
+
+### DSP Phases
+
+```
+AUDIT → HYPOTHESIZE → MEASURE → OPTIMIZE → VALIDATE
+```
+
+| Phase | Purpose | Actions |
+|-------|---------|---------|
+| **AUDIT** | Inventory gaps, debt, orphans | Scan TODO.md, TypeDB for stale items |
+| **HYPOTHESIZE** | Form improvement theories | Propose rule/decision changes |
+| **MEASURE** | Quantify current state | Run tests, check metrics, count orphans |
+| **OPTIMIZE** | Apply improvements | Update TypeDB, clean backlog, archive completed |
+| **VALIDATE** | Verify improvements | Run full test suite, verify no regressions |
+
+### When to Invoke DSP
+
+| Trigger | Scope | Cadence |
+|---------|-------|---------|
+| **Session End** | Quick audit of new gaps | Every session (5 min) |
+| **Milestone** | Full backlog hygiene | Weekly or per milestone (30 min) |
+| **Pre-Release** | Deep technical review | Before major releases (2+ hours) |
+| **Entropy Alert** | Orphan detection | When TypeDB inference detects issues |
+
+### Quick DSP Checklist (Session End)
+
+```markdown
+## DSP Quick Audit
+
+- [ ] New gaps added to TODO.md?
+- [ ] Decisions logged in evidence/?
+- [ ] Tests still passing?
+- [ ] No orphan rules created?
+- [ ] Session log completed?
+```
+
+### Full DSP Checklist (Milestone)
+
+```markdown
+## DSP Full Audit
+
+### AUDIT
+- [ ] Count open gaps in TODO.md
+- [ ] Check for stale items (>30 days)
+- [ ] Identify orphan rules (no references)
+- [ ] Scan for TODO(RULE-XXX) compliance
+
+### HYPOTHESIZE
+- [ ] Propose cleanup actions
+- [ ] Identify consolidation opportunities
+- [ ] Draft deprecation list
+
+### MEASURE
+- [ ] Run pytest tests/
+- [ ] Check TypeDB entity counts
+- [ ] Verify ChromaDB doc counts
+
+### OPTIMIZE
+- [ ] Archive completed tasks
+- [ ] Close resolved gaps
+- [ ] Update deprecated rules
+- [ ] Clean TODO.md
+
+### VALIDATE
+- [ ] All tests pass
+- [ ] No regression introduced
+- [ ] Documentation updated
+```
+
+### DSP vs Business Navigation
+
+| Aspect | DSP (Deep Sleep) | Business Navigation |
+|--------|------------------|---------------------|
+| **Pace** | Deliberate, methodical | Aggressive, fast |
+| **Focus** | Technical debt, backlog | Feature delivery |
+| **Scope** | Cleanup, hygiene | New functionality |
+| **Evidence** | Audit trails | User stories |
+| **Outcome** | Reduced entropy | Customer value |
+
+### Validation
+
+- [ ] DSP quick audit at each session end
+- [ ] DSP full audit at each milestone
+- [ ] Entropy metrics tracked (gap count, orphan count)
+- [ ] No stale items > 30 days without review
+
+---
+
+## RULE-013: Rules Applicability Convention
+
+**Category:** `governance`
+**Priority:** HIGH
+**Status:** ACTIVE
+**Source:** Session 2024-12-24 (strategic vision analysis)
+
+### Directive
+
+All code comments, gaps, and TODOs MUST reference applicable governance rules using a consistent meta-reference format.
+
+### Problem Statement
+
+Code gaps and TODOs lack traceability:
+- `# TODO: Fix this later` - No rule reference
+- Gaps in TODO.md don't link to enforcing rules
+- Hard to audit rule compliance across codebase
+- Orphan gaps with no governance context
+
+### Meta-Reference Format
+
+```
+{TYPE}({RULE-ID}): {Description}
+
+Where:
+- TYPE: TODO | FIXME | GAP-XXX | HACK | NOTE
+- RULE-ID: RULE-001 through RULE-0XX (or DECISION-XXX)
+- Description: Actionable statement
+```
+
+### Examples
+
+```python
+# Good - with rule reference
+# TODO(RULE-002): Extract to separate module for separation of concerns
+# FIXME(RULE-009): Version mismatch - check container version first
+# GAP-020(RULE-005): Memory threshold exceeded, add monitoring
+# HACK(RULE-002): Temporary workaround until refactor
+
+# Bad - no rule reference
+# TODO: Fix this later
+# FIXME: This is broken
+# HACK: Don't ask why
+```
+
+### Gap Format in TODO.md
+
+```markdown
+| ID | Gap | Priority | Category | Rule |
+|----|-----|----------|----------|------|
+| GAP-020 | Memory monitoring | HIGH | stability | RULE-005 |
+| GAP-021 | Session template | MEDIUM | governance | RULE-001 |
+```
+
+### TypeDB Integration
+
+Gaps and rules are cross-referenced:
+
+```typeql
+# Gap entity with rule reference
+gap sub entity,
+    owns gap-id,
+    owns description,
+    owns location,      # file:line or doc:section
+    owns status,
+    plays gap-rule-reference:referenced-gap;
+
+gap-rule-reference sub relation,
+    relates referenced-gap,
+    relates governing-rule;
+
+rule-entity plays gap-rule-reference:governing-rule;
+```
+
+### Inference Benefits
+
+With proper meta-referencing, TypeDB can infer:
+- **Orphan gaps**: Gaps with no rule reference
+- **Rule coverage**: Which rules have active gaps
+- **Compliance debt**: Gaps blocking rule enforcement
+- **Priority cascade**: High-priority rule → high-priority gap
+
+### Validation
+
+- [ ] All TODO comments have RULE-XXX reference
+- [ ] Gaps in TODO.md have Rule column populated
+- [ ] No orphan gaps in codebase (grep for `TODO:` without RULE)
+- [ ] TypeDB gap-rule-reference populated
+
+### Enforcement
+
+```bash
+# Find orphan TODOs (no rule reference)
+grep -rn "TODO:" --include="*.py" | grep -v "RULE-"
+
+# Count compliant vs non-compliant
+grep -c "TODO(RULE-" *.py  # Compliant
+grep -c "TODO:" *.py        # Total
+```
+
+---
+
 ## Enforcement
 
 Rules are enforced via:
@@ -959,3 +1169,5 @@ Rules are enforced via:
 | 0.8.0 | 2024-12-24 | Added RULE-010: Evidence-Based Wisdom (hypothesis-driven approach) |
 | 0.9.0 | 2024-12-24 | Added RULE-011: Multi-Agent Governance Protocol (bicameral model, MCP-based DB state) |
 | 0.9.1 | 2024-12-24 | Created DESIGN-Governance-MCP.md architecture document |
+| 0.10.0 | 2024-12-24 | Added RULE-012: Deep Sleep Protocol (DSP) for backlog hygiene |
+| 0.11.0 | 2024-12-24 | Added RULE-013: Rules Applicability Convention (meta-referencing) |
