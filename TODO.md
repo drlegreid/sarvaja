@@ -21,6 +21,9 @@
 | GAP-008 | Agent UI Image | Low | configuration | image not found |
 | GAP-009 | Pre-commit Hooks | Medium | tooling | RULES-DIRECTIVES.md |
 | GAP-010 | CI/CD Pipeline | Low | tooling | DEPLOYMENT.md |
+| GAP-011 | OctoCode MCP not in use | High | tooling | user feedback |
+| GAP-012 | TypeDB R&D (inference + type safety) | Medium | R&D | user request |
+| GAP-013 | MCPs tested but not invoked | High | workflow | user feedback |
 
 ---
 
@@ -310,6 +313,127 @@ Automate testing and deployment via GitHub Actions.
 | 📋 | Not Started | Ready to begin |
 | ❌ | Blocked | Cannot proceed due to blocker |
 | ⏸️ | On Hold | Paused for later consideration |
+
+---
+
+## R&D Backlog
+
+### 12. 🔬 TypeDB Local Deployment (GAP-012)
+
+**Priority:** Medium  
+**Effort:** High (research + implementation)  
+**Status:** 📋 Not Started
+
+#### Objective
+Evaluate TypeDB for local premise deployment with:
+- Strong type system (polymorphic queries)
+- Rule inference engine
+- Symbolic reasoning
+- Haskell client integration (type-safe queries)
+
+#### Research Questions
+1. Can TypeDB replace/complement ChromaDB for rules storage?
+2. How does inference compare to manual rule evaluation?
+3. Is Haskell client mature enough for production?
+4. Resource requirements for local deployment?
+
+#### Resources
+- TypeDB: https://github.com/typedb/typedb
+- Haskell Client: https://github.com/typedb-osi/typedb-client-haskell (INCUBATING)
+- Learning Center: https://typedb.com/learn
+
+#### TypeDB Features
+| Feature | Benefit |
+|---------|---------|
+| Type System | Polymorphic queries, compile-time safety |
+| Rule Inference | Auto-derive facts from rules |
+| Symbolic Reasoning | Logic-based querying |
+| TypeQL | Declarative query language |
+
+#### Haskell Client Layers
+1. **Type-Safe-Client** - Schema compiled with Haskell (strongest)
+2. **High-Level-Client** - Nice API for TypeDB Protocol
+3. **Low-Level-Client** - gRPC wrapper
+
+---
+
+### 13. 🔍 OctoCode MCP Integration (GAP-011)
+
+**Priority:** High  
+**Effort:** Low (30 min)  
+**Status:** 📋 Not Started
+
+#### Objective
+Enable semantic GitHub code search via OctoCode MCP.
+
+#### Why Not Using It?
+- Was classified as RISKY in angelgai (rate limits, memory)
+- But user correctly notes: it's valuable for code research
+
+#### OctoCode Tools
+| Tool | Purpose |
+|------|---------|
+| `githubSearchCode` | Find code patterns across repos |
+| `githubSearchRepositories` | Discover repos by topic |
+| `githubViewRepoStructure` | Explore repo structure |
+| `githubGetFileContent` | Read files with smart extraction |
+| `githubSearchPullRequests` | Find PRs |
+
+#### Commands
+- `/research` - Expert code & product research
+- `/plan` - Research, plan & implement
+- `/review_pull_request` - PR review
+- `/review_security` - Security audit
+
+#### Installation
+```json
+{
+  "octocode": {
+    "command": "npx",
+    "args": ["-y", "octocode-mcp@latest"],
+    "env": {
+      "GITHUB_PERSONAL_ACCESS_TOKEN": "<token>"
+    }
+  }
+}
+```
+
+#### Tasks
+- [ ] Add OctoCode to mcp_config.json
+- [ ] Configure GitHub PAT
+- [ ] Test with `/research` command
+- [ ] Document in workflows.md
+
+---
+
+### 14. 🛠️ MCP Workflow Integration (GAP-013)
+
+**Priority:** High  
+**Effort:** Medium  
+**Status:** 📋 Not Started
+
+#### Problem
+MCPs are tested/verified but NOT actively used in workflow.
+
+#### Root Cause
+- Cascade doesn't auto-invoke MCP tools
+- Need explicit tool calls or prompts
+- Some MCPs require specific invocation patterns
+
+#### Available MCPs (Verified Working)
+| MCP | How to Use |
+|-----|------------|
+| `sequential-thinking` | Complex reasoning chains |
+| `memory` | Knowledge graph persistence |
+| `playwright` | Browser automation |
+| `desktop-automation` | Robot automation |
+| `desktop-commander` | File/process ops |
+
+#### Actions
+- [ ] Document when to use each MCP
+- [ ] Create workflow triggers for MCP usage
+- [ ] Add MCP usage to RULE-004/005
+- [ ] Practice using MCPs in actual work
 
 ---
 
