@@ -315,6 +315,14 @@ class TypeDBClient:
         return [{"superseding": r.get("aid"), "superseded": r.get("bid")} for r in results]
 
     # =========================================================================
+    # PUBLIC QUERY METHOD
+    # =========================================================================
+
+    def execute_query(self, query: str, infer: bool = False) -> List[Dict[str, Any]]:
+        """Execute a TypeQL query and return results. Public wrapper for _execute_query."""
+        return self._execute_query(query, infer)
+
+    # =========================================================================
     # PRIVATE METHODS
     # =========================================================================
 

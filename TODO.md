@@ -416,25 +416,30 @@ Automate testing and deployment via GitHub Actions.
 **Success Criteria:** TypeDB running, 1 inference rule working ✅
 
 > **Progress (2024-12-24):** Phase 1 COMPLETE!
-> - Schema + data + loader created (4 inference rules)
+> - Schema + data + loader created (6 inference rules)
 > - Python client wrapper with 2.29.x driver API
-> - 28 tests passing (unit + integration)
-> - Inference verified: transitive deps, cascade supersede, priority conflicts
-> Files: `governance/schema.tql`, `governance/data.tql`, `governance/loader.py`, `governance/client.py`
+> - 68 tests passing (unit + BDD + integration)
+> - Inference verified: transitive deps, cascade supersede, priority conflicts, escalation, proposal cascade
+> - RULE-011 Multi-Agent Governance implemented with agents, proposals, votes, disputes
+> - 11 rules, 4 decisions, 3 agents loaded
+> - Files: `governance/schema.tql`, `governance/data.tql`, `governance/loader.py`, `governance/client.py`
+> - Design: `docs/DESIGN-Governance-MCP.md` (GaaS architecture)
 
 ---
 
-### PHASE 2: Hybrid Architecture
+### PHASE 2: Hybrid Architecture & Governance MCP
 
 | Task | Status | Description |
 |------|--------|-------------|
-| P2.1 | 📋 TODO | Create hybrid query router |
-| P2.2 | 📋 TODO | Migrate RULE-001 to RULE-008 to TypeDB |
-| P2.3 | 📋 TODO | Migrate DECISION-001 to DECISION-003 to TypeDB |
-| P2.4 | 📋 TODO | Add relationship: rule → decision → gap |
-| P2.5 | 📋 TODO | Test: "find all rules affected by DECISION-003" |
+| P2.1 | ✅ DONE | Migrate RULE-001 to RULE-011 to TypeDB (11 rules, 4 decisions) |
+| P2.2 | ✅ DONE | Add relationships: rule-dependency, decision-affects, decision-supersedes |
+| P2.3 | ✅ DONE | Test: "find all rules affected by DECISION-003" (verified) |
+| P2.4 | 🚧 IN PROGRESS | Create Governance MCP server skeleton |
+| P2.5 | 📋 TODO | Implement MCP tools: propose_rule, vote, dispute, get_trust_score |
+| P2.6 | 📋 TODO | Create hybrid query router (TypeDB + ChromaDB) |
+| P2.7 | 📋 TODO | Integration tests for MCP-TypeDB workflow |
 
-**Success Criteria:** Hybrid queries work, no regression
+**Success Criteria:** Governance MCP server running, basic tools working
 
 ---
 
