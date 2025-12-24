@@ -21,9 +21,9 @@
 | GAP-008 | Agent UI Image | Low | configuration | image not found |
 | GAP-009 | Pre-commit Hooks | Medium | tooling | RULES-DIRECTIVES.md |
 | GAP-010 | CI/CD Pipeline | Low | tooling | DEPLOYMENT.md |
-| GAP-011 | OctoCode MCP not in use | High | tooling | user feedback |
+| GAP-011 | OctoCode MCP not in use | ⏸️ DEFERRED | tooling | needs GitHub PAT |
 | GAP-012 | TypeDB R&D (inference + type safety) | Medium | R&D | user request |
-| GAP-013 | MCPs tested but not invoked | High | workflow | user feedback |
+| GAP-013 | MCPs tested but not invoked | ✅ RESOLVED | workflow | DECISION-001 simplified stack |
 
 ---
 
