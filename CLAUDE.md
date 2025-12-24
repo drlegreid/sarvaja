@@ -30,16 +30,17 @@ DECISION → evidence/SESSION-DECISIONS-*.md
 Workflow → .windsurf/workflows.md
 ```
 
-## Architecture
+## Architecture (Simplified - DECISION-001)
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                      Sim.ai PoC Stack                       │
+│                 Sim.ai PoC Stack (4 containers)             │
 ├─────────────────────────────────────────────────────────────┤
-│  Agents (7777)  │  LiteLLM (4000)  │  Opik (5173/5174)     │
+│  Agents (7777)  │  LiteLLM (4000)  │  Ollama (11434)       │
 ├─────────────────────────────────────────────────────────────┤
-│  ChromaDB (8001)  │  Ollama (11434)                        │
+│  ChromaDB (8001) - 53 docs from claude-mem                  │
 └─────────────────────────────────────────────────────────────┘
 ```
+> Opik removed per DECISION-001 (overkill for current needs)
 
 ## Core Rules (6 Active)
 
