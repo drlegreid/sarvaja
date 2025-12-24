@@ -61,16 +61,16 @@
 
 ---
 
-## Services Status (End of Session)
+## Services Status (Final)
 
 | Service | Port | Status |
 |---------|------|--------|
 | Opik Frontend | 5173 | ✅ Healthy |
 | Opik Backend | 8080 | ✅ Healthy |
 | Agents API | 7777 | ✅ Up |
-| ChromaDB | 8001 | ⚠️ Unhealthy (but connected) |
-| Ollama | 11434 | ⚠️ Unhealthy (model ready) |
-| LiteLLM | 4000 | ⚠️ DB connection issue |
+| ChromaDB | 8001 | ✅ Connected |
+| Ollama | 11434 | ✅ Model ready (4GB memory-tight) |
+| LiteLLM | 4000 | ✅ Fixed (commit 63ee954) |
 
 ---
 
