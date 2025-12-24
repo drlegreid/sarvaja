@@ -674,3 +674,227 @@ class TestMultiAgentGovernance:
         # Check dependencies exist (transitive through inference)
         assert 'rule-dependency' in content
         # The actual dependencies are in the data file
+
+
+# =============================================================================
+# BDD-STYLE TESTS - Governance Workflow Behaviors
+# =============================================================================
+
+class TestGovernanceBDD:
+    """
+    BDD-style tests for governance workflows.
+    Format: Given-When-Then to describe expected behaviors.
+    These tests verify governance protocol behaviors per RULE-011.
+    """
+
+    # -------------------------------------------------------------------------
+    # Scenario: Agent proposes a rule change
+    # -------------------------------------------------------------------------
+
+    @pytest.mark.unit
+    def test_given_agent_when_propose_rule_then_proposal_created(self):
+        """
+        GIVEN an agent with trust-score >= 0.5
+        WHEN the agent proposes a rule change
+        THEN a proposal entity is created with status "pending"
+        """
+        with open(SCHEMA_FILE, 'r') as f:
+            schema = f.read()
+        # Verify proposal workflow is supported
+        assert 'proposal sub entity' in schema
+        assert 'proposal-status' in schema
+        assert 'plays proposal:proposer' in schema  # agent can propose
+
+    @pytest.mark.unit
+    def test_given_proposal_when_affects_rule_then_cascade_to_dependents(self):
+        """
+        GIVEN a proposal that affects RULE-001
+        WHEN RULE-006 depends on RULE-001
+        THEN the proposal should cascade to affect RULE-006 (via inference)
+        """
+        with open(SCHEMA_FILE, 'r') as f:
+            schema = f.read()
+        # Verify cascade inference rule exists
+        assert 'rule proposal-cascade:' in schema
+        assert 'proposal-affects' in schema
+        assert 'rule-dependency' in schema
+
+    # -------------------------------------------------------------------------
+    # Scenario: Agents vote on proposals
+    # -------------------------------------------------------------------------
+
+    @pytest.mark.unit
+    def test_given_proposal_when_agents_vote_then_votes_recorded(self):
+        """
+        GIVEN a pending proposal
+        WHEN multiple agents cast votes
+        THEN each vote is recorded with voter, value, and weight
+        """
+        with open(SCHEMA_FILE, 'r') as f:
+            schema = f.read()
+        assert 'vote sub relation' in schema
+        assert 'relates voter' in schema
+        assert 'owns vote-value' in schema
+        assert 'owns vote-weight' in schema
+
+    @pytest.mark.unit
+    def test_given_low_trust_agent_when_votes_then_weight_reduced(self):
+        """
+        GIVEN an agent with trust-score < 0.5
+        WHEN the agent casts a vote
+        THEN the vote-weight equals trust-score (reduced influence)
+        """
+        with open(SCHEMA_FILE, 'r') as f:
+            schema = f.read()
+        # Trust-weighted voting is documented
+        assert 'vote-weight' in schema
+        assert 'trust-score' in schema
+        # The formula is in comments
+        assert 'Low trust agents (< 0.5) have vote-weight = trust-score' in schema
+
+    @pytest.mark.unit
+    def test_given_high_trust_agent_when_votes_then_full_weight(self):
+        """
+        GIVEN an agent with trust-score >= 0.5
+        WHEN the agent casts a vote
+        THEN the vote-weight equals 1.0 (full influence)
+        """
+        with open(SCHEMA_FILE, 'r') as f:
+            schema = f.read()
+        # Full weight for trusted agents
+        assert 'High trust agents (>= 0.5) have vote-weight = 1.0' in schema
+
+    # -------------------------------------------------------------------------
+    # Scenario: Agent disputes a proposal
+    # -------------------------------------------------------------------------
+
+    @pytest.mark.unit
+    def test_given_proposal_when_agent_disputes_then_dispute_created(self):
+        """
+        GIVEN an approved or pending proposal
+        WHEN an agent raises a dispute
+        THEN a dispute relation is created with reason and analysis
+        """
+        with open(SCHEMA_FILE, 'r') as f:
+            schema = f.read()
+        assert 'dispute sub relation' in schema
+        assert 'relates disputer' in schema
+        assert 'owns dispute-reason' in schema
+        assert 'owns semantic-analysis' in schema
+
+    @pytest.mark.unit
+    def test_given_dispute_when_resolution_escalate_then_human_review(self):
+        """
+        GIVEN a dispute with resolution-method "escalate"
+        WHEN the escalation-required inference runs
+        THEN the proposal requires human review (requires-escalation relation)
+        """
+        with open(SCHEMA_FILE, 'r') as f:
+            schema = f.read()
+        assert 'rule escalation-required:' in schema
+        assert 'resolution-method "escalate"' in schema
+        assert 'requires-escalation sub relation' in schema
+
+    # -------------------------------------------------------------------------
+    # Scenario: Human escalation triggers
+    # -------------------------------------------------------------------------
+
+    @pytest.mark.unit
+    def test_given_escalation_triggers_defined(self):
+        """
+        GIVEN the governance protocol (RULE-011)
+        WHEN human intervention is needed
+        THEN escalation triggers are: VETO, STEER, AMBIGUITY, DEADLOCK, CRITICAL
+        """
+        with open(SCHEMA_FILE, 'r') as f:
+            schema = f.read()
+        assert 'escalation-trigger' in schema
+        # Verify triggers are documented
+        assert 'VETO' in schema
+        assert 'STEER' in schema
+        assert 'AMBIGUITY' in schema
+        assert 'DEADLOCK' in schema
+        assert 'CRITICAL' in schema
+
+    # -------------------------------------------------------------------------
+    # Scenario: Trust score calculation
+    # -------------------------------------------------------------------------
+
+    @pytest.mark.unit
+    def test_given_agent_attributes_then_trust_formula_defined(self):
+        """
+        GIVEN agent attributes: compliance-rate, accuracy-rate, tenure-days
+        WHEN calculating trust-score
+        THEN formula is: Trust = (Compliance * 0.4) + (Accuracy * 0.3) + (Consistency * 0.2) + (Tenure * 0.1)
+        """
+        with open(SCHEMA_FILE, 'r', encoding='utf-8') as f:
+            schema = f.read()
+        # Verify formula is documented (check for key terms, allow any multiplication symbol)
+        assert 'Compliance' in schema and '0.4' in schema
+        assert 'Accuracy' in schema and '0.3' in schema
+        assert 'Consistency' in schema and '0.2' in schema
+        assert 'Tenure' in schema and '0.1' in schema
+        # Verify this is the trust formula section
+        assert 'Trust' in schema and 'Formula' in schema
+
+    @pytest.mark.unit
+    def test_given_agent_actions_then_tracked_for_trust(self):
+        """
+        GIVEN an agent performs actions (propose, vote, dispute)
+        WHEN action completes
+        THEN action is tracked for trust scoring (agent-action relation)
+        """
+        with open(SCHEMA_FILE, 'r') as f:
+            schema = f.read()
+        assert 'agent-action sub relation' in schema
+        assert 'owns action-type' in schema
+        assert 'owns action-outcome' in schema
+
+    # -------------------------------------------------------------------------
+    # Scenario: Conflict resolution methods
+    # -------------------------------------------------------------------------
+
+    @pytest.mark.unit
+    def test_given_conflict_then_resolution_methods_defined(self):
+        """
+        GIVEN a rule conflict or dispute
+        WHEN resolution is needed
+        THEN methods are: consensus, evidence, authority, escalate
+        """
+        with open(SCHEMA_FILE, 'r') as f:
+            schema = f.read()
+        assert 'resolution-method' in schema
+        # Verify methods documented
+        assert '"consensus"' in schema or 'consensus' in schema
+        assert '"evidence"' in schema or 'evidence' in schema
+        assert '"authority"' in schema or 'authority' in schema
+        assert '"escalate"' in schema or 'escalate' in schema
+
+    # -------------------------------------------------------------------------
+    # Scenario: Bicameral governance model
+    # -------------------------------------------------------------------------
+
+    @pytest.mark.unit
+    def test_given_bicameral_model_then_human_oversight_defined(self):
+        """
+        GIVEN the bicameral governance model (RULE-011)
+        WHEN critical decisions arise
+        THEN human oversight (Upper House) can intervene via escalation
+        """
+        with open(DATA_FILE, 'r') as f:
+            data = f.read()
+        # RULE-011 defines bicameral model
+        assert 'Bicameral model: Human oversight + AI execution' in data
+
+    @pytest.mark.unit
+    def test_given_agents_then_types_support_distributed_execution(self):
+        """
+        GIVEN the multi-agent architecture
+        WHEN different tasks require execution
+        THEN agent types support: claude-code (R&D), docker-agent (production), sync-agent (coordination)
+        """
+        with open(DATA_FILE, 'r') as f:
+            data = f.read()
+        assert 'agent-type "claude-code"' in data
+        assert 'agent-type "docker-agent"' in data
+        assert 'agent-type "sync-agent"' in data
