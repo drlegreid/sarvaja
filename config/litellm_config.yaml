@@ -63,11 +63,17 @@ router_settings:
   
 # General settings
 general_settings:
-  master_key: os.environ/LITELLM_MASTER_KEY
+  # NOTE: master_key requires database connection for validation
+  # Using simple key without DB validation
+  master_key: sk-litellm-dev-key
   drop_params: true  # Drop unsupported params instead of erroring
+  # Allow requests without requiring DB-backed key validation
+  allow_user_auth: false
   
 # Callbacks for observability (Opik integration)
-litellm_settings:
-  success_callback: ["opik"]
-  failure_callback: ["opik"]
-  service_callback: ["opik"]
+# NOTE: Disabled temporarily - causes "No connected db" error
+# Re-enable after configuring LiteLLM database or Opik connection
+# litellm_settings:
+#   success_callback: ["opik"]
+#   failure_callback: ["opik"]
+#   service_callback: ["opik"]
