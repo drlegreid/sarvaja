@@ -73,13 +73,15 @@
 | Hash | Message |
 |------|---------|
 | 7ab53bb | Add RULE-012 (DSP) and RULE-013 (Rules Applicability Convention) |
+| 58b5689 | DSP(RULE-012): Session log for strategic vision session |
+| d87180f | DSP(RULE-012): Add RULE-012/013 to TypeDB data + GAP-020 |
 
 ---
 
 ## Next Steps
 
-1. Add RULE-012/013 to governance/data.tql
-2. Add GAP-020 to TODO.md with Rule column
+1. ~~Add RULE-012/013 to governance/data.tql~~ ✅ DONE
+2. ~~Add GAP-020 to TODO.md with Rule column~~ ✅ DONE
 3. Split TODO.md per strategic vision
 4. Test TypeDB schema reload with new entities
 
