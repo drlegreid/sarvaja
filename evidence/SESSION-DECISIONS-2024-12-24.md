@@ -99,8 +99,10 @@ Every session MUST log decisions in:
 - [x] Check Ollama model status → gemma3:4b downloaded ✅
 - [x] Check Opik UI accessibility → localhost:5173 returns 200 ✅
 - [x] Fix LiteLLM "No connected db" error → ✅ FIXED (commit 63ee954)
-- [ ] Clean up unused MCPs from config
-- [ ] Add OctoCode MCP with GitHub PAT
+- [x] Clean up unused MCPs from config → Docker cleanup done (Opik removed)
+- [ ] Add OctoCode MCP with GitHub PAT (needs user PAT)
+- [x] R&D #1: Data lakes migration → 53 docs migrated
+- [x] R&D #3: Session dump workflow → scripts/session_dump.py
 - [x] Update gap index (GAP-001, GAP-002, GAP-003 now FIXED) ✅
 - [x] Add RULE-006 for decision logging → ✅ ADDED (commit a2efccb)
 
