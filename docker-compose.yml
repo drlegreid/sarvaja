@@ -1,5 +1,6 @@
-# Unified PoC: Agno + Opik + LiteLLM + Ollama + ChromaDB
+# Unified PoC: Agno + LiteLLM + Ollama + ChromaDB
 # For i7/16GB laptop with CPU-only inference
+# Opik REMOVED: 2024-12-24 (DECISION-001) - overkill for current needs
 # Run: docker compose --profile cpu up -d
 
 services:
@@ -52,14 +53,6 @@ services:
       retries: 5
 
   # =============================================================================
-  # OBSERVABILITY LAYER (Optional - requires separate Opik deployment)
-  # =============================================================================
-  # Opik requires cloning: git clone https://github.com/comet-ml/opik.git
-  # Then run: cd opik && ./opik.sh
-  # This will start Opik on ports 5173 (UI) and 5174 (API)
-  # Configure agents to connect: OPIK_BASE_URL=http://host.docker.internal:5174
-
-  # =============================================================================
   # STORAGE LAYER
   # =============================================================================
   
@@ -90,7 +83,7 @@ services:
   # AGENT LAYER
   # =============================================================================
   
-  # Agno Agents - Multi-agent orchestration with Opik tracing
+  # Agno Agents - Multi-agent orchestration
   agents:
     build:
       context: ./agent
@@ -100,9 +93,7 @@ services:
     environment:
       - LITELLM_BASE_URL=http://litellm:4000
       - LITELLM_API_KEY=${LITELLM_MASTER_KEY:-sk-litellm-master-key}
-      - OPIK_URL_OVERRIDE=${OPIK_URL_OVERRIDE:-http://host.docker.internal:5173/api}
-      - OPIK_PROJECT_NAME=sim-ai-poc
-      - OPIK_WORKSPACE=default
+      # Opik removed (DECISION-001) - will build custom session/memory UI
       - CHROMADB_HOST=chromadb
       - CHROMADB_PORT=8000
       - CHROMA_AUTH_TOKEN=${CHROMA_AUTH_TOKEN:-chroma-token-dev}

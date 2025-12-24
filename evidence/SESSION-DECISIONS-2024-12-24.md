@@ -5,12 +5,37 @@
 
 ---
 
+## DECISION-001: Remove Opik from Stack
+
+**Date:** 2024-12-24  
+**Context:** Evaluating whether Opik (8 services) is justified for current needs
+
+**Options Considered:**
+1. **Keep Opik** - LLM tracing, experiment tracking
+   - Pros: Industry standard observability
+   - Cons: 8 containers, ~3GB RAM, not connected to session/memory workflow
+2. **Remove Opik, build custom UI** - TypeDB or simple graph DB
+   - Pros: Aligned with actual needs (session viewer, memory browser, task UI)
+   - Cons: Development effort
+
+**Decision:** Remove Opik, plan custom solution  
+**Rationale:** 
+- Opik is LLM observability, not session/memory management
+- 8 services for features not being used
+- Custom solution aligns with TypeDB R&D (upsell potential)
+- Simpler stack = fewer freeze/crash issues
+
+**Status:** IMPLEMENTED
+
+---
+
 ## Decisions Made ✅
 
 | Decision | Status | Evidence |
 |----------|--------|----------|
+| **DECISION-001: Remove Opik** | ✅ IMPLEMENTED | docker-compose.yml updated |
 | Fix GAP-001 ChromaDB | ✅ RESOLVED | Inject HttpClient into `_client` |
-| Fix GAP-002 Opik | ✅ RESOLVED | Use OPIK_URL_OVERRIDE env var |
+| Fix GAP-002 Opik config | ✅ RESOLVED | OPIK_URL_OVERRIDE (now removed) |
 | TypeDB for upsell | ✅ DOCUMENTED | Added to R&D backlog #15 |
 | Replace Agno ChromaDb → Memory MCP | ✅ DOCUMENTED | Added to R&D backlog #16 |
 | Strategic MCP analysis | ✅ DOCUMENTED | Only memory + octocode needed |

@@ -324,11 +324,12 @@ Automate testing and deployment via GitHub Actions.
 | # | Item | Priority | Business Value |
 |---|------|----------|----------------|
 | 1 | **Inherit Experience Data Lakes** | HIGH | 114 docs, proven patterns, institutional knowledge |
-| 2 | **Session Data Dump Workflow** | HIGH | Preserve learnings, enable continuity |
-| 3 | TypeDB In-House Solution | HIGH | Upsell potential, differentiation |
-| 4 | Replace Agno with Memory MCP | HIGH | Simpler, proven, more powerful |
-| 5 | OctoCode MCP | MEDIUM | Developer productivity |
-| 6 | MCP Workflow Integration | LOW | Nice-to-have |
+| 2 | **Custom Session/Memory UI** | HIGH | Replace Opik, aligned with actual needs (DECISION-001) |
+| 3 | **Session Data Dump Workflow** | HIGH | Preserve learnings, enable continuity |
+| 4 | TypeDB In-House Solution | HIGH | Upsell potential, differentiation |
+| 5 | Replace Agno with Memory MCP | HIGH | Simpler, proven, more powerful |
+| 6 | OctoCode MCP | MEDIUM | Developer productivity |
+| 7 | MCP Workflow Integration | LOW | Nice-to-have |
 
 ---
 
