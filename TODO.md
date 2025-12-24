@@ -651,11 +651,19 @@ config = {
 ```
 
 #### Next Steps
-- [ ] Pull Ollama embedding model: `ollama pull nomic-embed-text`
-- [ ] Test Mem0 with Ollama embeddings
+- [x] Pull Ollama embedding model: `ollama pull nomic-embed-text` ✅ Done
+- [x] Test Mem0 with Ollama embeddings ✅ Validated 2024-12-24
+- [x] Created `config/mem0_config.py` with reusable config
 - [ ] Deploy OpenMemory MCP server
 - [ ] Integrate with Windsurf/Cascade
 - [ ] Migrate 53 ChromaDB docs if successful
+
+#### Validation Evidence (2024-12-24)
+```
+Add result: {'id': '751fdaf2-...', 'memory': 'sim-ai project uses...', 'event': 'ADD'}
+Search results: 1 found
+```
+**Note:** Use `embedding_model_dims: 768` for nomic-embed-text (not 1536 like OpenAI).
 
 ---
 
@@ -749,12 +757,20 @@ System monitoring tool that exposes metrics via MCP protocol. LLMs can query rea
 - Created sync agent skeleton
 - Pushed to GitHub
 
+### 2024-12-24 (Claude Code Setup)
+- Configured new ANTHROPIC_API_KEY in .env
+- Validated all 10 MCPs active and working
+- Tested Mem0 with Ollama embeddings ✅ (DECISION-002 validated)
+- Tested LiteLLM routing: gemma-local + claude-sonnet ✅
+- Created `config/mem0_config.py` for reusable Mem0 config
+- Created session evidence: `evidence/SESSION-2024-12-24-CLAUDE-CODE-SETUP.md`
+- Ollama models: gemma3:4b (3.3GB), nomic-embed-text (274MB)
+
 ### Next Session Focus
-1. Start Opik dashboard (Task #3)
-2. Pull Ollama model (Task #4)
-3. Fix Opik tracing (Task #2)
-4. Fix ChromaDB knowledge (Task #1)
-5. Add pre-commit hooks (Task #10)
+1. Deploy OpenMemory MCP server
+2. Integrate Mem0 with Windsurf/Cascade
+3. Evaluate MCP-Monitor for crash prevention
+4. Fix deploy.ps1 health check script (curl issue)
 
 ---
 

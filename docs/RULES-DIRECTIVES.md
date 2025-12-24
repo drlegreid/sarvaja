@@ -18,6 +18,8 @@ Rules are indexed in ChromaDB (`sim_ai_rules` collection) and enforced by agents
 | RULE-003 | governance | HIGH | DRAFT | Sync agent |
 | RULE-004 | testing | HIGH | ACTIVE | Playwright MCP |
 | RULE-005 | stability | HIGH | ACTIVE | Memory thresholds |
+| RULE-006 | governance | MEDIUM | ACTIVE | Decision logging |
+| RULE-007 | productivity | HIGH | ACTIVE | MCP Usage Protocol |
 
 ---
 
@@ -307,24 +309,28 @@ All MCP operations MUST respect memory thresholds and stability tiers.
 | > 2000 MB | CRITICAL | Restart soon |
 | > 3000 MB | EMERGENCY | Restart immediately |
 
-### MCP Stability Tiers
+### MCP Stability Tiers (Updated 2024-12-24)
 
 | Tier | MCPs | Risk | Usage |
 |------|------|------|-------|
-| **STABLE** | sequential-thinking, memory | LOW | ✅ Always allowed |
-| **MODERATE** | desktop-commander, playwright, desktop-automation | MEDIUM | ✅ Use with monitoring |
-| **RISKY** | context7, docker, fetch | HIGH | ⚠️ Use cautiously |
-| **CONDITIONAL** | godot | MEDIUM | ⚠️ Requires Godot editor |
+| **STABLE** | claude-mem, sequential-thinking, filesystem, git | LOW | ✅ Always use |
+| **PRODUCTIVE** | octocode, powershell, llm-sandbox | LOW | ✅ Use for research/automation |
+| **MODERATE** | desktop-commander, playwright | MEDIUM | ✅ Use with monitoring |
+| **CONDITIONAL** | godot-mcp | MEDIUM | ⚠️ Requires Godot editor |
 
-### Approved MCPs (Verified Working)
+### Approved MCPs (Verified Working - 2024-12-24)
 
 ```
+✅ claude-mem         - Memory persistence (53 docs in ChromaDB)
+✅ octocode           - GitHub code search (GITHUB_PAT configured)
 ✅ sequential-thinking - Chain-of-thought reasoning
-✅ memory            - Knowledge graph persistence
-✅ playwright         - Browser automation (v0.0.53)
-✅ desktop-automation - Robot MCP Server
+✅ playwright         - Browser automation
 ✅ desktop-commander  - File/process operations
-⚠️ godot             - Requires Godot editor running
+✅ filesystem         - File system operations
+✅ git                - Version control
+✅ powershell         - Windows automation
+✅ llm-sandbox        - Code execution sandbox
+⚠️ godot-mcp         - Requires Godot editor running
 ```
 
 ### Process Leak Detection
@@ -431,6 +437,116 @@ Every session MUST log decisions in:
 
 ---
 
+## RULE-007: MCP Usage Protocol
+
+**Category:** `productivity`
+**Priority:** HIGH
+**Status:** ACTIVE
+**Source:** Session audit 2024-12-24 (Claude Code setup)
+
+### Directive
+
+All sessions MUST actively leverage available MCPs according to task type.
+MCPs are tools - they provide value only when invoked.
+
+### Problem Statement
+
+Session audit revealed MCPs were available but underutilized:
+- claude-mem: 53 docs existed but weren't queried for context
+- octocode: GitHub research done manually instead of via MCP
+- sequential-thinking: Complex decisions made without structured reasoning
+- playwright: UI endpoints not visually tested
+
+### MCP Usage Matrix
+
+| Task Type | Required MCPs | Optional MCPs |
+|-----------|---------------|---------------|
+| **Session Start** | claude-mem (context), filesystem | sequential-thinking |
+| **Code Research** | octocode, filesystem | claude-mem |
+| **Implementation** | filesystem, powershell | llm-sandbox, git |
+| **Testing** | playwright, powershell | desktop-commander |
+| **Complex Analysis** | sequential-thinking | claude-mem |
+| **Documentation** | filesystem, git | claude-mem |
+
+### Session Start Protocol (Updated)
+
+Before starting work, MUST execute:
+
+```
+1. Query claude-mem for project context:
+   mcp__claude-mem__chroma_query_documents(
+     collection_name="claude_memories",
+     query_texts=["sim-ai project context recent decisions"]
+   )
+
+2. Check for relevant prior decisions:
+   mcp__claude-mem__chroma_query_documents(
+     collection_name="claude_memories",
+     query_texts=["sim-ai DECISION architecture"]
+   )
+
+3. For code research, use octocode:
+   mcp__octocode__githubSearchCode(queries=[...])
+```
+
+### MCP Invocation Checklist
+
+At session start, verify these MCPs are considered:
+
+| MCP | Check | When to Use |
+|-----|-------|-------------|
+| **claude-mem** | ☐ Queried for context? | Always - 53+ docs available |
+| **octocode** | ☐ GitHub research needed? | Code patterns, library usage |
+| **sequential-thinking** | ☐ Complex decision? | Architecture, multi-step analysis |
+| **playwright** | ☐ UI to test? | Web endpoints, visual verification |
+| **powershell** | ☐ System commands? | Windows automation, env loading |
+| **llm-sandbox** | ☐ Code to isolate? | Untrusted code, experiments |
+
+### Active MCPs Reference
+
+| MCP | Purpose | Invocation Pattern |
+|-----|---------|-------------------|
+| **claude-mem** | Memory persistence | `chroma_query_documents`, `chroma_add_documents` |
+| **octocode** | GitHub code search | `githubSearchCode`, `githubGetFileContent` |
+| **playwright** | Browser automation | `browser_navigate`, `browser_snapshot` |
+| **sequential-thinking** | Structured reasoning | `sequentialthinking` |
+| **desktop-commander** | File/process ops | `read_file`, `write_file`, `start_process` |
+| **filesystem** | File operations | `read_file`, `write_file`, `list_directory` |
+| **git** | Version control | `git_status`, `git_commit`, `git_diff` |
+| **powershell** | Windows automation | `run_powershell` |
+| **llm-sandbox** | Code execution | `execute_code` |
+
+### Usage Metrics (Track per Session)
+
+```yaml
+mcp_usage:
+  claude_mem_queries: 0      # Target: ≥1 per session
+  octocode_searches: 0       # Target: ≥1 for research tasks
+  sequential_thinking: 0     # Target: ≥1 for complex decisions
+  playwright_tests: 0        # Target: ≥1 for UI tasks
+  total_mcp_invocations: 0   # Track overall usage
+```
+
+### Anti-Patterns to Avoid
+
+| Anti-Pattern | Correct Approach |
+|--------------|------------------|
+| Manual GitHub search | Use octocode MCP |
+| Copy-paste context | Query claude-mem |
+| Ad-hoc decisions | Use sequential-thinking |
+| Bash for file ops | Use filesystem MCP |
+| Skipping memory check | Always query claude-mem first |
+
+### Validation
+
+- [ ] Session starts with claude-mem context query
+- [ ] Research tasks use octocode (not manual search)
+- [ ] Complex decisions use sequential-thinking
+- [ ] UI testing uses playwright
+- [ ] MCP usage logged in session evidence
+
+---
+
 ## Enforcement
 
 Rules are enforced via:
@@ -449,3 +565,5 @@ Rules are enforced via:
 | 0.2.0 | 2024-12-24 | Added RULE-004: Exploratory Test Automation with Playwright MCP |
 | 0.3.0 | 2024-12-24 | Added RULE-005: Memory & MCP Stability (from AngelGAI/LocalGAI) |
 | 0.4.0 | 2024-12-24 | Added RULE-006: Decision Logging (from session audit) |
+| 0.5.0 | 2024-12-24 | Added RULE-007: MCP Usage Protocol (from Claude Code session audit) |
+| 0.5.1 | 2024-12-24 | Updated RULE-005: MCP tiers to reflect 10 active MCPs |
