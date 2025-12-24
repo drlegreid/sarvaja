@@ -379,6 +379,58 @@ All MCP operations MUST respect memory thresholds and stability tiers.
 
 ---
 
+## RULE-006: Decision Logging
+
+**Category:** `governance`  
+**Priority:** MEDIUM  
+**Status:** ACTIVE  
+**Source:** Session audit 2024-12-24
+
+### Directive
+
+All strategic decisions MUST be logged in task system, not just chat.
+
+### Problem Statement
+
+Decisions made during sessions often get lost because:
+- Logged only in chat history (not persistent)
+- No structured format for retrieval
+- Hard to track what was decided vs discussed
+- LLM cannot find prior decisions
+
+### Requirements
+
+Every session MUST log decisions in:
+
+1. **`evidence/SESSION-DECISIONS-{date}.md`** - Decision audit trail
+2. **`TODO.md`** - Add DECISION-XXX entries for major decisions
+
+### Decision Log Format
+
+```markdown
+## DECISION-XXX: [Title]
+
+**Date:** YYYY-MM-DD  
+**Context:** [Why this decision was needed]  
+**Options Considered:**
+1. Option A - [pros/cons]
+2. Option B - [pros/cons]
+
+**Decision:** [What was decided]  
+**Rationale:** [Why this option]  
+**Action:** [What was done / to be done]  
+**Status:** IMPLEMENTED | PENDING | DEFERRED
+```
+
+### Validation
+
+- [ ] Session ends with decision audit
+- [ ] Major decisions have DECISION-XXX entry
+- [ ] evidence/SESSION-DECISIONS-*.md exists
+- [ ] Decisions are actionable (not just discussion)
+
+---
+
 ## Enforcement
 
 Rules are enforced via:
@@ -396,3 +448,4 @@ Rules are enforced via:
 | 0.1.0 | 2024-12-24 | Initial rules: Session Evidence, Architecture |
 | 0.2.0 | 2024-12-24 | Added RULE-004: Exploratory Test Automation with Playwright MCP |
 | 0.3.0 | 2024-12-24 | Added RULE-005: Memory & MCP Stability (from AngelGAI/LocalGAI) |
+| 0.4.0 | 2024-12-24 | Added RULE-006: Decision Logging (from session audit) |

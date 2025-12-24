@@ -39,7 +39,7 @@ Workflow → .windsurf/workflows.md
 └─────────────────────────────────────────────────────────────┘
 ```
 
-## Core Rules (5 Active)
+## Core Rules (6 Active)
 
 | Rule | Directive | Enforcement |
 |------|-----------|-------------|
@@ -48,6 +48,7 @@ Workflow → .windsurf/workflows.md
 | **RULE-003** | Sync Protocol (DRAFT) | Sync agent for skills/sessions |
 | **RULE-004** | Exploratory Testing | Playwright MCP with heuristics |
 | **RULE-005** | Memory & MCP Stability | Memory thresholds, MCP tiers |
+| **RULE-006** | Decision Logging | `evidence/SESSION-DECISIONS-*.md` |
 
 > **Full rules:** [`docs/RULES-DIRECTIVES.md`](docs/RULES-DIRECTIVES.md)
 
