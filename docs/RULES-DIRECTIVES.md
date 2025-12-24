@@ -309,11 +309,23 @@ All MCP operations MUST respect memory thresholds and stability tiers.
 
 ### MCP Stability Tiers
 
-| Tier | MCPs | Risk |
-|------|------|------|
-| **STABLE** | sequential-thinking, memory, filesystem, git | LOW |
-| **MODERATE** | desktop-commander, playwright | MEDIUM |
-| **RISKY** | context7, docker, fetch | HIGH (timeouts) |
+| Tier | MCPs | Risk | Usage |
+|------|------|------|-------|
+| **STABLE** | sequential-thinking, memory | LOW | ✅ Always allowed |
+| **MODERATE** | desktop-commander, playwright, desktop-automation | MEDIUM | ✅ Use with monitoring |
+| **RISKY** | context7, docker, fetch | HIGH | ⚠️ Use cautiously |
+| **CONDITIONAL** | godot | MEDIUM | ⚠️ Requires Godot editor |
+
+### Approved MCPs (Verified Working)
+
+```
+✅ sequential-thinking - Chain-of-thought reasoning
+✅ memory            - Knowledge graph persistence
+✅ playwright         - Browser automation (v0.0.53)
+✅ desktop-automation - Robot MCP Server
+✅ desktop-commander  - File/process operations
+⚠️ godot             - Requires Godot editor running
+```
 
 ### Process Leak Detection
 

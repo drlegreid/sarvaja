@@ -19,22 +19,28 @@ from agno.vectordb.chroma import ChromaDb
 
 
 def init_opik():
-    """Initialize Opik for tracing."""
-    opik_url = os.getenv("OPIK_BASE_URL")
+    """Initialize Opik for tracing.
+    
+    Uses environment variables (no configure() call needed):
+    - OPIK_URL_OVERRIDE: Self-hosted Opik URL (e.g., http://opik-backend:8080/api)
+    - OPIK_PROJECT_NAME: Project name for traces
+    - OPIK_WORKSPACE: Workspace name
+    - OPIK_API_KEY: API key (optional for self-hosted)
+    """
+    opik_url = os.getenv("OPIK_URL_OVERRIDE")
     project = os.getenv("OPIK_PROJECT_NAME", "sim-ai-poc")
     
     if opik_url:
         try:
             import opik
-            opik.configure(
-                api_key=os.getenv("OPIK_API_KEY", ""),
-                workspace=os.getenv("OPIK_WORKSPACE", "default"),
-                host=opik_url,
-            )
-            print(f"Opik initialized: {opik_url} (project: {project})")
+            # Opik SDK auto-configures from environment variables
+            # No need to call configure() - just import and use
+            print(f"Opik configured via env: {opik_url} (project: {project})")
             return True
         except Exception as e:
-            print(f"Opik initialization failed: {e}")
+            print(f"Opik import failed: {e}")
+    else:
+        print("Opik not configured (OPIK_URL_OVERRIDE not set)")
     return False
 
 

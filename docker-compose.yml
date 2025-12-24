@@ -19,9 +19,6 @@ services:
       - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
       - XAI_API_KEY=${XAI_API_KEY:-}
     command: ["--config", "/app/config.yaml", "--port", "4000"]
-    depends_on:
-      ollama:
-        condition: service_started
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:4000/health"]
       interval: 30s
@@ -103,8 +100,9 @@ services:
     environment:
       - LITELLM_BASE_URL=http://litellm:4000
       - LITELLM_API_KEY=${LITELLM_MASTER_KEY:-sk-litellm-master-key}
-      - OPIK_BASE_URL=${OPIK_BASE_URL:-http://host.docker.internal:5174}
+      - OPIK_URL_OVERRIDE=${OPIK_URL_OVERRIDE:-http://host.docker.internal:5173/api}
       - OPIK_PROJECT_NAME=sim-ai-poc
+      - OPIK_WORKSPACE=default
       - CHROMADB_HOST=chromadb
       - CHROMADB_PORT=8000
       - CHROMA_AUTH_TOKEN=${CHROMA_AUTH_TOKEN:-chroma-token-dev}

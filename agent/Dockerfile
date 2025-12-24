@@ -17,7 +17,7 @@ COPY <<EOF entrypoint.sh
 #!/bin/sh
 echo "=== Sim.ai PoC Agent ==="
 echo "LiteLLM: \${LITELLM_BASE_URL}"
-echo "Opik: \${OPIK_BASE_URL}"
+echo "Opik: \${OPIK_URL_OVERRIDE}"
 echo "ChromaDB: \${CHROMADB_HOST}:\${CHROMADB_PORT}"
 exec python playground.py
 EOF

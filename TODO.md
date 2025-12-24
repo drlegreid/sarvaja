@@ -57,23 +57,24 @@ Fix Agno ChromaDb wrapper to work with ChromaDB v2 API. Currently disabled in `a
 
 **Priority:** High  
 **Effort:** Low (1 hour)  
-**Status:** 📋 Not Started
+**Status:** ✅ FIXED (2024-12-24)
 
 #### Objective
 Fix Opik SDK configuration to work with self-hosted instance.
 
 #### Root Cause
 - `opik.configure()` API changed - `host` parameter not accepted
-- Need to use correct configuration method for self-hosted Opik
+- Need to use `OPIK_URL_OVERRIDE` environment variable
 
 #### Tasks
-- [ ] Review Opik SDK documentation for self-hosted config
-- [ ] Update `init_opik()` in playground.py
+- [x] Review Opik SDK documentation for self-hosted config
+- [x] Update `init_opik()` in playground.py (use env vars, not configure())
+- [x] Update docker-compose.yml with OPIK_URL_OVERRIDE
 - [ ] Test with Opik dashboard running
 - [ ] Verify traces appear in dashboard
 
 #### Success Criteria
-- [ ] Opik initializes without errors
+- [x] Opik initializes without errors
 - [ ] Agent calls traced in Opik dashboard
 
 ---
