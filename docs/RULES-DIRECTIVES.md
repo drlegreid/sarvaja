@@ -127,9 +127,9 @@ All code and system design MUST follow:
    - No hardcoded values in source
 
 3. **Observability by Default**
-   - All agent calls traced via Opik
    - Health endpoints for every service
    - Structured logging (JSON format)
+   - Session dumps via `scripts/session_dump.py`
 
 4. **Graceful Degradation**
    - Fallback models configured in LiteLLM
@@ -159,9 +159,9 @@ architectural_compliance:
     - no_hardcoded_urls: true
     - yaml_configs_validated: true
   observability:
-    - opik_tracing_enabled: true
     - health_endpoints_exist: true
     - structured_logging: true
+    - session_dumps_enabled: true
   degradation:
     - fallback_models_configured: true
     - timeouts_configured: true
@@ -173,7 +173,7 @@ architectural_compliance:
 - [ ] No circular imports detected
 - [ ] All secrets in `.env` (not in code)
 - [ ] Health endpoint returns 200
-- [ ] Opik traces visible in dashboard
+- [ ] Session dump created (`scripts/session_dump.py`)
 
 ---
 
@@ -437,7 +437,7 @@ Rules are enforced via:
 1. **Pre-commit hooks** - Static validation
 2. **CI/CD checks** - Test suite includes rule compliance
 3. **Runtime guards** - Agent checks rules before execution
-4. **Opik metrics** - Track rule violation rates
+4. **Session dumps** - Track decisions and gaps
 
 ---
 
