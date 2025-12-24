@@ -10,24 +10,23 @@
 
 | Need | Document | Lines |
 |------|----------|-------|
-| **Tasks & Gaps** | [`TODO.md`](TODO.md) | ~400 |
-| **Rules** | [`docs/RULES-DIRECTIVES.md`](docs/RULES-DIRECTIVES.md) | ~300 |
+| **Tasks** | [`TODO.md`](TODO.md) | ~100 |
+| **Gaps** | [`docs/gaps/GAP-INDEX.md`](docs/gaps/GAP-INDEX.md) | ~60 |
+| **R&D** | [`docs/backlog/R&D-BACKLOG.md`](docs/backlog/R&D-BACKLOG.md) | ~100 |
+| **Rules (Index)** | [`docs/RULES-DIRECTIVES.md`](docs/RULES-DIRECTIVES.md) | ~120 |
+| **Rules (Details)** | [`docs/rules/`](docs/rules/) | 3 files |
 | **Workflows** | [`.windsurf/workflows.md`](.windsurf/workflows.md) | ~260 |
 | **Deployment** | [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md) | ~130 |
-| **Architecture** | [`README.md`](README.md) | ~160 |
 
 ### Cross-Reference Index
 ```
-RULE-001 → docs/RULES-DIRECTIVES.md#rule-001
-RULE-002 → docs/RULES-DIRECTIVES.md#rule-002  
-RULE-003 → docs/RULES-DIRECTIVES.md#rule-003
-RULE-004 → docs/RULES-DIRECTIVES.md#rule-004
-RULE-005 → docs/RULES-DIRECTIVES.md#rule-005
-RULE-006 → docs/RULES-DIRECTIVES.md#rule-006
-GAP-*    → TODO.md#gap-index-summary
-R&D-*    → TODO.md#rd-backlog
-DECISION → evidence/SESSION-DECISIONS-*.md
-Workflow → .windsurf/workflows.md
+RULE-001,003,006,011,013 → docs/rules/RULES-GOVERNANCE.md
+RULE-002,007,008,009,010 → docs/rules/RULES-TECHNICAL.md
+RULE-004,005,012,014     → docs/rules/RULES-OPERATIONAL.md
+GAP-*                    → docs/gaps/GAP-INDEX.md
+R&D-*                    → docs/backlog/R&D-BACKLOG.md
+DECISION                 → evidence/SESSION-DECISIONS-*.md
+Completed Tasks          → docs/tasks/TASKS-COMPLETED.md
 ```
 
 ## Architecture (Simplified - DECISION-001)
@@ -42,18 +41,18 @@ Workflow → .windsurf/workflows.md
 ```
 > Opik removed per DECISION-001 (overkill for current needs)
 
-## Core Rules (6 Active)
+## Core Rules (14 Active)
 
-| Rule | Directive | Enforcement |
-|------|-----------|-------------|
-| **RULE-001** | Session Evidence Logging | `./docs/SESSION-{date}-{topic}.md` |
-| **RULE-002** | Architectural Best Practices | Code review, no hardcoded secrets |
-| **RULE-003** | Sync Protocol (DRAFT) | Sync agent for skills/sessions |
-| **RULE-004** | Exploratory Testing | Playwright MCP with heuristics |
-| **RULE-005** | Memory & MCP Stability | Memory thresholds, MCP tiers |
-| **RULE-006** | Decision Logging | `evidence/SESSION-DECISIONS-*.md` |
+| Rule | Directive | Priority |
+|------|-----------|----------|
+| **RULE-001** | Session Evidence Logging | CRITICAL |
+| **RULE-007** | MCP Usage Protocol | HIGH |
+| **RULE-011** | Multi-Agent Governance | CRITICAL |
+| **RULE-012** | Deep Sleep Protocol (DSP) | HIGH |
+| **RULE-014** | Autonomous Task Sequencing | CRITICAL |
 
 > **Full rules:** [`docs/RULES-DIRECTIVES.md`](docs/RULES-DIRECTIVES.md)
+> **Halt commands (RULE-014):** STOP, HALT, STAI, RED ALERT, ALERT
 
 ### Quick Checks
 - [ ] Session log created in `./docs/`
