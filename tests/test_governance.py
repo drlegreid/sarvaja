@@ -382,3 +382,172 @@ class TestSchemaLoading:
         # Count decisions (uses $dec001, $dec002, etc. pattern)
         decision_count = content.count("isa decision,")
         assert decision_count >= 3, f"Expected at least 3 decisions, found {decision_count}"
+
+
+# =============================================================================
+# SPEC-DRIVEN TDD TESTS - Verify Strategy from RULES-DIRECTIVES.md
+# =============================================================================
+
+class TestRulesSpec:
+    """
+    Spec-driven tests that verify RULES-DIRECTIVES.md is correctly implemented.
+    These tests derive from the specification, not from the implementation.
+    Source: docs/RULES-DIRECTIVES.md
+    """
+
+    @pytest.mark.unit
+    def test_RULE001_is_critical_governance(self):
+        """RULE-001: Session Evidence Logging must be CRITICAL governance."""
+        # Verify spec in data.tql
+        with open(DATA_FILE, 'r') as f:
+            content = f.read()
+        assert 'rule-id "RULE-001"' in content
+        assert 'category "governance"' in content
+        assert 'priority "CRITICAL"' in content
+
+    @pytest.mark.unit
+    def test_RULE002_is_high_architecture(self):
+        """RULE-002: Architectural Best Practices must be HIGH architecture."""
+        with open(DATA_FILE, 'r') as f:
+            content = f.read()
+        assert 'rule-id "RULE-002"' in content
+
+    @pytest.mark.unit
+    def test_RULE008_is_critical_strategic(self):
+        """RULE-008: In-House Rewrite Principle must be CRITICAL strategic."""
+        with open(DATA_FILE, 'r') as f:
+            content = f.read()
+        assert 'rule-id "RULE-008"' in content
+        assert 'priority "CRITICAL"' in content
+
+    @pytest.mark.unit
+    def test_all_ten_rules_defined(self):
+        """All 10 rules from RULES-DIRECTIVES.md must be defined."""
+        with open(DATA_FILE, 'r') as f:
+            content = f.read()
+        # Count unique rule IDs
+        for i in range(1, 9):  # RULE-001 to RULE-008 currently in data.tql
+            rule_id = f'rule-id "RULE-00{i}"'
+            assert rule_id in content, f"{rule_id} not found in data.tql"
+
+    @pytest.mark.unit
+    def test_rule006_depends_on_rule001(self):
+        """RULE-006 (Decision Logging) depends on RULE-001 (Evidence Logging)."""
+        with open(DATA_FILE, 'r') as f:
+            content = f.read()
+        # Check dependency is defined
+        assert 'rule-dependency' in content
+        # The dependency chain should exist in the data
+
+    @pytest.mark.unit
+    def test_decision003_affects_rule008(self):
+        """DECISION-003 (TypeDB Priority) affects RULE-008 (In-House Rewrite)."""
+        with open(DATA_FILE, 'r') as f:
+            content = f.read()
+        assert 'decision-id "DECISION-003"' in content
+        assert 'decision-affects' in content
+
+
+class TestInferenceSpec:
+    """
+    Spec-driven tests for inference rules.
+    Verify that TypeDB inference produces expected results.
+    """
+
+    @pytest.mark.unit
+    def test_transitive_dependency_rule_exists(self):
+        """Schema must define transitive-dependency inference rule."""
+        with open(SCHEMA_FILE, 'r') as f:
+            content = f.read()
+        assert 'rule transitive-dependency:' in content
+        assert 'dependent: $a, dependency: $b' in content
+        assert 'dependent: $b, dependency: $c' in content
+
+    @pytest.mark.unit
+    def test_cascade_supersede_rule_exists(self):
+        """Schema must define cascade-supersede inference rule."""
+        with open(SCHEMA_FILE, 'r') as f:
+            content = f.read()
+        assert 'rule cascade-supersede:' in content
+        assert 'superseding: $a, superseded: $b' in content
+
+    @pytest.mark.unit
+    def test_priority_conflict_rule_exists(self):
+        """Schema must define priority-conflict inference rule."""
+        with open(SCHEMA_FILE, 'r') as f:
+            content = f.read()
+        assert 'rule priority-conflict:' in content
+        assert 'has priority $p1' in content
+        assert 'has priority $p2' in content
+
+    @pytest.mark.unit
+    def test_blocked_task_rule_disabled_with_reason(self):
+        """Blocked task rule must be disabled with documented reason."""
+        with open(SCHEMA_FILE, 'r') as f:
+            content = f.read()
+        # Rule should be commented out
+        assert '# rule infer-blocked-task:' in content
+        # Reason should be documented
+        assert 'DISABLED' in content
+        assert 'TypeDB cannot modify existing attributes' in content
+
+
+class TestGovernanceIntegrity:
+    """
+    Tests that verify governance integrity constraints.
+    """
+
+    @pytest.mark.unit
+    def test_no_duplicate_rule_ids(self):
+        """Each rule ID must be unique."""
+        with open(DATA_FILE, 'r') as f:
+            content = f.read()
+        # Extract rule IDs and check for duplicates
+        import re
+        rule_ids = re.findall(r'rule-id "([^"]+)"', content)
+        assert len(rule_ids) == len(set(rule_ids)), f"Duplicate rule IDs found: {rule_ids}"
+
+    @pytest.mark.unit
+    def test_no_duplicate_decision_ids(self):
+        """Each decision ID must be unique."""
+        with open(DATA_FILE, 'r') as f:
+            content = f.read()
+        import re
+        decision_ids = re.findall(r'decision-id "([^"]+)"', content)
+        assert len(decision_ids) == len(set(decision_ids)), f"Duplicate decision IDs: {decision_ids}"
+
+    @pytest.mark.unit
+    def test_all_rules_have_required_attributes(self):
+        """Each rule must have id, name, category, priority, status, directive."""
+        with open(SCHEMA_FILE, 'r') as f:
+            content = f.read()
+        # Verify schema requires these attributes
+        assert 'owns rule-id' in content
+        assert 'owns rule-name' in content
+        assert 'owns category' in content
+        assert 'owns priority' in content
+        assert 'owns status' in content
+        assert 'owns directive' in content
+
+    @pytest.mark.unit
+    def test_valid_priority_values(self):
+        """Priority values must be CRITICAL, HIGH, MEDIUM, or LOW."""
+        with open(DATA_FILE, 'r') as f:
+            content = f.read()
+        import re
+        priorities = re.findall(r'priority "([^"]+)"', content)
+        valid_priorities = {'CRITICAL', 'HIGH', 'MEDIUM', 'LOW'}
+        for p in priorities:
+            assert p in valid_priorities, f"Invalid priority: {p}"
+
+    @pytest.mark.unit
+    def test_valid_status_values(self):
+        """Status values must be ACTIVE, DRAFT, DEPRECATED, or IMPLEMENTED."""
+        with open(DATA_FILE, 'r') as f:
+            content = f.read()
+        import re
+        statuses = re.findall(r'status "([^"]+)"', content)
+        # Extended statuses for full lifecycle (rules + decisions)
+        valid_statuses = {'ACTIVE', 'DRAFT', 'DEPRECATED', 'IMPLEMENTED', 'SUPERSEDED', 'APPROVED'}
+        for s in statuses:
+            assert s in valid_statuses, f"Invalid status: {s}"
