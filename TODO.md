@@ -31,7 +31,7 @@
 | GAP-018 | Session documentation workflow | ✅ DONE | governance | RULE-001 | docs/SESSION-TEMPLATE.md |
 | GAP-019 | MCP usage documentation | Medium | docs | RULE-007 | When to use each MCP |
 | GAP-020 | Cross-project knowledge queries | HIGH | workflow | RULE-007 | claude-mem needs localgai/angelgai prefixes |
-| GAP-021 | MCP usage over basic tools | HIGH | workflow | RULE-007 | Use OctoCode/desktop-commander over Grep/Read |
+| GAP-021 | OctoCode for external research | Medium | workflow | RULE-007 | Use OctoCode for GitHub patterns, not just web search |
 
 ---
 
