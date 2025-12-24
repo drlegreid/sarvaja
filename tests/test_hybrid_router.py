@@ -11,7 +11,8 @@ from governance.hybrid_router import (
     HybridQueryRouter,
     QueryResult,
     QueryType,
-    MemorySyncBridge
+    MemorySyncBridge,
+    SyncStatus
 )
 
 
@@ -201,21 +202,87 @@ class TestHealthCheck:
 class TestMemorySyncBridge:
     """Test MemorySyncBridge functionality."""
 
-    def test_sync_no_typedb_client(self):
-        """Sync returns 0 when TypeDB not connected."""
+    def test_sync_status_dataclass(self):
+        """SyncStatus dataclass creation."""
+        status = SyncStatus(
+            source="typedb",
+            target="chromadb",
+            synced_count=10,
+            skipped_count=2,
+            error_count=0
+        )
+        assert status.source == "typedb"
+        assert status.synced_count == 10
+        assert status.errors == []  # Default empty list
+
+    def test_sync_status_with_errors(self):
+        """SyncStatus with errors list."""
+        status = SyncStatus(
+            source="typedb",
+            target="chromadb",
+            synced_count=0,
+            skipped_count=0,
+            error_count=1,
+            errors=["Connection failed"]
+        )
+        assert len(status.errors) == 1
+        assert "Connection failed" in status.errors[0]
+
+    def test_sync_rules_no_typedb_client(self):
+        """Sync returns error status when TypeDB not connected."""
         router = HybridQueryRouter()
         bridge = MemorySyncBridge(router)
-        count = bridge.sync_rules_to_chromadb()
-        assert count == 0
+        status = bridge.sync_rules_to_chromadb()
+        assert isinstance(status, SyncStatus)
+        assert status.synced_count == 0
+        assert "TypeDB client not connected" in status.errors
 
-    def test_sync_no_chromadb_client(self):
-        """Sync returns 0 when ChromaDB not connected."""
+    def test_sync_rules_no_chromadb_client(self):
+        """Sync returns error status when ChromaDB not connected."""
         router = HybridQueryRouter()
         router._typedb_client = MagicMock()
         router._typedb_client.get_all_rules.return_value = []
         bridge = MemorySyncBridge(router)
-        count = bridge.sync_rules_to_chromadb()
-        assert count == 0
+        status = bridge.sync_rules_to_chromadb()
+        assert isinstance(status, SyncStatus)
+        assert "ChromaDB client not connected" in status.errors
+
+    def test_sync_decisions_no_clients(self):
+        """Sync decisions returns error when no clients."""
+        router = HybridQueryRouter()
+        bridge = MemorySyncBridge(router)
+        status = bridge.sync_decisions_to_chromadb()
+        assert isinstance(status, SyncStatus)
+        assert status.synced_count == 0
+
+    def test_sync_agents_no_clients(self):
+        """Sync agents returns error when no clients."""
+        router = HybridQueryRouter()
+        bridge = MemorySyncBridge(router)
+        status = bridge.sync_agents_to_chromadb()
+        assert isinstance(status, SyncStatus)
+        assert status.synced_count == 0
+
+    def test_sync_all_returns_dict(self):
+        """Sync all returns dict with all entity types."""
+        router = HybridQueryRouter()
+        bridge = MemorySyncBridge(router)
+        result = bridge.sync_all()
+        assert isinstance(result, dict)
+        assert "rules" in result
+        assert "decisions" in result
+        assert "agents" in result
+        assert all(isinstance(v, SyncStatus) for v in result.values())
+
+    def test_get_sync_status_no_connections(self):
+        """Get sync status with no connections."""
+        router = HybridQueryRouter()
+        bridge = MemorySyncBridge(router)
+        status = bridge.get_sync_status()
+        assert "chromadb_connected" in status
+        assert "typedb_connected" in status
+        assert status["chromadb_connected"] is False
+        assert status["typedb_connected"] is False
 
 
 # =============================================================================
