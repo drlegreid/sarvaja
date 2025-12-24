@@ -183,6 +183,91 @@ See `./docs/SYNC-AGENT-DESIGN.md` for implementation.
 
 ---
 
+## RULE-004: Exploratory Test Automation with Playwright MCP
+
+**Category:** `testing`  
+**Priority:** HIGH  
+**Status:** ACTIVE  
+**Effectiveness Score:** N/A (new)
+
+### Directive
+
+All UI/web components MUST be testable via Playwright MCP with custom heuristics:
+
+1. **Exploratory Testing Protocol**
+   - Use Playwright MCP for browser automation
+   - Apply heuristic-based exploration (not just scripted tests)
+   - Document findings as evidence in session logs
+
+2. **Test Automation Heuristics**
+   | Heuristic | Description | Priority |
+   |-----------|-------------|----------|
+   | `BOUNDARY` | Test edge cases, limits, empty states | HIGH |
+   | `NAVIGATION` | Verify all links, routes, redirects | HIGH |
+   | `STATE` | Check state transitions, persistence | MEDIUM |
+   | `ERROR` | Trigger and verify error handling | HIGH |
+   | `ACCESSIBILITY` | Check a11y compliance | MEDIUM |
+   | `PERFORMANCE` | Measure load times, responsiveness | LOW |
+
+3. **MCP Integration**
+   - Configure Playwright MCP in IDE (`mcp_config.json`)
+   - Use headless mode for CI, headed for debugging
+   - Capture screenshots on failures
+
+4. **Evidence Requirements**
+   - Screenshot of each tested state
+   - Console logs for errors
+   - Network requests for API calls
+   - Accessibility audit results
+
+### MCP Configuration
+
+```json
+{
+  "mcpServers": {
+    "playwright": {
+      "command": "npx",
+      "args": ["-y", "@anthropic-ai/mcp-server-playwright"],
+      "env": {
+        "PLAYWRIGHT_HEADLESS": "true",
+        "PLAYWRIGHT_TIMEOUT": "30000"
+      }
+    }
+  }
+}
+```
+
+### Playwright MCP Tools
+
+| Tool | Purpose |
+|------|---------|
+| `browser_navigate` | Navigate to URL |
+| `browser_screenshot` | Capture current state |
+| `browser_click` | Click element |
+| `browser_fill` | Fill form field |
+| `browser_evaluate` | Run JavaScript |
+| `browser_console` | Get console logs |
+
+### Implementation Workflow
+
+```
+1. Navigate to target URL
+2. Apply BOUNDARY heuristic (test limits)
+3. Apply NAVIGATION heuristic (check links)
+4. Apply ERROR heuristic (trigger failures)
+5. Capture screenshots as evidence
+6. Document findings in session log
+```
+
+### Validation
+
+- [ ] Playwright MCP configured in IDE
+- [ ] At least 3 heuristics applied per test session
+- [ ] Screenshots captured for each state
+- [ ] Findings documented in session log
+
+---
+
 ## Rule Index (ChromaDB Schema)
 
 ```json
@@ -221,3 +306,4 @@ Rules are enforced via:
 | Version | Date | Change |
 |---------|------|--------|
 | 0.1.0 | 2024-12-24 | Initial rules: Session Evidence, Architecture |
+| 0.2.0 | 2024-12-24 | Added RULE-004: Exploratory Test Automation with Playwright MCP |

@@ -226,11 +226,57 @@ pytest tests/test_health.py -v
 
 ---
 
+## Workflow 7: Exploratory Testing with Playwright MCP
+
+**Trigger:** Testing UI/web components
+
+### Prerequisites
+- Playwright MCP configured in `mcp_config.json`
+- Target URL accessible
+
+### Heuristics to Apply
+
+| Heuristic | Actions |
+|-----------|--------|
+| `BOUNDARY` | Empty inputs, max length, special chars |
+| `NAVIGATION` | All links, back button, deep links |
+| `STATE` | Login/logout, form persistence, refresh |
+| `ERROR` | Invalid inputs, network failures, 404s |
+| `ACCESSIBILITY` | Tab order, screen reader, contrast |
+
+### Workflow Steps
+
+```
+1. browser_navigate → target URL
+2. browser_screenshot → initial state
+3. Apply BOUNDARY heuristic:
+   - browser_fill → empty, max, special
+   - browser_screenshot → each state
+4. Apply NAVIGATION heuristic:
+   - browser_click → all links
+   - browser_screenshot → each page
+5. Apply ERROR heuristic:
+   - browser_fill → invalid data
+   - browser_console → capture errors
+6. Document findings in session log
+```
+
+### Evidence Collection
+```powershell
+# Screenshots saved to:
+./evidence/screenshots/{date}_{test}_{state}.png
+
+# Console logs:
+./evidence/logs/{date}_{test}_console.json
+```
+
+---
+
 ## Related Documents
 
 - [CLAUDE.md](../CLAUDE.md) - Project rules
 - [TODO.md](../TODO.md) - Task tracking
-- [RULES-DIRECTIVES.md](docs/RULES-DIRECTIVES.md) - Governance rules
+- [RULES-DIRECTIVES.md](docs/RULES-DIRECTIVES.md) - Governance rules (RULE-004)
 - [DEPLOYMENT.md](docs/DEPLOYMENT.md) - Deployment guide
 
 ---

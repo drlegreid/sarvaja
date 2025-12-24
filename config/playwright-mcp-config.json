@@ -1,0 +1,11 @@
+{
+  "playwright": {
+    "command": "npx",
+    "args": ["-y", "@anthropic-ai/mcp-server-playwright"],
+    "env": {
+      "PLAYWRIGHT_HEADLESS": "true",
+      "PLAYWRIGHT_TIMEOUT": "30000"
+    },
+    "description": "Playwright MCP for browser automation and exploratory testing"
+  }
+}
