@@ -13,7 +13,7 @@
 |----|-----|----------|----------|----------|
 | GAP-001 | ChromaDB Knowledge Integration | ✅ FIXED | integration | HttpClient injection |
 | GAP-002 | Opik Tracing Integration | ✅ FIXED | integration | OPIK_URL_OVERRIDE |
-| GAP-003 | Ollama Model Pull | ✅ FIXED | configuration | gemma3:4b downloaded |
+| GAP-003 | Ollama Model Pull | ✅ FIXED | configuration | gemma3:4b (4GB, memory-tight) |
 | GAP-004 | Grok/xAI API Key | Medium | configuration | test skip |
 | GAP-005 | Agent Task Backlog UI | Medium | functionality | user request |
 | GAP-006 | Sync Agent Implementation | Medium | functionality | skeleton only |
