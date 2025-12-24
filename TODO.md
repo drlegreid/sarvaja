@@ -11,8 +11,8 @@
 
 | ID | Gap | Priority | Category | Evidence |
 |----|-----|----------|----------|----------|
-| GAP-001 | ChromaDB Knowledge Integration | High | integration | `playground.py:45` |
-| GAP-002 | Opik Tracing Integration | High | integration | `playground.py:25` |
+| GAP-001 | ChromaDB Knowledge Integration | ✅ FIXED | integration | HttpClient injection |
+| GAP-002 | Opik Tracing Integration | ✅ FIXED | integration | OPIK_URL_OVERRIDE |
 | GAP-003 | Ollama Model Pull | High | configuration | LiteLLM 500 error |
 | GAP-004 | Grok/xAI API Key | Medium | configuration | test skip |
 | GAP-005 | Agent Task Backlog UI | Medium | functionality | user request |
