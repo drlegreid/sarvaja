@@ -22,9 +22,14 @@
 | GAP-009 | Pre-commit Hooks | Medium | tooling | RULES-DIRECTIVES.md |
 | GAP-010 | CI/CD Pipeline | Low | tooling | DEPLOYMENT.md |
 | GAP-011 | OctoCode MCP not in use | ✅ CONFIGURED | tooling | GITHUB_PAT in .env |
-| GAP-012 | TypeDB R&D (inference + type safety) | Medium | R&D | user request |
+| GAP-012 | TypeDB R&D (inference + type safety) | ✅ RESOLVED | R&D | Phase 1+2 complete, MCP server created |
 | GAP-013 | MCPs tested but not invoked | ✅ RESOLVED | workflow | DECISION-001 simplified stack |
 | GAP-014 | IntelliJ Windsurf MCP not loading | Medium | tooling | ~/.codeium/mcp_config.json not read by IntelliJ |
+| GAP-015 | Consolidated STRATEGY.md | Medium | docs | docs/GAP-ANALYSIS-2024-12-24.md |
+| GAP-016 | ChromaDB sync TDD stubs | ✅ DONE | testing | tests/test_chromadb_sync.py (10 skipped) |
+| GAP-017 | Pre-commit hooks for RULE-001/002 | Medium | tooling | Duplicate of GAP-009 |
+| GAP-018 | Session documentation workflow | ✅ DONE | governance | docs/SESSION-TEMPLATE.md |
+| GAP-019 | MCP usage documentation | Medium | docs | When to use each MCP |
 
 ---
 
@@ -434,8 +439,8 @@ Automate testing and deployment via GitHub Actions.
 | P2.1 | ✅ DONE | Migrate RULE-001 to RULE-011 to TypeDB (11 rules, 4 decisions) |
 | P2.2 | ✅ DONE | Add relationships: rule-dependency, decision-affects, decision-supersedes |
 | P2.3 | ✅ DONE | Test: "find all rules affected by DECISION-003" (verified) |
-| P2.4 | 🚧 IN PROGRESS | Create Governance MCP server skeleton |
-| P2.5 | 📋 TODO | Implement MCP tools: propose_rule, vote, dispute, get_trust_score |
+| P2.4 | ✅ DONE | Create Governance MCP server (11 tools) |
+| P2.5 | ✅ DONE | Implement MCP tools: propose_rule, vote, dispute, get_trust_score |
 | P2.6 | 📋 TODO | Create hybrid query router (TypeDB + ChromaDB) |
 | P2.7 | 📋 TODO | Integration tests for MCP-TypeDB workflow |
 
