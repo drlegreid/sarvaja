@@ -73,20 +73,31 @@ Every session MUST log decisions in:
 
 - [x] Check Ollama model status → gemma3:4b downloaded ✅
 - [x] Check Opik UI accessibility → localhost:5173 returns 200 ✅
-- [ ] Fix LiteLLM "No connected db" error (Opik callback issue)
+- [x] Fix LiteLLM "No connected db" error → ✅ FIXED (commit 63ee954)
 - [ ] Clean up unused MCPs from config
 - [ ] Add OctoCode MCP with GitHub PAT
 - [x] Update gap index (GAP-001, GAP-002, GAP-003 now FIXED) ✅
 - [ ] Consider adding RULE-006 for decision logging
 
-### Known Issue: LiteLLM DB Connection
+### ~~Known Issue: LiteLLM DB Connection~~ ✅ FIXED
 ```
-Error: {"error":{"message":"No connected db.","type":"no_db_connection"}}
-Cause: Opik callbacks in litellm_config.yaml require DB
-Fix options:
-  1. Disable Opik callbacks temporarily
-  2. Configure LiteLLM database connection
-  3. Ensure Opik backend is properly connected
+Original Error: {"error":{"message":"No connected db.","type":"no_db_connection"}}
+Root Cause: master_key setting required DB-backed validation
+Fix Applied: 
+  - Disabled Opik callbacks
+  - Used simple dev key (sk-litellm-dev-key)
+  - Set allow_user_auth: false
+Status: ✅ RESOLVED (commit 63ee954)
+```
+
+### Known Issue: Ollama Memory Constraint
+```
+Error: model requires more system memory (4.0 GiB) than is available (4.0 GiB)
+Cause: Container memory limit exactly matches model requirement
+Options:
+  1. Increase container memory limit
+  2. Use smaller model (gemma2:2b)
+  3. Accept occasional OOM errors
 ```
 
 ---
