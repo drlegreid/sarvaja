@@ -23,8 +23,10 @@ RULE-002 → docs/RULES-DIRECTIVES.md#rule-002
 RULE-003 → docs/RULES-DIRECTIVES.md#rule-003
 RULE-004 → docs/RULES-DIRECTIVES.md#rule-004
 RULE-005 → docs/RULES-DIRECTIVES.md#rule-005
+RULE-006 → docs/RULES-DIRECTIVES.md#rule-006
 GAP-*    → TODO.md#gap-index-summary
 R&D-*    → TODO.md#rd-backlog
+DECISION → evidence/SESSION-DECISIONS-*.md
 Workflow → .windsurf/workflows.md
 ```
 
