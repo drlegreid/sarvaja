@@ -323,10 +323,51 @@ Automate testing and deployment via GitHub Actions.
 
 | # | Item | Priority | Business Value |
 |---|------|----------|----------------|
-| 1 | TypeDB In-House Solution | HIGH | Upsell potential, differentiation |
-| 2 | Replace Agno with Memory MCP | HIGH | Simpler, proven, more powerful |
-| 3 | OctoCode MCP | MEDIUM | Developer productivity |
-| 4 | MCP Workflow Integration | LOW | Nice-to-have |
+| 1 | **Inherit Experience Data Lakes** | HIGH | 114 docs, proven patterns, institutional knowledge |
+| 2 | TypeDB In-House Solution | HIGH | Upsell potential, differentiation |
+| 3 | Replace Agno with Memory MCP | HIGH | Simpler, proven, more powerful |
+| 4 | OctoCode MCP | MEDIUM | Developer productivity |
+| 5 | MCP Workflow Integration | LOW | Nice-to-have |
+
+---
+
+### 17. 🧠 Inherit Experience Data Lakes
+
+**Priority:** HIGH  
+**Effort:** Medium (1-2 days)  
+**Status:** 📋 Not Started  
+**Business Value:** Institutional knowledge, proven patterns, avoid re-learning
+
+#### Data Sources to Inherit
+
+| Source | Location | Docs | Content |
+|--------|----------|------|--------|
+| **claude-mem** | `~/.claude-mem/chroma` | 114 | Governance, sessions, workflows |
+| **angelgai** | `../angelgai/` | ~10 | Crash recovery, MCP stability |
+| **localgai** | `../localgai/` | ~20 | EBMSF, DSM, scripts |
+
+#### Knowledge Categories
+
+```
+governance     - Bicameral model, RACI, sync protocol
+session_*      - Session histories, decisions
+workflow       - DSM, AITV, ceremonies
+mcp_*          - Selection methodology, stability rules
+scripts        - Python utilities (dsm_tracker, memory_audit)
+```
+
+#### Migration Strategy
+
+1. **Phase 1:** Export claude-mem to sim-ai ChromaDB
+2. **Phase 2:** Import governance docs as agent knowledge
+3. **Phase 3:** Migrate scripts to sim-ai/scripts/
+4. **Phase 4:** Update agent instructions with inherited patterns
+
+#### Why This Matters
+- 114 docs = months of learnings
+- EBMSF methodology = proven MCP selection
+- DSM workflow = structured maintenance
+- Governance model = human/AI collaboration
 
 ---
 
