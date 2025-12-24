@@ -62,7 +62,7 @@
 | P3.1 | ✅ DONE | Hybrid query router (TypeDB + ChromaDB) |
 | P3.2 | ✅ DONE | Integration tests for MCP-TypeDB |
 | P3.3 | ✅ DONE | ChromaDB sync bridge (rules, decisions, agents) |
-| P3.4 | 📋 TODO | Update agents to use hybrid layer |
+| P3.4 | ✅ DONE | Agent hybrid layer (HybridVectorDb + playground) |
 | P3.5 | 📋 TODO | Performance benchmarks |
 | P3.6 | 📋 TODO | v1.0 release |
 
