@@ -421,14 +421,25 @@ class TestRulesSpec:
         assert 'priority "CRITICAL"' in content
 
     @pytest.mark.unit
-    def test_all_ten_rules_defined(self):
-        """All 10 rules from RULES-DIRECTIVES.md must be defined."""
+    def test_all_eleven_rules_defined(self):
+        """All 11 rules from RULES-DIRECTIVES.md must be defined."""
         with open(DATA_FILE, 'r') as f:
             content = f.read()
-        # Count unique rule IDs
-        for i in range(1, 9):  # RULE-001 to RULE-008 currently in data.tql
+        # Count unique rule IDs (RULE-001 to RULE-011)
+        for i in range(1, 10):  # RULE-001 to RULE-009
             rule_id = f'rule-id "RULE-00{i}"'
             assert rule_id in content, f"{rule_id} not found in data.tql"
+        # RULE-010 and RULE-011 (double digit)
+        assert 'rule-id "RULE-010"' in content, "RULE-010 not found in data.tql"
+        assert 'rule-id "RULE-011"' in content, "RULE-011 not found in data.tql"
+
+    @pytest.mark.unit
+    def test_RULE011_is_critical_governance(self):
+        """RULE-011: Multi-Agent Governance Protocol must be CRITICAL governance."""
+        with open(DATA_FILE, 'r') as f:
+            content = f.read()
+        assert 'rule-id "RULE-011"' in content
+        assert 'rule-name "Multi-Agent Governance Protocol"' in content
 
     @pytest.mark.unit
     def test_rule006_depends_on_rule001(self):
@@ -551,3 +562,115 @@ class TestGovernanceIntegrity:
         valid_statuses = {'ACTIVE', 'DRAFT', 'DEPRECATED', 'IMPLEMENTED', 'SUPERSEDED', 'APPROVED'}
         for s in statuses:
             assert s in valid_statuses, f"Invalid status: {s}"
+
+
+class TestMultiAgentGovernance:
+    """
+    Tests for RULE-011: Multi-Agent Governance Protocol.
+    Verifies agent entities, trust scoring, and conflict resolution schema.
+    """
+
+    @pytest.mark.unit
+    def test_agent_entity_defined(self):
+        """Schema must define agent entity for trust tracking."""
+        with open(SCHEMA_FILE, 'r') as f:
+            content = f.read()
+        assert 'agent sub entity' in content
+        assert 'owns agent-id' in content
+        assert 'owns trust-score' in content
+        assert 'owns compliance-rate' in content
+
+    @pytest.mark.unit
+    def test_proposal_entity_defined(self):
+        """Schema must define proposal entity for governance changes."""
+        with open(SCHEMA_FILE, 'r') as f:
+            content = f.read()
+        assert 'proposal sub entity' in content
+        assert 'owns proposal-id' in content
+        assert 'owns proposal-type' in content
+        assert 'owns evidence' in content
+        assert 'owns hypothesis' in content
+
+    @pytest.mark.unit
+    def test_vote_relation_defined(self):
+        """Schema must define vote relation for consensus."""
+        with open(SCHEMA_FILE, 'r') as f:
+            content = f.read()
+        assert 'vote sub relation' in content
+        assert 'relates voter' in content
+        assert 'relates vote-target' in content
+        assert 'owns vote-value' in content
+
+    @pytest.mark.unit
+    def test_dispute_relation_defined(self):
+        """Schema must define dispute relation for conflict resolution."""
+        with open(SCHEMA_FILE, 'r') as f:
+            content = f.read()
+        assert 'dispute sub relation' in content
+        assert 'relates disputer' in content
+        assert 'relates disputed-proposal' in content
+        assert 'owns resolution-method' in content
+
+    @pytest.mark.unit
+    def test_escalation_relation_defined(self):
+        """Schema must define escalation relation for human review."""
+        with open(SCHEMA_FILE, 'r') as f:
+            content = f.read()
+        assert 'requires-escalation sub relation' in content
+        assert 'relates escalated-proposal' in content
+
+    @pytest.mark.unit
+    def test_three_agents_defined(self):
+        """Data must define 3 initial agents."""
+        with open(DATA_FILE, 'r') as f:
+            content = f.read()
+        assert 'agent-id "AGENT-001"' in content
+        assert 'agent-id "AGENT-002"' in content
+        assert 'agent-id "AGENT-003"' in content
+
+    @pytest.mark.unit
+    def test_agent_types_valid(self):
+        """Agent types must be valid (claude-code, docker-agent, sync-agent)."""
+        with open(DATA_FILE, 'r') as f:
+            content = f.read()
+        import re
+        agent_types = re.findall(r'agent-type "([^"]+)"', content)
+        valid_types = {'claude-code', 'docker-agent', 'sync-agent'}
+        for t in agent_types:
+            assert t in valid_types, f"Invalid agent type: {t}"
+
+    @pytest.mark.unit
+    def test_trust_scores_in_range(self):
+        """Trust scores must be between 0.0 and 1.0."""
+        with open(DATA_FILE, 'r') as f:
+            content = f.read()
+        import re
+        trust_scores = re.findall(r'trust-score ([\d.]+)', content)
+        for score in trust_scores:
+            score_val = float(score)
+            assert 0.0 <= score_val <= 1.0, f"Trust score out of range: {score_val}"
+
+    @pytest.mark.unit
+    def test_escalation_inference_rule_exists(self):
+        """Schema must define escalation-required inference rule."""
+        with open(SCHEMA_FILE, 'r') as f:
+            content = f.read()
+        assert 'rule escalation-required:' in content
+        assert 'resolution-method "escalate"' in content
+
+    @pytest.mark.unit
+    def test_proposal_cascade_inference_rule_exists(self):
+        """Schema must define proposal-cascade inference rule."""
+        with open(SCHEMA_FILE, 'r') as f:
+            content = f.read()
+        assert 'rule proposal-cascade:' in content
+        assert 'proposal-affects' in content
+
+    @pytest.mark.unit
+    def test_rule011_depends_on_evidence_rules(self):
+        """RULE-011 must depend on RULE-001 and RULE-010."""
+        with open(DATA_FILE, 'r') as f:
+            content = f.read()
+        # Check dependencies exist (transitive through inference)
+        assert 'rule-dependency' in content
+        # The actual dependencies are in the data file

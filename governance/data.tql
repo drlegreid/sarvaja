@@ -1,6 +1,7 @@
 # Sim.ai Governance Data
-# Initial load: 8 rules + 4 decisions
+# Initial load: 11 rules + 4 decisions + 3 agents
 # Created: 2024-12-24
+# Updated: 2024-12-24 (RULE-011) - Added RULE-009/010/011 + agents
 
 insert
 
@@ -80,6 +81,64 @@ $rule008 isa rule-entity,
     has directive "Prefer technologies with tests (rewrite warranty)",
     has created-date 2024-12-24T00:00:00;
 
+$rule009 isa rule-entity,
+    has rule-id "RULE-009",
+    has rule-name "Version Compatibility Protocol",
+    has category "devops",
+    has priority "CRITICAL",
+    has status "ACTIVE",
+    has directive "Pin versions for reproducibility, test migrations before deploying",
+    has created-date 2024-12-24T00:00:00;
+
+$rule010 isa rule-entity,
+    has rule-id "RULE-010",
+    has rule-name "Evidence-Based Wisdom Accumulation",
+    has category "strategic",
+    has priority "CRITICAL",
+    has status "ACTIVE",
+    has directive "All insights stored as testable hypotheses, validated before adoption",
+    has created-date 2024-12-24T00:00:00;
+
+$rule011 isa rule-entity,
+    has rule-id "RULE-011",
+    has rule-name "Multi-Agent Governance Protocol",
+    has category "governance",
+    has priority "CRITICAL",
+    has status "ACTIVE",
+    has directive "Bicameral model: Human oversight + AI execution, MCP manages DB state",
+    has created-date 2024-12-24T00:00:00;
+
+# =============================================================================
+# AGENTS (for multi-agent governance)
+# =============================================================================
+
+$agent_claude isa agent,
+    has agent-id "AGENT-001",
+    has agent-name "Claude Code R&D",
+    has agent-type "claude-code",
+    has trust-score 0.95,
+    has compliance-rate 0.98,
+    has accuracy-rate 0.92,
+    has tenure-days 30;
+
+$agent_docker isa agent,
+    has agent-id "AGENT-002",
+    has agent-name "Docker Production Agent",
+    has agent-type "docker-agent",
+    has trust-score 0.80,
+    has compliance-rate 0.90,
+    has accuracy-rate 0.85,
+    has tenure-days 7;
+
+$agent_sync isa agent,
+    has agent-id "AGENT-003",
+    has agent-name "Sync Protocol Agent",
+    has agent-type "sync-agent",
+    has trust-score 0.75,
+    has compliance-rate 0.85,
+    has accuracy-rate 0.80,
+    has tenure-days 1;
+
 # =============================================================================
 # DECISIONS (DECISION-001 to DECISION-004)
 # =============================================================================
@@ -131,3 +190,10 @@ $dec004 isa decision,
 
 # Decision supersedes
 (superseding: $dec003, superseded: $dec002) isa decision-supersedes;  # TypeDB supersedes Mem0
+
+# Additional rule dependencies (RULE-011)
+(dependent: $rule009, dependency: $rule002) isa rule-dependency;  # Version protocol depends on architecture
+(dependent: $rule010, dependency: $rule001) isa rule-dependency;  # Evidence wisdom depends on session logging
+(dependent: $rule010, dependency: $rule006) isa rule-dependency;  # Evidence wisdom depends on decision logging
+(dependent: $rule011, dependency: $rule001) isa rule-dependency;  # Governance protocol depends on evidence
+(dependent: $rule011, dependency: $rule010) isa rule-dependency;  # Governance protocol depends on evidence-based wisdom

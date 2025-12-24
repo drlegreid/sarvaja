@@ -3,6 +3,7 @@ TypeDB Schema and Data Loader
 Loads governance schema and initial data into TypeDB.
 Created: 2024-12-24 (DECISION-003)
 Updated: 2024-12-24 - Uses typedb-driver 2.29.x API for TypeDB Core 2.29.1 (RULE-009)
+Updated: 2024-12-24 - Added RULE-011 multi-agent governance entities
 """
 import os
 from pathlib import Path
@@ -88,6 +89,10 @@ def verify_load(driver):
             decisions = list(tx.query.get("match $d isa decision; get $d;"))
             print(f"  Decisions loaded: {len(decisions)}")
 
+            # Count agents (RULE-011)
+            agents = list(tx.query.get("match $a isa agent; get $a;"))
+            print(f"  Agents loaded: {len(agents)}")
+
             # Count relationships
             deps = list(tx.query.get("match $rel isa rule-dependency; get $rel;"))
             print(f"  Rule dependencies: {len(deps)}")
@@ -95,7 +100,7 @@ def verify_load(driver):
             affects = list(tx.query.get("match $rel isa decision-affects; get $rel;"))
             print(f"  Decision affects: {len(affects)}")
 
-    return len(rules) == 8 and len(decisions) == 4
+    return len(rules) == 11 and len(decisions) == 4 and len(agents) == 3
 
 
 def test_inference(driver):

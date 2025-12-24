@@ -1,6 +1,7 @@
 # Sim.ai Governance Schema
 # TypeDB schema for rules, decisions, and inference
 # Created: 2024-12-24 (DECISION-003)
+# Updated: 2024-12-24 (RULE-011) - Added multi-agent governance entities
 
 define
 
@@ -19,7 +20,9 @@ rule-entity sub entity,
     plays rule-dependency:dependent,
     plays rule-dependency:dependency,
     plays decision-affects:affected-rule,
-    plays rule-conflict:conflicting-rule;
+    plays rule-conflict:conflicting-rule,
+    plays proposal-affects:affected-rule,   # RULE-011: proposals can affect rules
+    plays agent-action:action-target;       # RULE-011: agents act on rules
 
 decision sub entity,
     owns decision-id,
@@ -47,6 +50,38 @@ gap sub entity,
     owns severity,
     plays gap-requires:requiring-gap,
     plays gap-requires:required-rule;
+
+# =============================================================================
+# MULTI-AGENT GOVERNANCE ENTITIES (RULE-011)
+# =============================================================================
+
+# Agent entity for trust tracking
+agent sub entity,
+    owns agent-id,
+    owns agent-name,
+    owns agent-type,        # "claude-code", "docker-agent", "sync-agent"
+    owns trust-score,       # 0.0 to 1.0
+    owns compliance-rate,   # Historical compliance percentage
+    owns accuracy-rate,     # Decision accuracy
+    owns tenure-days,       # Days active
+    plays proposal:proposer,
+    plays vote:voter,
+    plays dispute:disputer,
+    plays agent-action:acting-agent;
+
+# Proposal for rule changes
+proposal sub entity,
+    owns proposal-id,
+    owns proposal-type,     # "create", "modify", "deprecate"
+    owns proposal-status,   # "pending", "approved", "rejected", "disputed"
+    owns evidence,
+    owns hypothesis,
+    owns proposal-created-at,
+    plays proposal:proposed-change,
+    plays vote:vote-target,
+    plays dispute:disputed-proposal,
+    plays proposal-affects:proposing,
+    plays requires-escalation:escalated-proposal;
 
 # =============================================================================
 # ATTRIBUTE TYPES
@@ -81,6 +116,41 @@ gap-name sub attribute, value string;
 gap-status sub attribute, value string;  # OPEN, RESOLVED, DEFERRED
 severity sub attribute, value string;
 
+# Agent attributes (RULE-011)
+agent-id sub attribute, value string;
+agent-name sub attribute, value string;
+agent-type sub attribute, value string;    # "claude-code", "docker-agent", "sync-agent"
+trust-score sub attribute, value double;   # 0.0 to 1.0
+compliance-rate sub attribute, value double;
+accuracy-rate sub attribute, value double;
+tenure-days sub attribute, value long;
+
+# Proposal attributes (RULE-011)
+proposal-id sub attribute, value string;
+proposal-type sub attribute, value string;    # "create", "modify", "deprecate"
+proposal-status sub attribute, value string;  # "pending", "approved", "rejected", "disputed", "escalated"
+evidence sub attribute, value string;
+hypothesis sub attribute, value string;
+proposal-created-at sub attribute, value datetime;
+
+# Vote attributes (RULE-011)
+vote-value sub attribute, value string;       # "approve", "reject", "abstain"
+vote-reason sub attribute, value string;
+vote-timestamp sub attribute, value datetime;
+vote-weight sub attribute, value double;      # Trust-weighted vote
+
+# Dispute attributes (RULE-011)
+dispute-id sub attribute, value string;
+dispute-reason sub attribute, value string;
+semantic-analysis sub attribute, value string;
+resolution-method sub attribute, value string; # "consensus", "evidence", "authority", "escalate"
+escalation-trigger sub attribute, value string; # "VETO", "STEER", "AMBIGUITY", "DEADLOCK", "CRITICAL"
+
+# Agent action attributes (RULE-011)
+action-type sub attribute, value string;       # "propose", "vote", "dispute", "resolve"
+action-timestamp sub attribute, value datetime;
+action-outcome sub attribute, value string;    # "success", "failure", "pending"
+
 # =============================================================================
 # RELATION TYPES
 # =============================================================================
@@ -113,6 +183,53 @@ gap-requires sub relation,
 # Rules that conflict with each other
 rule-conflict sub relation,
     relates conflicting-rule;
+
+# =============================================================================
+# MULTI-AGENT GOVERNANCE RELATIONS (RULE-011)
+# =============================================================================
+
+# Proposal relation (agent proposes a change)
+proposal sub relation,
+    relates proposer,
+    relates proposed-change;
+
+# Vote on a proposal
+vote sub relation,
+    relates voter,
+    relates vote-target,
+    owns vote-value,
+    owns vote-reason,
+    owns vote-timestamp,
+    owns vote-weight;
+
+# Dispute a proposal
+dispute sub relation,
+    relates disputer,
+    relates disputed-proposal,
+    owns dispute-id,
+    owns dispute-reason,
+    owns semantic-analysis,
+    owns resolution-method,
+    owns escalation-trigger,
+    plays requires-escalation:escalation-reason;
+
+# Proposal affects a rule
+proposal-affects sub relation,
+    relates proposing,
+    relates affected-rule;
+
+# Agent action tracking (for trust scoring)
+agent-action sub relation,
+    relates acting-agent,
+    relates action-target,
+    owns action-type,
+    owns action-timestamp,
+    owns action-outcome;
+
+# Escalation indicator (inferred when human review required)
+requires-escalation sub relation,
+    relates escalated-proposal,
+    relates escalation-reason;
 
 # =============================================================================
 # INFERENCE RULES
@@ -158,3 +275,34 @@ rule priority-conflict:
     } then {
         (conflicting-rule: $r1, conflicting-rule: $r2) isa rule-conflict;
     };
+
+# =============================================================================
+# MULTI-AGENT GOVERNANCE INFERENCE RULES (RULE-011)
+# =============================================================================
+
+# Trust score decay: Low compliance reduces trust
+# NOTE: Trust score computation done externally, this is query-based
+# Formula: Trust = (Compliance × 0.4) + (Accuracy × 0.3) + (Consistency × 0.2) + (Tenure × 0.1)
+
+# Escalation required: Disputed proposals needing human review
+rule escalation-required:
+    when {
+        $d (disputed-proposal: $p, disputer: $a) isa dispute, has resolution-method "escalate";
+        $p isa proposal;
+    } then {
+        (escalated-proposal: $p, escalation-reason: $d) isa requires-escalation;
+    };
+
+# Proposal cascade: When a proposal affects a rule, it affects dependent rules too
+rule proposal-cascade:
+    when {
+        (proposing: $p, affected-rule: $r1) isa proposal-affects;
+        (dependent: $r2, dependency: $r1) isa rule-dependency;
+    } then {
+        (proposing: $p, affected-rule: $r2) isa proposal-affects;
+    };
+
+# Low trust vote weight: Agents with low trust get reduced vote weight
+# NOTE: Vote weight is computed externally based on trust-score
+# Low trust agents (< 0.5) have vote-weight = trust-score
+# High trust agents (>= 0.5) have vote-weight = 1.0
