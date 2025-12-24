@@ -135,6 +135,15 @@ $rule014 isa rule-entity,
     has directive "Prioritize by product strategy, continue until HALT command (STOP|HALT|STAI|RED ALERT|ALERT)",
     has created-date 2024-12-24T00:00:00;
 
+$rule015 isa rule-entity,
+    has rule-id "RULE-015",
+    has rule-name "R&D Workflow with Human Approval Gate",
+    has category "autonomy",
+    has priority "CRITICAL",
+    has status "ACTIVE",
+    has directive "R&D tasks require human approval unless DEEP autonomy mandated; budget flags: LOW/MEDIUM/HIGH/CRITICAL",
+    has created-date 2024-12-24T00:00:00;
+
 # =============================================================================
 # AGENTS (for multi-agent governance)
 # =============================================================================
@@ -232,3 +241,8 @@ $dec004 isa decision,
 (dependent: $rule013, dependency: $rule012) isa rule-dependency;  # Applicability convention supports DSP audits
 (dependent: $rule014, dependency: $rule012) isa rule-dependency;  # Task sequencing integrates with DSP hygiene
 (dependent: $rule014, dependency: $rule008) isa rule-dependency;  # Task sequencing follows strategic priorities
+
+# Rule dependencies (RULE-015)
+(dependent: $rule015, dependency: $rule014) isa rule-dependency;  # R&D workflow extends task sequencing
+(dependent: $rule015, dependency: $rule008) isa rule-dependency;  # R&D uses technology scorecard
+(dependent: $rule015, dependency: $rule010) isa rule-dependency;  # R&D requires evidence-based approach

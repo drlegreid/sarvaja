@@ -91,41 +91,70 @@ All UI/web components MUST be testable via Playwright MCP with heuristics:
 
 ### Directive
 
-Periodically invoke DSP for deliberate technical backlog hygiene.
+Periodically invoke DSP for deliberate technical backlog hygiene with MCP integration.
 
-### DSP Phases
+### DSP Phases (Enhanced)
 
 ```
-AUDIT → HYPOTHESIZE → MEASURE → OPTIMIZE → VALIDATE
+AUDIT → HYPOTHESIZE → MEASURE → OPTIMIZE → VALIDATE → DREAM → REPORT
 ```
 
-| Phase | Purpose | Actions |
-|-------|---------|---------|
-| **AUDIT** | Inventory gaps | Scan TODO.md, TypeDB |
-| **HYPOTHESIZE** | Form improvement theories | Propose changes |
-| **MEASURE** | Quantify current state | Run tests, metrics |
-| **OPTIMIZE** | Apply improvements | Clean backlog |
-| **VALIDATE** | Verify improvements | Full test suite |
+| Phase | Purpose | MCPs Required |
+|-------|---------|---------------|
+| **AUDIT** | Inventory gaps, orphans, loops | claude-mem, TypeDB |
+| **HYPOTHESIZE** | Form improvement theories | sequential-thinking |
+| **MEASURE** | Quantify current state | powershell, llm-sandbox |
+| **OPTIMIZE** | Apply improvements | filesystem, git |
+| **VALIDATE** | Run tests (chunked categories) | pytest, llm-sandbox |
+| **DREAM** | Explore product, discover issues | playwright, docker |
+| **REPORT** | Link to GitHub, close issues | git, octocode |
+
+### MCP Checks (Mandatory)
+
+| Check | MCP | Query |
+|-------|-----|-------|
+| **TypeDB Health** | TypeDB MCP | Port 1729, schema loaded |
+| **Orphan Detection** | TypeDB | Rules/gaps with no references |
+| **Loop Detection** | TypeDB | Circular dependencies |
+| **Memory Dedup** | claude-mem | Similarity > 85% = duplicate |
+| **Index Quality** | TypeDB | Completeness, consistency, freshness |
+
+### Test Evidence (BDD Mode)
+
+```yaml
+test_modes:
+  ci_mode: minimal output, full on fail
+  trace_mode: prestep → action → poststep → substep
+
+test_chunks:
+  unit: 30s timeout, P0
+  integration: 120s, P1
+  bdd: 60s, P1 (Given-When-Then)
+```
 
 ### When to Invoke DSP
 
 | Trigger | Scope | Cadence |
 |---------|-------|---------|
 | **Session End** | Quick audit | Every session (5 min) |
-| **Milestone** | Full backlog hygiene | Weekly (30 min) |
-| **Pre-Release** | Deep technical review | Before releases (2+ hours) |
+| **Milestone** | Full backlog + DREAM | Weekly (30 min) |
+| **Pre-Release** | Deep review + Report | Before releases (2+ hours) |
 
 ### Quick DSP Checklist
 
 - [ ] New gaps added to TODO.md?
 - [ ] Decisions logged in evidence/?
-- [ ] Tests still passing?
+- [ ] Tests still passing (chunked)?
 - [ ] Session log completed?
+- [ ] MCP usage audited?
+- [ ] TypeDB orphans checked?
 
 ### Validation
 - [ ] DSP quick audit at each session end
 - [ ] DSP full audit at each milestone
 - [ ] No stale items > 30 days
+- [ ] GitHub issue linked/closed on commit
+- [ ] All MCP checks passed
 
 ---
 
@@ -183,4 +212,79 @@ Agents MUST autonomously sequence tasks according to product strategy. Continue 
 
 ---
 
-*Per RULE-012: Deep Sleep Protocol*
+## RULE-015: R&D Workflow with Human Approval Gate
+
+**Category:** `autonomy` | **Priority:** CRITICAL | **Status:** ACTIVE (GitHub integration ON HOLD)
+
+### Directive
+
+R&D tasks that may impact budget, architecture, or strategic direction MUST require human approval unless DEEP autonomy is mandated.
+
+### Autonomy Levels
+
+| Level | Trigger | Actions | Approval |
+|-------|---------|---------|----------|
+| **ROUTINE** | Default task | Execute queue | None |
+| **STRATEGIC** | P1 milestone | Execute + log | Post-hoc review |
+| **R&D** | Research needed | Propose + WAIT | **Human required** |
+| **DEEP** | Explicit mandate | Full autonomy | Pre-approved |
+
+### R&D Triggers
+
+Tasks flagged as R&D when they involve:
+- New technology evaluation (RULE-008 scorecard)
+- Architecture changes affecting multiple components
+- External dependency additions
+- Budget-impacting decisions (API costs, subscriptions)
+- Infrastructure changes (new containers, services)
+
+### R&D Gate Protocol
+
+```
+1. Create R&D proposal document
+2. Link to relevant rules (RULE-008, RULE-010)
+3. Estimate effort/risk
+4. PAUSE for human review
+5. On approval: proceed with logging
+6. On reject: archive proposal
+```
+
+### DEEP Autonomy Mandate
+
+When user specifies "DEEP" or grants DEEP autonomy:
+- Time-boxed execution (default: 2 hours)
+- Full evidence collection
+- All decisions logged
+- Report on completion
+
+### Budget Flags
+
+| Level | Criteria | Approval |
+|-------|----------|----------|
+| **LOW** | < 2h effort, no external cost | Auto |
+| **MEDIUM** | 2-8h, potential API costs | Review |
+| **HIGH** | > 8h, infrastructure changes | Human |
+| **CRITICAL** | Procurement/subscription | Executive |
+
+### Integration with DSP
+
+R&D tasks discovered during DSP DREAM phase:
+1. Flag as R&D in TODO.md
+2. Create proposal in docs/proposals/
+3. ~~Link to GitHub issue~~ **ON HOLD** (budget concern)
+4. Wait for human approval (via chat/session)
+5. On approval: add to task queue
+
+> **DEFERRED:** GitHub issue automation with before/after evidence, pros/cons analysis.
+> Reason: Budget uncertainty until next period. Manual approval via session continues.
+
+### Validation
+- [ ] R&D tasks properly flagged
+- [ ] Proposals created before execution
+- [ ] Budget impact assessed
+- [ ] Human approval for non-DEEP R&D
+- [ ] Evidence collected for DEEP sessions
+
+---
+
+*Per RULE-014: Autonomous Task Sequencing + RULE-012: DSP*

@@ -1,6 +1,6 @@
 # Sim.ai Rules Directives - Index
 
-**Status:** Active | **Updated:** 2024-12-24 | **Rules:** 14 (13 ACTIVE, 1 DRAFT)
+**Status:** Active | **Updated:** 2024-12-24 | **Rules:** 15 (14 ACTIVE, 1 DRAFT)
 
 ---
 
@@ -10,7 +10,7 @@
 |----------|---------|-------|
 | [RULES-GOVERNANCE](rules/RULES-GOVERNANCE.md) | Process, documentation, collaboration | 001, 003, 006, 011, 013 |
 | [RULES-TECHNICAL](rules/RULES-TECHNICAL.md) | Architecture, technology, tooling | 002, 007, 008, 009, 010 |
-| [RULES-OPERATIONAL](rules/RULES-OPERATIONAL.md) | Testing, stability, maintenance, execution | 004, 005, 012, 014 |
+| [RULES-OPERATIONAL](rules/RULES-OPERATIONAL.md) | Testing, stability, maintenance, execution | 004, 005, 012, 014, 015 |
 
 ---
 
@@ -32,6 +32,7 @@
 | RULE-012 | Deep Sleep Protocol (DSP) | maintenance | HIGH | ACTIVE |
 | RULE-013 | Rules Applicability Convention | governance | HIGH | ACTIVE |
 | RULE-014 | Autonomous Task Sequencing | autonomy | CRITICAL | ACTIVE |
+| RULE-015 | R&D Workflow Human Gate | autonomy | CRITICAL | ACTIVE |
 
 ---
 
@@ -41,7 +42,7 @@
 |----------|----------|-------|
 | `governance` | CRITICAL | 001, 003, 006, 011, 013 |
 | `strategic` | CRITICAL | 008, 010 |
-| `autonomy` | CRITICAL | 014 |
+| `autonomy` | CRITICAL | 014, 015 |
 | `architecture` | HIGH | 002 |
 | `devops` | CRITICAL | 009 |
 | `productivity` | HIGH | 007 |
@@ -55,7 +56,7 @@
 
 | Level | Meaning | Rules |
 |-------|---------|-------|
-| **CRITICAL** | Must enforce always | 001, 008, 009, 010, 011, 014 |
+| **CRITICAL** | Must enforce always | 001, 008, 009, 010, 011, 014, 015 |
 | **HIGH** | Enforce in normal ops | 002, 003, 004, 005, 007, 012, 013 |
 | **MEDIUM** | Advisory | 006 |
 
@@ -111,6 +112,7 @@ Rules are enforced via:
 | 0.9.0 | 2024-12-24 | Added RULE-008 to RULE-011 |
 | 0.12.0 | 2024-12-24 | Added RULE-012 to RULE-014 |
 | 1.0.0 | 2024-12-24 | Split into modular files |
+| 1.1.0 | 2024-12-24 | Added RULE-015: R&D Workflow, Enhanced RULE-012 with MCP checks |
 
 ---
 
