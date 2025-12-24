@@ -80,8 +80,9 @@ def create_chromadb_knowledge() -> Optional[Knowledge]:
         http_client.heartbeat()
         
         # Create Agno ChromaDb wrapper
+        # Use sim_ai_knowledge collection (53 docs migrated from claude-mem)
         vector_db = ChromaDb(
-            collection="sim_ai_rules",
+            collection="sim_ai_knowledge",
         )
         
         # Inject HttpClient directly (bypass default ephemeral client)
