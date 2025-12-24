@@ -66,7 +66,8 @@ LiteLLM (4000) → Ollama (11434) → ChromaDB (8001) → Agents (7777)
 ### Deliverables
 - [x] Export claude-mem -> sim-ai ChromaDB (53 high-value docs)
 - [x] Migration script: `scripts/migrate_claude_mem.py`
-- [ ] Import governance docs as agent knowledge
+- [x] Session dump workflow: `scripts/session_dump.py`
+- [x] Agent configured to use sim_ai_knowledge collection
 - [ ] Migrate scripts (dsm_tracker, memory_audit)
 - [ ] Update agent instructions with inherited patterns
 - [ ] Build custom session/memory UI
