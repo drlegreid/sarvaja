@@ -451,12 +451,23 @@ Build in-house TypeDB-based rules engine with:
 - Type-safe integrations (Haskell client)
 - On-premise deployment (no cloud dependency)
 
-#### Phase Plan
-1. **Phase 1:** Prototype TypeDB rules schema
-2. **Phase 2:** Build inference rules for governance
-3. **Phase 3:** Haskell client integration (type-safe)
-4. **Phase 4:** Migration path from ChromaDB
-5. **Phase 5:** Enterprise packaging for upsell
+#### Phase Plan (USER DECISION 2024-12-24)
+
+**Phase 1: Vanilla TypeDB**
+1. Deploy vanilla TypeDB locally
+2. Prototype rules schema
+3. Build inference rules for governance
+4. Test with sim-ai knowledge base
+5. Validate inference + type safety benefits
+
+**Phase 2: Performance Rewrite**
+1. Evaluate rewrite in: **Haskell**, **Go**, or **Rust**
+2. Keep TypeDB schema/query language
+3. Optimize for:
+   - Local-first deployment
+   - Memory efficiency
+   - Enterprise performance
+4. Migration path from vanilla TypeDB
 
 ---
 
