@@ -1,0 +1,15 @@
+{
+  "editor.formatOnSave": true,
+  "python.defaultInterpreterPath": ".venv/Scripts/python.exe",
+  "python.formatting.provider": "black",
+  "files.exclude": {
+    "**/__pycache__": true,
+    "**/.pytest_cache": true,
+    "**/*.pyc": true
+  },
+  "editor.rulers": [88, 120],
+  "files.associations": {
+    "*.md": "markdown",
+    "docker-compose*.yml": "dockercompose"
+  }
+}
