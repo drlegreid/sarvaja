@@ -79,6 +79,27 @@ services:
       timeout: 10s
       retries: 3
 
+  # TypeDB - Graph database with inference engine (DECISION-003: 2024-12-24)
+  # Provides: rule inference, type safety, knowledge reasoning
+  # Architecture: Hybrid with ChromaDB (semantic search + inference)
+  typedb:
+    image: vaticle/typedb:latest
+    profiles: ["cpu", "full"]
+    ports:
+      - "1729:1729"
+    volumes:
+      - typedb_data:/opt/typedb-all-linux-x86_64/server/data
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+    healthcheck:
+      test: ["CMD-SHELL", "echo > /dev/tcp/localhost/1729 || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
   # =============================================================================
   # AGENT LAYER
   # =============================================================================
@@ -127,6 +148,7 @@ services:
 volumes:
   ollama_data:
   chromadb_data:
+  typedb_data:
 
 # =============================================================================
 # NETWORKS

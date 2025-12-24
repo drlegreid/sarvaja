@@ -1,0 +1,133 @@
+# Sim.ai Governance Data
+# Initial load: 8 rules + 4 decisions
+# Created: 2024-12-24
+
+insert
+
+# =============================================================================
+# RULES (RULE-001 to RULE-008)
+# =============================================================================
+
+$rule001 isa rule-entity,
+    has rule-id "RULE-001",
+    has rule-name "Session Evidence Logging",
+    has category "governance",
+    has priority "CRITICAL",
+    has status "ACTIVE",
+    has directive "Every session MUST create evidence log in ./docs/SESSION-{date}-{topic}.md",
+    has created-date 2024-12-24T00:00:00;
+
+$rule002 isa rule-entity,
+    has rule-id "RULE-002",
+    has rule-name "Architectural Best Practices",
+    has category "architecture",
+    has priority "HIGH",
+    has status "ACTIVE",
+    has directive "Code reviews required, no hardcoded secrets in commits",
+    has created-date 2024-12-24T00:00:00;
+
+$rule003 isa rule-entity,
+    has rule-id "RULE-003",
+    has rule-name "Sync Protocol",
+    has category "governance",
+    has priority "HIGH",
+    has status "DRAFT",
+    has directive "Sync agent for skills/sessions synchronization",
+    has created-date 2024-12-24T00:00:00;
+
+$rule004 isa rule-entity,
+    has rule-id "RULE-004",
+    has rule-name "Exploratory Test Automation",
+    has category "testing",
+    has priority "HIGH",
+    has status "ACTIVE",
+    has directive "Use Playwright MCP with heuristics for exploratory testing",
+    has created-date 2024-12-24T00:00:00;
+
+$rule005 isa rule-entity,
+    has rule-id "RULE-005",
+    has rule-name "Memory and MCP Stability",
+    has category "stability",
+    has priority "HIGH",
+    has status "ACTIVE",
+    has directive "Memory thresholds monitored, MCP tiers respected",
+    has created-date 2024-12-24T00:00:00;
+
+$rule006 isa rule-entity,
+    has rule-id "RULE-006",
+    has rule-name "Decision Logging",
+    has category "governance",
+    has priority "MEDIUM",
+    has status "ACTIVE",
+    has directive "Log decisions in evidence/SESSION-DECISIONS-*.md",
+    has created-date 2024-12-24T00:00:00;
+
+$rule007 isa rule-entity,
+    has rule-id "RULE-007",
+    has rule-name "MCP Usage Protocol",
+    has category "productivity",
+    has priority "HIGH",
+    has status "ACTIVE",
+    has directive "Sessions MUST actively leverage available MCPs",
+    has created-date 2024-12-24T00:00:00;
+
+$rule008 isa rule-entity,
+    has rule-id "RULE-008",
+    has rule-name "In-House Rewrite Principle",
+    has category "strategic",
+    has priority "CRITICAL",
+    has status "ACTIVE",
+    has directive "Prefer technologies with tests (rewrite warranty)",
+    has created-date 2024-12-24T00:00:00;
+
+# =============================================================================
+# DECISIONS (DECISION-001 to DECISION-004)
+# =============================================================================
+
+$dec001 isa decision,
+    has decision-id "DECISION-001",
+    has decision-name "Remove Opik from Stack",
+    has context "Evaluating if 8-service Opik is justified",
+    has rationale "Overkill for current needs, not connected to workflow",
+    has decision-status "IMPLEMENTED",
+    has decision-date 2024-12-24T00:00:00;
+
+$dec002 isa decision,
+    has decision-id "DECISION-002",
+    has decision-name "Mem0 Knowledge Governance",
+    has context "MCPs configured but not actively used",
+    has rationale "Superseded by TypeDB approach",
+    has decision-status "SUPERSEDED",
+    has decision-date 2024-12-24T00:00:00;
+
+$dec003 isa decision,
+    has decision-id "DECISION-003",
+    has decision-name "TypeDB Priority Elevation",
+    has context "Strategic R&D reassessment",
+    has rationale "Inference and reasoning over vector storage",
+    has decision-status "APPROVED",
+    has decision-date 2024-12-24T00:00:00;
+
+$dec004 isa decision,
+    has decision-id "DECISION-004",
+    has decision-name "No Enterprise Lockdown",
+    has context "Evaluated Claude enterprise vs open-source",
+    has rationale "Build incrementally on own stack, avoid vendor lock-in",
+    has decision-status "APPROVED",
+    has decision-date 2024-12-24T00:00:00;
+
+# =============================================================================
+# RELATIONSHIPS
+# =============================================================================
+
+# Rule dependencies
+(dependent: $rule006, dependency: $rule001) isa rule-dependency;  # Decision logging depends on session evidence
+(dependent: $rule007, dependency: $rule005) isa rule-dependency;  # MCP usage depends on stability
+
+# Decision affects rules
+(affecting-decision: $dec001, affected-rule: $rule005) isa decision-affects;  # Removing Opik affects stability
+(affecting-decision: $dec003, affected-rule: $rule008) isa decision-affects;  # TypeDB decision influenced by rewrite principle
+(affecting-decision: $dec004, affected-rule: $rule008) isa decision-affects;  # No lockdown enforces rewrite principle
+
+# Decision supersedes
+(superseding: $dec003, superseded: $dec002) isa decision-supersedes;  # TypeDB supersedes Mem0

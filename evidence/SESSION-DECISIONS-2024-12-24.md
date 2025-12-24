@@ -36,6 +36,7 @@
 | **DECISION-001: Remove Opik** | ✅ IMPLEMENTED | docker-compose.yml updated |
 | **DECISION-002: Mem0 + Ollama** | ⚠️ SUPERSEDED | Validated but deprioritized |
 | **DECISION-003: TypeDB Elevation** | ✅ APPROVED | Reasoning > vector storage |
+| **DECISION-004: No Enterprise Lockdown** | ✅ APPROVED | Build on own stack |
 | Fix GAP-001 ChromaDB | ✅ RESOLVED | Inject HttpClient into `_client` |
 | Fix GAP-002 Opik config | ✅ RESOLVED | OPIK_URL_OVERRIDE (now removed) |
 | TypeDB for upsell | ✅ ELEVATED | Now Phase 2 priority |
@@ -151,6 +152,67 @@
 - [ ] At least one inference rule working
 - [ ] Query: "find all rules that conflict" returns results
 - [ ] Performance acceptable for dev use
+
+**Status:** APPROVED
+
+---
+
+## DECISION-004: No Enterprise Lockdown
+
+**Date:** 2024-12-24
+**Context:** Evaluated Claude enterprise/lockdown vs open-source approach for governance UI
+
+**Research Performed:**
+Web search + analysis of open-source Claude Code UI alternatives:
+- Claudia GUI (YC startup) - Claude Code GUI wrapper
+- Claude Code UI - Remote session management
+- Opcode - GUI toolkit
+- Minion Skills - Skills implementation
+- SuperClaude Framework - Config framework with commands/personas
+
+**Critical Analysis:**
+
+| Project | Focus | Alignment with Vision |
+|---------|-------|----------------------|
+| Claudia GUI | UI wrapper | ❌ UI only, no governance layer |
+| Claude Code UI | Session mgmt | ❌ Session UI, not governance |
+| Opcode | Convenience | ❌ Wrapper only |
+| Minion Skills | Skills | ⚠️ Skills only, no inference |
+| SuperClaude | Config | ⚠️ No TypeDB integration |
+
+**Options Considered:**
+1. **Claude Enterprise/Lockdown** - Use official enterprise tooling
+   - Pros: Official support, enterprise features
+   - Cons: Vendor dependency, violates RULE-008
+2. **Adopt Open-Source UI** - Use Claudia/Opcode/etc.
+   - Pros: Community support, open source
+   - Cons: None match our vision (governance + inference)
+3. **Build Incrementally** - Extend our stack with TypeDB + minimal UI
+   - Pros: Full control, aligned with vision, rewrite warranty
+   - Cons: Development effort
+
+**Decision:** Option 3 - Build incrementally on our stack
+
+**Rationale:**
+1. Enterprise lockdown = vendor dependency (violates RULE-008)
+2. No existing open-source tool matches our unique vision
+3. Our differentiator: Private cluster + TypeDB inference + Cloud→Local transfer
+4. Cherry-pick patterns from open-source (skill format, command structure)
+
+**Strategic Path:**
+```
+Current:  Claude Code + MCPs → Our Stack (Agno/LiteLLM/ChromaDB)
+     ↓
+Phase 1:  Add TypeDB for rules inference (DECISION-003)
+     ↓
+Phase 2:  Build minimal governance UI (evidence browser, rule viewer)
+     ↓
+Phase 3:  Cloud→Local transfer validation
+```
+
+**Cherry-Pick from Open-Source:**
+- Minion Skills → Skill patterns reference
+- SuperClaude → Command/persona structure inspiration
 
 **Status:** APPROVED
 

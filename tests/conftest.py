@@ -12,6 +12,8 @@ CHROMADB_URL = os.getenv("CHROMADB_URL", "http://localhost:8001")
 OLLAMA_URL = os.getenv("OLLAMA_URL", "http://localhost:11434")
 AGENTS_URL = os.getenv("AGENTS_URL", "http://localhost:7777")
 OPIK_URL = os.getenv("OPIK_URL", "http://localhost:5173")
+TYPEDB_HOST = os.getenv("TYPEDB_HOST", "localhost")
+TYPEDB_PORT = int(os.getenv("TYPEDB_PORT", "1729"))
 LITELLM_API_KEY = os.getenv("LITELLM_MASTER_KEY", "sk-litellm-dev-key")
 
 
@@ -45,6 +47,12 @@ def agents_client(http_client: httpx.Client):
 def opik_client(http_client: httpx.Client):
     """Opik API client."""
     return {"client": http_client, "base_url": OPIK_URL}
+
+
+@pytest.fixture
+def typedb_config():
+    """TypeDB connection config."""
+    return {"host": TYPEDB_HOST, "port": TYPEDB_PORT}
 
 
 def pytest_configure(config):

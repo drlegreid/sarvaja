@@ -1,0 +1,159 @@
+# Sim.ai Governance Schema
+# TypeDB schema for rules, decisions, and inference
+# Created: 2024-12-24 (DECISION-003)
+
+define
+
+# =============================================================================
+# ENTITY TYPES
+# =============================================================================
+
+rule-entity sub entity,
+    owns rule-id,
+    owns rule-name,
+    owns category,
+    owns priority,
+    owns status,
+    owns directive,
+    owns created-date,
+    plays rule-dependency:dependent,
+    plays rule-dependency:dependency,
+    plays decision-affects:affected-rule,
+    plays rule-conflict:conflicting-rule;
+
+decision sub entity,
+    owns decision-id,
+    owns decision-name,
+    owns context,
+    owns rationale,
+    owns decision-status,
+    owns decision-date,
+    plays decision-affects:affecting-decision,
+    plays decision-supersedes:superseding,
+    plays decision-supersedes:superseded;
+
+task sub entity,
+    owns task-id,
+    owns task-name,
+    owns task-status,
+    owns phase,
+    plays task-blocked:blocked-task,
+    plays task-blocked:blocking-rule;
+
+gap sub entity,
+    owns gap-id,
+    owns gap-name,
+    owns gap-status,
+    owns severity,
+    plays gap-requires:requiring-gap,
+    plays gap-requires:required-rule;
+
+# =============================================================================
+# ATTRIBUTE TYPES
+# =============================================================================
+
+# Rule attributes
+rule-id sub attribute, value string;
+rule-name sub attribute, value string;
+category sub attribute, value string;  # governance, architecture, testing, etc.
+priority sub attribute, value string;  # CRITICAL, HIGH, MEDIUM, LOW
+status sub attribute, value string;    # ACTIVE, DRAFT, DEPRECATED
+directive sub attribute, value string;
+created-date sub attribute, value datetime;
+
+# Decision attributes
+decision-id sub attribute, value string;
+decision-name sub attribute, value string;
+context sub attribute, value string;
+rationale sub attribute, value string;
+decision-status sub attribute, value string;  # APPROVED, PENDING, SUPERSEDED
+decision-date sub attribute, value datetime;
+
+# Task attributes
+task-id sub attribute, value string;
+task-name sub attribute, value string;
+task-status sub attribute, value string;  # TODO, IN_PROGRESS, DONE, BLOCKED
+phase sub attribute, value string;
+
+# Gap attributes
+gap-id sub attribute, value string;
+gap-name sub attribute, value string;
+gap-status sub attribute, value string;  # OPEN, RESOLVED, DEFERRED
+severity sub attribute, value string;
+
+# =============================================================================
+# RELATION TYPES
+# =============================================================================
+
+# Rule A depends on Rule B
+rule-dependency sub relation,
+    relates dependent,
+    relates dependency;
+
+# Decision affects Rule
+decision-affects sub relation,
+    relates affecting-decision,
+    relates affected-rule;
+
+# Decision supersedes another Decision
+decision-supersedes sub relation,
+    relates superseding,
+    relates superseded;
+
+# Task is blocked by Rule
+task-blocked sub relation,
+    relates blocked-task,
+    relates blocking-rule;
+
+# Gap requires Rule to be resolved
+gap-requires sub relation,
+    relates requiring-gap,
+    relates required-rule;
+
+# Rules that conflict with each other
+rule-conflict sub relation,
+    relates conflicting-rule;
+
+# =============================================================================
+# INFERENCE RULES
+# =============================================================================
+
+# Transitive rule dependency: if A depends on B and B depends on C, then A depends on C
+rule transitive-dependency:
+    when {
+        (dependent: $a, dependency: $b) isa rule-dependency;
+        (dependent: $b, dependency: $c) isa rule-dependency;
+    } then {
+        (dependent: $a, dependency: $c) isa rule-dependency;
+    };
+
+# Blocked task inference: if a task depends on a rule that is not ACTIVE, task is blocked
+rule infer-blocked-task:
+    when {
+        $task isa task, has task-status "TODO";
+        $rule isa rule-entity, has status $s;
+        not { $s = "ACTIVE"; };
+        (blocked-task: $task, blocking-rule: $rule) isa task-blocked;
+    } then {
+        $task has task-status "BLOCKED";
+    };
+
+# Cascade superseded: if decision A supersedes B, and B affects rule R, A now affects R
+rule cascade-supersede:
+    when {
+        (superseding: $a, superseded: $b) isa decision-supersedes;
+        (affecting-decision: $b, affected-rule: $r) isa decision-affects;
+    } then {
+        (affecting-decision: $a, affected-rule: $r) isa decision-affects;
+    };
+
+# Priority conflict: if two active rules in same category have different priorities
+rule priority-conflict:
+    when {
+        $r1 isa rule-entity, has category $c, has priority $p1, has status "ACTIVE";
+        $r2 isa rule-entity, has category $c, has priority $p2, has status "ACTIVE";
+        not { $r1 is $r2; };
+        not { $p1 = $p2; };
+    } then {
+        (conflicting-rule: $r1, conflicting-rule: $r2) isa rule-conflict;
+    };

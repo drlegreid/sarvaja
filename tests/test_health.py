@@ -97,9 +97,31 @@ class TestServiceHealth:
         """Test Opik UI is healthy."""
         client = opik_client["client"]
         base_url = opik_client["base_url"]
-        
+
         try:
             response = client.get(base_url)
             assert response.status_code == 200, f"Opik unhealthy: {response.text}"
         except httpx.ConnectError:
             pytest.skip("Opik not running - start with: cd opik && ./opik.sh")
+
+    @pytest.mark.integration
+    def test_typedb_health(self, typedb_config):
+        """Test TypeDB is healthy (DECISION-003).
+
+        TypeDB doesn't have HTTP health endpoint, so we check socket connectivity.
+        """
+        import socket
+
+        host = typedb_config["host"]
+        port = typedb_config["port"]
+
+        try:
+            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            sock.settimeout(5)
+            result = sock.connect_ex((host, port))
+            sock.close()
+
+            if result != 0:
+                pytest.skip(f"TypeDB not running on {host}:{port}")
+        except socket.error as e:
+            pytest.skip(f"TypeDB connection failed: {e}")
