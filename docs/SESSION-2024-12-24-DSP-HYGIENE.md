@@ -11,10 +11,10 @@
 ```yaml
 session_id: DSP-2024-12-24-HYGIENE
 type: deep_sleep_protocol
-phase: OPTIMIZE
-rules_applied: [RULE-012, RULE-013, RULE-014]
-mcps_used: [claude-mem, git, filesystem]
-commits: [cbb3198, 0ceeaf6]
+phase: VALIDATE
+rules_applied: [RULE-004, RULE-012, RULE-013, RULE-014, RULE-015]
+mcps_used: [claude-mem, git, filesystem, powershell]
+commits: [cbb3198, 0ceeaf6, 113c18a, 4388c51]
 tests_passed: 5
 tests_skipped: 10
 ```
@@ -49,10 +49,12 @@ tests_skipped: 10
 | docs/rules/RULES-TECHNICAL.md | Rules 002,007,008,009,010 |
 | docs/rules/RULES-OPERATIONAL.md | Rules 004,005,012,014 |
 
-### Rules Added
+### Rules Added/Enhanced
 
 - **RULE-014**: Autonomous Task Sequencing (halt commands)
-- Dependencies: RULE-012 (DSP), RULE-008 (strategic priorities)
+- **RULE-015**: R&D Workflow with Human Approval Gate (GitHub ON HOLD)
+- **RULE-004**: Enhanced with domain heuristics (UI/API/Shell/Docker/Safety) + executable spec
+- Dependencies: RULE-012 (DSP), RULE-008 (strategic priorities), RULE-010 (DevOps wisdom)
 
 ---
 
@@ -61,6 +63,8 @@ tests_skipped: 10
 ### Commits
 - `cbb3198`: DSP(RULE-012): Split large docs to reduce entropy
 - `0ceeaf6`: DSP(RULE-012): Update CLAUDE.md document map
+- `113c18a`: DSP(RULE-012): Enhanced protocol + RULE-015 R&D workflow
+- `4388c51`: DSP(RULE-004): Enhanced exploratory testing with executable spec
 
 ### Test Results
 ```
