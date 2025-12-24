@@ -324,10 +324,57 @@ Automate testing and deployment via GitHub Actions.
 | # | Item | Priority | Business Value |
 |---|------|----------|----------------|
 | 1 | **Inherit Experience Data Lakes** | HIGH | 114 docs, proven patterns, institutional knowledge |
-| 2 | TypeDB In-House Solution | HIGH | Upsell potential, differentiation |
-| 3 | Replace Agno with Memory MCP | HIGH | Simpler, proven, more powerful |
-| 4 | OctoCode MCP | MEDIUM | Developer productivity |
-| 5 | MCP Workflow Integration | LOW | Nice-to-have |
+| 2 | **Session Data Dump Workflow** | HIGH | Preserve learnings, enable continuity |
+| 3 | TypeDB In-House Solution | HIGH | Upsell potential, differentiation |
+| 4 | Replace Agno with Memory MCP | HIGH | Simpler, proven, more powerful |
+| 5 | OctoCode MCP | MEDIUM | Developer productivity |
+| 6 | MCP Workflow Integration | LOW | Nice-to-have |
+
+---
+
+### 18. 💾 Session Data Dump Workflow
+
+**Priority:** HIGH  
+**Effort:** Medium (1 day)  
+**Status:** 📋 Not Started  
+**Business Value:** Preserve learnings, enable session continuity
+
+#### Objective
+Create automated workflow to dump session data for future use.
+
+#### What to Dump
+| Data | Source | Format |
+|------|--------|--------|
+| Session decisions | `evidence/SESSION-DECISIONS-*.md` | Markdown |
+| Gaps discovered | `TODO.md#gap-index` | JSON export |
+| Rules created | `docs/RULES-DIRECTIVES.md` | Markdown |
+| Memories | Cascade memory system | JSON export |
+| ChromaDB docs | `sim-ai ChromaDB` | JSON + embeddings |
+
+#### Workflow Integration
+```
+Session End → Trigger dump → Export to:
+  1. evidence/SESSION-DUMP-{date}.json
+  2. GitHub commit
+  3. Optional: claude-mem sync
+```
+
+#### Script Design
+```python
+# scripts/session_dump.py
+def dump_session():
+    export_decisions()      # evidence/*.md
+    export_gaps()           # TODO.md gaps as JSON
+    export_chromadb()       # Vector store snapshot
+    export_memories()       # Cascade memories
+    commit_to_git()         # Auto-commit
+```
+
+#### Success Criteria
+- [ ] One-command session dump
+- [ ] JSON export for programmatic access
+- [ ] Git commit with dump
+- [ ] Can restore session context from dump
 
 ---
 
