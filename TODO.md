@@ -330,6 +330,9 @@ Automate testing and deployment via GitHub Actions.
 | 5 | Replace Agno with Memory MCP | HIGH | Simpler, proven, more powerful |
 | 6 | OctoCode MCP | MEDIUM | Developer productivity |
 | 7 | MCP Workflow Integration | LOW | Nice-to-have |
+| 8 | **Mem0 / OpenMemory MCP** | HIGH | Local-first memory layer, vector-backed, MCP native |
+| 9 | **AnythingLLM** | MEDIUM | All-in-one AI app, local LLMs, document RAG |
+| 10 | **Awesome MCP Memory Servers** | RESEARCH | Curated alternatives: Arc Memory, CogniGraph, Obsidian MCP |
 
 ---
 
@@ -601,6 +604,78 @@ MCPs are tested/verified but NOT actively used in workflow.
 - [ ] Create workflow triggers for MCP usage
 - [ ] Add MCP usage to RULE-004/005
 - [ ] Practice using MCPs in actual work
+
+---
+
+### 19. 🧠 Mem0 / OpenMemory MCP
+
+**Priority:** HIGH  
+**Effort:** Medium (1-2 days)  
+**Status:** 📋 RESEARCH  
+**Source:** https://mem0.ai/blog/how-to-make-your-clients-more-context-aware-with-openmemory-mcp
+
+#### What It Is
+Private, local memory layer for MCP clients with vector-backed storage. Works with Cursor, Claude Desktop, and other MCP-compatible tools.
+
+#### Key Features
+- Local-first (data stays on your machine)
+- Vector storage for semantic search
+- MCP protocol native
+- Dashboard UI included
+- Cross-session memory persistence
+
+#### Evaluation Criteria
+- [ ] Compare with our ChromaDB + custom UI approach
+- [ ] Test local deployment
+- [ ] Assess MCP integration complexity
+- [ ] Check if it can replace Agno ChromaDb hack
+
+---
+
+### 20. 🤖 AnythingLLM
+
+**Priority:** MEDIUM  
+**Effort:** Low (exploration)  
+**Status:** 📋 RESEARCH  
+**Source:** https://anythingllm.com | https://github.com/Mintplex-Labs/anything-llm
+
+#### What It Is
+All-in-one AI application for document chat, local LLM hosting, and RAG.
+
+#### Key Features
+- Desktop app (free)
+- Use any LLM (local or API)
+- Document RAG built-in
+- Privacy-focused
+- No technical setup required
+
+#### Evaluation Criteria
+- [ ] Compare with our LiteLLM + Agents stack
+- [ ] Test document ingestion workflow
+- [ ] Assess if it replaces or complements our stack
+
+---
+
+### 21. 📚 Awesome MCP Memory Servers
+
+**Priority:** RESEARCH  
+**Effort:** Low (survey)  
+**Status:** 📋 RESEARCH  
+**Source:** https://github.com/TensorBlock/awesome-mcp-servers/blob/main/docs/knowledge-management--memory.md
+
+#### Notable Projects
+| Project | Description |
+|---------|-------------|
+| **Arc Memory** | Temporal knowledge graph for AI dev |
+| **CogniGraph** | Mind maps + knowledge graphs |
+| **mcp-obsidian** | Obsidian vault integration |
+| **mcp-memory-bank** | Structured docs for context preservation |
+| **mem0 integration** | Long-term memory via Mem0 |
+
+#### Actions
+- [ ] Survey top 5 projects
+- [ ] Identify best fit for sim-ai use case
+- [ ] Consider Arc Memory for TypeDB alternative
 
 ---
 
