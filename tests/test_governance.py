@@ -703,7 +703,7 @@ class TestGovernanceBDD:
         # Verify proposal workflow is supported
         assert 'proposal sub entity' in schema
         assert 'proposal-status' in schema
-        assert 'plays proposal:proposer' in schema  # agent can propose
+        assert 'plays proposes:proposer' in schema  # agent can propose
 
     @pytest.mark.unit
     def test_given_proposal_when_affects_rule_then_cascade_to_dependents(self):

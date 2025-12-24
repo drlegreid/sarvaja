@@ -64,7 +64,7 @@ agent sub entity,
     owns compliance-rate,   # Historical compliance percentage
     owns accuracy-rate,     # Decision accuracy
     owns tenure-days,       # Days active
-    plays proposal:proposer,
+    plays proposes:proposer,
     plays vote:voter,
     plays dispute:disputer,
     plays agent-action:acting-agent;
@@ -77,7 +77,7 @@ proposal sub entity,
     owns evidence,
     owns hypothesis,
     owns proposal-created-at,
-    plays proposal:proposed-change,
+    plays proposes:proposed-change,
     plays vote:vote-target,
     plays dispute:disputed-proposal,
     plays proposal-affects:proposing,
@@ -188,8 +188,8 @@ rule-conflict sub relation,
 # MULTI-AGENT GOVERNANCE RELATIONS (RULE-011)
 # =============================================================================
 
-# Proposal relation (agent proposes a change)
-proposal sub relation,
+# Proposes relation (agent proposes a change)
+proposes sub relation,
     relates proposer,
     relates proposed-change;
 
