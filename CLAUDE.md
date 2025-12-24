@@ -6,6 +6,28 @@
 - **Repo**: https://github.com/drlegreid/platform-gai
 - **Updated**: 2024-12-24
 
+## 🗺️ Document Map (LLM Entry Point)
+
+| Need | Document | Lines |
+|------|----------|-------|
+| **Tasks & Gaps** | [`TODO.md`](TODO.md) | ~400 |
+| **Rules** | [`docs/RULES-DIRECTIVES.md`](docs/RULES-DIRECTIVES.md) | ~300 |
+| **Workflows** | [`.windsurf/workflows.md`](.windsurf/workflows.md) | ~260 |
+| **Deployment** | [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md) | ~130 |
+| **Architecture** | [`README.md`](README.md) | ~160 |
+
+### Cross-Reference Index
+```
+RULE-001 → docs/RULES-DIRECTIVES.md#rule-001
+RULE-002 → docs/RULES-DIRECTIVES.md#rule-002  
+RULE-003 → docs/RULES-DIRECTIVES.md#rule-003
+RULE-004 → docs/RULES-DIRECTIVES.md#rule-004
+RULE-005 → docs/RULES-DIRECTIVES.md#rule-005
+GAP-*    → TODO.md#gap-index-summary
+R&D-*    → TODO.md#rd-backlog
+Workflow → .windsurf/workflows.md
+```
+
 ## Architecture
 ```
 ┌─────────────────────────────────────────────────────────────┐
@@ -17,7 +39,7 @@
 └─────────────────────────────────────────────────────────────┘
 ```
 
-## Core Rules (4 Active)
+## Core Rules (5 Active)
 
 | Rule | Directive | Enforcement |
 |------|-----------|-------------|
@@ -25,6 +47,9 @@
 | **RULE-002** | Architectural Best Practices | Code review, no hardcoded secrets |
 | **RULE-003** | Sync Protocol (DRAFT) | Sync agent for skills/sessions |
 | **RULE-004** | Exploratory Testing | Playwright MCP with heuristics |
+| **RULE-005** | Memory & MCP Stability | Memory thresholds, MCP tiers |
+
+> **Full rules:** [`docs/RULES-DIRECTIVES.md`](docs/RULES-DIRECTIVES.md)
 
 ### Quick Checks
 - [ ] Session log created in `./docs/`
@@ -119,4 +144,16 @@ See `.windsurf/workflows.md` for:
 - Memory interaction protocol
 
 ---
-*See TODO.md for gaps and tasks. See docs/ for detailed documentation.*
+
+## 📚 Related Projects (Cross-Links)
+
+| Project | Purpose | Location |
+|---------|---------|----------|
+| **angelgai** | Crash recovery, MCP stability | `../../../angelgai` |
+| **localgai** | claude-mem, EBMSF methodology | `../../../localgai` |
+| **godot-mcp** | Game dev MCP | `../../../godot-mcp` |
+
+> **Migration guide:** [`docs/MIGRATION-FROM-LEGACY.md`](docs/MIGRATION-FROM-LEGACY.md)
+
+---
+*Keep this file <100 lines. Details in linked docs.*
