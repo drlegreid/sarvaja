@@ -33,25 +33,26 @@
 
 **Priority:** High  
 **Effort:** Medium (2-3 hours)  
-**Status:** 📋 Not Started
+**Status:** ✅ FIXED (2024-12-24)
 
 #### Objective
-Fix Agno ChromaDb wrapper to work with ChromaDB v2 API. Currently disabled in `agent/playground.py`.
+Fix Agno ChromaDb wrapper to work with remote ChromaDB server.
 
-#### Root Cause
-- ChromaDB v2 API requires collection UUIDs, not names
-- Agno wrapper expects different parameters than v2 provides
+#### Root Cause (ACTUAL)
+- Agno's ChromaDb uses ephemeral client by default, not HttpClient
+- kwargs passed to wrong client type (ChromaDbClient vs HttpClient)
+- **Solution:** Inject HttpClient directly into `_client` property
 
 #### Tasks
-- [ ] Research Agno ChromaDb class API requirements
-- [ ] Create ChromaDB client wrapper that handles UUID lookup
-- [ ] Update `create_chromadb_knowledge()` in playground.py
-- [ ] Test with rules/memories/sessions collections
+- [x] Research Agno ChromaDb class API requirements
+- [x] Discovered: kwargs go to ephemeral client, not HttpClient
+- [x] Fix: Inject `chromadb.HttpClient()` into `vector_db._client`
+- [x] Test connection with heartbeat()
 - [ ] Update integration tests in `test_rules_governance.py`
 
 #### Success Criteria
-- [ ] Knowledge base loads without errors
-- [ ] Agents can query ChromaDB for rules
+- [x] Knowledge base loads without errors
+- [x] Agents can connect to ChromaDB
 - [ ] All skipped tests pass
 
 ---

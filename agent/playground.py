@@ -51,18 +51,49 @@ def create_model(model_name: str) -> Claude:
 
 
 def create_chromadb_knowledge() -> Optional[Knowledge]:
-    """Create ChromaDB-backed knowledge base."""
+    """Create ChromaDB-backed knowledge base.
+    
+    Uses chromadb.HttpClient to connect to remote ChromaDB server.
+    Injects HttpClient directly into Agno's ChromaDb._client property
+    since kwargs are passed to ephemeral client, not HttpClient.
+    """
     host = os.getenv("CHROMADB_HOST")
     port = os.getenv("CHROMADB_PORT", "8000")
+    token = os.getenv("CHROMA_AUTH_TOKEN")
     
     if not host:
         print("ChromaDB not configured, skipping knowledge base")
         return None
     
-    print(f"ChromaDB available at {host}:{port} (knowledge disabled for initial test)")
-    # TODO: Fix Agno ChromaDb wrapper integration
-    # For now, skip knowledge to get basic agent running
-    return None
+    try:
+        import chromadb
+        
+        # Create HttpClient for remote ChromaDB server
+        headers = {"X-Chroma-Token": token} if token else {}
+        http_client = chromadb.HttpClient(
+            host=host,
+            port=int(port),
+            headers=headers
+        )
+        
+        # Test connection
+        http_client.heartbeat()
+        
+        # Create Agno ChromaDb wrapper
+        vector_db = ChromaDb(
+            collection="sim_ai_rules",
+        )
+        
+        # Inject HttpClient directly (bypass default ephemeral client)
+        vector_db._client = http_client
+        
+        knowledge = Knowledge(vector_db=vector_db)
+        print(f"ChromaDB knowledge connected: {host}:{port}")
+        return knowledge
+        
+    except Exception as e:
+        print(f"ChromaDB knowledge init failed: {e}")
+        return None
 
 
 def create_agents(config: dict) -> list[Agent]:
