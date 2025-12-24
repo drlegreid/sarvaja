@@ -5,7 +5,7 @@
 This document defines mandatory rules for the Sim.ai PoC agent platform.
 Rules are indexed in ChromaDB (`sim_ai_rules` collection) and enforced by agents.
 
-**Quick Reference:** 13 active rules (12 ACTIVE, 1 DRAFT), 9 categories, automated enforcement via pre-commit + CI/CD.
+**Quick Reference:** 14 active rules (13 ACTIVE, 1 DRAFT), 10 categories, automated enforcement via pre-commit + CI/CD.
 
 ---
 
@@ -26,6 +26,7 @@ Rules are indexed in ChromaDB (`sim_ai_rules` collection) and enforced by agents
 | RULE-011 | governance | CRITICAL | ACTIVE | Multi-agent governance |
 | RULE-012 | maintenance | HIGH | ACTIVE | Deep Sleep Protocol (DSP) |
 | RULE-013 | governance | HIGH | ACTIVE | Rules Applicability Convention |
+| RULE-014 | autonomy | CRITICAL | ACTIVE | Autonomous Task Sequencing |
 
 ---
 
@@ -1144,6 +1145,74 @@ grep -c "TODO:" *.py        # Total
 
 ---
 
+## RULE-014: Autonomous Task Sequencing
+
+**Category:** `autonomy`
+**Priority:** CRITICAL
+**Status:** ACTIVE
+**Source:** Session 2024-12-24 (user directive)
+
+### Directive
+
+Agents MUST autonomously sequence and prioritize tasks according to product strategy. Continue execution until explicit halt command is received.
+
+### Core Principles
+
+1. **Strategic Prioritization**: Always consider task sequence based on product strategy
+2. **Autonomous Execution**: Don't pause for confirmation on routine tasks
+3. **Continuous Flow**: Keep working until explicit halt
+4. **DSP Integration**: Use DSP for hygiene, not as a stopping point
+
+### Halt Commands
+
+Agent MUST only stop when user issues one of these explicit commands:
+
+| Command | Action |
+|---------|--------|
+| `STOP` | Immediate halt, save state |
+| `HALT` | Immediate halt, save state |
+| `STAI` | Immediate halt, save state |
+| `RED ALERT` | Emergency stop, prioritize stability |
+| `ALERT` | Pause and await instructions |
+
+### Task Sequencing Protocol
+
+```
+1. ASSESS current task queue
+2. PRIORITIZE by product strategy (not just urgency)
+3. EXECUTE highest-priority task
+4. VALIDATE completion (tests pass, no regressions)
+5. CONTINUE to next task (no pause for confirmation)
+6. REPEAT until HALT command or queue empty
+```
+
+### Priority Matrix
+
+| Priority | Criteria | Action |
+|----------|----------|--------|
+| **P0** | Blocking production | Execute immediately |
+| **P1** | Strategic milestone | Execute in sequence |
+| **P2** | Technical hygiene | Execute during DSP |
+| **P3** | Nice-to-have | Queue for later |
+
+### Anti-Patterns
+
+| ❌ Don't | ✅ Do Instead |
+|----------|---------------|
+| Ask "should I continue?" | Continue automatically |
+| Stop after each task | Batch related tasks |
+| Wait for approval on routine | Only halt on HALT commands |
+| Prioritize urgent over strategic | Follow product strategy |
+
+### Validation
+
+- [ ] Tasks sequenced by product strategy
+- [ ] No unnecessary pauses for confirmation
+- [ ] Halt only on explicit commands
+- [ ] DSP integrated as hygiene, not blocker
+
+---
+
 ## Enforcement
 
 Rules are enforced via:
@@ -1171,3 +1240,4 @@ Rules are enforced via:
 | 0.9.1 | 2024-12-24 | Created DESIGN-Governance-MCP.md architecture document |
 | 0.10.0 | 2024-12-24 | Added RULE-012: Deep Sleep Protocol (DSP) for backlog hygiene |
 | 0.11.0 | 2024-12-24 | Added RULE-013: Rules Applicability Convention (meta-referencing) |
+| 0.12.0 | 2024-12-24 | Added RULE-014: Autonomous Task Sequencing (halt commands, strategic priority) |

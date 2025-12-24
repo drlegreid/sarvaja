@@ -1,7 +1,7 @@
 # Sim.ai Governance Data
-# Initial load: 13 rules + 4 decisions + 3 agents
+# Initial load: 14 rules + 4 decisions + 3 agents
 # Created: 2024-12-24
-# Updated: 2024-12-24 (RULE-013) - Added RULE-012 (DSP) and RULE-013 (Applicability)
+# Updated: 2024-12-24 (RULE-014) - Added Autonomous Task Sequencing
 
 insert
 
@@ -126,6 +126,15 @@ $rule013 isa rule-entity,
     has directive "Format: {TYPE}({RULE-ID}): {Description} - gaps/TODOs must reference governing rules",
     has created-date 2024-12-24T00:00:00;
 
+$rule014 isa rule-entity,
+    has rule-id "RULE-014",
+    has rule-name "Autonomous Task Sequencing",
+    has category "autonomy",
+    has priority "CRITICAL",
+    has status "ACTIVE",
+    has directive "Prioritize by product strategy, continue until HALT command (STOP|HALT|STAI|RED ALERT|ALERT)",
+    has created-date 2024-12-24T00:00:00;
+
 # =============================================================================
 # AGENTS (for multi-agent governance)
 # =============================================================================
@@ -216,8 +225,10 @@ $dec004 isa decision,
 (dependent: $rule011, dependency: $rule001) isa rule-dependency;  # Governance protocol depends on evidence
 (dependent: $rule011, dependency: $rule010) isa rule-dependency;  # Governance protocol depends on evidence-based wisdom
 
-# Rule dependencies (RULE-012, RULE-013)
+# Rule dependencies (RULE-012, RULE-013, RULE-014)
 (dependent: $rule012, dependency: $rule001) isa rule-dependency;  # DSP depends on session evidence logging
 (dependent: $rule012, dependency: $rule007) isa rule-dependency;  # DSP uses MCP protocol for queries
 (dependent: $rule013, dependency: $rule006) isa rule-dependency;  # Applicability depends on decision logging
 (dependent: $rule013, dependency: $rule012) isa rule-dependency;  # Applicability convention supports DSP audits
+(dependent: $rule014, dependency: $rule012) isa rule-dependency;  # Task sequencing integrates with DSP hygiene
+(dependent: $rule014, dependency: $rule008) isa rule-dependency;  # Task sequencing follows strategic priorities

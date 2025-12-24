@@ -172,13 +172,13 @@ class TestCurrentSyncState:
         assert mcp_file.exists(), "governance/mcp_server.py not found"
 
     @pytest.mark.unit
-    def test_schema_has_thirteen_rules(self):
-        """TypeDB schema should have 13 rules defined (RULE-001 to RULE-013)."""
+    def test_schema_has_fourteen_rules(self):
+        """TypeDB schema should have 14 rules defined (RULE-001 to RULE-014)."""
         data_file = GOVERNANCE_DIR / "data.tql"
         content = data_file.read_text()
         # Count rule entities
         rule_count = content.count("isa rule-entity")
-        assert rule_count == 13, f"Expected 13 rules, found {rule_count}"
+        assert rule_count == 14, f"Expected 14 rules, found {rule_count}"
 
     @pytest.mark.unit
     def test_chromadb_has_existing_data(self):
