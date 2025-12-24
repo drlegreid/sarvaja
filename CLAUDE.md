@@ -100,5 +100,15 @@ Invoke-WebRequest -Uri "http://localhost:7777/health"
 git add -A; git commit -m "message"; git push origin master
 ```
 
+## Windsurf Workflows
+
+See `.windsurf/workflows.md` for:
+- Session start protocol
+- Gap discovery & documentation
+- Session evidence export
+- DevOps operations
+- Integration testing
+- Memory interaction protocol
+
 ---
 *See TODO.md for gaps and tasks. See docs/ for detailed documentation.*

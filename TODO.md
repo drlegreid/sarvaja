@@ -2,7 +2,25 @@
 
 **Document ID:** `TODO-001`  
 **Status:** Active  
-**Last Updated:** 2024-12-24
+**Last Updated:** 2024-12-24  
+**Gap Index:** See `.windsurf/workflows.md` for full evidence
+
+---
+
+## Gap Index Summary
+
+| ID | Gap | Priority | Category | Evidence |
+|----|-----|----------|----------|----------|
+| GAP-001 | ChromaDB Knowledge Integration | High | integration | `playground.py:45` |
+| GAP-002 | Opik Tracing Integration | High | integration | `playground.py:25` |
+| GAP-003 | Ollama Model Pull | High | configuration | LiteLLM 500 error |
+| GAP-004 | Grok/xAI API Key | Medium | configuration | test skip |
+| GAP-005 | Agent Task Backlog UI | Medium | functionality | user request |
+| GAP-006 | Sync Agent Implementation | Medium | functionality | skeleton only |
+| GAP-007 | ChromaDB v2 Test Update | Low | testing | UUID error |
+| GAP-008 | Agent UI Image | Low | configuration | image not found |
+| GAP-009 | Pre-commit Hooks | Medium | tooling | RULES-DIRECTIVES.md |
+| GAP-010 | CI/CD Pipeline | Low | tooling | DEPLOYMENT.md |
 
 ---
 
