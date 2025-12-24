@@ -5,7 +5,7 @@
 This document defines mandatory rules for the Sim.ai PoC agent platform.
 Rules are indexed in ChromaDB (`sim_ai_rules` collection) and enforced by agents.
 
-**Quick Reference:** 10 active rules (9 ACTIVE, 1 DRAFT), 8 categories, automated enforcement via pre-commit + CI/CD.
+**Quick Reference:** 11 active rules (10 ACTIVE, 1 DRAFT), 8 categories, automated enforcement via pre-commit + CI/CD.
 
 ---
 
@@ -23,6 +23,7 @@ Rules are indexed in ChromaDB (`sim_ai_rules` collection) and enforced by agents
 | RULE-008 | strategic | CRITICAL | ACTIVE | Technology scorecard |
 | RULE-009 | devops | CRITICAL | ACTIVE | Version compatibility |
 | RULE-010 | strategic | CRITICAL | ACTIVE | Evidence-based wisdom |
+| RULE-011 | governance | CRITICAL | ACTIVE | Multi-agent governance |
 
 ---
 
@@ -790,6 +791,149 @@ As platform grows:
 
 ---
 
+## RULE-011: Multi-Agent Governance Protocol
+
+**Category:** `governance`
+**Priority:** CRITICAL
+**Status:** ACTIVE
+**Source:** Session 2024-12-24 (AI governance best practices research)
+
+### Directive
+
+Multi-agent systems MUST implement structured governance with human oversight, consensus mechanisms, and evidence-based conflict resolution.
+
+### Governance Layers (Bicameral Model)
+
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│ UPPER CHAMBER (Human Oversight)                                      │
+│ - Veto authority on rule changes                                    │
+│ - Strategic steering and prioritization                             │
+│ - Ambiguity resolution when AI cannot decide                        │
+│ - Budget and resource allocation                                    │
+├─────────────────────────────────────────────────────────────────────┤
+│ LOWER CHAMBER (AI Execution)                                         │
+│ - Task execution from TypeDB queue                                  │
+│ - Evidence collection and hypothesis testing                        │
+│ - Peer review and consensus voting                                  │
+│ - Trust scoring and compliance tracking                             │
+└─────────────────────────────────────────────────────────────────────┘
+```
+
+### Governance MCP Responsibilities
+
+The Governance MCP manages DB state and provides:
+
+| Tool | Responsibility |
+|------|----------------|
+| `governance_propose_rule` | Submit rule changes with evidence |
+| `governance_vote` | Peer review voting on proposals |
+| `governance_dispute` | Raise conflicts for resolution |
+| `governance_resolve_conflict` | Evidence-based conflict resolution |
+| `governance_get_trust_score` | Agent reliability scoring |
+| `governance_sync_state` | Bidirectional sync protocol |
+| `governance_escalate_to_human` | Trigger human oversight |
+
+### Conflict Resolution Protocol
+
+```
+1. DETECT: TypeDB inference identifies conflict
+   └─> Priority, semantic, or dependency conflict
+
+2. ANALYZE: Hypothesis-based assessment (RULE-010)
+   ├─> Evidence weight scoring
+   ├─> Semantic clarity analysis
+   └─> Trust score weighting
+
+3. PEER REVIEW: Agents vote on resolution
+   ├─> Weighted by trust score
+   ├─> Quorum: 2+ agents
+   └─> Threshold: 80% weighted approval
+
+4. HUMAN ESCALATION (if needed):
+   ├─> Deadlock (50/50 split)
+   ├─> Strategic impact (affects CRITICAL rules)
+   ├─> Trust deficit (all agents < 0.70)
+   └─> Explicit ambiguity detected
+
+5. RESOLVE: Update TypeDB, propagate to all agents
+   └─> Log evidence trail, update trust scores
+```
+
+### Human Escalation Triggers
+
+| Trigger | Condition | Action |
+|---------|-----------|--------|
+| **VETO** | Human explicitly blocks | Proposal rejected, logged |
+| **STEER** | Strategic direction needed | Human chooses from options |
+| **AMBIGUITY** | Multiple valid interpretations | Human selects interpretation |
+| **DEADLOCK** | Agents cannot reach consensus | Human breaks tie |
+| **CRITICAL** | Affects CRITICAL priority rule | Human approval required |
+
+### Trust Score Algorithm
+
+```python
+Trust = (Compliance × 0.4) + (Accuracy × 0.3) + (Consistency × 0.2) + (Tenure × 0.1)
+
+Where:
+- Compliance: % of rules followed
+- Accuracy: % of predictions validated
+- Consistency: 1 - variance(behavior)
+- Tenure: min(1.0, days_active / 365)
+```
+
+### Sync Protocol
+
+```
+LOCAL (Claude Code)          GOVERNANCE MCP          SERVER (Docker)
+      │                            │                       │
+      │──propose_rule──────────────>│                       │
+      │                            │──validate_conflict────>│
+      │                            │<─────vote─────────────│
+      │<────vote_request───────────│                       │
+      │─────vote───────────────────>│                       │
+      │                            │──calculate_consensus──│
+      │                            │                       │
+      │                     [IF CONSENSUS]                 │
+      │                            │──update_typedb───────>│
+      │<────sync_state─────────────│<──sync_state─────────│
+      │                            │                       │
+      │                     [IF ESCALATE]                  │
+      │                            │──notify_human────────>│
+      │                            │<─────decision────────│
+      │<────resolution─────────────│──────resolution─────>│
+```
+
+### Best Practices Applied
+
+Based on research (arxiv.org/html/2508.18765v2, arxiv.org/html/2501.06322v1):
+
+1. **Governance-as-a-Service**: Modular policy enforcement without modifying agent logic
+2. **Trust Factor Mechanism**: Longitudinal compliance and severity-aware history
+3. **Rule-Based Consensus**: Efficiency and predictability over ad-hoc negotiation
+4. **Debate Protocols**: Argumentative exchanges for complex conflicts
+5. **Communication Standards**: MCP as protocol with embedded governance guarantees
+
+### Validation
+
+- [ ] Governance MCP server implemented
+- [ ] TypeDB schema extended (agent, proposal, vote, dispute)
+- [ ] Conflict detection inference rules active
+- [ ] Trust scoring algorithm operational
+- [ ] Human escalation workflow tested
+- [ ] Sync protocol verified bidirectional
+
+### References
+
+- [Governance-as-a-Service Framework](https://arxiv.org/html/2508.18765v2)
+- [Multi-Agent Collaboration Mechanisms](https://arxiv.org/html/2501.06322v1)
+- [Multi-Agent Risks from Advanced AI](https://arxiv.org/abs/2502.14143)
+- [Anthropic MCP Protocol](https://modelcontextprotocol.io/)
+- RULE-010: Evidence-Based Wisdom Accumulation
+- Bicameral Governance Model (claude-mem: gov_bicameral_model)
+
+---
+
 ## Enforcement
 
 Rules are enforced via:
@@ -811,3 +955,7 @@ Rules are enforced via:
 | 0.5.0 | 2024-12-24 | Added RULE-007: MCP Usage Protocol (from Claude Code session audit) |
 | 0.5.1 | 2024-12-24 | Updated RULE-005: MCP tiers to reflect 10 active MCPs |
 | 0.6.0 | 2024-12-24 | Added RULE-008: In-House Rewrite Principle (strategic tech selection) |
+| 0.7.0 | 2024-12-24 | Added RULE-009: Version Compatibility Protocol (TypeDB/dependency management) |
+| 0.8.0 | 2024-12-24 | Added RULE-010: Evidence-Based Wisdom (hypothesis-driven approach) |
+| 0.9.0 | 2024-12-24 | Added RULE-011: Multi-Agent Governance Protocol (bicameral model, MCP-based DB state) |
+| 0.9.1 | 2024-12-24 | Created DESIGN-Governance-MCP.md architecture document |
