@@ -5,7 +5,7 @@
 This document defines mandatory rules for the Sim.ai PoC agent platform.
 Rules are indexed in ChromaDB (`sim_ai_rules` collection) and enforced by agents.
 
-**Quick Reference:** 4 active rules, 6 categories, automated enforcement via pre-commit + CI/CD.
+**Quick Reference:** 8 active rules, 7 categories, automated enforcement via pre-commit + CI/CD.
 
 ---
 
@@ -20,6 +20,7 @@ Rules are indexed in ChromaDB (`sim_ai_rules` collection) and enforced by agents
 | RULE-005 | stability | HIGH | ACTIVE | Memory thresholds |
 | RULE-006 | governance | MEDIUM | ACTIVE | Decision logging |
 | RULE-007 | productivity | HIGH | ACTIVE | MCP Usage Protocol |
+| RULE-008 | strategic | CRITICAL | ACTIVE | Technology scorecard |
 
 ---
 
@@ -547,6 +548,110 @@ mcp_usage:
 
 ---
 
+## RULE-008: In-House Rewrite Principle
+
+**Category:** `strategic`
+**Priority:** CRITICAL
+**Status:** ACTIVE
+**Source:** Session 2024-12-24 (TypeDB decision research)
+
+### Directive
+
+When selecting external technologies for strategic components, ALWAYS prefer solutions that:
+1. Have comprehensive test suites (warranty for in-house rewrite)
+2. Are open-source with permissive or copyleft licenses
+3. Have active development and community
+4. Can be ported/rewritten in-house if needed
+
+### Rationale
+
+External dependencies are risks. Tests are warranties:
+- If a solution has tests, we can understand its behavior
+- Tests serve as specifications for an in-house rewrite
+- We're not locked into vendor decisions
+- Enterprise clients may require in-house solutions
+
+### Evaluation Criteria
+
+| Criterion | Weight | What to Check |
+|-----------|--------|---------------|
+| **Test Coverage** | CRITICAL | Does it have comprehensive tests? |
+| **License** | HIGH | Open source? Apache/MIT/AGPL? |
+| **Activity** | HIGH | Recent commits? Active PRs? |
+| **Documentation** | MEDIUM | API docs? Examples? |
+| **Community** | MEDIUM | Issues addressed? Discussions? |
+| **Rewrite Path** | HIGH | Clear architecture? Modular? |
+
+### Technology Selection Scorecard
+
+Before adopting any strategic technology, complete this scorecard:
+
+```yaml
+technology_evaluation:
+  name: "<technology>"
+  purpose: "<what it solves>"
+
+  scores:  # 1-5 scale
+    test_coverage: 0      # Does it have tests?
+    license_freedom: 0    # Can we fork/rewrite?
+    active_development: 0 # Recent activity?
+    documentation: 0      # Can we understand it?
+    rewrite_feasibility: 0 # Could we build it ourselves?
+
+  total_score: 0  # Sum of above (max 25)
+  recommendation: "ADOPT | EVALUATE | REJECT"
+
+  notes: |
+    <reasoning for scores>
+```
+
+### Example: TypeDB Evaluation
+
+```yaml
+technology_evaluation:
+  name: "TypeDB"
+  purpose: "Graph DB with inference engine for knowledge reasoning"
+
+  scores:
+    test_coverage: 5      # typedb-behaviour repo, extensive tests
+    license_freedom: 4    # AGPL-3.0 (copyleft, but open)
+    active_development: 5 # Pushed Dec 2024, active issues
+    documentation: 4      # Good docs, TypeQL reference
+    rewrite_feasibility: 3 # Complex but modular architecture
+
+  total_score: 21  # Strong candidate
+  recommendation: "ADOPT"
+
+  notes: |
+    - 4,153 stars, active community
+    - Native inference (not external plugin)
+    - TypeDB-behaviour repo = clear test specifications
+    - Python/Java/Rust drivers available
+    - AGPL requires open-source derivatives
+```
+
+### Comparison: Graph DBs with Inference
+
+| Database | Stars | Inference | License | Tests | Rewrite Score |
+|----------|-------|-----------|---------|-------|---------------|
+| **TypeDB** | 4,153 | ✅ Native | AGPL-3.0 | ✅ Extensive | **21/25** |
+| **Dgraph** | 21,423 | ❌ Limited | Apache-2.0 | ✅ Yes | 18/25 |
+| **Apache Jena** | 1,261 | ✅ OWL/RDFS | Apache-2.0 | ✅ Yes | 17/25 |
+| **Blazegraph** | 973 | ✅ External | GPL-2.0 | ⚠️ Older | 14/25 |
+| **Neo4j** | 13K+ | ❌ None | Mixed | ✅ Yes | 15/25 |
+| **Stardog** | - | ✅ Yes | Commercial | - | **REJECT** |
+| **GraphDB** | - | ✅ OWL | Commercial | - | **REJECT** |
+
+### Validation
+
+- [ ] Technology scorecard completed before adoption
+- [ ] Test suite reviewed and understood
+- [ ] License verified compatible with enterprise use
+- [ ] Rewrite path documented if critical component
+- [ ] OctoCode research performed (not just web search)
+
+---
+
 ## Enforcement
 
 Rules are enforced via:
@@ -567,3 +672,4 @@ Rules are enforced via:
 | 0.4.0 | 2024-12-24 | Added RULE-006: Decision Logging (from session audit) |
 | 0.5.0 | 2024-12-24 | Added RULE-007: MCP Usage Protocol (from Claude Code session audit) |
 | 0.5.1 | 2024-12-24 | Updated RULE-005: MCP tiers to reflect 10 active MCPs |
+| 0.6.0 | 2024-12-24 | Added RULE-008: In-House Rewrite Principle (strategic tech selection) |

@@ -320,21 +320,25 @@ Automate testing and deployment via GitHub Actions.
 
 ## R&D Backlog
 
-### 🎯 PRIORITY ORDER
+### 🎯 PRIORITY ORDER (DECISION-003: 2024-12-24)
 
 | # | Item | Priority | Business Value |
 |---|------|----------|----------------|
-| 1 | **Inherit Experience Data Lakes** | ✅ DONE | 53 docs migrated to sim-ai ChromaDB |
-| 2 | **Custom Session/Memory UI** | HIGH | Replace Opik, aligned with actual needs (DECISION-001) |
-| 3 | **Session Data Dump Workflow** | ✅ DONE | scripts/session_dump.py created |
-| 4 | TypeDB In-House Solution | HIGH | Upsell potential, differentiation |
-| 5 | Replace Agno with Memory MCP | HIGH | Simpler, proven, more powerful |
-| 6 | OctoCode MCP | ✅ CONFIGURED | GITHUB_PAT in .env (GAP-011) |
-| 7 | MCP Workflow Integration | LOW | Nice-to-have |
-| 8 | **Mem0 / OpenMemory MCP** | 🔥 PRIORITY | DECISION-002: Knowledge governance (can use Ollama - no OpenAI!) |
-| 9 | **AnythingLLM** | MEDIUM | All-in-one AI app, local LLMs, document RAG |
-| 10 | **Awesome MCP Memory Servers** | RESEARCH | Curated alternatives: Arc Memory, CogniGraph, Obsidian MCP |
-| 11 | **MCP-Monitor** | HIGH | System metrics via MCP - prevent crashes by monitoring memory/CPU |
+| 1 | **TypeDB Prototype** | 🔥 **PHASE 2** | Inference + type safety = differentiation (DECISION-003) |
+| 2 | **Stabilize Tests/Stack** | HIGH | Green tests before new features |
+| 3 | **Inherit Experience Data Lakes** | ✅ DONE | 53 docs migrated to sim-ai ChromaDB |
+| 4 | **Session Data Dump Workflow** | ✅ DONE | scripts/session_dump.py created |
+| 5 | OctoCode MCP | ✅ CONFIGURED | GITHUB_PAT in .env (GAP-011) |
+| 6 | **Mem0 / OpenMemory MCP** | ⏸️ DEFERRED | Validated (DECISION-002) but superseded by TypeDB focus |
+| 7 | **Custom Session/Memory UI** | MEDIUM | After TypeDB validation |
+| 8 | Replace Agno with Memory MCP | ⏸️ DEFERRED | Pending TypeDB outcome |
+| 9 | **MCP-Monitor** | MEDIUM | System metrics via MCP - prevent crashes |
+| 10 | **AnythingLLM** | LOW | All-in-one AI app, evaluate later |
+| 11 | **Awesome MCP Memory Servers** | RESEARCH | Curated alternatives if TypeDB fails |
+| 12 | MCP Workflow Integration | LOW | Nice-to-have |
+
+> **DECISION-003**: Elevated TypeDB to Phase 2. Reasoning/inference > vector storage.
+> Vector stores (Mem0/ChromaDB) are commoditized; TypeDB provides differentiation.
 
 ---
 

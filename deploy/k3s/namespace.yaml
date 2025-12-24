@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: sim-ai
+  labels:
+    app.kubernetes.io/name: sim-ai
+    app.kubernetes.io/part-of: platform-gai

@@ -34,10 +34,12 @@
 | Decision | Status | Evidence |
 |----------|--------|----------|
 | **DECISION-001: Remove Opik** | ✅ IMPLEMENTED | docker-compose.yml updated |
+| **DECISION-002: Mem0 + Ollama** | ⚠️ SUPERSEDED | Validated but deprioritized |
+| **DECISION-003: TypeDB Elevation** | ✅ APPROVED | Reasoning > vector storage |
 | Fix GAP-001 ChromaDB | ✅ RESOLVED | Inject HttpClient into `_client` |
 | Fix GAP-002 Opik config | ✅ RESOLVED | OPIK_URL_OVERRIDE (now removed) |
-| TypeDB for upsell | ✅ DOCUMENTED | Added to R&D backlog #15 |
-| Replace Agno ChromaDb → Memory MCP | ✅ DOCUMENTED | Added to R&D backlog #16 |
+| TypeDB for upsell | ✅ ELEVATED | Now Phase 2 priority |
+| Replace Agno ChromaDb → Memory MCP | ⏸️ DEFERRED | Pending TypeDB validation |
 | Strategic MCP analysis | ✅ DOCUMENTED | Only memory + octocode needed |
 | Tests not needed for R&D | ✅ DECIDED | Health checks only |
 | Doc cross-links | ✅ IMPLEMENTED | CLAUDE.md updated |
@@ -80,7 +82,77 @@
 3. Test integration with Windsurf/Cascade
 4. Migrate 53 docs from ChromaDB if successful
 
-**Status:** IN PROGRESS
+**Status:** SUPERSEDED by DECISION-003
+
+---
+
+## DECISION-003: TypeDB Priority Elevation
+
+**Date:** 2024-12-24
+**Context:** Strategic R&D reassessment revealed over-investment in vector stores
+
+**Problem Statement:**
+- Current path prioritizes Mem0/OpenMemory (another vector store)
+- DECISION-002 validated Mem0+Ollama works, but it's still just vector search
+- No reasoning, no inference, no type safety
+- We're solving symptoms (storage) not root cause (knowledge reasoning)
+- Multiple vector stores (ChromaDB + Mem0) = technical debt
+
+**Critical Analysis:**
+
+| Capability | ChromaDB/Mem0 | TypeDB |
+|------------|---------------|--------|
+| Storage | ✅ Vectors | ✅ Typed graphs |
+| Semantic search | ✅ Similarity | ❌ Not primary |
+| **Inference** | ❌ None | ✅ Auto-derive facts |
+| **Type safety** | ❌ Unstructured | ✅ Schema-enforced |
+| **Reasoning** | ❌ Embeddings only | ✅ Symbolic logic |
+| **Explainability** | ❌ Black box | ✅ Query chain |
+| Enterprise value | Low | **High (upsell)** |
+
+**Options Considered:**
+1. **Continue current path** - Deploy OpenMemory MCP, then TypeDB later
+   - Pros: Quick wins, immediate value
+   - Cons: More vector store debt, no differentiation
+2. **Elevate TypeDB** - Time-boxed prototype before OpenMemory
+   - Pros: Strategic differentiation, inference + type safety
+   - Cons: Higher complexity, longer time to first value
+3. **Hybrid immediate** - TypeDB + ChromaDB in parallel
+   - Pros: Best of both worlds
+   - Cons: Two systems to maintain
+
+**Decision:** Option 2 - Elevate TypeDB to Phase 2
+
+**Revised R&D Priority Order:**
+
+| Previous Priority | New Priority |
+|-------------------|--------------|
+| 1. OpenMemory MCP | 1. **TypeDB Prototype** |
+| 2. Custom Session UI | 2. Stabilize tests/stack |
+| 3. TypeDB (someday) | 3. Hybrid architecture (if TypeDB works) |
+| 4. MCP-Monitor | 4. OpenMemory (if still needed) |
+
+**Rationale:**
+- We're over-investing in vector stores when differentiation is in reasoning
+- TypeDB provides enterprise value (audit trails, inference, explainability)
+- Time-boxed prototype (2-3 days) validates before deeper investment
+- If TypeDB fails validation, fall back to Mem0 path
+
+**Time-Boxed Prototype Plan:**
+1. Deploy vanilla TypeDB locally
+2. Migrate 7 governance rules (RULE-001 to RULE-007) as POC
+3. Test inference: "derive blocked tasks from rule dependencies"
+4. Validate type-safety benefits with schema
+5. Decide: Hybrid (ChromaDB + TypeDB) or TypeDB-first
+
+**Success Criteria:**
+- [ ] TypeDB running locally
+- [ ] Rules schema defined and loaded
+- [ ] At least one inference rule working
+- [ ] Query: "find all rules that conflict" returns results
+- [ ] Performance acceptable for dev use
+
+**Status:** APPROVED
 
 ---
 

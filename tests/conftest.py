@@ -12,7 +12,7 @@ CHROMADB_URL = os.getenv("CHROMADB_URL", "http://localhost:8001")
 OLLAMA_URL = os.getenv("OLLAMA_URL", "http://localhost:11434")
 AGENTS_URL = os.getenv("AGENTS_URL", "http://localhost:7777")
 OPIK_URL = os.getenv("OPIK_URL", "http://localhost:5173")
-LITELLM_API_KEY = os.getenv("LITELLM_MASTER_KEY", "sk-litellm-master-key-change-me")
+LITELLM_API_KEY = os.getenv("LITELLM_MASTER_KEY", "sk-litellm-dev-key")
 
 
 @pytest.fixture(scope="session")
