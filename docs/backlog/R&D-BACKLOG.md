@@ -80,16 +80,69 @@
 
 ---
 
-## Strategic R&D: TypeDB 3.x Frontrun
+## Strategic R&D: Custom Inference Engine
 
 **Context:** TypeDB 3.x is ALPHA. We use stable 2.29.1.
 
-**Opportunity:** Build in-house inference engine:
-- Study TypeDB 3.x alpha features
-- Build lightweight Rust/Python engine
-- Maintain 2.x data format compatibility
+### DIRECTIVE: Learn Before Optimize
 
-**Why:** Strategic independence + performance optimization.
+> **Principle:** Implement Haskell MCP service first to become domain experts
+> before attempting creative optimizations. Test coverage validates dependencies.
+
+```
+Phase 1: Python (current) ──→ Validate logic, gather requirements
+         │
+Phase 2: Haskell MCP ──────→ Learn inference domain deeply
+         │                   └── Lazy eval, pattern matching, type safety
+         │
+Phase 3: Optimize ─────────→ Rust rewrite ONLY if benchmarks demand
+         │                   └── PyO3 bindings, sub-ms latency
+         │
+Phase 4: Robotics ─────────→ Compatible inference for embedded/ROS
+```
+
+### Language Decision Matrix
+
+| Factor | Python | Haskell | Rust |
+|--------|--------|---------|------|
+| **Learning** | ✅ Done | 🎯 Next | ⏳ Later |
+| **Inference elegance** | ⚠️ Imperative | ✅ Natural | ⚠️ Manual |
+| **Python FFI** | Native | HTTP/gRPC | PyO3 |
+| **Robotics/ROS** | rospy | ❌ Hard | ✅ ros2-rust |
+| **MCP deploy** | ✅ Easy | ⚠️ Runtime | ✅ Small binary |
+
+### R&D Tasks
+
+| ID | Task | Status | Priority | Notes |
+|----|------|--------|----------|-------|
+| RD-001 | Haskell inference MCP prototype | 📋 TODO | HIGH | Learn domain via Servant API |
+| RD-002 | Benchmark Python vs Haskell | 📋 TODO | MEDIUM | After RD-001 |
+| RD-003 | Rust rewrite decision | ⏸️ BLOCKED | LOW | Requires RD-002 benchmarks |
+| RD-004 | Robotics inference compatibility | 📋 TODO | FUTURE | ROS2/embedded targets |
+| RD-005 | TypeDB 3.x alpha evaluation | 📋 TODO | LOW | Monitor releases |
+
+### Haskell MCP Interface (Target)
+
+```haskell
+-- Servant API for inference MCP
+type InferenceAPI =
+       "query" :> ReqBody '[JSON] Query :> Post '[JSON] QueryResult
+  :<|> "deps"  :> Capture "ruleId" Text :> Get '[JSON] [RuleId]
+  :<|> "conflicts" :> Get '[JSON] [Conflict]
+  :<|> "health" :> Get '[JSON] HealthStatus
+```
+
+### Why This Order?
+
+1. **Python**: Already working, validates business logic
+2. **Haskell**: Forces deep understanding of inference patterns
+3. **Rust**: Only if latency <1ms is required (measure first!)
+4. **Robotics**: Long-term - inference on edge devices
+
+**Trigger for Rust rewrite:**
+- Haskell inference >10ms on 1K rules
+- Need WASM/embedded deployment
+- Team prefers Rust ecosystem
 
 ---
 
