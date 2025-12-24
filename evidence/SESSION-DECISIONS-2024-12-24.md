@@ -44,6 +44,46 @@
 
 ---
 
+## DECISION-002: Knowledge Governance Protocol
+
+**Date:** 2024-12-24  
+**Context:** MCPs configured but not actively used; risk of "garbage iterations"
+
+**Problem Statement:**
+- ChromaDB has 53 docs but not queried during work
+- Playwright MCP, OctoCode MCP, Memory MCP not invoked
+- 8 documented workflows not enforced
+- No active governance loop
+
+**Options Considered:**
+1. **Mem0/OpenMemory MCP** - Built-in governance, dashboard UI
+   - Pros: Designed for this, local-first, MCP native, has UI
+   - Cons: Another dependency
+2. **Custom enforcement** - Build triggers into workflows
+   - Pros: Full control
+   - Cons: 3-5 days dev effort
+3. **Manual discipline** - Checklist before each commit
+   - Pros: No dev work
+   - Cons: Ongoing overhead, human error
+
+**Decision:** Option 1 - Evaluate Mem0/OpenMemory MCP  
+**Rationale:** 
+- Purpose-built for AI memory governance
+- Self-hosted (local-first, privacy)
+- Dashboard UI for visibility
+- MCP protocol integration
+- Replaces hacky Agno ChromaDb
+
+**Next Steps:**
+1. Install mem0ai package
+2. Deploy OpenMemory MCP locally
+3. Test integration with Windsurf/Cascade
+4. Migrate 53 docs from ChromaDB if successful
+
+**Status:** IN PROGRESS
+
+---
+
 ## Decisions PENDING ⚠️
 
 | Topic | Question | Status |

@@ -330,7 +330,7 @@ Automate testing and deployment via GitHub Actions.
 | 5 | Replace Agno with Memory MCP | HIGH | Simpler, proven, more powerful |
 | 6 | OctoCode MCP | ✅ CONFIGURED | GITHUB_PAT in .env (GAP-011) |
 | 7 | MCP Workflow Integration | LOW | Nice-to-have |
-| 8 | **Mem0 / OpenMemory MCP** | HIGH | Local-first memory layer, vector-backed, MCP native |
+| 8 | **Mem0 / OpenMemory MCP** | 🔥 PRIORITY | DECISION-002: Knowledge governance (needs OPENAI_API_KEY for embeddings) |
 | 9 | **AnythingLLM** | MEDIUM | All-in-one AI app, local LLMs, document RAG |
 | 10 | **Awesome MCP Memory Servers** | RESEARCH | Curated alternatives: Arc Memory, CogniGraph, Obsidian MCP |
 
@@ -620,9 +620,9 @@ MCPs are tested/verified but NOT actively used in workflow.
 
 ### 19. 🧠 Mem0 / OpenMemory MCP
 
-**Priority:** HIGH  
+**Priority:** 🔥 TOP (DECISION-002)  
 **Effort:** Medium (1-2 days)  
-**Status:** 📋 RESEARCH  
+**Status:** 🔄 IN PROGRESS  
 **Source:** https://mem0.ai/blog/how-to-make-your-clients-more-context-aware-with-openmemory-mcp
 
 #### What It Is
@@ -635,11 +635,17 @@ Private, local memory layer for MCP clients with vector-backed storage. Works wi
 - Dashboard UI included
 - Cross-session memory persistence
 
-#### Evaluation Criteria
-- [ ] Compare with our ChromaDB + custom UI approach
-- [ ] Test local deployment
-- [ ] Assess MCP integration complexity
-- [ ] Check if it can replace Agno ChromaDb hack
+#### Requirements (discovered 2024-12-24)
+- `pip install mem0ai` ✅ Installed
+- **OPENAI_API_KEY required** for embeddings (text-embedding-3-small)
+- Can use Anthropic for LLM but needs OpenAI for vectors
+
+#### Next Steps
+- [ ] Add OPENAI_API_KEY to .env
+- [ ] Test basic memory add/search
+- [ ] Deploy OpenMemory MCP server
+- [ ] Integrate with Windsurf/Cascade
+- [ ] Migrate 53 ChromaDB docs if successful
 
 ---
 
