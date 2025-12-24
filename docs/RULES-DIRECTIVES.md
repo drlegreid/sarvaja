@@ -5,6 +5,19 @@
 This document defines mandatory rules for the Sim.ai PoC agent platform.
 Rules are indexed in ChromaDB (`sim_ai_rules` collection) and enforced by agents.
 
+**Quick Reference:** 4 active rules, 6 categories, automated enforcement via pre-commit + CI/CD.
+
+---
+
+## Rules Summary
+
+| Rule | Category | Priority | Status | Enforcement |
+|------|----------|----------|--------|-------------|
+| RULE-001 | governance | CRITICAL | ACTIVE | Session logs required |
+| RULE-002 | architecture | HIGH | ACTIVE | Code review |
+| RULE-003 | governance | HIGH | DRAFT | Sync agent |
+| RULE-004 | testing | HIGH | ACTIVE | Playwright MCP |
+
 ---
 
 ## Rule Categories
@@ -13,10 +26,10 @@ Rules are indexed in ChromaDB (`sim_ai_rules` collection) and enforced by agents
 |----------|----------|-------------|
 | `governance` | CRITICAL | Mandatory |
 | `architecture` | HIGH | Mandatory |
+| `testing` | HIGH | Mandatory |
 | `observability` | HIGH | Mandatory |
 | `security` | HIGH | Mandatory |
 | `performance` | MEDIUM | Advisory |
-| `style` | LOW | Advisory |
 
 ---
 

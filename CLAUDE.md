@@ -17,12 +17,20 @@
 └─────────────────────────────────────────────────────────────┘
 ```
 
-## Core Rules
-1. **Session Evidence**: Every session produces `./docs/SESSION-{date}-{topic}.md`
-2. **Rules Governance**: Follow `./docs/RULES-DIRECTIVES.md` (RULE-001, RULE-002)
-3. **Gaps as Tasks**: Track gaps in `./TODO.md` with priority/status
-4. **Tests First**: Run `pytest tests/ -v` before claiming completion
-5. **Credential Safety**: Never commit `.env` - use `.env.example` template
+## Core Rules (4 Active)
+
+| Rule | Directive | Enforcement |
+|------|-----------|-------------|
+| **RULE-001** | Session Evidence Logging | `./docs/SESSION-{date}-{topic}.md` |
+| **RULE-002** | Architectural Best Practices | Code review, no hardcoded secrets |
+| **RULE-003** | Sync Protocol (DRAFT) | Sync agent for skills/sessions |
+| **RULE-004** | Exploratory Testing | Playwright MCP with heuristics |
+
+### Quick Checks
+- [ ] Session log created in `./docs/`
+- [ ] No secrets in code (use `.env`)
+- [ ] Tests pass: `pytest tests/ -v`
+- [ ] Gaps tracked in `./TODO.md`
 
 ## Running Services (via deploy.ps1)
 ```powershell
