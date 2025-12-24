@@ -320,25 +320,147 @@ Automate testing and deployment via GitHub Actions.
 
 ## R&D Backlog
 
-### 🎯 PRIORITY ORDER (DECISION-003: 2024-12-24)
+### 🎯 STRATEGIC VISION: Private Cluster AI Platform
 
-| # | Item | Priority | Business Value |
-|---|------|----------|----------------|
-| 1 | **TypeDB Prototype** | 🔥 **PHASE 2** | Inference + type safety = differentiation (DECISION-003) |
-| 2 | **Stabilize Tests/Stack** | HIGH | Green tests before new features |
-| 3 | **Inherit Experience Data Lakes** | ✅ DONE | 53 docs migrated to sim-ai ChromaDB |
-| 4 | **Session Data Dump Workflow** | ✅ DONE | scripts/session_dump.py created |
-| 5 | OctoCode MCP | ✅ CONFIGURED | GITHUB_PAT in .env (GAP-011) |
-| 6 | **Mem0 / OpenMemory MCP** | ⏸️ DEFERRED | Validated (DECISION-002) but superseded by TypeDB focus |
-| 7 | **Custom Session/Memory UI** | MEDIUM | After TypeDB validation |
-| 8 | Replace Agno with Memory MCP | ⏸️ DEFERRED | Pending TypeDB outcome |
-| 9 | **MCP-Monitor** | MEDIUM | System metrics via MCP - prevent crashes |
-| 10 | **AnythingLLM** | LOW | All-in-one AI app, evaluate later |
-| 11 | **Awesome MCP Memory Servers** | RESEARCH | Curated alternatives if TypeDB fails |
-| 12 | MCP Workflow Integration | LOW | Nice-to-have |
+**Goal:** Self-hosted platform with MCPs & UIs on private cluster
 
-> **DECISION-003**: Elevated TypeDB to Phase 2. Reasoning/inference > vector storage.
-> Vector stores (Mem0/ChromaDB) are commoditized; TypeDB provides differentiation.
+#### Platform Pillars
+
+| Pillar | Components | Current | Target |
+|--------|------------|---------|--------|
+| **Agents** | Orchestration, routing, playground | ✅ Agno/LiteLLM | TypeDB-enhanced |
+| **Tasks/Projects** | Backlog, tracking, dependencies | 📋 TODO.md | TypeDB graph |
+| **Evidence/Sessions** | Decisions, logs, dumps | ✅ Markdown/scripts | Structured DB |
+| **Rules** | RULE-001 to RULE-008 | ✅ Markdown | TypeDB inference |
+
+#### Governance Mechanisms
+
+| Mechanism | Purpose | Status |
+|-----------|---------|--------|
+| **Workflows** | Session protocols, ceremonies | ✅ Documented |
+| **Observability** | Metrics, logs, traces | 📋 MCP-Monitor |
+| **Authoring** | Rule creation, validation | 📋 TypeDB schema |
+| **Conflict Resolution** | Clustering, merging | 📋 TypeDB queries |
+| **Orphan Detection** | Unused rules, dead links | 📋 TypeDB inference |
+| **Ambiguity Detection** | Overlapping rules | 📋 TypeDB inference |
+
+#### Memory Architecture
+
+| Layer | Function | Technology |
+|-------|----------|------------|
+| **Short-term** | Session context | ChromaDB vectors |
+| **Long-term** | Institutional knowledge | TypeDB + ChromaDB |
+| **Compression** | Summarization, compacting | LLM + TypeDB |
+| **Indexing** | Fast retrieval | ChromaDB similarity |
+| **Structuring** | Relationships, types | TypeDB schema |
+| **Inference** | Rule derivation | TypeDB engine |
+
+#### Strategic Approach: Cloud → Local Transfer
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                  KNOWLEDGE TRANSFER PIPELINE                    │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                 │
+│  CLOUD LLM (Expensive)          LOCAL INFERENCE (Cheap)        │
+│  ┌─────────────────┐            ┌─────────────────┐            │
+│  │ Claude/GPT-4    │            │ Ollama/Gemma    │            │
+│  │ - R&D           │   RULES    │ - Production    │            │
+│  │ - Rule creation │ ────────►  │ - Apply rules   │            │
+│  │ - Complex tasks │   TypeDB   │ - Fast queries  │            │
+│  └─────────────────┘            └─────────────────┘            │
+│                                                                 │
+│  HYPOTHESIS: Rules created by expensive Cloud LLM can be       │
+│  applied by cheap local models via TypeDB inference engine.    │
+│                                                                 │
+│  TypeDB stores the "wisdom" - local models execute it.         │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+> **R&D Question**: Can TypeDB rules transfer Cloud LLM reasoning to local inference?
+
+---
+
+### 🎯 EVOLUTION ROADMAP (DECISION-003: 2024-12-24)
+
+**Target:** sim-ai v0.x → sim-ai v1.0 (TypeDB-Enhanced Hybrid Platform)
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                    sim-ai v1.0 Target Architecture              │
+├─────────────────────────────────────────────────────────────────┤
+│  Agents (7777) ─────────────────────────────────────────────    │
+│       │                                                         │
+│       ├── LiteLLM (4000) ── Ollama (11434)                     │
+│       │                                                         │
+│       ├── ChromaDB (8001)     │  TypeDB (1729)                 │
+│       │   └── Semantic search │  └── Inference + Types         │
+│       │   └── Documents (53)  │  └── Rules (8) + Decisions     │
+│       │                       │                                 │
+│       └── HYBRID QUERY LAYER ─┴─────────────────────────────   │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+### PHASE 1: TypeDB Container (Current Sprint)
+
+| Task | Status | Description |
+|------|--------|-------------|
+| P1.1 | 📋 TODO | Add TypeDB to docker-compose.yml (port 1729) |
+| P1.2 | 📋 TODO | Create TypeDB schema for 8 rules |
+| P1.3 | 📋 TODO | Create Python TypeDB client wrapper |
+| P1.4 | 📋 TODO | Write inference rule: "blocked-by-dependency" |
+| P1.5 | 📋 TODO | Test inference query returns results |
+
+**Success Criteria:** TypeDB running, 1 inference rule working
+
+---
+
+### PHASE 2: Hybrid Architecture
+
+| Task | Status | Description |
+|------|--------|-------------|
+| P2.1 | 📋 TODO | Create hybrid query router |
+| P2.2 | 📋 TODO | Migrate RULE-001 to RULE-008 to TypeDB |
+| P2.3 | 📋 TODO | Migrate DECISION-001 to DECISION-003 to TypeDB |
+| P2.4 | 📋 TODO | Add relationship: rule → decision → gap |
+| P2.5 | 📋 TODO | Test: "find all rules affected by DECISION-003" |
+
+**Success Criteria:** Hybrid queries work, no regression
+
+---
+
+### PHASE 3: Stabilization & v1.0
+
+| Task | Status | Description |
+|------|--------|-------------|
+| P3.1 | 📋 TODO | Update agents to use hybrid layer |
+| P3.2 | 📋 TODO | Create TypeDB MCP server (optional) |
+| P3.3 | 📋 TODO | Document hybrid architecture |
+| P3.4 | 📋 TODO | Performance benchmarks |
+| P3.5 | 📋 TODO | v1.0 release |
+
+**Success Criteria:** Production-ready, documented, benchmarked
+
+---
+
+### COMPLETED / DEFERRED
+
+| # | Item | Status | Notes |
+|---|------|--------|-------|
+| 1 | Inherit Experience Data Lakes | ✅ DONE | 53 docs in ChromaDB |
+| 2 | Session Data Dump Workflow | ✅ DONE | scripts/session_dump.py |
+| 3 | OctoCode MCP | ✅ CONFIGURED | GITHUB_PAT in .env |
+| 4 | Mem0 / OpenMemory MCP | ⏸️ DEFERRED | Superseded by TypeDB |
+| 5 | Replace Agno with Memory MCP | ⏸️ DEFERRED | Pending TypeDB outcome |
+| 6 | Custom Session/Memory UI | ⏸️ DEFERRED | After TypeDB validation |
+| 7 | MCP-Monitor | LOW | Nice-to-have |
+| 8 | AnythingLLM | LOW | Evaluate later |
+
+> **DECISION-003**: TypeDB elevated to Phase 1. Reasoning/inference > vector storage.
+> **RULE-008**: Technology scorecard applied - TypeDB scored 21/25 (ADOPT).
+> **Principle**: Gradual migration - don't break what works, add alongside.
 
 ---
 
