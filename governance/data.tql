@@ -1,7 +1,7 @@
 # Sim.ai Governance Data
-# Initial load: 11 rules + 4 decisions + 3 agents
+# Initial load: 13 rules + 4 decisions + 3 agents
 # Created: 2024-12-24
-# Updated: 2024-12-24 (RULE-011) - Added RULE-009/010/011 + agents
+# Updated: 2024-12-24 (RULE-013) - Added RULE-012 (DSP) and RULE-013 (Applicability)
 
 insert
 
@@ -108,6 +108,24 @@ $rule011 isa rule-entity,
     has directive "Bicameral model: Human oversight + AI execution, MCP manages DB state",
     has created-date 2024-12-24T00:00:00;
 
+$rule012 isa rule-entity,
+    has rule-id "RULE-012",
+    has rule-name "Deep Sleep Protocol",
+    has category "workflow",
+    has priority "HIGH",
+    has status "ACTIVE",
+    has directive "DSP phases: AUDIT → HYPOTHESIZE → MEASURE → OPTIMIZE → VALIDATE for backlog hygiene",
+    has created-date 2024-12-24T00:00:00;
+
+$rule013 isa rule-entity,
+    has rule-id "RULE-013",
+    has rule-name "Rules Applicability Convention",
+    has category "traceability",
+    has priority "MEDIUM",
+    has status "ACTIVE",
+    has directive "Format: {TYPE}({RULE-ID}): {Description} - gaps/TODOs must reference governing rules",
+    has created-date 2024-12-24T00:00:00;
+
 # =============================================================================
 # AGENTS (for multi-agent governance)
 # =============================================================================
@@ -197,3 +215,9 @@ $dec004 isa decision,
 (dependent: $rule010, dependency: $rule006) isa rule-dependency;  # Evidence wisdom depends on decision logging
 (dependent: $rule011, dependency: $rule001) isa rule-dependency;  # Governance protocol depends on evidence
 (dependent: $rule011, dependency: $rule010) isa rule-dependency;  # Governance protocol depends on evidence-based wisdom
+
+# Rule dependencies (RULE-012, RULE-013)
+(dependent: $rule012, dependency: $rule001) isa rule-dependency;  # DSP depends on session evidence logging
+(dependent: $rule012, dependency: $rule007) isa rule-dependency;  # DSP uses MCP protocol for queries
+(dependent: $rule013, dependency: $rule006) isa rule-dependency;  # Applicability depends on decision logging
+(dependent: $rule013, dependency: $rule012) isa rule-dependency;  # Applicability convention supports DSP audits

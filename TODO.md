@@ -9,27 +9,28 @@
 
 ## Gap Index Summary
 
-| ID | Gap | Priority | Category | Evidence |
-|----|-----|----------|----------|----------|
-| GAP-001 | ChromaDB Knowledge Integration | ✅ FIXED | integration | HttpClient injection |
-| GAP-002 | Opik Tracing Integration | ✅ FIXED | integration | OPIK_URL_OVERRIDE |
-| GAP-003 | Ollama Model Pull | ✅ FIXED | configuration | gemma3:4b (4GB, memory-tight) |
-| GAP-004 | Grok/xAI API Key | Medium | configuration | test skip |
-| GAP-005 | Agent Task Backlog UI | Medium | functionality | user request |
-| GAP-006 | Sync Agent Implementation | Medium | functionality | skeleton only |
-| GAP-007 | ChromaDB v2 Test Update | Low | testing | UUID error |
-| GAP-008 | Agent UI Image | Low | configuration | image not found |
-| GAP-009 | Pre-commit Hooks | Medium | tooling | RULES-DIRECTIVES.md |
-| GAP-010 | CI/CD Pipeline | Low | tooling | DEPLOYMENT.md |
-| GAP-011 | OctoCode MCP not in use | ✅ CONFIGURED | tooling | GITHUB_PAT in .env |
-| GAP-012 | TypeDB R&D (inference + type safety) | ✅ RESOLVED | R&D | Phase 1+2 complete, MCP server created |
-| GAP-013 | MCPs tested but not invoked | ✅ RESOLVED | workflow | DECISION-001 simplified stack |
-| GAP-014 | IntelliJ Windsurf MCP not loading | Medium | tooling | ~/.codeium/mcp_config.json not read by IntelliJ |
-| GAP-015 | Consolidated STRATEGY.md | Medium | docs | docs/GAP-ANALYSIS-2024-12-24.md |
-| GAP-016 | ChromaDB sync TDD stubs | ✅ DONE | testing | tests/test_chromadb_sync.py (10 skipped) |
-| GAP-017 | Pre-commit hooks for RULE-001/002 | Medium | tooling | Duplicate of GAP-009 |
-| GAP-018 | Session documentation workflow | ✅ DONE | governance | docs/SESSION-TEMPLATE.md |
-| GAP-019 | MCP usage documentation | Medium | docs | When to use each MCP |
+| ID | Gap | Priority | Category | Rule | Evidence |
+|----|-----|----------|----------|------|----------|
+| GAP-001 | ChromaDB Knowledge Integration | ✅ FIXED | integration | RULE-002 | HttpClient injection |
+| GAP-002 | Opik Tracing Integration | ✅ FIXED | integration | RULE-002 | OPIK_URL_OVERRIDE |
+| GAP-003 | Ollama Model Pull | ✅ FIXED | configuration | RULE-009 | gemma3:4b (4GB, memory-tight) |
+| GAP-004 | Grok/xAI API Key | Medium | configuration | RULE-002 | test skip |
+| GAP-005 | Agent Task Backlog UI | Medium | functionality | RULE-002 | user request |
+| GAP-006 | Sync Agent Implementation | Medium | functionality | RULE-003 | skeleton only |
+| GAP-007 | ChromaDB v2 Test Update | Low | testing | RULE-009 | UUID error |
+| GAP-008 | Agent UI Image | Low | configuration | RULE-009 | image not found |
+| GAP-009 | Pre-commit Hooks | Medium | tooling | RULE-001 | RULES-DIRECTIVES.md |
+| GAP-010 | CI/CD Pipeline | Low | tooling | RULE-009 | DEPLOYMENT.md |
+| GAP-011 | OctoCode MCP not in use | ✅ CONFIGURED | tooling | RULE-007 | GITHUB_PAT in .env |
+| GAP-012 | TypeDB R&D (inference + type safety) | ✅ RESOLVED | R&D | RULE-010 | Phase 1+2 complete, MCP server created |
+| GAP-013 | MCPs tested but not invoked | ✅ RESOLVED | workflow | RULE-007 | DECISION-001 simplified stack |
+| GAP-014 | IntelliJ Windsurf MCP not loading | Medium | tooling | RULE-005 | ~/.codeium/mcp_config.json not read by IntelliJ |
+| GAP-015 | Consolidated STRATEGY.md | Medium | docs | RULE-001 | docs/GAP-ANALYSIS-2024-12-24.md |
+| GAP-016 | ChromaDB sync TDD stubs | ✅ DONE | testing | RULE-004 | tests/test_chromadb_sync.py (10 skipped) |
+| GAP-017 | Pre-commit hooks for RULE-001/002 | Medium | tooling | RULE-001 | Duplicate of GAP-009 |
+| GAP-018 | Session documentation workflow | ✅ DONE | governance | RULE-001 | docs/SESSION-TEMPLATE.md |
+| GAP-019 | MCP usage documentation | Medium | docs | RULE-007 | When to use each MCP |
+| GAP-020 | Cross-project knowledge queries | HIGH | workflow | RULE-007 | claude-mem needs localgai/angelgai prefixes |
 
 ---
 
