@@ -236,6 +236,8 @@ Sources to check:
 - https://github.com/modelcontextprotocol/servers (Official)
 - https://mcpmarket.com/ (10,000+ tools, leaderboard)
 - https://mcp.so/ (Registry - 17,000+ servers)
+- https://github.com/TensorBlock/awesome-mcp-servers (Curated lists by category)
+- https://github.com/IO-Aerospace-software-engineering (Specialized MCPs)
 
 ### Phase 2: Hypothesis Formation
 ```

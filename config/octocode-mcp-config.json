@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "octocode": {
+      "command": "npx",
+      "args": ["octocode-mcp@latest"],
+      "env": {
+        "GITHUB_TOKEN": "${GITHUB_PAT}"
+      }
+    }
+  }
+}
