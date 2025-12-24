@@ -24,6 +24,7 @@
 | GAP-011 | OctoCode MCP not in use | ✅ CONFIGURED | tooling | GITHUB_PAT in .env |
 | GAP-012 | TypeDB R&D (inference + type safety) | Medium | R&D | user request |
 | GAP-013 | MCPs tested but not invoked | ✅ RESOLVED | workflow | DECISION-001 simplified stack |
+| GAP-014 | IntelliJ Windsurf MCP not loading | Medium | tooling | ~/.codeium/mcp_config.json not read by IntelliJ |
 
 ---
 
