@@ -226,7 +226,59 @@ pytest tests/test_health.py -v
 
 ---
 
-## Workflow 7: Exploratory Testing with Playwright MCP
+## Workflow 7: EBMSF - Evidence-Based MCP Selection
+
+**Trigger:** Adding new MCP server or reviewing existing MCPs
+**Source:** LocalGAI methodology (proven in production)
+
+### Phase 1: Discovery
+Sources to check:
+- https://github.com/modelcontextprotocol/servers (Official)
+- https://mcpmarket.com/ (10,000+ tools, leaderboard)
+- https://mcp.so/ (Registry - 17,000+ servers)
+
+### Phase 2: Hypothesis Formation
+```
+Template: IF [project_need] THEN [mcp_candidate] BECAUSE [evidence]
+
+Example: IF project requires browser testing 
+         THEN playwright-mcp 
+         BECAUSE it captures traces and screenshots automatically
+```
+
+### Phase 3: Risk Assessment
+| Dimension | LOW | MEDIUM | HIGH |
+|-----------|-----|--------|------|
+| Security | Read-only, no network | Sandboxed writes | System access, network |
+| Stability | Official, >1yr | Community, 6-12mo | New, <6mo |
+| Data | Local files only | External with auth | Transmits sensitive |
+
+**Threshold:** Total risk ≤ 6 (max 3 per dimension)
+
+### Phase 4: Impact Scoring
+| Metric | Weight | HIGH | MEDIUM | LOW |
+|--------|--------|------|--------|-----|
+| Token Preservation | 35% | >50% | 25-50% | <25% |
+| Task Acceleration | 30% | >40% | 20-40% | <20% |
+| Error Reduction | 20% | >30% | 15-30% | <15% |
+| Learning Curve | 15% | <1hr | 1-4hr | >4hr |
+
+### Phase 5: Decision Matrix
+```
+MUST_HAVE:    Impact ≥ 2.5 AND Risk ≤ 4
+RECOMMENDED:  Impact ≥ 2.0 AND Risk ≤ 6
+OPTIONAL:     Impact ≥ 1.5 AND Risk ≤ 6
+EXCLUDE:      Impact < 1.5 OR Risk > 6
+```
+
+### Phase 6: Continuous Validation
+- Monthly review of all MCPs
+- Check GitHub for maintenance status
+- Re-evaluate on project scope change
+
+---
+
+## Workflow 8: Exploratory Testing with Playwright MCP
 
 **Trigger:** Testing UI/web components
 

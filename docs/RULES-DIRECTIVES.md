@@ -17,6 +17,7 @@ Rules are indexed in ChromaDB (`sim_ai_rules` collection) and enforced by agents
 | RULE-002 | architecture | HIGH | ACTIVE | Code review |
 | RULE-003 | governance | HIGH | DRAFT | Sync agent |
 | RULE-004 | testing | HIGH | ACTIVE | Playwright MCP |
+| RULE-005 | stability | HIGH | ACTIVE | Memory thresholds |
 
 ---
 
@@ -233,22 +234,25 @@ All UI/web components MUST be testable via Playwright MCP with custom heuristics
    - Network requests for API calls
    - Accessibility audit results
 
-### MCP Configuration
+### MCP Configuration (Windsurf)
 
 ```json
 {
-  "mcpServers": {
-    "playwright": {
-      "command": "npx",
-      "args": ["-y", "@anthropic-ai/mcp-server-playwright"],
-      "env": {
-        "PLAYWRIGHT_HEADLESS": "true",
-        "PLAYWRIGHT_TIMEOUT": "30000"
-      }
-    }
+  "playwright": {
+    "command": "npx",
+    "args": [
+      "-y",
+      "@playwright/mcp@latest",
+      "--headless",
+      "--output-dir",
+      "C:\\Users\\natik\\Documents\\Vibe\\mcp_trials\\.artifacts\\playwright",
+      "--save-trace"
+    ]
   }
 }
 ```
+
+**Evidence Output:** `C:\Users\natik\Documents\Vibe\mcp_trials\.artifacts\playwright`
 
 ### Playwright MCP Tools
 
@@ -278,6 +282,65 @@ All UI/web components MUST be testable via Playwright MCP with custom heuristics
 - [ ] At least 3 heuristics applied per test session
 - [ ] Screenshots captured for each state
 - [ ] Findings documented in session log
+
+---
+
+## RULE-005: Memory & MCP Stability
+
+**Category:** `stability`  
+**Priority:** HIGH  
+**Status:** ACTIVE  
+**Source:** AngelGAI + LocalGAI (production-proven)
+
+### Directive
+
+All MCP operations MUST respect memory thresholds and stability tiers.
+
+### Memory Thresholds
+
+| Memory | Status | Action |
+|--------|--------|--------|
+| < 500 MB | HEALTHY | Normal operation |
+| 500-1000 MB | NORMAL | Active development |
+| 1000-1500 MB | WARNING | Monitor closely |
+| 1500-2000 MB | HIGH | Consider closing files |
+| > 2000 MB | CRITICAL | Restart soon |
+| > 3000 MB | EMERGENCY | Restart immediately |
+
+### MCP Stability Tiers
+
+| Tier | MCPs | Risk |
+|------|------|------|
+| **STABLE** | sequential-thinking, memory, filesystem, git | LOW |
+| **MODERATE** | desktop-commander, playwright | MEDIUM |
+| **RISKY** | context7, docker, fetch | HIGH (timeouts) |
+
+### Process Leak Detection
+
+```powershell
+# Check node process count
+(Get-Process node -EA SilentlyContinue).Count
+
+# Thresholds:
+# 1-3: HEALTHY
+# 4-7: NORMAL
+# 8-10: WARNING
+# >10: LEAK - Kill and restart
+```
+
+### Recovery Levels
+
+1. **Soft**: Restart Cascade/Claude Code
+2. **Medium**: Disable heavy MCPs
+3. **Hard**: Kill node processes
+4. **Nuclear**: Full system restart
+
+### Validation
+
+- [ ] Memory stays below 2GB during normal operation
+- [ ] Node process count < 10
+- [ ] No MCP timeouts > 30 seconds
+- [ ] Recovery script available
 
 ---
 
@@ -320,3 +383,4 @@ Rules are enforced via:
 |---------|------|--------|
 | 0.1.0 | 2024-12-24 | Initial rules: Session Evidence, Architecture |
 | 0.2.0 | 2024-12-24 | Added RULE-004: Exploratory Test Automation with Playwright MCP |
+| 0.3.0 | 2024-12-24 | Added RULE-005: Memory & MCP Stability (from AngelGAI/LocalGAI) |
