@@ -26,7 +26,8 @@ rule-entity sub entity,
     plays proposal-affects:affected-rule,   # RULE-011: proposals can affect rules
     plays agent-action:action-target,       # RULE-011: agents act on rules
     plays gap-rule-reference:governing-rule,       # RULE-013: rules govern gaps
-    plays document-references-rule:referenced-rule; # RULE-013: rules referenced by docs
+    plays document-references-rule:referenced-rule, # RULE-013: rules referenced by docs
+    plays entity-vector:embedded-entity;   # P7.1: vector embeddings
 
 decision sub entity,
     owns decision-id,
@@ -38,7 +39,8 @@ decision sub entity,
     plays decision-affects:affecting-decision,
     plays decision-supersedes:superseding,
     plays decision-supersedes:superseded,
-    plays document-references-decision:referenced-decision; # RULE-013: decisions referenced by docs
+    plays document-references-decision:referenced-decision, # RULE-013: decisions referenced by docs
+    plays entity-vector:embedded-entity;   # P7.1: vector embeddings
 
 task sub entity,
     owns task-id,
@@ -62,6 +64,40 @@ gap sub entity,
 # =============================================================================
 # DOCUMENT CROSS-REFERENCING ENTITIES (RULE-013)
 # =============================================================================
+
+# =============================================================================
+# VECTOR EMBEDDING ENTITIES (P7.1 - TypeDB 2.x Bridge)
+# =============================================================================
+# NOTE: TypeDB 3.x will have native vector support (double[]).
+# This is a bridge pattern for TypeDB 2.x that stores embeddings as JSON strings.
+# Similarity computation is done externally in Python (numpy/sklearn).
+# See DECISION-003: TypeDB-First Strategy for migration plan.
+
+# Vector document entity - stores text with embedding
+vector-document sub entity,
+    owns vector-id,
+    owns vector-content,
+    owns vector-embedding,       # JSON-encoded float array
+    owns vector-model,           # Embedding model name (e.g., "text-embedding-3-small")
+    owns vector-dimension,       # Embedding dimensions (e.g., 1536)
+    owns vector-source,          # Source identifier (rule-id, decision-id, session-id)
+    owns vector-source-type,     # Source type (rule, decision, session, document)
+    owns vector-created-at,
+    plays vector-similarity:source-vector,
+    plays vector-similarity:similar-vector,
+    plays entity-vector:entity-embedding;
+
+# Similarity relation (precomputed top-k neighbors)
+# This allows TypeDB to store and query precomputed similarities
+vector-similarity sub relation,
+    relates source-vector,
+    relates similar-vector,
+    owns similarity-score;       # Cosine similarity 0.0-1.0
+
+# Link vector to source entity (rule, decision, etc.)
+entity-vector sub relation,
+    relates embedded-entity,
+    relates entity-embedding;
 
 # =============================================================================
 # E2E EXPLORATION ENTITIES (RULE-020)
@@ -200,6 +236,17 @@ document-type sub attribute, value string;   # markdown, yaml, json, code
 document-storage sub attribute, value string; # local, webdav, github
 last-modified sub attribute, value datetime;
 content-hash sub attribute, value string;
+
+# Vector embedding attributes (P7.1 - TypeDB 2.x Bridge)
+vector-id sub attribute, value string;           # Unique vector ID (uuid)
+vector-content sub attribute, value string;      # Original text content
+vector-embedding sub attribute, value string;    # JSON-encoded float[] (e.g., "[0.1, 0.2, ...]")
+vector-model sub attribute, value string;        # Embedding model (e.g., "text-embedding-3-small")
+vector-dimension sub attribute, value long;      # Embedding dimensions (e.g., 1536, 768)
+vector-source sub attribute, value string;       # Source ID (rule-id, decision-id, etc.)
+vector-source-type sub attribute, value string;  # Source type (rule, decision, session)
+vector-created-at sub attribute, value datetime;
+similarity-score sub attribute, value double;    # Cosine similarity 0.0-1.0
 
 # E2E Exploration attributes (RULE-020)
 session-url sub attribute, value string;

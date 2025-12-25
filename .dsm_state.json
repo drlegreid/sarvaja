@@ -1,0 +1,59 @@
+{
+  "current_cycle": {
+    "cycle_id": "DSM-2025-12-24-215643",
+    "batch_id": "MCP-TEST",
+    "start_time": "2025-12-24T21:56:43.484998",
+    "end_time": null,
+    "current_phase": "dream",
+    "phases_completed": [
+      "audit",
+      "hypothesize",
+      "measure",
+      "optimize",
+      "validate"
+    ],
+    "checkpoints": [
+      {
+        "phase": "hypothesize",
+        "timestamp": "2025-12-24T21:56:43.884823",
+        "description": "Test checkpoint",
+        "metrics": {},
+        "evidence": []
+      },
+      {
+        "phase": "validate",
+        "timestamp": "2025-12-24T21:58:13.717543",
+        "description": "Test checkpoint",
+        "metrics": {},
+        "evidence": []
+      }
+    ],
+    "findings": [
+      {
+        "id": "FINDING-001",
+        "type": "gap",
+        "description": "Missing tests",
+        "severity": "HIGH",
+        "phase": "measure",
+        "timestamp": "2025-12-24T21:56:43.903550",
+        "related_rules": [
+          "RULE-004"
+        ]
+      },
+      {
+        "id": "FINDING-002",
+        "type": "gap",
+        "description": "Missing tests",
+        "severity": "HIGH",
+        "phase": "dream",
+        "timestamp": "2025-12-24T21:58:13.726454",
+        "related_rules": [
+          "RULE-004"
+        ]
+      }
+    ],
+    "metrics": {}
+  },
+  "completed_count": 0,
+  "last_updated": "2025-12-24T21:58:13.726454"
+}

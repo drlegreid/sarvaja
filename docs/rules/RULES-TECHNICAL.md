@@ -188,4 +188,161 @@ Stupidity = Σ(Assumptions × Untested)
 
 ---
 
+## RULE-016: Infrastructure Identity & Hardware Metadata
+
+**Category:** `devops` | **Priority:** CRITICAL | **Status:** ACTIVE
+
+### Directive
+
+All infrastructure components MUST be identifiable via metadata for digital twin management. Hardware specifications enable reproducible environments and capacity planning.
+
+### Infrastructure Registry
+
+```yaml
+infrastructure:
+  host:
+    id: "natik-laptop-i7"
+    hardware:
+      cpu: "Intel Core i7"
+      ram: "16GB"
+      storage: "SSD"
+      gpu: "None (CPU-only)"
+    os: "Windows 11"
+    roles: ["development", "docker-host", "mcp-host"]
+
+  clusters:
+    sim-ai:
+      type: "docker-compose"
+      containers:
+        - name: agents-1
+          image: sim-ai-agents
+          port: 7777
+          role: "agno-agent-runtime"
+        - name: chromadb-1
+          image: chromadb/chroma
+          port: 8001
+          role: "vector-storage"
+        - name: typedb-1
+          image: vaticle/typedb
+          port: 1729
+          role: "graph-inference"
+        - name: litellm-1
+          image: ghcr.io/berriai/litellm
+          port: 4000
+          role: "model-routing"
+        - name: ollama-1
+          image: ollama/ollama
+          port: 11434
+          role: "local-inference"
+
+    agno-agi:
+      type: "docker-compose"
+      source: "C:\Users\natik\Documents\Vibe\agno-agi"
+      containers:
+        - name: agents
+          port: 7777
+        - name: agent-ui
+          port: 3000
+        - name: chromadb
+          port: 8001
+
+  mcp_servers:
+    runtime: "claude-code-native"
+    servers:
+      - name: claude-mem
+        type: stable
+        backend: chromadb
+      - name: playwright
+        type: moderate
+        backend: browser
+      - name: godot-mcp
+        type: conditional
+        backend: godot-editor
+      - name: desktop-commander
+        type: moderate
+        backend: native
+      - name: sequential-thinking
+        type: stable
+        backend: memory
+```
+
+### Hardware Resource Limits
+
+| Container | Memory | CPU | Purpose |
+|-----------|--------|-----|---------|
+| agents | 1G | - | Agno agent runtime |
+| litellm | 512M | - | Model routing proxy |
+| chromadb | 1G | - | Vector storage |
+| typedb | 2G | - | Graph database |
+| ollama | 4G | 2 | Local inference |
+
+### Digital Twin Identity Protocol
+
+Every deployment MUST include:
+
+```yaml
+deployment_identity:
+  deployment_id: "{project}-{date}-{env}"  # sim-ai-2024-12-24-dev
+  host_fingerprint: "{cpu}-{ram}-{os}"      # i7-16gb-win11
+  cluster_signature: md5(containers)         # Unique per config
+  mcp_profile: [active_mcp_names]            # Current MCP set
+```
+
+### Cross-Workspace Coordination
+
+| Workspace | Cluster | Host |
+|-----------|---------|------|
+| sim-ai | sim-ai-* | natik-laptop-i7 |
+| agno-agi | agno-agi-* | natik-laptop-i7 |
+| local-gai | MCP-only | natik-laptop-i7 |
+| angelgai | Watchdog | natik-laptop-i7 |
+
+### Validation
+- [ ] Infrastructure registry up-to-date
+- [ ] All containers have defined resource limits
+- [ ] Deployment identity logged in session
+- [ ] Hardware fingerprint matches deployment
+
+---
+
+## RULE-017: Cross-Workspace Pattern Reuse
+
+**Category:** `strategic` | **Priority:** HIGH | **Status:** ACTIVE
+
+### Directive
+
+Before implementing new functionality, check cross-workspace wisdom index for existing patterns.
+
+### Pattern Sources
+
+| Source | Path | Patterns |
+|--------|------|----------|
+| **local-gai** | `C:\Users\natik\Documents\Vibe\localgai` | EBMSF, DSM, MCP wrappers |
+| **agno-agi** | `C:\Users\natik\Documents\Vibe\agno-agi` | Base Agno cluster |
+| **sim-ai** | Current | TypeDB hybrid, Governance MCP |
+
+### Reuse Checklist
+
+Before implementing:
+- [ ] Checked CROSS-WORKSPACE-WISDOM.md
+- [ ] Searched claude-mem for similar patterns
+- [ ] Reviewed related workspace evidence
+
+### Pattern Categories
+
+| Category | Documents | Tools |
+|----------|-----------|-------|
+| MCP Wrappers | docker_wrapper.py, godot_wrapper.py | Dependency auto-start |
+| Type-Safe Tools | pydantic_tools.py | Pydantic AI + FastMCP |
+| State Machines | langgraph_workflow.py | LangGraph |
+| Evidence Tracking | dsm_tracker.py | DSM phases |
+| Health Monitoring | watchdog_rules | Memory thresholds |
+
+### Validation
+- [ ] Cross-workspace search performed
+- [ ] Existing patterns leveraged
+- [ ] New patterns documented for reuse
+
+---
+
 *Per RULE-008: In-House Rewrite Principle*

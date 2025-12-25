@@ -12,7 +12,80 @@ Rules governing testing, stability, maintenance, and task execution.
 
 All components MUST be testable via domain-specific heuristics. Exploratory testing complements TDD cycle to ensure proper coverage and evidence capture for audit.
 
+### Workflow Principles (CRITICAL)
+
+| Principle | Directive | Gate |
+|-----------|-----------|------|
+| **Gaps Before Implementation** | Document all gaps BEFORE coding | No PR without GAP-* references |
+| **Page Object Model (POM)** | All UI tests use OOP page objects | Code review check |
+| **Test What You Ship** | RULE-023 compliance | CI/CD gate |
+| **Insight Capture** | Document insights during task execution | Task description updated |
+
+### Insight Capture Protocol (CRITICAL)
+
+```
+DURING every task execution, capture and document:
+
+1. DISCOVERIES
+   └── New patterns, behaviors, or edge cases found
+   └── Update task description with findings
+
+2. GAPS IDENTIFIED
+   └── Missing features → GAP-UI-XXX or GAP-XXX
+   └── Link gap ID in task description
+
+3. DECISIONS MADE
+   └── Why approach X was chosen over Y
+   └── Evidence/rationale recorded
+
+4. ARTIFACTS CREATED
+   └── Tests, screenshots, API responses
+   └── Store in evidence/ folder
+
+Format in task/gap description:
+---
+## Insights Captured
+- [DISCOVERY] Found that X behaves as Y when Z
+- [GAP] GAP-UI-006: Missing validation message on form
+- [DECISION] Used polling over WebSocket due to simplicity
+- [ARTIFACT] evidence/screenshots/rules-list-2024-12-25.png
+---
+
+This enables:
+• Knowledge accumulation across sessions
+• Audit trail for decisions
+• Reproducibility of discoveries
+• Pattern recognition over time
+```
+
 ### Test Strategy Integration
+
+```
+EXPLORE (Gaps) → DOCUMENT (GAP-*) → PRIORITIZE → TDD (RED→GREEN→REFACTOR)
+       ↓                                              ↓
+  Gap Discovery                               Page Object Tests
+```
+
+### Page Object Model Requirements
+
+```python
+# Required structure for UI tests
+tests/
+├── pages/                    # Page Objects (OOP)
+│   ├── base_page.py         # BasePage with common methods
+│   ├── rules_page.py        # RulesPage(BasePage)
+│   ├── sessions_page.py     # SessionsPage(BasePage)
+│   └── components/          # Reusable UI components
+│       ├── navbar.py
+│       ├── table.py
+│       └── form.py
+├── locators/                 # Centralized selectors
+│   └── locators.py          # All element selectors
+└── e2e/                      # Robot Framework tests
+    └── *.robot              # Uses page object keywords
+```
+
+### Legacy Test Strategy Integration
 
 ```
 TDD Spec (What) ←→ Exploratory (How) ←→ Executable Spec (Verify)
@@ -266,6 +339,82 @@ test_chunks:
 | **Milestone** | Full backlog + DREAM | Weekly (30 min) |
 | **Pre-Release** | Deep review + Report | Before releases (2+ hours) |
 
+### Semantic Code Structure (DSP Hygiene)
+
+**Principle:** Files >300 lines MUST be restructured during DSP night cycles.
+
+**Paradigm Alignment:**
+- **Functional Programming:** Pure functions, immutability, composition
+- **Digital Twin:** Entity-centric modules mirroring domain reality
+
+**Semantic Decomposition Pattern:**
+
+```
+BEFORE (monolithic):
+  governance_ui.py (800 lines)
+
+AFTER (semantic):
+  ui/
+  ├── __init__.py
+  ├── entities/           # BY DOMAIN (noun)
+  │   ├── rules_view.py   # Rule entity UI
+  │   ├── decisions_view.py
+  │   ├── sessions_view.py
+  │   └── tasks_view.py
+  ├── concerns/           # BY ACTION (verb)
+  │   ├── navigation.py   # Nav logic
+  │   ├── forms.py        # CRUD forms
+  │   ├── filters.py      # Filter/sort
+  │   └── state.py        # State management
+  └── components/         # BY STRUCTURE (reusable)
+      ├── table.py
+      ├── detail_card.py
+      └── dialog.py
+```
+
+**Decomposition Heuristics:**
+
+| Signal | Action |
+|--------|--------|
+| File >300 lines | Split by entity |
+| Class >200 lines | Extract concerns |
+| Function >50 lines | Compose smaller functions |
+| Repeated patterns | Extract to component |
+| Mixed concerns (UI + logic) | Separate layers |
+
+**Functional Programming Principles:**
+
+```python
+# ✅ DO: Pure functions, composition
+def get_rule_color(status: str) -> str:
+    return STATUS_COLORS.get(status, "grey")
+
+# ✅ DO: Immutable data transforms
+rules_filtered = [r for r in rules if r.status == "ACTIVE"]
+
+# ❌ DON'T: Side effects in transforms
+def process_rules(rules):
+    for r in rules:
+        r["processed"] = True  # Mutation!
+```
+
+**Digital Twin Alignment:**
+
+```yaml
+domain_entities:
+  Rule:
+    views: [list, detail, form]
+    concerns: [crud, filter, validate]
+
+  Decision:
+    views: [list, detail]
+    concerns: [timeline, impact]
+
+  Session:
+    views: [list, timeline, evidence]
+    concerns: [search, export]
+```
+
 ### Quick DSP Checklist
 
 - [ ] New gaps added to TODO.md?
@@ -274,6 +423,10 @@ test_chunks:
 - [ ] Session log completed?
 - [ ] MCP usage audited?
 - [ ] TypeDB orphans checked?
+- [ ] Documents structured (evidence/, tests/)?
+- [ ] TypeDB document links synced?
+- [ ] **Files >300 lines flagged for restructure?**
+- [ ] **Semantic decomposition applied?**
 
 ### Validation
 - [ ] DSP quick audit at each session end
@@ -425,6 +578,26 @@ E2E tests MUST be generated via LLM-driven exploratory sessions using Playwright
 3. **Failure analysis** - Analyze why deterministic tests failed
 
 LLM is NOT used during test execution.
+
+### Related Rules & Workflows
+
+| Related | Purpose |
+|---------|---------|
+| **RULE-004** | Exploratory heuristics library (domain-specific) |
+| **RULE-023** | Test Before Ship (quality gate) |
+| **[UI-FIRST-SPRINT-WORKFLOW](../workflows/UI-FIRST-SPRINT-WORKFLOW.md)** | DSM + TDD + EXPLORATORY fusion |
+
+### Integration with UI-First Sprint (P10)
+
+```
+DSM (Domain Model)     → Define what UI SHOULD show
+     ↓
+TDD (Robot Tests)      → Write failing tests for expected behavior
+     ↓
+EXPLORATORY (Playwright) → Discover gaps, validate, generate tests
+     ↓
+ROBOT EXECUTION        → Deterministic test runs
+```
 
 ### Architecture
 
@@ -838,6 +1011,263 @@ integrity-check sub relation,
 - [ ] Hash verified on session start
 - [ ] Changes detected and logged
 - [ ] Similarity scores for rule evolution
+
+---
+
+## RULE-023: Test Before Ship
+
+**Category:** `quality` | **Priority:** CRITICAL | **Status:** ACTIVE
+
+### Directive
+
+All code, UIs, and components MUST be tested before claiming they are complete. No shipping untested code under any circumstances.
+
+### Origin
+
+This rule was created on 2024-12-25 after shipping Trame UI modules (P9.2-P9.4) without verifying:
+1. Dependencies were installed
+2. Imports worked
+3. UIs actually started
+
+**Lesson learned:** Writing code is not the same as shipping working code.
+
+### Test Levels
+
+| Level | What | When |
+|-------|------|------|
+| **L1: Import** | Module imports without errors | After writing |
+| **L2: Init** | Class/function instantiates | After writing |
+| **L3: Smoke** | Basic happy path works | Before claiming done |
+| **L4: Edge** | Edge cases handled | Before merge/release |
+
+### Protocol
+
+```
+1. WRITE code
+2. TEST imports work
+3. TEST initialization works
+4. TEST basic functionality
+5. THEN mark as complete
+```
+
+### Anti-Patterns
+
+| ❌ Don't | ✅ Do Instead |
+|----------|---------------|
+| Write code → claim done | Write → Test → Verify → claim done |
+| Assume dependencies installed | Verify with `pip show` or import |
+| Skip testing "simple" code | Simple code fails too |
+| Trust previous session's tests | Re-run relevant tests |
+
+### Validation
+
+- [ ] All new modules import without errors
+- [ ] All new classes instantiate
+- [ ] Basic functionality verified
+- [ ] Dependencies documented in requirements
+
+---
+
+## RULE-024: AMNESIA Protocol (Autonomous Context Recovery)
+
+**Category:** `maintenance` | **Priority:** CRITICAL | **Status:** ACTIVE
+
+### Directive
+
+When context is lost, truncated, or a session continues from a previous conversation, agents MUST autonomously recover context using the AMNESIA Protocol before proceeding with tasks.
+
+### AMNESIA = Autonomous Memory & Network Extraction for Session Intelligence and Awareness
+
+### Recovery Triggers
+
+| Trigger | Indicator | Action |
+|---------|-----------|--------|
+| **Session Continuation** | "continued from previous conversation" | Full AMNESIA |
+| **Context Truncation** | Summarized context provided | Partial AMNESIA |
+| **Unknown State** | Unclear task queue or priorities | Targeted AMNESIA |
+| **Explicit Request** | User asks "what were we doing?" | Full AMNESIA |
+
+### Recovery Hierarchy (Priority Order)
+
+```
+┌─────────────────────────────────────────────────────────────────────────┐
+│                    AMNESIA Protocol - Recovery Layers                    │
+├─────────────────────────────────────────────────────────────────────────┤
+│                                                                          │
+│  Layer 1: TODO.md (CRITICAL - Read First)                               │
+│  ┌─────────────────────────────────────────────────────────────────┐    │
+│  │  File: TODO.md                                                   │    │
+│  │  Contents: Current priorities, in-progress tasks, next actions   │    │
+│  │  Recovery: Read and parse task queue                             │    │
+│  └─────────────────────────────────────────────────────────────────┘    │
+│                               │                                          │
+│                               ▼                                          │
+│  Layer 2: R&D Backlog (Strategic Context)                               │
+│  ┌─────────────────────────────────────────────────────────────────┐    │
+│  │  File: docs/backlog/R&D-BACKLOG.md                              │    │
+│  │  Contents: Sprint status, phase progress, strategic goals        │    │
+│  │  Recovery: Understand current phase and objectives               │    │
+│  └─────────────────────────────────────────────────────────────────┘    │
+│                               │                                          │
+│                               ▼                                          │
+│  Layer 3: Session Summary (Provided Context)                            │
+│  ┌─────────────────────────────────────────────────────────────────┐    │
+│  │  Source: Conversation summary (if available)                     │    │
+│  │  Contents: Key decisions, files modified, pending work           │    │
+│  │  Recovery: Parse summary for actionable items                    │    │
+│  └─────────────────────────────────────────────────────────────────┘    │
+│                               │                                          │
+│                               ▼                                          │
+│  Layer 4: Claude-Mem Queries (Semantic Memory)                          │
+│  ┌─────────────────────────────────────────────────────────────────┐    │
+│  │  MCP: claude-mem                                                 │    │
+│  │  Queries:                                                        │    │
+│  │    - "sim-ai current sprint progress"                           │    │
+│  │    - "sim-ai recent session decisions"                          │    │
+│  │    - "sim-ai [topic] implementation status"                     │    │
+│  │  Recovery: Semantic search for relevant context                  │    │
+│  └─────────────────────────────────────────────────────────────────┘    │
+│                               │                                          │
+│                               ▼                                          │
+│  Layer 5: Gap Index (Known Issues)                                      │
+│  ┌─────────────────────────────────────────────────────────────────┐    │
+│  │  File: docs/gaps/GAP-INDEX.md                                   │    │
+│  │  Contents: Open gaps, blockers, dependencies                     │    │
+│  │  Recovery: Understand current blockers                           │    │
+│  └─────────────────────────────────────────────────────────────────┘    │
+│                                                                          │
+└─────────────────────────────────────────────────────────────────────────┘
+```
+
+### Recovery Protocol
+
+```yaml
+amnesia_protocol:
+  step_1_read_todo:
+    action: "Read TODO.md"
+    extract:
+      - current_sprint
+      - in_progress_tasks
+      - next_priorities
+    fallback: "If TODO.md missing, proceed to step 2"
+
+  step_2_read_backlog:
+    action: "Read R&D-BACKLOG.md"
+    extract:
+      - phase_status
+      - strategic_goals
+      - completion_percentage
+    fallback: "If backlog missing, proceed to step 3"
+
+  step_3_parse_summary:
+    action: "Parse conversation summary"
+    extract:
+      - key_decisions
+      - files_modified
+      - pending_work
+      - errors_encountered
+    fallback: "If no summary, proceed to step 4"
+
+  step_4_query_memory:
+    action: "Query claude-mem"
+    queries:
+      - "sim-ai [project] current sprint"
+      - "sim-ai recent decisions"
+      - "sim-ai [topic] status"
+    extract:
+      - recent_context
+      - relevant_memories
+    fallback: "If no memories, proceed to step 5"
+
+  step_5_check_gaps:
+    action: "Read GAP-INDEX.md"
+    extract:
+      - open_gaps
+      - blockers
+      - dependencies
+    fallback: "If gaps missing, use available context"
+
+  final:
+    action: "Synthesize and continue"
+    output:
+      - reconstructed_context
+      - task_queue
+      - next_action
+```
+
+### Claude-Mem Query Patterns
+
+```python
+# Always prefix with project name for isolation
+queries = [
+    "sim-ai current phase progress",
+    "sim-ai P9 UI dashboard status",
+    "sim-ai recent session 2024-12-25",
+    "sim-ai TypeDB governance schema",
+]
+
+# Include dates for temporal search
+"sim-ai 2024-12-25 decisions"
+
+# Topic-specific recovery
+"sim-ai RuleMonitor implementation"
+"sim-ai JourneyAnalyzer tests"
+```
+
+### Recovery Output Format
+
+After AMNESIA Protocol completes, output:
+
+```markdown
+## Context Recovered (AMNESIA Protocol)
+
+**Current Sprint:** P9.x - [Sprint Name]
+**Phase Progress:** X/Y tasks complete
+
+**In Progress:**
+- [Task currently being worked on]
+
+**Next Actions:**
+1. [Priority 1 task]
+2. [Priority 2 task]
+
+**Recent Decisions:**
+- [Key decision from recent sessions]
+
+**Active Blockers:**
+- [Any gaps or blockers identified]
+
+---
+Continuing with: [specific next task]
+```
+
+### Integration with Other Rules
+
+| Rule | Integration |
+|------|-------------|
+| **RULE-001** | Session evidence logging supports recovery |
+| **RULE-012** | DSP hygiene keeps documents recovery-friendly |
+| **RULE-014** | Autonomous sequencing resumes after recovery |
+| **RULE-021** | MCP healthcheck before claude-mem queries |
+
+### Anti-Patterns
+
+| ❌ Don't | ✅ Do Instead |
+|----------|---------------|
+| Ask user "what were we doing?" | Run AMNESIA Protocol autonomously |
+| Start fresh without context | Recover context before proceeding |
+| Ignore provided summary | Parse summary for actionable items |
+| Query claude-mem without project prefix | Always prefix with "sim-ai" |
+| Skip TODO.md | Always read TODO.md first |
+
+### Validation
+
+- [ ] TODO.md read on context loss
+- [ ] R&D backlog consulted for strategic context
+- [ ] Summary parsed for key information
+- [ ] Claude-mem queried with project prefix
+- [ ] Recovery output clearly summarized
+- [ ] Task sequencing resumed automatically
 
 ---
 

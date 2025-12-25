@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sim.ai Task Console</title>
+    <style>
+        :root {
+            --bg-primary: #0d1117;
+            --bg-secondary: #161b22;
+            --bg-tertiary: #21262d;
+            --text-primary: #c9d1d9;
+            --text-secondary: #8b949e;
+            --accent: #58a6ff;
+            --success: #3fb950;
+            --warning: #d29922;
+            --error: #f85149;
+            --border: #30363d;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        header {
+            background: var(--bg-secondary);
+            border-bottom: 1px solid var(--border);
+            padding: 1rem 2rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        header h1 {
+            font-size: 1.25rem;
+            font-weight: 600;
+        }
+
+        header .badge {
+            background: var(--accent);
+            color: var(--bg-primary);
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        main {
+            flex: 1;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            padding: 1rem;
+            max-height: calc(100vh - 60px);
+        }
+
+        .panel {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .panel-header {
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .panel-header h2 {
+            font-size: 0.875rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-secondary);
+        }
+
+        .panel-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 1rem;
+        }
+
+        /* Task Input Form */
+        .task-form {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .form-group label {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+        }
+
+        .form-group select,
+        .form-group textarea {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            color: var(--text-primary);
+            padding: 0.75rem;
+            font-family: inherit;
+            font-size: 0.875rem;
+        }
+
+        .form-group textarea {
+            min-height: 120px;
+            resize: vertical;
+        }
+
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+
+        .btn {
+            background: var(--accent);
+            color: var(--bg-primary);
+            border: none;
+            border-radius: 6px;
+            padding: 0.75rem 1.5rem;
+            font-size: 0.875rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+
+        .btn:hover {
+            opacity: 0.9;
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* Event Stream */
+        .event-stream {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .event {
+            background: var(--bg-tertiary);
+            border-radius: 6px;
+            padding: 0.75rem;
+            font-family: 'SF Mono', 'Consolas', monospace;
+            font-size: 0.8125rem;
+        }
+
+        .event-header {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .event-type {
+            padding: 0.125rem 0.375rem;
+            border-radius: 4px;
+            font-size: 0.6875rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .event-type.run-started { background: var(--accent); color: var(--bg-primary); }
+        .event-type.text-message { background: var(--success); color: var(--bg-primary); }
+        .event-type.state-delta { background: var(--warning); color: var(--bg-primary); }
+        .event-type.run-finished { background: var(--success); color: var(--bg-primary); }
+        .event-type.run-error { background: var(--error); color: white; }
+        .event-type.tool-call { background: #a371f7; color: var(--bg-primary); }
+
+        .event-time {
+            color: var(--text-secondary);
+            font-size: 0.75rem;
+        }
+
+        .event-data {
+            color: var(--text-secondary);
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+
+        /* Status Indicator */
+        .status {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.75rem;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--text-secondary);
+        }
+
+        .status-dot.connected { background: var(--success); }
+        .status-dot.running { background: var(--warning); animation: pulse 1s infinite; }
+        .status-dot.error { background: var(--error); }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        /* Task List */
+        .task-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .task-item {
+            background: var(--bg-tertiary);
+            border-radius: 6px;
+            padding: 0.75rem;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .task-item:hover {
+            background: var(--border);
+        }
+
+        .task-item.active {
+            border: 1px solid var(--accent);
+        }
+
+        .task-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.25rem;
+        }
+
+        .task-id {
+            font-family: 'SF Mono', 'Consolas', monospace;
+            font-size: 0.75rem;
+            color: var(--accent);
+        }
+
+        .task-status {
+            font-size: 0.6875rem;
+            padding: 0.125rem 0.375rem;
+            border-radius: 4px;
+        }
+
+        .task-status.pending { background: var(--text-secondary); }
+        .task-status.running { background: var(--warning); }
+        .task-status.completed { background: var(--success); }
+        .task-status.failed { background: var(--error); }
+
+        .task-prompt {
+            font-size: 0.8125rem;
+            color: var(--text-secondary);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 2rem;
+            color: var(--text-secondary);
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            main {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Sim.ai Task Console</h1>
+        <span class="badge">AG-UI</span>
+        <div class="status">
+            <span class="status-dot" id="statusDot"></span>
+            <span id="statusText">Disconnected</span>
+        </div>
+    </header>
+
+    <main>
+        <!-- Left Panel: Task Input -->
+        <div class="panel">
+            <div class="panel-header">
+                <h2>New Task</h2>
+            </div>
+            <div class="panel-content">
+                <form class="task-form" id="taskForm">
+                    <div class="form-group">
+                        <label for="agent">Agent</label>
+                        <select id="agent" name="agent">
+                            <option value="orchestrator">Task Orchestrator</option>
+                            <option value="researcher">Research Agent</option>
+                            <option value="coder">Code Agent</option>
+                            <option value="rules_curator">Rules Curator</option>
+                            <option value="simple_assistant">Local Assistant</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="prompt">Task Prompt</label>
+                        <textarea id="prompt" name="prompt" placeholder="Describe your task..."></textarea>
+                    </div>
+                    <button type="submit" class="btn" id="submitBtn">Submit Task</button>
+                </form>
+
+                <div style="margin-top: 2rem;">
+                    <div class="panel-header" style="padding: 0; border: none; margin-bottom: 0.5rem;">
+                        <h2>Recent Tasks</h2>
+                    </div>
+                    <div class="task-list" id="taskList">
+                        <div class="empty-state">No tasks yet</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Panel: Event Stream -->
+        <div class="panel">
+            <div class="panel-header">
+                <h2>Event Stream</h2>
+                <button class="btn" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;" onclick="clearEvents()">Clear</button>
+            </div>
+            <div class="panel-content">
+                <div class="event-stream" id="eventStream">
+                    <div class="empty-state">Submit a task to see events</div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        const API_BASE = window.location.origin;
+        let currentTaskId = null;
+        let eventSource = null;
+
+        // Update connection status
+        function setStatus(status, text) {
+            const dot = document.getElementById('statusDot');
+            const statusText = document.getElementById('statusText');
+            dot.className = 'status-dot ' + status;
+            statusText.textContent = text;
+        }
+
+        // Add event to stream
+        function addEvent(event) {
+            const stream = document.getElementById('eventStream');
+            const empty = stream.querySelector('.empty-state');
+            if (empty) empty.remove();
+
+            const typeClass = event.type.toLowerCase().replace('_', '-');
+            const time = new Date(event.timestamp).toLocaleTimeString();
+
+            const eventEl = document.createElement('div');
+            eventEl.className = 'event';
+            eventEl.innerHTML = `
+                <div class="event-header">
+                    <span class="event-type ${typeClass}">${event.type}</span>
+                    <span class="event-time">${time}</span>
+                </div>
+                <div class="event-data">${formatEventData(event)}</div>
+            `;
+            stream.appendChild(eventEl);
+            stream.scrollTop = stream.scrollHeight;
+        }
+
+        // Format event data for display
+        function formatEventData(event) {
+            const data = { ...event };
+            delete data.type;
+            delete data.timestamp;
+            delete data.runId;
+
+            if (Object.keys(data).length === 0) return '';
+
+            if (data.content) return data.content;
+            if (data.error) return `Error: ${data.error}`;
+
+            return JSON.stringify(data, null, 2);
+        }
+
+        // Clear events
+        function clearEvents() {
+            const stream = document.getElementById('eventStream');
+            stream.innerHTML = '<div class="empty-state">Submit a task to see events</div>';
+        }
+
+        // Refresh task list
+        async function refreshTasks() {
+            try {
+                const response = await fetch(`${API_BASE}/tasks`);
+                const tasks = await response.json();
+
+                const list = document.getElementById('taskList');
+
+                if (tasks.length === 0) {
+                    list.innerHTML = '<div class="empty-state">No tasks yet</div>';
+                    return;
+                }
+
+                list.innerHTML = tasks.slice(0, 10).map(task => `
+                    <div class="task-item ${task.task_id === currentTaskId ? 'active' : ''}"
+                         onclick="selectTask('${task.task_id}')">
+                        <div class="task-meta">
+                            <span class="task-id">${task.task_id}</span>
+                            <span class="task-status ${task.status}">${task.status}</span>
+                        </div>
+                        <div class="task-prompt">${escapeHtml(task.prompt)}</div>
+                    </div>
+                `).join('');
+            } catch (e) {
+                console.error('Failed to refresh tasks:', e);
+            }
+        }
+
+        // Select task and stream events
+        function selectTask(taskId) {
+            currentTaskId = taskId;
+            refreshTasks();
+            clearEvents();
+            streamEvents(taskId);
+        }
+
+        // Stream events for task
+        function streamEvents(taskId) {
+            if (eventSource) {
+                eventSource.close();
+            }
+
+            setStatus('running', 'Streaming...');
+
+            eventSource = new EventSource(`${API_BASE}/tasks/${taskId}/events`);
+
+            eventSource.onmessage = (e) => {
+                const event = JSON.parse(e.data);
+                addEvent(event);
+
+                if (event.type === 'RUN_FINISHED' || event.type === 'RUN_ERROR') {
+                    setStatus('connected', 'Complete');
+                    eventSource.close();
+                    refreshTasks();
+                }
+            };
+
+            eventSource.onerror = () => {
+                setStatus('error', 'Disconnected');
+                eventSource.close();
+            };
+        }
+
+        // Submit task
+        document.getElementById('taskForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const btn = document.getElementById('submitBtn');
+            btn.disabled = true;
+            btn.textContent = 'Submitting...';
+
+            try {
+                const response = await fetch(`${API_BASE}/tasks`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        prompt: document.getElementById('prompt').value,
+                        agent: document.getElementById('agent').value
+                    })
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    document.getElementById('prompt').value = '';
+                    selectTask(result.task_id);
+                } else {
+                    alert(result.detail || 'Failed to submit task');
+                }
+            } catch (e) {
+                alert('Network error: ' + e.message);
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Submit Task';
+            }
+        });
+
+        // Escape HTML
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // Initial load
+        setStatus('connected', 'Connected');
+        refreshTasks();
+        setInterval(refreshTasks, 5000);
+    </script>
+</body>
+</html>

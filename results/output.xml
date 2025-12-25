@@ -1,0 +1,555 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<robot generator="Robot 7.3.2 (Python 3.12.6 on win32)" generated="2025-12-25T19:29:37.996455" rpa="false" schemaversion="5">
+<suite id="s1" name="Rules Crud" source="C:\Users\natik\Documents\Vibe\sim-ai\sim-ai\tests\ui\rules_crud.robot">
+<kw name="Open Governance Dashboard" owner="governance" type="SETUP">
+<kw name="New Browser" owner="Browser">
+<msg time="2025-12-25T19:29:38.259886" level="INFO">{"browser": "chromium", "headless": true, "chromiumSandbox": false, "devtools": false, "handleSIGHUP": true, "handleSIGINT": true, "handleSIGTERM": true, "slowMo": 0.0, "timeout": 30000.0, "tracesDir": "C:\\Users\\natik\\Documents\\Vibe\\sim-ai\\sim-ai\\results\\browser\\traces\\temp\\dbe7a003-31c3-4104-9481-e3888c240823"}</msg>
+<msg time="2025-12-25T19:29:38.310212" level="INFO">Starting Browser process C:\DEV\Python\Python312\Lib\site-packages\Browser\wrapper\index.js using at 127.0.0.1:59867</msg>
+<msg time="2025-12-25T19:29:39.515340" level="INFO">Successfully created browser with options: {"browser":"chromium","headless":true,"chromiumSandbox":false,"devtools":false,"handleSIGHUP":true,"handleSIGINT":true,"handleSIGTERM":true,"slowMo":0,"timeout":30000,"tracesDir":"C:\\Users\\natik\\Documents\\Vibe\\sim-ai\\sim-ai\\results\\browser\\traces\\temp\\dbe7a003-31c3-4104-9481-e3888c240823"}</msg>
+<arg>chromium</arg>
+<arg>headless=${HEADLESS}</arg>
+<tag>BrowserControl</tag>
+<tag>Setter</tag>
+<doc>Create a new playwright Browser with specified options.</doc>
+<status status="PASS" start="2025-12-25T19:29:38.258882" elapsed="1.256458"/>
+</kw>
+<kw name="New Context" owner="Browser">
+<msg time="2025-12-25T19:29:39.517893" level="INFO">{
+  "acceptDownloads": true,
+  "bypassCSP": false,
+  "forcedColors": "none",
+  "ignoreHTTPSErrors": false,
+  "javaScriptEnabled": true,
+  "offline": false,
+  "reducedMotion": "no-preference",
+  "serviceWorkers": "allow",
+  "viewport": {
+    "width": 1280,
+    "height": 720
+  }
+}</msg>
+<msg time="2025-12-25T19:29:39.532764" level="INFO">Successfully created context. </msg>
+<msg time="2025-12-25T19:29:39.532764" level="INFO">{'acceptDownloads': True, 'bypassCSP': False, 'forcedColors': 'none', 'ignoreHTTPSErrors': False, 'javaScriptEnabled': True, 'offline': False, 'reducedMotion': 'no-preference', 'serviceWorkers': 'allow', 'viewport': {'width': 1280, 'height': 720}}</msg>
+<arg>viewport={'width': 1280, 'height': 720}</arg>
+<tag>BrowserControl</tag>
+<tag>Setter</tag>
+<doc>Create a new BrowserContext with specified options.</doc>
+<status status="PASS" start="2025-12-25T19:29:39.515865" elapsed="0.016899"/>
+</kw>
+<kw name="New Page" owner="Browser">
+<msg time="2025-12-25T19:29:39.705540" level="INFO">Successfully initialized new page object and opened url: http://localhost:8081/index.html</msg>
+<arg>${GOVERNANCE_URL}</arg>
+<tag>BrowserControl</tag>
+<tag>Setter</tag>
+<doc>Open a new Page.</doc>
+<status status="PASS" start="2025-12-25T19:29:39.532764" elapsed="0.172776"/>
+</kw>
+<kw name="Wait For Load State" owner="Browser">
+<msg time="2025-12-25T19:29:39.707045" level="INFO">Waiting page load to state to receive networkidle in 30000.0</msg>
+<msg time="2025-12-25T19:29:40.415807" level="INFO">Load state networkidle got in 30000</msg>
+<arg>networkidle</arg>
+<arg>timeout=${TIMEOUT}</arg>
+<tag>PageContent</tag>
+<tag>Wait</tag>
+<doc>Waits that the page reaches the required load state.</doc>
+<status status="PASS" start="2025-12-25T19:29:39.706540" elapsed="0.709267"/>
+</kw>
+<doc>Open the Sim.ai Governance Dashboard</doc>
+<status status="PASS" start="2025-12-25T19:29:38.256805" elapsed="2.159002"/>
+</kw>
+<test id="s1-t1" name="Rules Tab Loads Successfully" line="37">
+<kw name="Navigate To Rules Tab" owner="governance">
+<kw name="Wait For Elements State" owner="Browser">
+<msg time="2025-12-25T19:29:40.452241" level="INFO">Waited for Element with selector text=Governance Rules at state visible</msg>
+<arg>text=Governance Rules</arg>
+<arg>visible</arg>
+<arg>timeout=${TIMEOUT}</arg>
+<tag>PageContent</tag>
+<tag>Wait</tag>
+<doc>Waits for the element found by ``selector`` to satisfy state option.</doc>
+<status status="PASS" start="2025-12-25T19:29:40.417807" elapsed="0.034434"/>
+</kw>
+<doc>Click on Rules tab in navigation (or verify already there)</doc>
+<status status="PASS" start="2025-12-25T19:29:40.416807" elapsed="0.035434"/>
+</kw>
+<kw name="Rules List Should Be Visible" owner="governance">
+<kw name="Wait For Elements State" owner="Browser">
+<msg time="2025-12-25T19:29:40.461313" level="INFO">Waited for Element with selector text=Governance Rules at state visible</msg>
+<arg>text=Governance Rules</arg>
+<arg>visible</arg>
+<arg>timeout=${TIMEOUT}</arg>
+<tag>PageContent</tag>
+<tag>Wait</tag>
+<doc>Waits for the element found by ``selector`` to satisfy state option.</doc>
+<status status="PASS" start="2025-12-25T19:29:40.452746" elapsed="0.008567"/>
+</kw>
+<kw name="Get Element Count" owner="Browser">
+<msg time="2025-12-25T19:29:40.469825" level="INFO">${count} = 10</msg>
+<var>${count}</var>
+<arg>text=ACTIVE</arg>
+<tag>Assertion</tag>
+<tag>Getter</tag>
+<tag>PageContent</tag>
+<doc>Returns the count of elements found with ``selector``.</doc>
+<status status="PASS" start="2025-12-25T19:29:40.461313" elapsed="0.008512"/>
+</kw>
+<kw name="Should Be True" owner="BuiltIn">
+<arg>${count} &gt; 0</arg>
+<arg>msg=No ACTIVE rules visible</arg>
+<doc>Fails if the given condition is not true.</doc>
+<status status="PASS" start="2025-12-25T19:29:40.469825" elapsed="0.000999"/>
+</kw>
+<doc>Verify rules list is displayed</doc>
+<status status="PASS" start="2025-12-25T19:29:40.452746" elapsed="0.018078"/>
+</kw>
+<kw name="Should Not Have Errors" owner="governance">
+<kw name="Get Element Count" owner="Browser">
+<msg time="2025-12-25T19:29:40.478419" level="INFO">${has_error} = 0</msg>
+<var>${has_error}</var>
+<arg>${ERROR_BANNER}</arg>
+<tag>Assertion</tag>
+<tag>Getter</tag>
+<tag>PageContent</tag>
+<doc>Returns the count of elements found with ``selector``.</doc>
+<status status="PASS" start="2025-12-25T19:29:40.470824" elapsed="0.007595"/>
+</kw>
+<kw name="Should Be Equal As Integers" owner="BuiltIn">
+<msg time="2025-12-25T19:29:40.479418" level="INFO">Argument types are:
+&lt;class 'int'&gt;
+&lt;class 'str'&gt;</msg>
+<arg>${has_error}</arg>
+<arg>0</arg>
+<arg>msg=Error message displayed</arg>
+<doc>Fails if objects are unequal after converting them to integers.</doc>
+<status status="PASS" start="2025-12-25T19:29:40.478419" elapsed="0.000999"/>
+</kw>
+<doc>Verify no error messages are displayed</doc>
+<status status="PASS" start="2025-12-25T19:29:40.470824" elapsed="0.008594"/>
+</kw>
+<doc>Smoke test: Rules tab loads without errors</doc>
+<tag>list</tag>
+<tag>P0</tag>
+<tag>smoke</tag>
+<timeout value="1 minute"/>
+<status status="PASS" start="2025-12-25T19:29:40.416807" elapsed="0.062611"/>
+</test>
+<test id="s1-t2" name="Rules List Shows All Rules" line="44">
+<kw name="Navigate To Rules Tab" owner="governance">
+<kw name="Wait For Elements State" owner="Browser">
+<msg time="2025-12-25T19:29:40.490711" level="INFO">Waited for Element with selector text=Governance Rules at state visible</msg>
+<arg>text=Governance Rules</arg>
+<arg>visible</arg>
+<arg>timeout=${TIMEOUT}</arg>
+<tag>PageContent</tag>
+<tag>Wait</tag>
+<doc>Waits for the element found by ``selector`` to satisfy state option.</doc>
+<status status="PASS" start="2025-12-25T19:29:40.484152" elapsed="0.006559"/>
+</kw>
+<doc>Click on Rules tab in navigation (or verify already there)</doc>
+<status status="PASS" start="2025-12-25T19:29:40.483152" elapsed="0.007559"/>
+</kw>
+<kw name="Get Rules Count" owner="governance">
+<kw name="Get Element Count" owner="Browser">
+<msg time="2025-12-25T19:29:40.498060" level="INFO">${list_items} = 16</msg>
+<var>${list_items}</var>
+<arg>.v-list-item</arg>
+<tag>Assertion</tag>
+<tag>Getter</tag>
+<tag>PageContent</tag>
+<doc>Returns the count of elements found with ``selector``.</doc>
+<status status="PASS" start="2025-12-25T19:29:40.491723" elapsed="0.006337"/>
+</kw>
+<if>
+<branch type="IF" condition="${list_items} &gt; 0">
+<return>
+<value>${list_items}</value>
+<status status="PASS" start="2025-12-25T19:29:40.499060" elapsed="0.000000"/>
+</return>
+<status status="PASS" start="2025-12-25T19:29:40.498060" elapsed="0.001000"/>
+</branch>
+<status status="PASS" start="2025-12-25T19:29:40.498060" elapsed="0.001000"/>
+</if>
+<kw name="Get Elements" owner="Browser">
+<var>${rows}</var>
+<arg>table tbody tr</arg>
+<tag>Getter</tag>
+<tag>PageContent</tag>
+<doc>Returns a reference to Playwright [https://playwright.dev/docs/api/class-locator|Locator]
+for all matched elements by ``selector``.</doc>
+<status status="NOT RUN" start="2025-12-25T19:29:40.499060" elapsed="0.000000"/>
+</kw>
+<kw name="Get Length" owner="BuiltIn">
+<var>${count}</var>
+<arg>${rows}</arg>
+<doc>Returns and logs the length of the given item as an integer.</doc>
+<status status="NOT RUN" start="2025-12-25T19:29:40.499060" elapsed="0.000000"/>
+</kw>
+<return>
+<value>${count}</value>
+<status status="NOT RUN" start="2025-12-25T19:29:40.499060" elapsed="0.000000"/>
+</return>
+<msg time="2025-12-25T19:29:40.499060" level="INFO">${count} = 16</msg>
+<var>${count}</var>
+<doc>Get number of rules in the table/list</doc>
+<status status="PASS" start="2025-12-25T19:29:40.491723" elapsed="0.007337"/>
+</kw>
+<kw name="Should Be True" owner="BuiltIn">
+<arg>${count} &gt;= 11</arg>
+<arg>msg=Expected at least 11 rules (per exploration)</arg>
+<doc>Fails if the given condition is not true.</doc>
+<status status="PASS" start="2025-12-25T19:29:40.500563" elapsed="0.000000"/>
+</kw>
+<doc>Rules list displays expected number of rules</doc>
+<tag>list</tag>
+<tag>P0</tag>
+<timeout value="1 minute"/>
+<status status="PASS" start="2025-12-25T19:29:40.483152" elapsed="0.017411"/>
+</test>
+<test id="s1-t3" name="Rules List Has Rule ID Column" line="51">
+<kw name="Navigate To Rules Tab" owner="governance">
+<kw name="Wait For Elements State" owner="Browser">
+<msg time="2025-12-25T19:29:40.512825" level="INFO">Waited for Element with selector text=Governance Rules at state visible</msg>
+<arg>text=Governance Rules</arg>
+<arg>visible</arg>
+<arg>timeout=${TIMEOUT}</arg>
+<tag>PageContent</tag>
+<tag>Wait</tag>
+<doc>Waits for the element found by ``selector`` to satisfy state option.</doc>
+<status status="PASS" start="2025-12-25T19:29:40.504567" elapsed="0.008258"/>
+</kw>
+<doc>Click on Rules tab in navigation (or verify already there)</doc>
+<status status="PASS" start="2025-12-25T19:29:40.504567" elapsed="0.008258"/>
+</kw>
+<kw name="Rule Should Have ID Column" owner="governance">
+<kw name="Wait For Elements State" owner="Browser">
+<msg time="2025-12-25T19:30:10.571303" level="INFO" html="true">&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td colspan="3"&gt;&lt;a href="browser/screenshot/fail-screenshot-1.png" target="_blank"&gt;&lt;img src="browser/screenshot/fail-screenshot-1.png" width="800px"/&gt;&lt;/a&gt;</msg>
+<msg time="2025-12-25T19:30:10.571303" level="INFO">See also file:///C:/Users/natik/Documents/Vibe/sim-ai/sim-ai/results/playwright-log-1766683778206517100.txt for additional details.</msg>
+<msg time="2025-12-25T19:30:10.571303" level="FAIL">TimeoutError: locator.waitFor: Timeout 30000ms exceeded.
+Call log:
+  - waiting for locator('[data-testid="rule-col-id"]') to be visible
+</msg>
+<arg>${RULES_COL_ID}</arg>
+<arg>visible</arg>
+<arg>timeout=${TIMEOUT}</arg>
+<tag>PageContent</tag>
+<tag>Wait</tag>
+<doc>Waits for the element found by ``selector`` to satisfy state option.</doc>
+<status status="FAIL" start="2025-12-25T19:29:40.514139" elapsed="30.060163">TimeoutError: locator.waitFor: Timeout 30000ms exceeded.
+Call log:
+  - waiting for locator('[data-testid="rule-col-id"]') to be visible
+</status>
+</kw>
+<doc>Verify rule_id column is present - GAP-UI-006: WILL FAIL</doc>
+<status status="FAIL" start="2025-12-25T19:29:40.512825" elapsed="30.061477">TimeoutError: locator.waitFor: Timeout 30000ms exceeded.
+Call log:
+  - waiting for locator('[data-testid="rule-col-id"]') to be visible
+</status>
+</kw>
+<doc>GAP-UI-006: Rule ID column should be visible</doc>
+<tag>gap-ui-006</tag>
+<tag>list</tag>
+<tag>will-fail</tag>
+<timeout value="1 minute"/>
+<status status="FAIL" start="2025-12-25T19:29:40.504567" elapsed="30.070735">TimeoutError: locator.waitFor: Timeout 30000ms exceeded.
+Call log:
+  - waiting for locator('[data-testid="rule-col-id"]') to be visible
+</status>
+</test>
+<test id="s1-t4" name="Rules List Has All Expected Columns" line="57">
+<kw name="Navigate To Rules Tab" owner="governance">
+<kw name="Wait For Elements State" owner="Browser">
+<msg time="2025-12-25T19:30:10.585878" level="INFO">Waited for Element with selector text=Governance Rules at state visible</msg>
+<arg>text=Governance Rules</arg>
+<arg>visible</arg>
+<arg>timeout=${TIMEOUT}</arg>
+<tag>PageContent</tag>
+<tag>Wait</tag>
+<doc>Waits for the element found by ``selector`` to satisfy state option.</doc>
+<status status="PASS" start="2025-12-25T19:30:10.578303" elapsed="0.007575"/>
+</kw>
+<doc>Click on Rules tab in navigation (or verify already there)</doc>
+<status status="PASS" start="2025-12-25T19:30:10.577302" elapsed="0.008576"/>
+</kw>
+<kw name="Wait For Elements State" owner="Browser">
+<msg time="2025-12-25T19:30:20.664133" level="INFO" html="true">&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td colspan="3"&gt;&lt;a href="browser/screenshot/fail-screenshot-2.png" target="_blank"&gt;&lt;img src="browser/screenshot/fail-screenshot-2.png" width="800px"/&gt;&lt;/a&gt;</msg>
+<msg time="2025-12-25T19:30:20.664133" level="INFO">See also file:///C:/Users/natik/Documents/Vibe/sim-ai/sim-ai/results/playwright-log-1766683778206517100.txt for additional details.</msg>
+<msg time="2025-12-25T19:30:20.664657" level="FAIL">TimeoutError: locator.waitFor: Timeout 10000ms exceeded.
+Call log:
+  - waiting for locator('[data-testid="rule-col-id"]') to be visible
+</msg>
+<arg>[data-testid="rule-col-id"]</arg>
+<arg>visible</arg>
+<tag>PageContent</tag>
+<tag>Wait</tag>
+<doc>Waits for the element found by ``selector`` to satisfy state option.</doc>
+<status status="FAIL" start="2025-12-25T19:30:10.586883" elapsed="10.078294">TimeoutError: locator.waitFor: Timeout 10000ms exceeded.
+Call log:
+  - waiting for locator('[data-testid="rule-col-id"]') to be visible
+</status>
+</kw>
+<kw name="Wait For Elements State" owner="Browser">
+<arg>[data-testid="rule-col-title"]</arg>
+<arg>visible</arg>
+<tag>PageContent</tag>
+<tag>Wait</tag>
+<doc>Waits for the element found by ``selector`` to satisfy state option.</doc>
+<status status="NOT RUN" start="2025-12-25T19:30:20.665759" elapsed="0.000000"/>
+</kw>
+<kw name="Wait For Elements State" owner="Browser">
+<arg>[data-testid="rule-col-status"]</arg>
+<arg>visible</arg>
+<tag>PageContent</tag>
+<tag>Wait</tag>
+<doc>Waits for the element found by ``selector`` to satisfy state option.</doc>
+<status status="NOT RUN" start="2025-12-25T19:30:20.665759" elapsed="0.000000"/>
+</kw>
+<kw name="Wait For Elements State" owner="Browser">
+<arg>[data-testid="rule-col-category"]</arg>
+<arg>visible</arg>
+<tag>PageContent</tag>
+<tag>Wait</tag>
+<doc>Waits for the element found by ``selector`` to satisfy state option.</doc>
+<status status="NOT RUN" start="2025-12-25T19:30:20.665759" elapsed="0.000528"/>
+</kw>
+<kw name="Wait For Elements State" owner="Browser">
+<arg>[data-testid="rule-col-priority"]</arg>
+<arg>visible</arg>
+<tag>PageContent</tag>
+<tag>Wait</tag>
+<doc>Waits for the element found by ``selector`` to satisfy state option.</doc>
+<status status="NOT RUN" start="2025-12-25T19:30:20.666287" elapsed="0.000000"/>
+</kw>
+<doc>List should have all DSM-specified columns</doc>
+<tag>dsm</tag>
+<tag>list</tag>
+<tag>will-fail</tag>
+<timeout value="1 minute"/>
+<status status="FAIL" start="2025-12-25T19:30:10.577302" elapsed="10.088985">TimeoutError: locator.waitFor: Timeout 10000ms exceeded.
+Call log:
+  - waiting for locator('[data-testid="rule-col-id"]') to be visible
+</status>
+</test>
+<test id="s1-t5" name="Rules List Rows Are Clickable" line="68">
+<kw name="Navigate To Rules Tab" owner="governance">
+<kw name="Wait For Elements State" owner="Browser">
+<msg time="2025-12-25T19:30:20.677865" level="INFO">Waited for Element with selector text=Governance Rules at state visible</msg>
+<arg>text=Governance Rules</arg>
+<arg>visible</arg>
+<arg>timeout=${TIMEOUT}</arg>
+<tag>PageContent</tag>
+<tag>Wait</tag>
+<doc>Waits for the element found by ``selector`` to satisfy state option.</doc>
+<status status="PASS" start="2025-12-25T19:30:20.670516" elapsed="0.007872"/>
+</kw>
+<doc>Click on Rules tab in navigation (or verify already there)</doc>
+<status status="PASS" start="2025-12-25T19:30:20.669992" elapsed="0.008396"/>
+</kw>
+<kw name="Rule Row Should Be Clickable" owner="governance">
+<kw name="Get Element" owner="Browser">
+<msg time="2025-12-25T19:30:20.745088" level="INFO" html="true">&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td colspan="3"&gt;&lt;a href="browser/screenshot/fail-screenshot-3.png" target="_blank"&gt;&lt;img src="browser/screenshot/fail-screenshot-3.png" width="800px"/&gt;&lt;/a&gt;</msg>
+<msg time="2025-12-25T19:30:20.746088" level="INFO">See also file:///C:/Users/natik/Documents/Vibe/sim-ai/sim-ai/results/playwright-log-1766683778206517100.txt for additional details.</msg>
+<msg time="2025-12-25T19:30:20.746088" level="FAIL">Error: locator.waitFor: Error: strict mode violation: locator('[data-testid="rule-row"], .v-data-table tbody tr, .v-list-item') resolved to 16 elements:
+    1) &lt;div tabindex="-2" role="option" aria-selected="true" class="v-list-item v-list-item--active v-list-item--link v-list-item--nav v-theme--light v-list-item--density-compact v-list-item--one-line v-list-item--rounded v-list-item--variant-text"&gt;…&lt;/div&gt; aka getByRole('option', { name: 'Rules' })
+    2) &lt;div tabindex="-2" role="option" aria-selected="false" class="v-list-item v-list-item--link v-list-item--nav v-theme--light v-list-item--density-compact v-list-item--one-line v-list-item--rounded v-list-item--variant-text"&gt;…&lt;/div&gt; aka getByRole('option', { name: 'Decisions' })
+    3) &lt;div tabindex="-2" role="option" aria-selected="false" class="v-list-item v-list-item--link v-list-item--nav v-theme--light v-list-item--density-compact v-list-item--one-line v-list-item--rounded v-list-item--variant-text"&gt;…&lt;/div&gt; aka getByRole('option', { name: 'Sessions' })
+    4) &lt;div tabindex="-2" role="option" aria-selected="false" class="v-list-item v-list-item--link v-list-item--nav v-theme--light v-list-item--density-compact v-list-item--one-line v-list-item--rounded v-list-item--variant-text"&gt;…&lt;/div&gt; aka getByRole('option', { name: 'Tasks' })
+    5) &lt;div tabindex="-2" role="option" aria-selected="false" class="v-list-item v-list-item--link v-list-item--nav v-theme--light v-list-item--density-compact v-list-item--one-line v-list-item--rounded v-list-item--variant-text"&gt;…&lt;/div&gt; aka getByRole('option', { name: 'Search' })
+    6) &lt;div role="listitem" class="v-list-item v-theme--light v-list-item--density-default v-list-item--one-line rounded-0 v-list-item--variant-text"&gt;…&lt;/div&gt; aka getByText('Exploratory Test AutomationACTIVE')
+    7) &lt;div role="listitem" class="v-list-item v-theme--light v-list-item--density-default v-list-item--one-line rounded-0 v-list-item--variant-text"&gt;…&lt;/div&gt; aka getByText('MCP Usage ProtocolACTIVE')
+    8) &lt;div role="listitem" class="v-list-item v-theme--light v-list-item--density-default v-list-item--one-line rounded-0 v-list-item--variant-text"&gt;…&lt;/div&gt; aka getByText('Memory and MCP StabilityACTIVE')
+    9) &lt;div role="listitem" class="v-list-item v-theme--light v-list-item--density-default v-list-item--one-line rounded-0 v-list-item--variant-text"&gt;…&lt;/div&gt; aka getByText('Architectural Best PracticesACTIVE')
+    10) &lt;div role="listitem" class="v-list-item v-theme--light v-list-item--density-default v-list-item--one-line rounded-0 v-list-item--variant-text"&gt;…&lt;/div&gt; aka getByText('Sync ProtocolDRAFT')
+    ...
+
+Call log:
+  - waiting for locator('[data-testid="rule-row"], .v-data-table tbody tr, .v-list-item')
+</msg>
+<var>${row}</var>
+<arg>${RULES_ROW}</arg>
+<tag>Getter</tag>
+<tag>PageContent</tag>
+<doc>Returns a reference to a Playwright [https://playwright.dev/docs/api/class-locator|Locator].</doc>
+<status status="FAIL" start="2025-12-25T19:30:20.678917" elapsed="0.073682">Error: locator.waitFor: Error: strict mode violation: locator('[data-testid="rule-row"], .v-data-table tbody tr, .v-list-item') resolved to 16 elements:
+    1) &lt;div tabindex="-2" role="option" aria-selected="true" class="v-list-item v-list-item--active v-list-item--link v-list-item--nav v-theme--light v-list-item--density-compact v-list-item--one-line v-list-item--rounded v-list-item--variant-text"&gt;…&lt;/div&gt; aka getByRole('option', { name: 'Rules' })
+    2) &lt;div tabindex="-2" role="option" aria-selected="false" class="v-list-item v-list-item--link v-list-item--nav v-theme--light v-list-item--density-compact v-list-item--one-line v-list-item--rounded v-list-item--variant-text"&gt;…&lt;/div&gt; aka getByRole('option', { name: 'Decisions' })
+    3) &lt;div tabindex="-2" role="option" aria-selected="false" class="v-list-item v-list-item--link v-list-item--nav v-theme--light v-list-item--density-compact v-list-item--one-line v-list-item--rounded v-list-item--variant-text"&gt;…&lt;/div&gt; aka getByRole('option', { name: 'Sessions' })
+    4) &lt;div tabindex="-2" role="option" aria-selected="false" class="v-list-item v-list-item--link v-list-item--nav v-theme--light v-list-item--density-compact v-list-item--one-line v-list-item--rounded v-list-item--variant-text"&gt;…&lt;/div&gt; aka getByRole('option', { name: 'Tasks' })
+    5) &lt;div tabindex="-2" role="option" aria-selected="false" class="v-list-item v-list-item--link v-list-item--nav v-theme--light v-list-item--density-c...
+    [ Message content over the limit has been removed. ]
+    6) &lt;div role="listitem" class="v-list-item v-theme--light v-list-item--density-default v-list-item--one-line rounded-0 v-list-item--variant-text"&gt;…&lt;/div&gt; aka getByText('Exploratory Test AutomationACTIVE')
+    7) &lt;div role="listitem" class="v-list-item v-theme--light v-list-item--density-default v-list-item--one-line rounded-0 v-list-item--variant-text"&gt;…&lt;/div&gt; aka getByText('MCP Usage ProtocolACTIVE')
+    8) &lt;div role="listitem" class="v-list-item v-theme--light v-list-item--density-default v-list-item--one-line rounded-0 v-list-item--variant-text"&gt;…&lt;/div&gt; aka getByText('Memory and MCP StabilityACTIVE')
+    9) &lt;div role="listitem" class="v-list-item v-theme--light v-list-item--density-default v-list-item--one-line rounded-0 v-list-item--variant-text"&gt;…&lt;/div&gt; aka getByText('Architectural Best PracticesACTIVE')
+    10) &lt;div role="listitem" class="v-list-item v-theme--light v-list-item--density-default v-list-item--one-line rounded-0 v-list-item--variant-text"&gt;…&lt;/div&gt; aka getByText('Sync ProtocolDRAFT')
+    ...
+
+Call log:
+  - waiting for locator('[data-testid="rule-row"], .v-data-table tbody tr, .v-list-item')</status>
+</kw>
+<kw name="Click" owner="Browser">
+<arg>${row}</arg>
+<tag>PageContent</tag>
+<tag>Setter</tag>
+<doc>Simulates mouse click on the element found by ``selector``.</doc>
+<status status="NOT RUN" start="2025-12-25T19:30:20.753603" elapsed="0.000000"/>
+</kw>
+<kw name="Wait For Elements State" owner="Browser">
+<arg>${RULE_DETAIL}</arg>
+<arg>visible</arg>
+<arg>timeout=${TIMEOUT}</arg>
+<tag>PageContent</tag>
+<tag>Wait</tag>
+<doc>Waits for the element found by ``selector`` to satisfy state option.</doc>
+<status status="NOT RUN" start="2025-12-25T19:30:20.753603" elapsed="0.000000"/>
+</kw>
+<doc>Verify rule rows are clickable - GAP-UI-007: WILL FAIL</doc>
+<status status="FAIL" start="2025-12-25T19:30:20.678917" elapsed="0.074686">Error: locator.waitFor: Error: strict mode violation: locator('[data-testid="rule-row"], .v-data-table tbody tr, .v-list-item') resolved to 16 elements:
+    1) &lt;div tabindex="-2" role="option" aria-selected="true" class="v-list-item v-list-item--active v-list-item--link v-list-item--nav v-theme--light v-list-item--density-compact v-list-item--one-line v-list-item--rounded v-list-item--variant-text"&gt;…&lt;/div&gt; aka getByRole('option', { name: 'Rules' })
+    2) &lt;div tabindex="-2" role="option" aria-selected="false" class="v-list-item v-list-item--link v-list-item--nav v-theme--light v-list-item--density-compact v-list-item--one-line v-list-item--rounded v-list-item--variant-text"&gt;…&lt;/div&gt; aka getByRole('option', { name: 'Decisions' })
+    3) &lt;div tabindex="-2" role="option" aria-selected="false" class="v-list-item v-list-item--link v-list-item--nav v-theme--light v-list-item--density-compact v-list-item--one-line v-list-item--rounded v-list-item--variant-text"&gt;…&lt;/div&gt; aka getByRole('option', { name: 'Sessions' })
+    4) &lt;div tabindex="-2" role="option" aria-selected="false" class="v-list-item v-list-item--link v-list-item--nav v-theme--light v-list-item--density-compact v-list-item--one-line v-list-item--rounded v-list-item--variant-text"&gt;…&lt;/div&gt; aka getByRole('option', { name: 'Tasks' })
+    5) &lt;div tabindex="-2" role="option" aria-selected="false" class="v-list-item v-list-item--link v-list-item--nav v-theme--light v-list-item--density-c...
+    [ Message content over the limit has been removed. ]
+    6) &lt;div role="listitem" class="v-list-item v-theme--light v-list-item--density-default v-list-item--one-line rounded-0 v-list-item--variant-text"&gt;…&lt;/div&gt; aka getByText('Exploratory Test AutomationACTIVE')
+    7) &lt;div role="listitem" class="v-list-item v-theme--light v-list-item--density-default v-list-item--one-line rounded-0 v-list-item--variant-text"&gt;…&lt;/div&gt; aka getByText('MCP Usage ProtocolACTIVE')
+    8) &lt;div role="listitem" class="v-list-item v-theme--light v-list-item--density-default v-list-item--one-line rounded-0 v-list-item--variant-text"&gt;…&lt;/div&gt; aka getByText('Memory and MCP StabilityACTIVE')
+    9) &lt;div role="listitem" class="v-list-item v-theme--light v-list-item--density-default v-list-item--one-line rounded-0 v-list-item--variant-text"&gt;…&lt;/div&gt; aka getByText('Architectural Best PracticesACTIVE')
+    10) &lt;div role="listitem" class="v-list-item v-theme--light v-list-item--density-default v-list-item--one-line rounded-0 v-list-item--variant-text"&gt;…&lt;/div&gt; aka getByText('Sync ProtocolDRAFT')
+    ...
+
+Call log:
+  - waiting for locator('[data-testid="rule-row"], .v-data-table tbody tr, .v-list-item')</status>
+</kw>
+<doc>GAP-UI-007: Clicking rule row navigates to detail</doc>
+<tag>gap-ui-007</tag>
+<tag>list</tag>
+<tag>navigation</tag>
+<tag>will-fail</tag>
+<timeout value="1 minute"/>
+<status status="FAIL" start="2025-12-25T19:30:20.669468" elapsed="0.084135">Error: locator.waitFor: Error: strict mode violation: locator('[data-testid="rule-row"], .v-data-table tbody tr, .v-list-item') resolved to 16 elements:
+    1) &lt;div tabindex="-2" role="option" aria-selected="true" class="v-list-item v-list-item--active v-list-item--link v-list-item--nav v-theme--light v-list-item--density-compact v-list-item--one-line v-list-item--rounded v-list-item--variant-text"&gt;…&lt;/div&gt; aka getByRole('option', { name: 'Rules' })
+    2) &lt;div tabindex="-2" role="option" aria-selected="false" class="v-list-item v-list-item--link v-list-item--nav v-theme--light v-list-item--density-compact v-list-item--one-line v-list-item--rounded v-list-item--variant-text"&gt;…&lt;/div&gt; aka getByRole('option', { name: 'Decisions' })
+    3) &lt;div tabindex="-2" role="option" aria-selected="false" class="v-list-item v-list-item--link v-list-item--nav v-theme--light v-list-item--density-compact v-list-item--one-line v-list-item--rounded v-list-item--variant-text"&gt;…&lt;/div&gt; aka getByRole('option', { name: 'Sessions' })
+    4) &lt;div tabindex="-2" role="option" aria-selected="false" class="v-list-item v-list-item--link v-list-item--nav v-theme--light v-list-item--density-compact v-list-item--one-line v-list-item--rounded v-list-item--variant-text"&gt;…&lt;/div&gt; aka getByRole('option', { name: 'Tasks' })
+    5) &lt;div tabindex="-2" role="option" aria-selected="false" class="v-list-item v-list-item--link v-list-item--nav v-theme--light v-list-item--density-c...
+    [ Message content over the limit has been removed. ]
+    6) &lt;div role="listitem" class="v-list-item v-theme--light v-list-item--density-default v-list-item--one-line rounded-0 v-list-item--variant-text"&gt;…&lt;/div&gt; aka getByText('Exploratory Test AutomationACTIVE')
+    7) &lt;div role="listitem" class="v-list-item v-theme--light v-list-item--density-default v-list-item--one-line rounded-0 v-list-item--variant-text"&gt;…&lt;/div&gt; aka getByText('MCP Usage ProtocolACTIVE')
+    8) &lt;div role="listitem" class="v-list-item v-theme--light v-list-item--density-default v-list-item--one-line rounded-0 v-list-item--variant-text"&gt;…&lt;/div&gt; aka getByText('Memory and MCP StabilityACTIVE')
+    9) &lt;div role="listitem" class="v-list-item v-theme--light v-list-item--density-default v-list-item--one-line rounded-0 v-list-item--variant-text"&gt;…&lt;/div&gt; aka getByText('Architectural Best PracticesACTIVE')
+    10) &lt;div role="listitem" class="v-list-item v-theme--light v-list-item--density-default v-list-item--one-line rounded-0 v-list-item--variant-text"&gt;…&lt;/div&gt; aka getByText('Sync ProtocolDRAFT')
+    ...
+
+Call log:
+  - waiting for locator('[data-testid="rule-row"], .v-data-table tbody tr, .v-list-item')</status>
+</test>
+<test id="s1-t6" name="Rules List Has Add Button" line="74">
+<kw name="Navigate To Rules Tab" owner="governance">
+<kw name="Wait For Elements State" owner="Browser">
+<msg time="2025-12-25T19:30:20.764487" level="INFO">Waited for Element with selector text=Governance Rules at state visible</msg>
+<arg>text=Governance Rules</arg>
+<arg>visible</arg>
+<arg>timeout=${TIMEOUT}</arg>
+<tag>PageContent</tag>
+<tag>Wait</tag>
+<doc>Waits for the element found by ``selector`` to satisfy state option.</doc>
+<status status="PASS" start="2025-12-25T19:30:20.756604" elapsed="0.009073"/>
+</kw>
+<doc>Click on Rules tab in navigation (or verify already there)</doc>
+<status status="PASS" start="2025-12-25T19:30:20.756604" elapsed="0.009073"/>
+</kw>
+<kw name="Wait For Elements State" owner="Browser">
+<msg time="2025-12-25T19:30:30.825308" level="INFO" html="true">&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td colspan="3"&gt;&lt;a href="browser/screenshot/fail-screenshot-4.png" target="_blank"&gt;&lt;img src="browser/screenshot/fail-screenshot-4.png" width="800px"/&gt;&lt;/a&gt;</msg>
+<msg time="2025-12-25T19:30:30.826371" level="INFO">See also file:///C:/Users/natik/Documents/Vibe/sim-ai/sim-ai/results/playwright-log-1766683778206517100.txt for additional details.</msg>
+<msg time="2025-12-25T19:30:30.826371" level="FAIL">TimeoutError: locator.waitFor: Timeout 10000ms exceeded.
+Call log:
+  - waiting for locator('[data-testid="rules-add-btn"]') to be visible
+</msg>
+<arg>${RULES_ADD_BTN}</arg>
+<arg>visible</arg>
+<tag>PageContent</tag>
+<tag>Wait</tag>
+<doc>Waits for the element found by ``selector`` to satisfy state option.</doc>
+<status status="FAIL" start="2025-12-25T19:30:20.765677" elapsed="10.060694">TimeoutError: locator.waitFor: Timeout 10000ms exceeded.
+Call log:
+  - waiting for locator('[data-testid="rules-add-btn"]') to be visible
+</status>
+</kw>
+<doc>GAP-UI-002: Add Rule button should be visible</doc>
+<tag>crud</tag>
+<tag>gap-ui-002</tag>
+<tag>list</tag>
+<tag>will-fail</tag>
+<timeout value="1 minute"/>
+<status status="FAIL" start="2025-12-25T19:30:20.756604" elapsed="10.070793">TimeoutError: locator.waitFor: Timeout 10000ms exceeded.
+Call log:
+  - waiting for locator('[data-testid="rules-add-btn"]') to be visible
+</status>
+</test>
+<kw name="Close All Browsers Safely" owner="governance" type="TEARDOWN">
+<kw name="Run Keyword And Return Status" owner="BuiltIn">
+<kw name="Close Browser" owner="Browser">
+<msg time="2025-12-25T19:30:30.889131" level="INFO">Closed all browsers</msg>
+<arg>ALL</arg>
+<tag>BrowserControl</tag>
+<tag>Setter</tag>
+<doc>Closes the current browser.</doc>
+<status status="PASS" start="2025-12-25T19:30:30.829898" elapsed="0.059233"/>
+</kw>
+<msg time="2025-12-25T19:30:30.889131" level="INFO">${status} = True</msg>
+<var>${status}</var>
+<arg>Close Browser</arg>
+<arg>ALL</arg>
+<doc>Runs the given keyword with given arguments and returns the status as a Boolean value.</doc>
+<status status="PASS" start="2025-12-25T19:30:30.829898" elapsed="0.059233"/>
+</kw>
+<kw name="Log" owner="BuiltIn">
+<msg time="2025-12-25T19:30:30.890131" level="INFO">Browser close status: True</msg>
+<arg>Browser close status: ${status}</arg>
+<doc>Logs the given message with the given level.</doc>
+<status status="PASS" start="2025-12-25T19:30:30.889131" elapsed="0.001000"/>
+</kw>
+<doc>Close all browsers with error handling</doc>
+<status status="PASS" start="2025-12-25T19:30:30.829392" elapsed="0.060739"/>
+</kw>
+<doc>Rules CRUD E2E Tests - Spec-First TDD (RED Phase)
+Per RULE-004: Page Object Model (POM)
+Per UI-FIRST-SPRINT-WORKFLOW.md: Spec-First TDD
+Per ENTITY-API-UI-MAP.md: Rule entity specification
+
+These tests define the EXPECTED behavior of the Rules UI.
+Currently in RED phase - all tests SHOULD FAIL until UI implemented.
+
+Gaps addressed:
+- GAP-UI-001: No data-testid attributes (all locators)
+- GAP-UI-002: No CRUD forms (CREATE/UPDATE tests)
+- GAP-UI-003: No detail drill-down (READ detail tests)
+- GAP-UI-006: Rules list missing rule_id column
+- GAP-UI-007: List rows not clickable
+- GAP-UI-010: No column sorting
+- GAP-UI-011: No filtering/faceted search</doc>
+<status status="FAIL" start="2025-12-25T19:29:37.998063" elapsed="52.892068"/>
+</suite>
+<statistics>
+<total>
+<stat pass="2" fail="4" skip="0">All Tests</stat>
+</total>
+<tag>
+<stat pass="0" fail="1" skip="0">crud</stat>
+<stat pass="0" fail="1" skip="0">dsm</stat>
+<stat pass="0" fail="1" skip="0">gap-ui-002</stat>
+<stat pass="0" fail="1" skip="0">gap-ui-006</stat>
+<stat pass="0" fail="1" skip="0">gap-ui-007</stat>
+<stat pass="2" fail="4" skip="0">list</stat>
+<stat pass="0" fail="1" skip="0">navigation</stat>
+<stat pass="2" fail="0" skip="0">P0</stat>
+<stat pass="1" fail="0" skip="0">smoke</stat>
+<stat pass="0" fail="4" skip="0">will-fail</stat>
+</tag>
+<suite>
+<stat name="Rules Crud" id="s1" pass="2" fail="4" skip="0">Rules Crud</stat>
+</suite>
+</statistics>
+<errors>
+</errors>
+</robot>

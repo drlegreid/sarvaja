@@ -1,0 +1,57 @@
+# Robot Framework Configuration for Sim.ai E2E Tests
+# Per Phase 7: E2E Testing with Robot Framework + Playwright
+
+# Paths
+paths:
+  output: results
+  logs: results/logs
+  screenshots: results/screenshots
+
+# Browser settings
+browser:
+  default: chromium
+  headless: true
+  slow_mo: 0
+  timeout: 30000
+  viewport:
+    width: 1280
+    height: 720
+
+# Test execution
+execution:
+  loglevel: INFO
+  console: verbose
+  exitonerror: false
+  randomize: none
+
+# Tags
+include_tags: []
+exclude_tags:
+  - skip
+  - wip
+
+# Environments
+environments:
+  local:
+    base_url: http://localhost:7777
+    headless: true
+
+  docker:
+    base_url: http://agents:7777
+    headless: true
+
+  ci:
+    base_url: http://localhost:7777
+    headless: true
+    timeout: 60000
+
+# Retry settings
+retry:
+  count: 2
+  interval: 1s
+
+# Evidence capture
+evidence:
+  screenshots_on_failure: true
+  video_recording: false
+  trace_on_failure: true

@@ -1,11 +1,51 @@
 # Gap Index - Sim.ai PoC
 
-**Last Updated:** 2024-12-24
-**Total Gaps:** 21 (9 resolved, 12 open)
+**Last Updated:** 2024-12-25
+**Total Gaps:** 32 (9 resolved, 23 open) — includes 11 UI gaps from EXP-P10-001
 
 ---
 
 ## Active Gaps
+
+### UI Gaps (P10 Sprint) - Exploratory Session EXP-P10-001 (2024-12-25)
+
+| ID | Gap | Priority | Category | Entity | Operation | Evidence |
+|----|-----|----------|----------|--------|-----------|----------|
+| GAP-UI-001 | No data-testid attributes on Trame components | HIGH | testability | All | N/A | POM requirement |
+| GAP-UI-002 | No CRUD forms for Rules | HIGH | functionality | Rule | CREATE/UPDATE | ENTITY-API-UI-MAP |
+| GAP-UI-003 | No detail drill-down views | HIGH | functionality | All | READ | ENTITY-API-UI-MAP |
+| GAP-UI-004 | No REST API endpoints | HIGH | backend | All | ALL | ENTITY-API-UI-MAP |
+| GAP-UI-005 | Missing loading/error states | MEDIUM | ux | All | READ | Exploratory |
+| GAP-UI-006 | Rules list missing rule_id column | HIGH | data_binding | Rule | READ | EXP-P10-001 |
+| GAP-UI-007 | List rows not clickable (no detail navigation) | HIGH | navigation | All | READ | EXP-P10-001 |
+| GAP-UI-008 | Tasks view shows empty table (no data source) | HIGH | data_binding | Task | READ | EXP-P10-001 |
+| GAP-UI-009 | Search returns no results (unclear if functional) | MEDIUM | functionality | Evidence | SEARCH | EXP-P10-001 |
+| GAP-UI-010 | No column sorting functionality | MEDIUM | ux | All | READ | EXP-P10-001 |
+| GAP-UI-011 | No filtering/faceted search | MEDIUM | functionality | All | SEARCH | EXP-P10-001 |
+
+#### Insights Captured (EXP-P10-001)
+
+```
+Session: EXP-P10-001 | Date: 2024-12-25 | Target: Governance Dashboard
+
+[DISCOVERY] Dashboard header shows "11 Rules | 5 Decisions" - data is loading
+[DISCOVERY] Navigation works: Rules, Decisions, Sessions, Tasks, Search tabs functional
+[DISCOVERY] Rules view: Shows 11 rules with title + status badge, but NO rule_id column
+[DISCOVERY] Decisions view: Shows 5 decisions WITH decision_id visible (inconsistent with Rules)
+[DISCOVERY] Sessions view: Shows 6 sessions with dates
+[DISCOVERY] Tasks view: Empty table with "No data available" - possible missing data source
+[DISCOVERY] Search view: Has search box but no results returned for "RULE-001"
+
+[GAP] GAP-UI-006: Rules list inconsistent with Decisions (no ID column)
+[GAP] GAP-UI-007: Cannot click rows to see detail - fundamental navigation broken
+[GAP] GAP-UI-008: Tasks view has no data - check if API or MCP tool connected
+[GAP] GAP-UI-009: Search function unclear - no results or feedback
+
+[DECISION] Use Spec-First TDD for P10 implementation - we have full control
+[DECISION] Start with Rules entity (P0) - most complete data already loaded
+```
+
+### General Gaps
 
 | ID | Gap | Priority | Category | Rule | Evidence |
 |----|-----|----------|----------|------|----------|
@@ -44,12 +84,24 @@
 
 | Category | Count | Priority |
 |----------|-------|----------|
+| **UI (P10)** | 11 | HIGH |
 | workflow | 2 | HIGH |
 | configuration | 2 | Medium |
 | functionality | 2 | Medium |
 | tooling | 4 | Medium/Low |
 | docs | 2 | Medium |
 | testing | 1 | Low |
+
+### UI Gap Breakdown by Type
+
+| Type | Count | Examples |
+|------|-------|----------|
+| **testability** | 1 | GAP-UI-001 (data-testid) |
+| **functionality** | 4 | GAP-UI-002, 009, 011 (CRUD, search) |
+| **navigation** | 1 | GAP-UI-007 (clickable rows) |
+| **data_binding** | 2 | GAP-UI-006, 008 (missing columns, empty data) |
+| **backend** | 1 | GAP-UI-004 (REST API) |
+| **ux** | 2 | GAP-UI-005, 010 (loading states, sorting) |
 
 ---
 

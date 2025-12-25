@@ -2,16 +2,22 @@
 TypeDB Client Wrapper for Sim.ai Governance
 Provides high-level API for rule inference and knowledge queries.
 Created: 2024-12-24 (DECISION-003)
+Updated: 2024-12-25 (Rule archive support)
 """
 import os
+import json
 from typing import List, Dict, Any, Optional
-from dataclasses import dataclass
+from dataclasses import dataclass, asdict
 from datetime import datetime
+from pathlib import Path
 
 # Configuration
 TYPEDB_HOST = os.getenv("TYPEDB_HOST", "localhost")
 TYPEDB_PORT = int(os.getenv("TYPEDB_PORT", "1729"))
 DATABASE_NAME = os.getenv("TYPEDB_DATABASE", "sim-ai-governance")
+
+# Archive configuration
+ARCHIVE_DIR = Path(os.getenv("RULE_ARCHIVE_DIR", Path(__file__).parent.parent / "evidence" / "archive" / "rules"))
 
 
 @dataclass
@@ -370,6 +376,331 @@ class TypeDBClient:
             )
             for r in results
         ]
+
+    def _execute_write(self, query: str) -> bool:
+        """Execute a TypeQL write query (insert/update/delete).
+
+        Uses typedb-driver 2.29.x API compatible with TypeDB Core 2.29.1
+        """
+        if not self._connected:
+            raise RuntimeError("Not connected to TypeDB")
+
+        from typedb.driver import SessionType, TransactionType
+
+        with self._client.session(self.database, SessionType.DATA) as session:
+            with session.transaction(TransactionType.WRITE) as tx:
+                tx.query.insert(query)
+                tx.commit()
+
+        return True
+
+    # =========================================================================
+    # RULE CRUD OPERATIONS
+    # =========================================================================
+
+    def create_rule(
+        self,
+        rule_id: str,
+        name: str,
+        category: str,
+        priority: str,
+        directive: str,
+        status: str = "DRAFT"
+    ) -> Optional[Rule]:
+        """
+        Create a new governance rule.
+
+        Args:
+            rule_id: Unique rule ID (e.g., "RULE-023")
+            name: Human-readable rule name
+            category: Rule category (governance, technical, operational)
+            priority: Priority level (CRITICAL, HIGH, MEDIUM, LOW)
+            directive: The rule directive text
+            status: Initial status (default: DRAFT)
+
+        Returns:
+            Created Rule object or None if failed
+        """
+        # Validate inputs
+        valid_categories = ["governance", "technical", "operational", "architecture", "testing"]
+        valid_priorities = ["CRITICAL", "HIGH", "MEDIUM", "LOW"]
+        valid_statuses = ["ACTIVE", "DRAFT", "DEPRECATED"]
+
+        if category not in valid_categories:
+            raise ValueError(f"Invalid category: {category}. Must be one of {valid_categories}")
+        if priority not in valid_priorities:
+            raise ValueError(f"Invalid priority: {priority}. Must be one of {valid_priorities}")
+        if status not in valid_statuses:
+            raise ValueError(f"Invalid status: {status}. Must be one of {valid_statuses}")
+
+        # Check if rule already exists
+        existing = self.get_rule_by_id(rule_id)
+        if existing:
+            raise ValueError(f"Rule {rule_id} already exists")
+
+        # Escape quotes in directive
+        directive_escaped = directive.replace('"', '\\"')
+
+        query = f'''
+            insert $r isa rule-entity,
+                has rule-id "{rule_id}",
+                has rule-name "{name}",
+                has category "{category}",
+                has priority "{priority}",
+                has status "{status}",
+                has directive "{directive_escaped}";
+        '''
+
+        self._execute_write(query)
+
+        # Return the created rule
+        return self.get_rule_by_id(rule_id)
+
+    def update_rule(
+        self,
+        rule_id: str,
+        name: Optional[str] = None,
+        category: Optional[str] = None,
+        priority: Optional[str] = None,
+        directive: Optional[str] = None,
+        status: Optional[str] = None
+    ) -> Optional[Rule]:
+        """
+        Update an existing rule's attributes.
+
+        Only provided attributes will be updated.
+
+        Args:
+            rule_id: Rule ID to update
+            name: New name (optional)
+            category: New category (optional)
+            priority: New priority (optional)
+            directive: New directive (optional)
+            status: New status (optional)
+
+        Returns:
+            Updated Rule object or None if not found
+        """
+        # Check if rule exists
+        existing = self.get_rule_by_id(rule_id)
+        if not existing:
+            raise ValueError(f"Rule {rule_id} not found")
+
+        from typedb.driver import SessionType, TransactionType
+
+        # Build update queries for each changed attribute
+        updates = []
+        if name is not None and name != existing.name:
+            updates.append(('rule-name', existing.name, name))
+        if category is not None and category != existing.category:
+            updates.append(('category', existing.category, category))
+        if priority is not None and priority != existing.priority:
+            updates.append(('priority', existing.priority, priority))
+        if status is not None and status != existing.status:
+            updates.append(('status', existing.status, status))
+        if directive is not None and directive != existing.directive:
+            updates.append(('directive', existing.directive.replace('"', '\\"'), directive.replace('"', '\\"')))
+
+        if not updates:
+            return existing  # Nothing to update
+
+        # Execute updates in a single transaction
+        with self._client.session(self.database, SessionType.DATA) as session:
+            with session.transaction(TransactionType.WRITE) as tx:
+                for attr_type, old_val, new_val in updates:
+                    # Delete old attribute and insert new one
+                    delete_query = f'''
+                        match
+                            $r isa rule-entity, has rule-id "{rule_id}";
+                            $a isa {attr_type}; $a "{old_val}";
+                            $r has $a;
+                        delete
+                            $r has $a;
+                    '''
+                    tx.query.delete(delete_query)
+
+                    insert_query = f'''
+                        match
+                            $r isa rule-entity, has rule-id "{rule_id}";
+                        insert
+                            $r has {attr_type} "{new_val}";
+                    '''
+                    tx.query.insert(insert_query)
+
+                tx.commit()
+
+        return self.get_rule_by_id(rule_id)
+
+    def deprecate_rule(self, rule_id: str, reason: Optional[str] = None) -> Optional[Rule]:
+        """
+        Deprecate a rule (set status to DEPRECATED).
+
+        Args:
+            rule_id: Rule ID to deprecate
+            reason: Optional reason for deprecation
+
+        Returns:
+            Updated Rule object or None if not found
+        """
+        return self.update_rule(rule_id, status="DEPRECATED")
+
+    def delete_rule(self, rule_id: str, archive: bool = True) -> bool:
+        """
+        Delete a rule from TypeDB (archives first by default).
+
+        Args:
+            rule_id: Rule ID to delete
+            archive: If True, archive the rule before deletion (default: True)
+
+        Returns:
+            True if deleted, False if not found
+        """
+        # Check if rule exists
+        existing = self.get_rule_by_id(rule_id)
+        if not existing:
+            return False
+
+        # Archive before deletion (unless explicitly disabled)
+        if archive:
+            self.archive_rule(rule_id, reason="deleted")
+
+        from typedb.driver import SessionType, TransactionType
+
+        with self._client.session(self.database, SessionType.DATA) as session:
+            with session.transaction(TransactionType.WRITE) as tx:
+                # Delete the rule entity and all its attributes
+                delete_query = f'''
+                    match
+                        $r isa rule-entity, has rule-id "{rule_id}";
+                    delete
+                        $r isa rule-entity;
+                '''
+                tx.query.delete(delete_query)
+                tx.commit()
+
+        return True
+
+    # =========================================================================
+    # RULE ARCHIVE OPERATIONS
+    # =========================================================================
+
+    def archive_rule(self, rule_id: str, reason: str = "archived") -> Optional[Dict[str, Any]]:
+        """
+        Archive a rule to JSON file for later retrieval.
+
+        Args:
+            rule_id: Rule ID to archive
+            reason: Reason for archiving (deleted, deprecated, replaced, etc.)
+
+        Returns:
+            Archive record dict or None if rule not found
+        """
+        rule = self.get_rule_by_id(rule_id)
+        if not rule:
+            return None
+
+        # Ensure archive directory exists
+        ARCHIVE_DIR.mkdir(parents=True, exist_ok=True)
+
+        # Create archive record
+        archive_record = {
+            "rule": asdict(rule),
+            "archived_at": datetime.now().isoformat(),
+            "reason": reason,
+            "archived_from_db": self.database
+        }
+
+        # Get dependencies before archiving (for potential restore)
+        try:
+            deps = self.get_rule_dependencies(rule_id)
+            archive_record["dependencies"] = deps
+        except Exception:
+            archive_record["dependencies"] = []
+
+        try:
+            dependents = self.get_rules_depending_on(rule_id)
+            archive_record["dependents"] = dependents
+        except Exception:
+            archive_record["dependents"] = []
+
+        # Save to archive file
+        archive_file = ARCHIVE_DIR / f"{rule_id}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+        with open(archive_file, 'w', encoding='utf-8') as f:
+            json.dump(archive_record, f, indent=2, default=str)
+
+        return archive_record
+
+    def get_archived_rules(self) -> List[Dict[str, Any]]:
+        """
+        Get all archived rules.
+
+        Returns:
+            List of archive records
+        """
+        archives = []
+
+        if not ARCHIVE_DIR.exists():
+            return archives
+
+        for archive_file in sorted(ARCHIVE_DIR.glob("*.json"), reverse=True):
+            try:
+                with open(archive_file, 'r', encoding='utf-8') as f:
+                    record = json.load(f)
+                    record["archive_file"] = str(archive_file)
+                    archives.append(record)
+            except Exception:
+                continue
+
+        return archives
+
+    def get_archived_rule(self, rule_id: str) -> Optional[Dict[str, Any]]:
+        """
+        Get the most recent archive of a specific rule.
+
+        Args:
+            rule_id: Rule ID to find in archive
+
+        Returns:
+            Most recent archive record or None
+        """
+        archives = self.get_archived_rules()
+
+        for record in archives:
+            if record.get("rule", {}).get("id") == rule_id:
+                return record
+
+        return None
+
+    def restore_rule(self, rule_id: str) -> Optional[Rule]:
+        """
+        Restore a rule from archive.
+
+        Args:
+            rule_id: Rule ID to restore
+
+        Returns:
+            Restored Rule object or None if not in archive
+        """
+        archive = self.get_archived_rule(rule_id)
+        if not archive:
+            return None
+
+        rule_data = archive.get("rule", {})
+
+        # Check if rule already exists (don't overwrite)
+        existing = self.get_rule_by_id(rule_id)
+        if existing:
+            raise ValueError(f"Rule {rule_id} already exists. Delete or rename before restore.")
+
+        # Recreate the rule
+        return self.create_rule(
+            rule_id=rule_data.get("id"),
+            name=rule_data.get("name"),
+            category=rule_data.get("category"),
+            priority=rule_data.get("priority"),
+            directive=rule_data.get("directive"),
+            status="DRAFT"  # Restored rules start as DRAFT
+        )
 
 
 # =============================================================================

@@ -1,0 +1,140 @@
+{"level":30,"time":"2025-12-25T17:29:39.092Z","pid":35528,"hostname":"enchantress1","msg":"Listening on 127.0.0.1:59867"}
+{"level":30,"time":"2025-12-25T17:29:39.384Z","pid":35528,"hostname":"enchantress1","msg":"Start of node method newBrowser"}
+{"level":30,"time":"2025-12-25T17:29:39.512Z","pid":35528,"hostname":"enchantress1","msg":"Adding browser to stack: chromium, version: 143.0.7499.4"}
+{"level":30,"time":"2025-12-25T17:29:39.513Z","pid":35528,"hostname":"enchantress1","msg":"Adding 0 contexts to browser"}
+{"level":30,"time":"2025-12-25T17:29:39.513Z","pid":35528,"hostname":"enchantress1","msg":"End of node method newBrowser"}
+{"level":30,"time":"2025-12-25T17:29:39.520Z","pid":35528,"hostname":"enchantress1","msg":"Start of node method newContext"}
+{"level":30,"time":"2025-12-25T17:29:39.521Z","pid":35528,"hostname":"enchantress1","msg":"Creating new context with options: {\"acceptDownloads\":true,\"bypassCSP\":false,\"forcedColors\":\"none\",\"ignoreHTTPSErrors\":false,\"javaScriptEnabled\":true,\"offline\":false,\"reducedMotion\":\"no-preference\",\"serviceWorkers\":\"allow\",\"viewport\":{\"width\":1280,\"height\":720}}"}
+{"level":30,"time":"2025-12-25T17:29:39.521Z","pid":35528,"hostname":"enchantress1","msg":"currentBrowser: {\"name\":\"chromium\",\"browser\":{\"_type\":\"Browser\",\"_guid\":\"browser@514cf640889c3a61e9c4b8c6faa42d15\"},\"headless\":true,\"_contextStack\":[],\"id\":\"browser=22c960b1-02db-486e-a950-9379e587f008\"}"}
+{"level":30,"time":"2025-12-25T17:29:39.521Z","pid":35528,"hostname":"enchantress1","msg":"Trace file: "}
+{"level":30,"time":"2025-12-25T17:29:39.530Z","pid":35528,"hostname":"enchantress1","msg":"Setting default timeout for context context=fcdabcb2-df4c-4905-8efa-71a077d0898b to 10000"}
+{"level":30,"time":"2025-12-25T17:29:39.531Z","pid":35528,"hostname":"enchantress1","msg":"Changed active context: context=fcdabcb2-df4c-4905-8efa-71a077d0898b"}
+{"level":30,"time":"2025-12-25T17:29:39.531Z","pid":35528,"hostname":"enchantress1","msg":"End of node method newContext"}
+{"level":30,"time":"2025-12-25T17:29:39.537Z","pid":35528,"hostname":"enchantress1","msg":"Start of node method newPage"}
+{"level":30,"time":"2025-12-25T17:29:39.538Z","pid":35528,"hostname":"enchantress1","msg":"currentBrowser: {\"name\":\"chromium\",\"browser\":{\"_type\":\"Browser\",\"_guid\":\"browser@514cf640889c3a61e9c4b8c6faa42d15\"},\"headless\":true,\"_contextStack\":[{\"id\":\"context=fcdabcb2-df4c-4905-8efa-71a077d0898b\",\"c\":{\"_type\":\"BrowserContext\",\"_guid\":\"browser-context@03340fe5637003518bad3dab8ce3f96f\"},\"pageStack\":[],\"options\":{\"acceptDownloads\":true,\"bypassCSP\":false,\"forcedColors\":\"none\",\"ignoreHTTPSErrors\":false,\"javaScriptEnabled\":true,\"offline\":false,\"reducedMotion\":\"no-preference\",\"serviceWorkers\":\"allow\",\"viewport\":{\"width\":1280,\"height\":720}},\"traceFile\":\"\"}],\"id\":\"browser=22c960b1-02db-486e-a950-9379e587f008\"}"}
+{"level":30,"time":"2025-12-25T17:29:39.640Z","pid":35528,"hostname":"enchantress1","msg":"Video path: undefined"}
+{"level":30,"time":"2025-12-25T17:29:39.640Z","pid":35528,"hostname":"enchantress1","msg":"Changed active page"}
+{"level":30,"time":"2025-12-25T17:29:39.702Z","pid":35528,"hostname":"enchantress1","msg":"End of node method newPage"}
+{"level":30,"time":"2025-12-25T17:29:39.709Z","pid":35528,"hostname":"enchantress1","msg":"Start of node method WaitForPageLoadState"}
+{"level":30,"time":"2025-12-25T17:29:39.709Z","pid":35528,"hostname":"enchantress1","msg":"timeout: 30000 state: networkidle"}
+{"level":30,"time":"2025-12-25T17:29:40.414Z","pid":35528,"hostname":"enchantress1","msg":"End of node method WaitForPageLoadState"}
+{"level":30,"time":"2025-12-25T17:29:40.422Z","pid":35528,"hostname":"enchantress1","msg":"Start of node method waitForElementState"}
+{"level":30,"time":"2025-12-25T17:29:40.422Z","pid":35528,"hostname":"enchantress1","msg":"Strict mode is enabled, find Locator with text=Governance Rules in page."}
+{"level":30,"time":"2025-12-25T17:29:40.450Z","pid":35528,"hostname":"enchantress1","msg":"End of node method waitForElementState"}
+{"level":30,"time":"2025-12-25T17:29:40.455Z","pid":35528,"hostname":"enchantress1","msg":"Start of node method waitForElementState"}
+{"level":30,"time":"2025-12-25T17:29:40.455Z","pid":35528,"hostname":"enchantress1","msg":"Strict mode is enabled, find Locator with text=Governance Rules in page."}
+{"level":30,"time":"2025-12-25T17:29:40.460Z","pid":35528,"hostname":"enchantress1","msg":"End of node method waitForElementState"}
+{"level":30,"time":"2025-12-25T17:29:40.463Z","pid":35528,"hostname":"enchantress1","msg":"Start of node method getElementCount"}
+{"level":30,"time":"2025-12-25T17:29:40.464Z","pid":35528,"hostname":"enchantress1","msg":"Strict mode is disabled, return Locator: text=ACTIVE in page."}
+{"level":30,"time":"2025-12-25T17:29:40.468Z","pid":35528,"hostname":"enchantress1","msg":"End of node method getElementCount"}
+{"level":30,"time":"2025-12-25T17:29:40.472Z","pid":35528,"hostname":"enchantress1","msg":"Start of node method getElementCount"}
+{"level":30,"time":"2025-12-25T17:29:40.473Z","pid":35528,"hostname":"enchantress1","msg":"Strict mode is disabled, return Locator: [data-testid=\"error-banner\"] in page."}
+{"level":30,"time":"2025-12-25T17:29:40.477Z","pid":35528,"hostname":"enchantress1","msg":"End of node method getElementCount"}
+{"level":30,"time":"2025-12-25T17:29:40.485Z","pid":35528,"hostname":"enchantress1","msg":"Start of node method waitForElementState"}
+{"level":30,"time":"2025-12-25T17:29:40.485Z","pid":35528,"hostname":"enchantress1","msg":"Strict mode is enabled, find Locator with text=Governance Rules in page."}
+{"level":30,"time":"2025-12-25T17:29:40.489Z","pid":35528,"hostname":"enchantress1","msg":"End of node method waitForElementState"}
+{"level":30,"time":"2025-12-25T17:29:40.494Z","pid":35528,"hostname":"enchantress1","msg":"Start of node method getElementCount"}
+{"level":30,"time":"2025-12-25T17:29:40.494Z","pid":35528,"hostname":"enchantress1","msg":"Strict mode is disabled, return Locator: .v-list-item in page."}
+{"level":30,"time":"2025-12-25T17:29:40.497Z","pid":35528,"hostname":"enchantress1","msg":"End of node method getElementCount"}
+{"level":30,"time":"2025-12-25T17:29:40.507Z","pid":35528,"hostname":"enchantress1","msg":"Start of node method waitForElementState"}
+{"level":30,"time":"2025-12-25T17:29:40.507Z","pid":35528,"hostname":"enchantress1","msg":"Strict mode is enabled, find Locator with text=Governance Rules in page."}
+{"level":30,"time":"2025-12-25T17:29:40.511Z","pid":35528,"hostname":"enchantress1","msg":"End of node method waitForElementState"}
+{"level":30,"time":"2025-12-25T17:29:40.516Z","pid":35528,"hostname":"enchantress1","msg":"Start of node method waitForElementState"}
+{"level":30,"time":"2025-12-25T17:29:40.516Z","pid":35528,"hostname":"enchantress1","msg":"Strict mode is enabled, find Locator with [data-testid=\"rule-col-id\"] in page."}
+{"level":30,"time":"2025-12-25T17:30:10.520Z","pid":35528,"hostname":"enchantress1","msg":"Error of node method  waitForElementState"}
+================= Original suppressed error =================
+locator.waitFor: Timeout 30000ms exceeded.
+Call log:
+[2m  - waiting for locator('[data-testid="rule-col-id"]') to be visible[22m
+
+    at waitForElementState (C:\DEV\Python\Python312\Lib\site-packages\Browser\wrapper\index.js:11721:19)
+    at async PlaywrightServer.waitForElementsState (C:\DEV\Python\Python312\Lib\site-packages\Browser\wrapper\index.js:13635:28) {
+  name: 'TimeoutError'
+}
+=============================================================
+{"level":30,"time":"2025-12-25T17:30:10.528Z","pid":35528,"hostname":"enchantress1","msg":"Start of node method takeScreenshot"}
+{"level":30,"time":"2025-12-25T17:30:10.528Z","pid":35528,"hostname":"enchantress1","Take screenshot with options: ":{"path":"C:\\Users\\natik\\Documents\\Vibe\\sim-ai\\sim-ai\\results\\browser\\screenshot\\fail-screenshot-1.png","fileType":"png","fullPage":false,"timeout":10000,"omitBackground":false}}
+{"level":30,"time":"2025-12-25T17:30:10.569Z","pid":35528,"hostname":"enchantress1","msg":"End of node method takeScreenshot"}
+{"level":30,"time":"2025-12-25T17:30:10.580Z","pid":35528,"hostname":"enchantress1","msg":"Start of node method waitForElementState"}
+{"level":30,"time":"2025-12-25T17:30:10.581Z","pid":35528,"hostname":"enchantress1","msg":"Strict mode is enabled, find Locator with text=Governance Rules in page."}
+{"level":30,"time":"2025-12-25T17:30:10.585Z","pid":35528,"hostname":"enchantress1","msg":"End of node method waitForElementState"}
+{"level":30,"time":"2025-12-25T17:30:10.588Z","pid":35528,"hostname":"enchantress1","msg":"Start of node method waitForElementState"}
+{"level":30,"time":"2025-12-25T17:30:10.588Z","pid":35528,"hostname":"enchantress1","msg":"Strict mode is enabled, find Locator with [data-testid=\"rule-col-id\"] in page."}
+{"level":30,"time":"2025-12-25T17:30:20.604Z","pid":35528,"hostname":"enchantress1","msg":"Error of node method  waitForElementState"}
+================= Original suppressed error =================
+locator.waitFor: Timeout 10000ms exceeded.
+Call log:
+[2m  - waiting for locator('[data-testid="rule-col-id"]') to be visible[22m
+
+    at waitForElementState (C:\DEV\Python\Python312\Lib\site-packages\Browser\wrapper\index.js:11721:19)
+    at async PlaywrightServer.waitForElementsState (C:\DEV\Python\Python312\Lib\site-packages\Browser\wrapper\index.js:13635:28) {
+  name: 'TimeoutError'
+}
+=============================================================
+{"level":30,"time":"2025-12-25T17:30:20.608Z","pid":35528,"hostname":"enchantress1","msg":"Start of node method takeScreenshot"}
+{"level":30,"time":"2025-12-25T17:30:20.608Z","pid":35528,"hostname":"enchantress1","Take screenshot with options: ":{"path":"C:\\Users\\natik\\Documents\\Vibe\\sim-ai\\sim-ai\\results\\browser\\screenshot\\fail-screenshot-2.png","fileType":"png","fullPage":false,"timeout":10000,"omitBackground":false}}
+{"level":30,"time":"2025-12-25T17:30:20.662Z","pid":35528,"hostname":"enchantress1","msg":"End of node method takeScreenshot"}
+{"level":30,"time":"2025-12-25T17:30:20.673Z","pid":35528,"hostname":"enchantress1","msg":"Start of node method waitForElementState"}
+{"level":30,"time":"2025-12-25T17:30:20.673Z","pid":35528,"hostname":"enchantress1","msg":"Strict mode is enabled, find Locator with text=Governance Rules in page."}
+{"level":30,"time":"2025-12-25T17:30:20.677Z","pid":35528,"hostname":"enchantress1","msg":"End of node method waitForElementState"}
+{"level":30,"time":"2025-12-25T17:30:20.681Z","pid":35528,"hostname":"enchantress1","msg":"Start of node method getElement"}
+{"level":30,"time":"2025-12-25T17:30:20.681Z","pid":35528,"hostname":"enchantress1","msg":"Strict mode is enabled, find Locator with [data-testid=\"rule-row\"], .v-data-table tbody tr, .v-list-item in page."}
+{"level":30,"time":"2025-12-25T17:30:20.699Z","pid":35528,"hostname":"enchantress1","msg":"Error of node method  getElement"}
+================= Original suppressed error =================
+locator.waitFor: Error: strict mode violation: locator('[data-testid="rule-row"], .v-data-table tbody tr, .v-list-item') resolved to 16 elements:
+    1) <div tabindex="-2" role="option" aria-selected="true" class="v-list-item v-list-item--active v-list-item--link v-list-item--nav v-theme--light v-list-item--density-compact v-list-item--one-line v-list-item--rounded v-list-item--variant-text">…</div> aka getByRole('option', { name: 'Rules' })
+    2) <div tabindex="-2" role="option" aria-selected="false" class="v-list-item v-list-item--link v-list-item--nav v-theme--light v-list-item--density-compact v-list-item--one-line v-list-item--rounded v-list-item--variant-text">…</div> aka getByRole('option', { name: 'Decisions' })
+    3) <div tabindex="-2" role="option" aria-selected="false" class="v-list-item v-list-item--link v-list-item--nav v-theme--light v-list-item--density-compact v-list-item--one-line v-list-item--rounded v-list-item--variant-text">…</div> aka getByRole('option', { name: 'Sessions' })
+    4) <div tabindex="-2" role="option" aria-selected="false" class="v-list-item v-list-item--link v-list-item--nav v-theme--light v-list-item--density-compact v-list-item--one-line v-list-item--rounded v-list-item--variant-text">…</div> aka getByRole('option', { name: 'Tasks' })
+    5) <div tabindex="-2" role="option" aria-selected="false" class="v-list-item v-list-item--link v-list-item--nav v-theme--light v-list-item--density-compact v-list-item--one-line v-list-item--rounded v-list-item--variant-text">…</div> aka getByRole('option', { name: 'Search' })
+    6) <div role="listitem" class="v-list-item v-theme--light v-list-item--density-default v-list-item--one-line rounded-0 v-list-item--variant-text">…</div> aka getByText('Exploratory Test AutomationACTIVE')
+    7) <div role="listitem" class="v-list-item v-theme--light v-list-item--density-default v-list-item--one-line rounded-0 v-list-item--variant-text">…</div> aka getByText('MCP Usage ProtocolACTIVE')
+    8) <div role="listitem" class="v-list-item v-theme--light v-list-item--density-default v-list-item--one-line rounded-0 v-list-item--variant-text">…</div> aka getByText('Memory and MCP StabilityACTIVE')
+    9) <div role="listitem" class="v-list-item v-theme--light v-list-item--density-default v-list-item--one-line rounded-0 v-list-item--variant-text">…</div> aka getByText('Architectural Best PracticesACTIVE')
+    10) <div role="listitem" class="v-list-item v-theme--light v-list-item--density-default v-list-item--one-line rounded-0 v-list-item--variant-text">…</div> aka getByText('Sync ProtocolDRAFT')
+    ...
+
+Call log:
+[2m  - waiting for locator('[data-testid="rule-row"], .v-data-table tbody tr, .v-list-item')[22m
+
+    at getElement (C:\DEV\Python\Python312\Lib\site-packages\Browser\wrapper\index.js:11603:17)
+    at async PlaywrightServer.getElement (C:\DEV\Python\Python312\Lib\site-packages\Browser\wrapper\index.js:13635:28)
+=============================================================
+{"level":30,"time":"2025-12-25T17:30:20.703Z","pid":35528,"hostname":"enchantress1","msg":"Start of node method takeScreenshot"}
+{"level":30,"time":"2025-12-25T17:30:20.703Z","pid":35528,"hostname":"enchantress1","Take screenshot with options: ":{"path":"C:\\Users\\natik\\Documents\\Vibe\\sim-ai\\sim-ai\\results\\browser\\screenshot\\fail-screenshot-3.png","fileType":"png","fullPage":false,"timeout":10000,"omitBackground":false}}
+{"level":30,"time":"2025-12-25T17:30:20.744Z","pid":35528,"hostname":"enchantress1","msg":"End of node method takeScreenshot"}
+{"level":30,"time":"2025-12-25T17:30:20.760Z","pid":35528,"hostname":"enchantress1","msg":"Start of node method waitForElementState"}
+{"level":30,"time":"2025-12-25T17:30:20.760Z","pid":35528,"hostname":"enchantress1","msg":"Strict mode is enabled, find Locator with text=Governance Rules in page."}
+{"level":30,"time":"2025-12-25T17:30:20.764Z","pid":35528,"hostname":"enchantress1","msg":"End of node method waitForElementState"}
+{"level":30,"time":"2025-12-25T17:30:20.768Z","pid":35528,"hostname":"enchantress1","msg":"Start of node method waitForElementState"}
+{"level":30,"time":"2025-12-25T17:30:20.768Z","pid":35528,"hostname":"enchantress1","msg":"Strict mode is enabled, find Locator with [data-testid=\"rules-add-btn\"] in page."}
+{"level":30,"time":"2025-12-25T17:30:30.784Z","pid":35528,"hostname":"enchantress1","msg":"Error of node method  waitForElementState"}
+================= Original suppressed error =================
+locator.waitFor: Timeout 10000ms exceeded.
+Call log:
+[2m  - waiting for locator('[data-testid="rules-add-btn"]') to be visible[22m
+
+    at waitForElementState (C:\DEV\Python\Python312\Lib\site-packages\Browser\wrapper\index.js:11721:19)
+    at async PlaywrightServer.waitForElementsState (C:\DEV\Python\Python312\Lib\site-packages\Browser\wrapper\index.js:13635:28) {
+  name: 'TimeoutError'
+}
+=============================================================
+{"level":30,"time":"2025-12-25T17:30:30.788Z","pid":35528,"hostname":"enchantress1","msg":"Start of node method takeScreenshot"}
+{"level":30,"time":"2025-12-25T17:30:30.788Z","pid":35528,"hostname":"enchantress1","Take screenshot with options: ":{"path":"C:\\Users\\natik\\Documents\\Vibe\\sim-ai\\sim-ai\\results\\browser\\screenshot\\fail-screenshot-4.png","fileType":"png","fullPage":false,"timeout":10000,"omitBackground":false}}
+{"level":30,"time":"2025-12-25T17:30:30.824Z","pid":35528,"hostname":"enchantress1","msg":"End of node method takeScreenshot"}
+{"level":30,"time":"2025-12-25T17:30:30.831Z","pid":35528,"hostname":"enchantress1","msg":"Start of node method closeAllBrowsers"}
+{"level":30,"time":"2025-12-25T17:30:30.835Z","pid":35528,"hostname":"enchantress1","msg":"Removed page=84729d43-7803-4307-9590-dd71954247fe from context=fcdabcb2-df4c-4905-8efa-71a077d0898b page stack"}
+{"level":30,"time":"2025-12-25T17:30:30.888Z","pid":35528,"hostname":"enchantress1","msg":"End of node method closeAllBrowsers"}
+================= Original suppressed error =================
+Error: Browser has been closed.
+    at PlaywrightState.getActiveBrowser (C:\DEV\Python\Python312\Lib\site-packages\Browser\wrapper\index.js:12672:15)
+    at PlaywrightServer.getActiveBrowser (C:\DEV\Python\Python312\Lib\site-packages\Browser\wrapper\index.js:13622:59)
+    at PlaywrightServer.setTimeout (C:\DEV\Python\Python312\Lib\site-packages\Browser\wrapper\index.js:13873:57)
+    at Object.onReceiveHalfClose (C:\DEV\Python\Python312\Lib\site-packages\Browser\wrapper\node_modules\@grpc\grpc-js\build\src\server.js:1464:25)
+    at BaseServerInterceptingCall.maybePushNextMessage (C:\DEV\Python\Python312\Lib\site-packages\Browser\wrapper\node_modules\@grpc\grpc-js\build\src\server-interceptors.js:595:31)
+    at BaseServerInterceptingCall.handleEndEvent (C:\DEV\Python\Python312\Lib\site-packages\Browser\wrapper\node_modules\@grpc\grpc-js\build\src\server-interceptors.js:635:14)
+    at ServerHttp2Stream.<anonymous> (C:\DEV\Python\Python312\Lib\site-packages\Browser\wrapper\node_modules\@grpc\grpc-js\build\src\server-interceptors.js:394:18)
+    at ServerHttp2Stream.emit (node:events:531:35)
+    at endReadableNT (node:internal/streams/readable:1696:12)
+    at process.processTicksAndRejections (node:internal/process/task_queues:82:21)
+=============================================================

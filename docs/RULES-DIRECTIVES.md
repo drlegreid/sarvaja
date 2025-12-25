@@ -1,6 +1,6 @@
 # Sim.ai Rules Directives - Index
 
-**Status:** Active | **Updated:** 2024-12-25 | **Rules:** 22 (20 ACTIVE, 2 DRAFT)
+**Status:** Active | **Updated:** 2024-12-25 | **Rules:** 24 (22 ACTIVE, 2 DRAFT)
 
 ---
 
@@ -10,7 +10,7 @@
 |----------|---------|-------|
 | [RULES-GOVERNANCE](rules/RULES-GOVERNANCE.md) | Process, documentation, collaboration, reporting | 001, 003, 006, 011, 013, 018, 019 |
 | [RULES-TECHNICAL](rules/RULES-TECHNICAL.md) | Architecture, technology, infrastructure | 002, 007, 008, 009, 010, 016, 017 |
-| [RULES-OPERATIONAL](rules/RULES-OPERATIONAL.md) | Testing, stability, maintenance, execution, security | 004, 005, 012, 014, 015, 020, 021, 022 |
+| [RULES-OPERATIONAL](rules/RULES-OPERATIONAL.md) | Testing, stability, maintenance, execution, security | 004, 005, 012, 014, 015, 020, 021, 022, 023, 024 |
 
 ---
 
@@ -21,7 +21,7 @@
 | RULE-001 | Session Evidence Logging | governance | CRITICAL | ACTIVE |
 | RULE-002 | Architectural Best Practices | architecture | HIGH | ACTIVE |
 | RULE-003 | Sync Protocol | governance | HIGH | DRAFT |
-| RULE-004 | Exploratory Testing & Executable Spec | testing | HIGH | ACTIVE |
+| RULE-004 | Exploratory Testing, Executable Spec & Insight Capture | testing | HIGH | ACTIVE |
 | RULE-005 | Memory & MCP Stability | stability | HIGH | ACTIVE |
 | RULE-006 | Decision Logging | governance | MEDIUM | ACTIVE |
 | RULE-007 | MCP Usage Protocol | productivity | HIGH | ACTIVE |
@@ -40,6 +40,8 @@
 | RULE-020 | LLM-Driven E2E Test Generation | testing | HIGH | ACTIVE |
 | RULE-021 | MCP Healthcheck Protocol | stability | CRITICAL | ACTIVE |
 | RULE-022 | Integrity Verification (Frankel Hash) | security | HIGH | DRAFT |
+| RULE-023 | Test Before Ship | quality | CRITICAL | ACTIVE |
+| RULE-024 | AMNESIA Protocol (Context Recovery) | maintenance | CRITICAL | ACTIVE |
 
 ---
 
@@ -55,9 +57,10 @@
 | `productivity` | HIGH | 007 |
 | `testing` | HIGH | 004, 020 |
 | `stability` | CRITICAL | 005, 021 |
-| `maintenance` | HIGH | 012 |
+| `maintenance` | CRITICAL | 012, 024 |
 | `reporting` | HIGH | 018, 019 |
 | `security` | HIGH | 022 |
+| `quality` | CRITICAL | 023 |
 
 ---
 
@@ -65,7 +68,7 @@
 
 | Level | Meaning | Rules |
 |-------|---------|-------|
-| **CRITICAL** | Must enforce always | 001, 008, 009, 010, 011, 014, 015, 016, 021 |
+| **CRITICAL** | Must enforce always | 001, 008, 009, 010, 011, 014, 015, 016, 021, 023, 024 |
 | **HIGH** | Enforce in normal ops | 002, 003, 004, 005, 007, 012, 013, 017, 018, 019, 020, 022 |
 | **MEDIUM** | Advisory | 006 |
 
@@ -126,6 +129,11 @@ Rules are enforced via:
 | 1.3.0 | 2024-12-24 | Added RULE-018: Objective Reporting, RULE-019: UI/UX Standards |
 | 1.4.0 | 2024-12-25 | Added RULE-020: LLM-Driven E2E Test Generation |
 | 1.5.0 | 2024-12-25 | Added RULE-021: MCP Healthcheck Protocol, RULE-022: Integrity Verification |
+| 1.6.0 | 2024-12-25 | Added RULE-023: Test Before Ship |
+| 1.7.0 | 2024-12-25 | Enhanced RULE-004: Added Insight Capture Protocol, Spec-First TDD workflow mode |
+| 1.8.0 | 2024-12-25 | Enhanced RULE-012: Added Semantic Code Structure (DSP Hygiene) - FP + Digital Twin paradigm |
+| 1.9.0 | 2024-12-25 | Enhanced RULE-011: Added R&D Rule Quality & Decomposition (Category/Group Theory patterns) |
+| 2.0.0 | 2024-12-25 | Added RULE-024: AMNESIA Protocol (Autonomous Context Recovery) |
 
 ---
 

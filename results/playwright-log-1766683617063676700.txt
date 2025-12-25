@@ -1,0 +1,69 @@
+{"level":30,"time":"2025-12-25T17:26:57.867Z","pid":34212,"hostname":"enchantress1","msg":"Listening on 127.0.0.1:59261"}
+{"level":30,"time":"2025-12-25T17:26:58.247Z","pid":34212,"hostname":"enchantress1","msg":"Start of node method newBrowser"}
+{"level":30,"time":"2025-12-25T17:26:58.366Z","pid":34212,"hostname":"enchantress1","msg":"Adding browser to stack: chromium, version: 143.0.7499.4"}
+{"level":30,"time":"2025-12-25T17:26:58.367Z","pid":34212,"hostname":"enchantress1","msg":"Adding 0 contexts to browser"}
+{"level":30,"time":"2025-12-25T17:26:58.367Z","pid":34212,"hostname":"enchantress1","msg":"End of node method newBrowser"}
+{"level":30,"time":"2025-12-25T17:26:58.372Z","pid":34212,"hostname":"enchantress1","msg":"Start of node method newContext"}
+{"level":30,"time":"2025-12-25T17:26:58.373Z","pid":34212,"hostname":"enchantress1","msg":"Creating new context with options: {\"acceptDownloads\":true,\"bypassCSP\":false,\"forcedColors\":\"none\",\"ignoreHTTPSErrors\":false,\"javaScriptEnabled\":true,\"offline\":false,\"reducedMotion\":\"no-preference\",\"serviceWorkers\":\"allow\",\"viewport\":{\"width\":1280,\"height\":720}}"}
+{"level":30,"time":"2025-12-25T17:26:58.373Z","pid":34212,"hostname":"enchantress1","msg":"currentBrowser: {\"name\":\"chromium\",\"browser\":{\"_type\":\"Browser\",\"_guid\":\"browser@bd7744dd284378d207fea28e0a23c018\"},\"headless\":true,\"_contextStack\":[],\"id\":\"browser=0f2285cf-1451-49d7-ac98-0729edc868de\"}"}
+{"level":30,"time":"2025-12-25T17:26:58.373Z","pid":34212,"hostname":"enchantress1","msg":"Trace file: "}
+{"level":30,"time":"2025-12-25T17:26:58.383Z","pid":34212,"hostname":"enchantress1","msg":"Setting default timeout for context context=9776d874-1e15-485a-bc2b-434fa3249a1e to 10000"}
+{"level":30,"time":"2025-12-25T17:26:58.383Z","pid":34212,"hostname":"enchantress1","msg":"Changed active context: context=9776d874-1e15-485a-bc2b-434fa3249a1e"}
+{"level":30,"time":"2025-12-25T17:26:58.383Z","pid":34212,"hostname":"enchantress1","msg":"End of node method newContext"}
+{"level":30,"time":"2025-12-25T17:26:58.388Z","pid":34212,"hostname":"enchantress1","msg":"Start of node method newPage"}
+{"level":30,"time":"2025-12-25T17:26:58.389Z","pid":34212,"hostname":"enchantress1","msg":"currentBrowser: {\"name\":\"chromium\",\"browser\":{\"_type\":\"Browser\",\"_guid\":\"browser@bd7744dd284378d207fea28e0a23c018\"},\"headless\":true,\"_contextStack\":[{\"id\":\"context=9776d874-1e15-485a-bc2b-434fa3249a1e\",\"c\":{\"_type\":\"BrowserContext\",\"_guid\":\"browser-context@fcb18c603191bf77c8a2dd805e6720a3\"},\"pageStack\":[],\"options\":{\"acceptDownloads\":true,\"bypassCSP\":false,\"forcedColors\":\"none\",\"ignoreHTTPSErrors\":false,\"javaScriptEnabled\":true,\"offline\":false,\"reducedMotion\":\"no-preference\",\"serviceWorkers\":\"allow\",\"viewport\":{\"width\":1280,\"height\":720}},\"traceFile\":\"\"}],\"id\":\"browser=0f2285cf-1451-49d7-ac98-0729edc868de\"}"}
+{"level":30,"time":"2025-12-25T17:26:58.473Z","pid":34212,"hostname":"enchantress1","msg":"Video path: undefined"}
+{"level":30,"time":"2025-12-25T17:26:58.473Z","pid":34212,"hostname":"enchantress1","msg":"Changed active page"}
+{"level":30,"time":"2025-12-25T17:26:58.522Z","pid":34212,"hostname":"enchantress1","msg":"End of node method newPage"}
+{"level":30,"time":"2025-12-25T17:26:58.528Z","pid":34212,"hostname":"enchantress1","msg":"Start of node method WaitForPageLoadState"}
+{"level":30,"time":"2025-12-25T17:26:58.528Z","pid":34212,"hostname":"enchantress1","msg":"timeout: 30000 state: networkidle"}
+{"level":30,"time":"2025-12-25T17:26:59.201Z","pid":34212,"hostname":"enchantress1","msg":"End of node method WaitForPageLoadState"}
+{"level":30,"time":"2025-12-25T17:26:59.210Z","pid":34212,"hostname":"enchantress1","msg":"Start of node method waitForElementState"}
+{"level":30,"time":"2025-12-25T17:26:59.210Z","pid":34212,"hostname":"enchantress1","msg":"Strict mode is enabled, find Locator with [data-testid=\"rules-table\"] in page."}
+{"level":30,"time":"2025-12-25T17:27:04.215Z","pid":34212,"hostname":"enchantress1","msg":"Error of node method  waitForElementState"}
+================= Original suppressed error =================
+locator.waitFor: Timeout 5000ms exceeded.
+Call log:
+[2m  - waiting for locator('[data-testid="rules-table"]') to be visible[22m
+
+    at waitForElementState (C:\DEV\Python\Python312\Lib\site-packages\Browser\wrapper\index.js:11721:19)
+    at async PlaywrightServer.waitForElementsState (C:\DEV\Python\Python312\Lib\site-packages\Browser\wrapper\index.js:13635:28) {
+  name: 'TimeoutError'
+}
+=============================================================
+{"level":30,"time":"2025-12-25T17:27:04.222Z","pid":34212,"hostname":"enchantress1","msg":"Start of node method takeScreenshot"}
+{"level":30,"time":"2025-12-25T17:27:04.222Z","pid":34212,"hostname":"enchantress1","Take screenshot with options: ":{"path":"C:\\Users\\natik\\Documents\\Vibe\\sim-ai\\sim-ai\\results\\browser\\screenshot\\fail-screenshot-1.png","fileType":"png","fullPage":false,"timeout":10000,"omitBackground":false}}
+{"level":30,"time":"2025-12-25T17:27:04.261Z","pid":34212,"hostname":"enchantress1","msg":"End of node method takeScreenshot"}
+{"level":30,"time":"2025-12-25T17:27:04.273Z","pid":34212,"hostname":"enchantress1","msg":"Start of node method click"}
+{"level":30,"time":"2025-12-25T17:27:04.273Z","pid":34212,"hostname":"enchantress1","msg":"Strict mode is enabled, find Locator with .v-navigation-rail .v-list-item:first-child in page."}
+{"level":30,"time":"2025-12-25T17:27:14.288Z","pid":34212,"hostname":"enchantress1","msg":"Error of node method  click"}
+================= Original suppressed error =================
+locator.click: Timeout 10000ms exceeded.
+Call log:
+[2m  - waiting for locator('.v-navigation-rail .v-list-item:first-child')[22m
+
+    at internalClick (C:\DEV\Python\Python312\Lib\site-packages\Browser\wrapper\index.js:12341:19)
+    at async click (C:\DEV\Python\Python312\Lib\site-packages\Browser\wrapper\index.js:12322:18)
+    at async PlaywrightServer.click (C:\DEV\Python\Python312\Lib\site-packages\Browser\wrapper\index.js:13635:28) {
+  name: 'TimeoutError'
+}
+=============================================================
+{"level":30,"time":"2025-12-25T17:27:14.307Z","pid":34212,"hostname":"enchantress1","msg":"Start of node method takeScreenshot"}
+{"level":30,"time":"2025-12-25T17:27:14.307Z","pid":34212,"hostname":"enchantress1","Take screenshot with options: ":{"path":"C:\\Users\\natik\\Documents\\Vibe\\sim-ai\\sim-ai\\results\\browser\\screenshot\\fail-screenshot-2.png","fileType":"png","fullPage":false,"timeout":10000,"omitBackground":false}}
+{"level":30,"time":"2025-12-25T17:27:14.351Z","pid":34212,"hostname":"enchantress1","msg":"End of node method takeScreenshot"}
+{"level":30,"time":"2025-12-25T17:27:14.362Z","pid":34212,"hostname":"enchantress1","msg":"Start of node method closeAllBrowsers"}
+{"level":30,"time":"2025-12-25T17:27:14.366Z","pid":34212,"hostname":"enchantress1","msg":"Removed page=46d8af33-78e1-4d57-a365-41f80cf6402e from context=9776d874-1e15-485a-bc2b-434fa3249a1e page stack"}
+{"level":30,"time":"2025-12-25T17:27:14.409Z","pid":34212,"hostname":"enchantress1","msg":"End of node method closeAllBrowsers"}
+================= Original suppressed error =================
+Error: Browser has been closed.
+    at PlaywrightState.getActiveBrowser (C:\DEV\Python\Python312\Lib\site-packages\Browser\wrapper\index.js:12672:15)
+    at PlaywrightServer.getActiveBrowser (C:\DEV\Python\Python312\Lib\site-packages\Browser\wrapper\index.js:13622:59)
+    at PlaywrightServer.setTimeout (C:\DEV\Python\Python312\Lib\site-packages\Browser\wrapper\index.js:13873:57)
+    at Object.onReceiveHalfClose (C:\DEV\Python\Python312\Lib\site-packages\Browser\wrapper\node_modules\@grpc\grpc-js\build\src\server.js:1464:25)
+    at BaseServerInterceptingCall.maybePushNextMessage (C:\DEV\Python\Python312\Lib\site-packages\Browser\wrapper\node_modules\@grpc\grpc-js\build\src\server-interceptors.js:595:31)
+    at BaseServerInterceptingCall.handleEndEvent (C:\DEV\Python\Python312\Lib\site-packages\Browser\wrapper\node_modules\@grpc\grpc-js\build\src\server-interceptors.js:635:14)
+    at ServerHttp2Stream.<anonymous> (C:\DEV\Python\Python312\Lib\site-packages\Browser\wrapper\node_modules\@grpc\grpc-js\build\src\server-interceptors.js:394:18)
+    at ServerHttp2Stream.emit (node:events:531:35)
+    at endReadableNT (node:internal/streams/readable:1696:12)
+    at process.processTicksAndRejections (node:internal/process/task_queues:82:21)
+=============================================================

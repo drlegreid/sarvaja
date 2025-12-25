@@ -200,21 +200,45 @@ def create_agents(config: dict) -> list[Agent]:
 
 def main():
     config_file = sys.argv[1] if len(sys.argv) > 1 else "/agents.yaml"
-    
+
     print(f"=== Sim.ai PoC Agent Server ===")
     print(f"Loading config: {config_file}")
-    
+
     with open(config_file, "r") as f:
         expanded = os.path.expandvars(f.read())
         config = yaml.safe_load(expanded)
 
     agents = create_agents(config)
-    
+
     print(f"Starting AgentOS with {len(agents)} agents on port 7777")
-    
+
     agent_os = AgentOS(agents=agents)
     app = agent_os.get_app()
-    
+
+    # Integrate Task UI with AG-UI event streaming (Phase 6.1)
+    try:
+        from agent.task_ui import integrate_task_ui
+        agents_dict = {a.name: a for a in agents}
+        integrate_task_ui(app, agents_dict)
+        print(f"Task UI enabled: POST /tasks, GET /tasks/{{id}}/events")
+
+        # Serve static UI (Phase 6.3)
+        from fastapi.staticfiles import StaticFiles
+        from fastapi.responses import FileResponse
+        import os
+
+        static_dir = os.path.join(os.path.dirname(__file__), "static")
+        if os.path.exists(static_dir):
+            app.mount("/static", StaticFiles(directory=static_dir), name="static")
+
+            @app.get("/ui")
+            async def ui_redirect():
+                return FileResponse(os.path.join(static_dir, "index.html"))
+
+            print(f"Static UI available at: /ui")
+    except ImportError as e:
+        print(f"Task UI not available: {e}")
+
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=7777)
 
