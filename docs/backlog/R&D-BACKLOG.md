@@ -232,6 +232,98 @@ Phase 4: Robotics ─────────→ Compatible inference for embedd
 | RD-004 | Robotics inference compatibility | 📋 TODO | FUTURE | ROS2/embedded targets |
 | RD-005 | TypeDB 3.x alpha evaluation | 📋 TODO | LOW | Monitor releases |
 
+### Frankel Hash R&D (RULE-022 Extension)
+
+**Vision:** Digital twin evidence world with holographic navigation
+
+| ID | Task | Status | Priority | Notes |
+|----|------|--------|----------|-------|
+| FH-001 | CLI zoom in/out on hash changes | 📋 TODO | HIGH | Navigate document changes at chunk level |
+| FH-002 | Hash tree visualization (ASCII/terminal) | 📋 TODO | HIGH | Merkle tree depth navigation |
+| FH-003 | 5D visualization framework | 📋 TODO | MEDIUM | Lighting + 3D + deformation mapping |
+| FH-004 | Holographic mapping of evidence world | 📋 TODO | MEDIUM | Digital twin navigation for LLM + human |
+| FH-005 | Game theory for hash convergence | 📋 TODO | FUTURE | Group theory, equilibria, stability |
+| FH-006 | Sync R&D tasks with GitHub issues | 📋 TODO | HIGH | Automate issue creation from backlog |
+
+### Frankel Hash Architecture
+
+```
+┌─────────────────────────────────────────────────────────────────────────┐
+│              Frankel Hash Evidence Navigation                            │
+├─────────────────────────────────────────────────────────────────────────┤
+│                                                                          │
+│  Layer 1: CHUNK HASHING (Core)                                          │
+│  ┌─────────────────────────────────────────────────────────────────┐    │
+│  │  Document → Chunks (paragraphs/sections)                        │    │
+│  │     └── Each chunk → Similarity hash (locality-sensitive)       │    │
+│  │     └── Merkle tree of chunk hashes                             │    │
+│  └─────────────────────────────────────────────────────────────────┘    │
+│                               │                                          │
+│                               ▼                                          │
+│  Layer 2: CLI NAVIGATION (FH-001, FH-002)                               │
+│  ┌─────────────────────────────────────────────────────────────────┐    │
+│  │  Terminal UI with zoom levels:                                  │    │
+│  │     • Level 0: Document root hash (single hash)                 │    │
+│  │     • Level 1: Section hashes (zoom in)                         │    │
+│  │     • Level 2: Paragraph hashes (deeper zoom)                   │    │
+│  │     • Level N: Line-level changes (maximum detail)              │    │
+│  │  Commands: zoom-in, zoom-out, diff, navigate, highlight         │    │
+│  └─────────────────────────────────────────────────────────────────┘    │
+│                               │                                          │
+│                               ▼                                          │
+│  Layer 3: 5D VISUALIZATION (FH-003)                                     │
+│  ┌─────────────────────────────────────────────────────────────────┐    │
+│  │  Dimensions:                                                     │    │
+│  │     • X/Y/Z: Spatial position (3D tree structure)               │    │
+│  │     • Lighting: Change intensity (brightness = delta)           │    │
+│  │     • Deformation: Stability (warping = volatility)             │    │
+│  │  Rendering: WebGL/Three.js or terminal (Blessed/Curses)         │    │
+│  └─────────────────────────────────────────────────────────────────┘    │
+│                               │                                          │
+│                               ▼                                          │
+│  Layer 4: HOLOGRAPHIC TWIN (FH-004)                                     │
+│  ┌─────────────────────────────────────────────────────────────────┐    │
+│  │  Evidence World Navigation:                                     │    │
+│  │     • Map all session evidence to hash-space                    │    │
+│  │     • LLM queries: "Show me changes in RULE-011 since Dec 24"   │    │
+│  │     • Human navigation: Fly through evidence topology           │    │
+│  │     • Convergence visualization: Stable regions vs flux         │    │
+│  └─────────────────────────────────────────────────────────────────┘    │
+│                               │                                          │
+│                               ▼                                          │
+│  Layer 5: THEORY LAYER (FH-005)                                         │
+│  ┌─────────────────────────────────────────────────────────────────┐    │
+│  │  Mathematical foundations:                                       │    │
+│  │     • Group theory: Hash transformations as group operations    │    │
+│  │     • Game theory: Multi-agent convergence on evidence          │    │
+│  │     • Topology: Continuous navigation in discrete hash space    │    │
+│  └─────────────────────────────────────────────────────────────────┘    │
+│                                                                          │
+└─────────────────────────────────────────────────────────────────────────┘
+```
+
+### Frankel Hash TypeDB Integration
+
+```typeql
+define
+  frankel-hash sub entity,
+    owns hash-id,
+    owns hash-value,
+    owns chunk-level,      # 0=document, 1=section, 2=paragraph, N=line
+    owns created-at,
+    plays parent-child:parent,
+    plays parent-child:child,
+    plays document-hash:hash;
+
+  parent-child sub relation,
+    relates parent,
+    relates child;
+
+  document-hash sub relation,
+    relates document,
+    relates hash;
+```
+
 ### Haskell MCP Interface (Target)
 
 ```haskell
