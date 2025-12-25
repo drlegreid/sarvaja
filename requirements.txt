@@ -1,0 +1,34 @@
+# Sim.ai Platform Core Dependencies
+# Per agent/pyproject.toml
+# Updated: 2024-12-25
+
+# Core Framework
+fastapi>=0.124.0
+uvicorn>=0.38.0
+pydantic>=2.0.0
+
+# Agent Framework
+agno>=2.3.0
+anthropic>=0.75.0
+mcp>=1.24.0
+litellm>=1.50.0
+
+# Data Storage
+chromadb>=0.5.0
+sqlalchemy>=2.0.0
+
+# HTTP
+httpx>=0.28.0
+pyyaml>=6.0.0
+
+# UI Framework (Phase 6)
+trame>=3.0.0
+trame-vuetify>=2.0.0
+trame-client>=3.0.0
+
+# TypeDB Client (Phase 7)
+typedb-driver>=2.29.0
+
+# Optional: Observability
+# opik>=1.9.0  # Removed per DECISION-001
+# ace-framework[observability]>=0.1.0  # Optional
