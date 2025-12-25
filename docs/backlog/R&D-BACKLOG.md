@@ -1,6 +1,6 @@
 # R&D Backlog - Sim.ai PoC
 
-**Last Updated:** 2024-12-24
+**Last Updated:** 2024-12-25
 **Status:** Active Development
 
 ---
@@ -16,7 +16,7 @@
 | **Agents** | Orchestration, routing, playground | ✅ Agno/LiteLLM | TypeDB-enhanced |
 | **Tasks/Projects** | Backlog, tracking, dependencies | ✅ Split docs | TypeDB graph |
 | **Evidence/Sessions** | Decisions, logs, dumps | ✅ Markdown/scripts | Structured DB |
-| **Rules** | RULE-001 to RULE-014 | ✅ TypeDB + Markdown | TypeDB inference |
+| **Rules** | RULE-001 to RULE-022 | ✅ TypeDB + Markdown | TypeDB inference |
 
 ### Architecture Target
 
@@ -30,7 +30,7 @@
 │       │                                                         │
 │       ├── ChromaDB (8001)     │  TypeDB (1729)                 │
 │       │   └── Semantic search │  └── Inference + Types         │
-│       │   └── Documents (53)  │  └── Rules (14) + Decisions    │
+│       │   └── Documents (53)  │  └── Rules (22) + Decisions    │
 │       │                       │                                 │
 │       └── HYBRID QUERY LAYER ─┴─────────────────────────────   │
 └─────────────────────────────────────────────────────────────────┘
@@ -65,6 +65,117 @@
 | P3.4 | ✅ DONE | Agent hybrid layer (HybridVectorDb + playground) |
 | P3.5 | 📋 TODO | Performance benchmarks |
 | P3.6 | 📋 TODO | v1.0 release |
+
+### Phase 4: Cross-Workspace Integration (IN PROGRESS)
+
+| Task | Status | Description |
+|------|--------|-------------|
+| P4.1 | ✅ DONE | MCP → Agno @tool wrapping (from agno-agi) |
+| P4.2 | ✅ DONE | Session evidence flow (SessionCollector) |
+| P4.2b | ✅ DONE | Rule Quality Analyzer (orphans, shallow, circular, impact) |
+| P4.3 | ✅ DONE | DSM tracker integration (RULE-012 Deep Sleep Protocol) |
+| P4.4 | ✅ DONE | Pydantic AI type-safe tools (from local-gai) |
+| P4.5 | ✅ DONE | LangGraph state machine for complex workflows |
+
+### Phase 5: External MCP Integration ✅ COMPLETE
+
+| Task | Status | Description |
+|------|--------|-------------|
+| P5.1 | ✅ DONE | PlaywrightTools (7 tools: navigate, snapshot, click, type, screenshot, evaluate, wait) |
+| P5.2 | ✅ DONE | PowerShellTools (2 tools: run_script, run_command) |
+| P5.3 | ✅ DONE | DesktopCommanderTools (7 tools: read, write, list, search, info, create, move) |
+| P5.4 | ✅ DONE | OctoCodeTools (5 tools: search_code, get_file, view_structure, search_repos, search_prs) |
+
+**Tests:** 62 passed, 2 skipped (64 total)
+**Files:** `agent/external_mcp_tools.py`, `tests/test_external_mcp_tools.py`
+
+### Phase 6: Agent UI Framework ✅ COMPLETE
+
+| Task | Status | Description |
+|------|--------|-------------|
+| P6.1 | ✅ DONE | Task UI with AG-UI event streaming (29 tests) |
+| P6.2 | ✅ DONE | Strategic architecture review (DECISION-003: TypeDB-First) |
+| P6.3 | ✅ DONE | Trame frontend for task submission (12 tests) |
+| RULE-018 | ✅ DONE | Objective Reporting rule |
+| RULE-019 | ✅ DONE | UI/UX Design Standards rule |
+
+**Framework Decision:** Trame (Python-native web UI framework)
+**Files:** `agent/task_ui.py`, `agent/trame_ui.py`, `tests/test_task_ui.py`, `tests/test_trame_ui.py`
+**Tests:** 41 tests (29 task_ui + 12 trame_ui)
+
+### Phase 7: TypeDB-First Migration (NEXT)
+
+| Task | Status | Description |
+|------|--------|-------------|
+| P7.1 | 📋 TODO | TypeDB vector schema (embeddings support) |
+| P7.2 | 📋 TODO | Embedding pipeline (generate + store) |
+| P7.3 | 📋 TODO | New data → TypeDB routing |
+| P7.4 | 📋 TODO | ChromaDB migration tool |
+| P7.5 | 📋 TODO | ChromaDB sunset (read-only) |
+
+**Phase 7 Context:** Per DECISION-003, TypeDB 3.x has vector search. Unify semantic + logical queries in single database. See [DECISION-003-TYPEDB-FIRST-STRATEGY.md](../evidence/DECISION-003-TYPEDB-FIRST-STRATEGY.md).
+
+### Phase 8: E2E Testing Framework ✅ COMPLETE
+
+| Task | Status | Description |
+|------|--------|-------------|
+| P8.1 | ✅ DONE | Robot Framework + Browser Library setup |
+| P8.2 | ✅ DONE | Exploratory test keywords (heuristic patterns) |
+| P8.3 | ✅ DONE | Task UI E2E test suite |
+| P8.4 | ✅ DONE | Add E2E to requirements |
+| P8.5 | ✅ DONE | Apply RULE-020 TypeDB schema |
+| RULE-020 | ✅ DONE | LLM-Driven E2E Test Generation rule |
+
+**Framework:** Robot Framework + Playwright (Browser Library)
+**Architecture:** LLM explores → Generates deterministic tests → No LLM at runtime
+**Files:**
+- `tests/e2e/task_ui.robot` - E2E test suite
+- `tests/e2e/resources/exploratory.resource` - Heuristic keywords
+- `tests/e2e/run_e2e.ps1` - PowerShell runner
+- `agent/e2e_explorer.py` - LLM exploration framework
+- `governance/schema.tql` - Exploration session entities
+- `governance/data.tql` - RULE-020 data
+
+**See:** [RULE-020 in RULES-OPERATIONAL.md](../rules/RULES-OPERATIONAL.md)
+
+---
+
+## Cross-Workspace Tools Captured
+
+**Source:** [CROSS-WORKSPACE-WISDOM.md](../CROSS-WORKSPACE-WISDOM.md)
+
+### From local-gai
+
+| Tool | Purpose | Integration |
+|------|---------|-------------|
+| **EBMSF** | MCP selection scoring | Apply to new MCP evaluations |
+| **DSM Tracker** | `scripts/dsm_tracker.py` | Cycle evidence automation |
+| **Docker Wrapper** | `scripts/docker_wrapper.py` | MCP dependency auto-start |
+| **Pydantic Tools** | `photoprism_migration/pydantic_tools.py` | Type-safe MCP tools |
+| **LangGraph Workflow** | `langgraph_workflow.py` | State machine patterns |
+| **Watchdog Rules** | Memory thresholds, grace periods | RULE-005 enhancement |
+
+### From agno-agi
+
+| Tool | Purpose | Integration |
+|------|---------|-------------|
+| **agents.yaml** | Agent config template | Base for sim-ai agents |
+| **playground.py** | Agno agent setup | Pattern for hybrid knowledge |
+| **docker-compose** | Cluster template | Port/service standards |
+
+### Integration Patterns
+
+```python
+# MCP → Agno @tool wrapping (target)
+from agno.tools import tool
+import httpx
+
+class MCPToolWrapper:
+    @tool
+    def governance_query_rules(self, category: str = None) -> str:
+        return self.client.post("/tools/governance_query_rules",
+                                json={"category": category}).json()
+```
 
 ---
 

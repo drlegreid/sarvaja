@@ -1,6 +1,6 @@
 # Sim.ai Rules Directives - Index
 
-**Status:** Active | **Updated:** 2024-12-24 | **Rules:** 15 (14 ACTIVE, 1 DRAFT)
+**Status:** Active | **Updated:** 2024-12-25 | **Rules:** 22 (20 ACTIVE, 2 DRAFT)
 
 ---
 
@@ -8,9 +8,9 @@
 
 | Document | Content | Rules |
 |----------|---------|-------|
-| [RULES-GOVERNANCE](rules/RULES-GOVERNANCE.md) | Process, documentation, collaboration | 001, 003, 006, 011, 013 |
-| [RULES-TECHNICAL](rules/RULES-TECHNICAL.md) | Architecture, technology, tooling | 002, 007, 008, 009, 010 |
-| [RULES-OPERATIONAL](rules/RULES-OPERATIONAL.md) | Testing, stability, maintenance, execution | 004, 005, 012, 014, 015 |
+| [RULES-GOVERNANCE](rules/RULES-GOVERNANCE.md) | Process, documentation, collaboration, reporting | 001, 003, 006, 011, 013, 018, 019 |
+| [RULES-TECHNICAL](rules/RULES-TECHNICAL.md) | Architecture, technology, infrastructure | 002, 007, 008, 009, 010, 016, 017 |
+| [RULES-OPERATIONAL](rules/RULES-OPERATIONAL.md) | Testing, stability, maintenance, execution, security | 004, 005, 012, 014, 015, 020, 021, 022 |
 
 ---
 
@@ -33,6 +33,13 @@
 | RULE-013 | Rules Applicability Convention | governance | HIGH | ACTIVE |
 | RULE-014 | Autonomous Task Sequencing | autonomy | CRITICAL | ACTIVE |
 | RULE-015 | R&D Workflow Human Gate | autonomy | CRITICAL | ACTIVE |
+| RULE-016 | Infrastructure Identity & Hardware | devops | CRITICAL | ACTIVE |
+| RULE-017 | Cross-Workspace Pattern Reuse | strategic | HIGH | ACTIVE |
+| RULE-018 | Objective Reporting | reporting | HIGH | ACTIVE |
+| RULE-019 | UI/UX Design Standards | reporting | HIGH | ACTIVE |
+| RULE-020 | LLM-Driven E2E Test Generation | testing | HIGH | ACTIVE |
+| RULE-021 | MCP Healthcheck Protocol | stability | CRITICAL | ACTIVE |
+| RULE-022 | Integrity Verification (Frankel Hash) | security | HIGH | DRAFT |
 
 ---
 
@@ -41,14 +48,16 @@
 | Category | Priority | Rules |
 |----------|----------|-------|
 | `governance` | CRITICAL | 001, 003, 006, 011, 013 |
-| `strategic` | CRITICAL | 008, 010 |
+| `strategic` | CRITICAL | 008, 010, 017 |
 | `autonomy` | CRITICAL | 014, 015 |
 | `architecture` | HIGH | 002 |
-| `devops` | CRITICAL | 009 |
+| `devops` | CRITICAL | 009, 016 |
 | `productivity` | HIGH | 007 |
-| `testing` | HIGH | 004 |
-| `stability` | HIGH | 005 |
+| `testing` | HIGH | 004, 020 |
+| `stability` | CRITICAL | 005, 021 |
 | `maintenance` | HIGH | 012 |
+| `reporting` | HIGH | 018, 019 |
+| `security` | HIGH | 022 |
 
 ---
 
@@ -56,8 +65,8 @@
 
 | Level | Meaning | Rules |
 |-------|---------|-------|
-| **CRITICAL** | Must enforce always | 001, 008, 009, 010, 011, 014, 015 |
-| **HIGH** | Enforce in normal ops | 002, 003, 004, 005, 007, 012, 013 |
+| **CRITICAL** | Must enforce always | 001, 008, 009, 010, 011, 014, 015, 016, 021 |
+| **HIGH** | Enforce in normal ops | 002, 003, 004, 005, 007, 012, 013, 017, 018, 019, 020, 022 |
 | **MEDIUM** | Advisory | 006 |
 
 ---
@@ -113,6 +122,10 @@ Rules are enforced via:
 | 0.12.0 | 2024-12-24 | Added RULE-012 to RULE-014 |
 | 1.0.0 | 2024-12-24 | Split into modular files |
 | 1.1.0 | 2024-12-24 | Added RULE-015: R&D Workflow, Enhanced RULE-012 with MCP checks |
+| 1.2.0 | 2024-12-24 | Added RULE-016: Infrastructure Identity, RULE-017: Cross-Workspace Patterns |
+| 1.3.0 | 2024-12-24 | Added RULE-018: Objective Reporting, RULE-019: UI/UX Standards |
+| 1.4.0 | 2024-12-25 | Added RULE-020: LLM-Driven E2E Test Generation |
+| 1.5.0 | 2024-12-25 | Added RULE-021: MCP Healthcheck Protocol, RULE-022: Integrity Verification |
 
 ---
 

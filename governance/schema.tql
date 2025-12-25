@@ -3,6 +3,7 @@
 # Created: 2024-12-24 (DECISION-003)
 # Updated: 2024-12-24 (RULE-011) - Added multi-agent governance entities
 # Updated: 2024-12-24 (RULE-013) - Added document entity and gap-rule cross-referencing
+# Updated: 2024-12-25 (RULE-020) - Added E2E exploration session entities
 
 define
 
@@ -62,8 +63,56 @@ gap sub entity,
 # DOCUMENT CROSS-REFERENCING ENTITIES (RULE-013)
 # =============================================================================
 
+# =============================================================================
+# E2E EXPLORATION ENTITIES (RULE-020)
+# =============================================================================
+
+# Exploration session for LLM-driven E2E testing
+exploration-session sub entity,
+    owns session-id,
+    owns session-name,
+    owns session-url,
+    owns started-at,
+    owns completed-at,
+    owns heuristics-applied,
+    plays session-step:session,
+    plays generates:generating-session;
+
+# Exploration step within a session
+exploration-step sub entity,
+    owns step-id,
+    owns action-type,
+    owns target-selector,
+    owns step-value,
+    owns step-description,
+    owns step-success,
+    owns step-error,
+    plays session-step:step;
+
+# Generated test case from exploration
+test-case sub entity,
+    owns test-id,
+    owns test-name,
+    owns generated-from,
+    owns robot-code,
+    owns test-tags,
+    plays generates:generated-test,
+    plays test-failed:generated-test;
+
+# Test failure for LLM analysis
+test-failure sub entity,
+    owns failure-id,
+    owns failure-test-name,
+    owns failure-step,
+    owns failure-error,
+    owns failure-screenshot,
+    owns analysis-classification,
+    owns analysis-root-cause,
+    owns analysis-fix,
+    owns analysis-confidence,
+    plays test-failed:failure;
+
 # Document entity for cross-referencing
-document sub entity,
     owns document-id,
     owns document-title,
     owns document-path,         # Local path: docs/RULES.md
@@ -151,6 +200,30 @@ document-type sub attribute, value string;   # markdown, yaml, json, code
 document-storage sub attribute, value string; # local, webdav, github
 last-modified sub attribute, value datetime;
 content-hash sub attribute, value string;
+
+# E2E Exploration attributes (RULE-020)
+session-url sub attribute, value string;
+started-at sub attribute, value datetime;
+completed-at sub attribute, value datetime;
+heuristics-applied sub attribute, value string;  # Comma-separated list
+target-selector sub attribute, value string;     # CSS/XPath selector
+step-value sub attribute, value string;          # Input value for type actions
+step-description sub attribute, value string;
+step-success sub attribute, value boolean;
+step-error sub attribute, value string;
+test-name sub attribute, value string;
+generated-from sub attribute, value string;      # session-id reference
+robot-code sub attribute, value string;          # Generated Robot Framework code
+test-tags sub attribute, value string;           # Comma-separated tags
+failure-id sub attribute, value string;
+failure-test-name sub attribute, value string;
+failure-step sub attribute, value string;
+failure-error sub attribute, value string;
+failure-screenshot sub attribute, value string;  # Path to screenshot
+analysis-classification sub attribute, value string; # app_bug, test_issue, environment
+analysis-root-cause sub attribute, value string;
+analysis-fix sub attribute, value string;
+analysis-confidence sub attribute, value double; # 0.0 to 1.0
 
 # Agent attributes (RULE-011)
 agent-id sub attribute, value string;
@@ -243,6 +316,25 @@ document-references-gap sub relation,
 # Rules that conflict with each other
 rule-conflict sub relation,
     relates conflicting-rule;
+
+# =============================================================================
+# E2E EXPLORATION RELATIONS (RULE-020)
+# =============================================================================
+
+# Session contains steps
+session-step sub relation,
+    relates session,
+    relates step;
+
+# Session generates test cases
+generates sub relation,
+    relates generating-session,
+    relates generated-test;
+
+# Test case failed (for analysis)
+test-failed sub relation,
+    relates generated-test,
+    relates failure;
 
 # =============================================================================
 # MULTI-AGENT GOVERNANCE RELATIONS (RULE-011)

@@ -1,7 +1,9 @@
 # Sim.ai Governance Data
-# Initial load: 15 rules + 4 decisions + 3 agents
+# Initial load: 22 rules + 4 decisions + 3 agents
 # Created: 2024-12-24
 # Updated: 2024-12-24 (RULE-015) - R&D Workflow, Enhanced RULE-004 with Executable Spec
+# Updated: 2024-12-25 (RULE-016-020) - Infrastructure, Cross-Workspace, Reporting, UI/UX, E2E Testing
+# Updated: 2024-12-25 (RULE-021-022) - MCP Healthcheck Protocol, Integrity Verification (Frankel Hash)
 
 insert
 
@@ -246,3 +248,109 @@ $dec004 isa decision,
 (dependent: $rule015, dependency: $rule014) isa rule-dependency;  # R&D workflow extends task sequencing
 (dependent: $rule015, dependency: $rule008) isa rule-dependency;  # R&D uses technology scorecard
 (dependent: $rule015, dependency: $rule010) isa rule-dependency;  # R&D requires evidence-based approach
+
+# =============================================================================
+# RULES (RULE-016 to RULE-020) - Added 2024-12-25
+# =============================================================================
+
+$rule016 isa rule-entity,
+    has rule-id "RULE-016",
+    has rule-name "Infrastructure Identity & Hardware",
+    has category "devops",
+    has priority "CRITICAL",
+    has status "ACTIVE",
+    has directive "Document hardware specs, maintain machine identity registry, track GPU/CUDA capabilities",
+    has created-date 2024-12-24T00:00:00;
+
+$rule017 isa rule-entity,
+    has rule-id "RULE-017",
+    has rule-name "Cross-Workspace Pattern Reuse",
+    has category "strategic",
+    has priority "HIGH",
+    has status "ACTIVE",
+    has directive "Reuse patterns across workspaces via cross-workspace wisdom collection",
+    has created-date 2024-12-24T00:00:00;
+
+$rule018 isa rule-entity,
+    has rule-id "RULE-018",
+    has rule-name "Objective Reporting",
+    has category "reporting",
+    has priority "HIGH",
+    has status "ACTIVE",
+    has directive "Reports must be factual without flattery; prioritize accuracy over validation",
+    has created-date 2024-12-24T00:00:00;
+
+$rule019 isa rule-entity,
+    has rule-id "RULE-019",
+    has rule-name "UI/UX Design Standards",
+    has category "reporting",
+    has priority "HIGH",
+    has status "ACTIVE",
+    has directive "Follow accessibility (WCAG), responsive design, consistent components, dark mode support",
+    has created-date 2024-12-24T00:00:00;
+
+$rule020 isa rule-entity,
+    has rule-id "RULE-020",
+    has rule-name "LLM-Driven E2E Test Generation",
+    has category "testing",
+    has priority "HIGH",
+    has status "ACTIVE",
+    has directive "E2E via LLM exploration -> deterministic Robot tests; LLM only for explore/analyze, not runtime",
+    has created-date 2024-12-25T00:00:00;
+
+# =============================================================================
+# RULE DEPENDENCIES (RULE-016 to RULE-020)
+# =============================================================================
+
+# RULE-016 depends on RULE-002 (architecture) and RULE-009 (version compatibility)
+(dependent: $rule016, dependency: $rule002) isa rule-dependency;
+(dependent: $rule016, dependency: $rule009) isa rule-dependency;
+
+# RULE-017 depends on RULE-010 (evidence-based wisdom) and RULE-001 (session logging)
+(dependent: $rule017, dependency: $rule010) isa rule-dependency;
+(dependent: $rule017, dependency: $rule001) isa rule-dependency;
+
+# RULE-018 depends on RULE-001 (session logging) and RULE-006 (decision logging)
+(dependent: $rule018, dependency: $rule001) isa rule-dependency;
+(dependent: $rule018, dependency: $rule006) isa rule-dependency;
+
+# RULE-019 depends on RULE-018 (objective reporting)
+(dependent: $rule019, dependency: $rule018) isa rule-dependency;
+
+# RULE-020 depends on RULE-004 (exploratory testing) and RULE-007 (MCP usage)
+(dependent: $rule020, dependency: $rule004) isa rule-dependency;
+(dependent: $rule020, dependency: $rule007) isa rule-dependency;
+
+# =============================================================================
+# RULES (RULE-021 to RULE-022) - Added 2024-12-25 (Session 2)
+# =============================================================================
+
+$rule021 isa rule-entity,
+    has rule-id "RULE-021",
+    has rule-name "MCP Healthcheck Protocol",
+    has category "stability",
+    has priority "CRITICAL",
+    has status "ACTIVE",
+    has directive "Every MCP operation must verify server health; failures logged and recovery attempted before failing",
+    has created-date 2024-12-25T00:00:00;
+
+$rule022 isa rule-entity,
+    has rule-id "RULE-022",
+    has rule-name "Integrity Verification (Frankel Hash)",
+    has category "security",
+    has priority "HIGH",
+    has status "DRAFT",
+    has directive "Critical files must have integrity verification via Frankel Hash for similarity detection and change tracking",
+    has created-date 2024-12-25T00:00:00;
+
+# =============================================================================
+# RULE DEPENDENCIES (RULE-021 to RULE-022)
+# =============================================================================
+
+# RULE-021 depends on RULE-005 (memory stability) and RULE-007 (MCP usage)
+(dependent: $rule021, dependency: $rule005) isa rule-dependency;
+(dependent: $rule021, dependency: $rule007) isa rule-dependency;
+
+# RULE-022 depends on RULE-001 (session logging) and RULE-010 (evidence-based wisdom)
+(dependent: $rule022, dependency: $rule001) isa rule-dependency;
+(dependent: $rule022, dependency: $rule010) isa rule-dependency;
