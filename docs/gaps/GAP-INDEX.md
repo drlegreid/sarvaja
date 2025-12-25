@@ -1,7 +1,7 @@
 # Gap Index - Sim.ai PoC
 
 **Last Updated:** 2024-12-25
-**Total Gaps:** 34 (17 resolved, 17 open) — DSP: Docker + UI + reliability fixes
+**Total Gaps:** 38 (17 resolved, 21 open) — UI CRUD coverage audit
 
 ---
 
@@ -23,6 +23,10 @@
 | GAP-UI-010 | No column sorting functionality | MEDIUM | ux | All | READ | EXP-P10-001 |
 | GAP-UI-011 | No filtering/faceted search | MEDIUM | functionality | All | SEARCH | EXP-P10-001 |
 | GAP-UI-028 | Tests pass but UI broken (lenient tests) | CRITICAL | testing | All | ALL | EXP-UI-FAILURE-001 |
+| GAP-UI-031 | Rule Save button is mock-only (no persist) | CRITICAL | functionality | Rule | CREATE/UPDATE | UI-COVERAGE-2024-12-25 |
+| GAP-UI-032 | Rule Delete button is mock-only (no delete) | CRITICAL | functionality | Rule | DELETE | UI-COVERAGE-2024-12-25 |
+| GAP-UI-033 | No CRUD operations for Decisions | HIGH | functionality | Decision | ALL | UI-COVERAGE-2024-12-25 |
+| GAP-UI-034 | No CRUD operations for Sessions | HIGH | functionality | Session | ALL | UI-COVERAGE-2024-12-25 |
 
 #### Insights Captured (EXP-P10-001)
 
