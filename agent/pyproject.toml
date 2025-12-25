@@ -1,7 +1,7 @@
 [project]
 name = "sim-ai-agent"
-version = "0.1.0"
-description = "Sim.ai PoC Agent with ACE, LiteLLM routing, Opik tracing, and ChromaDB"
+version = "1.0.0"
+description = "Sim.ai Multi-Agent Platform with TypeDB Governance, LiteLLM routing, and ChromaDB"
 requires-python = ">=3.12"
 dependencies = [
     "agno>=2.3.0",
@@ -16,4 +16,8 @@ dependencies = [
     "litellm>=1.50.0",
     "httpx>=0.28.0",
     "ace-framework[observability]>=0.1.0",
+    # UI Framework (Phase 6)
+    "trame>=3.0.0",
+    "trame-vuetify>=2.0.0",
+    "trame-client>=3.0.0",
 ]

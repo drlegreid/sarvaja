@@ -1,10 +1,11 @@
 # Sim.ai PoC Project Rules
 
 ## Quick Context
-- **Project**: Multi-agent platform with LiteLLM, ChromaDB, Opik
+- **Project**: Multi-agent platform with TypeDB Governance, LiteLLM, ChromaDB
+- **Version**: 1.0.0
 - **Location**: `C:\Users\natik\Documents\Vibe\sim-ai\sim-ai`
 - **Repo**: https://github.com/drlegreid/platform-gai
-- **Updated**: 2024-12-24
+- **Updated**: 2024-12-25
 
 ## 🗺️ Document Map (LLM Entry Point)
 
@@ -29,19 +30,21 @@ DECISION                 → evidence/SESSION-DECISIONS-*.md
 Completed Tasks          → docs/tasks/TASKS-COMPLETED.md
 ```
 
-## Architecture (Simplified - DECISION-001)
+## Architecture (v1.0 - DECISION-001, DECISION-003)
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                 Sim.ai PoC Stack (4 containers)             │
+│                 Sim.ai v1.0 Stack (5 containers)            │
 ├─────────────────────────────────────────────────────────────┤
 │  Agents (7777)  │  LiteLLM (4000)  │  Ollama (11434)       │
 ├─────────────────────────────────────────────────────────────┤
-│  ChromaDB (8001) - 53 docs from claude-mem                  │
+│  ChromaDB (8001)        │  TypeDB (1729)                    │
+│  └── Semantic search    │  └── Governance inference         │
+│  └── 53 docs            │  └── 22 rules, 8 decisions        │
 └─────────────────────────────────────────────────────────────┘
 ```
-> Opik removed per DECISION-001 (overkill for current needs)
+> Opik removed per DECISION-001 | TypeDB-First per DECISION-003
 
-## Core Rules (14 Active)
+## Core Rules (22 Total: 20 ACTIVE, 2 DRAFT)
 
 | Rule | Directive | Priority |
 |------|-----------|----------|
