@@ -1,7 +1,7 @@
 # Gap Index - Sim.ai PoC
 
 **Last Updated:** 2024-12-25
-**Total Gaps:** 32 (9 resolved, 23 open) — includes 11 UI gaps from EXP-P10-001
+**Total Gaps:** 34 (17 resolved, 17 open) — DSP: Docker + UI + reliability fixes
 
 ---
 
@@ -22,6 +22,7 @@
 | GAP-UI-009 | Search returns no results (unclear if functional) | MEDIUM | functionality | Evidence | SEARCH | EXP-P10-001 |
 | GAP-UI-010 | No column sorting functionality | MEDIUM | ux | All | READ | EXP-P10-001 |
 | GAP-UI-011 | No filtering/faceted search | MEDIUM | functionality | All | SEARCH | EXP-P10-001 |
+| GAP-UI-028 | Tests pass but UI broken (lenient tests) | CRITICAL | testing | All | ALL | EXP-UI-FAILURE-001 |
 
 #### Insights Captured (EXP-P10-001)
 
@@ -68,6 +69,13 @@ Session: EXP-P10-001 | Date: 2024-12-25 | Target: Governance Dashboard
 
 | ID | Gap | Resolution | Date |
 |----|-----|------------|------|
+| GAP-UI-023 | VDataTable binding fails in Trame | Replaced with VList | 2024-12-25 |
+| GAP-UI-024 | Add Rule button crashes (TypeError) | Direct state assignment | 2024-12-25 |
+| GAP-UI-025 | Rule items not clickable | Added click handler | 2024-12-25 |
+| GAP-UI-026 | Search does not filter results | Added v-show filter | 2024-12-25 |
+| GAP-UI-027 | Status filter shows corrupted options | State-bound items | 2024-12-25 |
+| GAP-029 | TypeDB driver 3.x incompatibility in Docker | Pin to <3.0.0 | 2024-12-25 |
+| GAP-030 | Trame server exits on idle (no connections) | timeout=0 in server.start() | 2024-12-25 |
 | GAP-001 | ChromaDB Knowledge Integration | HttpClient injection | 2024-12-24 |
 | GAP-002 | Opik Tracing Integration | OPIK_URL_OVERRIDE | 2024-12-24 |
 | GAP-003 | Ollama Model Pull | gemma3:4b | 2024-12-24 |

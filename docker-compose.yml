@@ -1,7 +1,16 @@
-# Unified PoC: Agno + LiteLLM + Ollama + ChromaDB
+# Unified PoC: Agno + LiteLLM + Ollama + ChromaDB + TypeDB + Governance UI
 # For i7/16GB laptop with CPU-only inference
 # Opik REMOVED: 2024-12-24 (DECISION-001) - overkill for current needs
-# Run: docker compose --profile cpu up -d
+#
+# Profiles:
+#   cpu  - Production: LiteLLM, Ollama, ChromaDB, TypeDB, Agents, Governance Dashboard
+#   full - All services including Agent UI
+#   dev  - Development: ChromaDB, TypeDB, Governance Dashboard (with volume mounts)
+#
+# Run:
+#   docker compose --profile cpu up -d           # Production stack
+#   docker compose --profile dev up -d           # Dev mode with live reload
+#   docker compose --profile dev up --build -d   # Rebuild and run dev
 
 services:
   # =============================================================================
@@ -59,6 +68,7 @@ services:
   # ChromaDB - Vector database for rules/memories embeddings
   chromadb:
     image: chromadb/chroma:latest
+    profiles: ["cpu", "full", "dev"]
     ports:
       - "8001:8000"
     volumes:
@@ -84,7 +94,7 @@ services:
   # Architecture: Hybrid with ChromaDB (semantic search + inference)
   typedb:
     image: vaticle/typedb:latest
-    profiles: ["cpu", "full"]
+    profiles: ["cpu", "full", "dev"]
     ports:
       - "1729:1729"
     volumes:
@@ -141,6 +151,70 @@ services:
       - NEXT_PUBLIC_API_URL=http://localhost:7777
     depends_on:
       - agents
+
+  # =============================================================================
+  # GOVERNANCE UI LAYER
+  # =============================================================================
+
+  # Governance Dashboard - Trame UI for rules/decisions/sessions
+  # Production mode: code baked into image
+  governance-dashboard:
+    build:
+      context: .
+      dockerfile: agent/Dockerfile.dashboard
+    profiles: ["cpu", "full"]
+    ports:
+      - "8081:8081"
+    environment:
+      - DASHBOARD_PORT=8081
+      - TYPEDB_HOST=typedb
+      - TYPEDB_PORT=1729
+      - CHROMADB_HOST=chromadb
+      - CHROMADB_PORT=8000
+      - CHROMA_AUTH_TOKEN=${CHROMA_AUTH_TOKEN:-chroma-token-dev}
+    depends_on:
+      - typedb
+      - chromadb
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8081/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+  # Governance Dashboard - Dev mode with live code reload
+  governance-dashboard-dev:
+    build:
+      context: .
+      dockerfile: agent/Dockerfile.dashboard
+    profiles: ["dev"]
+    ports:
+      - "8081:8081"
+    environment:
+      - DASHBOARD_PORT=8081
+      - TYPEDB_HOST=typedb
+      - TYPEDB_PORT=1729
+      - CHROMADB_HOST=chromadb
+      - CHROMADB_PORT=8000
+      - CHROMA_AUTH_TOKEN=${CHROMA_AUTH_TOKEN:-chroma-token-dev}
+      - PYTHONDONTWRITEBYTECODE=1
+    volumes:
+      # Mount local directories for live development
+      - ./agent:/app/agent:ro
+      - ./governance:/app/governance:ro
+      - ./docs:/app/docs:ro
+      - ./evidence:/app/evidence:ro
+    depends_on:
+      - typedb
+      - chromadb
+    deploy:
+      resources:
+        limits:
+          memory: 512M
 
 # =============================================================================
 # VOLUMES

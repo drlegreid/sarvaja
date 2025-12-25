@@ -1,6 +1,6 @@
 # TODO Index - Sim.ai PoC
 
-**Status:** Active | **Updated:** 2024-12-25 (P10 GitHub Actions + Templates)
+**Status:** Active | **Updated:** 2024-12-25 (DSP - Docker + UI Fixes)
 
 ---
 
@@ -66,16 +66,13 @@
 
 | Task | Completed | Description |
 |------|-----------|-------------|
-| P10.1 | 2024-12-25 | GitHub Actions E2E workflow (e2e-certification.yml) |
-| P10.2 | 2024-12-25 | CI workflow (ci.yml) |
-| P10.3 | 2024-12-25 | Certification issue template |
-| P7.3 | 2024-12-25 | TypeDB data routing (DataRouter) |
-| P7.4 | 2024-12-25 | ChromaDB migration tool (ChromaMigration) |
-| P7.5 | 2024-12-25 | ChromaDB sunset (ChromaReadOnly) |
-| P9.6 | 2024-12-25 | Real-time Rule Monitoring (RuleMonitor + UI) |
-| P9.7 | 2024-12-25 | Journey Pattern Analyzer (recurring questions) |
-| P9.8 | 2024-12-25 | Capability Journey Certification (E2E tests) |
-| RULE-024 | 2024-12-25 | AMNESIA Protocol (context recovery) |
+| P10.4 | 2024-12-25 | Governance Dashboard Docker container (dev profile) |
+| P10.5 | 2024-12-25 | UI Fix: VDataTable → VList migration (GAP-UI-023) |
+| P10.6 | 2024-12-25 | UI Fix: Add Rule button crash (GAP-UI-024) |
+| P10.7 | 2024-12-25 | UI Fix: Clickable rule items (GAP-UI-025) |
+| P10.8 | 2024-12-25 | UI Fix: Search filtering (GAP-UI-026) |
+| P10.9 | 2024-12-25 | UI Fix: Status filter options (GAP-UI-027) |
+| P10.10 | 2024-12-25 | TypeDB driver version pin (<3.0.0) |
 
 ---
 
@@ -95,13 +92,12 @@
 
 | Suite | Tests | Status |
 |-------|-------|--------|
-| data_router | 22 | ✅ |
-| chroma_migration | 19 | ✅ |
-| chroma_readonly | 17 | ✅ |
-| governance_ui | 36 | ✅ |
-| rule_monitor | 20 | ✅ |
-| journey_analyzer | 24 | ✅ |
-| **Total (P7+P9)** | **138** | ✅ |
+| **Full Suite** | 827 passed | ✅ |
+| **TDD Stubs** | 28 failed | 🚧 Planned |
+| **Skipped** | 42 | ⏸️ |
+| **Total** | **897** | 92% pass |
+
+> TDD stubs: DSM tools, Session tools, Rule quality MCP tools (future work)
 
 ---
 

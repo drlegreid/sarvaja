@@ -26,8 +26,8 @@ trame>=3.0.0
 trame-vuetify>=2.0.0
 trame-client>=3.0.0
 
-# TypeDB Client (Phase 7)
-typedb-driver>=2.29.0
+# TypeDB Client (Phase 7) - Pin to 2.x for core_driver API compatibility
+typedb-driver>=2.29.0,<3.0.0
 
 # Optional: Observability
 # opik>=1.9.0  # Removed per DECISION-001

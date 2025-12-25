@@ -1,0 +1,34 @@
+# Governance Dashboard - Trame UI
+# Per RULE-019: UI/UX Design Standards
+FROM python:3.12-slim
+
+ENV PYTHONUNBUFFERED=1
+ENV TRAME_DEFAULT_HOST=0.0.0.0
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+# Install Python dependencies
+COPY requirements.txt /tmp/requirements.txt
+RUN pip install --no-cache-dir -r /tmp/requirements.txt
+
+# Copy application code (context is project root)
+COPY agent /app/agent
+COPY governance /app/governance
+
+# Create entrypoint
+RUN echo '#!/bin/sh\n\
+echo "=== Sim.ai Governance Dashboard ==="\n\
+echo "Port: ${DASHBOARD_PORT:-8081}"\n\
+echo "TypeDB: ${TYPEDB_HOST:-typedb}:${TYPEDB_PORT:-1729}"\n\
+cd /app\n\
+exec python -m agent.governance_dashboard --port ${DASHBOARD_PORT:-8081}\n\
+' > /entrypoint.sh && chmod +x /entrypoint.sh
+
+EXPOSE 8081
+
+ENTRYPOINT ["/entrypoint.sh"]

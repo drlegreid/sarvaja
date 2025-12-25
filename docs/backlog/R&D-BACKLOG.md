@@ -513,6 +513,8 @@ define
 | FH-004 | Holographic mapping of evidence world | 📋 TODO | MEDIUM | Digital twin navigation for LLM + human |
 | FH-005 | Game theory for hash convergence | 📋 TODO | FUTURE | Group theory, equilibria, stability |
 | FH-006 | Sync R&D tasks with GitHub issues | ✅ DONE | HIGH | governance/github_sync.py + 18 tests |
+| FH-007 | Dashboard hash display on refresh | 📋 TODO | HIGH | Show Frankel hash change on each dashboard refresh (2024-12-25) |
+| FH-008 | Test coverage effectiveness assessment | 📋 TODO | MEDIUM | Assess test quality, coverage, correctness gaps (2024-12-25) |
 
 ### Frankel Hash Architecture
 
