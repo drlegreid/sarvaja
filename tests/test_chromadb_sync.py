@@ -172,13 +172,13 @@ class TestCurrentSyncState:
         assert mcp_file.exists(), "governance/mcp_server.py not found"
 
     @pytest.mark.unit
-    def test_schema_has_twentytwo_rules(self):
-        """TypeDB schema should have 22 rules defined (RULE-001 to RULE-022)."""
+    def test_schema_has_twentyfive_rules(self):
+        """TypeDB schema should have 25 rules defined (RULE-001 to RULE-025)."""
         data_file = GOVERNANCE_DIR / "data.tql"
         content = data_file.read_text()
         # Count rule entities
         rule_count = content.count("isa rule-entity")
-        assert rule_count == 22, f"Expected 22 rules, found {rule_count}"
+        assert rule_count == 25, f"Expected 25 rules, found {rule_count}"
 
     @pytest.mark.unit
     def test_chromadb_has_existing_data(self):
@@ -209,8 +209,8 @@ class TestCurrentSyncState:
         # ChromaDB config
         assert "CHROMADB_HOST" in os.environ or True  # Optional, has default
 
-        # Verify defaults in client.py
-        with open(GOVERNANCE_DIR / "client.py", "r") as f:
+        # Verify defaults in typedb/base.py (refactored from client.py)
+        with open(GOVERNANCE_DIR / "typedb" / "base.py", "r") as f:
             content = f.read()
         assert 'os.getenv("TYPEDB_HOST"' in content
         assert 'os.getenv("TYPEDB_PORT"' in content

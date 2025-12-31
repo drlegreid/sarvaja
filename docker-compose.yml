@@ -30,10 +30,12 @@ services:
       - XAI_API_KEY=${XAI_API_KEY:-}
     command: ["--config", "/app/config.yaml", "--port", "4000"]
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:4000/health"]
+      # LiteLLM /health endpoint - use /health/liveliness for auth-free check
+      test: ["CMD", "curl", "-f", "http://localhost:4000/health/liveliness"]
       interval: 30s
       timeout: 10s
       retries: 3
+      start_period: 15s
     deploy:
       resources:
         limits:
@@ -79,15 +81,18 @@ services:
       - CHROMA_SERVER_AUTH_PROVIDER=chromadb.auth.token_authn.TokenAuthenticationServerProvider
       - CHROMA_SERVER_AUTH_TOKEN_TRANSPORT_HEADER=X-Chroma-Token
       - CHROMA_AUTH_TOKEN=${CHROMA_AUTH_TOKEN:-chroma-token-dev}
+      - GOVERNANCE_API_URL=http://host.docker.internal:8082
     deploy:
       resources:
         limits:
           memory: 1G
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/heartbeat"]
+      # ChromaDB v2 API uses /api/v2/heartbeat (not v1)
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/v2/heartbeat"]
       interval: 30s
       timeout: 10s
       retries: 3
+      start_period: 10s
 
   # TypeDB - Graph database with inference engine (DECISION-003: 2024-12-24)
   # Provides: rule inference, type safety, knowledge reasoning
@@ -128,6 +133,7 @@ services:
       - CHROMADB_HOST=chromadb
       - CHROMADB_PORT=8000
       - CHROMA_AUTH_TOKEN=${CHROMA_AUTH_TOKEN:-chroma-token-dev}
+      - GOVERNANCE_API_URL=http://host.docker.internal:8082
       - MODEL_NAME=${MODEL_NAME:-claude-sonnet-4-20250514}
       - LOCAL_MODEL_NAME=${LOCAL_MODEL_NAME:-gemma3:4b}
     depends_on:
@@ -141,16 +147,17 @@ services:
         limits:
           memory: 1G
 
-  # Agent UI - Web interface
-  agent-ui:
-    image: agnohq/agent-ui:latest
-    profiles: ["full"]
-    ports:
-      - "3000:3000"
-    environment:
-      - NEXT_PUBLIC_API_URL=http://localhost:7777
-    depends_on:
-      - agents
+  # Agent UI - Web interface (DISABLED: image agnohq/agent-ui doesn't exist)
+  # See GAP-008: Need to find or build alternative agent UI
+  # agent-ui:
+  #   image: agnohq/agent-ui:latest
+  #   profiles: ["full"]
+  #   ports:
+  #     - "3000:3000"
+  #   environment:
+  #     - NEXT_PUBLIC_API_URL=http://localhost:7777
+  #   depends_on:
+  #     - agents
 
   # =============================================================================
   # GOVERNANCE UI LAYER
@@ -172,6 +179,7 @@ services:
       - CHROMADB_HOST=chromadb
       - CHROMADB_PORT=8000
       - CHROMA_AUTH_TOKEN=${CHROMA_AUTH_TOKEN:-chroma-token-dev}
+      - GOVERNANCE_API_URL=http://host.docker.internal:8082
     depends_on:
       - typedb
       - chromadb
@@ -187,34 +195,48 @@ services:
       start_period: 10s
 
   # Governance Dashboard - Dev mode with live code reload
+  # Per RULE-030: Dev container must support full E2E testing
   governance-dashboard-dev:
     build:
       context: .
       dockerfile: agent/Dockerfile.dashboard
     profiles: ["dev"]
     ports:
-      - "8081:8081"
+      - "8081:8081"  # Dashboard UI
+      - "8082:8082"  # REST API for E2E tests
     environment:
       - DASHBOARD_PORT=8081
+      - API_PORT=8082
       - TYPEDB_HOST=typedb
       - TYPEDB_PORT=1729
       - CHROMADB_HOST=chromadb
       - CHROMADB_PORT=8000
       - CHROMA_AUTH_TOKEN=${CHROMA_AUTH_TOKEN:-chroma-token-dev}
+      - GOVERNANCE_API_URL=http://localhost:8082
       - PYTHONDONTWRITEBYTECODE=1
     volumes:
       # Mount local directories for live development
       - ./agent:/app/agent:ro
       - ./governance:/app/governance:ro
       - ./docs:/app/docs:ro
-      - ./evidence:/app/evidence:ro
+      - ./evidence:/app/evidence  # Read-write for archive operations
     depends_on:
       - typedb
       - chromadb
+    # Override entrypoint to run both API and Dashboard
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        echo "=== Sim.ai Dev Container (API + Dashboard) ==="
+        echo "Starting API on port 8082..."
+        cd /app && python -c "from governance.api import app; import uvicorn; uvicorn.run(app, host='0.0.0.0', port=8082)" &
+        sleep 3
+        echo "Starting Dashboard on port 8081..."
+        cd /app && exec python -m agent.governance_dashboard --port 8081
     deploy:
       resources:
         limits:
-          memory: 512M
+          memory: 768M
 
 # =============================================================================
 # VOLUMES

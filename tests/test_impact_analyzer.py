@@ -13,6 +13,8 @@ from typing import Dict, List, Any
 
 # Reusable constant for mock path (DRY principle)
 TYPEDB_CLIENT_MOCK_PATH = 'governance.mcp_tools.common.get_typedb_client'
+# Patch paths must target the module where functions are USED, not where exported
+IMPACT_MODULE = 'agent.governance_ui.data_access.impact'
 
 
 # =============================================================================
@@ -164,8 +166,8 @@ class TestBuildDependencyGraph:
 
     def test_builds_nodes_from_rules(self, sample_rules):
         """Test builds node list from rules."""
-        with patch('agent.governance_ui.data_access.get_rule_dependencies', return_value=[]):
-            with patch('agent.governance_ui.data_access.get_rule_conflicts', return_value=[]):
+        with patch(f'{IMPACT_MODULE}.get_rule_dependencies', return_value=[]):
+            with patch(f'{IMPACT_MODULE}.get_rule_conflicts', return_value=[]):
                 from agent.governance_ui.data_access import build_dependency_graph
                 graph = build_dependency_graph(sample_rules)
 
@@ -179,8 +181,8 @@ class TestBuildDependencyGraph:
                 return ['RULE-001']
             return []
 
-        with patch('agent.governance_ui.data_access.get_rule_dependencies', side_effect=mock_deps):
-            with patch('agent.governance_ui.data_access.get_rule_conflicts', return_value=[]):
+        with patch(f'{IMPACT_MODULE}.get_rule_dependencies', side_effect=mock_deps):
+            with patch(f'{IMPACT_MODULE}.get_rule_conflicts', return_value=[]):
                 from agent.governance_ui.data_access import build_dependency_graph
                 graph = build_dependency_graph(sample_rules)
 
@@ -191,8 +193,8 @@ class TestBuildDependencyGraph:
 
     def test_includes_conflict_edges(self, sample_rules):
         """Test includes conflict edges in graph."""
-        with patch('agent.governance_ui.data_access.get_rule_dependencies', return_value=[]):
-            with patch('agent.governance_ui.data_access.get_rule_conflicts', return_value=[
+        with patch(f'{IMPACT_MODULE}.get_rule_dependencies', return_value=[]):
+            with patch(f'{IMPACT_MODULE}.get_rule_conflicts', return_value=[
                 {'rule1': 'RULE-001', 'rule2': 'RULE-002', 'reason': 'Conflict'}
             ]):
                 from agent.governance_ui.data_access import build_dependency_graph
@@ -206,8 +208,8 @@ class TestCalculateRuleImpact:
 
     def test_returns_low_risk_when_no_dependents(self, sample_rules):
         """Test returns LOW risk when no rules depend on this rule."""
-        with patch('agent.governance_ui.data_access.get_rule_dependents', return_value=[]):
-            with patch('agent.governance_ui.data_access.get_rule_dependencies', return_value=[]):
+        with patch(f'{IMPACT_MODULE}.get_rule_dependents', return_value=[]):
+            with patch(f'{IMPACT_MODULE}.get_rule_dependencies', return_value=[]):
                 from agent.governance_ui.data_access import calculate_rule_impact
                 impact = calculate_rule_impact('RULE-004', sample_rules)
 
@@ -216,8 +218,8 @@ class TestCalculateRuleImpact:
 
     def test_returns_medium_risk_when_few_dependents(self, sample_rules):
         """Test returns MEDIUM risk when 1-2 rules depend on this rule."""
-        with patch('agent.governance_ui.data_access.get_rule_dependents', return_value=['RULE-002']):
-            with patch('agent.governance_ui.data_access.get_rule_dependencies', return_value=[]):
+        with patch(f'{IMPACT_MODULE}.get_rule_dependents', return_value=['RULE-002']):
+            with patch(f'{IMPACT_MODULE}.get_rule_dependencies', return_value=[]):
                 from agent.governance_ui.data_access import calculate_rule_impact
                 impact = calculate_rule_impact('RULE-001', sample_rules)
 
@@ -226,8 +228,8 @@ class TestCalculateRuleImpact:
 
     def test_returns_critical_when_critical_rule_affected(self, sample_rules):
         """Test returns CRITICAL when a CRITICAL priority rule is affected."""
-        with patch('agent.governance_ui.data_access.get_rule_dependents', return_value=['RULE-001']):
-            with patch('agent.governance_ui.data_access.get_rule_dependencies', return_value=[]):
+        with patch(f'{IMPACT_MODULE}.get_rule_dependents', return_value=['RULE-001']):
+            with patch(f'{IMPACT_MODULE}.get_rule_dependencies', return_value=[]):
                 from agent.governance_ui.data_access import calculate_rule_impact
                 impact = calculate_rule_impact('RULE-002', sample_rules)
 
@@ -236,8 +238,8 @@ class TestCalculateRuleImpact:
 
     def test_includes_recommendation(self, sample_rules):
         """Test includes recommendation based on risk level."""
-        with patch('agent.governance_ui.data_access.get_rule_dependents', return_value=[]):
-            with patch('agent.governance_ui.data_access.get_rule_dependencies', return_value=[]):
+        with patch(f'{IMPACT_MODULE}.get_rule_dependents', return_value=[]):
+            with patch(f'{IMPACT_MODULE}.get_rule_dependencies', return_value=[]):
                 from agent.governance_ui.data_access import calculate_rule_impact
                 impact = calculate_rule_impact('RULE-004', sample_rules)
 

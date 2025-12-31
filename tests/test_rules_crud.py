@@ -599,8 +599,8 @@ class TestRulesArchive:
             with patch.object(client, 'get_rule_by_id', return_value=sample_rule):
                 with patch.object(client, 'get_rule_dependencies', return_value=[]):
                     with patch.object(client, 'get_rules_depending_on', return_value=[]):
-                        # Patch ARCHIVE_DIR to use temp path
-                        with patch('governance.client.ARCHIVE_DIR', tmp_path):
+                        # Patch ARCHIVE_DIR to use temp path (must patch in module where used)
+                        with patch('governance.typedb.queries.rules.ARCHIVE_DIR', tmp_path):
                             result = client.archive_rule(sample_rule.id)
 
                             assert result is not None
@@ -619,7 +619,7 @@ class TestRulesArchive:
             client = TypeDBClient()
             client._connected = True
 
-            with patch('governance.client.ARCHIVE_DIR', tmp_path):
+            with patch('governance.typedb.queries.rules.ARCHIVE_DIR', tmp_path):
                 result = client.get_archived_rules()
                 assert result == []
 
@@ -645,7 +645,7 @@ class TestRulesArchive:
             with open(archive2, 'w') as f:
                 json_module.dump(record2, f)
 
-            with patch('governance.client.ARCHIVE_DIR', tmp_path):
+            with patch('governance.typedb.queries.rules.ARCHIVE_DIR', tmp_path):
                 result = client.get_archived_rule(sample_rule.id)
                 assert result is not None
                 assert result["archived_at"] == "2024-01-02T12:00:00"
@@ -665,7 +665,7 @@ class TestRulesArchive:
             with open(archive_file, 'w') as f:
                 json_module.dump(record, f)
 
-            with patch('governance.client.ARCHIVE_DIR', tmp_path):
+            with patch('governance.typedb.queries.rules.ARCHIVE_DIR', tmp_path):
                 with patch.object(client, 'get_rule_by_id', return_value=sample_rule):
                     with pytest.raises(ValueError, match="already exists"):
                         client.restore_rule(sample_rule.id)
