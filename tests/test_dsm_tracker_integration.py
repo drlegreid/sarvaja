@@ -250,33 +250,35 @@ class TestFullCycleWorkflow:
             # AUDIT
             tracker.advance_phase()
             assert tracker.get_current_phase() == DSPPhase.AUDIT
-            tracker.add_finding("gap", "Missing tests")
-            tracker.checkpoint("Audit complete")
+            tracker.add_finding("gap", "Missing tests for integration coverage")
+            tracker.checkpoint("Audit complete with gaps identified for resolution")
 
             # HYPOTHESIZE
             tracker.advance_phase()
             assert tracker.get_current_phase() == DSPPhase.HYPOTHESIZE
-            tracker.checkpoint("Hypothesis formed")
+            tracker.checkpoint("Hypothesis formed and documented for testing purposes")
 
             # MEASURE
             tracker.advance_phase()
             assert tracker.get_current_phase() == DSPPhase.MEASURE
             tracker.update_metrics({"baseline_coverage": 75})
+            tracker.checkpoint("Baseline metrics collected for coverage analysis", metrics={"baseline_coverage": 75})
 
             # OPTIMIZE
             tracker.advance_phase()
             assert tracker.get_current_phase() == DSPPhase.OPTIMIZE
-            tracker.checkpoint("Optimizations applied")
+            tracker.checkpoint("Optimizations applied for improved test coverage")
 
             # VALIDATE
             tracker.advance_phase()
             assert tracker.get_current_phase() == DSPPhase.VALIDATE
             tracker.update_metrics({"new_coverage": 85})
+            tracker.checkpoint("Validation completed with improved coverage metrics")
 
             # DREAM
             tracker.advance_phase()
             assert tracker.get_current_phase() == DSPPhase.DREAM
-            tracker.add_finding("improvement", "Consider new pattern")
+            tracker.add_finding("improvement", "Consider new pattern for better test isolation")
 
             # REPORT
             tracker.advance_phase()
@@ -304,8 +306,9 @@ class TestFullCycleWorkflow:
             )
             tracker1.start_cycle("RESUME-TEST")
             tracker1.advance_phase()  # AUDIT
+            tracker1.checkpoint("Audit checkpoint for testing")  # Required before advancing
             tracker1.advance_phase()  # HYPOTHESIZE
-            tracker1.checkpoint("Before interruption")
+            tracker1.checkpoint("Hypothesis checkpoint before simulated interruption")
 
             # Simulate interruption - create new tracker
             tracker2 = DSMTracker(
@@ -316,7 +319,7 @@ class TestFullCycleWorkflow:
             # Should resume at HYPOTHESIZE
             assert tracker2.current_cycle is not None
             assert tracker2.get_current_phase() == DSPPhase.HYPOTHESIZE
-            assert len(tracker2.current_cycle.checkpoints) == 1
+            assert len(tracker2.current_cycle.checkpoints) == 2  # Audit + Hypothesize checkpoints
 
             # Can continue
             tracker2.advance_phase()  # MEASURE

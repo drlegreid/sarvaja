@@ -1,7 +1,7 @@
 # Gap Index - Sim.ai PoC
 
 **Last Updated:** 2026-01-02
-**Total Gaps:** 192 | Status: 64 RESOLVED, 5 PARTIAL, 123 OPEN
+**Total Gaps:** 193 | Status: 64 RESOLVED, 5 PARTIAL, 124 OPEN
 **Format Migration:** GAP-WORKFLOW-003 - Replaced strikethrough with Status column
 
 ---
@@ -101,6 +101,7 @@ Session: EXP-P10-001 | Date: 2024-12-25 | Target: Governance Dashboard
 | GAP-HEALTH-001 | OPEN | Healthcheck state file lacks retry history and rotation | MEDIUM | observability | RULE-021 | Should track all retry attempts |
 | GAP-HEALTH-002 | OPEN | Healthcheck doesn't detect document entropy (RULE-012 DSP trigger) | HIGH | workflow | RULE-012 | Should ALERT and suggest DEEP SLEEP mode |
 | GAP-TEST-002 | PARTIAL | Test output blows context window - need reporting modes | HIGH | testing | RULE-023 | Implemented --report-minimal, --report-cert |
+| GAP-TEST-003 | OPEN | E2E tests require port 8082 API server (not Docker 8080) | HIGH | testing | RULE-023 | 35 tests fail on connection refused |
 | GAP-META-001 | OPEN | GAPs lack evidence file references - context bloat risk | HIGH | architecture | RULE-012 | 2026-01-02: Index→Evidence split needed |
 | GAP-META-002 | OPEN | No standardized CATEGORY taxonomy for gaps/rules | HIGH | governance | RULE-013 | 2026-01-02: Need GOVERNANCE/TESTING/UI/etc |
 | GAP-RULE-001 | OPEN | Rules lack applicability TYPE (FORBIDDEN/CONDITIONAL/RECOMMENDED) | HIGH | governance | RULE-013 | 2026-01-02: Schema needs TYPE column |
