@@ -44,6 +44,32 @@ Completed Tasks          → docs/tasks/TASKS-COMPLETED.md
 ```
 > Opik removed per DECISION-001 | TypeDB-First per DECISION-003
 
+## Technology Decisions (GAP-CTX-001)
+
+> **CRITICAL:** Agents MUST be aware of these decisions during refactoring
+
+| Decision | Choice | NOT Using | Rationale |
+|----------|--------|-----------|-----------|
+| **UI Framework** | Trame + Vuetify | React, raw Vue.js | Python-first, Vuetify components |
+| **Rule Engine** | TypeDB (1729) | SQL, MongoDB | TypeQL inference, graph relations |
+| **Semantic Search** | ChromaDB (8001) | Elasticsearch | Vector embeddings, MCP integration |
+| **LLM Routing** | LiteLLM (4000) | Direct API calls | Multi-provider abstraction |
+| **Agent Framework** | Agno | LangChain, CrewAI | Lightweight, TypeDB integration |
+| **Observability** | Removed Opik | Kept Opik | DECISION-001: Memory overhead |
+
+**UI Stack Details:**
+- **Trame**: Python server-side rendering with Vue.js frontend
+- **Vuetify**: Material Design components (v-data-table, v-card, etc.)
+- **State Management**: `agent/governance_ui/state/` modules
+- **Views**: `agent/governance_ui/views/` (12 modules)
+- **Controllers**: `agent/governance_ui/controllers/` (10 modules)
+
+**When Refactoring UI:**
+1. Use Trame's `state` for reactivity, NOT Vue refs
+2. Use Vuetify components, NOT raw HTML
+3. Follow existing view patterns in `governance_ui/views/`
+4. Register controllers via `register_all_controllers()`
+
 ## Core Rules (25 Total: 22 ACTIVE, 3 DRAFT)
 
 | Rule | Directive | Priority |

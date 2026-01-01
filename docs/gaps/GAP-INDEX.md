@@ -1,7 +1,7 @@
 # Gap Index - Sim.ai PoC
 
 **Last Updated:** 2026-01-02
-**Total Gaps:** 192 | Status: 63 RESOLVED, 5 PARTIAL, 124 OPEN
+**Total Gaps:** 192 | Status: 64 RESOLVED, 5 PARTIAL, 123 OPEN
 **Format Migration:** GAP-WORKFLOW-003 - Replaced strikethrough with Status column
 
 ---
@@ -588,7 +588,7 @@ INFO after: v-if = backlog_agent_id && claimed_tasks.length === 0  core.py:614
 
 | ID | Status | Gap | Priority | Category | Evidence |
 |----|--------|-----|----------|----------|----------|
-| GAP-CTX-001 | OPEN | Agent unaware of technology decisions (Trame/Vuetify) during refactoring | CRITICAL | memory | User 2024-12-28 |
+| GAP-CTX-001 | RESOLVED | Agent unaware of technology decisions (Trame/Vuetify) during refactoring | CRITICAL | memory | 2026-01-02: CLAUDE.md "Technology Decisions" section |
 | GAP-CTX-002 | OPEN | AMNESIA protocol not auto-loading DECISION-* context | HIGH | process | RULE-024 violation |
 | GAP-CTX-003 | OPEN | Duplicate memory systems (claude-mem vs TypeDB) need consolidation | HIGH | architecture | User 2024-12-28 |
 
