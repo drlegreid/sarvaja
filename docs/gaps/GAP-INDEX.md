@@ -98,28 +98,16 @@ Session: EXP-P10-001 | Date: 2024-12-25 | Target: Governance Dashboard
 | GAP-MCP-004 | Rule fallback to markdown files not implemented when TypeDB unavailable | HIGH | architecture | RULE-021 | 2024-12-31: CLAUDE.md documents hierarchy but code doesn't read from docs/rules/*.md |
 | GAP-TEST-001 | E2E tests lack Given/When/Then BDD paradigm and OOP reusability | MEDIUM | testing | RULE-023 | 2026-01-01: .claude/hooks/e2e_test.py has 17 tests but no pytest fixtures, BDD patterns, or reusable test assets |
 | GAP-HEALTH-001 | Healthcheck state file lacks retry history and rotation | MEDIUM | observability | RULE-021 | 2026-01-02: .healthcheck_state.json should track all retry attempts per session and rotate on session end |
-| GAP-TEST-002 | Test output blows context window - need reporting modes | HIGH | testing | RULE-023 | 2026-01-02: Current verbose pytest output consumes too much context; need minimal/medium/trace/certification modes |
+| ~~GAP-TEST-002~~ | ~~Test output blows context window - need reporting modes~~ | ~~HIGH~~ | ~~testing~~ | ~~RULE-023~~ | **PARTIAL** 2026-01-02: Implemented --report-minimal, --report-trace, --report-cert in tests/conftest.py |
 
-**GAP-TEST-002 Test Reporting Modes:**
-- **Problem:** Verbose test output consumes Claude Code context window, limiting work capacity
-- **Required Modes:**
-  1. **MINIMAL** (`--minimal` or `-m`): Dots only (`.` pass, `F` fail, `S` skip) - smallest context footprint
-  2. **MEDIUM** (`--progress` or `-p`): Progress bar + summary counts - default for CI
-  3. **TRACE** (`--trace` or `-t`): Full logs for DEV isolated test runs - captures debug output
-  4. **CERTIFICATION** (`--cert` or `-c`): Collects all evidence in `/results` directory - for audits
-- **Directory Structure:**
-  ```
-  results/
-  ├── YYYY-MM-DD/
-  │   ├── test-run-{timestamp}.json    # Test results
-  │   ├── test-run-{timestamp}.log     # Full trace log
-  │   └── coverage-{timestamp}.html    # Coverage report
-  ```
-- **Implementation Path:**
-  1. Create `conftest.py` pytest plugin with mode flags
-  2. Add custom reporter class for each mode
-  3. Ensure `/results` directory populated on ALL runs
-  4. Add `--results-dir` flag for custom output location
+**GAP-TEST-002 Test Reporting Modes:** ✅ IMPLEMENTED
+- **Usage:**
+  - `pytest tests/ --report-minimal` - Dots only (`. F S`)
+  - `pytest tests/ --report-trace` - Full verbose output (-vv)
+  - `pytest tests/ --report-cert` - JSON evidence to `/results/YYYY-MM-DD/`
+  - `pytest tests/ --report-cert --results-dir=custom` - Custom output dir
+- **Files:** `tests/conftest.py` (MinimalReporter, CertificationReporter classes)
+- **Remaining:** Coverage HTML report generation (--report-cert + coverage)
 
 **GAP-HEALTH-001 Requirements:**
 - **Current State:** `.claude/hooks/.healthcheck_state.json` stores single point-in-time status

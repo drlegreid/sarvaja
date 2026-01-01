@@ -26,6 +26,9 @@ venv/
 *.log
 logs/
 
+# Test results (GAP-TEST-002)
+results/
+
 # OS
 .DS_Store
 Thumbs.db
