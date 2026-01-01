@@ -1,0 +1,53 @@
+{
+  "_comment": "Backup of disabled MCP servers - 2026-01-01",
+  "_reason": "Memory optimization - 93% RAM spike with 9 MCPs active",
+  "_restore": "Copy desired entries to C:\\Users\\natik\\.claude.json mcpServers section",
+
+  "disabled_mcps": {
+    "desktop-commander": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "@wonderwhy-er/desktop-commander@latest"],
+      "env": {},
+      "disabled_date": "2026-01-01",
+      "reason": "Memory overhead, redundant with Bash tool"
+    },
+    "playwright": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "@playwright/mcp@latest", "--browser", "msedge"],
+      "env": {},
+      "disabled_date": "2026-01-01",
+      "reason": "Browser automation heavy, only needed for web testing"
+    },
+    "filesystem": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-filesystem",
+        "C:/DEV/photoprism",
+        "C:/DEV/photoprism_backups",
+        "C:/Users/natik/Documents/Vibe/localgai",
+        "C:/Users/natik/Documents/Vibe/godot-mcp"
+      ],
+      "env": {},
+      "disabled_date": "2026-01-01",
+      "reason": "Redundant with Bash/Read/Write tools"
+    },
+    "godot-mcp": {
+      "type": "stdio",
+      "command": "python",
+      "args": ["C:/Users/natik/Documents/Vibe/localgai/scripts/godot_wrapper.py", "--quiet"],
+      "env": {"MCP_TIMEOUT": "60000"},
+      "disabled_date": "2026-01-01",
+      "reason": "Game dev specific, only needed for Godot projects"
+    },
+    "octocode": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "@anthropic/octocode"],
+      "env": {},
+      "disabled_date": "2026-01-01",
+      "reason": "HIGH RISK - Rate limits, external API, caused crashes"
+    }
+  }
+}

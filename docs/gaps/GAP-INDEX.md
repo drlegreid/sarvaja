@@ -1,7 +1,7 @@
 # Gap Index - Sim.ai PoC
 
-**Last Updated:** 2024-12-31
-**Total Gaps:** 119 (67 resolved, 52 open) — +2 (GAP-INFRA-006, GAP-MCP-004)
+**Last Updated:** 2026-01-02
+**Total Gaps:** 184 (57 resolved, 127 open) — Added GAP-HEALTH-001, GAP-TEST-002 for test reporting modes
 
 ---
 
@@ -22,7 +22,7 @@
 | GAP-UI-009 | Search returns no results (unclear if functional) | MEDIUM | functionality | Evidence | SEARCH | EXP-P10-001 |
 | GAP-UI-010 | No column sorting functionality | MEDIUM | ux | All | READ | EXP-P10-001 |
 | GAP-UI-011 | No filtering/faceted search | MEDIUM | functionality | All | SEARCH | EXP-P10-001 |
-| GAP-UI-028 | Tests pass but UI broken (lenient tests) | CRITICAL | testing | All | ALL | **RESOLVED** RULE-028 + 11 UI smoke tests |
+| ~~GAP-UI-028~~ | ~~Tests pass but UI broken (lenient tests)~~ | ~~CRITICAL~~ | ~~testing~~ | ~~All~~ | ~~ALL~~ | **RESOLVED** RULE-028 + 11 UI smoke tests |
 | ~~GAP-UI-029~~ | ~~Executive Report shows 0 Rules/Agents in stats~~ | ~~HIGH~~ | ~~data~~ | ~~Report~~ | ~~READ~~ | **RESOLVED** 2024-12-31: Field name mismatch fixed (rules_total→total_rules) |
 | ~~GAP-UI-030~~ | ~~Tasks view polluted with 150+ TEST-* tasks~~ | ~~MEDIUM~~ | ~~data~~ | ~~Task~~ | ~~READ~~ | **RESOLVED** 2024-12-31: Deleted 154 TEST-* tasks from TypeDB |
 | GAP-UI-EXP | No exploratory UI testing workflow to discover UI gaps | MEDIUM | process | All | N/A | E2E-2024-12-27 |
@@ -89,12 +89,51 @@ Session: EXP-P10-001 | Date: 2024-12-25 | Target: Governance Dashboard
 | GAP-021 | OctoCode for external research | Medium | workflow | RULE-007 | Use OctoCode for GitHub |
 | ~~GAP-DEPLOY-001~~ | ~~deploy.ps1 missing dev profile support~~ | ~~MEDIUM~~ | ~~tooling~~ | ~~RULE-028~~ | **RESOLVED** 2024-12-31: Added 'dev' to ValidateSet, updated docs/endpoints |
 | ~~GAP-MCP-002~~ | ~~MCP governance healthcheck should force Claude Code to stop and resolve dependent services~~ | ~~HIGH~~ | ~~stability~~ | ~~RULE-021~~ | **PARTIAL** 2024-12-31: Tool implemented but not auto-called (see GAP-MCP-003) |
-| GAP-MCP-003 | governance_health not called automatically at session start | CRITICAL | workflow | RULE-021 | 2024-12-31: User restarted laptop, Claude Code continued without checking services |
+| ~~GAP-MCP-003~~ | ~~governance_health not called automatically at session start~~ | ~~CRITICAL~~ | ~~workflow~~ | ~~RULE-021~~ | **RESOLVED** 2026-01-01: Non-blocking healthcheck with 30s retry ceiling, 17 E2E tests, auto-recovery via docker compose, hookSpecificOutput context injection |
 | GAP-WORKFLOW-001 | Session context not auto-saved to claude-mem before restart | HIGH | workflow | RULE-001 | 2024-12-31: /save not called, context lost on restart |
 | GAP-WORKFLOW-002 | Claude Code should prompt user to /save before major transitions | HIGH | workflow | RULE-001 | 2024-12-31: Autonomous work should include save prompts |
+| GAP-WORKFLOW-003 | GAP-INDEX uses strikethrough instead of Status column | HIGH | data | RULE-012 | 2026-01-01: Strikethrough is unparseable, need Status column (OPEN/PARTIAL/RESOLVED) |
 | GAP-INFRA-005 | Ollama container not started with dev profile | MEDIUM | infra | RULE-021 | 2024-12-31: docker compose --profile dev doesn't include ollama |
 | GAP-INFRA-006 | Ollama container suboptimal for laptop dev workflow - high memory usage | MEDIUM | infrastructure | RULE-021 | 2024-12-31: May need to disable for DEV, use Claude API for strategic work |
 | GAP-MCP-004 | Rule fallback to markdown files not implemented when TypeDB unavailable | HIGH | architecture | RULE-021 | 2024-12-31: CLAUDE.md documents hierarchy but code doesn't read from docs/rules/*.md |
+| GAP-TEST-001 | E2E tests lack Given/When/Then BDD paradigm and OOP reusability | MEDIUM | testing | RULE-023 | 2026-01-01: .claude/hooks/e2e_test.py has 17 tests but no pytest fixtures, BDD patterns, or reusable test assets |
+| GAP-HEALTH-001 | Healthcheck state file lacks retry history and rotation | MEDIUM | observability | RULE-021 | 2026-01-02: .healthcheck_state.json should track all retry attempts per session and rotate on session end |
+| GAP-TEST-002 | Test output blows context window - need reporting modes | HIGH | testing | RULE-023 | 2026-01-02: Current verbose pytest output consumes too much context; need minimal/medium/trace/certification modes |
+
+**GAP-TEST-002 Test Reporting Modes:**
+- **Problem:** Verbose test output consumes Claude Code context window, limiting work capacity
+- **Required Modes:**
+  1. **MINIMAL** (`--minimal` or `-m`): Dots only (`.` pass, `F` fail, `S` skip) - smallest context footprint
+  2. **MEDIUM** (`--progress` or `-p`): Progress bar + summary counts - default for CI
+  3. **TRACE** (`--trace` or `-t`): Full logs for DEV isolated test runs - captures debug output
+  4. **CERTIFICATION** (`--cert` or `-c`): Collects all evidence in `/results` directory - for audits
+- **Directory Structure:**
+  ```
+  results/
+  ├── YYYY-MM-DD/
+  │   ├── test-run-{timestamp}.json    # Test results
+  │   ├── test-run-{timestamp}.log     # Full trace log
+  │   └── coverage-{timestamp}.html    # Coverage report
+  ```
+- **Implementation Path:**
+  1. Create `conftest.py` pytest plugin with mode flags
+  2. Add custom reporter class for each mode
+  3. Ensure `/results` directory populated on ALL runs
+  4. Add `--results-dir` flag for custom output location
+
+**GAP-HEALTH-001 Requirements:**
+- **Current State:** `.claude/hooks/.healthcheck_state.json` stores single point-in-time status
+- **Issue:** No historical retry tracking; state persists indefinitely across sessions
+- **Required Changes:**
+  1. Add `retry_history[]` array to track all retry attempts with timestamps
+  2. Add `session_id` field to link state to Claude Code session
+  3. Implement rotation: Archive old state files on session end (keep last 5)
+  4. Add `total_retries_this_session` counter for debugging
+- **Implementation Path:** Modify `.claude/hooks/healthcheck.py` to:
+  - Append to retry_history on each check
+  - Detect session change (new Claude Code instance) via env or timestamp gap
+  - Archive previous session state to `.healthcheck_state.{timestamp}.json`
+  - Cap retry_history to last 100 entries to prevent unbounded growth
 
 **GAP-MCP-004 Analysis:**
 - **Issue:** When TypeDB is unavailable, agents cannot access rule content
@@ -189,14 +228,15 @@ Session: EXP-P10-001 | Date: 2024-12-25 | Target: Governance Dashboard
 ### User Feedback Gaps (2024-12-26 Session)
 
 > **Source:** User feedback during TODO-6 development
+> **Note:** IDs corrected 2026-01-01 (previously duplicated GAP-UI-040-044)
 
 | ID | Gap | Priority | Category | Entity | Evidence |
 |----|-----|----------|----------|--------|----------|
-| GAP-UI-040 | Rules tab: No directive/description shown | HIGH | ui | Rule | User feedback |
-| GAP-UI-041 | No entity relationships displayed in UI | HIGH | ui | All | User feedback |
-| GAP-UI-042 | Tasks: No description, no linkage to sessions/evidence/rules | HIGH | ui | Task | User feedback |
-| GAP-UI-043 | Session evidence tab has no data | HIGH | functionality | Session | User feedback |
-| GAP-UI-044 | Real-time rule monitoring tab not functional | HIGH | functionality | Monitor | User feedback |
+| GAP-UI-047 | Rules tab: No directive/description shown | HIGH | ui | Rule | User feedback |
+| GAP-UI-048 | No entity relationships displayed in UI | HIGH | ui | All | User feedback |
+| GAP-UI-049 | Tasks: No description, no linkage to sessions/evidence/rules | HIGH | ui | Task | User feedback |
+| GAP-UI-050 | Session evidence tab has no data | HIGH | functionality | Session | User feedback |
+| GAP-UI-051 | Real-time rule monitoring tab not functional | HIGH | functionality | Monitor | User feedback |
 
 ### Document MCP Gaps (2024-12-27 Assessment)
 
@@ -878,11 +918,11 @@ governance/
 
 | ID | Gap | Priority | Category | Entity | Evidence |
 |----|-----|----------|----------|--------|----------|
-| GAP-AGENT-010 | Agent Task Backlog tab shows tasks but agents don't execute | HIGH | functionality | Agent | PARTIAL: Status filtering fixed, polling impl needed |
-| GAP-AGENT-011 | No agent polling/subscription for new tasks | HIGH | architecture | Agent | Missing implementation |
-| GAP-AGENT-012 | No task claim/lock mechanism for multi-agent coordination | HIGH | architecture | Task | Concurrent access |
-| GAP-AGENT-013 | No delegation protocol when agent needs more context | HIGH | architecture | Agent | Workflow gap |
-| GAP-AGENT-014 | Rules Curator agent not implemented | MEDIUM | functionality | Agent | RULE-011 requirement |
+| ~~GAP-AGENT-010~~ | ~~Agent Task Backlog tab shows tasks but agents don't execute~~ | HIGH | functionality | Agent | RESOLVED: OrchestratorEngine integrated into playground.py (2026-01-01) |
+| ~~GAP-AGENT-011~~ | ~~No agent polling/subscription for new tasks~~ | HIGH | architecture | Agent | RESOLVED: TypeDBTaskPoller + OrchestratorEngine polling loop (2026-01-01) |
+| GAP-AGENT-012 | No task claim/lock mechanism for multi-agent coordination | HIGH | architecture | Task | PARTIAL: claim_task() implemented, atomic locking TBD |
+| ~~GAP-AGENT-013~~ | ~~No delegation protocol when agent needs more context~~ | HIGH | architecture | Agent | RESOLVED: DelegationProtocol in delegation.py (ORCH-004) |
+| ~~GAP-AGENT-014~~ | ~~Rules Curator agent not implemented~~ | MEDIUM | functionality | Agent | RESOLVED: RulesCuratorAgent in curator_agent.py (ORCH-005) |
 
 **Stub Migration Strategy:**
 1. **TypeDB Schema Update** (`governance/schema.tql`): Add `task`, `session`, `proposal` entities

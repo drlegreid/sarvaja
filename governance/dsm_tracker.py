@@ -236,15 +236,22 @@ class DSMTracker:
             return DSPPhase.IDLE
         return DSPPhase(self.current_cycle.current_phase)
 
-    def advance_phase(self) -> DSPPhase:
+    def advance_phase(self, force: bool = False) -> DSPPhase:
         """
         Advance to next phase.
+
+        Per TASK 3.2: Validates that actual work was done before advancing.
+        Each phase MUST produce evidence (checkpoints or findings).
+
+        Args:
+            force: Skip validation (for testing only, logs warning)
 
         Returns:
             The new phase
 
         Raises:
-            ValueError: If no cycle in progress or cycle is complete
+            ValueError: If no cycle in progress, cycle is complete, or
+                       validation fails (no evidence for current phase)
         """
         if not self.current_cycle:
             raise ValueError("No cycle in progress. Start one with start_cycle()")
@@ -255,6 +262,15 @@ class DSMTracker:
         if next_phase is None:
             raise ValueError("Cycle is complete. Cannot advance further.")
 
+        # Validate evidence was produced (skip for IDLE phase)
+        if current != DSPPhase.IDLE and not force:
+            validation_error = self._validate_phase_evidence(current)
+            if validation_error:
+                raise ValueError(
+                    f"Cannot advance from {current.value}: {validation_error}. "
+                    f"Add checkpoint() or add_finding() before advancing."
+                )
+
         # Record completion of current phase
         if current != DSPPhase.IDLE:
             self.current_cycle.phases_completed.append(current.value)
@@ -263,6 +279,97 @@ class DSMTracker:
 
         self._save_state()
         return next_phase
+
+    def _validate_phase_evidence(self, phase: DSPPhase) -> Optional[str]:
+        """
+        Validate that required evidence exists for a phase.
+
+        Per TASK 3.1: Each phase MUST produce evidence.
+
+        Returns:
+            Error message if validation fails, None if valid
+        """
+        # Get checkpoints and findings for this phase
+        phase_checkpoints = [
+            cp for cp in self.current_cycle.checkpoints
+            if cp.phase == phase.value
+        ]
+        phase_findings = [
+            f for f in self.current_cycle.findings
+            if f.get("phase") == phase.value
+        ]
+
+        # Phase-specific requirements
+        requirements = {
+            DSPPhase.AUDIT: {
+                "need_checkpoint_or_finding": True,
+                "finding_types": ["gap", "issue", "improvement", "orphan"],
+                "min_checkpoint_chars": 20,
+                "description": "Audit must identify at least one gap, issue, or checkpoint"
+            },
+            DSPPhase.HYPOTHESIZE: {
+                "need_checkpoint": True,
+                "min_checkpoint_chars": 30,
+                "description": "Hypothesis must be documented in checkpoint"
+            },
+            DSPPhase.MEASURE: {
+                "need_checkpoint_with_metrics": True,
+                "description": "Measurements must include metrics in checkpoint"
+            },
+            DSPPhase.OPTIMIZE: {
+                "need_checkpoint": True,
+                "min_checkpoint_chars": 20,
+                "description": "Optimizations must be documented in checkpoint"
+            },
+            DSPPhase.VALIDATE: {
+                "need_checkpoint": True,
+                "min_checkpoint_chars": 10,
+                "description": "Validation results must be documented"
+            },
+            DSPPhase.DREAM: {
+                "need_checkpoint_or_finding": True,
+                "min_checkpoint_chars": 10,
+                "description": "Dream phase must produce discoveries or observations"
+            },
+            DSPPhase.REPORT: {
+                # Report phase generates evidence automatically
+                "need_checkpoint_or_finding": False,
+                "description": "Report auto-generates evidence"
+            }
+        }
+
+        req = requirements.get(phase)
+        if not req:
+            return None  # Unknown phase, allow
+
+        # Check requirements
+        has_valid_checkpoint = any(
+            len(cp.description) >= req.get("min_checkpoint_chars", 0)
+            for cp in phase_checkpoints
+        )
+        has_valid_finding = len(phase_findings) > 0
+
+        if req.get("need_checkpoint_with_metrics"):
+            # Must have checkpoint with non-empty metrics
+            has_metrics = any(
+                cp.metrics and len(cp.metrics) > 0
+                for cp in phase_checkpoints
+            )
+            if not has_metrics:
+                return f"{phase.value.upper()}: Requires checkpoint with metrics"
+            return None
+
+        if req.get("need_checkpoint"):
+            if not has_valid_checkpoint:
+                return f"{phase.value.upper()}: Requires checkpoint (min {req.get('min_checkpoint_chars', 0)} chars)"
+            return None
+
+        if req.get("need_checkpoint_or_finding"):
+            if not has_valid_checkpoint and not has_valid_finding:
+                return f"{phase.value.upper()}: Requires checkpoint or finding"
+            return None
+
+        return None  # All checks passed
 
     def go_to_phase(self, phase: DSPPhase) -> DSPPhase:
         """

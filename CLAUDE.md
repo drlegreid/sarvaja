@@ -84,6 +84,26 @@ Completed Tasks          → docs/tasks/TASKS-COMPLETED.md
 **Per RULE-021 Level 2:** At session start, ALWAYS call `governance_health` first.
 If `action_required: START_SERVICES` → notify user with recovery command.
 
+### Backlog Sync Protocol (TASK 1.3)
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                    SESSION START PROTOCOL                        │
+├─────────────────────────────────────────────────────────────────┤
+│  1. Call governance_health → Verify services up                  │
+│  2. Call governance_get_backlog(limit=20) → Get prioritized gaps │
+│  3. Load gaps into Claude todo list → Track actual backlog       │
+│                                                                   │
+│  CRITICAL: Never create self-referential todo lists!             │
+│  GAP-INDEX.md is the source of truth (182 gaps, 138 open)        │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+**MCP Tools for Backlog:**
+- `governance_get_backlog(limit)` - Get prioritized open gaps
+- `governance_gap_summary()` - Get gap statistics
+- `governance_get_critical_gaps()` - Get all CRITICAL gaps
+
 ### Quick Checks
 - [ ] Session log created in `./docs/`
 - [ ] No secrets in code (use `.env`)
@@ -156,7 +176,32 @@ $result | Select-Object -Last 40
 4. **Run test** - should PASS (GREEN)
 5. **Add backward compat export** if needed in `governance/mcp_server.py`
 
-## Running Services (via deploy.ps1)
+## DevOps Commands (RULE-031)
+
+### CORE MCP Dependencies
+```
+CORE_SERVICES = ["docker", "typedb", "chromadb"]
+- Docker Desktop must be running
+- TypeDB (port 1729) - Rule inference engine
+- ChromaDB (port 8001) - Semantic search for claude-mem
+```
+
+### Command Hierarchy (Use in Order)
+```
+1. WRAPPER (deploy.ps1) - Full stack with validation
+   .\deploy.ps1 -Action up -Profile cpu
+
+2. DIRECT (docker compose) - Reliable, no PowerShell quirks
+   docker compose --profile cpu up -d typedb chromadb
+
+3. INDIVIDUAL - Surgical container control
+   docker start sim-ai-typedb-1
+   docker stop sim-ai-chromadb-1
+```
+
+> **Note**: deploy.ps1 has strict `$ErrorActionPreference='Stop'` which can fail on docker info warnings. Use direct docker compose for auto-recovery.
+
+### Running Services (via deploy.ps1)
 ```powershell
 # Start stack
 .\deploy.ps1 -Action up -Profile cpu
@@ -186,6 +231,27 @@ $result | Select-Object -Last 40
 .\deploy.ps1 -Action down
 ```
 
+### Direct Docker Commands (Reliable Fallback)
+```powershell
+# Start CORE services only
+docker compose --profile cpu up -d typedb chromadb
+
+# Start all services
+docker compose --profile cpu up -d
+
+# Check running containers
+docker ps --format "table {{.Names}}\t{{.Status}}"
+
+# View container logs
+docker logs sim-ai-typedb-1 --tail 50
+
+# Restart specific container
+docker restart sim-ai-typedb-1
+
+# Stop all
+docker compose --profile cpu down
+```
+
 ## Key Files
 | File | Purpose |
 |------|---------|
@@ -195,6 +261,57 @@ $result | Select-Object -Last 40
 | `agent/playground.py` | Agent server code |
 | `agent/sync_agent.py` | Sync agent skeleton |
 | `.env.example` | Environment template |
+
+## Claude Code Configuration Paths
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                 CLAUDE CODE CONFIG LOCATIONS                     │
+├─────────────────────────────────────────────────────────────────┤
+│  GLOBAL (User-level):                                            │
+│  ├── C:\Users\natik\.claude.json       ← MCP servers config     │
+│  ├── C:\Users\natik\.claude\settings.json  ← Hooks & settings   │
+│  └── %APPDATA%\Claude\logs\            ← Desktop app logs       │
+│                                                                   │
+│  PROJECT (Repository-level):                                     │
+│  ├── .mcp.json                         ← Project MCP servers    │
+│  ├── .claude\settings.local.json       ← Project hooks          │
+│  └── CLAUDE.md                         ← Project instructions   │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### CORE MCP Servers (6 Total - Stability-Tested)
+| Server | Purpose | Risk |
+|--------|---------|------|
+| `claude-mem` | Memory via ChromaDB | LOW |
+| `governance` | TypeDB rules (project .mcp.json) | LOW |
+| `llm-sandbox` | Python code execution | LOW |
+| `sequential-thinking` | Reasoning chains | LOW |
+| `git` | Git operations | LOW |
+| `powershell` | Windows shell commands | LOW |
+
+### UTILITY MCPs (Disabled 2026-01-01 - See R&D TOOL-009)
+| Server | Reason Disabled | Backup Location | Re-enable When |
+|--------|-----------------|-----------------|----------------|
+| `desktop-commander` | Memory overhead | `.claude/mcp-backup.json` | Need file/process ops |
+| `playwright` | Browser automation heavy | `.claude/mcp-backup.json` | Need web testing |
+| `filesystem` | Redundant with Bash/Read tools | `.claude/mcp-backup.json` | Never |
+| `godot-mcp` | Game dev specific | `.claude/mcp-backup.json` | Godot project work |
+
+### High-Risk MCPs (Removed - Never Enable)
+| Server | Issue | Removed Date |
+|--------|-------|--------------|
+| `context7` | NPX cold start, external API | 2024-12-14 |
+| `octocode` | Rate limits, external API crashes | 2026-01-01 |
+
+### Hook Event Nesting Rules
+```
+WITHOUT matchers (SessionStart, Stop, SessionEnd):
+  [{ "type": "command", "command": "...", "timeout": N }]
+
+WITH matchers (PostToolUse, UserPromptSubmit, PreToolUse):
+  [{ "matcher": "*", "hooks": [{ "type": "command", "command": "...", "timeout": N }] }]
+```
 
 ## Health Checks
 ```powershell

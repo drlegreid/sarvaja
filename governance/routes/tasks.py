@@ -3,9 +3,10 @@ Tasks Routes.
 
 Per RULE-012: DSP Semantic Code Structure.
 Per GAP-FILE-002: Extracted from api.py.
-Per GAP-ARCH-001: TypeDB-first with in-memory fallback.
+Per GAP-STUB-001/002: TypeDB is source of truth (in-memory fallback deprecated).
 
 Created: 2024-12-28
+Updated: 2025-01-01 (TypeDB-first refactoring)
 """
 
 from fastapi import APIRouter, HTTPException, Query
@@ -20,6 +21,11 @@ from governance.models import (
 )
 from governance.stores import (
     get_typedb_client,
+    # TypeDB-first wrappers (preferred)
+    get_all_tasks_from_typedb,
+    get_task_from_typedb,
+    TypeDBUnavailable,
+    # Legacy stores (deprecated - kept for backward compatibility)
     _tasks_store, _execution_events_store,
     _agents_store, _AGENT_BASE_CONFIG,
     _load_agent_metrics, _save_agent_metrics,
@@ -44,29 +50,20 @@ async def list_tasks(
     """
     List all tasks.
 
-    Per GAP-ARCH-001: Attempts TypeDB first, falls back to in-memory.
+    Per GAP-STUB-001/002: TypeDB is source of truth with fallback for resilience.
     """
-    client = get_typedb_client()
-
-    # Try TypeDB first
-    if client:
-        try:
-            tasks = client.get_all_tasks(status=status, phase=phase, agent_id=agent_id)
-            if tasks:
-                return [task_to_response(t) for t in tasks]
-        except Exception as e:
-            logger.warning(f"TypeDB task query failed, using fallback: {e}")
-
-    # Fallback to in-memory
-    tasks = list(_tasks_store.values())
-    if phase:
-        tasks = [t for t in tasks if t.get("phase") == phase]
-    if status:
-        tasks = [t for t in tasks if t.get("status") == status]
-    if agent_id:
-        tasks = [t for t in tasks if t.get("agent_id") == agent_id]
-
-    return [TaskResponse(**t) for t in tasks]
+    try:
+        # Use TypeDB wrapper (handles fallback internally)
+        tasks = get_all_tasks_from_typedb(
+            status=status,
+            phase=phase,
+            agent_id=agent_id,
+            allow_fallback=True  # Keep fallback during migration
+        )
+        return [TaskResponse(**t) for t in tasks]
+    except TypeDBUnavailable as e:
+        logger.error(f"TypeDB unavailable: {e}")
+        raise HTTPException(status_code=503, detail="Database service unavailable")
 
 
 @router.post("/tasks", response_model=TaskResponse, status_code=201)

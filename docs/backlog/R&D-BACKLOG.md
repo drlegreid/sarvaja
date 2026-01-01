@@ -1,6 +1,6 @@
 # R&D Backlog - Sim.ai PoC
 
-**Last Updated:** 2024-12-31
+**Last Updated:** 2026-01-01
 **Status:** Active Development
 **Pattern:** Table-of-Contents → Individual Documents
 
@@ -96,7 +96,7 @@ This is the **root document** for R&D backlog. Each section links to detailed in
 | KAN-001-005 | Kanren Context Engineering | **HIGH** | [RD-KANREN-CONTEXT.md](rd/RD-KANREN-CONTEXT.md) |
 | FH-001-008 | Frankel Hash | HIGH | [RD-FRANKEL-HASH.md](rd/RD-FRANKEL-HASH.md) |
 | TEST-001-006 | Testing Strategy | **CRITICAL** | [RD-TESTING-STRATEGY.md](rd/RD-TESTING-STRATEGY.md) |
-| TOOL-001-005 | MCP Tooling Efficiency | MEDIUM | (inline below) |
+| TOOL-001-009 | MCP Tooling & Architecture | **HIGH** | (inline below) |
 | DOC-001-005 | Document Management MCP | HIGH | (inline below) |
 
 ### Deferred R&D
@@ -167,6 +167,198 @@ This is the **root document** for R&D backlog. Each section links to detailed in
 | TOOL-003 | Playwright MCP heuristic catalog | 📋 TODO | HIGH |
 | TOOL-004 | PowerShell MCP use cases | 📋 TODO | LOW |
 | TOOL-005 | Desktop-Commander vs filesystem MCP | 📋 TODO | LOW |
+| **TOOL-006** | **Containerize MCP services in Docker** | 📋 TODO | **HIGH** |
+| **TOOL-007** | **Evaluate governance MCP split** | 📋 TODO | **MEDIUM** |
+| **TOOL-008** | **Memory tuning for VS Code + Claude Code** | 📋 TODO | **HIGH** |
+| **TOOL-009** | **MCP priority groupings & profiles** | 📋 TODO | **HIGH** |
+
+---
+
+## MCP Architecture R&D (2026-01-01)
+
+### TOOL-006: Containerize MCP Services in Docker
+
+**Status:** 📋 TODO | **Priority:** HIGH | **Complexity:** HIGH
+
+**Problem Statement:**
+- NPX-based MCPs have cold-start delays causing timeouts
+- External API MCPs (context7, octocode) cause stability issues
+- Current MCP processes run in Claude Code's process space
+
+**Proposed Architecture:**
+```
+┌─────────────────────────────────────────────────────────────┐
+│  Docker Container: mcp-services                             │
+├─────────────────────────────────────────────────────────────┤
+│  MCP Gateway (Port 8888)                                    │
+│  ├── claude-mem (ChromaDB)                                  │
+│  ├── llm-sandbox (Python sandbox)                           │
+│  ├── sequential-thinking                                    │
+│  └── playwright                                             │
+├─────────────────────────────────────────────────────────────┤
+│  Volumes:                                                   │
+│  ├── /workspace → C:\Users\natik\Documents\Vibe\sim-ai     │
+│  ├── /claude-mem → C:\Users\natik\.claude-mem              │
+│  └── /chroma-data → persistent storage                     │
+└─────────────────────────────────────────────────────────────┘
+```
+
+**Benefits:**
+- Pre-warmed containers eliminate cold-start
+- Isolation prevents crashes from affecting Claude Code
+- Volume mapping maintains workspace access
+- Can scale horizontally for heavy workloads
+
+**Risks:**
+- IPC overhead (stdio→TCP translation)
+- Windows Docker Desktop memory consumption
+- Volume permission issues on Windows
+
+**Research Tasks:**
+- [ ] Evaluate MCP-over-HTTP vs stdio proxy patterns
+- [ ] Benchmark cold-start improvement with containers
+- [ ] Test volume mapping with workspace files
+- [ ] Measure memory overhead of containerized MCPs
+
+**Related:** GAP-MCP-002, CRASH_REPORT.md (2024-12-14)
+
+---
+
+### TOOL-007: Evaluate Governance MCP Split
+
+**Status:** 📋 TODO | **Priority:** MEDIUM | **Complexity:** MEDIUM
+
+**Current State:**
+- Single `governance` MCP with 40+ tools
+- Tool categories: rules, sessions, tasks, agents, DSM, evidence, documents, gaps, workspace
+
+**Split Candidates:**
+| MCP | Tools | Responsibility |
+|-----|-------|----------------|
+| governance-core | ~15 | Rules, agents, health, proposals |
+| governance-session | ~10 | Sessions, decisions, evidence search |
+| governance-dsm | ~8 | DSM cycles, checkpoints, findings |
+| governance-workspace | ~10 | Tasks, documents, gap sync |
+
+**Benefits:**
+- Faster startup (smaller tool catalog)
+- Independent scaling
+- Clearer separation of concerns
+- Easier testing and maintenance
+
+**Risks:**
+- Cross-MCP coordination complexity
+- Breaking change for existing workflows
+- Increased configuration surface
+
+**Decision Criteria:**
+- [ ] Measure startup time reduction
+- [ ] Evaluate cross-tool dependencies (e.g., session→evidence)
+- [ ] Assess user workflow impact
+- [ ] Consider TypeDB connection pooling
+
+**Recommendation:** Start with `governance-dsm` extraction as pilot (isolated functionality)
+
+---
+
+### TOOL-008: Memory Tuning for VS Code + Claude Code
+
+**Status:** 📋 TODO | **Priority:** HIGH | **Complexity:** MEDIUM
+
+**Problem Statement:**
+- 93% RAM spike observed after IDE restart with 9 MCPs
+- Claude Code + VS Code + Language Server + MCPs compete for memory
+- Need to enable swap/page file usage to prevent OOM
+
+**Tuning Targets:**
+
+| Component | Setting | Default | Recommended |
+|-----------|---------|---------|-------------|
+| VS Code | `--max-memory` | 4096MB | 2048MB |
+| VS Code | `files.maxMemoryForLargeFilesMB` | 4096 | 1024 |
+| Node.js (MCPs) | `NODE_OPTIONS=--max-old-space-size` | 4096 | 1024 |
+| TypeScript Server | `typescript.tsserver.maxTsServerMemory` | 3072 | 1536 |
+| Claude Code Extension | TBD | ? | ? |
+
+**Research Tasks:**
+- [ ] Profile memory usage per MCP server (desktop-commander, playwright, etc.)
+- [ ] Identify Claude Code extension memory settings
+- [ ] Configure VS Code `argv.json` with `--max-memory` flag
+- [ ] Test swap file size recommendations (2x RAM vs fixed)
+- [ ] Benchmark performance impact of memory limits
+
+**Implementation:**
+```json
+// .vscode/settings.json
+{
+  "files.maxMemoryForLargeFilesMB": 1024,
+  "typescript.tsserver.maxTsServerMemory": 1536
+}
+```
+
+```json
+// %APPDATA%\Code\argv.json (Windows)
+{
+  "disable-hardware-acceleration": false,
+  "max-memory": 2048
+}
+```
+
+**Related:** GAP-INFRA-006 (Ollama memory), TOOL-006 (containerization)
+
+---
+
+### TOOL-009: MCP Priority Groupings & Profiles
+
+**Status:** 📋 TODO | **Priority:** HIGH | **Complexity:** MEDIUM
+
+**Problem Statement:**
+- Currently MCPs are all-or-nothing in `.claude.json`
+- No way to define "CORE" vs "UTILITY" vs "PROJECT" profiles
+- Manual editing required to enable/disable MCPs
+- Need quick switching between lightweight and full-featured modes
+
+**Existing Design:** See [docs/MCP-LANDSCAPE.md](../MCP-LANDSCAPE.md) - EBMSF scoring
+
+**Proposed MCP Profiles:**
+
+| Profile | MCPs | Memory | Use Case |
+|---------|------|--------|----------|
+| **MINIMAL** | claude-mem, governance | ~500MB | Low-memory systems |
+| **CORE** | + llm-sandbox, sequential-thinking, git, powershell | ~1GB | Default DEV workflow |
+| **FULL** | + desktop-commander, playwright, filesystem | ~2GB | Full automation |
+| **PROJECT** | + godot-mcp (or other project-specific) | Variable | Per-project needs |
+
+**Implementation Options:**
+
+1. **Multiple .claude.json files** (e.g., `.claude-core.json`, `.claude-full.json`)
+   - Pros: Simple, no tooling needed
+   - Cons: Manual switching, duplication
+
+2. **Profile field in .claude.json**
+   ```json
+   {
+     "activeProfile": "CORE",
+     "profiles": {
+       "CORE": ["claude-mem", "governance", "llm-sandbox", "git", "powershell"],
+       "FULL": ["... all MCPs ..."]
+     }
+   }
+   ```
+   - Pros: Single file, easy switching
+   - Cons: Requires Claude Code support (feature request?)
+
+3. **PowerShell script for switching**
+   - Pros: Immediate, no upstream changes
+   - Cons: Manual, script maintenance
+
+**Research Tasks:**
+- [ ] Check if Claude Code supports MCP profiles natively
+- [ ] Implement PowerShell switching script as interim solution
+- [ ] Document profile switching in CLAUDE.md
+- [ ] Test memory impact of each profile
+
+**Related:** MCP-LANDSCAPE.md (EBMSF scoring), TOOL-008 (memory tuning)
 
 ---
 

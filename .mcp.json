@@ -2,7 +2,7 @@
   "mcpServers": {
     "governance": {
       "type": "stdio",
-      "command": "python",
+      "command": "pythonw",
       "args": ["-m", "governance.mcp_server"],
       "cwd": "c:\\Users\\natik\\Documents\\Vibe\\sim-ai\\sim-ai",
       "env": {

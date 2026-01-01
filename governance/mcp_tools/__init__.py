@@ -17,6 +17,7 @@ Package Structure (by entity/concern):
     tasks.py       - Task CRUD operations (P10.4)
     agents.py      - Agent CRUD operations (P10.4)
     workspace.py   - Workspace task capture (P10.10)
+    gaps.py        - Gap backlog sync (TASK 1.3)
 
 Main Server:
     governance/mcp_server.py - Thin coordinator (imports + registration)
@@ -36,6 +37,7 @@ from .evidence import register_evidence_tools
 from .tasks import register_task_tools
 from .agents import register_agent_tools
 from .workspace import register_workspace_tools
+from .gaps import register_gap_tools
 
 
 def register_all_tools(mcp) -> None:
@@ -55,6 +57,7 @@ def register_all_tools(mcp) -> None:
     register_task_tools(mcp)
     register_agent_tools(mcp)
     register_workspace_tools(mcp)
+    register_gap_tools(mcp)
 
 
 __all__ = [
@@ -69,4 +72,5 @@ __all__ = [
     'register_task_tools',
     'register_agent_tools',
     'register_workspace_tools',
+    'register_gap_tools',
 ]

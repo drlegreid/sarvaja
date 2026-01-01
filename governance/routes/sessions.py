@@ -3,9 +3,10 @@ Sessions Routes.
 
 Per RULE-012: DSP Semantic Code Structure.
 Per GAP-FILE-002: Extracted from api.py.
-Per GAP-ARCH-002: TypeDB-first with in-memory fallback.
+Per GAP-STUB-003/004: TypeDB is source of truth (in-memory fallback deprecated).
 
 Created: 2024-12-28
+Updated: 2025-01-01 (TypeDB-first refactoring)
 """
 
 from fastapi import APIRouter, HTTPException
@@ -18,6 +19,11 @@ from pydantic import BaseModel
 from governance.models import SessionResponse, SessionCreate, SessionEnd
 from governance.stores import (
     get_typedb_client,
+    # TypeDB-first wrappers (preferred)
+    get_all_sessions_from_typedb,
+    get_session_from_typedb,
+    TypeDBUnavailable,
+    # Legacy stores (deprecated - kept for backward compatibility)
     _sessions_store,
     session_to_response
 )
@@ -40,21 +46,15 @@ async def list_sessions():
     """
     List all sessions.
 
-    Per GAP-ARCH-002: Queries TypeDB first, falls back to in-memory.
+    Per GAP-STUB-003/004: TypeDB is source of truth with fallback for resilience.
     """
-    client = get_typedb_client()
-
-    # Try TypeDB first
-    if client:
-        try:
-            sessions = client.get_all_sessions()
-            if sessions:
-                return [session_to_response(s) for s in sessions]
-        except Exception as e:
-            logger.warning(f"TypeDB sessions query failed, using fallback: {e}")
-
-    # Fallback to in-memory
-    return [SessionResponse(**s) for s in _sessions_store.values()]
+    try:
+        # Use TypeDB wrapper (handles fallback internally)
+        sessions = get_all_sessions_from_typedb(allow_fallback=True)
+        return [SessionResponse(**s) for s in sessions]
+    except TypeDBUnavailable as e:
+        logger.error(f"TypeDB unavailable: {e}")
+        raise HTTPException(status_code=503, detail="Database service unavailable")
 
 
 @router.post("/sessions", response_model=SessionResponse, status_code=201)

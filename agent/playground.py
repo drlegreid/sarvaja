@@ -24,6 +24,13 @@ try:
 except ImportError:
     HYBRID_AVAILABLE = False
 
+# Import orchestrator for task polling (GAP-AGENT-010-014)
+try:
+    from agent.orchestrator import OrchestratorEngine, AgentInfo, AgentRole
+    ORCHESTRATOR_AVAILABLE = True
+except ImportError:
+    ORCHESTRATOR_AVAILABLE = False
+
 
 def init_opik():
     """Initialize Opik for tracing.
@@ -190,12 +197,87 @@ def create_agents(config: dict) -> list[Agent]:
                 agent_kwargs["knowledge"] = chromadb_knowledge
         
         agent = Agent(**agent_kwargs)
-        
+
         if agent_data.get("chat", True):
             agents.append(agent)
             print(f"Created agent: {agent_data['name']} (model: {model_name})")
-    
+
     return agents
+
+
+def create_orchestrator(agents: list[Agent], config: dict) -> Optional[OrchestratorEngine]:
+    """
+    Create orchestrator engine for task polling.
+
+    Per GAP-AGENT-010-014: Integrate OrchestratorEngine with playground.
+
+    Args:
+        agents: List of Agno agents
+        config: Configuration from agents.yaml
+
+    Returns:
+        OrchestratorEngine instance or None if unavailable
+    """
+    if not ORCHESTRATOR_AVAILABLE:
+        print("Orchestrator not available, skipping task polling")
+        return None
+
+    try:
+        from governance.client import get_client
+
+        # Get TypeDB client
+        client = get_client()
+        if not client:
+            print("TypeDB not available, skipping orchestrator")
+            return None
+
+        # Create orchestrator
+        poll_interval = float(os.getenv("ORCHESTRATOR_POLL_INTERVAL", "10.0"))
+        engine = OrchestratorEngine(client, poll_interval=poll_interval)
+
+        # Register agents from config
+        for agent_id, agent_data in config.get("agents", {}).items():
+            # Map agent role from config
+            role_map = {
+                "research": AgentRole.RESEARCH,
+                "coding": AgentRole.CODING,
+                "curator": AgentRole.CURATOR,
+                "sync": AgentRole.SYNC,
+                "orchestrator": AgentRole.ORCHESTRATOR,
+            }
+            role_str = agent_data.get("role", "coding").lower()
+            role = role_map.get(role_str, AgentRole.CODING)
+
+            # Default trust score from config or 0.8
+            trust_score = float(agent_data.get("trust_score", 0.8))
+
+            agent_info = AgentInfo(
+                agent_id=agent_id,
+                name=agent_data.get("name", agent_id),
+                role=role,
+                trust_score=trust_score,
+            )
+            engine.register_agent(agent_info)
+            print(f"Registered agent for orchestration: {agent_id} (trust: {trust_score})")
+
+        return engine
+
+    except Exception as e:
+        print(f"Orchestrator init failed: {e}")
+        return None
+
+
+async def start_orchestration(engine: OrchestratorEngine) -> None:
+    """
+    Start orchestration loop in background.
+
+    Per GAP-AGENT-011: Agent polling/subscription for new tasks.
+    """
+    try:
+        await engine.start()
+        print(f"Orchestrator started (polling every {engine._poller._poll_interval}s)")
+    except Exception as e:
+        print(f"Orchestrator start failed: {e}")
 
 
 def main():
@@ -214,6 +296,34 @@ def main():
 
     agent_os = AgentOS(agents=agents)
     app = agent_os.get_app()
+
+    # Integrate orchestrator for task polling (GAP-AGENT-010-014)
+    orchestrator = create_orchestrator(agents, config)
+    if orchestrator:
+        import asyncio
+
+        @app.get("/orchestrator/status")
+        async def orchestrator_status():
+            """Get orchestrator status and statistics."""
+            return orchestrator.stats
+
+        @app.post("/orchestrator/dispatch")
+        async def orchestrator_dispatch():
+            """Manually dispatch next task from queue."""
+            result = await orchestrator.dispatch_next()
+            return {
+                "success": result.success,
+                "task_id": result.task_id,
+                "agent_id": result.agent_id,
+                "message": result.message,
+            }
+
+        @app.on_event("startup")
+        async def startup_orchestrator():
+            """Start orchestration on server startup."""
+            asyncio.create_task(start_orchestration(orchestrator))
+
+        print(f"Orchestrator endpoints enabled: /orchestrator/status, /orchestrator/dispatch")
 
     # Integrate Task UI with AG-UI event streaming (Phase 6.1)
     try:

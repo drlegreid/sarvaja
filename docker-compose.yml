@@ -20,6 +20,7 @@ services:
   # LiteLLM Proxy - Routes requests to Claude (remote) or Ollama (local)
   litellm:
     image: ghcr.io/berriai/litellm:main-latest
+    profiles: ["cpu", "full", "dev"]
     ports:
       - "4000:4000"
     volumes:
@@ -124,6 +125,7 @@ services:
     build:
       context: ./agent
       dockerfile: Dockerfile
+    profiles: ["cpu", "full", "dev"]
     ports:
       - "7777:7777"
     environment:
@@ -164,12 +166,12 @@ services:
   # =============================================================================
 
   # Governance Dashboard - Trame UI for rules/decisions/sessions
-  # Production mode: code baked into image
+  # Production mode only - not included in dev/cpu profiles
   governance-dashboard:
     build:
       context: .
       dockerfile: agent/Dockerfile.dashboard
-    profiles: ["cpu", "full"]
+    profiles: ["prod", "full"]
     ports:
       - "8081:8081"
     environment:
@@ -195,48 +197,23 @@ services:
       start_period: 10s
 
   # Governance Dashboard - Dev mode with live code reload
-  # Per RULE-030: Dev container must support full E2E testing
-  governance-dashboard-dev:
-    build:
-      context: .
-      dockerfile: agent/Dockerfile.dashboard
-    profiles: ["dev"]
-    ports:
-      - "8081:8081"  # Dashboard UI
-      - "8082:8082"  # REST API for E2E tests
-    environment:
-      - DASHBOARD_PORT=8081
-      - API_PORT=8082
-      - TYPEDB_HOST=typedb
-      - TYPEDB_PORT=1729
-      - CHROMADB_HOST=chromadb
-      - CHROMADB_PORT=8000
-      - CHROMA_AUTH_TOKEN=${CHROMA_AUTH_TOKEN:-chroma-token-dev}
-      - GOVERNANCE_API_URL=http://localhost:8082
-      - PYTHONDONTWRITEBYTECODE=1
-    volumes:
-      # Mount local directories for live development
-      - ./agent:/app/agent:ro
-      - ./governance:/app/governance:ro
-      - ./docs:/app/docs:ro
-      - ./evidence:/app/evidence  # Read-write for archive operations
-    depends_on:
-      - typedb
-      - chromadb
-    # Override entrypoint to run both API and Dashboard
-    entrypoint: ["/bin/sh", "-c"]
-    command:
-      - |
-        echo "=== Sim.ai Dev Container (API + Dashboard) ==="
-        echo "Starting API on port 8082..."
-        cd /app && python -c "from governance.api import app; import uvicorn; uvicorn.run(app, host='0.0.0.0', port=8082)" &
-        sleep 3
-        echo "Starting Dashboard on port 8081..."
-        cd /app && exec python -m agent.governance_dashboard --port 8081
-    deploy:
-      resources:
-        limits:
-          memory: 768M
+  # Disabled: Not needed in persistent dev mode, use "dashboard-dev" profile explicitly
+  # governance-dashboard-dev:
+  #   build:
+  #     context: .
+  #     dockerfile: agent/Dockerfile.dashboard
+  #   profiles: ["dashboard-dev"]
+  #   ports:
+  #     - "8081:8081"
+  #     - "8082:8082"
+  #   environment:
+  #     - DASHBOARD_PORT=8081
+  #     - API_PORT=8082
+  #     - TYPEDB_HOST=typedb
+  #     - TYPEDB_PORT=1729
+  #   depends_on:
+  #     - typedb
+  #     - chromadb
 
 # =============================================================================
 # VOLUMES
