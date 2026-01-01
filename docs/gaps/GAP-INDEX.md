@@ -1,7 +1,8 @@
 # Gap Index - Sim.ai PoC
 
 **Last Updated:** 2026-01-02
-**Total Gaps:** 184 (57 resolved, 127 open) — Added GAP-HEALTH-001, GAP-TEST-002 for test reporting modes
+**Total Gaps:** 184 | Status: 59 RESOLVED, 5 PARTIAL, 120 OPEN
+**Format Migration:** GAP-WORKFLOW-003 - Replaced strikethrough with Status column
 
 ---
 
@@ -9,39 +10,39 @@
 
 ### UI Gaps (P10 Sprint) - Exploratory Session EXP-P10-001 (2024-12-25)
 
-| ID | Gap | Priority | Category | Entity | Operation | Evidence |
-|----|-----|----------|----------|--------|-----------|----------|
-| GAP-UI-001 | No data-testid attributes on Trame components | HIGH | testability | All | N/A | POM requirement |
-| GAP-UI-002 | No CRUD forms for Rules | HIGH | functionality | Rule | CREATE/UPDATE | ENTITY-API-UI-MAP |
-| GAP-UI-003 | No detail drill-down views | HIGH | functionality | All | READ | ENTITY-API-UI-MAP |
-| ~~GAP-UI-004~~ | ~~No REST API endpoints~~ | ~~HIGH~~ | ~~backend~~ | ~~All~~ | ~~ALL~~ | **RESOLVED** governance/api.py |
-| GAP-UI-005 | Missing loading/error states | MEDIUM | ux | All | READ | Exploratory |
-| GAP-UI-006 | Rules list missing rule_id column | HIGH | data_binding | Rule | READ | EXP-P10-001 |
-| GAP-UI-007 | List rows not clickable (no detail navigation) | HIGH | navigation | All | READ | EXP-P10-001 |
-| ~~GAP-UI-008~~ | ~~Tasks view shows empty table (no data source)~~ | ~~HIGH~~ | ~~data_binding~~ | ~~Task~~ | ~~READ~~ | **RESOLVED** API seed data added |
-| GAP-UI-009 | Search returns no results (unclear if functional) | MEDIUM | functionality | Evidence | SEARCH | EXP-P10-001 |
-| GAP-UI-010 | No column sorting functionality | MEDIUM | ux | All | READ | EXP-P10-001 |
-| GAP-UI-011 | No filtering/faceted search | MEDIUM | functionality | All | SEARCH | EXP-P10-001 |
-| ~~GAP-UI-028~~ | ~~Tests pass but UI broken (lenient tests)~~ | ~~CRITICAL~~ | ~~testing~~ | ~~All~~ | ~~ALL~~ | **RESOLVED** RULE-028 + 11 UI smoke tests |
-| ~~GAP-UI-029~~ | ~~Executive Report shows 0 Rules/Agents in stats~~ | ~~HIGH~~ | ~~data~~ | ~~Report~~ | ~~READ~~ | **RESOLVED** 2024-12-31: Field name mismatch fixed (rules_total→total_rules) |
-| ~~GAP-UI-030~~ | ~~Tasks view polluted with 150+ TEST-* tasks~~ | ~~MEDIUM~~ | ~~data~~ | ~~Task~~ | ~~READ~~ | **RESOLVED** 2024-12-31: Deleted 154 TEST-* tasks from TypeDB |
-| GAP-UI-EXP | No exploratory UI testing workflow to discover UI gaps | MEDIUM | process | All | N/A | E2E-2024-12-27 |
-| ~~GAP-UI-031~~ | ~~Rule Save button is mock-only~~ | ~~CRITICAL~~ | ~~functionality~~ | ~~Rule~~ | ~~CREATE/UPDATE~~ | **RESOLVED** wired to API |
-| ~~GAP-UI-032~~ | ~~Rule Delete button is mock-only~~ | ~~CRITICAL~~ | ~~functionality~~ | ~~Rule~~ | ~~DELETE~~ | **RESOLVED** wired to API |
-| GAP-UI-033 | No CRUD operations for Decisions | HIGH | functionality | Decision | ALL | UI-COVERAGE-2024-12-25 |
-| GAP-UI-034 | No CRUD operations for Sessions | HIGH | functionality | Session | ALL | UI-COVERAGE-2024-12-25 |
-| GAP-UI-035 | No datetime columns in tables | MEDIUM | ux | All | READ | USER-2024-12-27 |
-| GAP-UI-036 | No scrolling/paging in tables | MEDIUM | ux | All | READ | USER-2024-12-27 |
-| GAP-UI-037 | No entity content preview (unclear data) | HIGH | ux | All | READ | USER-2024-12-27 |
-| GAP-UI-038 | No document reference viewer (fullscreen modal) | HIGH | functionality | Document | READ | USER-2024-12-27 |
-| GAP-UI-039 | No document format support (CSV, Markdown, etc.) | MEDIUM | functionality | Document | READ | USER-2024-12-27 → RD-DOCVIEW |
-| GAP-UI-040 | Agent dashboard lacks effective config display (Agno framework) | HIGH | functionality | Agent | READ | USER-2024-12-27 |
-| GAP-UI-041 | No agent-to-session/task relation UI links | HIGH | functionality | Agent | READ | USER-2024-12-27 |
-| GAP-UI-042 | No trust score change explanation/history | HIGH | functionality | Agent | READ | USER-2024-12-27 |
-| GAP-UI-043 | Agent dashboard lacks execution metrics | MEDIUM | functionality | Agent | READ | USER-2024-12-27 |
-| ~~GAP-UI-044~~ | ~~No Executive Reporting view in Session Evidence tab~~ | ~~HIGH~~ | ~~functionality~~ | ~~Session~~ | ~~READ~~ | **RESOLVED** governance_dashboard.py + api.py |
-| GAP-UI-045 | No cross-workspace metrics aggregation | MEDIUM | functionality | Session | READ | RULE-029 |
-| GAP-UI-046 | Executive Report should be per-session not quarterly/monthly | HIGH | functionality | Session | READ | User 2024-12-28 |
+| ID | Status | Gap | Priority | Category | Entity | Operation | Evidence |
+|----|--------|-----|----------|----------|--------|-----------|----------|
+| GAP-UI-001 | OPEN | No data-testid attributes on Trame components | HIGH | testability | All | N/A | POM requirement |
+| GAP-UI-002 | OPEN | No CRUD forms for Rules | HIGH | functionality | Rule | CREATE/UPDATE | ENTITY-API-UI-MAP |
+| GAP-UI-003 | OPEN | No detail drill-down views | HIGH | functionality | All | READ | ENTITY-API-UI-MAP |
+| GAP-UI-004 | RESOLVED | No REST API endpoints | HIGH | backend | All | ALL | governance/api.py |
+| GAP-UI-005 | OPEN | Missing loading/error states | MEDIUM | ux | All | READ | Exploratory |
+| GAP-UI-006 | OPEN | Rules list missing rule_id column | HIGH | data_binding | Rule | READ | EXP-P10-001 |
+| GAP-UI-007 | OPEN | List rows not clickable (no detail navigation) | HIGH | navigation | All | READ | EXP-P10-001 |
+| GAP-UI-008 | RESOLVED | Tasks view shows empty table (no data source) | HIGH | data_binding | Task | READ | API seed data added |
+| GAP-UI-009 | OPEN | Search returns no results (unclear if functional) | MEDIUM | functionality | Evidence | SEARCH | EXP-P10-001 |
+| GAP-UI-010 | OPEN | No column sorting functionality | MEDIUM | ux | All | READ | EXP-P10-001 |
+| GAP-UI-011 | OPEN | No filtering/faceted search | MEDIUM | functionality | All | SEARCH | EXP-P10-001 |
+| GAP-UI-028 | RESOLVED | Tests pass but UI broken (lenient tests) | CRITICAL | testing | All | ALL | RULE-028 + 11 UI smoke tests |
+| GAP-UI-029 | RESOLVED | Executive Report shows 0 Rules/Agents in stats | HIGH | data | Report | READ | 2024-12-31: Field name mismatch fixed |
+| GAP-UI-030 | RESOLVED | Tasks view polluted with 150+ TEST-* tasks | MEDIUM | data | Task | READ | 2024-12-31: Deleted 154 TEST-* tasks |
+| GAP-UI-EXP | OPEN | No exploratory UI testing workflow to discover UI gaps | MEDIUM | process | All | N/A | E2E-2024-12-27 |
+| GAP-UI-031 | RESOLVED | Rule Save button is mock-only | CRITICAL | functionality | Rule | CREATE/UPDATE | wired to API |
+| GAP-UI-032 | RESOLVED | Rule Delete button is mock-only | CRITICAL | functionality | Rule | DELETE | wired to API |
+| GAP-UI-033 | OPEN | No CRUD operations for Decisions | HIGH | functionality | Decision | ALL | UI-COVERAGE-2024-12-25 |
+| GAP-UI-034 | OPEN | No CRUD operations for Sessions | HIGH | functionality | Session | ALL | UI-COVERAGE-2024-12-25 |
+| GAP-UI-035 | OPEN | No datetime columns in tables | MEDIUM | ux | All | READ | USER-2024-12-27 |
+| GAP-UI-036 | OPEN | No scrolling/paging in tables | MEDIUM | ux | All | READ | USER-2024-12-27 |
+| GAP-UI-037 | OPEN | No entity content preview (unclear data) | HIGH | ux | All | READ | USER-2024-12-27 |
+| GAP-UI-038 | OPEN | No document reference viewer (fullscreen modal) | HIGH | functionality | Document | READ | USER-2024-12-27 |
+| GAP-UI-039 | OPEN | No document format support (CSV, Markdown, etc.) | MEDIUM | functionality | Document | READ | USER-2024-12-27 → RD-DOCVIEW |
+| GAP-UI-040 | OPEN | Agent dashboard lacks effective config display (Agno framework) | HIGH | functionality | Agent | READ | USER-2024-12-27 |
+| GAP-UI-041 | OPEN | No agent-to-session/task relation UI links | HIGH | functionality | Agent | READ | USER-2024-12-27 |
+| GAP-UI-042 | OPEN | No trust score change explanation/history | HIGH | functionality | Agent | READ | USER-2024-12-27 |
+| GAP-UI-043 | OPEN | Agent dashboard lacks execution metrics | MEDIUM | functionality | Agent | READ | USER-2024-12-27 |
+| GAP-UI-044 | RESOLVED | No Executive Reporting view in Session Evidence tab | HIGH | functionality | Session | READ | governance_dashboard.py + api.py |
+| GAP-UI-045 | OPEN | No cross-workspace metrics aggregation | MEDIUM | functionality | Session | READ | RULE-029 |
+| GAP-UI-046 | OPEN | Executive Report should be per-session not quarterly/monthly | HIGH | functionality | Session | READ | User 2024-12-28 |
 
 **GAP-UI-046 Requirements:**
 - Replace Sessions view with Executive Reports per session
@@ -73,32 +74,32 @@ Session: EXP-P10-001 | Date: 2024-12-25 | Target: Governance Dashboard
 
 ### General Gaps
 
-| ID | Gap | Priority | Category | Rule | Evidence |
-|----|-----|----------|----------|------|----------|
-| GAP-004 | Grok/xAI API Key | Medium | configuration | RULE-002 | test skip |
-| GAP-005 | Agent Task Backlog UI | Medium | functionality | RULE-002 | PARTIAL: Status filtering fixed (TODO+pending), polling not impl |
-| GAP-006 | Sync Agent Implementation | Medium | functionality | RULE-003 | skeleton only |
-| GAP-007 | ChromaDB v2 Test Update | Low | testing | RULE-009 | UUID error |
-| ~~GAP-008~~ | ~~Agent UI Image~~ | ~~Low~~ | ~~configuration~~ | ~~RULE-009~~ | **RESOLVED** Service disabled in docker-compose |
-| GAP-009 | Pre-commit Hooks | Medium | tooling | RULE-001 | RULES-DIRECTIVES.md |
-| GAP-010 | CI/CD Pipeline | Low | tooling | RULE-009 | DEPLOYMENT.md |
-| GAP-014 | IntelliJ Windsurf MCP not loading | Medium | tooling | RULE-005 | ~/.codeium/mcp_config.json |
-| GAP-015 | Consolidated STRATEGY.md | Medium | docs | RULE-001 | docs/GAP-ANALYSIS-2024-12-24.md |
-| ~~GAP-019~~ | ~~MCP usage documentation~~ | ~~Medium~~ | ~~docs~~ | ~~RULE-007~~ | **RESOLVED** docs/MCP-USAGE.md |
-| ~~GAP-020~~ | ~~Cross-project knowledge queries~~ | ~~HIGH~~ | ~~workflow~~ | ~~RULE-007~~ | **RESOLVED** MCP-USAGE.md Section 8 |
-| GAP-021 | OctoCode for external research | Medium | workflow | RULE-007 | Use OctoCode for GitHub |
-| ~~GAP-DEPLOY-001~~ | ~~deploy.ps1 missing dev profile support~~ | ~~MEDIUM~~ | ~~tooling~~ | ~~RULE-028~~ | **RESOLVED** 2024-12-31: Added 'dev' to ValidateSet, updated docs/endpoints |
-| ~~GAP-MCP-002~~ | ~~MCP governance healthcheck should force Claude Code to stop and resolve dependent services~~ | ~~HIGH~~ | ~~stability~~ | ~~RULE-021~~ | **PARTIAL** 2024-12-31: Tool implemented but not auto-called (see GAP-MCP-003) |
-| ~~GAP-MCP-003~~ | ~~governance_health not called automatically at session start~~ | ~~CRITICAL~~ | ~~workflow~~ | ~~RULE-021~~ | **RESOLVED** 2026-01-01: Non-blocking healthcheck with 30s retry ceiling, 17 E2E tests, auto-recovery via docker compose, hookSpecificOutput context injection |
-| GAP-WORKFLOW-001 | Session context not auto-saved to claude-mem before restart | HIGH | workflow | RULE-001 | 2024-12-31: /save not called, context lost on restart |
-| GAP-WORKFLOW-002 | Claude Code should prompt user to /save before major transitions | HIGH | workflow | RULE-001 | 2024-12-31: Autonomous work should include save prompts |
-| GAP-WORKFLOW-003 | GAP-INDEX uses strikethrough instead of Status column | HIGH | data | RULE-012 | 2026-01-01: Strikethrough is unparseable, need Status column (OPEN/PARTIAL/RESOLVED) |
-| GAP-INFRA-005 | Ollama container not started with dev profile | MEDIUM | infra | RULE-021 | 2024-12-31: docker compose --profile dev doesn't include ollama |
-| GAP-INFRA-006 | Ollama container suboptimal for laptop dev workflow - high memory usage | MEDIUM | infrastructure | RULE-021 | 2024-12-31: May need to disable for DEV, use Claude API for strategic work |
-| GAP-MCP-004 | Rule fallback to markdown files not implemented when TypeDB unavailable | HIGH | architecture | RULE-021 | 2024-12-31: CLAUDE.md documents hierarchy but code doesn't read from docs/rules/*.md |
-| GAP-TEST-001 | E2E tests lack Given/When/Then BDD paradigm and OOP reusability | MEDIUM | testing | RULE-023 | 2026-01-01: .claude/hooks/e2e_test.py has 17 tests but no pytest fixtures, BDD patterns, or reusable test assets |
-| GAP-HEALTH-001 | Healthcheck state file lacks retry history and rotation | MEDIUM | observability | RULE-021 | 2026-01-02: .healthcheck_state.json should track all retry attempts per session and rotate on session end |
-| ~~GAP-TEST-002~~ | ~~Test output blows context window - need reporting modes~~ | ~~HIGH~~ | ~~testing~~ | ~~RULE-023~~ | **PARTIAL** 2026-01-02: Implemented --report-minimal, --report-trace, --report-cert in tests/conftest.py |
+| ID | Status | Gap | Priority | Category | Rule | Evidence |
+|----|--------|-----|----------|----------|------|----------|
+| GAP-004 | OPEN | Grok/xAI API Key | Medium | configuration | RULE-002 | test skip |
+| GAP-005 | OPEN | Agent Task Backlog UI | Medium | functionality | RULE-002 | Status filtering fixed, polling not impl |
+| GAP-006 | OPEN | Sync Agent Implementation | Medium | functionality | RULE-003 | skeleton only |
+| GAP-007 | OPEN | ChromaDB v2 Test Update | Low | testing | RULE-009 | UUID error |
+| GAP-008 | RESOLVED | Agent UI Image | Low | configuration | RULE-009 | Service disabled in docker-compose |
+| GAP-009 | OPEN | Pre-commit Hooks | Medium | tooling | RULE-001 | RULES-DIRECTIVES.md |
+| GAP-010 | OPEN | CI/CD Pipeline | Low | tooling | RULE-009 | DEPLOYMENT.md |
+| GAP-014 | OPEN | IntelliJ Windsurf MCP not loading | Medium | tooling | RULE-005 | ~/.codeium/mcp_config.json |
+| GAP-015 | OPEN | Consolidated STRATEGY.md | Medium | docs | RULE-001 | docs/GAP-ANALYSIS-2024-12-24.md |
+| GAP-019 | RESOLVED | MCP usage documentation | Medium | docs | RULE-007 | docs/MCP-USAGE.md |
+| GAP-020 | RESOLVED | Cross-project knowledge queries | HIGH | workflow | RULE-007 | MCP-USAGE.md Section 8 |
+| GAP-021 | OPEN | OctoCode for external research | Medium | workflow | RULE-007 | Use OctoCode for GitHub |
+| GAP-DEPLOY-001 | RESOLVED | deploy.ps1 missing dev profile support | MEDIUM | tooling | RULE-028 | 2024-12-31: Added 'dev' to ValidateSet |
+| GAP-MCP-002 | PARTIAL | MCP governance healthcheck should force Claude Code to stop and resolve dependent services | HIGH | stability | RULE-021 | Tool implemented but not auto-called |
+| GAP-MCP-003 | RESOLVED | governance_health not called automatically at session start | CRITICAL | workflow | RULE-021 | 2026-01-01: Non-blocking healthcheck with 30s retry |
+| GAP-WORKFLOW-001 | OPEN | Session context not auto-saved to claude-mem before restart | HIGH | workflow | RULE-001 | 2024-12-31: /save not called, context lost |
+| GAP-WORKFLOW-002 | OPEN | Claude Code should prompt user to /save before major transitions | HIGH | workflow | RULE-001 | Autonomous work should include save prompts |
+| GAP-WORKFLOW-003 | RESOLVED | GAP-INDEX uses strikethrough instead of Status column | HIGH | data | RULE-012 | 2026-01-02: This migration |
+| GAP-INFRA-005 | OPEN | Ollama container not started with dev profile | MEDIUM | infra | RULE-021 | docker compose --profile dev issue |
+| GAP-INFRA-006 | OPEN | Ollama container suboptimal for laptop dev workflow | MEDIUM | infrastructure | RULE-021 | May need to disable for DEV |
+| GAP-MCP-004 | OPEN | Rule fallback to markdown files not implemented when TypeDB unavailable | HIGH | architecture | RULE-021 | Code doesn't read from docs/rules/*.md |
+| GAP-TEST-001 | OPEN | E2E tests lack Given/When/Then BDD paradigm and OOP reusability | MEDIUM | testing | RULE-023 | No pytest fixtures, BDD patterns |
+| GAP-HEALTH-001 | OPEN | Healthcheck state file lacks retry history and rotation | MEDIUM | observability | RULE-021 | Should track all retry attempts |
+| GAP-TEST-002 | PARTIAL | Test output blows context window - need reporting modes | HIGH | testing | RULE-023 | Implemented --report-minimal, --report-cert |
 
 **GAP-TEST-002 Test Reporting Modes:** ✅ IMPLEMENTED
 - **Usage:**
@@ -136,106 +137,106 @@ Session: EXP-P10-001 | Date: 2024-12-25 | Target: Governance Dashboard
 
 ### Architecture Gaps (DSP-2024-12-26)
 
-| ID | Gap | Priority | Category | Rule | Evidence |
-|----|-----|----------|----------|------|----------|
-| ~~GAP-ARCH-001~~ | ~~Tasks in-memory, not TypeDB~~ | ~~CRITICAL~~ | ~~architecture~~ | ~~DECISION-003~~ | **RESOLVED** Hybrid TypeDB+fallback |
-| ~~GAP-ARCH-002~~ | ~~Sessions in-memory, not TypeDB~~ | ~~CRITICAL~~ | ~~architecture~~ | ~~DECISION-003~~ | **RESOLVED** Hybrid TypeDB+fallback |
-| ~~GAP-ARCH-003~~ | ~~Agents in-memory, not TypeDB~~ | ~~HIGH~~ | ~~architecture~~ | ~~DECISION-003~~ | **RESOLVED** P10.3: TypeDB-first seeding (seed_data.py 2024-12-28) |
-| ~~GAP-ARCH-004~~ | ~~TypeDB missing RULE-012 to RULE-025~~ | ~~CRITICAL~~ | ~~data~~ | ~~RULE-012~~ | **RESOLVED** 25 rules loaded |
-| ~~GAP-ARCH-005~~ | ~~No MCP tools for Tasks/Sessions~~ | ~~HIGH~~ | ~~functionality~~ | ~~RULE-007~~ | **RESOLVED** mcp_tools/tasks.py + agents.py |
-| ~~GAP-ARCH-007~~ | ~~Entity hierarchy review: Decision as Task subtype~~ | ~~MEDIUM~~ | ~~architecture~~ | ~~DECISION-003~~ | **RESOLVED** P10.7-ENTITY-HIERARCHY-REVIEW.md: Keep separate |
-| ~~GAP-ARCH-006~~ | ~~Session/Task MCP exports missing~~ | ~~HIGH~~ | ~~testing~~ | ~~RULE-023~~ | **RESOLVED** exports added |
-| ~~GAP-ARCH-008~~ | ~~TypeDB-Filesystem Rule Linking~~ | ~~MEDIUM~~ | ~~architecture~~ | ~~DECISION-003~~ | **RESOLVED** P10.8: rule_linker.py + 4 MCP tools (3 docs, 36 rule refs) |
-| GAP-ARCH-009 | TypeDB sessions created but not retrievable for end operation | MEDIUM | architecture | DECISION-003 | E2E test: test_end_session_via_api fails 404 |
-| ~~GAP-ARCH-010~~ | ~~Workspace tasks not captured in TypeDB~~ | ~~HIGH~~ | ~~architecture~~ | ~~DECISION-003~~ | **RESOLVED** P10.10: workspace_scanner.py + 3 MCP tools (89 tasks) |
+| ID | Status | Gap | Priority | Category | Rule | Evidence |
+|----|--------|-----|----------|----------|------|----------|
+| GAP-ARCH-001 | RESOLVED | Tasks in-memory, not TypeDB | CRITICAL | architecture | DECISION-003 | Hybrid TypeDB+fallback |
+| GAP-ARCH-002 | RESOLVED | Sessions in-memory, not TypeDB | CRITICAL | architecture | DECISION-003 | Hybrid TypeDB+fallback |
+| GAP-ARCH-003 | RESOLVED | Agents in-memory, not TypeDB | HIGH | architecture | DECISION-003 | P10.3: TypeDB-first seeding |
+| GAP-ARCH-004 | RESOLVED | TypeDB missing RULE-012 to RULE-025 | CRITICAL | data | RULE-012 | 25 rules loaded |
+| GAP-ARCH-005 | RESOLVED | No MCP tools for Tasks/Sessions | HIGH | functionality | RULE-007 | mcp_tools/tasks.py + agents.py |
+| GAP-ARCH-007 | RESOLVED | Entity hierarchy review: Decision as Task subtype | MEDIUM | architecture | DECISION-003 | Keep separate |
+| GAP-ARCH-006 | RESOLVED | Session/Task MCP exports missing | HIGH | testing | RULE-023 | exports added |
+| GAP-ARCH-008 | RESOLVED | TypeDB-Filesystem Rule Linking | MEDIUM | architecture | DECISION-003 | P10.8: rule_linker.py + 4 MCP tools |
+| GAP-ARCH-009 | OPEN | TypeDB sessions created but not retrievable for end operation | MEDIUM | architecture | DECISION-003 | E2E test: test_end_session_via_api fails 404 |
+| GAP-ARCH-010 | RESOLVED | Workspace tasks not captured in TypeDB | HIGH | architecture | DECISION-003 | P10.10: workspace_scanner.py + 3 MCP tools |
 
 ### TDD Stub Gaps (DSP-2024-12-26 Cycles 201-330)
 
-| ID | Gap | Priority | Category | Rule | Evidence |
-|----|-----|----------|----------|------|----------|
-| ~~GAP-TDD-001~~ | ~~Task response missing 'phase' field~~ | ~~MEDIUM~~ | ~~testing~~ | ~~RULE-025~~ | **RESOLVED** mcp_server.py:169 |
-| ~~GAP-TDD-002~~ | ~~Evidence search missing 'query'/'score'~~ | ~~MEDIUM~~ | ~~testing~~ | ~~RULE-025~~ | **RESOLVED** mcp_server.py:223 |
-| GAP-TDD-003 | DSM advance missing 'required_mcps' | LOW | testing | RULE-012 | test_dsm_tracker_integration.py |
-| GAP-TDD-006 | Tests write TEST-* data to production TypeDB | MEDIUM | testing | RULE-023 | Caused GAP-UI-030, need isolation |
-| GAP-TDD-004 | DSM checkpoint missing 'timestamp' | LOW | testing | RULE-012 | test_dsm_tracker_integration.py |
-| GAP-TDD-005 | DSM finding missing 'related_rules' | LOW | testing | RULE-012 | test_dsm_tracker_integration.py |
+| ID | Status | Gap | Priority | Category | Rule | Evidence |
+|----|--------|-----|----------|----------|------|----------|
+| GAP-TDD-001 | RESOLVED | Task response missing 'phase' field | MEDIUM | testing | RULE-025 | mcp_server.py:169 |
+| GAP-TDD-002 | RESOLVED | Evidence search missing 'query'/'score' | MEDIUM | testing | RULE-025 | mcp_server.py:223 |
+| GAP-TDD-003 | OPEN | DSM advance missing 'required_mcps' | LOW | testing | RULE-012 | test_dsm_tracker_integration.py |
+| GAP-TDD-006 | OPEN | Tests write TEST-* data to production TypeDB | MEDIUM | testing | RULE-023 | Caused GAP-UI-030, need isolation |
+| GAP-TDD-004 | OPEN | DSM checkpoint missing 'timestamp' | LOW | testing | RULE-012 | test_dsm_tracker_integration.py |
+| GAP-TDD-005 | OPEN | DSM finding missing 'related_rules' | LOW | testing | RULE-012 | test_dsm_tracker_integration.py |
 
 ### DSP Gap Discovery (Cycles 331-380)
 
-| ID | Gap | Priority | Category | Rule | Evidence |
-|----|-----|----------|----------|------|----------|
-| ~~GAP-DSP-001~~ | ~~MCP tools not registered~~ | ~~CRITICAL~~ | ~~functionality~~ | ~~RULE-007~~ | **FALSE POSITIVE** 40 tools registered |
-| GAP-DSP-002 | 9 schema entities without data | HIGH | data | DECISION-003 | schema.tql vs data.tql |
-| GAP-DSP-003 | API documentation at 25% | MEDIUM | docs | RULE-001 | api.py 5/20 docstrings |
-| ~~GAP-SEC-001~~ | ~~No API authentication middleware~~ | ~~HIGH~~ | ~~security~~ | ~~RULE-011~~ | **RESOLVED** AuthMiddleware + X-API-Key header |
-| GAP-PERF-001 | Sync I/O in async code | LOW | performance | RULE-009 | api.py:469,494 |
+| ID | Status | Gap | Priority | Category | Rule | Evidence |
+|----|--------|-----|----------|----------|------|----------|
+| GAP-DSP-001 | RESOLVED | MCP tools not registered | CRITICAL | functionality | RULE-007 | FALSE POSITIVE: 40 tools registered |
+| GAP-DSP-002 | OPEN | 9 schema entities without data | HIGH | data | DECISION-003 | schema.tql vs data.tql |
+| GAP-DSP-003 | OPEN | API documentation at 25% | MEDIUM | docs | RULE-001 | api.py 5/20 docstrings |
+| GAP-SEC-001 | RESOLVED | No API authentication middleware | HIGH | security | RULE-011 | AuthMiddleware + X-API-Key header |
+| GAP-PERF-001 | OPEN | Sync I/O in async code | LOW | performance | RULE-009 | api.py:469,494 |
 
 ### Data Integrity Gaps (2024-12-26 Data Audit)
 
-| ID | Gap | Priority | Category | Rule | Evidence |
-|----|-----|----------|----------|------|----------|
-| GAP-DATA-001 | Tasks have no descriptions/content/linkage | CRITICAL | data | DECISION-003 | P11.2: Structure added, P11.2b: Content recovery pending |
-| ~~GAP-DATA-002~~ | ~~No entity relationships (Task→Rule, Session→Evidence)~~ | ~~CRITICAL~~ | ~~architecture~~ | ~~DECISION-003~~ | **RESOLVED** P11.3: TypeDB schema + 5 sessions + 5 evidence + relationships |
-| ~~GAP-DATA-003~~ | ~~Session evidence attachments not loadable~~ | ~~HIGH~~ | ~~functionality~~ | ~~RULE-001~~ | **RESOLVED** P11.5: API + UI + TypeDB linkage |
-| ~~GAP-ARCH-011~~ | ~~TypeDB migration incomplete (claude-mem disconnected)~~ | ~~CRITICAL~~ | ~~architecture~~ | ~~DECISION-003~~ | **RESOLVED** P11.4: session_memory.py + DSM integration |
-| ~~GAP-PROC-001~~ | ~~Memory/context loss - no wisdom accumulation~~ | ~~CRITICAL~~ | ~~process~~ | ~~RULE-012~~ | **RESOLVED** P11.4: SessionContext + AMNESIA recovery |
-| ~~GAP-ORG-001~~ | ~~Files misplaced (png/xml/html in wrong directories)~~ | ~~MEDIUM~~ | ~~organization~~ | ~~RULE-001~~ | **RESOLVED** P11.6: 24 files reorganized |
-| ~~GAP-UI-035~~ | ~~UI views don't auto-load data on open~~ | ~~HIGH~~ | ~~ux~~ | ~~RULE-019~~ | **RESOLVED** Added state change handler |
+| ID | Status | Gap | Priority | Category | Rule | Evidence |
+|----|--------|-----|----------|----------|------|----------|
+| GAP-DATA-001 | OPEN | Tasks have no descriptions/content/linkage | CRITICAL | data | DECISION-003 | P11.2: Structure added, content pending |
+| GAP-DATA-002 | RESOLVED | No entity relationships (Task→Rule, Session→Evidence) | CRITICAL | architecture | DECISION-003 | P11.3: TypeDB schema + relationships |
+| GAP-DATA-003 | RESOLVED | Session evidence attachments not loadable | HIGH | functionality | RULE-001 | P11.5: API + UI + TypeDB linkage |
+| GAP-ARCH-011 | RESOLVED | TypeDB migration incomplete (claude-mem disconnected) | CRITICAL | architecture | DECISION-003 | P11.4: session_memory.py + DSM |
+| GAP-PROC-001 | RESOLVED | Memory/context loss - no wisdom accumulation | CRITICAL | process | RULE-012 | P11.4: SessionContext + AMNESIA recovery |
+| GAP-ORG-001 | RESOLVED | Files misplaced (png/xml/html in wrong directories) | MEDIUM | organization | RULE-001 | P11.6: 24 files reorganized |
+| GAP-UI-035-DUP | RESOLVED | UI views don't auto-load data on open | HIGH | ux | RULE-019 | Added state change handler |
 
 ### P11.8 Entity Audit Gaps (2024-12-26)
 
 > **Source:** [DATA-AUDIT-REPORT-2024-12-26.md](DATA-AUDIT-REPORT-2024-12-26.md)
 
-| ID | Gap | Priority | Category | Entity | Field | Evidence |
-|----|-----|----------|----------|--------|-------|----------|
-| GAP-TASK-001 | Tasks linked_sessions only 10% coverage | MEDIUM | data | Task | linked_sessions | P11.8 Audit |
-| GAP-TASK-002 | Tasks agent_id always null | LOW | data | Task | agent_id | P11.8 Audit |
-| GAP-TASK-003 | Tasks completed_at not populated | LOW | data | Task | completed_at | P11.8 Audit |
-| ~~GAP-AGENT-001~~ | ~~Agent trust_score hardcoded, not calculated~~ | ~~HIGH~~ | ~~data~~ | ~~Agent~~ | ~~trust_score~~ | **RESOLVED** P11.9: Dynamic calculation |
-| ~~GAP-AGENT-002~~ | ~~Agent tasks_executed always 0, resets on restart~~ | ~~HIGH~~ | ~~data~~ | ~~Agent~~ | ~~tasks_executed~~ | **RESOLVED** P11.9: Persistent metrics |
-| ~~GAP-AGENT-003~~ | ~~Agent last_active never populated~~ | ~~MEDIUM~~ | ~~data~~ | ~~Agent~~ | ~~last_active~~ | **RESOLVED** P11.9: Updated on task |
-| GAP-AGENT-004 | Agent capabilities field missing | MEDIUM | schema | Agent | capabilities | P11.8 Audit |
-| ~~GAP-EVIDENCE-001~~ | ~~Evidence session_id never populated (no linkage)~~ | ~~HIGH~~ | ~~data~~ | ~~Evidence~~ | ~~session_id~~ | **RESOLVED** P11.10: 8/9 linked |
-| GAP-EVIDENCE-002 | Evidence only reads .md files | LOW | functionality | Evidence | file_types | P11.8 Audit |
-| GAP-DECISION-001 | Decision linked_rules not exposed in API | MEDIUM | api | Decision | linked_rules | P11.8 Audit |
+| ID | Status | Gap | Priority | Category | Entity | Field | Evidence |
+|----|--------|-----|----------|----------|--------|-------|----------|
+| GAP-TASK-001 | OPEN | Tasks linked_sessions only 10% coverage | MEDIUM | data | Task | linked_sessions | P11.8 Audit |
+| GAP-TASK-002 | OPEN | Tasks agent_id always null | LOW | data | Task | agent_id | P11.8 Audit |
+| GAP-TASK-003 | OPEN | Tasks completed_at not populated | LOW | data | Task | completed_at | P11.8 Audit |
+| GAP-AGENT-001 | RESOLVED | Agent trust_score hardcoded, not calculated | HIGH | data | Agent | trust_score | P11.9: Dynamic calculation |
+| GAP-AGENT-002 | RESOLVED | Agent tasks_executed always 0, resets on restart | HIGH | data | Agent | tasks_executed | P11.9: Persistent metrics |
+| GAP-AGENT-003 | RESOLVED | Agent last_active never populated | MEDIUM | data | Agent | last_active | P11.9: Updated on task |
+| GAP-AGENT-004 | OPEN | Agent capabilities field missing | MEDIUM | schema | Agent | capabilities | P11.8 Audit |
+| GAP-EVIDENCE-001 | RESOLVED | Evidence session_id never populated (no linkage) | HIGH | data | Evidence | session_id | P11.10: 8/9 linked |
+| GAP-EVIDENCE-002 | OPEN | Evidence only reads .md files | LOW | functionality | Evidence | file_types | P11.8 Audit |
+| GAP-DECISION-001 | OPEN | Decision linked_rules not exposed in API | MEDIUM | api | Decision | linked_rules | P11.8 Audit |
 
 ### Mock/Stub Technical Debt (P10.1-P10.3) - TO BE REMOVED
 
 > **Per User Directive:** All mocked/stubbed data MUST be replaced with realtime TypeDB + Document MCP queries
 
-| ID | Stub Location | Task | Priority | Target Data Source |
-|----|---------------|------|----------|-------------------|
-| GAP-STUB-001 | `governance/api.py:401` `_tasks_store: Dict` | P10.1 | CRITICAL | TypeDB `task` entity |
-| GAP-STUB-002 | `governance/api.py:151-293` `seed_tasks` | P10.1 | CRITICAL | TypeDB + workspace TODO.md |
-| GAP-STUB-003 | `governance/api.py:470` `_sessions_store: Dict` | P10.2 | CRITICAL | TypeDB `session` entity |
-| GAP-STUB-004 | `governance/api.py:302-375` `seed_sessions` | P10.2 | CRITICAL | TypeDB + session evidence files |
-| GAP-STUB-005 | `governance/api.py:558-604` `_agents_store: Dict` | P10.3 | HIGH | TypeDB `agent` entity |
-| GAP-STUB-006 | `agent/governance_ui/data_access.py:42` `get_proposals()` | P10.7 | MEDIUM | TypeDB `proposal` entity |
-| GAP-STUB-007 | `agent/governance_ui/data_access.py:48` `get_escalated_proposals()` | P10.7 | MEDIUM | TypeDB `proposal` with escalation |
+| ID | Status | Stub Location | Task | Priority | Target Data Source |
+|----|--------|---------------|------|----------|-------------------|
+| GAP-STUB-001 | OPEN | `governance/api.py:401` `_tasks_store: Dict` | P10.1 | CRITICAL | TypeDB `task` entity |
+| GAP-STUB-002 | OPEN | `governance/api.py:151-293` `seed_tasks` | P10.1 | CRITICAL | TypeDB + workspace TODO.md |
+| GAP-STUB-003 | OPEN | `governance/api.py:470` `_sessions_store: Dict` | P10.2 | CRITICAL | TypeDB `session` entity |
+| GAP-STUB-004 | OPEN | `governance/api.py:302-375` `seed_sessions` | P10.2 | CRITICAL | TypeDB + session evidence files |
+| GAP-STUB-005 | OPEN | `governance/api.py:558-604` `_agents_store: Dict` | P10.3 | HIGH | TypeDB `agent` entity |
+| GAP-STUB-006 | OPEN | `agent/governance_ui/data_access.py:42` `get_proposals()` | P10.7 | MEDIUM | TypeDB `proposal` entity |
+| GAP-STUB-007 | OPEN | `agent/governance_ui/data_access.py:48` `get_escalated_proposals()` | P10.7 | MEDIUM | TypeDB `proposal` with escalation |
 
 ### User Feedback Gaps (2024-12-26 Session)
 
 > **Source:** User feedback during TODO-6 development
 > **Note:** IDs corrected 2026-01-01 (previously duplicated GAP-UI-040-044)
 
-| ID | Gap | Priority | Category | Entity | Evidence |
-|----|-----|----------|----------|--------|----------|
-| GAP-UI-047 | Rules tab: No directive/description shown | HIGH | ui | Rule | User feedback |
-| GAP-UI-048 | No entity relationships displayed in UI | HIGH | ui | All | User feedback |
-| GAP-UI-049 | Tasks: No description, no linkage to sessions/evidence/rules | HIGH | ui | Task | User feedback |
-| GAP-UI-050 | Session evidence tab has no data | HIGH | functionality | Session | User feedback |
-| GAP-UI-051 | Real-time rule monitoring tab not functional | HIGH | functionality | Monitor | User feedback |
+| ID | Status | Gap | Priority | Category | Entity | Evidence |
+|----|--------|-----|----------|----------|--------|----------|
+| GAP-UI-047 | OPEN | Rules tab: No directive/description shown | HIGH | ui | Rule | User feedback |
+| GAP-UI-048 | OPEN | No entity relationships displayed in UI | HIGH | ui | All | User feedback |
+| GAP-UI-049 | OPEN | Tasks: No description, no linkage to sessions/evidence/rules | HIGH | ui | Task | User feedback |
+| GAP-UI-050 | OPEN | Session evidence tab has no data | HIGH | functionality | Session | User feedback |
+| GAP-UI-051 | OPEN | Real-time rule monitoring tab not functional | HIGH | functionality | Monitor | User feedback |
 
 ### Document MCP Gaps (2024-12-27 Assessment)
 
 > **Source:** Platform usability assessment - user cannot view documents in evidence/task/rule links
 
-| ID | Gap | Priority | Category | Entity | Evidence |
-|----|-----|----------|----------|--------|----------|
-| ~~GAP-DOC-001~~ | ~~No Document viewing MCP for rule markdown files~~ | ~~CRITICAL~~ | ~~functionality~~ | ~~Rule~~ | **RESOLVED** governance_get_rule_document, governance_get_document |
-| ~~GAP-DOC-002~~ | ~~No Document viewing MCP for evidence files~~ | ~~CRITICAL~~ | ~~functionality~~ | ~~Evidence~~ | **RESOLVED** governance_get_document, governance_list_documents |
-| GAP-DOC-003 | No TypeDB→Document sync architecture | HIGH | architecture | All | R&D-BACKLOG DOC-001 |
-| GAP-DOC-004 | No Document version tracking in TypeDB | MEDIUM | architecture | All | R&D-BACKLOG DOC-004 |
+| ID | Status | Gap | Priority | Category | Entity | Evidence |
+|----|--------|-----|----------|----------|--------|----------|
+| GAP-DOC-001 | RESOLVED | No Document viewing MCP for rule markdown files | CRITICAL | functionality | Rule | governance_get_rule_document |
+| GAP-DOC-002 | RESOLVED | No Document viewing MCP for evidence files | CRITICAL | functionality | Evidence | governance_get_document |
+| GAP-DOC-003 | OPEN | No TypeDB→Document sync architecture | HIGH | architecture | All | R&D-BACKLOG DOC-001 |
+| GAP-DOC-004 | OPEN | No Document version tracking in TypeDB | MEDIUM | architecture | All | R&D-BACKLOG DOC-004 |
 
 ### Platform UI Gaps (2024-12-27 Assessment)
 
@@ -243,10 +244,10 @@ Session: EXP-P10-001 | Date: 2024-12-25 | Target: Governance Dashboard
 > **Related:** RULE-011 (Multi-Agent Governance), RULE-014 (Autonomous Task Sequencing)
 > **Design Doc:** [DESIGN-Governance-MCP.md](../DESIGN-Governance-MCP.md)
 
-| ID | Gap | Priority | Category | Entity | Evidence |
-|----|-----|----------|----------|--------|----------|
-| GAP-UI-CHAT-001 | Platform UI has no prompt/chat functionality for commanding agents | **CRITICAL** | functionality | Agent | User feedback 2024-12-27 |
-| GAP-UI-CHAT-002 | No agent interaction UI (send tasks, receive responses, view execution) | **CRITICAL** | functionality | Agent | Platform requirement |
+| ID | Status | Gap | Priority | Category | Entity | Evidence |
+|----|--------|-----|----------|----------|--------|----------|
+| GAP-UI-CHAT-001 | OPEN | Platform UI has no prompt/chat functionality for commanding agents | CRITICAL | functionality | Agent | User feedback 2024-12-27 |
+| GAP-UI-CHAT-002 | OPEN | No agent interaction UI (send tasks, receive responses, view execution) | CRITICAL | functionality | Agent | Platform requirement |
 
 #### GAP-UI-CHAT-001/002 Requirements Specification
 
@@ -302,9 +303,9 @@ Session: EXP-P10-001 | Date: 2024-12-25 | Target: Governance Dashboard
 
 ### R&D Assessment Gaps (2024-12-31)
 
-| ID | Gap | Priority | Category | Evidence |
-|----|-----|----------|----------|----------|
-| GAP-RD-001 | Kanren integration benefit assessment: Has KAN-001/KAN-002 improved workflow stability? | MEDIUM | assessment | RD-KANREN-CONTEXT.md: 39 tests pass, but real-world usage not measured |
+| ID | Status | Gap | Priority | Category | Evidence |
+|----|--------|-----|----------|----------|----------|
+| GAP-RD-001 | OPEN | Kanren integration benefit assessment: Has KAN-001/KAN-002 improved workflow stability? | MEDIUM | assessment | RD-KANREN-CONTEXT.md: 39 tests pass, but real-world usage not measured |
 
 **GAP-RD-001 Assessment Criteria:**
 - **KAN-001/KAN-002 Status:** ✅ DONE (governance/kanren_constraints.py, 39 tests)
@@ -323,13 +324,13 @@ Session: EXP-P10-001 | Date: 2024-12-25 | Target: Governance Dashboard
 
 ### Infrastructure Gaps (2024-12-31)
 
-| ID | Gap | Priority | Category | Evidence |
-|----|-----|----------|----------|----------|
-| ~~GAP-INFRA-001~~ | ~~Docker health checks misconfigured~~ | ~~HIGH~~ | ~~infrastructure~~ | **RESOLVED** 2024-12-31: ChromaDB v1→v2, LiteLLM /health→/health/liveliness |
-| ~~GAP-INFRA-002~~ | ~~Dev vs Prod dashboard workflow undocumented~~ | ~~HIGH~~ | ~~documentation~~ | **RESOLVED** 2024-12-31: DEPLOYMENT.md "Development vs Production Mode" section |
-| ~~GAP-INFRA-003~~ | ~~deploy.ps1 missing dev profile support~~ | ~~MEDIUM~~ | ~~tooling~~ | **RESOLVED** 2024-12-31: Added 'dev' to ValidateSet, updated docs/endpoints |
-| GAP-INFRA-004 | No Docker infrastructure health dashboard or startup validation | HIGH | observability | User 2024-12-31: "rules system damaged, blocks cognition of infrastructure" |
-| GAP-INFRA-006 | Ollama container suboptimal for laptop dev workflow - high memory usage | MEDIUM | infrastructure | User 2024-12-31: May need to disable for DEV, use Claude API for strategic work |
+| ID | Status | Gap | Priority | Category | Evidence |
+|----|--------|-----|----------|----------|----------|
+| GAP-INFRA-001 | RESOLVED | Docker health checks misconfigured | HIGH | infrastructure | 2024-12-31: ChromaDB v1→v2, LiteLLM /health→/health/liveliness |
+| GAP-INFRA-002 | RESOLVED | Dev vs Prod dashboard workflow undocumented | HIGH | documentation | DEPLOYMENT.md "Development vs Production Mode" section |
+| GAP-INFRA-003 | RESOLVED | deploy.ps1 missing dev profile support | MEDIUM | tooling | Added 'dev' to ValidateSet, updated docs/endpoints |
+| GAP-INFRA-004 | OPEN | No Docker infrastructure health dashboard or startup validation | HIGH | observability | User 2024-12-31: "rules system damaged, blocks cognition" |
+| GAP-INFRA-006-DUP | OPEN | Ollama container suboptimal for laptop dev workflow - high memory usage | MEDIUM | infrastructure | May need to disable for DEV, use Claude API |
 
 **GAP-INFRA-006 Analysis:**
 - **Issue:** Ollama-1 container consumes significant laptop memory (models loaded)
@@ -417,9 +418,9 @@ Session: EXP-P10-001 | Date: 2024-12-25 | Target: Governance Dashboard
 
 ### Dashboard Logging Gaps (2024-12-31)
 
-| ID | Gap | Priority | Category | Evidence |
-|----|-----|----------|----------|----------|
-| GAP-LOG-001 | Unclear Trame dashboard UI logs - tokenization messages not documented | LOW | observability | User 2024-12-31 |
+| ID | Status | Gap | Priority | Category | Evidence |
+|----|--------|-----|----------|----------|----------|
+| GAP-LOG-001 | OPEN | Unclear Trame dashboard UI logs - tokenization messages not documented | LOW | observability | User 2024-12-31 |
 
 **GAP-LOG-001 Evidence:**
 ```
@@ -439,11 +440,11 @@ INFO after: v-if = backlog_agent_id && claimed_tasks.length === 0  core.py:614
 
 > **Source:** User observation - agent forgetting technology decisions (Trame/Vuetify)
 
-| ID | Gap | Priority | Category | Evidence |
-|----|-----|----------|----------|----------|
-| GAP-CTX-001 | Agent unaware of technology decisions (Trame/Vuetify) during refactoring | **CRITICAL** | memory | User 2024-12-28 |
-| GAP-CTX-002 | AMNESIA protocol not auto-loading DECISION-* context | HIGH | process | RULE-024 violation |
-| GAP-CTX-003 | Duplicate memory systems (claude-mem vs TypeDB) need consolidation | HIGH | architecture | User 2024-12-28 |
+| ID | Status | Gap | Priority | Category | Evidence |
+|----|--------|-----|----------|----------|----------|
+| GAP-CTX-001 | OPEN | Agent unaware of technology decisions (Trame/Vuetify) during refactoring | CRITICAL | memory | User 2024-12-28 |
+| GAP-CTX-002 | OPEN | AMNESIA protocol not auto-loading DECISION-* context | HIGH | process | RULE-024 violation |
+| GAP-CTX-003 | OPEN | Duplicate memory systems (claude-mem vs TypeDB) need consolidation | HIGH | architecture | User 2024-12-28 |
 
 **GAP-CTX-003: claude-mem vs TypeDB Memory Decision Needed**
 | Aspect | claude-mem (ChromaDB) | TypeDB Governance |
@@ -463,20 +464,20 @@ INFO after: v-if = backlog_agent_id && claimed_tasks.length === 0  core.py:614
 > **Source:** DSP Audit - RULE-012 Semantic Code Structure violation
 > **Rule:** Files >300 lines MUST be restructured during DSP night cycles
 
-| ID | Gap | Priority | Category | File | Lines | Evidence |
-|----|-----|----------|----------|------|-------|----------|
-| ~~GAP-FILE-001~~ | ~~governance_dashboard.py exceeds 300 line limit~~ | ~~CRITICAL~~ | ~~architecture~~ | ~~agent/governance_dashboard.py~~ | ~~3404→1305~~ | **RESOLVED** 2024-12-28 |
-| ~~GAP-FILE-002~~ | ~~governance/api.py exceeds 300 line limit~~ | ~~CRITICAL~~ | ~~architecture~~ | ~~governance/api.py~~ | ~~2357→198~~ | **RESOLVED** 2024-12-28 |
-| ~~GAP-FILE-003~~ | ~~governance/client.py exceeds 300 line limit~~ | ~~CRITICAL~~ | ~~architecture~~ | ~~governance/client.py~~ | ~~1389→135~~ | **RESOLVED** 2024-12-28 |
-| ~~GAP-FILE-004~~ | ~~agent/governance_ui/state.py exceeds 300 line limit~~ | ~~CRITICAL~~ | ~~architecture~~ | ~~agent/governance_ui/state.py~~ | ~~1547→34~~ | **RESOLVED** 2024-12-28 |
-| ~~GAP-FILE-005~~ | ~~agent/governance_dashboard.py controllers exceed inline limit~~ | ~~HIGH~~ | ~~architecture~~ | ~~agent/governance_dashboard.py~~ | ~~1159→592~~ | **RESOLVED** 2024-12-28 |
-| ~~GAP-FILE-006~~ | ~~agent/governance_ui/data_access.py exceeds 300 line limit~~ | ~~CRITICAL~~ | ~~architecture~~ | ~~agent/governance_ui/data_access.py~~ | ~~1170→85~~ | **RESOLVED** 2024-12-28 |
-| ~~GAP-FILE-007~~ | ~~governance/mcp_server.py exceeds 300 line limit~~ | ~~CRITICAL~~ | ~~architecture~~ | ~~governance/mcp_server.py~~ | ~~897→120~~ | **RESOLVED** 2024-12-28 |
-| ~~GAP-FILE-008~~ | ~~governance/mcp_tools/evidence.py exceeds 300 line limit~~ | ~~HIGH~~ | ~~architecture~~ | ~~governance/mcp_tools/evidence.py~~ | ~~870→42~~ | **RESOLVED** 2024-12-28 |
-| ~~GAP-FILE-009~~ | ~~governance/langgraph_workflow.py exceeds 300 line limit~~ | ~~MEDIUM~~ | ~~architecture~~ | ~~governance/langgraph_workflow.py~~ | ~~851→136~~ | **RESOLVED** 2024-12-28 |
-| ~~GAP-FILE-010~~ | ~~governance/pydantic_tools.py exceeds 300 line limit~~ | ~~MEDIUM~~ | ~~architecture~~ | ~~governance/pydantic_tools.py~~ | ~~807→175~~ | **RESOLVED** 2024-12-28 |
-| ~~GAP-FILE-011~~ | ~~agent/external_mcp_tools.py exceeds 300 line limit~~ | ~~MEDIUM~~ | ~~architecture~~ | ~~agent/external_mcp_tools.py~~ | ~~791→115~~ | **RESOLVED** 2024-12-28 |
-| ~~GAP-FILE-012~~ | ~~governance/hybrid_router.py exceeds 300 line limit~~ | ~~MEDIUM~~ | ~~architecture~~ | ~~governance/hybrid_router.py~~ | ~~742→99~~ | **RESOLVED** 2024-12-28 |
+| ID | Status | Gap | Priority | Category | File | Lines | Evidence |
+|----|--------|-----|----------|----------|------|-------|----------|
+| GAP-FILE-001 | RESOLVED | governance_dashboard.py exceeds 300 line limit | CRITICAL | architecture | agent/governance_dashboard.py | 3404→1305 | 2024-12-28 |
+| GAP-FILE-002 | RESOLVED | governance/api.py exceeds 300 line limit | CRITICAL | architecture | governance/api.py | 2357→198 | 2024-12-28 |
+| GAP-FILE-003 | RESOLVED | governance/client.py exceeds 300 line limit | CRITICAL | architecture | governance/client.py | 1389→135 | 2024-12-28 |
+| GAP-FILE-004 | RESOLVED | agent/governance_ui/state.py exceeds 300 line limit | CRITICAL | architecture | agent/governance_ui/state.py | 1547→34 | 2024-12-28 |
+| GAP-FILE-005 | RESOLVED | agent/governance_dashboard.py controllers exceed inline limit | HIGH | architecture | agent/governance_dashboard.py | 1159→592 | 2024-12-28 |
+| GAP-FILE-006 | RESOLVED | agent/governance_ui/data_access.py exceeds 300 line limit | CRITICAL | architecture | agent/governance_ui/data_access.py | 1170→85 | 2024-12-28 |
+| GAP-FILE-007 | RESOLVED | governance/mcp_server.py exceeds 300 line limit | CRITICAL | architecture | governance/mcp_server.py | 897→120 | 2024-12-28 |
+| GAP-FILE-008 | RESOLVED | governance/mcp_tools/evidence.py exceeds 300 line limit | HIGH | architecture | governance/mcp_tools/evidence.py | 870→42 | 2024-12-28 |
+| GAP-FILE-009 | RESOLVED | governance/langgraph_workflow.py exceeds 300 line limit | MEDIUM | architecture | governance/langgraph_workflow.py | 851→136 | 2024-12-28 |
+| GAP-FILE-010 | RESOLVED | governance/pydantic_tools.py exceeds 300 line limit | MEDIUM | architecture | governance/pydantic_tools.py | 807→175 | 2024-12-28 |
+| GAP-FILE-011 | RESOLVED | agent/external_mcp_tools.py exceeds 300 line limit | MEDIUM | architecture | agent/external_mcp_tools.py | 791→115 | 2024-12-28 |
+| GAP-FILE-012 | RESOLVED | governance/hybrid_router.py exceeds 300 line limit | MEDIUM | architecture | governance/hybrid_router.py | 742→99 | 2024-12-28 |
 
 **Resolution GAP-FILE-002 (2024-12-28):**
 - ✅ 8 route modules extracted to `governance/routes/`
@@ -904,13 +905,13 @@ governance/
 
 > **Source:** Agent Task Backlog tab not functional - agents not picking up tasks
 
-| ID | Gap | Priority | Category | Entity | Evidence |
-|----|-----|----------|----------|--------|----------|
-| ~~GAP-AGENT-010~~ | ~~Agent Task Backlog tab shows tasks but agents don't execute~~ | HIGH | functionality | Agent | RESOLVED: OrchestratorEngine integrated into playground.py (2026-01-01) |
-| ~~GAP-AGENT-011~~ | ~~No agent polling/subscription for new tasks~~ | HIGH | architecture | Agent | RESOLVED: TypeDBTaskPoller + OrchestratorEngine polling loop (2026-01-01) |
-| GAP-AGENT-012 | No task claim/lock mechanism for multi-agent coordination | HIGH | architecture | Task | PARTIAL: claim_task() implemented, atomic locking TBD |
-| ~~GAP-AGENT-013~~ | ~~No delegation protocol when agent needs more context~~ | HIGH | architecture | Agent | RESOLVED: DelegationProtocol in delegation.py (ORCH-004) |
-| ~~GAP-AGENT-014~~ | ~~Rules Curator agent not implemented~~ | MEDIUM | functionality | Agent | RESOLVED: RulesCuratorAgent in curator_agent.py (ORCH-005) |
+| ID | Status | Gap | Priority | Category | Entity | Evidence |
+|----|--------|-----|----------|----------|--------|----------|
+| GAP-AGENT-010 | RESOLVED | Agent Task Backlog tab shows tasks but agents don't execute | HIGH | functionality | Agent | OrchestratorEngine integrated into playground.py (2026-01-01) |
+| GAP-AGENT-011 | RESOLVED | No agent polling/subscription for new tasks | HIGH | architecture | Agent | TypeDBTaskPoller + OrchestratorEngine polling loop (2026-01-01) |
+| GAP-AGENT-012 | PARTIAL | No task claim/lock mechanism for multi-agent coordination | HIGH | architecture | Task | claim_task() implemented, atomic locking TBD |
+| GAP-AGENT-013 | RESOLVED | No delegation protocol when agent needs more context | HIGH | architecture | Agent | DelegationProtocol in delegation.py (ORCH-004) |
+| GAP-AGENT-014 | RESOLVED | Rules Curator agent not implemented | MEDIUM | functionality | Agent | RulesCuratorAgent in curator_agent.py (ORCH-005) |
 
 **Stub Migration Strategy:**
 1. **TypeDB Schema Update** (`governance/schema.tql`): Add `task`, `session`, `proposal` entities
@@ -920,58 +921,22 @@ governance/
 
 ---
 
-## Resolved Gaps
+## Resolved Gaps (Summary)
+
+> **Note:** All gaps now use Status column in main tables above. This summary lists resolved gaps with dates.
 
 | ID | Gap | Resolution | Date |
 |----|-----|------------|------|
-| GAP-ARCH-001 | Tasks in-memory, not TypeDB | Hybrid: TypeDB client CRUD + in-memory fallback in api.py | 2024-12-27 |
-| GAP-ARCH-002 | Sessions in-memory, not TypeDB | Hybrid: TypeDB client CRUD + in-memory fallback in api.py | 2024-12-27 |
-| GAP-ARCH-003 | Agents in-memory, not TypeDB | Hybrid: TypeDB registry + local persistent metrics | 2024-12-27 |
-| GAP-020 | Cross-project knowledge queries | MCP-USAGE.md Section 8 + claude-mem patterns | 2024-12-27 |
-| GAP-SEC-001 | No API authentication middleware | AuthMiddleware + X-API-Key header + GOVERNANCE_API_KEY env | 2024-12-27 |
-| GAP-ARCH-011 | TypeDB migration incomplete (claude-mem disconnected) | P11.4: session_memory.py + DSM tracker integration | 2024-12-26 |
-| GAP-PROC-001 | Memory/context loss - no wisdom accumulation | P11.4: SessionContext, SessionMemoryManager, AMNESIA recovery | 2024-12-26 |
-| GAP-DATA-002 | No entity relationships (Task→Rule, Session→Evidence) | P11.3: TypeDB schema + 5 sessions + 5 evidence + linkages | 2024-12-26 |
-| GAP-TDD-001 | Task response missing 'phase' field | Fixed governance_list_tasks in mcp_server.py | 2024-12-26 |
-| GAP-TDD-002 | Evidence search missing 'query'/'score' | Fixed governance_evidence_search in mcp_server.py | 2024-12-26 |
-| GAP-MCP-001 | Governance MCP not visible in Claude Code | Created .mcp.json at project root | 2024-12-26 |
-| GAP-DSP-001 | MCP tools not registered | FALSE POSITIVE - 40 tools registered via mcp_tools pkg | 2024-12-26 |
-| GAP-ARCH-004 | TypeDB missing RULE-012 to RULE-025 | Reloaded data.tql with 25 rules | 2024-12-26 |
-| GAP-ARCH-005 | No MCP tools for Tasks/Sessions | Created mcp_tools/tasks.py (5 tools) + agents.py (4 tools) | 2024-12-26 |
-| GAP-ARCH-006 | Session/Task MCP exports missing | Added 15 backward compat exports | 2024-12-26 |
-| GAP-UI-004 | No REST API endpoints | Created governance/api.py (23 endpoints) | 2024-12-26 |
-| GAP-UI-031 | Rule Save mock-only | Wired to REST API via httpx | 2024-12-26 |
-| GAP-UI-032 | Rule Delete mock-only | Wired to REST API via httpx | 2024-12-26 |
-| GAP-035 | FastAPI/Starlette version mismatch | Updated FastAPI to 0.127.0 | 2024-12-26 |
-| GAP-UI-035 | UI views don't auto-load data on open | P11.1: Added @state.change handler | 2024-12-26 |
-| GAP-FILE-001 | governance_dashboard.py exceeds 300 line limit | Modularized 3404→1305 lines (62% reduction), 12 view modules | 2024-12-28 |
-| GAP-FILE-002 | governance/api.py exceeds 300 line limit | Modularized 2357→198 lines (92% reduction), 8 route modules | 2024-12-28 |
-| GAP-FILE-003 | governance/client.py exceeds 300 line limit | Modularized 1389→135 lines (90% reduction), 6 typedb modules | 2024-12-28 |
-| GAP-FILE-004 | agent/governance_ui/state.py exceeds 300 line limit | Modularized 1547→34 lines (98% reduction), 11 state modules | 2024-12-28 |
-| GAP-FILE-005 | governance_dashboard.py controllers exceed inline limit | Modularized 1159→592 lines (49% reduction), 10 controller modules | 2024-12-28 |
-| GAP-FILE-006 | agent/governance_ui/data_access.py exceeds 300 line limit | Modularized 1170→85 lines (93% reduction), 8 data access modules | 2024-12-28 |
-| GAP-FILE-007 | governance/mcp_server.py exceeds 300 line limit | Modularized 897→120 lines (87% reduction), 7 compat modules | 2024-12-28 |
-| GAP-FILE-008 | governance/mcp_tools/evidence.py exceeds 300 line limit | Modularized 870→42 lines (95% reduction), 6 evidence modules | 2024-12-28 |
-| GAP-FILE-009 | governance/langgraph_workflow.py exceeds 300 line limit | Modularized 851→136 lines (84% reduction), 5 langgraph modules | 2024-12-28 |
-| GAP-FILE-010 | governance/pydantic_tools.py exceeds 300 line limit | Modularized 807→175 lines (78% reduction), 8 pydantic modules | 2024-12-28 |
-| GAP-FILE-011 | agent/external_mcp_tools.py exceeds 300 line limit | Modularized 791→115 lines (85% reduction), 6 external MCP modules | 2024-12-28 |
-| GAP-FILE-012 | governance/hybrid_router.py exceeds 300 line limit | Modularized 742→99 lines (87% reduction), 3 hybrid modules | 2024-12-28 |
-| GAP-UI-023 | VDataTable binding fails in Trame | Replaced with VList | 2024-12-25 |
-| GAP-UI-024 | Add Rule button crashes (TypeError) | Direct state assignment | 2024-12-25 |
-| GAP-UI-025 | Rule items not clickable | Added click handler | 2024-12-25 |
-| GAP-UI-026 | Search does not filter results | Added v-show filter | 2024-12-25 |
-| GAP-UI-027 | Status filter shows corrupted options | State-bound items | 2024-12-25 |
-| GAP-029 | TypeDB driver 3.x incompatibility in Docker | Pin to <3.0.0 | 2024-12-25 |
-| GAP-030 | Trame server exits on idle (no connections) | timeout=0 in server.start() | 2024-12-25 |
-| GAP-001 | ChromaDB Knowledge Integration | HttpClient injection | 2024-12-24 |
-| GAP-002 | Opik Tracing Integration | OPIK_URL_OVERRIDE | 2024-12-24 |
-| GAP-003 | Ollama Model Pull | gemma3:4b | 2024-12-24 |
-| GAP-011 | OctoCode MCP not in use | GITHUB_PAT configured | 2024-12-24 |
-| GAP-012 | TypeDB R&D | Phase 1+2 complete | 2024-12-24 |
-| GAP-013 | MCPs tested but not invoked | DECISION-001 | 2024-12-24 |
-| GAP-016 | ChromaDB sync TDD stubs | test_chromadb_sync.py | 2024-12-24 |
-| GAP-017 | Pre-commit hooks | Duplicate of GAP-009 | 2024-12-24 |
-| GAP-018 | Session documentation workflow | SESSION-TEMPLATE.md | 2024-12-24 |
+| GAP-WORKFLOW-003 | GAP-INDEX strikethrough → Status column | 2026-01-02: This migration | 2026-01-02 |
+| GAP-MCP-003 | governance_health not called at session start | Non-blocking healthcheck with retry | 2026-01-01 |
+| GAP-ARCH-001 | Tasks in-memory, not TypeDB | Hybrid: TypeDB + fallback | 2024-12-27 |
+| GAP-ARCH-002 | Sessions in-memory, not TypeDB | Hybrid: TypeDB + fallback | 2024-12-27 |
+| GAP-ARCH-003 | Agents in-memory, not TypeDB | Hybrid: TypeDB + fallback | 2024-12-27 |
+| GAP-FILE-001-012 | 12 files exceeding 300 line limit | Modularized all (avg 85% reduction) | 2024-12-28 |
+| GAP-UI-004 | No REST API endpoints | governance/api.py (23 endpoints) | 2024-12-26 |
+| GAP-SEC-001 | No API authentication | AuthMiddleware + X-API-Key | 2024-12-27 |
+| GAP-DOC-001-002 | No document viewing MCP | governance_get_document tools | 2024-12-27 |
+| GAP-AGENT-010-014 | Agent orchestration gaps | OrchestratorEngine + delegation | 2026-01-01 |
 
 ---
 
