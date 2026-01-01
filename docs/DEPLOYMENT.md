@@ -69,6 +69,100 @@ notepad .env  # Set your ANTHROPIC_API_KEY
 
 # Full profile with UI
 .\deploy.ps1 -Action up -Profile full
+
+# Dev profile with live reload
+docker compose --profile dev up -d
+```
+
+---
+
+## Development vs Production Mode
+
+### Overview
+
+The Governance Dashboard has two deployment modes to support different workflows:
+
+| Mode | Container | Port | Code Loading | Use Case |
+|------|-----------|------|--------------|----------|
+| **Production** | `governance-dashboard` | 8081 | Baked into image | CI/CD, demos, testing |
+| **Development** | `governance-dashboard-dev` | 8081 | Volume-mounted | Live code editing |
+
+### Port Conflict Warning
+
+**Both modes use port 8081 - they are mutually exclusive.**
+
+Only one dashboard container can run at a time. Docker will fail to start the second container with a port binding error.
+
+### Production Mode (cpu/full profiles)
+
+Code is baked into the Docker image at build time.
+
+```powershell
+# Start production dashboard
+.\deploy.ps1 -Action up -Profile cpu
+
+# Or rebuild with latest code
+.\deploy.ps1 -Action rebuild
+```
+
+**When to use:**
+- Running automated tests
+- CI/CD pipelines
+- Demos and presentations
+- Verifying changes work in container
+
+### Development Mode (dev profile)
+
+Code is volume-mounted from local filesystem for live editing.
+
+```powershell
+# Stop production dashboard first (if running)
+docker stop sim-ai-governance-dashboard-1
+
+# Start development dashboard
+docker compose --profile dev up -d governance-dashboard-dev
+
+# Verify it's running
+docker ps | Select-String governance-dashboard-dev
+```
+
+**Volume Mounts (read-only):**
+```
+./agent      → /app/agent
+./governance → /app/governance
+./docs       → /app/docs
+./evidence   → /app/evidence
+```
+
+**When to use:**
+- Active development
+- Debugging UI issues
+- Testing code changes without rebuilding
+
+### Switching Between Modes
+
+```powershell
+# From prod to dev
+docker stop sim-ai-governance-dashboard-1
+docker compose --profile dev up -d governance-dashboard-dev
+
+# From dev to prod
+docker stop sim-ai-governance-dashboard-dev-1
+.\deploy.ps1 -Action up -Profile cpu
+
+# Or just rebuild and restart
+.\deploy.ps1 -Action rebuild
+```
+
+### Verifying Which Mode is Running
+
+```powershell
+# List running containers
+docker ps --format "table {{.Names}}\t{{.Status}}"
+
+# Should see ONE of:
+# - sim-ai-governance-dashboard-1     (production)
+# - sim-ai-governance-dashboard-dev-1 (development)
 ```
 
 ---
@@ -180,4 +274,4 @@ jobs:
 
 ---
 
-**Last Updated:** 2024-12-24
+**Last Updated:** 2024-12-31

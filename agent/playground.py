@@ -225,7 +225,7 @@ def main():
         # Serve static UI (Phase 6.3)
         from fastapi.staticfiles import StaticFiles
         from fastapi.responses import FileResponse
-        import os
+        # Note: os is already imported at module level - do not re-import
 
         static_dir = os.path.join(os.path.dirname(__file__), "static")
         if os.path.exists(static_dir):

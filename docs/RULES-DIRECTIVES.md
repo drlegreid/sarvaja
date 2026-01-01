@@ -1,6 +1,6 @@
 # Sim.ai Rules Directives - Index
 
-**Status:** Active | **Updated:** 2024-12-25 | **Rules:** 24 (22 ACTIVE, 2 DRAFT)
+**Status:** Active | **Updated:** 2024-12-28 | **Rules:** 30 (27 ACTIVE, 3 DRAFT)
 
 ---
 
@@ -8,9 +8,9 @@
 
 | Document | Content | Rules |
 |----------|---------|-------|
-| [RULES-GOVERNANCE](rules/RULES-GOVERNANCE.md) | Process, documentation, collaboration, reporting | 001, 003, 006, 011, 013, 018, 019 |
+| [RULES-GOVERNANCE](rules/RULES-GOVERNANCE.md) | Process, documentation, collaboration, reporting | 001, 003, 006, 011, 013, 018, 019, 026, 029 |
 | [RULES-TECHNICAL](rules/RULES-TECHNICAL.md) | Architecture, technology, infrastructure | 002, 007, 008, 009, 010, 016, 017 |
-| [RULES-OPERATIONAL](rules/RULES-OPERATIONAL.md) | Testing, stability, maintenance, execution, security | 004, 005, 012, 014, 015, 020, 021, 022, 023, 024 |
+| [RULES-OPERATIONAL](rules/RULES-OPERATIONAL.md) | Testing, stability, maintenance, execution, security | 004, 005, 012, 014, 015, 020, 021, 022, 023, 024, 027, 028, 030 |
 
 ---
 
@@ -42,6 +42,12 @@
 | RULE-022 | Integrity Verification (Frankel Hash) | security | HIGH | DRAFT |
 | RULE-023 | Test Before Ship | quality | CRITICAL | ACTIVE |
 | RULE-024 | AMNESIA Protocol (Context Recovery) | maintenance | CRITICAL | ACTIVE |
+| RULE-025 | Test Data Integrity Requirements | testing | HIGH | DRAFT |
+| RULE-026 | Decision Context Communication | governance | HIGH | ACTIVE |
+| RULE-027 | API Server Restart Protocol | testing | HIGH | ACTIVE |
+| RULE-028 | Change Validation Protocol | testing | HIGH | ACTIVE |
+| RULE-029 | Executive Reporting Pattern | reporting | HIGH | ACTIVE |
+| RULE-030 | Docker Dev Container Workflow | development | HIGH | ACTIVE |
 
 ---
 
@@ -55,12 +61,13 @@
 | `architecture` | HIGH | 002 |
 | `devops` | CRITICAL | 009, 016 |
 | `productivity` | HIGH | 007 |
-| `testing` | HIGH | 004, 020 |
+| `testing` | HIGH | 004, 020, 025, 027, 028 |
 | `stability` | CRITICAL | 005, 021 |
 | `maintenance` | CRITICAL | 012, 024 |
-| `reporting` | HIGH | 018, 019 |
+| `reporting` | HIGH | 018, 019, 029 |
 | `security` | HIGH | 022 |
 | `quality` | CRITICAL | 023 |
+| `development` | HIGH | 030 |
 
 ---
 
@@ -134,6 +141,11 @@ Rules are enforced via:
 | 1.8.0 | 2024-12-25 | Enhanced RULE-012: Added Semantic Code Structure (DSP Hygiene) - FP + Digital Twin paradigm |
 | 1.9.0 | 2024-12-25 | Enhanced RULE-011: Added R&D Rule Quality & Decomposition (Category/Group Theory patterns) |
 | 2.0.0 | 2024-12-25 | Added RULE-024: AMNESIA Protocol (Autonomous Context Recovery) |
+| 2.1.0 | 2024-12-26 | Added RULE-025: Test Data Integrity Requirements |
+| 2.2.0 | 2024-12-26 | Added RULE-027: API Server Restart Protocol (TODO-6 discovery) |
+| 2.3.0 | 2024-12-27 | Added RULE-028: Change Validation Protocol (exploratory heuristics) |
+| 2.4.0 | 2024-12-27 | Added RULE-029: Executive Reporting Pattern (enterprise reporting) |
+| 2.5.0 | 2024-12-28 | Added RULE-030: Docker Dev Container Workflow (autonomous validation) |
 
 ---
 

@@ -345,4 +345,56 @@ Before implementing:
 
 ---
 
+## RULE-025: Test Data Integrity Requirements
+
+**Category:** `testing` | **Priority:** HIGH | **Status:** DRAFT
+
+### Directive
+
+All tests that verify UI functionality MUST include API data validation assertions. A test that passes with empty data is not a valid test.
+
+### Requirements
+
+1. **API Data Validation**: Before UI validation, verify API returns non-empty data
+2. **Fail on Empty**: If data is empty, test MUST FAIL with diagnostic message
+3. **No Skipped Data Assertions**: E2E tests must not skip data-dependent assertions
+4. **Realistic Mocks**: Mocks must return realistic data, not empty collections
+
+### Anti-Patterns
+
+| ❌ Don't | ✅ Do Instead |
+|----------|---------------|
+| `assert isinstance(result, list)` | `assert len(result) > 0, "Expected data from API"` |
+| `@skipif(True, reason="Requires DB")` | Only skip after checking availability |
+| `mock.return_value = []` | `mock.return_value = [realistic_test_data]` |
+| Test imports only | Test actual data display |
+| Test type returns | Test content correctness |
+
+### Exploratory Test Heuristics
+
+Per user feedback: "Exploratory tests should have exposed gaps long ago"
+
+| Heuristic | Implementation |
+|-----------|----------------|
+| **API Data Available** | Query API, verify >0 items before UI test |
+| **Data Visible** | If API returns data, UI MUST display it |
+| **Empty State Handled** | If API empty, UI shows "No data" message |
+| **Linked Data Present** | Related entities should show relationships |
+| **CRUD Complete** | Create → Read → Update → Delete works end-to-end |
+
+### Validation
+
+- [ ] No tests with empty assertions pass
+- [ ] All E2E tests verify data availability first
+- [ ] Exploratory tests log findings to GAP-INDEX.md
+- [ ] Failed heuristics create new gaps
+
+### Evidence
+
+- GAP-UI-028: "Tests pass but UI broken (lenient tests)"
+- User feedback: "for me UI is still a toy"
+- Exploratory test session EXP-P10-001
+
+---
+
 *Per RULE-008: In-House Rewrite Principle*

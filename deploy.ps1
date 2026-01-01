@@ -2,20 +2,25 @@
 .SYNOPSIS
     Sim.ai PoC Deployment Script for Windows
 .DESCRIPTION
-    Deploys the full stack: Ollama + LiteLLM + Opik + ChromaDB + Agents
+    Deploys the full stack: Ollama + LiteLLM + ChromaDB + TypeDB + Agents
     Optimized for i7/16GB laptop with CPU-only profile
 .PARAMETER Profile
-    Deployment profile: 'cpu' (default), 'full' (with UI)
+    Deployment profile:
+      - 'cpu' (default): Production stack with baked-in code
+      - 'full': All services including Agent UI
+      - 'dev': Development mode with volume-mounted code for live editing
 .PARAMETER Action
-    Action: 'up', 'down', 'status', 'logs', 'pull-models'
+    Action: 'up', 'down', 'status', 'logs', 'pull-models', 'health', 'test', 'rebuild'
 .EXAMPLE
     .\deploy.ps1 -Action up -Profile cpu
+.EXAMPLE
+    .\deploy.ps1 -Action up -Profile dev
 #>
 
 param(
-    [ValidateSet('cpu', 'full')]
+    [ValidateSet('cpu', 'full', 'dev')]
     [string]$Profile = 'cpu',
-    
+
     [ValidateSet('up', 'down', 'status', 'logs', 'pull-models', 'health', 'test', 'opik', 'rebuild')]
     [string]$Action = 'up'
 )
@@ -111,13 +116,20 @@ function Show-Status {
     docker compose ps --format "table {{.Name}}\t{{.Status}}\t{{.Ports}}"
     
     Write-Host "`n=== Endpoints ===" -ForegroundColor Cyan
-    Write-Host "  Agents API:  http://localhost:7777" -ForegroundColor White
-    Write-Host "  LiteLLM:     http://localhost:4000" -ForegroundColor White
-    Write-Host "  Opik UI:     http://localhost:5173" -ForegroundColor White
-    Write-Host "  ChromaDB:    http://localhost:8001" -ForegroundColor White
-    Write-Host "  Ollama:      http://localhost:11434" -ForegroundColor White
+    Write-Host "  Agents API:   http://localhost:7777" -ForegroundColor White
+    Write-Host "  LiteLLM:      http://localhost:4000" -ForegroundColor White
+    Write-Host "  ChromaDB:     http://localhost:8001" -ForegroundColor White
+    Write-Host "  TypeDB:       localhost:1729 (gRPC)" -ForegroundColor White
+    Write-Host "  Dashboard:    http://localhost:8081" -ForegroundColor White
+    if ($Profile -eq 'cpu' -or $Profile -eq 'full') {
+        Write-Host "  Ollama:       http://localhost:11434" -ForegroundColor White
+    }
     if ($Profile -eq 'full') {
-        Write-Host "  Agent UI:    http://localhost:3000" -ForegroundColor White
+        Write-Host "  Agent UI:     http://localhost:3000" -ForegroundColor White
+    }
+    if ($Profile -eq 'dev') {
+        Write-Host "`n  [DEV MODE] Code volume-mounted for live editing" -ForegroundColor Yellow
+        Write-Host "  Dashboard container: governance-dashboard-dev" -ForegroundColor Yellow
     }
 }
 

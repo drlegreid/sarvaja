@@ -810,6 +810,8 @@ define
 
 Every MCP-dependent operation MUST verify MCP server health before execution. Failures must be logged and recovery attempted before failing the operation.
 
+**CRITICAL (GAP-MCP-003):** At session start, agents MUST call `governance_health` tool to verify Docker services (TypeDB, ChromaDB) are running. If unhealthy, notify user with recovery command before proceeding.
+
 ### Healthcheck Hierarchy
 
 ```
@@ -826,12 +828,16 @@ Every MCP-dependent operation MUST verify MCP server health before execution. Fa
 │  └─────────────────────────────────────────────────────────────────┘    │
 │                               │                                          │
 │                               ▼                                          │
-│  Level 2: SESSION START CHECK                                           │
+│  Level 2: SESSION START CHECK (MANDATORY - GAP-MCP-003)                 │
 │  ┌─────────────────────────────────────────────────────────────────┐    │
-│  │  At session initialization:                                     │    │
-│  │     └── Run full MCP health audit                               │    │
-│  │     └── Count active vs expected servers                        │    │
-│  │     └── Log to session evidence                                 │    │
+│  │  At session initialization (BEFORE any task execution):         │    │
+│  │     └── CALL governance_health tool                             │    │
+│  │     └── Check action_required field in response                 │    │
+│  │     └── IF unhealthy:                                           │    │
+│  │         ├── NOTIFY user: "Docker services down"                 │    │
+│  │         ├── PROVIDE recovery command from response              │    │
+│  │         └── WAIT for user acknowledgment                        │    │
+│  │     └── Log health status to session                            │    │
 │  └─────────────────────────────────────────────────────────────────┘    │
 │                               │                                          │
 │                               ▼                                          │
@@ -1076,7 +1082,19 @@ This rule was created on 2024-12-25 after shipping Trame UI modules (P9.2-P9.4) 
 
 When context is lost, truncated, or a session continues from a previous conversation, agents MUST autonomously recover context using the AMNESIA Protocol before proceeding with tasks.
 
+**CRITICAL (GAP-WORKFLOW-002):** Before major transitions (restart, crash recovery, long pause, context limit approaching), agents MUST prompt user to save context using `/save` or `/remember` skill.
+
 ### AMNESIA = Autonomous Memory & Network Extraction for Session Intelligence and Awareness
+
+### Save Prompts Before Transitions (GAP-WORKFLOW-002)
+
+| Transition Type | Trigger | Action |
+|-----------------|---------|--------|
+| **User requests restart** | "restart", "reboot", "close" | Prompt: "Would you like to /save before restart?" |
+| **Context limit approaching** | >80% context used | Prompt: "Context limit approaching. Run /save?" |
+| **Long pause detected** | >30 min between messages | Prompt: "Save session context before continuing?" |
+| **Major milestone** | Phase completion, feature done | Prompt: "Milestone complete. Save progress with /save?" |
+| **Error/crash recovery** | Resume after crash | Auto-run recovery, prompt to save after |
 
 ### Recovery Triggers
 
@@ -1271,4 +1289,371 @@ Continuing with: [specific next task]
 
 ---
 
+## RULE-028: Change Validation Protocol
+
+**Category:** `testing` | **Priority:** HIGH | **Status:** ACTIVE
+
+### Directive
+
+When code changes are implemented, agents MUST re-run exploratory validation using domain-specific heuristics from RULE-004 before marking tasks complete. This ensures changes don't introduce regressions or unexpected behaviors.
+
+**CRITICAL: Bug Fix vs Feature Validation**
+
+Fixing a technical bug is NOT the same as validating a feature works. Always validate at the FEATURE level, not just the BUG level.
+
+### Validation Hierarchy (MANDATORY)
+
+```
+Level 1: TECHNICAL FIX
+   └── The specific error/crash is resolved
+   └── Example: "AttributeError no longer raised"
+
+Level 2: FEATURE WORKS
+   └── The intended feature functionality works E2E
+   └── Example: "File content loads and displays in dialog"
+
+Level 3: USER FLOW COMPLETE
+   └── Full user journey works without friction
+   └── Example: "User can view session → click file → read content → close dialog"
+
+VALIDATION IS NOT COMPLETE UNTIL LEVEL 3 IS VERIFIED
+```
+
+### Origin (2024-12-28)
+
+Created after a bug fix was declared "complete" when only Level 1 was validated:
+- **Bug fixed**: `'GovernanceDashboard' object has no attribute '_client'` (dialog opened without crash)
+- **Feature broken**: File content showed "Not Found" (API endpoint not registered)
+- **Root cause**: API server not restarted (RULE-027 violation), endpoint not serving data
+
+**Lesson**: A crash fix is not a feature fix. Always validate the full user flow.
+
+### Trigger Conditions
+
+| Trigger | Scope | Validation Required |
+|---------|-------|---------------------|
+| **Code fix** | Modified files | Targeted heuristics for affected domain |
+| **Feature addition** | New components | Full heuristic suite for feature area |
+| **Refactoring** | Changed structure | Smoke + regression tests |
+| **Bug fix** | Specific issue | **Level 1-3 validation** (not just Level 1) |
+| **Test fix** | Test code only | Re-run affected test + exploratory |
+
+### Validation Protocol
+
+```
+WHEN code changes are implemented:
+
+1. IDENTIFY change scope
+   └── What files were modified?
+   └── What domain (UI, API, DB, etc)?
+
+2. SELECT heuristics from RULE-004
+   └── UI changes → BOUNDARY, NAVIGATION, STATE, ERROR
+   └── API changes → CONTRACT, IDEMPOTENCY, PAYLOAD
+   └── CLI changes → EXIT_CODE, STDERR, PATH_SAFETY
+   └── Docker changes → HEALTHCHECK, RESTART, VOLUME
+
+3. RUN validation suite
+   └── Unit tests for modified code
+   └── Integration tests for affected flows
+   └── Exploratory heuristics for domain
+
+4. DOCUMENT results
+   └── Evidence captured per RULE-001
+   └── Gaps identified per RULE-004
+   └── Pass/fail logged
+
+5. VERIFY before marking complete
+   └── All heuristics passed
+   └── No new gaps introduced
+   └── Tests green
+```
+
+### Exploratory Heuristic Matrix (Quick Reference)
+
+| Change Type | Minimum Heuristics | Evidence |
+|-------------|-------------------|----------|
+| **UI component** | BOUNDARY, STATE, ERROR | Screenshot |
+| **API endpoint** | CONTRACT, PAYLOAD, TIMEOUT | Response JSON |
+| **Database schema** | IDEMPOTENCY, VOLUME | Query results |
+| **Configuration** | RESTART, HEALTHCHECK | Service logs |
+| **MCP tool** | CONTRACT, EXIT_CODE | Tool output |
+
+### Integration with TDD Workflow
+
+```
+TDD Cycle:
+  RED (failing test)
+    ↓
+  GREEN (code passes)
+    ↓
+  REFACTOR (clean up)
+    ↓
+  ┌─────────────────────────────────┐
+  │ RULE-028: Change Validation     │
+  │   └── Re-run exploratory        │
+  │   └── Check heuristics          │
+  │   └── Capture evidence          │
+  └─────────────────────────────────┘
+    ↓
+  COMPLETE (mark done)
+```
+
+### Anti-Patterns
+
+| Pattern | Instead |
+|---------|---------|
+| Mark complete after unit tests only | Run exploratory validation too |
+| Skip heuristics for "small" changes | Apply proportional validation |
+| Trust green tests without exploration | Explore for unexpected behaviors |
+| Fix test without fixing code | Investigate root cause first |
+| **Declare "bug fixed" when crash stops** | **Validate full feature works E2E** |
+| **Assume API changes are live** | **Restart server per RULE-027** |
+| **Test only the technical fix** | **Test the user's intended workflow** |
+
+### Validation Checklist
+
+- [ ] Change scope identified
+- [ ] Domain heuristics selected from RULE-004
+- [ ] Validation suite executed
+- [ ] Results documented (screenshots, logs)
+- [ ] No new gaps introduced
+- [ ] Task marked complete only after validation
+
+---
+
 *Per RULE-014: Autonomous Task Sequencing + RULE-012: DSP*
+
+---
+
+## RULE-027: API Server Restart Protocol
+
+**Category:** `testing` | **Priority:** HIGH | **Status:** ACTIVE
+
+### Directive
+
+ALWAYS restart API servers after making code changes BEFORE running tests. This prevents false test failures from running against stale server code.
+
+### Protocol
+
+```
+WHEN modifying API code (endpoints, models, handlers):
+
+1. STOP existing server process
+   └── Kill any uvicorn/flask/fastapi processes on target port
+   └── Verify port is free
+
+2. START fresh server instance
+   └── python -m uvicorn <module>:app --port <port>
+   └── Wait for "Uvicorn running" confirmation
+
+3. VERIFY server is responsive
+   └── Call /api/health or similar endpoint
+   └── Confirm expected version/status
+
+4. RUN tests
+   └── Only after steps 1-3 complete
+   └── Tests hit fresh server with latest code
+```
+
+### Anti-Patterns
+
+| ❌ Don't | ✅ Do Instead |
+|----------|---------------|
+| Run tests immediately after code changes | Restart server first, verify health |
+| Assume hot-reload caught changes | Explicitly restart for reliability |
+| Debug "404 Method Not Allowed" without checking server | Check if server has latest code |
+| Keep background server running indefinitely | Restart after API modifications |
+
+### Validation
+
+- [ ] Server restarted after API code changes
+- [ ] Health endpoint confirms server is up
+- [ ] Tests pass with new endpoints
+
+---
+
+*Per TODO-6: Agent Task Backlog UI - discovered during E2E test development*
+
+---
+
+## RULE-030: Docker Dev Container Workflow
+
+**Category:** `development` | **Priority:** HIGH | **Status:** ACTIVE
+
+### Directive
+
+For UI/API development and validation, agents MUST use Docker dev containers with volume mounts instead of attempting to run local Python processes. This ensures consistent environments and enables fast prototyping with live code reloading.
+
+### Origin
+
+Created 2024-12-28 after attempting local Python validation instead of using the existing `governance-dashboard-dev` container. Local approach failed due to port conflicts (agents container on 7777) and missing dependencies.
+
+### When to Use Docker Dev Containers
+
+| Scenario | Use Docker Dev | Use Local Python |
+|----------|----------------|------------------|
+| **UI validation** | ✅ Yes | ❌ No |
+| **API testing** | ✅ Yes | ❌ No |
+| **Quick code fix validation** | ✅ Yes | ❌ No |
+| **Unit tests only** | Optional | ✅ Yes |
+| **Pure Python scripting** | Optional | ✅ Yes |
+
+### Available Dev Containers
+
+| Container | Port | Profile | Volume Mounts |
+|-----------|------|---------|---------------|
+| `governance-dashboard-dev` | 8081 | `dev` | `./agent`, `./governance`, `./docs`, `./evidence` |
+| `governance-api` | 8082 | `cpu` | `./governance` |
+
+### Protocol
+
+```
+WHEN validating UI/API changes:
+
+1. CHECK if dev container is running
+   └── docker ps | grep governance-dashboard-dev
+
+2. IF not running, START with dev profile
+   └── docker compose --profile dev up -d governance-dashboard-dev
+   └── OR: .\deploy.ps1 -Action up -Profile dev (after GAP-DEPLOY-001 resolved)
+
+3. IF running but stale, RESTART
+   └── docker restart sim-ai-governance-dashboard-dev-1
+
+4. WAIT for container readiness
+   └── curl http://localhost:8081 (dashboard)
+   └── curl http://localhost:8082/api/health (API)
+
+5. RUN validation
+   └── Use Playwright MCP for UI validation
+   └── Use PowerShell for API tests
+
+6. NEVER attempt local Python for UI/API
+   └── Ports likely in use by Docker containers
+   └── Dependencies may differ from container
+```
+
+### Volume Mount Benefits
+
+```yaml
+# docker-compose.yml dev service
+volumes:
+  - ./agent:/app/agent:ro       # UI code - live reload
+  - ./governance:/app/governance:ro  # API code - live reload
+  - ./docs:/app/docs:ro         # Documentation
+  - ./evidence:/app/evidence:ro  # Session evidence
+```
+
+Changes to mounted directories reflect immediately in the container without rebuild.
+
+### Anti-Patterns
+
+| ❌ Don't | ✅ Do Instead |
+|----------|---------------|
+| Run `python agent/governance_dashboard.py` locally | Use Docker dev container |
+| Run `uvicorn governance.api:app` locally | Use existing API container on 8082 |
+| Kill Docker containers to free ports | Use Docker for all validation |
+| Rebuild image after code changes | Restart container (volumes are mounted) |
+
+### Related
+
+- **GAP-DEPLOY-001**: deploy.ps1 missing dev profile support
+- **RULE-028**: Change Validation Protocol (use Docker for validation)
+- **RULE-023**: Test Before Ship (validate in Docker environment)
+
+### Validation
+
+- [ ] Docker dev container used for UI/API validation
+- [ ] No local Python processes for containerized services
+- [ ] Container restarted after code changes (not rebuilt)
+- [ ] Ports verified free before starting services
+
+---
+
+*Per RULE-028: Change Validation Protocol - Docker dev workflow discovered 2024-12-28*
+
+---
+
+## RULE-031: Autonomous Task Continuation
+
+**Category:** `operational` | **Priority:** CRITICAL | **Status:** ACTIVE
+
+### Directive
+
+When executing multi-step tasks, agents MUST continue working until ALL tasks are complete or an explicit halt command is received. Agents MUST NOT stop prematurely after completing intermediate steps.
+
+### Origin
+
+Created 2025-01-01 after observing premature termination during multi-task sessions. User feedback: "why you stopped implementing fixes for other known issues? is there a way to prevent this by tuning the rules established?"
+
+### Continuation Requirements
+
+| Trigger | Action |
+|---------|--------|
+| **Task list has pending items** | Continue to next task |
+| **Error during task** | Log error, attempt recovery, continue |
+| **Subtask completed** | Mark complete, start next immediately |
+| **All tasks complete** | Generate summary, await further instructions |
+| **Explicit halt command** | Stop immediately (see RULE-014) |
+
+### Anti-Patterns (PROHIBITED)
+
+| ❌ Don't | ✅ Do Instead |
+|----------|---------------|
+| Stop after fixing one issue when more exist | Fix all issues in sequence |
+| Summarize and wait after partial completion | Continue until todo list is empty |
+| Ask "should I continue?" after each step | Continue autonomously per RULE-014 |
+| Skip pending tasks without explicit instruction | Complete all pending tasks |
+
+### Task Tracking Requirements
+
+```
+WHEN working on multi-step tasks:
+
+1. BEFORE starting
+   └── Create todo list with ALL known tasks
+   └── Set first task to "in_progress"
+
+2. DURING execution
+   └── Mark task "completed" IMMEDIATELY after finishing
+   └── Set next task to "in_progress" WITHOUT pausing
+   └── Add new discovered tasks to list as needed
+
+3. ONLY STOP when:
+   └── All tasks marked "completed"
+   └── Explicit halt command received (STOP, HALT, STAI, RED ALERT)
+   └── Context limit approaching (then summarize and continue in new session)
+
+4. NEVER stop when:
+   └── Todo list has pending items
+   └── Intermediate step completed successfully
+   └── User hasn't responded (continue working)
+```
+
+### Integration with Other Rules
+
+| Rule | Relationship |
+|------|--------------|
+| **RULE-014** | Halt commands override continuation |
+| **RULE-012** | DSP cycles are atomic units of work |
+| **RULE-030** | Autonomous execution requirement |
+| **RULE-024** | Context recovery enables multi-session continuation |
+
+### Enforcement
+
+- [ ] Todo list maintained throughout session
+- [ ] No premature stops with pending tasks
+- [ ] Explicit "all tasks complete" message when done
+- [ ] Halt only on explicit command or context limit
+
+### Metrics
+
+Track and report:
+- Tasks completed per session
+- Premature stop incidents (should be 0)
+- Continuation chains across context limits
+
+---
+
+*Per user feedback 2025-01-01: Agents must not stop until all tasks complete*

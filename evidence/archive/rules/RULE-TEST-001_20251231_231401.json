@@ -1,0 +1,16 @@
+{
+  "rule": {
+    "id": "RULE-TEST-001",
+    "name": "Test Rule",
+    "category": "testing",
+    "priority": "MEDIUM",
+    "status": "DRAFT",
+    "directive": "This is a test rule directive.",
+    "created_date": null
+  },
+  "archived_at": "2025-12-31T23:14:01.519018",
+  "reason": "archived",
+  "archived_from_db": "sim-ai-governance",
+  "dependencies": [],
+  "dependents": []
+}

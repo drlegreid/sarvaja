@@ -27,7 +27,9 @@ rule-entity sub entity,
     plays agent-action:action-target,       # RULE-011: agents act on rules
     plays gap-rule-reference:governing-rule,       # RULE-013: rules govern gaps
     plays document-references-rule:referenced-rule, # RULE-013: rules referenced by docs
-    plays entity-vector:embedded-entity;   # P7.1: vector embeddings
+    plays entity-vector:embedded-entity,   # P7.1: vector embeddings
+    plays implements-rule:implemented-rule,  # P11.3: tasks implement rules
+    plays session-applied-rule:applied-rule; # P11.3: sessions apply rules
 
 decision sub entity,
     owns decision-id,
@@ -40,15 +42,27 @@ decision sub entity,
     plays decision-supersedes:superseding,
     plays decision-supersedes:superseded,
     plays document-references-decision:referenced-decision, # RULE-013: decisions referenced by docs
-    plays entity-vector:embedded-entity;   # P7.1: vector embeddings
+    plays entity-vector:embedded-entity,   # P7.1: vector embeddings
+    plays session-decision:session-made-decision, # P11.3: sessions make decisions
+    plays task-outcome:outcome-decision;   # P10.7: Decision as task outcome with authority
 
 task sub entity,
     owns task-id,
     owns task-name,
     owns task-status,
+    owns task-body,
     owns phase,
+    owns agent-id,                               # Agent assigned to task (E2E tests)
+    owns task-evidence,                          # Completion evidence/notes (E2E tests)
+    owns task-completed-at,                      # Completion timestamp (E2E tests)
+    owns gap-reference,                          # DEPRECATED: Use references-gap relation (P10.7)
     plays task-blocked:blocked-task,
-    plays task-blocked:blocking-rule;
+    plays task-blocked:blocking-rule,
+    plays implements-rule:implementing-task,
+    plays completed-in:completed-task,
+    plays evidence-supports:supported-task,
+    plays references-gap:referencing-task,       # P10.7: Typed task→gap reference
+    plays task-outcome:source-task;              # P10.7: Task can produce decisions
 
 gap sub entity,
     owns gap-id,
@@ -59,7 +73,36 @@ gap sub entity,
     plays gap-requires:requiring-gap,
     plays gap-requires:required-rule,
     plays gap-rule-reference:referencing-gap,  # RULE-013: gaps reference rules
-    plays document-references-gap:referenced-gap; # RULE-013: gaps referenced by docs
+    plays document-references-gap:referenced-gap, # RULE-013: gaps referenced by docs
+    plays references-gap:referenced-gap;       # P10.7: Tasks can reference gaps
+
+# =============================================================================
+# WORK SESSION ENTITY (P11.3 - Entity Linkage)
+# =============================================================================
+
+# Work session entity for tracking development sessions
+work-session sub entity,
+    owns session-id,
+    owns session-name,
+    owns session-description,
+    owns session-file-path,
+    owns agent-id,                               # Agent that created the session (E2E tests)
+    owns started-at,
+    owns completed-at,
+    plays completed-in:hosting-session,
+    plays has-evidence:evidence-session,
+    plays session-applied-rule:applying-session,
+    plays session-decision:deciding-session;
+
+# Evidence file entity for session artifacts
+evidence-file sub entity,
+    owns evidence-id,
+    owns evidence-source,
+    owns evidence-type,
+    owns evidence-content-preview,
+    owns evidence-created-at,
+    plays has-evidence:session-evidence,
+    plays evidence-supports:supporting-evidence;
 
 # =============================================================================
 # DOCUMENT CROSS-REFERENCING ENTITIES (RULE-013)
@@ -149,6 +192,7 @@ test-failure sub entity,
     plays test-failed:failure;
 
 # Document entity for cross-referencing
+document sub entity,
     owns document-id,
     owns document-title,
     owns document-path,         # Local path: docs/RULES.md
@@ -218,7 +262,22 @@ decision-date sub attribute, value datetime;
 task-id sub attribute, value string;
 task-name sub attribute, value string;
 task-status sub attribute, value string;  # TODO, IN_PROGRESS, DONE, BLOCKED
+task-body sub attribute, value string;    # P11.3: detailed task description
+task-evidence sub attribute, value string; # Completion evidence/notes (E2E tests)
+task-completed-at sub attribute, value datetime; # Completion timestamp (E2E tests)
 phase sub attribute, value string;
+gap-reference sub attribute, value string; # P11.3: linked gap ID
+
+# Work Session attributes (P11.3)
+session-description sub attribute, value string;
+session-file-path sub attribute, value string;   # Path to session evidence file
+
+# Evidence file attributes (P11.3)
+evidence-id sub attribute, value string;
+evidence-source sub attribute, value string;      # File path
+evidence-type sub attribute, value string;        # markdown, screenshot, log
+evidence-content-preview sub attribute, value string;  # First 500 chars
+evidence-created-at sub attribute, value datetime;
 
 # Gap attributes
 gap-id sub attribute, value string;
@@ -249,15 +308,19 @@ vector-created-at sub attribute, value datetime;
 similarity-score sub attribute, value double;    # Cosine similarity 0.0-1.0
 
 # E2E Exploration attributes (RULE-020)
+session-id sub attribute, value string;
+session-name sub attribute, value string;
 session-url sub attribute, value string;
 started-at sub attribute, value datetime;
 completed-at sub attribute, value datetime;
 heuristics-applied sub attribute, value string;  # Comma-separated list
 target-selector sub attribute, value string;     # CSS/XPath selector
+step-id sub attribute, value string;
 step-value sub attribute, value string;          # Input value for type actions
 step-description sub attribute, value string;
 step-success sub attribute, value boolean;
 step-error sub attribute, value string;
+test-id sub attribute, value string;
 test-name sub attribute, value string;
 generated-from sub attribute, value string;      # session-id reference
 robot-code sub attribute, value string;          # Generated Robot Framework code
@@ -307,6 +370,9 @@ action-type sub attribute, value string;       # "propose", "vote", "dispute", "
 action-timestamp sub attribute, value datetime;
 action-outcome sub attribute, value string;    # "success", "failure", "pending"
 
+# Typed reference attributes (P10.7 - Option B)
+has-authority sub attribute, value boolean;    # Decision authority from task outcome
+
 # =============================================================================
 # RELATION TYPES
 # =============================================================================
@@ -335,6 +401,55 @@ task-blocked sub relation,
 gap-requires sub relation,
     relates requiring-gap,
     relates required-rule;
+
+# =============================================================================
+# ENTITY LINKAGE RELATIONS (P11.3 - GAP-DATA-002)
+# =============================================================================
+
+# Task implements a rule (shows which rule a task is implementing)
+implements-rule sub relation,
+    relates implementing-task,
+    relates implemented-rule;
+
+# Task completed in a session (tracks when/where work was done)
+completed-in sub relation,
+    relates completed-task,
+    relates hosting-session;
+
+# Session has evidence files (links sessions to their artifacts)
+has-evidence sub relation,
+    relates evidence-session,
+    relates session-evidence;
+
+# Session applied a rule (rules used/followed during session)
+session-applied-rule sub relation,
+    relates applying-session,
+    relates applied-rule;
+
+# Session made a decision (decisions made during session)
+session-decision sub relation,
+    relates deciding-session,
+    relates session-made-decision;
+
+# Evidence supports a task (evidence proving task completion)
+evidence-supports sub relation,
+    relates supporting-evidence,
+    relates supported-task;
+
+# =============================================================================
+# TYPED REFERENCE RELATIONS (P10.7 - Option B)
+# =============================================================================
+
+# Task references a gap (replaces gap-reference attribute)
+references-gap sub relation,
+    relates referencing-task,
+    relates referenced-gap;
+
+# Decision is outcome of a task with authority
+task-outcome sub relation,
+    relates outcome-decision,
+    relates source-task,
+    owns has-authority;
 
 # =============================================================================
 # DOCUMENT CROSS-REFERENCING RELATIONS (RULE-013)

@@ -1,0 +1,16 @@
+{
+  "rule": {
+    "id": "TEST-153B8DDE",
+    "name": "Updated Name TEST-153B8DDE",
+    "category": "governance",
+    "priority": "MEDIUM",
+    "status": "ACTIVE",
+    "directive": "Original directive",
+    "created_date": null
+  },
+  "archived_at": "2025-12-31T21:43:45.370491",
+  "reason": "deleted",
+  "archived_from_db": "sim-ai-governance",
+  "dependencies": [],
+  "dependents": []
+}

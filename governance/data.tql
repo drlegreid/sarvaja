@@ -4,6 +4,7 @@
 # Updated: 2024-12-24 (RULE-015) - R&D Workflow, Enhanced RULE-004 with Executable Spec
 # Updated: 2024-12-25 (RULE-016-020) - Infrastructure, Cross-Workspace, Reporting, UI/UX, E2E Testing
 # Updated: 2024-12-25 (RULE-021-022) - MCP Healthcheck Protocol, Integrity Verification (Frankel Hash)
+# Updated: 2024-12-26 (RULE-023-025) - Test Before Ship, AMNESIA Protocol, Test Data Integrity
 
 insert
 
@@ -344,7 +345,38 @@ $rule022 isa rule-entity,
     has created-date 2024-12-25T00:00:00;
 
 # =============================================================================
-# RULE DEPENDENCIES (RULE-021 to RULE-022)
+# RULES (RULE-023 to RULE-025) - Added 2024-12-26
+# =============================================================================
+
+$rule023 isa rule-entity,
+    has rule-id "RULE-023",
+    has rule-name "Test Before Ship",
+    has category "quality",
+    has priority "CRITICAL",
+    has status "ACTIVE",
+    has directive "All code changes MUST pass tests before commit; no shipping untested code; test failures block deployment",
+    has created-date 2024-12-25T00:00:00;
+
+$rule024 isa rule-entity,
+    has rule-id "RULE-024",
+    has rule-name "AMNESIA Protocol (Context Recovery)",
+    has category "maintenance",
+    has priority "CRITICAL",
+    has status "ACTIVE",
+    has directive "Context recovery must use hierarchical sources: TODO.md -> R&D-BACKLOG -> Session Summary -> Claude-Mem -> GAP-INDEX; never ask user 'what were we doing?'",
+    has created-date 2024-12-25T00:00:00;
+
+$rule025 isa rule-entity,
+    has rule-id "RULE-025",
+    has rule-name "Test Data Integrity Requirements",
+    has category "testing",
+    has priority "HIGH",
+    has status "DRAFT",
+    has directive "All tests MUST validate API returns data before UI assertions; tests passing with empty data are invalid; use realistic mocks not empty collections",
+    has created-date 2024-12-26T00:00:00;
+
+# =============================================================================
+# RULE DEPENDENCIES (RULE-021 to RULE-025)
 # =============================================================================
 
 # RULE-021 depends on RULE-005 (memory stability) and RULE-007 (MCP usage)
@@ -354,3 +386,164 @@ $rule022 isa rule-entity,
 # RULE-022 depends on RULE-001 (session logging) and RULE-010 (evidence-based wisdom)
 (dependent: $rule022, dependency: $rule001) isa rule-dependency;
 (dependent: $rule022, dependency: $rule010) isa rule-dependency;
+
+# RULE-023 depends on RULE-004 (exploratory testing)
+(dependent: $rule023, dependency: $rule004) isa rule-dependency;
+
+# RULE-024 depends on RULE-012 (DSP) and RULE-001 (session logging)
+(dependent: $rule024, dependency: $rule012) isa rule-dependency;
+(dependent: $rule024, dependency: $rule001) isa rule-dependency;
+
+# RULE-025 depends on RULE-023 (test before ship) and RULE-004 (exploratory testing)
+(dependent: $rule025, dependency: $rule023) isa rule-dependency;
+(dependent: $rule025, dependency: $rule004) isa rule-dependency;
+
+# =============================================================================
+# WORK SESSIONS (P11.3 - Entity Linkage)
+# =============================================================================
+
+$session001 isa work-session,
+    has session-id "SESSION-2024-12-24-001",
+    has session-name "Claude Code Setup & MCP Wrapper",
+    has session-description "Initial project setup with TypeDB, MCP integration via Agno wrapper",
+    has session-file-path "evidence/SESSION-2024-12-24-CLAUDE-CODE-SETUP.md",
+    has started-at 2024-12-24T09:00:00,
+    has completed-at 2024-12-24T18:00:00;
+
+$session002 isa work-session,
+    has session-id "SESSION-2024-12-24-002",
+    has session-name "Phase 4 MCP Wrapper Implementation",
+    has session-description "MCP to Agno wrapper with 7 tools, 142 tests",
+    has session-file-path "evidence/SESSION-2024-12-24-PHASE4-MCP-WRAPPER.md",
+    has started-at 2024-12-24T14:00:00,
+    has completed-at 2024-12-24T22:00:00;
+
+$session003 isa work-session,
+    has session-id "SESSION-2024-12-25-001",
+    has session-name "DSP Cycles & Phase 8",
+    has session-description "Deep Sleep Protocol cycles with E2E implementation",
+    has session-file-path "evidence/SESSION-2024-12-25-DSP-CYCLES.md",
+    has started-at 2024-12-25T10:00:00,
+    has completed-at 2024-12-25T23:00:00;
+
+$session004 isa work-session,
+    has session-id "SESSION-2024-12-25-002",
+    has session-name "Phase 8 E2E Testing",
+    has session-description "E2E test implementation with Playwright",
+    has session-file-path "evidence/SESSION-2024-12-25-PHASE8-E2E.md",
+    has started-at 2024-12-25T14:00:00,
+    has completed-at 2024-12-25T20:00:00;
+
+$session005 isa work-session,
+    has session-id "SESSION-2024-12-26-001",
+    has session-name "P11 Entity Audit & Linkage",
+    has session-description "Full entity data audit, agent metrics, evidence linkage",
+    has session-file-path "docs/gaps/DATA-AUDIT-REPORT-2024-12-26.md",
+    has started-at 2024-12-26T09:00:00;
+
+# =============================================================================
+# EVIDENCE FILES (P11.3 - Entity Linkage)
+# =============================================================================
+
+$evidence001 isa evidence-file,
+    has evidence-id "EVIDENCE-001",
+    has evidence-source "evidence/SESSION-2024-12-24-CLAUDE-CODE-SETUP.md",
+    has evidence-type "markdown",
+    has evidence-content-preview "Phase 1-3 setup including TypeDB, ChromaDB, Docker stack...",
+    has evidence-created-at 2024-12-24T18:00:00;
+
+$evidence002 isa evidence-file,
+    has evidence-id "EVIDENCE-002",
+    has evidence-source "evidence/SESSION-2024-12-24-PHASE4-MCP-WRAPPER.md",
+    has evidence-type "markdown",
+    has evidence-content-preview "MCP to Agno wrapper implementation with 7 tools...",
+    has evidence-created-at 2024-12-24T22:00:00;
+
+$evidence003 isa evidence-file,
+    has evidence-id "EVIDENCE-003",
+    has evidence-source "evidence/DECISION-003-TYPEDB-FIRST-STRATEGY.md",
+    has evidence-type "markdown",
+    has evidence-content-preview "TypeDB priority elevation decision with rationale...",
+    has evidence-created-at 2024-12-24T15:00:00;
+
+$evidence004 isa evidence-file,
+    has evidence-id "EVIDENCE-004",
+    has evidence-source "evidence/SESSION-2024-12-25-DSP-CYCLES.md",
+    has evidence-type "markdown",
+    has evidence-content-preview "Deep Sleep Protocol cycles execution log...",
+    has evidence-created-at 2024-12-25T23:00:00;
+
+$evidence005 isa evidence-file,
+    has evidence-id "EVIDENCE-005",
+    has evidence-source "evidence/SESSION-2024-12-25-PHASE8-E2E.md",
+    has evidence-type "markdown",
+    has evidence-content-preview "E2E test implementation with Playwright and Robot...",
+    has evidence-created-at 2024-12-25T20:00:00;
+
+# =============================================================================
+# TASKS (P11.3 - Sample tasks for linkage)
+# =============================================================================
+
+$task_p2_4 isa task,
+    has task-id "P2.4",
+    has task-name "Governance MCP Server",
+    has task-status "DONE",
+    has task-body "Implement governance MCP server with 11 tools and 68 tests",
+    has phase "P2";
+
+$task_p4_1 isa task,
+    has task-id "P4.1",
+    has task-name "MCP to Agno Wrapper",
+    has task-status "DONE",
+    has task-body "Wrap MCP tools in Agno framework with 7 tools and 142 tests",
+    has phase "P4";
+
+$task_p9_5 isa task,
+    has task-id "P9.5",
+    has task-name "Agent Trust Dashboard",
+    has task-status "DONE",
+    has task-body "Multi-agent governance dashboard with trust scores per RULE-011",
+    has phase "P9";
+
+$task_p11_3 isa task,
+    has task-id "P11.3",
+    has task-name "Entity Linkage Schema",
+    has task-status "IN_PROGRESS",
+    has task-body "Add TypeDB relationships for Task→Rule, Session→Evidence, Task→Session",
+    has phase "P11",
+    has gap-reference "GAP-DATA-002";
+
+# =============================================================================
+# ENTITY LINKAGE RELATIONSHIPS (P11.3)
+# =============================================================================
+
+# Tasks implement rules
+(implementing-task: $task_p2_4, implemented-rule: $rule007) isa implements-rule;
+(implementing-task: $task_p4_1, implemented-rule: $rule007) isa implements-rule;
+(implementing-task: $task_p9_5, implemented-rule: $rule011) isa implements-rule;
+(implementing-task: $task_p11_3, implemented-rule: $rule013) isa implements-rule;
+
+# Tasks completed in sessions
+(completed-task: $task_p2_4, hosting-session: $session001) isa completed-in;
+(completed-task: $task_p4_1, hosting-session: $session002) isa completed-in;
+(completed-task: $task_p9_5, hosting-session: $session003) isa completed-in;
+
+# Sessions have evidence
+(evidence-session: $session001, session-evidence: $evidence001) isa has-evidence;
+(evidence-session: $session002, session-evidence: $evidence002) isa has-evidence;
+(evidence-session: $session003, session-evidence: $evidence004) isa has-evidence;
+(evidence-session: $session004, session-evidence: $evidence005) isa has-evidence;
+
+# Sessions applied rules
+(applying-session: $session001, applied-rule: $rule001) isa session-applied-rule;
+(applying-session: $session001, applied-rule: $rule007) isa session-applied-rule;
+(applying-session: $session002, applied-rule: $rule001) isa session-applied-rule;
+(applying-session: $session002, applied-rule: $rule007) isa session-applied-rule;
+(applying-session: $session003, applied-rule: $rule012) isa session-applied-rule;
+(applying-session: $session004, applied-rule: $rule020) isa session-applied-rule;
+(applying-session: $session005, applied-rule: $rule001) isa session-applied-rule;
+(applying-session: $session005, applied-rule: $rule013) isa session-applied-rule;
+
+# Sessions made decisions
+(deciding-session: $session001, session-made-decision: $dec003) isa session-decision;
+(deciding-session: $session001, session-made-decision: $dec001) isa session-decision;

@@ -1,0 +1,16 @@
+{
+  "rule": {
+    "id": "TEST-650EDF99",
+    "name": "To Delete TEST-650EDF99",
+    "category": "operational",
+    "priority": "LOW",
+    "status": "DRAFT",
+    "directive": "This rule will be deleted",
+    "created_date": null
+  },
+  "archived_at": "2026-01-01T01:24:52.955610",
+  "reason": "deleted",
+  "archived_from_db": "sim-ai-governance",
+  "dependencies": [],
+  "dependents": []
+}

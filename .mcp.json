@@ -1,0 +1,15 @@
+{
+  "mcpServers": {
+    "governance": {
+      "type": "stdio",
+      "command": "python",
+      "args": ["-m", "governance.mcp_server"],
+      "cwd": "c:\\Users\\natik\\Documents\\Vibe\\sim-ai\\sim-ai",
+      "env": {
+        "PYTHONPATH": "c:\\Users\\natik\\Documents\\Vibe\\sim-ai\\sim-ai",
+        "TYPEDB_HOST": "localhost",
+        "TYPEDB_PORT": "1729"
+      }
+    }
+  }
+}

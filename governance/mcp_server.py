@@ -5,6 +5,7 @@ Thin coordinator (per DSP FP + Digital Twin paradigm).
 
 Created: 2024-12-24 (RULE-011, DECISION-005)
 Refactored: 2024-12-25 (DSP Semantic Restructure)
+Refactored: 2024-12-28 (GAP-FILE-007 - 897→~110 lines, 88% reduction)
 
 Protocol: MCP (Model Context Protocol)
 Backend: TypeDB 2.29.1
@@ -18,6 +19,14 @@ Structure (per RULE-012):
         sessions.py      - Session evidence
         dsm.py           - DSM tracker (RULE-012)
         evidence.py      - Evidence viewing
+    compat/              - Backward compatibility exports
+        core.py          - Core query functions
+        dsm.py           - DSM tracker exports
+        sessions.py      - Session collector exports
+        quality.py       - Rule quality exports
+        tasks.py         - Task CRUD exports
+        agents.py        - Agent CRUD exports
+        documents.py     - Document viewing exports
 
 Usage:
     python governance/mcp_server.py
@@ -32,7 +41,6 @@ Or add to MCP config:
     }
 """
 
-import os
 from mcp.server.fastmcp import FastMCP
 
 # Initialize MCP server
@@ -47,160 +55,55 @@ register_all_tools(mcp)
 
 
 # =============================================================================
-# BACKWARD COMPATIBILITY EXPORTS
+# BACKWARD COMPATIBILITY EXPORTS (GAP-FILE-007)
 # =============================================================================
-# These functions are used by agent/governance_ui/data_access.py
-# They wrap the internal implementations for direct Python calls
+# Re-export from governance/compat/ package for backward compatibility
+# These functions are used by agent/governance_ui/data_access.py and tests
 
-import json
-from governance.mcp_tools.common import get_typedb_client
-from governance.mcp_tools.evidence import EVIDENCE_DIR, BACKLOG_DIR
-import glob
-import re
-from pathlib import Path
-from dataclasses import asdict
-
-
-def governance_query_rules(category=None, status=None, priority=None):
-    """Query rules (backward compat export)."""
-    client = get_typedb_client()
-    try:
-        if not client.connect():
-            return json.dumps({"error": "Failed to connect to TypeDB"})
-        if status == "ACTIVE":
-            rules = client.get_active_rules()
-        else:
-            rules = client.get_all_rules()
-        if category:
-            rules = [r for r in rules if r.category == category]
-        if priority:
-            rules = [r for r in rules if r.priority == priority]
-        if status and status != "ACTIVE":
-            rules = [r for r in rules if r.status == status]
-        return json.dumps([asdict(r) for r in rules], default=str, indent=2)
-    finally:
-        client.close()
-
-
-def governance_list_sessions(limit=20, session_type=None):
-    """List sessions (backward compat export)."""
-    sessions = []
-    pattern = EVIDENCE_DIR / "SESSION-*.md"
-    for filepath in sorted(glob.glob(str(pattern)), reverse=True)[:limit]:
-        try:
-            path = Path(filepath)
-            filename = path.name
-            parts = filename.replace(".md", "").split("-")
-            if len(parts) >= 4:
-                date_str = f"{parts[1]}-{parts[2]}-{parts[3]}"
-                topic = "-".join(parts[4:]) if len(parts) > 4 else "general"
-            else:
-                date_str = "unknown"
-                topic = filename
-            if session_type and session_type.upper() not in topic.upper():
-                continue
-            sessions.append({
-                "session_id": filename.replace(".md", ""),
-                "date": date_str,
-                "topic": topic,
-                "path": str(filepath)
-            })
-        except Exception:
-            continue
-    return json.dumps({"sessions": sessions, "count": len(sessions)}, indent=2)
-
-
-def governance_get_session(session_id):
-    """Get session (backward compat export)."""
-    if not session_id.endswith(".md"):
-        session_id = session_id + ".md"
-    filepath = EVIDENCE_DIR / session_id
-    if not filepath.exists():
-        return json.dumps({"error": f"Session not found: {session_id}"})
-    try:
-        content = filepath.read_text(encoding="utf-8")
-        return json.dumps({
-            "session_id": session_id.replace(".md", ""),
-            "content": content
-        }, indent=2)
-    except Exception as e:
-        return json.dumps({"error": str(e)})
-
-
-def governance_list_decisions():
-    """List decisions (backward compat export)."""
-    decisions = []
-    client = get_typedb_client()
-    try:
-        if client.connect():
-            db_decisions = client.get_all_decisions()
-            for d in db_decisions:
-                decisions.append({
-                    "decision_id": d.id,
-                    "name": d.name,
-                    "status": d.status
-                })
-            client.close()
-    except Exception:
-        pass
-    return json.dumps({"decisions": decisions, "count": len(decisions)}, indent=2)
-
-
-def governance_get_decision(decision_id):
-    """Get decision (backward compat export)."""
-    result = {"decision_id": decision_id}
-    client = get_typedb_client()
-    try:
-        if client.connect():
-            db_decisions = client.get_all_decisions()
-            for d in db_decisions:
-                if d.id == decision_id:
-                    result["name"] = d.name
-                    result["status"] = d.status
-                    break
-            client.close()
-    except Exception:
-        pass
-    if len(result) == 1:
-        return json.dumps({"error": f"Decision {decision_id} not found"})
-    return json.dumps(result, indent=2)
-
-
-def governance_list_tasks(phase=None, status=None):
-    """List tasks (backward compat export)."""
-    tasks = []
-    backlog_file = BACKLOG_DIR / "R&D-BACKLOG.md"
-    if backlog_file.exists():
-        content = backlog_file.read_text(encoding="utf-8")
-        table_pattern = r"\|\s*([\w.-]+)\s*\|\s*([^|]+)\s*\|\s*([^|]+)\s*\|\s*([^|]+)\s*\|"
-        for match in re.finditer(table_pattern, content):
-            task_id = match.group(1).strip()
-            if task_id in ("ID", "Task", "Pillar") or task_id.startswith("-"):
-                continue
-            if not re.match(r'^(P\d+\.\d+|RD-\d+|FH-\d+)', task_id):
-                continue
-            tasks.append({"task_id": task_id, "status": "TODO"})
-    return json.dumps({"tasks": tasks, "count": len(tasks)}, indent=2)
-
-
-def governance_get_task_deps(task_id):
-    """Get task deps (backward compat export)."""
-    return json.dumps({"task_id": task_id, "blocked_by": [], "blocks": []}, indent=2)
-
-
-def governance_evidence_search(query, top_k=5, source_type=None):
-    """Search evidence (backward compat export)."""
-    results = []
-    query_lower = query.lower()
-    for filepath in glob.glob(str(EVIDENCE_DIR / "*.md")):
-        try:
-            path = Path(filepath)
-            content = path.read_text(encoding="utf-8")
-            if query_lower in content.lower():
-                results.append({"source": path.stem, "content": content[:200]})
-        except Exception:
-            continue
-    return json.dumps({"results": results[:top_k], "count": len(results[:top_k])}, indent=2)
+from governance.compat import (
+    # Core query functions
+    governance_query_rules,
+    governance_list_sessions,
+    governance_get_session,
+    governance_list_decisions,
+    governance_get_decision,
+    governance_list_tasks,
+    governance_get_task_deps,
+    governance_evidence_search,
+    # DSM tracker
+    dsm_start,
+    dsm_advance,
+    dsm_checkpoint,
+    dsm_status,
+    dsm_complete,
+    dsm_finding,
+    dsm_metrics,
+    # Session collector
+    session_start,
+    session_decision,
+    session_task,
+    session_end,
+    session_list,
+    # Rule quality
+    governance_analyze_rules,
+    governance_rule_impact,
+    governance_find_issues,
+    # Task CRUD
+    governance_create_task,
+    governance_get_task,
+    governance_update_task,
+    governance_delete_task,
+    # Agent CRUD
+    governance_create_agent,
+    governance_get_agent,
+    governance_list_agents,
+    governance_update_agent_trust,
+    # Document viewing
+    governance_get_document,
+    governance_list_documents,
+    governance_get_rule_document,
+    governance_get_task_document,
+)
 
 
 # =============================================================================

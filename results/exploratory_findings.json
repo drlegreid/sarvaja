@@ -1,0 +1,161 @@
+{
+  "timestamp": "2025-12-26T22:30:00.000000",
+  "summary": {
+    "total_gaps": 78,
+    "critical": 2,
+    "high": 0,
+    "medium": 0,
+    "low": 5,
+    "fixed": 43,
+    "stub_gaps": 7
+  },
+  "session_progress": {
+    "P11.1": "DONE - UI data auto-loading via @state.change handler",
+    "P11.2": "DONE - Task model enriched with body, linked_rules, linked_sessions, gap_id",
+    "P11.2b": "DONE - claude-mem scanned, 20 memories found",
+    "P11.3": "DONE - TypeDB entity linkage: work-session, evidence-file entities + implements-rule, completed-in, has-evidence relations",
+    "P11.4": "DONE - session_memory.py: SessionContext, SessionMemoryManager, AMNESIA recovery, DSM integration (28 tests)",
+    "P11.7": "DONE - Partial certification: 15/20 E2E tests, 28 session memory tests, claude-mem verified",
+    "P11.8": "DONE - Full Entity Data Audit complete, 10 gaps found, report generated",
+    "P11.9": "DONE - Agent metrics persistent, trust_score calculated dynamically",
+    "P11.10": "DONE - Evidence-session linkage via filename parsing (8/9 linked)"
+  },
+  "p11_8_audit_results": {
+    "audit_date": "2025-12-26T21:30:00",
+    "api_version": "1.0.0",
+    "typedb_connected": true,
+    "entities": {
+      "tasks": {
+        "total": 40,
+        "with_body": 40,
+        "with_linked_rules": 40,
+        "with_linked_sessions": 4,
+        "with_gap_id": 14,
+        "status": "GOOD",
+        "coverage": "100%"
+      },
+      "sessions": {
+        "total": 6,
+        "with_description": 6,
+        "with_file_path": 6,
+        "with_evidence_files": 6,
+        "with_linked_rules_applied": 6,
+        "with_linked_decisions": 3,
+        "status": "GOOD",
+        "coverage": "100%"
+      },
+      "agents": {
+        "total": 5,
+        "with_tasks_executed": 0,
+        "with_last_active": 0,
+        "status": "STUB_DATA",
+        "coverage": "0%"
+      },
+      "decisions": {
+        "total": 4,
+        "with_context": 4,
+        "with_rationale": 4,
+        "status": "GOOD (TypeDB)",
+        "coverage": "100%"
+      },
+      "evidence": {
+        "total": 9,
+        "with_session_id": 0,
+        "status": "NEEDS_LINKAGE",
+        "coverage": "0%"
+      }
+    }
+  },
+  "claude_mem_recovery": {
+    "memories_found": 20,
+    "date_range": "2024-12-24 to 2024-12-25",
+    "key_documents": [
+      "sim-ai-phase4-session-collector-2024-12-24",
+      "sim-ai-phase5-complete-2024-12-24",
+      "sim-ai-session-2024-12-24-governance-rule011",
+      "sim-ai-wisdom-2024-12-24",
+      "sim-ai-dsp-2024-12-24-governance-mcp"
+    ],
+    "content_recovered": [
+      "Phase 2.4: Governance MCP Server (11 tools, 68 tests)",
+      "Phase 4.1: MCP to Agno wrapper (7 tools, 142 tests)",
+      "Phase 4.2: SessionCollector (5 MCP tools, 170 tests)",
+      "Phase 5: External MCP Integration (21 tools, 62 tests)",
+      "RULE-011: Multi-Agent Governance Protocol",
+      "RULE-014: Autonomous Task Sequencing",
+      "RULE-015: R&D Workflow Human Gate",
+      "RULE-019: UI/UX Design Standards"
+    ]
+  },
+  "stub_gaps_documented": [
+    {"id": "GAP-STUB-001", "location": "governance/api.py:614", "stub": "_tasks_store: Dict", "task": "P10.1"},
+    {"id": "GAP-STUB-002", "location": "governance/api.py:156-298", "stub": "seed_tasks", "task": "P10.1"},
+    {"id": "GAP-STUB-003", "location": "governance/api.py:687", "stub": "_sessions_store: Dict", "task": "P10.2"},
+    {"id": "GAP-STUB-004", "location": "governance/api.py:304-375", "stub": "seed_sessions", "task": "P10.2"},
+    {"id": "GAP-STUB-005", "location": "governance/api.py:775-821", "stub": "_agents_store: Dict", "task": "P10.3"},
+    {"id": "GAP-STUB-006", "location": "agent/governance_ui/data_access.py:42", "stub": "get_proposals()", "task": "P10.7"},
+    {"id": "GAP-STUB-007", "location": "agent/governance_ui/data_access.py:48", "stub": "get_escalated_proposals()", "task": "P10.7"}
+  ],
+  "new_gaps_from_audit": [
+    {"id": "GAP-TASK-001", "entity": "tasks", "field": "linked_sessions", "severity": "medium", "status": "Only 10% coverage"},
+    {"id": "GAP-TASK-002", "entity": "tasks", "field": "agent_id", "severity": "low", "status": "Always null"},
+    {"id": "GAP-TASK-003", "entity": "tasks", "field": "completed_at", "severity": "low", "status": "Not populated for DONE tasks"},
+    {"id": "GAP-AGENT-001", "entity": "agents", "field": "trust_score", "severity": "high", "status": "Hardcoded, not calculated"},
+    {"id": "GAP-AGENT-002", "entity": "agents", "field": "tasks_executed", "severity": "high", "status": "Always 0, resets on restart"},
+    {"id": "GAP-AGENT-003", "entity": "agents", "field": "last_active", "severity": "medium", "status": "Never populated"},
+    {"id": "GAP-AGENT-004", "entity": "agents", "field": "capabilities", "severity": "medium", "status": "Missing field"},
+    {"id": "GAP-EVIDENCE-001", "entity": "evidence", "field": "session_id", "severity": "high", "status": "No session linkage"},
+    {"id": "GAP-EVIDENCE-002", "entity": "evidence", "field": "file_types", "severity": "low", "status": "Only .md files"},
+    {"id": "GAP-DECISION-001", "entity": "decisions", "field": "linked_rules", "severity": "medium", "status": "Not exposed in API"}
+  ],
+  "fixed_gaps": [
+    {"gap_id": "GAP-UI-101", "entity": "agents", "operation": "navigation", "fix": "Agents nav item now present with data-testid", "fixed_at": "2025-12-26T17:00:00"},
+    {"gap_id": "GAP-UI-102", "entity": "rules", "operation": "read_detail", "fix": "Rule detail view implemented with click handler", "fixed_at": "2025-12-26T17:00:00"},
+    {"gap_id": "GAP-UI-103", "entity": "rules", "operation": "update", "fix": "Edit button present in rule detail view", "fixed_at": "2025-12-26T17:00:00"},
+    {"gap_id": "GAP-UI-104", "entity": "rules", "operation": "delete", "fix": "Delete button present in rule detail view", "fixed_at": "2025-12-26T17:00:00"},
+    {"gap_id": "GAP-UI-105", "entity": "tasks", "operation": "create", "fix": "Add Task button present and functional", "fixed_at": "2025-12-26T17:00:00"},
+    {"gap_id": "GAP-UI-106", "entity": "tasks", "operation": "read_detail", "fix": "Task detail view implemented with click handler", "fixed_at": "2025-12-26T18:30:00"},
+    {"gap_id": "GAP-UI-108", "entity": "tasks", "operation": "delete", "fix": "Delete button present in task detail view", "fixed_at": "2025-12-26T18:30:00"},
+    {"gap_id": "GAP-UI-109", "entity": "sessions", "operation": "read_detail", "fix": "Session detail view implemented with click handler", "fixed_at": "2025-12-26T18:30:00"},
+    {"gap_id": "GAP-UI-110", "entity": "decisions", "operation": "read_detail", "fix": "Decision detail view implemented with click handler", "fixed_at": "2025-12-26T18:30:00"},
+    {"gap_id": "GAP-UI-100", "entity": "decisions", "operation": "api_structure", "fix": "Decision API structure corrected with fallback fields", "fixed_at": "2025-12-26T17:00:00"},
+    {"gap_id": "GAP-UI-035", "entity": "all", "operation": "auto_load", "fix": "P11.1: Added @state.change handler for view-based data loading", "fixed_at": "2025-12-26T19:30:00"},
+    {"gap_id": "GAP-DATA-001", "entity": "tasks", "operation": "enrichment", "fix": "P11.2: Added body, linked_rules, linked_sessions, gap_id to 40 tasks", "fixed_at": "2025-12-26T20:00:00"},
+    {"gap_id": "GAP-DATA-004", "entity": "sessions", "operation": "enrichment", "fix": "P11.2: Added description, file_path, evidence_files to 6 sessions", "fixed_at": "2025-12-26T20:00:00"},
+    {"gap_id": "GAP-UI-107", "entity": "tasks", "operation": "update", "fix": "Task edit via TaskUpdate model, PUT endpoint updated for all fields", "fixed_at": "2025-12-28T10:00:00"},
+    {"gap_id": "GAP-UI-111", "entity": "trust", "operation": "read_detail", "fix": "Agent detail via inline Vue state assignment on trust card click", "fixed_at": "2025-12-28T10:30:00"},
+    {"gap_id": "GAP-UI-112", "entity": "impact", "operation": "read_detail", "fix": "Impact detail with clickable rules navigating to rule detail view", "fixed_at": "2025-12-28T11:00:00"},
+    {"gap_id": "GAP-DATA-003", "entity": "sessions", "operation": "attachments", "fix": "Evidence files viewable via /api/files/content endpoint and file viewer dialog", "fixed_at": "2025-12-28T12:00:00"},
+    {"gap_id": "ORCH-005", "entity": "agents", "operation": "curator", "fix": "Rules Curator Agent with quality analysis, conflict detection, validation - 22 tests", "fixed_at": "2025-12-28T13:00:00"},
+    {"gap_id": "ORCH-007", "entity": "tasks", "operation": "execution_viewer", "fix": "Task execution viewer with timeline, events API, UI section - 26 tests", "fixed_at": "2025-12-28T14:00:00"}
+  ],
+  "open_gaps": [
+    {"gap_id": "GAP-DATA-002", "entity": "all", "operation": "linkage", "severity": "critical", "status": "No cross-entity relationships"},
+    {"gap_id": "GAP-ARCH-011", "entity": "all", "operation": "migration", "severity": "critical", "status": "TypeDB migration incomplete"},
+    {"gap_id": "GAP-PROC-001", "entity": "all", "operation": "memory", "severity": "critical", "status": "No wisdom accumulation mechanism"}
+  ],
+  "evidence_files_found": [
+    "evidence/DECISION-003-TYPEDB-FIRST-STRATEGY.md",
+    "evidence/EXP-UI-FAILURE-2024-12-25.md",
+    "evidence/MCP-TEST-RESULTS-2024-12-24.md",
+    "evidence/SESSION-2024-12-24-CLAUDE-CODE-SETUP.md",
+    "evidence/SESSION-2024-12-24-PHASE4-MCP-WRAPPER.md",
+    "evidence/SESSION-2024-12-25-DSP-CYCLES.md",
+    "evidence/SESSION-2024-12-25-PHASE8-E2E.md",
+    "evidence/SESSION-2024-12-25-PHASE8-HEALTHCHECK.md",
+    "evidence/SESSION-DECISIONS-2024-12-24.md"
+  ],
+  "next_steps": [
+    "P10.1-P10.3: Migrate in-memory stores to TypeDB (remove GAP-STUB-001 to GAP-STUB-005)",
+    "P11.3: Entity Linkage Schema in TypeDB (GAP-DATA-002)",
+    "P11.4: claude-mem Session Integration (GAP-ARCH-011, GAP-PROC-001)",
+    "P11.7: Agent Platform Readiness Certification (E2E verification)",
+    "Create missing evidence files referenced in sessions"
+  ],
+  "session_fixes": [
+    {"gap_id": "GAP-EVIDENCE-001", "fix": "P11.10: _extract_session_id() added", "fixed_at": "2025-12-26T22:00:00"},
+    {"gap_id": "GAP-AGENT-001", "fix": "P11.9: Dynamic trust_score calculation", "fixed_at": "2025-12-26T22:20:00"},
+    {"gap_id": "GAP-AGENT-002", "fix": "P11.9: Persistent metrics to JSON", "fixed_at": "2025-12-26T22:20:00"},
+    {"gap_id": "GAP-AGENT-003", "fix": "P11.9: last_active on task record", "fixed_at": "2025-12-26T22:20:00"}
+  ]
+}

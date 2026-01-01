@@ -1,0 +1,891 @@
+[12/28/25 18:58:03] WARNING  Tool already exists:            tool_manager.py:70
+                             governance_list_agents                            
+                    INFO     Registered workspace MCP tools (7 workspace.py:237
+                             tools)                                            
+                    INFO     Translator(prefix=None)            namespace.py:65
+[12/28/25 18:58:26] INFO     trigger(submit_rule_form)         controller.py:80
+                    INFO     trigger(delete_rule)              controller.py:80
+                    INFO     trigger(delete_task)              controller.py:80
+                    INFO     trigger(submit_task_edit)         controller.py:80
+                    INFO     trigger(toggle_auto_refresh)      controller.py:80
+                    INFO     trigger(send_chat_message)        controller.py:80
+                    INFO     trigger(clear_chat)               controller.py:80
+                    INFO     trigger(load_file_content)        controller.py:80
+                    INFO     trigger(load_task_execution)      controller.py:80
+                    INFO     trigger(refresh_data)             controller.py:80
+                    INFO     trigger(load_trust_data)          controller.py:80
+                    INFO     trigger(load_monitor_data)        controller.py:80
+                    INFO     trigger(refresh_backlog)          controller.py:80
+                    INFO     trigger(load_executive_report)    controller.py:80
+                    INFO     trigger(claim_backlog_task)       controller.py:80
+                    INFO     trigger(complete_backlog_task)    controller.py:80
+                    INFO     js_key = data-testid                   core.py:570
+                    INFO     js_key = density                       core.py:570
+                    INFO     js_key = color                         core.py:570
+                    INFO      token Sim.ai Governance          namespace.py:146
+                             Dashboard                                         
+                    INFO     js_key = size                          core.py:570
+                    INFO     js_key = color                         core.py:570
+                    INFO     js_key = variant                       core.py:570
+                    INFO      token {                          namespace.py:146
+                    INFO     (prefix=None) token {             namespace.py:130
+                    INFO     has({ => {) = False                   state.py:188
+                    INFO      => {                             namespace.py:138
+                    INFO      token { rules.length }           namespace.py:146
+                    INFO     (prefix=None) token {             namespace.py:130
+                    INFO     has({ => {) = False                   state.py:188
+                    INFO     (prefix=None) token               namespace.py:130
+                    INFO     has(  =>  ) = False                   state.py:188
+                    INFO     (prefix=None) token rules         namespace.py:130
+                    INFO     has(rules => rules) = True            state.py:188
+                    INFO     (prefix=None) translated rules    namespace.py:133
+                    INFO     (prefix=None) token .             namespace.py:130
+                    INFO     has(. => .) = False                   state.py:188
+                    INFO     (prefix=None) token length        namespace.py:130
+                    INFO     has(length => length) = False         state.py:188
+                    INFO     (prefix=None) token               namespace.py:130
+                    INFO     has(  =>  ) = False                   state.py:188
+                    INFO     (prefix=None) token }             namespace.py:130
+                    INFO     has(} => }) = False                   state.py:188
+                    INFO      => { rules.length }              namespace.py:138
+                    INFO      token } Rules | {                namespace.py:146
+                    INFO      token { decisions.length }       namespace.py:146
+                    INFO     (prefix=None) token {             namespace.py:130
+                    INFO     has({ => {) = False                   state.py:188
+                    INFO     (prefix=None) token               namespace.py:130
+                    INFO     has(  =>  ) = False                   state.py:188
+                    INFO     (prefix=None) token decisions     namespace.py:130
+                    INFO     has(decisions => decisions) = True    state.py:188
+                    INFO     (prefix=None) translated          namespace.py:133
+                             decisions                                         
+                    INFO     (prefix=None) token .             namespace.py:130
+                    INFO     has(. => .) = False                   state.py:188
+                    INFO     (prefix=None) token length        namespace.py:130
+                    INFO     has(length => length) = False         state.py:188
+                    INFO     (prefix=None) token               namespace.py:130
+                    INFO     has(  =>  ) = False                   state.py:188
+                    INFO     (prefix=None) token }             namespace.py:130
+                    INFO     has(} => }) = False                   state.py:188
+                    INFO      => { decisions.length }          namespace.py:138
+                    INFO      token } Decisions                namespace.py:146
+                    INFO     js_key = data-testid                   core.py:570
+                    INFO     js_key = title                         core.py:570
+                    INFO     js_key = variant                       core.py:570
+                    INFO     js_key = icon                          core.py:570
+                    INFO     (prefix=None) token trigger       namespace.py:130
+                    INFO     has(trigger => trigger) = False       state.py:188
+[12/28/25 18:58:27] INFO     (prefix=None) token (             namespace.py:130
+                    INFO     has(( => () = False                   state.py:188
+                    INFO     (prefix=None) token '             namespace.py:130
+                    INFO     has(' => ') = False                   state.py:188
+                    INFO     (prefix=None) token refresh_data  namespace.py:130
+                    INFO     has(refresh_data => refresh_data) =   state.py:188
+                             False                                             
+                    INFO     (prefix=None) token '             namespace.py:130
+                    INFO     has(' => ') = False                   state.py:188
+                    INFO     (prefix=None) token )             namespace.py:130
+                    INFO     has() => )) = False                   state.py:188
+                    INFO      => trigger('refresh_data')       namespace.py:138
+                    INFO     js_key = data-testid                   core.py:570
+                    INFO     js_key = permanent                     core.py:570
+                    INFO     js_key = rail                          core.py:570
+                    INFO     js_key = nav                           core.py:570
+                    INFO     js_key = density                       core.py:570
+                    INFO     js_key = data-testid                   core.py:570
+                    INFO     js_key = title                         core.py:570
+                    INFO     js_key = title                         core.py:570
+                    INFO     js_key = value                         core.py:570
+                    INFO     js_key = active                        core.py:570
+                    INFO     before: active = active_view ===       core.py:579
+                             'chat'                                            
+                    INFO     (prefix=None) token active_view   namespace.py:130
+                    INFO     has(active_view => active_view) =     state.py:188
+                             True                                              
+                    INFO     (prefix=None) translated          namespace.py:133
+                             active_view                                       
+                    INFO     (prefix=None) token               namespace.py:130
+                    INFO     has(  =>  ) = False                   state.py:188
+                    INFO     (prefix=None) token ===           namespace.py:130
+                    INFO     has(=== => ===) = False               state.py:188
+                    INFO     (prefix=None) token               namespace.py:130
+                    INFO     has(  =>  ) = False                   state.py:188
+                    INFO     (prefix=None) token '             namespace.py:130
+                    INFO     has(' => ') = False                   state.py:188
+                    INFO     (prefix=None) token chat          namespace.py:130
+                    INFO     has(chat => chat) = False             state.py:188
+                    INFO     (prefix=None) token '             namespace.py:130
+                    INFO     has(' => ') = False                   state.py:188
+                    INFO      => active_view === 'chat'        namespace.py:138
+                    INFO     after: active = active_view === 'chat' core.py:596
+                    INFO     js_key = prependIcon                   core.py:570
+                    INFO     (prefix=None) token active_view   namespace.py:130
+                    INFO     has(active_view => active_view) =     state.py:188
+                             True                                              
+                    INFO     (prefix=None) translated          namespace.py:133
+                             active_view                                       
+                    INFO     (prefix=None) token               namespace.py:130
+                    INFO     has(  =>  ) = False                   state.py:188
+                    INFO     (prefix=None) token =             namespace.py:130
+                    INFO     has(= => =) = False                   state.py:188
+                    INFO     (prefix=None) token               namespace.py:130
+                    INFO     has(  =>  ) = False                   state.py:188
+                    INFO     (prefix=None) token '             namespace.py:130
+                    INFO     has(' => ') = False                   state.py:188
+                    INFO     (prefix=None) token chat          namespace.py:130
+                    INFO     has(chat => chat) = False             state.py:188
+                    INFO     (prefix=None) token '             namespace.py:130
+                    INFO     has(' => ') = False                   state.py:188
+                    INFO      => active_view = 'chat'          namespace.py:138
+                    INFO     (prefix=None) token active_view   namespace.py:130
+                    INFO     has(active_view => active_view) =     state.py:188
+                             True                                              
+                    INFO     (prefix=None) translated          namespace.py:133
+                             active_view                                       
+                    INFO     (prefix=None) token               namespace.py:130
+                    INFO     has(  =>  ) = False                   state.py:188
+                    INFO     (prefix=None) token =             namespace.py:130
+                    INFO     has(= => =) = False                   state.py:188
+                    INFO     (prefix=None) token               namespace.py:130
+                    INFO     has(  =>  ) = False                   state.py:188
+                    INFO     (prefix=None) token '             namespace.py:130
+                    INFO     has(' => ') = False                   state.py:188
+                    INFO     (prefix=None) token chat          namespace.py:130
+                    INFO     has(chat => chat) = False             state.py:188
+                    INFO     (prefix=None) token '             namespace.py:130
+                    INFO     has(' => ') = False                   state.py:188
+                    INFO      => active_view = 'chat'          namespace.py:138
+                    INFO     js_key = data-testid                   core.py:570
+                    INFO     js_key = title                         core.py:570
+                    INFO     js_key = title                         core.py:570
+                    INFO     js_key = value                         core.py:570
+                    INFO     js_key = active                        core.py:570
+                    INFO     before: active = active_view ===       core.py:579
+                             'rules'                                           
+                    INFO     (prefix=None) token active_view   namespace.py:130
+                    INFO     has(active_view => active_view) =     state.py:188
+                             True                                              
+                    INFO     (prefix=None) translated          namespace.py:133
+                             active_view                                       
+                    INFO     (prefix=None) token               namespace.py:130
+                    INFO     has(  =>  ) = False                   state.py:188
+                    INFO     (prefix=None) token ===           namespace.py:130
+                    INFO     has(=== => ===) = False               state.py:188
+                    INFO     (prefix=None) token               namespace.py:130
+                    INFO     has(  =>  ) = False                   state.py:188
+                    INFO     (prefix=None) token '             namespace.py:130
+                    INFO     has(' => ') = False                   state.py:188
+                    INFO     (prefix=None) token rules         namespace.py:130
+                    INFO     has(rules => rules) = True            state.py:188
+                    INFO     (prefix=None) translated rules    namespace.py:133
+                    INFO     (prefix=None) token '             namespace.py:130
+                    INFO     has(' => ') = False                   state.py:188
+                    INFO      => active_view === 'rules'       namespace.py:138
+                    INFO     after: active = active_view ===        core.py:596
+                             'rules'                                           
+                    INFO     js_key = prependIcon                   core.py:570
+                    INFO     (prefix=None) token active_view   namespace.py:130
+                    INFO     has(active_view => active_view) =     state.py:188
+                             True                                              
+                    INFO     (prefix=None) translated          namespace.py:133
+                             active_view                                       
+                    INFO     (prefix=None) token               namespace.py:130
+                    INFO     has(  =>  ) = False                   state.py:188
+                    INFO     (prefix=None) token =             namespace.py:130
+                    INFO     has(= => =) = False                   state.py:188
+                    INFO     (prefix=None) token               namespace.py:130
+                    INFO     has(  =>  ) = False                   state.py:188
+                    INFO     (prefix=None) token '             namespace.py:130
+                    INFO     has(' => ') = False                   state.py:188
+                    INFO     (prefix=None) token rules         namespace.py:130
+                    INFO     has(rules => rules) = True            state.py:188
+                    INFO     (prefix=None) translated rules    namespace.py:133
+                    INFO     (prefix=None) token '             namespace.py:130
+                    INFO     has(' => ') = False                   state.py:188
+                    INFO      => active_view = 'rules'         namespace.py:138
+                    INFO     (prefix=None) token active_view   namespace.py:130
+                    INFO     has(active_view => active_view) =     state.py:188
+                             True                                              
+                    INFO     (prefix=None) translated          namespace.py:133
+                             active_view                                       
+                    INFO     (prefix=None) token               namespace.py:130
+                    INFO     has(  =>  ) = False                   state.py:188
+                    INFO     (prefix=None) token =             namespace.py:130
+                    INFO     has(= => =) = False                   state.py:188
+                    INFO     (prefix=None) token               namespace.py:130
+                    INFO     has(  =>  ) = False                   state.py:188
+                    INFO     (prefix=None) token '             namespace.py:130
+                    INFO     has(' => ') = False                   state.py:188
+                    INFO     (prefix=None) token rules         namespace.py:130
+                    INFO     has(rules => rules) = True            state.py:188
+                    INFO     (prefix=None) translated rules    namespace.py:133
+                    INFO     (prefix=None) token '             namespace.py:130
+                    INFO     has(' => ') = False                   state.py:188
+                    INFO      => active_view = 'rules'         namespace.py:138
+                    INFO     js_key = data-testid                   core.py:570
+                    INFO     js_key = title                         core.py:570
+                    INFO     js_key = title                         core.py:570
+                    INFO     js_key = value                         core.py:570
+                    INFO     js_key = active                        core.py:570
+                    INFO     before: active = active_view ===       core.py:579
+                             'agents'                                          
+                    INFO     (prefix=None) token active_view   namespace.py:130
+                    INFO     has(active_view => active_view) =     state.py:188
+                             True                                              
+                    INFO     (prefix=None) translated          namespace.py:133
+                             active_view                                       
+                    INFO     (prefix=None) token               namespace.py:130
+                    INFO     has(  =>  ) = False                   state.py:188
+                    INFO     (prefix=None) token ===           namespace.py:130
+                    INFO     has(=== => ===) = False               state.py:188
+                    INFO     (prefix=None) token               namespace.py:130
+                    INFO     has(  =>  ) = False                   state.py:188
+                    INFO     (prefix=None) token '             namespace.py:130
+                    INFO     has(' => ') = False                   state.py:188
+                    INFO     (prefix=None) token agents        namespace.py:130
+                    INFO     has(agents => agents) = True          state.py:188
+                    INFO     (prefix=None) translated agents   namespace.py:133
+                    INFO     (prefix=None) token '             namespace.py:130
+                    INFO     has(' => ') = False                   state.py:188
+                    INFO      => active_view === 'agents'      namespace.py:138
+                    INFO     after: active = active_view ===        core.py:596
+                             'agents'                                          
+                    INFO     js_key = prependIcon                   core.py:570
+                    INFO     (prefix=None) token active_view   namespace.py:130
+                    INFO     has(active_view => active_view) =     state.py:188
+                             True                                              
+                    INFO     (prefix=None) translated          namespace.py:133
+                             active_view                                       
+                    INFO     (prefix=None) token               namespace.py:130
+                    INFO     has(  =>  ) = False                   state.py:188
+                    INFO     (prefix=None) token =             namespace.py:130
+                    INFO     has(= => =) = False                   state.py:188
+                    INFO     (prefix=None) token               namespace.py:130
+                    INFO     has(  =>  ) = False                   state.py:188
+                    INFO     (prefix=None) token '             namespace.py:130
+                    INFO     has(' => ') = False                   state.py:188
+                    INFO     (prefix=None) token agents        namespace.py:130
+                    INFO     has(agents => agents) = True          state.py:188
+                    INFO     (prefix=None) translated agents   namespace.py:133
+                    INFO     (prefix=None) token '             namespace.py:130
+                    INFO     has(' => ') = False                   state.py:188
+                    INFO      => active_view = 'agents'        namespace.py:138
+                    INFO     (prefix=None) token active_view   namespace.py:130
+                    INFO     has(active_view => active_view) =     state.py:188
+                             True                                              
+                    INFO     (prefix=None) translated          namespace.py:133
+                             active_view                                       
+                    INFO     (prefix=None) token               namespace.py:130
+                    INFO     has(  =>  ) = False                   state.py:188
+                    INFO     (prefix=None) token =             namespace.py:130
+                    INFO     has(= => =) = False                   state.py:188
+                    INFO     (prefix=None) token               namespace.py:130
+                    INFO     has(  =>  ) = False                   state.py:188
+                    INFO     (prefix=None) token '             namespace.py:130
+                    INFO     has(' => ') = False                   state.py:188
+                    INFO     (prefix=None) token agents        namespace.py:130
+                    INFO     has(agents => agents) = True          state.py:188
+                    INFO     (prefix=None) translated agents   namespace.py:133
+                    INFO     (prefix=None) token '             namespace.py:130
+                    INFO     has(' => ') = False                   state.py:188
+                    INFO      => active_view = 'agents'        namespace.py:138
+                    INFO     js_key = data-testid                   core.py:570
+                    INFO     js_key = title                         core.py:570
+                    INFO     js_key = title                         core.py:570
+                    INFO     js_key = value                         core.py:570
+                    INFO     js_key = active                        core.py:570
+                    INFO     before: active = active_view ===       core.py:579
+                             'tasks'                                           
+                    INFO     (prefix=None) token active_view   namespace.py:130
+                    INFO     has(active_view => active_view) =     state.py:188
+                             True                                              
+                    INFO     (prefix=None) translated          namespace.py:133
+                             active_view                                       
+                    INFO     (prefix=None) token               namespace.py:130
+                    INFO     has(  =>  ) = False                   state.py:188
+                    INFO     (prefix=None) token ===           namespace.py:130
+                    INFO     has(=== => ===) = False               state.py:188
+                    INFO     (prefix=None) token               namespace.py:130
+                    INFO     has(  =>  ) = False                   state.py:188
+                    INFO     (prefix=None) token '             namespace.py:130
+                    INFO     has(' => ') = False                   state.py:188
+                    INFO     (prefix=None) token tasks         namespace.py:130
+                    INFO     has(tasks => tasks) = True            state.py:188
+                    INFO     (prefix=None) translated tasks    namespace.py:133
+                    INFO     (prefix=None) token '             namespace.py:130
+                    INFO     has(' => ') = False                   state.py:188
+                    INFO      => active_view === 'tasks'       namespace.py:138
+                    INFO     after: active = active_view ===        core.py:596
+                             'tasks'                                           
+                    INFO     js_key = prependIcon                   core.py:570
+                    INFO     (prefix=None) token active_view   namespace.py:130
+                    INFO     has(active_view => active_view) =     state.py:188
+                             True                                              
+                    INFO     (prefix=None) translated          namespace.py:133
+                             active_view                                       
+                    INFO     (prefix=None) token               namespace.py:130
+                    INFO     has(  =>  ) = False                   state.py:188
+                    INFO     (prefix=None) token =             namespace.py:130
+                    INFO     has(= => =) = False                   state.py:188
+                    INFO     (prefix=None) token               namespace.py:130
+                    INFO     has(  =>  ) = False                   state.py:188
+                    INFO     (prefix=None) token '             namespace.py:130
+                    INFO     has(' => ') = False                   state.py:188
+                    INFO     (prefix=None) token tasks         namespace.py:130
+                    INFO     has(tasks => tasks) = True            state.py:188
+                    INFO     (prefix=None) translated tasks    namespace.py:133
+                    INFO     (prefix=None) token '             namespace.py:130
+                    INFO     has(' => ') = False                   state.py:188
+                    INFO      => active_view = 'tasks'         namespace.py:138
+                    INFO     (prefix=None) token active_view   namespace.py:130
+                    INFO     has(active_view => active_view) =     state.py:188
+                             True                                              
+                    INFO     (prefix=None) translated          namespace.py:133
+                             active_view                                       
+                    INFO     (prefix=None) token               namespace.py:130
+                    INFO     has(  =>  ) = False                   state.py:188
+                    INFO     (prefix=None) token =             namespace.py:130
+                    INFO     has(= => =) = False                   state.py:188
+                    INFO     (prefix=None) token               namespace.py:130
+                    INFO     has(  =>  ) = False                   state.py:188
+                    INFO     (prefix=None) token '             namespace.py:130
+                    INFO     has(' => ') = False                   state.py:188
+                    INFO     (prefix=None) token tasks         namespace.py:130
+                    INFO     has(tasks => tasks) = True            state.py:188
+[12/28/25 18:58:28] INFO     (prefix=None) translated tasks    namespace.py:133
+                    INFO     (prefix=None) token '             namespace.py:130
+                    INFO     has(' => ') = False                   state.py:188
+                    INFO      => active_view = 'tasks'         namespace.py:138
+                    INFO     js_key = data-testid                   core.py:570
+                    INFO     js_key = title                         core.py:570
+                    INFO     js_key = title                         core.py:570
+                    INFO     js_key = value                         core.py:570
+                    INFO     js_key = active                        core.py:570
+                    INFO     before: active = active_view ===       core.py:579
+                             'backlog'                                         
+                    INFO     (prefix=None) token active_view   namespace.py:130
+                    INFO     has(active_view => active_view) =     state.py:188
+                             True                                              
+                    INFO     (prefix=None) translated          namespace.py:133
+                             active_view                                       
+                    INFO     (prefix=None) token               namespace.py:130
+                    INFO     has(  =>  ) = False                   state.py:188
+                    INFO     (prefix=None) token ===           namespace.py:130
+                    INFO     has(=== => ===) = False               state.py:188
+                    INFO     (prefix=None) token               namespace.py:130
+                    INFO     has(  =>  ) = False                   state.py:188
+                    INFO     (prefix=None) token '             namespace.py:130
+                    INFO     has(' => ') = False                   state.py:188
+                    INFO     (prefix=None) token backlog       namespace.py:130
+                    INFO     has(backlog => backlog) = False       state.py:188
+                    INFO     (prefix=None) token '             namespace.py:130
+                    INFO     has(' => ') = False                   state.py:188
+                    INFO      => active_view === 'backlog'     namespace.py:138
+                    INFO     after: active = active_view ===        core.py:596
+                             'backlog'                                         
+                    INFO     js_key = prependIcon                   core.py:570
+                    INFO     (prefix=None) token active_view   namespace.py:130
+                    INFO     has(active_view => active_view) =     state.py:188
+                             True                                              
+                    INFO     (prefix=None) translated          namespace.py:133
+                             active_view                                       
+                    INFO     (prefix=None) token               namespace.py:130
+                    INFO     has(  =>  ) = False                   state.py:188
+                    INFO     (prefix=None) token =             namespace.py:130
+                    INFO     has(= => =) = False                   state.py:188
+                    INFO     (prefix=None) token               namespace.py:130
+                    INFO     has(  =>  ) = False                   state.py:188
+                    INFO     (prefix=None) token '             namespace.py:130
+                    INFO     has(' => ') = False                   state.py:188
+                    INFO     (prefix=None) token backlog       namespace.py:130
+                    INFO     has(backlog => backlog) = False       state.py:188
+                    INFO     (prefix=None) token '             namespace.py:130
+                    INFO     has(' => ') = False                   state.py:188
+                    INFO      => active_view = 'backlog'       namespace.py:138
+                    INFO     (prefix=None) token active_view   namespace.py:130
+                    INFO     has(active_view => active_view) =     state.py:188
+                             True                                              
+                    INFO     (prefix=None) translated          namespace.py:133
+                             active_view                                       
+                    INFO     (prefix=None) token               namespace.py:130
+                    INFO     has(  =>  ) = False                   state.py:188
+                    INFO     (prefix=None) token =             namespace.py:130
+                    INFO     has(= => =) = False                   state.py:188
+                    INFO     (prefix=None) token               namespace.py:130
+                    INFO     has(  =>  ) = False                   state.py:188
+                    INFO     (prefix=None) token '             namespace.py:130
+                    INFO     has(' => ') = False                   state.py:188
+                    INFO     (prefix=None) token backlog       namespace.py:130
+                    INFO     has(backlog => backlog) = False       state.py:188
+                    INFO     (prefix=None) token '             namespace.py:130
+                    INFO     has(' => ') = False                   state.py:188
+                    INFO      => active_view = 'backlog'       namespace.py:138
+                    INFO     js_key = data-testid                   core.py:570
+                    INFO     js_key = title                         core.py:570
+                    INFO     js_key = title                         core.py:570
+                    INFO     js_key = value                         core.py:570
+                    INFO     js_key = active                        core.py:570
+                    INFO     before: active = active_view ===       core.py:579
+                             'sessions'                                        
+                    INFO     (prefix=None) token active_view   namespace.py:130
+                    INFO     has(active_view => active_view) =     state.py:188
+                             True                                              
+                    INFO     (prefix=None) translated          namespace.py:133
+                             active_view                                       
+                    INFO     (prefix=None) token               namespace.py:130
+                    INFO     has(  =>  ) = False                   state.py:188
+                    INFO     (prefix=None) token ===           namespace.py:130
+                    INFO     has(=== => ===) = False               state.py:188
+                    INFO     (prefix=None) token               namespace.py:130
+                    INFO     has(  =>  ) = False                   state.py:188
+                    INFO     (prefix=None) token '             namespace.py:130
+                    INFO     has(' => ') = False                   state.py:188
+                    INFO     (prefix=None) token sessions      namespace.py:130
+                    INFO     has(sessions => sessions) = True      state.py:188
+                    INFO     (prefix=None) translated sessions namespace.py:133
+                    INFO     (prefix=None) token '             namespace.py:130
+                    INFO     has(' => ') = False                   state.py:188
+                    INFO      => active_view === 'sessions'    namespace.py:138
+                    INFO     after: active = active_view ===        core.py:596
+                             'sessions'                                        
+                    INFO     js_key = prependIcon                   core.py:570
+                    INFO     (prefix=None) token active_view   namespace.py:130
+                    INFO     has(active_view => active_view) =     state.py:188
+                             True                                              
+                    INFO     (prefix=None) translated          namespace.py:133
+                             active_view                                       
+                    INFO     (prefix=None) token               namespace.py:130
+                    INFO     has(  =>  ) = False                   state.py:188
+                    INFO     (prefix=None) token =             namespace.py:130
+                    INFO     has(= => =) = False                   state.py:188
+                    INFO     (prefix=None) token               namespace.py:130
+                    INFO     has(  =>  ) = False                   state.py:188
+                    INFO     (prefix=None) token '             namespace.py:130
+                    INFO     has(' => ') = False                   state.py:188
+                    INFO     (prefix=None) token sessions      namespace.py:130
+                    INFO     has(sessions => sessions) = True      state.py:188
+                    INFO     (prefix=None) translated sessions namespace.py:133
+                    INFO     (prefix=None) token '             namespace.py:130
+                    INFO     has(' => ') = False                   state.py:188
+                    INFO      => active_view = 'sessions'      namespace.py:138
+                    INFO     (prefix=None) token active_view   namespace.py:130
+                    INFO     has(active_view => active_view) =     state.py:188
+                             True                                              
+                    INFO     (prefix=None) translated          namespace.py:133
+                             active_view                                       
+                    INFO     (prefix=None) token               namespace.py:130
+                    INFO     has(  =>  ) = False                   state.py:188
+                    INFO     (prefix=None) token =             namespace.py:130
+                    INFO     has(= => =) = False                   state.py:188
+                    INFO     (prefix=None) token               namespace.py:130
+                    INFO     has(  =>  ) = False                   state.py:188
+                    INFO     (prefix=None) token '             namespace.py:130
+                    INFO     has(' => ') = False                   state.py:188
+                    INFO     (prefix=None) token sessions      namespace.py:130
+                    INFO     has(sessions => sessions) = True      state.py:188
+                    INFO     (prefix=None) translated sessions namespace.py:133
+                    INFO     (prefix=None) token '             namespace.py:130
+                    INFO     has(' => ') = False                   state.py:188
+                    INFO      => active_view = 'sessions'      namespace.py:138
+                    INFO     js_key = data-testid                   core.py:570
+                    INFO     js_key = title                         core.py:570
+                    INFO     js_key = title                         core.py:570
+                    INFO     js_key = value                         core.py:570
+                    INFO     js_key = active                        core.py:570
+                    INFO     before: active = active_view ===       core.py:579
+                             'executive'                                       
+                    INFO     (prefix=None) token active_view   namespace.py:130
+                    INFO     has(active_view => active_view) =     state.py:188
+                             True                                              
+                    INFO     (prefix=None) translated          namespace.py:133
+                             active_view                                       
+                    INFO     (prefix=None) token               namespace.py:130
+                    INFO     has(  =>  ) = False                   state.py:188
+                    INFO     (prefix=None) token ===           namespace.py:130
+                    INFO     has(=== => ===) = False               state.py:188
+                    INFO     (prefix=None) token               namespace.py:130
+                    INFO     has(  =>  ) = False                   state.py:188
+                    INFO     (prefix=None) token '             namespace.py:130
+                    INFO     has(' => ') = False                   state.py:188
+                    INFO     (prefix=None) token executive     namespace.py:130
+                    INFO     has(executive => executive) = False   state.py:188
+                    INFO     (prefix=None) token '             namespace.py:130
+                    INFO     has(' => ') = False                   state.py:188
+                    INFO      => active_view === 'executive'   namespace.py:138
+                    INFO     after: active = active_view ===        core.py:596
+                             'executive'                                       
+                    INFO     js_key = prependIcon                   core.py:570
+                    INFO     (prefix=None) token active_view   namespace.py:130
+                    INFO     has(active_view => active_view) =     state.py:188
+                             True                                              
+                    INFO     (prefix=None) translated          namespace.py:133
+                             active_view                                       
+                    INFO     (prefix=None) token               namespace.py:130
+                    INFO     has(  =>  ) = False                   state.py:188
+                    INFO     (prefix=None) token =             namespace.py:130
+                    INFO     has(= => =) = False                   state.py:188
+                    INFO     (prefix=None) token               namespace.py:130
+                    INFO     has(  =>  ) = False                   state.py:188
+                    INFO     (prefix=None) token '             namespace.py:130
+                    INFO     has(' => ') = False                   state.py:188
+                    INFO     (prefix=None) token executive     namespace.py:130
+                    INFO     has(executive => executive) = False   state.py:188
+                    INFO     (prefix=None) token '             namespace.py:130
+                    INFO     has(' => ') = False                   state.py:188
+                    INFO      => active_view = 'executive'     namespace.py:138
+                    INFO     (prefix=None) token active_view   namespace.py:130
+                    INFO     has(active_view => active_view) =     state.py:188
+                             True                                              
+                    INFO     (prefix=None) translated          namespace.py:133
+                             active_view                                       
+                    INFO     (prefix=None) token               namespace.py:130
+                    INFO     has(  =>  ) = False                   state.py:188
+                    INFO     (prefix=None) token =             namespace.py:130
+                    INFO     has(= => =) = False                   state.py:188
+                    INFO     (prefix=None) token               namespace.py:130
+                    INFO     has(  =>  ) = False                   state.py:188
+                    INFO     (prefix=None) token '             namespace.py:130
+                    INFO     has(' => ') = False                   state.py:188
+                    INFO     (prefix=None) token executive     namespace.py:130
+                    INFO     has(executive => executive) = False   state.py:188
+                    INFO     (prefix=None) token '             namespace.py:130
+                    INFO     has(' => ') = False                   state.py:188
+                    INFO      => active_view = 'executive'     namespace.py:138
+                    INFO     js_key = data-testid                   core.py:570
+                    INFO     js_key = title                         core.py:570
+                    INFO     js_key = title                         core.py:570
+                    INFO     js_key = value                         core.py:570
+                    INFO     js_key = active                        core.py:570
+                    INFO     before: active = active_view ===       core.py:579
+                             'decisions'                                       
+                    INFO     (prefix=None) token active_view   namespace.py:130
+                    INFO     has(active_view => active_view) =     state.py:188
+                             True                                              
+                    INFO     (prefix=None) translated          namespace.py:133
+                             active_view                                       
+                    INFO     (prefix=None) token               namespace.py:130
+                    INFO     has(  =>  ) = False                   state.py:188
+                    INFO     (prefix=None) token ===           namespace.py:130
+                    INFO     has(=== => ===) = False               state.py:188
+                    INFO     (prefix=None) token               namespace.py:130
+                    INFO     has(  =>  ) = False                   state.py:188
+                    INFO     (prefix=None) token '             namespace.py:130
+                    INFO     has(' => ') = False                   state.py:188
+                    INFO     (prefix=None) token decisions     namespace.py:130
+                    INFO     has(decisions => decisions) = True    state.py:188
+                    INFO     (prefix=None) translated          namespace.py:133
+                             decisions                                         
+                    INFO     (prefix=None) token '             namespace.py:130
+                    INFO     has(' => ') = False                   state.py:188
+                    INFO      => active_view === 'decisions'   namespace.py:138
+                    INFO     after: active = active_view ===        core.py:596
+                             'decisions'                                       
+                    INFO     js_key = prependIcon                   core.py:570
+                    INFO     (prefix=None) token active_view   namespace.py:130
+                    INFO     has(active_view => active_view) =     state.py:188
+                             True                                              
+                    INFO     (prefix=None) translated          namespace.py:133
+                             active_view                                       
+                    INFO     (prefix=None) token               namespace.py:130
+                    INFO     has(  =>  ) = False                   state.py:188
+                    INFO     (prefix=None) token =             namespace.py:130
+                    INFO     has(= => =) = False                   state.py:188
+                    INFO     (prefix=None) token               namespace.py:130
+                    INFO     has(  =>  ) = False                   state.py:188
+                    INFO     (prefix=None) token '             namespace.py:130
+                    INFO     has(' => ') = False                   state.py:188
+                    INFO     (prefix=None) token decisions     namespace.py:130
+                    INFO     has(decisions => decisions) = True    state.py:188
+                    INFO     (prefix=None) translated          namespace.py:133
+                             decisions                                         
+                    INFO     (prefix=None) token '             namespace.py:130
+                    INFO     has(' => ') = False                   state.py:188
+                    INFO      => active_view = 'decisions'     namespace.py:138
+                    INFO     (prefix=None) token active_view   namespace.py:130
+                    INFO     has(active_view => active_view) =     state.py:188
+                             True                                              
+                    INFO     (prefix=None) translated          namespace.py:133
+                             active_view                                       
+                    INFO     (prefix=None) token               namespace.py:130
+                    INFO     has(  =>  ) = False                   state.py:188
+                    INFO     (prefix=None) token =             namespace.py:130
+                    INFO     has(= => =) = False                   state.py:188
+                    INFO     (prefix=None) token               namespace.py:130
+                    INFO     has(  =>  ) = False                   state.py:188
+                    INFO     (prefix=None) token '             namespace.py:130
+                    INFO     has(' => ') = False                   state.py:188
+                    INFO     (prefix=None) token decisions     namespace.py:130
+                    INFO     has(decisions => decisions) = True    state.py:188
+                    INFO     (prefix=None) translated          namespace.py:133
+                             decisions                                         
+                    INFO     (prefix=None) token '             namespace.py:130
+                    INFO     has(' => ') = False                   state.py:188
+                    INFO      => active_view = 'decisions'     namespace.py:138
+                    INFO     js_key = data-testid                   core.py:570
+                    INFO     js_key = title                         core.py:570
+                    INFO     js_key = title                         core.py:570
+                    INFO     js_key = value                         core.py:570
+                    INFO     js_key = active                        core.py:570
+                    INFO     before: active = active_view ===       core.py:579
+                             'impact'                                          
+                    INFO     (prefix=None) token active_view   namespace.py:130
+                    INFO     has(active_view => active_view) =     state.py:188
+                             True                                              
+                    INFO     (prefix=None) translated          namespace.py:133
+                             active_view                                       
+[12/28/25 18:58:29] INFO     (prefix=None) token               namespace.py:130
+                    INFO     has(  =>  ) = False                   state.py:188
+                    INFO     (prefix=None) token ===           namespace.py:130
+                    INFO     has(=== => ===) = False               state.py:188
+                    INFO     (prefix=None) token               namespace.py:130
+                    INFO     has(  =>  ) = False                   state.py:188
+                    INFO     (prefix=None) token '             namespace.py:130
+                    INFO     has(' => ') = False                   state.py:188
+                    INFO     (prefix=None) token impact        namespace.py:130
+                    INFO     has(impact => impact) = False         state.py:188
+                    INFO     (prefix=None) token '             namespace.py:130
+                    INFO     has(' => ') = False                   state.py:188
+                    INFO      => active_view === 'impact'      namespace.py:138
+                    INFO     after: active = active_view ===        core.py:596
+                             'impact'                                          
+                    INFO     js_key = prependIcon                   core.py:570
+                    INFO     (prefix=None) token active_view   namespace.py:130
+                    INFO     has(active_view => active_view) =     state.py:188
+                             True                                              
+                    INFO     (prefix=None) translated          namespace.py:133
+                             active_view                                       
+                    INFO     (prefix=None) token               namespace.py:130
+                    INFO     has(  =>  ) = False                   state.py:188
+                    INFO     (prefix=None) token =             namespace.py:130
+                    INFO     has(= => =) = False                   state.py:188
+                    INFO     (prefix=None) token               namespace.py:130
+                    INFO     has(  =>  ) = False                   state.py:188
+                    INFO     (prefix=None) token '             namespace.py:130
+                    INFO     has(' => ') = False                   state.py:188
+                    INFO     (prefix=None) token impact        namespace.py:130
+                    INFO     has(impact => impact) = False         state.py:188
+                    INFO     (prefix=None) token '             namespace.py:130
+                    INFO     has(' => ') = False                   state.py:188
+                    INFO      => active_view = 'impact'        namespace.py:138
+                    INFO     (prefix=None) token active_view   namespace.py:130
+                    INFO     has(active_view => active_view) =     state.py:188
+                             True                                              
+                    INFO     (prefix=None) translated          namespace.py:133
+                             active_view                                       
+                    INFO     (prefix=None) token               namespace.py:130
+                    INFO     has(  =>  ) = False                   state.py:188
+                    INFO     (prefix=None) token =             namespace.py:130
+                    INFO     has(= => =) = False                   state.py:188
+                    INFO     (prefix=None) token               namespace.py:130
+                    INFO     has(  =>  ) = False                   state.py:188
+                    INFO     (prefix=None) token '             namespace.py:130
+                    INFO     has(' => ') = False                   state.py:188
+                    INFO     (prefix=None) token impact        namespace.py:130
+                    INFO     has(impact => impact) = False         state.py:188
+                    INFO     (prefix=None) token '             namespace.py:130
+                    INFO     has(' => ') = False                   state.py:188
+                    INFO      => active_view = 'impact'        namespace.py:138
+                    INFO     js_key = data-testid                   core.py:570
+                    INFO     js_key = title                         core.py:570
+                    INFO     js_key = title                         core.py:570
+                    INFO     js_key = value                         core.py:570
+                    INFO     js_key = active                        core.py:570
+                    INFO     before: active = active_view ===       core.py:579
+                             'trust'                                           
+                    INFO     (prefix=None) token active_view   namespace.py:130
+                    INFO     has(active_view => active_view) =     state.py:188
+                             True                                              
+                    INFO     (prefix=None) translated          namespace.py:133
+                             active_view                                       
+                    INFO     (prefix=None) token               namespace.py:130
+                    INFO     has(  =>  ) = False                   state.py:188
+                    INFO     (prefix=None) token ===           namespace.py:130
+                    INFO     has(=== => ===) = False               state.py:188
+                    INFO     (prefix=None) token               namespace.py:130
+                    INFO     has(  =>  ) = False                   state.py:188
+                    INFO     (prefix=None) token '             namespace.py:130
+                    INFO     has(' => ') = False                   state.py:188
+                    INFO     (prefix=None) token trust         namespace.py:130
+                    INFO     has(trust => trust) = False           state.py:188
+                    INFO     (prefix=None) token '             namespace.py:130
+                    INFO     has(' => ') = False                   state.py:188
+                    INFO      => active_view === 'trust'       namespace.py:138
+                    INFO     after: active = active_view ===        core.py:596
+                             'trust'                                           
+                    INFO     js_key = prependIcon                   core.py:570
+                    INFO     (prefix=None) token active_view   namespace.py:130
+                    INFO     has(active_view => active_view) =     state.py:188
+                             True                                              
+                    INFO     (prefix=None) translated          namespace.py:133
+                             active_view                                       
+                    INFO     (prefix=None) token               namespace.py:130
+                    INFO     has(  =>  ) = False                   state.py:188
+                    INFO     (prefix=None) token =             namespace.py:130
+                    INFO     has(= => =) = False                   state.py:188
+                    INFO     (prefix=None) token               namespace.py:130
+                    INFO     has(  =>  ) = False                   state.py:188
+                    INFO     (prefix=None) token '             namespace.py:130
+                    INFO     has(' => ') = False                   state.py:188
+                    INFO     (prefix=None) token trust         namespace.py:130
+                    INFO     has(trust => trust) = False           state.py:188
+                    INFO     (prefix=None) token '             namespace.py:130
+                    INFO     has(' => ') = False                   state.py:188
+                    INFO      => active_view = 'trust'         namespace.py:138
+                    INFO     (prefix=None) token active_view   namespace.py:130
+                    INFO     has(active_view => active_view) =     state.py:188
+                             True                                              
+                    INFO     (prefix=None) translated          namespace.py:133
+                             active_view                                       
+                    INFO     (prefix=None) token               namespace.py:130
+                    INFO     has(  =>  ) = False                   state.py:188
+                    INFO     (prefix=None) token =             namespace.py:130
+                    INFO     has(= => =) = False                   state.py:188
+                    INFO     (prefix=None) token               namespace.py:130
+                    INFO     has(  =>  ) = False                   state.py:188
+                    INFO     (prefix=None) token '             namespace.py:130
+                    INFO     has(' => ') = False                   state.py:188
+                    INFO     (prefix=None) token trust         namespace.py:130
+                    INFO     has(trust => trust) = False           state.py:188
+                    INFO     (prefix=None) token '             namespace.py:130
+                    INFO     has(' => ') = False                   state.py:188
+                    INFO      => active_view = 'trust'         namespace.py:138
+                    INFO     js_key = data-testid                   core.py:570
+                    INFO     js_key = title                         core.py:570
+                    INFO     js_key = title                         core.py:570
+                    INFO     js_key = value                         core.py:570
+                    INFO     js_key = active                        core.py:570
+                    INFO     before: active = active_view ===       core.py:579
+                             'monitor'                                         
+                    INFO     (prefix=None) token active_view   namespace.py:130
+                    INFO     has(active_view => active_view) =     state.py:188
+                             True                                              
+                    INFO     (prefix=None) translated          namespace.py:133
+                             active_view                                       
+                    INFO     (prefix=None) token               namespace.py:130
+                    INFO     has(  =>  ) = False                   state.py:188
+                    INFO     (prefix=None) token ===           namespace.py:130
+                    INFO     has(=== => ===) = False               state.py:188
+                    INFO     (prefix=None) token               namespace.py:130
+                    INFO     has(  =>  ) = False                   state.py:188
+                    INFO     (prefix=None) token '             namespace.py:130
+                    INFO     has(' => ') = False                   state.py:188
+                    INFO     (prefix=None) token monitor       namespace.py:130
+                    INFO     has(monitor => monitor) = False       state.py:188
+                    INFO     (prefix=None) token '             namespace.py:130
+                    INFO     has(' => ') = False                   state.py:188
+                    INFO      => active_view === 'monitor'     namespace.py:138
+                    INFO     after: active = active_view ===        core.py:596
+                             'monitor'                                         
+                    INFO     js_key = prependIcon                   core.py:570
+                    INFO     (prefix=None) token active_view   namespace.py:130
+                    INFO     has(active_view => active_view) =     state.py:188
+                             True                                              
+                    INFO     (prefix=None) translated          namespace.py:133
+                             active_view                                       
+                    INFO     (prefix=None) token               namespace.py:130
+                    INFO     has(  =>  ) = False                   state.py:188
+                    INFO     (prefix=None) token =             namespace.py:130
+                    INFO     has(= => =) = False                   state.py:188
+                    INFO     (prefix=None) token               namespace.py:130
+                    INFO     has(  =>  ) = False                   state.py:188
+                    INFO     (prefix=None) token '             namespace.py:130
+                    INFO     has(' => ') = False                   state.py:188
+                    INFO     (prefix=None) token monitor       namespace.py:130
+                    INFO     has(monitor => monitor) = False       state.py:188
+                    INFO     (prefix=None) token '             namespace.py:130
+                    INFO     has(' => ') = False                   state.py:188
+                    INFO      => active_view = 'monitor'       namespace.py:138
+                    INFO     (prefix=None) token active_view   namespace.py:130
+                    INFO     has(active_view => active_view) =     state.py:188
+                             True                                              
+                    INFO     (prefix=None) translated          namespace.py:133
+                             active_view                                       
+                    INFO     (prefix=None) token               namespace.py:130
+                    INFO     has(  =>  ) = False                   state.py:188
+                    INFO     (prefix=None) token =             namespace.py:130
+                    INFO     has(= => =) = False                   state.py:188
+                    INFO     (prefix=None) token               namespace.py:130
+                    INFO     has(  =>  ) = False                   state.py:188
+                    INFO     (prefix=None) token '             namespace.py:130
+                    INFO     has(' => ') = False                   state.py:188
+                    INFO     (prefix=None) token monitor       namespace.py:130
+                    INFO     has(monitor => monitor) = False       state.py:188
+                    INFO     (prefix=None) token '             namespace.py:130
+                    INFO     has(' => ') = False                   state.py:188
+                    INFO      => active_view = 'monitor'       namespace.py:138
+                    INFO     js_key = data-testid                   core.py:570
+                    INFO     js_key = title                         core.py:570
+                    INFO     js_key = title                         core.py:570
+                    INFO     js_key = value                         core.py:570
+                    INFO     js_key = active                        core.py:570
+                    INFO     before: active = active_view ===       core.py:579
+                             'search'                                          
+                    INFO     (prefix=None) token active_view   namespace.py:130
+                    INFO     has(active_view => active_view) =     state.py:188
+                             True                                              
+                    INFO     (prefix=None) translated          namespace.py:133
+                             active_view                                       
+                    INFO     (prefix=None) token               namespace.py:130
+                    INFO     has(  =>  ) = False                   state.py:188
+                    INFO     (prefix=None) token ===           namespace.py:130
+                    INFO     has(=== => ===) = False               state.py:188
+                    INFO     (prefix=None) token               namespace.py:130
+                    INFO     has(  =>  ) = False                   state.py:188
+                    INFO     (prefix=None) token '             namespace.py:130
+                    INFO     has(' => ') = False                   state.py:188
+                    INFO     (prefix=None) token search        namespace.py:130
+                    INFO     has(search => search) = False         state.py:188
+                    INFO     (prefix=None) token '             namespace.py:130
+                    INFO     has(' => ') = False                   state.py:188
+                    INFO      => active_view === 'search'      namespace.py:138
+                    INFO     after: active = active_view ===        core.py:596
+                             'search'                                          
+                    INFO     js_key = prependIcon                   core.py:570
+                    INFO     (prefix=None) token active_view   namespace.py:130
+                    INFO     has(active_view => active_view) =     state.py:188
+                             True                                              
+                    INFO     (prefix=None) translated          namespace.py:133
+                             active_view                                       
+                    INFO     (prefix=None) token               namespace.py:130
+                    INFO     has(  =>  ) = False                   state.py:188
+                    INFO     (prefix=None) token =             namespace.py:130
+                    INFO     has(= => =) = False                   state.py:188
+                    INFO     (prefix=None) token               namespace.py:130
+                    INFO     has(  =>  ) = False                   state.py:188
+                    INFO     (prefix=None) token '             namespace.py:130
+                    INFO     has(' => ') = False                   state.py:188
+                    INFO     (prefix=None) token search        namespace.py:130
+                    INFO     has(search => search) = False         state.py:188
+                    INFO     (prefix=None) token '             namespace.py:130
+                    INFO     has(' => ') = False                   state.py:188
+                    INFO      => active_view = 'search'        namespace.py:138
+                    INFO     (prefix=None) token active_view   namespace.py:130
+                    INFO     has(active_view => active_view) =     state.py:188
+                             True                                              
+                    INFO     (prefix=None) translated          namespace.py:133
+                             active_view                                       
+                    INFO     (prefix=None) token               namespace.py:130
+                    INFO     has(  =>  ) = False                   state.py:188
+                    INFO     (prefix=None) token =             namespace.py:130
+                    INFO     has(= => =) = False                   state.py:188
+                    INFO     (prefix=None) token               namespace.py:130
+                    INFO     has(  =>  ) = False                   state.py:188
+                    INFO     (prefix=None) token '             namespace.py:130
+                    INFO     has(' => ') = False                   state.py:188
+                    INFO     (prefix=None) token search        namespace.py:130
+                    INFO     has(search => search) = False         state.py:188
+                    INFO     (prefix=None) token '             namespace.py:130
+                    INFO     has(' => ') = False                   state.py:188
+[12/28/25 18:58:30] INFO      => active_view = 'search'        namespace.py:138
+                    INFO     js_key = class                         core.py:570
+                    INFO     js_key = fluid                         core.py:570
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "C:\Users\natik\Documents\Vibe\sim-ai\sim-ai\agent\governance_dashboard.py", line 592, in <module>
+    main()
+  File "C:\Users\natik\Documents\Vibe\sim-ai\sim-ai\agent\governance_dashboard.py", line 584, in main
+    server = dashboard.build_ui()
+             ^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\natik\Documents\Vibe\sim-ai\sim-ai\agent\governance_dashboard.py", line 405, in build_ui
+    build_rules_view()
+TypeError: build_rules_view() missing 1 required positional argument: 'state'

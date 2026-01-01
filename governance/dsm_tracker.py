@@ -6,9 +6,11 @@ Implements RULE-012 (Deep Sleep Protocol) cycle tracking with:
 - Evidence collection per phase
 - MCP integration for phase-specific tools
 - Cycle metrics and checkpoints
+- Session memory integration (P11.4) for claude-mem context persistence
 
 Created: 2024-12-24
-Per: RULE-012 (DSP), RULE-017 (Cross-Workspace Patterns)
+Updated: 2024-12-26 (P11.4) - Added session memory integration
+Per: RULE-012 (DSP), RULE-017 (Cross-Workspace Patterns), RULE-024 (AMNESIA Protocol)
 Source: local-gai/scripts/dsm_tracker.py pattern
 """
 
@@ -394,6 +396,40 @@ class DSMTracker:
         self._save_state()
 
         return evidence_path
+
+    def get_session_memory_payload(self) -> Optional[Dict[str, Any]]:
+        """
+        Get payload for saving cycle context to claude-mem (P11.4).
+
+        Returns dict ready for chroma_add_documents MCP call, or None if no cycle.
+        Per RULE-024 (AMNESIA Protocol): Save session context for recovery.
+        """
+        if not self.current_cycle:
+            return None
+
+        try:
+            from governance.session_memory import create_dsp_session_context
+
+            # Create session context from cycle data
+            ctx = create_dsp_session_context(
+                cycle_id=self.current_cycle.cycle_id,
+                batch_id=self.current_cycle.batch_id,
+                phases_completed=self.current_cycle.phases_completed,
+                findings=self.current_cycle.findings,
+                checkpoints=[asdict(cp) for cp in self.current_cycle.checkpoints],
+                metrics=self.current_cycle.metrics,
+            )
+
+            # Return payload for MCP call
+            doc_id = f"sim-ai-dsp-{self.current_cycle.cycle_id}"
+            return {
+                "collection_name": "claude_memories",
+                "documents": [ctx.to_document()],
+                "ids": [doc_id],
+                "metadatas": [ctx.to_metadata()],
+            }
+        except ImportError:
+            return None
 
     def abort_cycle(self, reason: str = None) -> None:
         """

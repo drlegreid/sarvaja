@@ -553,11 +553,12 @@ class TestGovernanceIntegrity:
 
     @pytest.mark.unit
     def test_valid_status_values(self):
-        """Status values must be ACTIVE, DRAFT, DEPRECATED, or IMPLEMENTED."""
+        """Status values must be ACTIVE, DRAFT, DEPRECATED, or IMPLEMENTED for rules/decisions."""
         with open(DATA_FILE, 'r') as f:
             content = f.read()
         import re
-        statuses = re.findall(r'status "([^"]+)"', content)
+        # Match 'has status "X"' but not 'has task-status "X"' or other prefixed statuses
+        statuses = re.findall(r'has status "([^"]+)"', content)
         # Extended statuses for full lifecycle (rules + decisions)
         valid_statuses = {'ACTIVE', 'DRAFT', 'DEPRECATED', 'IMPLEMENTED', 'SUPERSEDED', 'APPROVED'}
         for s in statuses:

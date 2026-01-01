@@ -431,4 +431,203 @@ When building composable components (per Phase 6 research):
 
 ---
 
+## RULE-026: Decision Context Communication
+
+**Priority:** HIGH | **Status:** ACTIVE | **Category:** governance
+
+### Directive
+
+When referencing any strategic DECISION-*, the agent MUST explain what the decision means in context to ensure shared understanding.
+
+### Rationale
+
+Strategic decisions (DECISION-001 through DECISION-00N) represent architectural and design choices that affect the entire platform. Without explanation, references like "per DECISION-003" become opaque and context is lost across sessions.
+
+### Decision Registry
+
+| Decision | Name | Summary |
+|----------|------|---------|
+| DECISION-001 | Opik Removal | Removed Opik tracing layer to reduce complexity; rely on native LLM tracing |
+| DECISION-002 | Trame UI Framework | Selected Trame for Python-native web UI over React/Vue alternatives |
+| DECISION-003 | TypeDB-First Strategy | All entities (rules, decisions, tasks, sessions, agents) stored in TypeDB for unified inference + semantic queries. In-memory stores are temporary and should migrate to TypeDB. |
+| DECISION-004 | MCP-First Integration | Prioritize MCP tool development over direct API calls for agent capabilities |
+| DECISION-005 | Governance MCP Server | Created dedicated MCP server for governance operations (rules CRUD, trust scoring) |
+
+### Example Usage
+
+**Incorrect:** "Per DECISION-003, we should migrate tasks to TypeDB."
+
+**Correct:** "Per DECISION-003 (TypeDB-First Strategy - all entities stored in TypeDB for unified inference), we should migrate tasks from in-memory storage to TypeDB."
+
+### Enforcement
+
+- LLM agents must expand decision references on first use in a session
+- Documentation updates must include decision context
+- Code comments referencing decisions must explain the decision
+
+---
+
+## RULE-029: Executive Reporting Pattern
+
+**Category:** `reporting` | **Priority:** HIGH | **Status:** ACTIVE
+
+### Directive
+
+All sessions MUST produce an executive summary following a standardized template that enables:
+1. Cross-workspace consistency in reporting
+2. Clear project lens visualization in Session Evidence UI
+3. Stakeholder-ready status communication
+4. Enterprise-grade audit trail
+
+### Executive Summary Template
+
+```markdown
+# Executive Summary - [Session Topic]
+
+**Date:** YYYY-MM-DD
+**Session ID:** SESSION-YYYY-MM-DD-TOPIC
+**Duration:** X hours
+**Status:** COMPLETED | IN_PROGRESS | BLOCKED
+
+---
+
+## 1. OBJECTIVES (What we set out to do)
+
+- [ ] Objective 1 (status: ✅/⏳/❌)
+- [ ] Objective 2 (status: ✅/⏳/❌)
+
+## 2. OUTCOMES (What we achieved)
+
+| Category | Metric | Value |
+|----------|--------|-------|
+| Tests | Passed/Total | 968/968 |
+| Gaps Identified | Count | 9 |
+| Rules Updated | Count | 2 |
+| R&D Tasks Created | Count | 5 |
+
+## 3. KEY DECISIONS
+
+| Decision | Rationale | Impact |
+|----------|-----------|--------|
+| DECISION-00X | Why | Affected systems |
+
+## 4. ARTIFACTS PRODUCED
+
+- `path/to/file1.md` - Description
+- `path/to/file2.py` - Description
+
+## 5. BLOCKERS & RISKS
+
+| Blocker | Severity | Mitigation |
+|---------|----------|------------|
+| None | - | - |
+
+## 6. NEXT ACTIONS
+
+1. [Priority 1 - Description]
+2. [Priority 2 - Description]
+3. [Priority 3 - Description]
+
+## 7. STRATEGIC ALIGNMENT
+
+| Phase | Progress | Target |
+|-------|----------|--------|
+| Phase 10 | X% | Architecture Debt |
+| Phase 11 | Y% | Data Integrity |
+
+---
+
+*Generated per RULE-029: Executive Reporting Pattern*
+```
+
+### UI Integration
+
+The Session Evidence UI tab SHOULD display:
+
+```
+┌─────────────────────────────────────────────────────────────────────────┐
+│                    Session Evidence - Executive View                      │
+├─────────────────────────────────────────────────────────────────────────┤
+│                                                                          │
+│  ┌────────────────┐  ┌────────────────┐  ┌────────────────┐             │
+│  │  📊 Sessions   │  │  🎯 Objectives  │  │  📈 Metrics   │             │
+│  │     Today: 3   │  │   Completed: 8 │  │  Tests: 968   │             │
+│  │     Week: 12   │  │   In Progress: │  │  Gaps: 43     │             │
+│  │     Month: 45  │  │       2        │  │  Rules: 28    │             │
+│  └────────────────┘  └────────────────┘  └────────────────┘             │
+│                                                                          │
+│  Recent Sessions                                                         │
+│  ┌─────────────────────────────────────────────────────────────────┐    │
+│  │ [Expand] SESSION-2024-12-27-TDD-FIXES                           │    │
+│  │   Status: COMPLETED | Objectives: 7/7 | Duration: 2h           │    │
+│  │   Summary: Fixed 7 TDD stubs, added UI gaps, created R&D docs  │    │
+│  └─────────────────────────────────────────────────────────────────┘    │
+│                                                                          │
+└─────────────────────────────────────────────────────────────────────────┘
+```
+
+### Cross-Workspace Reporting
+
+This pattern enables centralized enterprise reporting across workspaces:
+
+```yaml
+enterprise_reporting:
+  collection: "executive_summaries"
+
+  aggregation:
+    - by_project: Sum metrics per project
+    - by_team: Roll up to team level
+    - by_period: Weekly/Monthly/Quarterly
+
+  export_formats:
+    - markdown: Session logs
+    - json: API consumption
+    - pdf: Stakeholder reports
+    - dashboard: Real-time metrics
+
+  cross_workspace_sync:
+    - Each workspace produces RULE-029 summaries
+    - Central aggregator collects via MCP
+    - Unified dashboard displays all workspaces
+```
+
+### DSP Integration
+
+During DSP cycles (RULE-012), executive summaries are:
+1. Generated at cycle end
+2. Stored in evidence folder
+3. Synced to TypeDB for querying
+4. Available in Session Evidence UI
+
+```typeql
+# Query executive summaries
+match
+  $s isa session,
+    has session-id $id,
+    has session-topic $topic,
+    has executive-summary $summary,
+    has session-status "COMPLETED";
+get $id, $topic, $summary;
+```
+
+### Tags
+
+| Tag | Purpose |
+|-----|---------|
+| `REPORTING` | Identifies executive reporting artifacts |
+| `EXECUTIVE` | Stakeholder-ready content |
+| `EVIDENCE` | Audit trail content |
+| `SESSION` | Session-bound content |
+
+### Validation Checklist
+
+- [ ] Session ends with executive summary
+- [ ] Summary follows template format
+- [ ] All 7 sections populated
+- [ ] Metrics are accurate
+- [ ] Next actions are actionable
+- [ ] Strategic alignment updated
+
+---
+
 *Per RULE-001: Session Evidence Logging*

@@ -67,56 +67,84 @@ class GitHubSync:
         self.tasks: List[RDTask] = []
 
     def parse_backlog(self) -> List[RDTask]:
-        """Parse R&D backlog markdown file."""
+        """Parse R&D backlog markdown file and linked sub-documents."""
         if not self.BACKLOG_PATH.exists():
             raise FileNotFoundError(f"Backlog not found: {self.BACKLOG_PATH}")
 
         content = self.BACKLOG_PATH.read_text(encoding="utf-8")
         tasks = []
 
-        # Parse task tables
+        # Find linked R&D documents (e.g., [phases/PHASE-10.md](phases/PHASE-10.md))
+        # Pattern: markdown links to .md files in subdirectories
+        link_pattern = r'\[([^\]]+)\]\(([^)]+\.md)\)'
+        linked_docs = []
+        for match in re.finditer(link_pattern, content):
+            link_path = match.group(2)
+            # Resolve relative to BACKLOG_PATH parent
+            full_path = self.BACKLOG_PATH.parent / link_path
+            if full_path.exists():
+                linked_docs.append(full_path)
+
+        # Parse main backlog and all linked documents
+        all_contents = [content]
+        for doc_path in linked_docs:
+            try:
+                all_contents.append(doc_path.read_text(encoding="utf-8"))
+            except Exception:
+                continue
+
+        # Parse task tables from all content
         # Format: | ID | Task | Status | Priority | Notes |
         table_pattern = r"\|\s*([\w-]+)\s*\|\s*([^|]+)\s*\|\s*([^|]+)\s*\|\s*([^|]+)\s*\|\s*([^|]*)\s*\|"
 
-        for match in re.finditer(table_pattern, content):
-            id_str, title, status, priority, notes = match.groups()
+        for doc_content in all_contents:
+            for match in re.finditer(table_pattern, doc_content):
+                id_str, title, status, priority, notes = match.groups()
 
-            # Skip header rows and separators
-            id_clean = id_str.strip()
-            if id_clean in ("ID", "Task", "Pillar", "Factor"):
-                continue
-            if id_clean.startswith("-") or id_clean.startswith("*"):
-                continue
-            # Must match task ID format: RD-001, FH-001, P7.1, P3.5, etc.
-            if not re.match(r'^(RD|FH|P\d)-\d{3}$', id_clean) and not re.match(r'^P\d\.\d$', id_clean):
-                continue
+                # Skip header rows and separators
+                id_clean = id_str.strip()
+                if id_clean in ("ID", "Task", "Pillar", "Factor", "Phase", "Name"):
+                    continue
+                if id_clean.startswith("-") or id_clean.startswith("*"):
+                    continue
+                # Must match task ID format: RD-001, FH-001, P7.1, ORCH-001, KAN-001, TEST-001, etc.
+                if not re.match(r'^(RD|FH|ORCH|KAN|TEST|TOOL|DOC|P\d+)-\d{3}$', id_clean) and not re.match(r'^P\d+\.\d+$', id_clean):
+                    continue
 
-            # Determine category from ID prefix
-            category = "RD"
-            if id_str.startswith("FH-"):
-                category = "FH"
-            elif id_str.startswith("P7"):
-                category = "P7"
-            elif id_str.startswith("P"):
-                category = "PHASE"
+                # Determine category from ID prefix
+                category = "RD"
+                if id_clean.startswith("FH-"):
+                    category = "FH"
+                elif id_clean.startswith("ORCH-"):
+                    category = "ORCH"
+                elif id_clean.startswith("KAN-"):
+                    category = "KAN"
+                elif id_clean.startswith("TEST-"):
+                    category = "TEST"
+                elif id_clean.startswith("TOOL-"):
+                    category = "TOOL"
+                elif id_clean.startswith("DOC-"):
+                    category = "DOC"
+                elif id_clean.startswith("P") and "." in id_clean:
+                    category = "PHASE"
 
-            # Normalize status
-            status_clean = status.strip()
-            for emoji_status, normalized in self.STATUS_MAP.items():
-                if emoji_status in status_clean:
-                    status_clean = normalized
-                    break
-            if status_clean not in ("TODO", "DONE", "BLOCKED", "IN_PROGRESS"):
-                status_clean = "TODO"
+                # Normalize status
+                status_clean = status.strip()
+                for emoji_status, normalized in self.STATUS_MAP.items():
+                    if emoji_status in status_clean:
+                        status_clean = normalized
+                        break
+                if status_clean not in ("TODO", "DONE", "BLOCKED", "IN_PROGRESS"):
+                    status_clean = "TODO"
 
-            tasks.append(RDTask(
-                id=id_str.strip(),
-                title=title.strip(),
-                status=status_clean,
-                priority=priority.strip(),
-                notes=notes.strip(),
-                category=category
-            ))
+                tasks.append(RDTask(
+                    id=id_clean,
+                    title=title.strip(),
+                    status=status_clean,
+                    priority=priority.strip(),
+                    notes=notes.strip(),
+                    category=category
+                ))
 
         self.tasks = tasks
         return tasks

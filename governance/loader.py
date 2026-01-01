@@ -100,7 +100,27 @@ def verify_load(driver):
             affects = list(tx.query.get("match $rel isa decision-affects; get $rel;"))
             print(f"  Decision affects: {len(affects)}")
 
-    return len(rules) == 11 and len(decisions) == 4 and len(agents) == 3
+            # P11.3: Count new entities
+            sessions = list(tx.query.get("match $s isa work-session; get $s;"))
+            print(f"  Work sessions loaded: {len(sessions)}")
+
+            evidence = list(tx.query.get("match $e isa evidence-file; get $e;"))
+            print(f"  Evidence files loaded: {len(evidence)}")
+
+            tasks = list(tx.query.get("match $t isa task; get $t;"))
+            print(f"  Tasks loaded: {len(tasks)}")
+
+            # P11.3: Count entity linkage relations
+            impl_rules = list(tx.query.get("match $rel isa implements-rule; get $rel;"))
+            print(f"  Task->Rule links: {len(impl_rules)}")
+
+            completed_in = list(tx.query.get("match $rel isa completed-in; get $rel;"))
+            print(f"  Task->Session links: {len(completed_in)}")
+
+            has_evidence = list(tx.query.get("match $rel isa has-evidence; get $rel;"))
+            print(f"  Session->Evidence links: {len(has_evidence)}")
+
+    return len(rules) >= 25 and len(decisions) == 4 and len(agents) == 3
 
 
 def test_inference(driver):

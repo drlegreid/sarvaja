@@ -14,6 +14,9 @@ Package Structure (by entity/concern):
     sessions.py    - Session evidence operations
     dsm.py         - DSM tracker operations (RULE-012)
     evidence.py    - Evidence viewing operations
+    tasks.py       - Task CRUD operations (P10.4)
+    agents.py      - Agent CRUD operations (P10.4)
+    workspace.py   - Workspace task capture (P10.10)
 
 Main Server:
     governance/mcp_server.py - Thin coordinator (imports + registration)
@@ -30,6 +33,9 @@ from .decisions import register_decision_tools
 from .sessions import register_session_tools
 from .dsm import register_dsm_tools
 from .evidence import register_evidence_tools
+from .tasks import register_task_tools
+from .agents import register_agent_tools
+from .workspace import register_workspace_tools
 
 
 def register_all_tools(mcp) -> None:
@@ -46,6 +52,9 @@ def register_all_tools(mcp) -> None:
     register_session_tools(mcp)
     register_dsm_tools(mcp)
     register_evidence_tools(mcp)
+    register_task_tools(mcp)
+    register_agent_tools(mcp)
+    register_workspace_tools(mcp)
 
 
 __all__ = [
@@ -57,4 +66,7 @@ __all__ = [
     'register_session_tools',
     'register_dsm_tools',
     'register_evidence_tools',
+    'register_task_tools',
+    'register_agent_tools',
+    'register_workspace_tools',
 ]
