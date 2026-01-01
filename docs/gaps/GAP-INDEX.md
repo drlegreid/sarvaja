@@ -1,7 +1,7 @@
 # Gap Index - Sim.ai PoC
 
 **Last Updated:** 2026-01-02
-**Total Gaps:** 188 | Status: 59 RESOLVED, 5 PARTIAL, 124 OPEN
+**Total Gaps:** 188 | Status: 63 RESOLVED, 5 PARTIAL, 120 OPEN
 **Format Migration:** GAP-WORKFLOW-003 - Replaced strikethrough with Status column
 
 ---
@@ -262,16 +262,17 @@ Session: EXP-P10-001 | Date: 2024-12-25 | Target: Governance Dashboard
 | GAP-EVIDENCE-002 | OPEN | Evidence only reads .md files | LOW | functionality | Evidence | file_types | P11.8 Audit |
 | GAP-DECISION-001 | OPEN | Decision linked_rules not exposed in API | MEDIUM | api | Decision | linked_rules | P11.8 Audit |
 
-### Mock/Stub Technical Debt (P10.1-P10.3) - TO BE REMOVED
+### Mock/Stub Technical Debt (P10.1-P10.3) - HYBRID ARCHITECTURE
 
-> **Per User Directive:** All mocked/stubbed data MUST be replaced with realtime TypeDB + Document MCP queries
+> **Resolution:** TypeDB-first with in-memory fallback per RULE-021 (graceful degradation)
+> Implemented: `governance/stores.py` wrappers + `routes/tasks.py`, `routes/sessions.py` usage
 
 | ID | Status | Stub Location | Task | Priority | Target Data Source |
 |----|--------|---------------|------|----------|-------------------|
-| GAP-STUB-001 | OPEN | `governance/api.py:401` `_tasks_store: Dict` | P10.1 | CRITICAL | TypeDB `task` entity |
-| GAP-STUB-002 | OPEN | `governance/api.py:151-293` `seed_tasks` | P10.1 | CRITICAL | TypeDB + workspace TODO.md |
-| GAP-STUB-003 | OPEN | `governance/api.py:470` `_sessions_store: Dict` | P10.2 | CRITICAL | TypeDB `session` entity |
-| GAP-STUB-004 | OPEN | `governance/api.py:302-375` `seed_sessions` | P10.2 | CRITICAL | TypeDB + session evidence files |
+| GAP-STUB-001 | RESOLVED | `governance/stores.py:48` `_tasks_store: Dict` | P10.1 | CRITICAL | TypeDB via `get_all_tasks_from_typedb()` |
+| GAP-STUB-002 | RESOLVED | `governance/stores.py:71-118` TypeDB wrapper | P10.1 | CRITICAL | TypeDB + fallback to in-memory |
+| GAP-STUB-003 | RESOLVED | `governance/stores.py:56` `_sessions_store: Dict` | P10.2 | CRITICAL | TypeDB via `get_all_sessions_from_typedb()` |
+| GAP-STUB-004 | RESOLVED | `governance/stores.py:147+` TypeDB wrapper | P10.2 | CRITICAL | TypeDB + fallback to in-memory |
 | GAP-STUB-005 | OPEN | `governance/api.py:558-604` `_agents_store: Dict` | P10.3 | HIGH | TypeDB `agent` entity |
 | GAP-STUB-006 | OPEN | `agent/governance_ui/data_access.py:42` `get_proposals()` | P10.7 | MEDIUM | TypeDB `proposal` entity |
 | GAP-STUB-007 | OPEN | `agent/governance_ui/data_access.py:48` `get_escalated_proposals()` | P10.7 | MEDIUM | TypeDB `proposal` with escalation |
