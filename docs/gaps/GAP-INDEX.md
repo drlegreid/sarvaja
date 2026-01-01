@@ -1,7 +1,7 @@
 # Gap Index - Sim.ai PoC
 
 **Last Updated:** 2026-01-02
-**Total Gaps:** 188 | Status: 63 RESOLVED, 5 PARTIAL, 120 OPEN
+**Total Gaps:** 192 | Status: 63 RESOLVED, 5 PARTIAL, 124 OPEN
 **Format Migration:** GAP-WORKFLOW-003 - Replaced strikethrough with Status column
 
 ---
@@ -99,6 +99,7 @@ Session: EXP-P10-001 | Date: 2024-12-25 | Target: Governance Dashboard
 | GAP-MCP-004 | OPEN | Rule fallback to markdown files not implemented when TypeDB unavailable | HIGH | architecture | RULE-021 | Code doesn't read from docs/rules/*.md |
 | GAP-TEST-001 | OPEN | E2E tests lack Given/When/Then BDD paradigm and OOP reusability | MEDIUM | testing | RULE-023 | No pytest fixtures, BDD patterns |
 | GAP-HEALTH-001 | OPEN | Healthcheck state file lacks retry history and rotation | MEDIUM | observability | RULE-021 | Should track all retry attempts |
+| GAP-HEALTH-002 | OPEN | Healthcheck doesn't detect document entropy (RULE-012 DSP trigger) | HIGH | workflow | RULE-012 | Should ALERT and suggest DEEP SLEEP mode |
 | GAP-TEST-002 | PARTIAL | Test output blows context window - need reporting modes | HIGH | testing | RULE-023 | Implemented --report-minimal, --report-cert |
 | GAP-META-001 | OPEN | GAPs lack evidence file references - context bloat risk | HIGH | architecture | RULE-012 | 2026-01-02: Index→Evidence split needed |
 | GAP-META-002 | OPEN | No standardized CATEGORY taxonomy for gaps/rules | HIGH | governance | RULE-013 | 2026-01-02: Need GOVERNANCE/TESTING/UI/etc |
@@ -186,6 +187,24 @@ Session: EXP-P10-001 | Date: 2024-12-25 | Target: Governance Dashboard
   - Archive previous session state to `.healthcheck_state.{timestamp}.json`
   - Cap retry_history to last 100 entries to prevent unbounded growth
 
+**GAP-HEALTH-002 Entropy Detection (RULE-012 DSP Trigger):**
+- **Problem:** Healthcheck doesn't detect document entropy that should trigger DEEP SLEEP mode
+- **Per RULE-012:** Files >300 lines, document bloat, excessive gaps should trigger DSP
+- **Required Checks in healthcheck.py:**
+  1. `check_file_entropy()` - Scan for files >300 lines in governance/, agent/, docs/
+  2. `check_gap_entropy()` - Count OPEN gaps, ALERT if >100 open HIGH/CRITICAL
+  3. `check_test_debt()` - Detect skipped tests, failing tests ratio
+  4. `check_rule_staleness()` - Rules without recent updates or evidence
+- **ALERT Thresholds:**
+  | Metric | Warning | Alert (DSP Trigger) |
+  |--------|---------|---------------------|
+  | Files >300 lines | 3+ | 5+ |
+  | OPEN HIGH/CRITICAL gaps | 20+ | 40+ |
+  | Test failure rate | 5% | 10% |
+  | Rules without evidence | 5+ | 10+ |
+- **Output:** Add `entropy_status` to healthcheck JSON with `needs_dsp: true/false`
+- **Integration:** When `needs_dsp: true`, output message suggesting DEEP SLEEP mode
+
 **GAP-MCP-004 Analysis:**
 - **Issue:** When TypeDB is unavailable, agents cannot access rule content
 - **Current:** hybrid_router.py has TypeDB→ChromaDB fallback for *queries*, not rule content
@@ -211,6 +230,70 @@ Session: EXP-P10-001 | Date: 2024-12-25 | Target: Governance Dashboard
 | GAP-ARCH-008 | RESOLVED | TypeDB-Filesystem Rule Linking | MEDIUM | architecture | DECISION-003 | P10.8: rule_linker.py + 4 MCP tools |
 | GAP-ARCH-009 | OPEN | TypeDB sessions created but not retrievable for end operation | MEDIUM | architecture | DECISION-003 | E2E test: test_end_session_via_api fails 404 |
 | GAP-ARCH-010 | RESOLVED | Workspace tasks not captured in TypeDB | HIGH | architecture | DECISION-003 | P10.10: workspace_scanner.py + 3 MCP tools |
+
+### Sync & Integration Gaps (2026-01-02)
+
+> **Source:** Risk of divergence between TypeDB governance data and workspace files
+> **Related:** TOOL-006-009 (MCP Architecture R&D), GAP-DOC-003, GAP-CTX-003
+
+| ID | Status | Gap | Priority | Category | Rule | Evidence |
+|----|--------|-----|----------|----------|------|----------|
+| GAP-SYNC-001 | OPEN | TypeDB rules/tasks may diverge from workspace files | HIGH | architecture | DECISION-003 | 2026-01-02: Bidirectional sync needed |
+| GAP-SYNC-002 | OPEN | No validation workflow to detect divergence | HIGH | testing | RULE-023 | Need comparison report tool |
+| GAP-SYNC-003 | OPEN | MCP services need refactoring before sync implementation | MEDIUM | architecture | RULE-012 | See TOOL-006-009 in R&D-BACKLOG |
+
+**GAP-SYNC-001 Analysis:**
+- **Problem:** Rules in TypeDB (25) vs rules in docs/rules/*.md may diverge
+- **Problem:** Tasks in TypeDB vs workspace TODO.md may diverge
+- **Problem:** Sessions in TypeDB vs evidence/*.md files may diverge
+- **Current State:**
+  - workspace_capture_tasks() syncs TODO.md → TypeDB (one-way)
+  - workspace_link_rules_to_documents() links rules → markdown (references only)
+  - No bidirectional sync or divergence detection
+- **Required:**
+  1. `governance_sync_status()` - Report divergence between TypeDB and files
+  2. `governance_sync_rules()` - Bidirectional rule sync with conflict detection
+  3. `governance_sync_tasks()` - Bidirectional task sync with status tracking
+
+**Safe/Quality-Driven Approach for MCP Refactoring:**
+```
+┌─────────────────────────────────────────────────────────────────────────┐
+│               MCP REFACTORING PRIORITY ORDER (SAFE PATH)                 │
+├─────────────────────────────────────────────────────────────────────────┤
+│                                                                          │
+│  STEP 1: STABILIZE (Before any refactoring)                             │
+│  ─────────────────────────────────────────────                          │
+│  □ Run full test suite: pytest tests/ -v                                │
+│  □ Document baseline: 1160 tests passing                                │
+│  □ Commit current state as checkpoint                                   │
+│                                                                          │
+│  STEP 2: SYNC VALIDATION (GAP-SYNC-002)                                 │
+│  ─────────────────────────────────────────                              │
+│  □ Add governance_sync_status() MCP tool                                │
+│  □ Compare TypeDB rules vs docs/rules/*.md                              │
+│  □ Compare TypeDB tasks vs TODO.md                                      │
+│  □ Generate divergence report                                           │
+│                                                                          │
+│  STEP 3: MCP CONSOLIDATION (TOOL-007)                                   │
+│  ────────────────────────────────────                                   │
+│  □ Evaluate: Should governance MCP be split into smaller MCPs?          │
+│  □ Current: 40+ tools in single governance MCP                          │
+│  □ Consider: rules-mcp, tasks-mcp, sessions-mcp, evidence-mcp           │
+│                                                                          │
+│  STEP 4: BIDIRECTIONAL SYNC (GAP-SYNC-001)                              │
+│  ─────────────────────────────────────────                              │
+│  □ Implement with conflict detection                                    │
+│  □ Last-write-wins vs merge strategy                                    │
+│  □ Audit trail for sync operations                                      │
+│                                                                          │
+│  STEP 5: CONTAINERIZATION (TOOL-006)                                    │
+│  ───────────────────────────────────                                    │
+│  □ Only after sync is stable                                            │
+│  □ Docker container for MCP services                                    │
+│  □ Eliminates NPX cold-start issues                                     │
+│                                                                          │
+└─────────────────────────────────────────────────────────────────────────┘
+```
 
 ### TDD Stub Gaps (DSP-2024-12-26 Cycles 201-330)
 
