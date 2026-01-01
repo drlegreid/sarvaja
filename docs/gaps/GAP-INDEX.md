@@ -1,7 +1,7 @@
 # Gap Index - Sim.ai PoC
 
 **Last Updated:** 2026-01-02
-**Total Gaps:** 184 | Status: 59 RESOLVED, 5 PARTIAL, 120 OPEN
+**Total Gaps:** 188 | Status: 59 RESOLVED, 5 PARTIAL, 124 OPEN
 **Format Migration:** GAP-WORKFLOW-003 - Replaced strikethrough with Status column
 
 ---
@@ -100,6 +100,68 @@ Session: EXP-P10-001 | Date: 2024-12-25 | Target: Governance Dashboard
 | GAP-TEST-001 | OPEN | E2E tests lack Given/When/Then BDD paradigm and OOP reusability | MEDIUM | testing | RULE-023 | No pytest fixtures, BDD patterns |
 | GAP-HEALTH-001 | OPEN | Healthcheck state file lacks retry history and rotation | MEDIUM | observability | RULE-021 | Should track all retry attempts |
 | GAP-TEST-002 | PARTIAL | Test output blows context window - need reporting modes | HIGH | testing | RULE-023 | Implemented --report-minimal, --report-cert |
+| GAP-META-001 | OPEN | GAPs lack evidence file references - context bloat risk | HIGH | architecture | RULE-012 | 2026-01-02: Index→Evidence split needed |
+| GAP-META-002 | OPEN | No standardized CATEGORY taxonomy for gaps/rules | HIGH | governance | RULE-013 | 2026-01-02: Need GOVERNANCE/TESTING/UI/etc |
+| GAP-RULE-001 | OPEN | Rules lack applicability TYPE (FORBIDDEN/CONDITIONAL/RECOMMENDED) | HIGH | governance | RULE-013 | 2026-01-02: Schema needs TYPE column |
+| GAP-RULE-002 | OPEN | Rules don't include good/bad practices with rationale | HIGH | governance | RULE-013 | 2026-01-02: Need examples + anti-patterns |
+
+**GAP-META-001 Evidence Architecture:** Index→Evidence Split
+- **Problem:** GAP-INDEX.md has 1000+ lines, bloating LLM context when reading gaps
+- **Current:** Evidence is inline with gaps, mixing index with content
+- **Solution:**
+  1. GAP-INDEX.md stays lean: ID, Status, Gap, Priority, Category, Rule, Evidence (file reference only)
+  2. Evidence files in `docs/gaps/evidence/GAP-XXX.md` contain full details
+  3. MCP tool `governance_get_gap_evidence(gap_id)` to fetch on demand
+- **Benefits:** LLM reads index first, fetches evidence only when needed
+
+**GAP-META-002 Category Taxonomy:**
+| Category | Purpose | Examples |
+|----------|---------|----------|
+| GOVERNANCE | Rule/decision management | RULE-001, RULE-011 |
+| ARCHITECTURE | System design | TypeDB, MCP, hybrid routing |
+| TESTING | Test infrastructure | pytest, E2E, TDD |
+| UI | Dashboard, views | Trame, Vuetify |
+| WORKFLOW | Process automation | DSP, session, evidence |
+| INFRASTRUCTURE | Docker, deployment | containers, health |
+| SECURITY | Auth, validation | API keys, middleware |
+| DATA | Entities, integrity | TypeDB entities, sync |
+| DOCUMENTATION | Docs, comments | API docs, CLAUDE.md |
+| META | Self-referential | Gap tracking itself |
+
+**GAP-RULE-001 Applicability Types:**
+| TYPE | Description | Example |
+|------|-------------|---------|
+| FORBIDDEN | Must never do | Commit secrets, skip tests |
+| REQUIRED | Must always do | Session logging, health checks |
+| CONDITIONAL | Context-dependent | Use TypeDB when available |
+| RECOMMENDED | Best practice | Modularize >300 line files |
+| DEPRECATED | Phase out | Strikethrough in gaps |
+
+**GAP-RULE-002 Rule Structure Template:**
+```markdown
+## RULE-XXX: [Name]
+
+**Type:** REQUIRED | FORBIDDEN | CONDITIONAL | RECOMMENDED
+**Category:** GOVERNANCE | TESTING | etc.
+**Priority:** CRITICAL | HIGH | MEDIUM | LOW
+
+### Directive
+[What to do/not do]
+
+### Rationale
+[Why this rule exists]
+
+### Good Practices ✓
+- [Example of correct behavior]
+- [Another good pattern]
+
+### Bad Practices ✗
+- [Anti-pattern to avoid]
+- [What goes wrong]
+
+### Evidence
+- [Link to evidence file]
+```
 
 **GAP-TEST-002 Test Reporting Modes:** ✅ IMPLEMENTED
 - **Usage:**
