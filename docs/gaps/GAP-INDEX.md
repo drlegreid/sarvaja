@@ -1,7 +1,7 @@
 # Gap Index - Sim.ai PoC
 
 **Last Updated:** 2026-01-02
-**Total Gaps:** 194 | Status: 77 RESOLVED, 8 PARTIAL, 109 OPEN
+**Total Gaps:** 194 | Status: 78 RESOLVED, 8 PARTIAL, 108 OPEN
 **Format Migration:** GAP-WORKFLOW-003 - Replaced strikethrough with Status column
 
 ---
@@ -42,13 +42,7 @@
 | GAP-UI-043 | RESOLVED | Agent metrics display added | MEDIUM | functionality | Agent | READ | 2026-01-02: build_agent_metrics_card in agents_view.py |
 | GAP-UI-044 | RESOLVED | No Executive Reporting view in Session Evidence tab | HIGH | functionality | Session | READ | governance_dashboard.py + api.py |
 | GAP-UI-045 | OPEN | No cross-workspace metrics aggregation | MEDIUM | functionality | Session | READ | RULE-029 |
-| GAP-UI-046 | OPEN | Executive Report should be per-session not quarterly/monthly | HIGH | functionality | Session | READ | User 2024-12-28 |
-
-**GAP-UI-046 Requirements:**
-- Replace Sessions view with Executive Reports per session
-- Each prompt = separate session with its own report
-- Report should show date/time, not period selection (week/month/quarter)
-- Session evidence + executive summary combined view
+| GAP-UI-046 | RESOLVED | Executive Report per-session (not quarterly/monthly) | HIGH | functionality | Session | READ | 2026-01-02: session selector, evidence summary, date display in executive_view.py |
 
 #### Insights Captured (EXP-P10-001)
 

@@ -4,40 +4,48 @@ Executive Report View for Governance Dashboard.
 Per RULE-012: Single Responsibility - only executive report UI.
 Per RULE-029: Executive Reporting Pattern.
 Per GAP-FILE-001: Modularization of governance_dashboard.py.
+Per GAP-UI-046: Reports are per-session, not quarterly/monthly.
 
 Extracted from governance_dashboard.py lines 2366-2502.
-
-GAP-UI-046: Should be per-session, not quarterly/monthly
 """
 
 from trame.widgets import vuetify3 as v3, html
 
 
+def build_session_selector() -> None:
+    """Build session selector for executive reports (GAP-UI-046)."""
+    with html.Div(classes="d-flex align-center", style="gap: 8px;"):
+        v3.VSelect(
+            v_model="executive_session_id",
+            items=("sessions.map(s => ({title: s.session_id || s.id, value: s.session_id || s.id}))",),
+            label="Select Session",
+            variant="outlined",
+            density="compact",
+            hide_details=True,
+            style="max-width: 300px;",
+            __properties=["data-testid"],
+            **{"data-testid": "executive-session-select"}
+        )
+        v3.VBtn(
+            "Generate Report",
+            prepend_icon="mdi-file-chart",
+            color="primary",
+            size="small",
+            click="trigger('load_executive_report')",
+            disabled=("!executive_session_id",),
+            __properties=["data-testid"],
+            **{"data-testid": "executive-generate-btn"}
+        )
+
+
 def build_executive_header() -> None:
-    """Build executive report header with period selector."""
+    """Build executive report header with session selector (GAP-UI-046)."""
     with v3.VCardTitle(classes="d-flex align-center"):
         v3.VIcon("mdi-chart-box", classes="mr-2")
         html.Span("Executive Report")
         v3.VSpacer()
-        # Period selector
-        with v3.VBtnToggle(
-            v_model=("executive_period",),
-            density="compact",
-            variant="outlined",
-        ):
-            v3.VBtn("Week", value="week", size="small")
-            v3.VBtn("Month", value="month", size="small")
-            v3.VBtn("Quarter", value="quarter", size="small")
-        v3.VBtn(
-            "Generate",
-            prepend_icon="mdi-refresh",
-            variant="outlined",
-            size="small",
-            classes="ml-2",
-            click="trigger('load_executive_report')",
-            __properties=["data-testid"],
-            **{"data-testid": "executive-generate-btn"}
-        )
+        # Session selector (replaces period selector per GAP-UI-046)
+        build_session_selector()
 
 
 def build_metrics_summary() -> None:
@@ -126,7 +134,7 @@ def build_report_sections() -> None:
 
 
 def build_status_banner() -> None:
-    """Build status banner at top of report."""
+    """Build status banner at top of report (GAP-UI-046: per-session)."""
     with v3.VAlert(
         v_bind_type=(
             "executive_report.overall_status === 'healthy' ? 'success' : "
@@ -134,6 +142,8 @@ def build_status_banner() -> None:
         ),
         density="compact",
         classes="mb-4",
+        __properties=["data-testid"],
+        **{"data-testid": "executive-status-banner"}
     ):
         with html.Div(classes="d-flex align-center"):
             v3.VIcon(
@@ -144,15 +154,92 @@ def build_status_banner() -> None:
                 ),
                 classes="mr-2"
             )
+            # Session ID and date (GAP-UI-046)
             html.Span(
-                "Report: {{ executive_report.period }}",
+                "Session: {{ executive_report.session_id || executive_session_id }}",
                 classes="font-weight-bold"
+            )
+            v3.VChip(
+                v_if="executive_report.session_date",
+                v_text="executive_report.session_date",
+                size="small",
+                prepend_icon="mdi-calendar",
+                classes="ml-2"
             )
             v3.VSpacer()
             html.Span(
                 "Generated: {{ executive_report.generated_at }}",
                 classes="text-caption"
             )
+
+
+def build_session_evidence_section() -> None:
+    """Build session evidence summary section (GAP-UI-046)."""
+    with v3.VCard(
+        v_if="executive_report.session_evidence",
+        variant="outlined",
+        classes="mb-4",
+        __properties=["data-testid"],
+        **{"data-testid": "session-evidence-section"}
+    ):
+        with v3.VCardTitle(classes="d-flex align-center", density="compact"):
+            v3.VIcon("mdi-file-document-multiple", classes="mr-2", size="small")
+            html.Span("Session Evidence")
+            v3.VSpacer()
+            v3.VBtn(
+                "View Full Session",
+                variant="text",
+                size="small",
+                prepend_icon="mdi-open-in-new",
+                click="active_view = 'sessions'; selected_session = sessions.find(s => (s.session_id || s.id) === executive_session_id); show_session_detail = true"
+            )
+        with v3.VCardText():
+            # Evidence stats
+            with v3.VRow(dense=True):
+                with v3.VCol(cols=3):
+                    with html.Div(classes="text-center"):
+                        html.Div(
+                            "{{ executive_report.session_evidence.decisions_count || 0 }}",
+                            classes="text-h6"
+                        )
+                        html.Div("Decisions", classes="text-caption text-grey")
+                with v3.VCol(cols=3):
+                    with html.Div(classes="text-center"):
+                        html.Div(
+                            "{{ executive_report.session_evidence.tasks_count || 0 }}",
+                            classes="text-h6"
+                        )
+                        html.Div("Tasks", classes="text-caption text-grey")
+                with v3.VCol(cols=3):
+                    with html.Div(classes="text-center"):
+                        html.Div(
+                            "{{ executive_report.session_evidence.gaps_resolved || 0 }}",
+                            classes="text-h6"
+                        )
+                        html.Div("Gaps Resolved", classes="text-caption text-grey")
+                with v3.VCol(cols=3):
+                    with html.Div(classes="text-center"):
+                        html.Div(
+                            "{{ executive_report.session_evidence.artifacts_count || 0 }}",
+                            classes="text-h6"
+                        )
+                        html.Div("Artifacts", classes="text-caption text-grey")
+
+            # Key highlights
+            with html.Div(
+                v_if="executive_report.session_evidence.highlights?.length > 0",
+                classes="mt-3"
+            ):
+                html.Div("Key Highlights", classes="text-subtitle-2 mb-2")
+                with v3.VList(density="compact"):
+                    with v3.VListItem(
+                        v_for="(highlight, idx) in executive_report.session_evidence.highlights",
+                        key="idx"
+                    ):
+                        with html.Template(v_slot_prepend=True):
+                            v3.VIcon("mdi-check", color="success", size="small")
+                        with v3.VListItemTitle():
+                            html.Span("{{ highlight }}")
 
 
 def build_executive_content() -> None:
@@ -178,6 +265,9 @@ def build_executive_content() -> None:
             # Status banner
             build_status_banner()
 
+            # Session evidence summary (GAP-UI-046)
+            build_session_evidence_section()
+
             # Metrics summary
             build_metrics_summary()
 
@@ -191,7 +281,7 @@ def build_executive_content() -> None:
         ):
             v3.VIcon("mdi-chart-box-outline", size="64", color="grey")
             html.Div(
-                "Click 'Generate' to create an executive report",
+                "Select a session and click 'Generate Report' to view executive summary",
                 classes="mt-2"
             )
 
@@ -202,7 +292,7 @@ def build_executive_view() -> None:
 
     This is the main entry point for the executive view module.
     Per RULE-029: Executive Reporting Pattern.
-    Per GAP-UI-046: Should be per-session (TODO - currently period-based).
+    Per GAP-UI-046: Reports are per-session with evidence summary.
     """
     with v3.VCard(
         v_if="active_view === 'executive'",
