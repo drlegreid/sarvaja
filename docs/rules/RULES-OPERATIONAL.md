@@ -1657,3 +1657,141 @@ Track and report:
 ---
 
 *Per user feedback 2025-01-01: Agents must not stop until all tasks complete*
+
+---
+
+## RULE-032: File Size & OOP Standards
+
+**Category:** `architecture` | **Priority:** HIGH | **Status:** ACTIVE
+
+### Directive
+
+All source files MUST stay under 300 lines. When a file exceeds this limit, IMMEDIATELY refactor using OOP/modular design principles.
+
+### Origin
+
+Created 2026-01-02 during GAP-FILE-001 modularization. The `governance_dashboard.py` file grew to 3000+ lines, becoming unmaintainable. Refactored into 12 view modules, 10 controller modules, and 5 state modules.
+
+### Hard Limit: 300 Lines Per File
+
+| Lines | Status | Action |
+|-------|--------|--------|
+| ≤200 | HEALTHY | No action needed |
+| 201-300 | WARNING | Consider splitting on next edit |
+| >300 | VIOLATION | **MUST split immediately** |
+
+### Refactoring Principles
+
+1. **Single Responsibility Principle**: Each file handles one concern
+   - Example: `governance_dashboard.py` → split into `views/`, `controllers/`, `state/`
+
+2. **Extract Classes/Modules**:
+   - Repeated code patterns → utility module
+   - Related functions → class with methods
+   - UI components → separate view files
+
+3. **Directory Structure**:
+   ```
+   feature/
+   ├── __init__.py      # Public exports only
+   ├── models.py        # Data classes/schemas (<100 lines)
+   ├── services.py      # Business logic (<200 lines)
+   ├── views.py         # UI components (<200 lines)
+   └── utils.py         # Helpers (<100 lines)
+   ```
+
+4. **Check Before Committing**:
+   ```bash
+   # Find files over 300 lines
+   wc -l *.py | awk '$1 > 300'
+
+   # PowerShell equivalent
+   Get-ChildItem *.py | ForEach-Object { $lines = (Get-Content $_).Count; if ($lines -gt 300) { "$lines`t$_" } }
+   ```
+
+### Decomposition Heuristics
+
+| Signal | Action |
+|--------|--------|
+| File >300 lines | Split by entity/domain |
+| Class >200 lines | Extract concerns to separate classes |
+| Function >50 lines | Compose from smaller functions |
+| Repeated patterns | Extract to shared component |
+| Mixed concerns (UI + logic) | Separate layers |
+
+### Validation
+
+- [ ] All source files ≤300 lines
+- [ ] Check run before each commit
+- [ ] Large files split using SRP
+
+---
+
+## RULE-033: PARTIAL Task Handling
+
+**Category:** `workflow` | **Priority:** HIGH | **Status:** ACTIVE
+
+### Directive
+
+When a gap or task requires breakdown, mark it as PARTIAL and create linked subtasks. Each subtask must be a deliverable work chunk completable in <2 hours.
+
+### Origin
+
+Created 2026-01-02 to clarify that PARTIAL status means "needs breakdown" not "in progress". Subtasks should be individually trackable and completable.
+
+### PARTIAL = Requires Subtask Breakdown
+
+| Status | Meaning | Next Action |
+|--------|---------|-------------|
+| OPEN | Not started | Begin work or break down |
+| PARTIAL | Needs breakdown | Create subtasks |
+| IN_PROGRESS | Being worked | Continue to completion |
+| RESOLVED | Done | No action needed |
+
+### Subtask Creation Protocol
+
+1. **Create Subtasks**: Break into deliverable chunks (<2 hours each)
+2. **Link to Parent**: Use dot notation or blocking reference
+3. **Track Individually**: Each subtask must be completable independently
+4. **Resolve Parent**: When ALL subtasks are complete
+
+### Naming Conventions
+
+```
+# Dot notation (preferred for UI gaps)
+GAP-UI-001       ← PARTIAL (parent)
+GAP-UI-001.1     ← RESOLVED (subtask A)
+GAP-UI-001.2     ← OPEN (subtask B)
+GAP-UI-001.3     ← OPEN (subtask C)
+
+# Blocking reference (for dependencies)
+GAP-UI-010       ← OPEN [BLOCKED BY: GAP-UI-009]
+```
+
+### Example
+
+```markdown
+| ID | Status | Gap | Evidence |
+|----|--------|-----|----------|
+| GAP-UI-001 | PARTIAL | Large feature | 3 subtasks pending |
+| GAP-UI-001.1 | RESOLVED | Subtask A | 2026-01-02 |
+| GAP-UI-001.2 | OPEN | Subtask B | blocked by .1 |
+| GAP-UI-001.3 | OPEN | Subtask C | blocked by .2 |
+```
+
+### Resolution Rules
+
+- Mark subtask RESOLVED immediately upon completion
+- Parent stays PARTIAL until ALL subtasks RESOLVED
+- When all subtasks done, mark parent RESOLVED with summary
+
+### Validation
+
+- [ ] PARTIAL tasks have subtasks linked
+- [ ] Subtasks are <2 hours of work
+- [ ] Parent resolved when all subtasks complete
+- [ ] No orphaned subtasks
+
+---
+
+*Per user feedback 2026-01-02: PARTIAL should link to deliverable subtasks*

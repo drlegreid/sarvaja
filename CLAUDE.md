@@ -70,20 +70,24 @@ Completed Tasks          → docs/tasks/TASKS-COMPLETED.md
 3. Follow existing view patterns in `governance_ui/views/`
 4. Register controllers via `register_all_controllers()`
 
-## Core Rules (25 Total: 22 ACTIVE, 3 DRAFT)
+## Rules Atlas (25 Total - Context-Optimized)
 
-| Rule | Directive | Priority |
-|------|-----------|----------|
-| **RULE-001** | Session Evidence Logging | CRITICAL |
-| **RULE-007** | MCP Usage Protocol | HIGH |
-| **RULE-011** | Multi-Agent Governance | CRITICAL |
-| **RULE-012** | Deep Sleep Protocol (DSP) | HIGH |
-| **RULE-014** | Autonomous Task Sequencing | CRITICAL |
-| **RULE-021** | MCP Healthcheck Protocol | CRITICAL |
-| **RULE-024** | AMNESIA Protocol (Context Recovery) | CRITICAL |
+> **Navigation**: Use TypeDB MCP or markdown fallback. Full details in linked files.
 
-> **Full rules:** [`docs/RULES-DIRECTIVES.md`](docs/RULES-DIRECTIVES.md)
-> **Halt commands (RULE-014):** STOP, HALT, STAI, RED ALERT, ALERT
+| Category | Rules | File |
+|----------|-------|------|
+| **Governance** | RULE-001, 003, 006, 011, 013 | [`RULES-GOVERNANCE.md`](docs/rules/RULES-GOVERNANCE.md) |
+| **Technical** | RULE-002, 007, 008, 009, 010 | [`RULES-TECHNICAL.md`](docs/rules/RULES-TECHNICAL.md) |
+| **Operational** | RULE-004, 005, 012, 014, 021-033 | [`RULES-OPERATIONAL.md`](docs/rules/RULES-OPERATIONAL.md) |
+
+**CRITICAL Rules (Always Active):**
+- `RULE-001`: Session evidence logging
+- `RULE-011`: Multi-agent trust governance
+- `RULE-014`: Autonomous halt commands (STOP, HALT, STAI, RED ALERT)
+- `RULE-021`: MCP healthcheck at session start
+- `RULE-024`: AMNESIA recovery protocol
+
+> **Index**: [`docs/RULES-DIRECTIVES.md`](docs/RULES-DIRECTIVES.md) | **TypeDB**: `governance_query_rules()`
 
 ### Rule Access Hierarchy (RULE-021 Integration)
 
@@ -142,46 +146,8 @@ If `action_required: START_SERVICES` → notify user with recovery command.
 - **Incremental progress** - Small changes that compile and pass tests
 - **Learn from existing code** - Study patterns before implementing
 - **Clear intent over clever code** - Choose boring, obvious solutions
-- **Files ≤300 lines** - Per RULE-012, modularize larger files
-
-### File Size & OOP Standards (RULE-032)
-**Hard Limit: 300 lines per file**
-
-When a file exceeds 300 lines, IMMEDIATELY refactor using OOP/modular design:
-
-1. **Single Responsibility Principle**: Each file handles one concern
-   - Example: `governance_dashboard.py` → split into `views/`, `controllers/`, `state/`
-2. **Extract Classes/Modules**:
-   - Repeated code patterns → utility module
-   - Related functions → class with methods
-   - UI components → separate view files
-3. **Directory Structure**:
-   ```
-   feature/
-   ├── __init__.py      # Public exports only
-   ├── models.py        # Data classes/schemas (<100 lines)
-   ├── services.py      # Business logic (<200 lines)
-   ├── views.py         # UI components (<200 lines)
-   └── utils.py         # Helpers (<100 lines)
-   ```
-4. **Check Before Committing**: `wc -l *.py | awk '$1 > 300'`
-
-### PARTIAL Task Handling (RULE-033)
-**PARTIAL = Task requires breakdown into subtasks**
-
-When marking a gap/task as PARTIAL:
-
-1. **Create Subtasks**: Break into deliverable chunks (<2 hours each)
-2. **Link to Parent**: `GAP-UI-001.1`, `GAP-UI-001.2` or `[BLOCKED BY: GAP-UI-001]`
-3. **Track Progress**: Each subtask must be individually completable
-4. **Example**:
-   ```
-   | GAP-UI-001 | PARTIAL | Large feature | HIGH | 3 subtasks pending |
-   | GAP-UI-001.1 | RESOLVED | Subtask A | HIGH | 2026-01-02 |
-   | GAP-UI-001.2 | OPEN | Subtask B | HIGH | blocked by .1 |
-   | GAP-UI-001.3 | OPEN | Subtask C | HIGH | blocked by .2 |
-   ```
-5. **Resolve Parent When**: All subtasks completed
+- **Files ≤300 lines** - Per RULE-032, modularize larger files ([details](docs/rules/RULES-OPERATIONAL.md#rule-032))
+- **PARTIAL = Subtasks** - Per RULE-033, break down large tasks ([details](docs/rules/RULES-OPERATIONAL.md#rule-033))
 
 ### When Stuck (Max 3 Attempts)
 After 3 failed attempts on an issue, **STOP** and:

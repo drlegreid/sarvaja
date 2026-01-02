@@ -1,6 +1,6 @@
 # Sim.ai Rules Directives - Index
 
-**Status:** Active | **Updated:** 2026-01-02 | **Rules:** 32 (29 ACTIVE, 3 DRAFT)
+**Status:** Active | **Updated:** 2026-01-02 | **Rules:** 33 (30 ACTIVE, 3 DRAFT)
 
 ---
 
@@ -10,7 +10,7 @@
 |----------|---------|-------|
 | [RULES-GOVERNANCE](rules/RULES-GOVERNANCE.md) | Process, documentation, collaboration, reporting | 001, 003, 006, 011, 013, 018, 019, 026, 029 |
 | [RULES-TECHNICAL](rules/RULES-TECHNICAL.md) | Architecture, technology, infrastructure | 002, 007, 008, 009, 010, 016, 017 |
-| [RULES-OPERATIONAL](rules/RULES-OPERATIONAL.md) | Testing, stability, maintenance, execution, security | 004, 005, 012, 014, 015, 020, 021, 022, 023, 024, 027, 028, 030 |
+| [RULES-OPERATIONAL](rules/RULES-OPERATIONAL.md) | Testing, stability, maintenance, execution, security | 004, 005, 012, 014, 015, 020, 021, 022, 023, 024, 027, 028, 030, 031, 032, 033 |
 
 ---
 
@@ -49,7 +49,8 @@
 | RULE-029 | Executive Reporting Pattern | reporting | HIGH | ACTIVE |
 | RULE-030 | Docker Dev Container Workflow | development | HIGH | ACTIVE |
 | RULE-031 | Autonomous Task Continuation | operational | CRITICAL | ACTIVE |
-| RULE-032 | DEV Phase Workflow Protocol | operational | HIGH | ACTIVE |
+| RULE-032 | File Size & OOP Standards | architecture | HIGH | ACTIVE |
+| RULE-033 | PARTIAL Task Handling | workflow | HIGH | ACTIVE |
 
 ---
 
@@ -70,7 +71,9 @@
 | `security` | HIGH | 022 |
 | `quality` | CRITICAL | 023 |
 | `development` | HIGH | 030 |
-| `operational` | CRITICAL | 031, 032 |
+| `operational` | CRITICAL | 031 |
+| `architecture` | HIGH | 002, 032 |
+| `workflow` | HIGH | 033 |
 
 ---
 
@@ -79,7 +82,7 @@
 | Level | Meaning | Rules |
 |-------|---------|-------|
 | **CRITICAL** | Must enforce always | 001, 008, 009, 010, 011, 014, 015, 016, 021, 023, 024, 031 |
-| **HIGH** | Enforce in normal ops | 002, 003, 004, 005, 007, 012, 013, 017, 018, 019, 020, 022, 025, 026, 027, 028, 029, 030, 032 |
+| **HIGH** | Enforce in normal ops | 002, 003, 004, 005, 007, 012, 013, 017, 018, 019, 020, 022, 025, 026, 027, 028, 029, 030, 032, 033 |
 | **MEDIUM** | Advisory | 006 |
 
 ---
@@ -150,7 +153,8 @@ Rules are enforced via:
 | 2.4.0 | 2024-12-27 | Added RULE-029: Executive Reporting Pattern (enterprise reporting) |
 | 2.5.0 | 2024-12-28 | Added RULE-030: Docker Dev Container Workflow (autonomous validation) |
 | 2.6.0 | 2026-01-01 | Added RULE-031: Autonomous Task Continuation (multi-step execution) |
-| 2.7.0 | 2026-01-02 | Added RULE-032: DEV Phase Workflow Protocol (volume mapping, DSP cycles) |
+| 2.7.0 | 2026-01-02 | Added RULE-032: File Size & OOP Standards (300 line limit, modularization) |
+| 2.8.0 | 2026-01-02 | Added RULE-033: PARTIAL Task Handling (subtask breakdown protocol) |
 
 ---
 

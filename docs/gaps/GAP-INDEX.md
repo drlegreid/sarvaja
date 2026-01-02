@@ -1,7 +1,7 @@
 # Gap Index - Sim.ai PoC
 
 **Last Updated:** 2026-01-02
-**Total Gaps:** 194 | Status: 76 RESOLVED, 8 PARTIAL, 110 OPEN
+**Total Gaps:** 194 | Status: 77 RESOLVED, 8 PARTIAL, 109 OPEN
 **Format Migration:** GAP-WORKFLOW-003 - Replaced strikethrough with Status column
 
 ---
@@ -38,7 +38,7 @@
 | GAP-UI-039 | OPEN | No document format support (CSV, Markdown, etc.) | MEDIUM | functionality | Document | READ | USER-2024-12-27 → RD-DOCVIEW |
 | GAP-UI-040 | RESOLVED | Agent config/instructions/tools display | HIGH | functionality | Agent | READ | 2026-01-02: agents_view.py with config/metrics/relations cards |
 | GAP-UI-041 | RESOLVED | Agent-session/task relation links | HIGH | functionality | Agent | READ | 2026-01-02: build_agent_relations_card in agents_view.py |
-| GAP-UI-042 | OPEN | No trust score change explanation/history | HIGH | functionality | Agent | READ | USER-2024-12-27 |
+| GAP-UI-042 | RESOLVED | Trust score history/explanation added | HIGH | functionality | Agent | READ | 2026-01-02: build_trust_history_card with RULE-011 formula, components, timeline |
 | GAP-UI-043 | RESOLVED | Agent metrics display added | MEDIUM | functionality | Agent | READ | 2026-01-02: build_agent_metrics_card in agents_view.py |
 | GAP-UI-044 | RESOLVED | No Executive Reporting view in Session Evidence tab | HIGH | functionality | Session | READ | governance_dashboard.py + api.py |
 | GAP-UI-045 | OPEN | No cross-workspace metrics aggregation | MEDIUM | functionality | Session | READ | RULE-029 |

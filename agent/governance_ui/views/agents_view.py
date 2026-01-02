@@ -6,6 +6,7 @@ Per RULE-019: UI/UX Standards - consistent view patterns.
 Per GAP-FILE-001: Modularization of governance_dashboard.py.
 Per GAP-UI-040: Effective config display.
 Per GAP-UI-041: Agent-to-session/task relation links.
+Per GAP-UI-042: Trust score history and explanation.
 
 Extracted from governance_dashboard.py lines 2506-2549.
 """
@@ -192,6 +193,162 @@ def build_agent_metrics_card() -> None:
             )
 
 
+def build_trust_history_card() -> None:
+    """Build trust score history card (GAP-UI-042)."""
+    with v3.VCard(
+        variant="outlined",
+        classes="mb-4",
+        __properties=["data-testid"],
+        **{"data-testid": "agent-trust-history-card"}
+    ):
+        with v3.VCardTitle(classes="d-flex align-center", density="compact"):
+            html.Span("Trust Score History")
+            v3.VSpacer()
+            v3.VBtn(
+                icon="mdi-refresh",
+                variant="text",
+                size="small",
+                click="$trigger('load_trust_history', [selected_agent.agent_id])",
+                __properties=["data-testid"],
+                **{"data-testid": "trust-history-refresh"}
+            )
+        with v3.VCardText():
+            # Current trust breakdown (RULE-011 formula)
+            with v3.VAlert(
+                type_="info",
+                variant="tonal",
+                density="compact",
+                classes="mb-4"
+            ):
+                html.Div("Trust Formula (RULE-011):", classes="font-weight-bold mb-2")
+                html.Div(
+                    "(Compliance × 0.4) + (Accuracy × 0.3) + "
+                    "(Consistency × 0.2) + (Tenure × 0.1)",
+                    classes="text-caption font-italic"
+                )
+
+            # Trust components breakdown
+            with v3.VRow(
+                v_if="selected_agent.trust_components",
+                classes="mb-4"
+            ):
+                with v3.VCol(cols=3):
+                    with html.Div(classes="text-center"):
+                        v3.VProgressCircular(
+                            model_value=(
+                                "(selected_agent.trust_components?.compliance || 0) * 100",
+                            ),
+                            size=60,
+                            width=4,
+                            color="primary"
+                        )
+                        html.Div("Compliance", classes="text-caption mt-1")
+                with v3.VCol(cols=3):
+                    with html.Div(classes="text-center"):
+                        v3.VProgressCircular(
+                            model_value=(
+                                "(selected_agent.trust_components?.accuracy || 0) * 100",
+                            ),
+                            size=60,
+                            width=4,
+                            color="success"
+                        )
+                        html.Div("Accuracy", classes="text-caption mt-1")
+                with v3.VCol(cols=3):
+                    with html.Div(classes="text-center"):
+                        v3.VProgressCircular(
+                            model_value=(
+                                "(selected_agent.trust_components?.consistency || 0) * 100",
+                            ),
+                            size=60,
+                            width=4,
+                            color="warning"
+                        )
+                        html.Div("Consistency", classes="text-caption mt-1")
+                with v3.VCol(cols=3):
+                    with html.Div(classes="text-center"):
+                        v3.VProgressCircular(
+                            model_value=(
+                                "(selected_agent.trust_components?.tenure || 0) * 100",
+                            ),
+                            size=60,
+                            width=4,
+                            color="info"
+                        )
+                        html.Div("Tenure", classes="text-caption mt-1")
+
+            # No components message
+            with v3.VAlert(
+                v_if="!selected_agent.trust_components",
+                type_="warning",
+                variant="tonal",
+                density="compact",
+                classes="mb-4"
+            ):
+                html.Span("Trust component breakdown not available")
+
+            # Trust history timeline
+            html.Div("Recent Changes", classes="font-weight-bold mb-2")
+            with v3.VTimeline(
+                v_if="selected_agent.trust_history?.length > 0",
+                density="compact",
+                align="start",
+                __properties=["data-testid"],
+                **{"data-testid": "trust-history-timeline"}
+            ):
+                with v3.VTimelineItem(
+                    v_for="(event, idx) in selected_agent.trust_history",
+                    key="idx",
+                    dot_color=(
+                        "event.change > 0 ? 'success' : "
+                        "event.change < 0 ? 'error' : 'grey'",
+                    ),
+                    size="small"
+                ):
+                    with v3.VCard(density="compact", variant="outlined"):
+                        with v3.VCardText(classes="py-2"):
+                            with html.Div(classes="d-flex align-center"):
+                                v3.VIcon(
+                                    v_text=(
+                                        "event.change > 0 ? 'mdi-arrow-up' : "
+                                        "event.change < 0 ? 'mdi-arrow-down' : "
+                                        "'mdi-minus'"
+                                    ),
+                                    color=(
+                                        "event.change > 0 ? 'success' : "
+                                        "event.change < 0 ? 'error' : 'grey'",
+                                    ),
+                                    size="small",
+                                    classes="mr-1"
+                                )
+                                html.Span(
+                                    "{{ event.change > 0 ? '+' : '' }}"
+                                    "{{ (event.change * 100).toFixed(1) }}%",
+                                    classes="font-weight-bold"
+                                )
+                                html.Span(
+                                    " → {{ (event.new_score * 100).toFixed(0) }}%",
+                                    classes="text-grey ml-1"
+                                )
+                            html.Div(
+                                "{{ event.reason || 'No reason provided' }}",
+                                classes="text-body-2 mt-1"
+                            )
+                            html.Div(
+                                "{{ event.timestamp }}",
+                                classes="text-caption text-grey mt-1"
+                            )
+
+            # No history message
+            with v3.VAlert(
+                v_if="!selected_agent.trust_history?.length",
+                type_="info",
+                variant="tonal",
+                density="compact"
+            ):
+                html.Span("No trust score changes recorded")
+
+
 def build_agent_relations_card() -> None:
     """Build agent relations card (GAP-UI-041)."""
     with v3.VCard(
@@ -286,6 +443,9 @@ def build_agent_detail_view() -> None:
         with v3.VCardText():
             # Metrics at top
             build_agent_metrics_card()
+
+            # Trust history (GAP-UI-042)
+            build_trust_history_card()
 
             # Config display
             build_agent_config_card()
