@@ -218,6 +218,9 @@ class AgentResponse(BaseModel):
     tasks_executed: int = 0
     trust_score: float = 0.0
     last_active: Optional[str] = None
+    # Relations (GAP-UI-048)
+    recent_sessions: List[str] = []
+    active_tasks: List[str] = []
 
 
 class AgentTaskAssign(BaseModel):

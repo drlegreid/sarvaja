@@ -387,7 +387,7 @@ Session: EXP-P10-001 | Date: 2024-12-25 | Target: Governance Dashboard
 | GAP-STUB-002 | RESOLVED | `governance/stores.py:71-118` TypeDB wrapper | P10.1 | CRITICAL | TypeDB + fallback to in-memory |
 | GAP-STUB-003 | RESOLVED | `governance/stores.py:56` `_sessions_store: Dict` | P10.2 | CRITICAL | TypeDB via `get_all_sessions_from_typedb()` |
 | GAP-STUB-004 | RESOLVED | `governance/stores.py:147+` TypeDB wrapper | P10.2 | CRITICAL | TypeDB + fallback to in-memory |
-| GAP-STUB-005 | OPEN | `governance/api.py:558-604` `_agents_store: Dict` | P10.3 | HIGH | TypeDB `agent` entity |
+| GAP-STUB-005 | RESOLVED | `governance/api.py:558-604` `_agents_store: Dict` | P10.3 | HIGH | 2026-01-02: TypeDB-first with trust updates + JSON persistence |
 | GAP-STUB-006 | OPEN | `agent/governance_ui/data_access.py:42` `get_proposals()` | P10.7 | MEDIUM | TypeDB `proposal` entity |
 | GAP-STUB-007 | OPEN | `agent/governance_ui/data_access.py:48` `get_escalated_proposals()` | P10.7 | MEDIUM | TypeDB `proposal` with escalation |
 
@@ -399,7 +399,7 @@ Session: EXP-P10-001 | Date: 2024-12-25 | Target: Governance Dashboard
 | ID | Status | Gap | Priority | Category | Entity | Evidence |
 |----|--------|-----|----------|----------|--------|----------|
 | GAP-UI-047 | RESOLVED | Rules tab: No directive/description shown | HIGH | ui | Rule | 2026-01-02: Added directive excerpt + chips to list view |
-| GAP-UI-048 | PARTIAL | No entity relationships displayed in UI | HIGH | ui | All | 2026-01-02: UI components exist - needs backend data for agents/sessions |
+| GAP-UI-048 | RESOLVED | No entity relationships displayed in UI | HIGH | ui | All | 2026-01-02: Backend now populates recent_sessions/active_tasks for agents |
 | GAP-UI-049 | RESOLVED | Tasks: No description, no linkage to sessions/evidence/rules | HIGH | ui | Task | 2026-01-02: Enhanced list view with chips + linked rules/sessions/gap |
 | GAP-UI-050 | RESOLVED | Session evidence tab has no data | HIGH | functionality | Session | 2026-01-02: Added evidence_files to seed data + UI displays |
 | GAP-UI-051 | RESOLVED | Real-time rule monitoring tab not functional | HIGH | functionality | Monitor | 2026-01-02: Added demo event seeding to RuleMonitor factory |
