@@ -34,6 +34,16 @@ def build_tasks_list_view() -> None:
                 __properties=["data-testid"],
                 **{"data-testid": "tasks-add-btn"}
             )
+
+        # Loading indicator (GAP-UI-005)
+        v3.VProgressLinear(
+            v_if="is_loading",
+            indeterminate=True,
+            color="primary",
+            __properties=["data-testid"],
+            **{"data-testid": "tasks-loading"}
+        )
+
         with v3.VCardText():
             html.Div("{{ tasks.length }} tasks loaded", classes="mb-2 text-grey")
             with v3.VList(

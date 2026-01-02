@@ -34,6 +34,16 @@ def build_sessions_list_view() -> None:
                 __properties=["data-testid"],
                 **{"data-testid": "sessions-add-btn"}
             )
+
+        # Loading indicator (GAP-UI-005)
+        v3.VProgressLinear(
+            v_if="is_loading",
+            indeterminate=True,
+            color="primary",
+            __properties=["data-testid"],
+            **{"data-testid": "sessions-loading"}
+        )
+
         with v3.VCardText():
             html.Div(
                 "{{ sessions.length }} sessions loaded",

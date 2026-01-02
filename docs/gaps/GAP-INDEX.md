@@ -1,7 +1,7 @@
 # Gap Index - Sim.ai PoC
 
 **Last Updated:** 2026-01-02
-**Total Gaps:** 194 | Status: 78 RESOLVED, 8 PARTIAL, 108 OPEN
+**Total Gaps:** 194 | Status: 79 RESOLVED, 8 PARTIAL, 107 OPEN
 **Format Migration:** GAP-WORKFLOW-003 - Replaced strikethrough with Status column
 
 ---
@@ -16,7 +16,7 @@
 | GAP-UI-002 | RESOLVED | No CRUD forms for Rules | HIGH | functionality | Rule | CREATE/UPDATE | 2026-01-02: build_rule_form_view exists (rules_view.py:181) |
 | GAP-UI-003 | RESOLVED | No detail drill-down views | HIGH | functionality | All | READ | 2026-01-02: detail views for rules/tasks/sessions/decisions/agents |
 | GAP-UI-004 | RESOLVED | No REST API endpoints | HIGH | backend | All | ALL | governance/api.py |
-| GAP-UI-005 | OPEN | Missing loading/error states | MEDIUM | ux | All | READ | Exploratory |
+| GAP-UI-005 | RESOLVED | Missing loading/error states | MEDIUM | ux | All | READ | 2026-01-02: VProgressLinear loading indicators added to all list views |
 | GAP-UI-006 | RESOLVED | Rules list missing rule_id column | HIGH | data_binding | Rule | READ | 2026-01-02: rule.id in list title (rules_view.py:105) |
 | GAP-UI-007 | RESOLVED | List rows not clickable (no detail navigation) | HIGH | navigation | All | READ | 2026-01-02: click handler navigates to detail (rules_view.py:97) |
 | GAP-UI-008 | RESOLVED | Tasks view shows empty table (no data source) | HIGH | data_binding | Task | READ | API seed data added |

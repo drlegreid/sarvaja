@@ -43,6 +43,15 @@ def build_rules_list_view() -> None:
                 **{"data-testid": "rules-add-btn"}
             )
 
+        # Loading indicator (GAP-UI-005)
+        v3.VProgressLinear(
+            v_if="is_loading",
+            indeterminate=True,
+            color="primary",
+            __properties=["data-testid"],
+            **{"data-testid": "rules-loading"}
+        )
+
         # Filters toolbar
         with v3.VToolbar(density="compact", flat=True):
             v3.VTextField(

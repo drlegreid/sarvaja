@@ -34,6 +34,16 @@ def build_decisions_list_view() -> None:
                 __properties=["data-testid"],
                 **{"data-testid": "decisions-add-btn"}
             )
+
+        # Loading indicator (GAP-UI-005)
+        v3.VProgressLinear(
+            v_if="is_loading",
+            indeterminate=True,
+            color="primary",
+            __properties=["data-testid"],
+            **{"data-testid": "decisions-loading"}
+        )
+
         with v3.VCardText():
             html.Div(
                 "{{ decisions.length }} decisions loaded",
