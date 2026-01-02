@@ -1,7 +1,7 @@
 # Gap Index - Sim.ai PoC
 
 **Last Updated:** 2026-01-02
-**Total Gaps:** 193 | Status: 64 RESOLVED, 5 PARTIAL, 124 OPEN
+**Total Gaps:** 193 | Status: 65 RESOLVED, 7 PARTIAL, 121 OPEN
 **Format Migration:** GAP-WORKFLOW-003 - Replaced strikethrough with Status column
 
 ---
@@ -321,7 +321,7 @@ Session: EXP-P10-001 | Date: 2024-12-25 | Target: Governance Dashboard
 
 | ID | Status | Gap | Priority | Category | Rule | Evidence |
 |----|--------|-----|----------|----------|------|----------|
-| GAP-DATA-001 | OPEN | Tasks have no descriptions/content/linkage | CRITICAL | data | DECISION-003 | P11.2: Structure added, content pending |
+| GAP-DATA-001 | PARTIAL | Tasks have no descriptions/content/linkage | CRITICAL | data | DECISION-003 | 2026-01-02: stores.py _task_to_dict uses body for description |
 | GAP-DATA-002 | RESOLVED | No entity relationships (Task→Rule, Session→Evidence) | CRITICAL | architecture | DECISION-003 | P11.3: TypeDB schema + relationships |
 | GAP-DATA-003 | RESOLVED | Session evidence attachments not loadable | HIGH | functionality | RULE-001 | P11.5: API + UI + TypeDB linkage |
 | GAP-ARCH-011 | RESOLVED | TypeDB migration incomplete (claude-mem disconnected) | CRITICAL | architecture | DECISION-003 | P11.4: session_memory.py + DSM |
@@ -393,8 +393,8 @@ Session: EXP-P10-001 | Date: 2024-12-25 | Target: Governance Dashboard
 
 | ID | Status | Gap | Priority | Category | Entity | Evidence |
 |----|--------|-----|----------|----------|--------|----------|
-| GAP-UI-CHAT-001 | OPEN | Platform UI has no prompt/chat functionality for commanding agents | CRITICAL | functionality | Agent | User feedback 2024-12-27 |
-| GAP-UI-CHAT-002 | OPEN | No agent interaction UI (send tasks, receive responses, view execution) | CRITICAL | functionality | Agent | Platform requirement |
+| GAP-UI-CHAT-001 | RESOLVED | Platform UI has no prompt/chat functionality for commanding agents | CRITICAL | functionality | Agent | 2026-01-02: Chat view + API exists (governance_ui/views/chat_view.py) |
+| GAP-UI-CHAT-002 | PARTIAL | No agent interaction UI (send tasks, receive responses, view execution) | CRITICAL | functionality | Agent | Chat UI exists, execution viewing pending |
 
 #### GAP-UI-CHAT-001/002 Requirements Specification
 

@@ -213,10 +213,15 @@ def get_session_count(allow_fallback: bool = True) -> int:
 
 
 def _task_to_dict(task) -> Dict[str, Any]:
-    """Convert TypeDB Task entity to dict format."""
+    """Convert TypeDB Task entity to dict format.
+
+    GAP-DATA-001: Ensure description has content from body if description is empty.
+    Priority: body > description > name (for UI display)
+    """
     return {
         "task_id": task.id,
-        "description": task.name or task.description or "",
+        "name": task.name or "",  # Short title
+        "description": task.body or task.description or task.name or "",  # Detailed content
         "phase": task.phase,
         "status": task.status,
         "agent_id": task.agent_id,
