@@ -170,12 +170,41 @@ def build_rule_detail_view() -> None:
 
             v3.VDivider(classes="my-4")
 
-            html.Div("Directive", classes="text-caption text-grey mb-2")
-            html.Div(
-                "{{ selected_rule.directive || 'No directive specified' }}",
-                classes="text-body-1",
-                style="white-space: pre-wrap"
-            )
+            # Directive preview (GAP-UI-037)
+            with v3.VCard(
+                variant="outlined",
+                __properties=["data-testid"],
+                **{"data-testid": "rule-directive-preview"}
+            ):
+                v3.VCardTitle("Directive", density="compact")
+                with v3.VCardText():
+                    html.Pre(
+                        "{{ selected_rule.directive || 'No directive specified' }}",
+                        style="white-space: pre-wrap; font-family: inherit; "
+                              "font-size: 0.875rem; background: #f5f5f5; "
+                              "padding: 12px; border-radius: 4px; margin: 0;",
+                        __properties=["data-testid"],
+                        **{"data-testid": "rule-directive-text"}
+                    )
+
+            # Rule dependencies (GAP-UI-037)
+            with v3.VCard(
+                v_if="selected_rule.dependencies?.length > 0",
+                variant="outlined",
+                classes="mt-4",
+                __properties=["data-testid"],
+                **{"data-testid": "rule-dependencies"}
+            ):
+                v3.VCardTitle("Dependencies", density="compact")
+                with v3.VCardText():
+                    v3.VChip(
+                        v_for="dep in selected_rule.dependencies",
+                        v_text="dep",
+                        size="small",
+                        color="secondary",
+                        classes="mr-1",
+                        prepend_icon="mdi-link"
+                    )
 
 
 def build_rule_form_view() -> None:

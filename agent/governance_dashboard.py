@@ -163,6 +163,7 @@ from agent.governance_ui.views import (
     build_trust_view,
     build_search_view,
     build_impact_view,
+    build_all_dialogs,  # GAP-UI-038: Shared dialogs
 )
 
 # Controller modules (extracted per GAP-FILE-005)
@@ -414,6 +415,11 @@ class GovernanceDashboard:
                         build_trust_view()
                         build_search_view()
                         build_impact_view()
+
+                    # =============================================================
+                    # SHARED DIALOGS (GAP-UI-038)
+                    # =============================================================
+                    build_all_dialogs()
 
                 # =================================================================
                 # LOADING SPINNER - GAP-UI-005

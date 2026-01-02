@@ -1,7 +1,7 @@
 # Gap Index - Sim.ai PoC
 
 **Last Updated:** 2026-01-02
-**Total Gaps:** 194 | Status: 70 RESOLVED, 9 PARTIAL, 115 OPEN
+**Total Gaps:** 194 | Status: 76 RESOLVED, 8 PARTIAL, 110 OPEN
 **Format Migration:** GAP-WORKFLOW-003 - Replaced strikethrough with Status column
 
 ---
@@ -33,13 +33,13 @@
 | GAP-UI-034 | RESOLVED | Session CRUD: API + UI implemented | HIGH | functionality | Session | ALL | 2026-01-02: models, routes, typedb, view, controller |
 | GAP-UI-035 | OPEN | No datetime columns in tables | MEDIUM | ux | All | READ | USER-2024-12-27 |
 | GAP-UI-036 | OPEN | No scrolling/paging in tables | MEDIUM | ux | All | READ | USER-2024-12-27 |
-| GAP-UI-037 | OPEN | No entity content preview (unclear data) | HIGH | ux | All | READ | USER-2024-12-27 |
-| GAP-UI-038 | OPEN | No document reference viewer (fullscreen modal) | HIGH | functionality | Document | READ | USER-2024-12-27 |
+| GAP-UI-037 | RESOLVED | Entity content previews added | HIGH | ux | All | READ | 2026-01-02: tasks/rules/decisions views have styled content cards |
+| GAP-UI-038 | RESOLVED | Fullscreen document viewer added | HIGH | functionality | Document | READ | 2026-01-02: views/dialogs.py with build_file_viewer_dialog |
 | GAP-UI-039 | OPEN | No document format support (CSV, Markdown, etc.) | MEDIUM | functionality | Document | READ | USER-2024-12-27 → RD-DOCVIEW |
-| GAP-UI-040 | OPEN | Agent dashboard lacks effective config display (Agno framework) | HIGH | functionality | Agent | READ | USER-2024-12-27 |
-| GAP-UI-041 | OPEN | No agent-to-session/task relation UI links | HIGH | functionality | Agent | READ | USER-2024-12-27 |
+| GAP-UI-040 | RESOLVED | Agent config/instructions/tools display | HIGH | functionality | Agent | READ | 2026-01-02: agents_view.py with config/metrics/relations cards |
+| GAP-UI-041 | RESOLVED | Agent-session/task relation links | HIGH | functionality | Agent | READ | 2026-01-02: build_agent_relations_card in agents_view.py |
 | GAP-UI-042 | OPEN | No trust score change explanation/history | HIGH | functionality | Agent | READ | USER-2024-12-27 |
-| GAP-UI-043 | OPEN | Agent dashboard lacks execution metrics | MEDIUM | functionality | Agent | READ | USER-2024-12-27 |
+| GAP-UI-043 | RESOLVED | Agent metrics display added | MEDIUM | functionality | Agent | READ | 2026-01-02: build_agent_metrics_card in agents_view.py |
 | GAP-UI-044 | RESOLVED | No Executive Reporting view in Session Evidence tab | HIGH | functionality | Session | READ | governance_dashboard.py + api.py |
 | GAP-UI-045 | OPEN | No cross-workspace metrics aggregation | MEDIUM | functionality | Session | READ | RULE-029 |
 | GAP-UI-046 | OPEN | Executive Report should be per-session not quarterly/monthly | HIGH | functionality | Session | READ | User 2024-12-28 |
@@ -430,7 +430,7 @@ Session: EXP-P10-001 | Date: 2024-12-25 | Target: Governance Dashboard
 | ID | Status | Gap | Priority | Category | Entity | Evidence |
 |----|--------|-----|----------|----------|--------|----------|
 | GAP-UI-CHAT-001 | RESOLVED | Platform UI has no prompt/chat functionality for commanding agents | CRITICAL | functionality | Agent | 2026-01-02: Chat view + API exists (governance_ui/views/chat_view.py) |
-| GAP-UI-CHAT-002 | PARTIAL | No agent interaction UI (send tasks, receive responses, view execution) | CRITICAL | functionality | Agent | Chat UI exists, execution viewing pending |
+| GAP-UI-CHAT-002 | RESOLVED | Task execution viewer added to chat | CRITICAL | functionality | Agent | 2026-01-02: build_task_execution_viewer() in chat_view.py |
 
 #### GAP-UI-CHAT-001/002 Requirements Specification
 

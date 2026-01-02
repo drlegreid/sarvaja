@@ -144,6 +144,45 @@ If `action_required: START_SERVICES` → notify user with recovery command.
 - **Clear intent over clever code** - Choose boring, obvious solutions
 - **Files ≤300 lines** - Per RULE-012, modularize larger files
 
+### File Size & OOP Standards (RULE-032)
+**Hard Limit: 300 lines per file**
+
+When a file exceeds 300 lines, IMMEDIATELY refactor using OOP/modular design:
+
+1. **Single Responsibility Principle**: Each file handles one concern
+   - Example: `governance_dashboard.py` → split into `views/`, `controllers/`, `state/`
+2. **Extract Classes/Modules**:
+   - Repeated code patterns → utility module
+   - Related functions → class with methods
+   - UI components → separate view files
+3. **Directory Structure**:
+   ```
+   feature/
+   ├── __init__.py      # Public exports only
+   ├── models.py        # Data classes/schemas (<100 lines)
+   ├── services.py      # Business logic (<200 lines)
+   ├── views.py         # UI components (<200 lines)
+   └── utils.py         # Helpers (<100 lines)
+   ```
+4. **Check Before Committing**: `wc -l *.py | awk '$1 > 300'`
+
+### PARTIAL Task Handling (RULE-033)
+**PARTIAL = Task requires breakdown into subtasks**
+
+When marking a gap/task as PARTIAL:
+
+1. **Create Subtasks**: Break into deliverable chunks (<2 hours each)
+2. **Link to Parent**: `GAP-UI-001.1`, `GAP-UI-001.2` or `[BLOCKED BY: GAP-UI-001]`
+3. **Track Progress**: Each subtask must be individually completable
+4. **Example**:
+   ```
+   | GAP-UI-001 | PARTIAL | Large feature | HIGH | 3 subtasks pending |
+   | GAP-UI-001.1 | RESOLVED | Subtask A | HIGH | 2026-01-02 |
+   | GAP-UI-001.2 | OPEN | Subtask B | HIGH | blocked by .1 |
+   | GAP-UI-001.3 | OPEN | Subtask C | HIGH | blocked by .2 |
+   ```
+5. **Resolve Parent When**: All subtasks completed
+
 ### When Stuck (Max 3 Attempts)
 After 3 failed attempts on an issue, **STOP** and:
 1. Document what failed and specific errors

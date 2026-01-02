@@ -84,8 +84,52 @@ def build_decision_metadata_chips() -> None:
         )
 
 
+def build_decision_content_preview() -> None:
+    """Build decision context and rationale preview (GAP-UI-037)."""
+    # Context preview
+    with v3.VCard(
+        v_if="selected_decision.context",
+        variant="outlined",
+        classes="mb-4",
+        __properties=["data-testid"],
+        **{"data-testid": "decision-context-preview"}
+    ):
+        v3.VCardTitle("Context", density="compact")
+        with v3.VCardText():
+            html.Pre(
+                "{{ selected_decision.context }}",
+                style="white-space: pre-wrap; font-family: inherit; "
+                      "font-size: 0.875rem; background: #f5f5f5; "
+                      "padding: 12px; border-radius: 4px; margin: 0;",
+                __properties=["data-testid"],
+                **{"data-testid": "decision-context-text"}
+            )
+
+    # Rationale preview
+    with v3.VCard(
+        v_if="selected_decision.rationale",
+        variant="outlined",
+        classes="mb-4",
+        __properties=["data-testid"],
+        **{"data-testid": "decision-rationale-preview"}
+    ):
+        v3.VCardTitle("Rationale", density="compact")
+        with v3.VCardText():
+            html.Pre(
+                "{{ selected_decision.rationale }}",
+                style="white-space: pre-wrap; font-family: inherit; "
+                      "font-size: 0.875rem; background: #e3f2fd; "
+                      "padding: 12px; border-radius: 4px; margin: 0;",
+                __properties=["data-testid"],
+                **{"data-testid": "decision-rationale-text"}
+            )
+
+
 def build_decision_info_cards() -> None:
     """Build decision information and impact cards."""
+    # Content previews first (GAP-UI-037)
+    build_decision_content_preview()
+
     with v3.VRow(classes="mt-4"):
         # Left column: Decision information
         with v3.VCol(cols=6):
@@ -137,6 +181,25 @@ def build_decision_info_cards() -> None:
                             subtitle=("selected_decision.category || 'N/A'",),
                             prepend_icon="mdi-tag",
                         )
+
+    # Affected rules chips (GAP-UI-037)
+    with v3.VCard(
+        v_if="selected_decision.affected_rules?.length > 0",
+        variant="outlined",
+        classes="mt-4",
+        __properties=["data-testid"],
+        **{"data-testid": "decision-affected-rules"}
+    ):
+        v3.VCardTitle("Affected Rules", density="compact")
+        with v3.VCardText():
+            v3.VChip(
+                v_for="rule in selected_decision.affected_rules",
+                v_text="rule",
+                size="small",
+                color="primary",
+                classes="mr-1",
+                prepend_icon="mdi-gavel"
+            )
 
 
 def build_decision_detail_view() -> None:
