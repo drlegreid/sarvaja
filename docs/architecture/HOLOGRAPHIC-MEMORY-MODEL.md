@@ -1,6 +1,8 @@
 # Holographic Memory Model
 **Per RULE-024 (AMNESIA Protocol) + RULE-022 (Frankel Hash)**
 
+**Last Updated:** 2026-01-02 (DSP Cycle: P11-AUTONOMOUS-BACKLOG)
+
 ## Purpose
 
 Prevent context window bloat by structuring rules/evidence in TypeDB for tiered access via governance MCP service.
@@ -11,17 +13,18 @@ Prevent context window bloat by structuring rules/evidence in TypeDB for tiered 
 ┌─────────────────────────────────────────────────────────────────┐
 │  LEVEL 0: Hash Summary Only (Minimal Context ~50 tokens)        │
 │  ─────────────────────────────────────────────────────────────  │
-│  Master Hash: 7A5DCDFC                                          │
-│  Rules: 26 (22 ACTIVE, 3 DRAFT, 1 DEPRECATED)                   │
+│  Master Hash: [computed at runtime]                              │
+│  Rules: 32 (29 ACTIVE, 3 DRAFT)                                  │
 │  Status: HEALTHY                                                 │
 └─────────────────────────────────────────────────────────────────┘
                               ↓ /health or governance_health
 ┌─────────────────────────────────────────────────────────────────┐
-│  LEVEL 1: CORE Rules Index (~200 tokens)                        │
+│  LEVEL 1: CORE Rules Index (~250 tokens)                        │
 │  ─────────────────────────────────────────────────────────────  │
-│  CRITICAL (12): RULE-001,008,009,010,011,014,015,016,021,023,   │
+│  CRITICAL (11): RULE-001,008,009,010,011,014,015,016,021,023,   │
 │                 024,031                                          │
-│  HIGH (11):     RULE-002,004,005,007,012,017,018,019,020,022,025│
+│  HIGH (19):     RULE-002,003,004,005,007,012,017,018,019,020,   │
+│                 022,025,026,027,028,029,030,032                  │
 │  MEDIUM (2):    RULE-006,013                                     │
 └─────────────────────────────────────────────────────────────────┘
                               ↓ governance_query_rules
@@ -65,12 +68,15 @@ These are accessed on-demand via governance MCP:
 
 | Category | Rules | Access Pattern |
 |----------|-------|----------------|
-| governance | 001,003,006,011 | governance_query_rules(category="governance") |
-| testing | 004,020,025 | governance_query_rules(category="testing") |
+| governance | 001,003,006,011,026,029 | governance_query_rules(category="governance") |
+| testing | 004,020,025,027,028 | governance_query_rules(category="testing") |
 | stability | 005,021 | governance_query_rules(category="stability") |
 | strategic | 008,010,017 | governance_query_rules(category="strategic") |
 | devops | 009,016 | governance_query_rules(category="devops") |
 | autonomy | 014,015 | governance_query_rules(category="autonomy") |
+| operational | 030,031,032 | governance_query_rules(category="operational") |
+| reporting | 018,019 | governance_query_rules(category="reporting") |
+| other | 002,007,012,013,022,023,024 | Various specialized categories |
 
 ## Hash-Based Change Detection
 
@@ -117,15 +123,33 @@ governance_evidence_search("session logging")
 
 | Component | Status | Notes |
 |-----------|--------|-------|
-| TypeDB Rules | ✅ 26 rules | Indexed in TypeDB |
-| Hash Computation | ✅ Healthcheck | Master hash working |
+| TypeDB Rules | ✅ 32 rules | 29 ACTIVE, 3 DRAFT |
+| Hash Computation | ✅ Healthcheck | Master hash via governance_health |
 | Per-Rule Hashes | ❌ TODO | Need to add to TypeDB schema |
-| Category Index | ✅ Working | governance_query_rules |
+| Category Index | ✅ Working | governance_query_rules(category=...) |
 | Evidence Links | ✅ Working | governance_evidence_search |
+| Rule Sync | ✅ Complete | TypeDB aligned with markdown docs |
+| Conflict Detection | ✅ Working | 6 pairs detected (all false positives) |
 
 ## Next Steps
 
-1. Add per-rule hash attribute to TypeDB schema
-2. Create rule category hash index
-3. Add change tree visualization to healthcheck
-4. Compress long directives with summary + hash
+1. **Per-Rule Hash** (TOOL-022 related): Add `rule-hash` attribute to TypeDB schema
+2. **Category Hash Index**: Compute category-level hashes for change detection
+3. **Change Tree Visualization**: Add to healthcheck output for quick diffs
+4. **Directive Compression**: Long directives → summary + hash for context efficiency
+
+## Governance MCP Restructure Status (TOOL-007)
+
+**Status:** DEFERRED (stability priority)
+
+The governance MCP currently has 40+ tools. Split candidates identified:
+- governance-core: Rules, agents, health, proposals (~15 tools)
+- governance-session: Sessions, decisions, evidence (~10 tools)
+- governance-dsm: DSM cycles, checkpoints, findings (~8 tools)
+- governance-workspace: Tasks, documents, gap sync (~10 tools)
+
+**Decision:** Defer split until rule inventory stabilizes. Current focus on rule-markdown sync and holographic access patterns.
+
+---
+
+*Updated per DSP cycle P11-AUTONOMOUS-BACKLOG (2026-01-02)*

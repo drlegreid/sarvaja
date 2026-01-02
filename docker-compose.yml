@@ -197,23 +197,36 @@ services:
       start_period: 10s
 
   # Governance Dashboard - Dev mode with live code reload
-  # Disabled: Not needed in persistent dev mode, use "dashboard-dev" profile explicitly
-  # governance-dashboard-dev:
-  #   build:
-  #     context: .
-  #     dockerfile: agent/Dockerfile.dashboard
-  #   profiles: ["dashboard-dev"]
-  #   ports:
-  #     - "8081:8081"
-  #     - "8082:8082"
-  #   environment:
-  #     - DASHBOARD_PORT=8081
-  #     - API_PORT=8082
-  #     - TYPEDB_HOST=typedb
-  #     - TYPEDB_PORT=1729
-  #   depends_on:
-  #     - typedb
-  #     - chromadb
+  governance-dashboard-dev:
+    build:
+      context: .
+      dockerfile: agent/Dockerfile.dashboard
+    profiles: ["dev", "dashboard-dev"]
+    ports:
+      - "8081:8081"
+      - "8082:8082"
+    environment:
+      - DASHBOARD_PORT=8081
+      - API_PORT=8082
+      - TYPEDB_HOST=typedb
+      - TYPEDB_PORT=1729
+      - CHROMADB_HOST=chromadb
+      - CHROMADB_PORT=8000
+      - CHROMA_AUTH_TOKEN=${CHROMA_AUTH_TOKEN:-chroma-token-dev}
+    volumes:
+      - ./agent:/app/agent:ro
+      - ./governance:/app/governance:ro
+      - ./docs:/app/docs:ro
+      - ./evidence:/app/evidence:rw
+    depends_on:
+      - typedb
+      - chromadb
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8081/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
 
 # =============================================================================
 # VOLUMES
