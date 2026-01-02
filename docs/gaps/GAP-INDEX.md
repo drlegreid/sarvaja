@@ -1,7 +1,7 @@
 # Gap Index - Sim.ai PoC
 
 **Last Updated:** 2026-01-02
-**Total Gaps:** 193 | Status: 70 RESOLVED, 7 PARTIAL, 116 OPEN
+**Total Gaps:** 193 | Status: 70 RESOLVED, 8 PARTIAL, 115 OPEN
 **Format Migration:** GAP-WORKFLOW-003 - Replaced strikethrough with Status column
 
 ---
@@ -22,7 +22,7 @@
 | GAP-UI-008 | RESOLVED | Tasks view shows empty table (no data source) | HIGH | data_binding | Task | READ | API seed data added |
 | GAP-UI-009 | OPEN | Search returns no results (unclear if functional) | MEDIUM | functionality | Evidence | SEARCH | EXP-P10-001 |
 | GAP-UI-010 | OPEN | No column sorting functionality | MEDIUM | ux | All | READ | EXP-P10-001 |
-| GAP-UI-011 | OPEN | No filtering/faceted search | MEDIUM | functionality | All | SEARCH | EXP-P10-001 |
+| GAP-UI-011 | PARTIAL | No filtering/faceted search | MEDIUM | functionality | All | SEARCH | 2026-01-02: Rules + Monitor have filters, tasks/sessions pending |
 | GAP-UI-028 | RESOLVED | Tests pass but UI broken (lenient tests) | CRITICAL | testing | All | ALL | RULE-028 + 11 UI smoke tests |
 | GAP-UI-029 | RESOLVED | Executive Report shows 0 Rules/Agents in stats | HIGH | data | Report | READ | 2024-12-31: Field name mismatch fixed |
 | GAP-UI-030 | RESOLVED | Tasks view polluted with 150+ TEST-* tasks | MEDIUM | data | Task | READ | 2024-12-31: Deleted 154 TEST-* tasks |
