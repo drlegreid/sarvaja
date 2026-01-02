@@ -44,7 +44,8 @@ def build_tasks_list_view() -> None:
             **{"data-testid": "tasks-loading"}
         )
 
-        with v3.VCardText():
+        # Tasks list content (GAP-UI-036: scrollable)
+        with v3.VCardText(style="max-height: 500px; overflow-y: auto;"):
             html.Div("{{ tasks.length }} tasks loaded", classes="mb-2 text-grey")
             with v3.VList(
                 density="compact",

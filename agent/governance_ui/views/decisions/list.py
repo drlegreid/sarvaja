@@ -44,7 +44,8 @@ def build_decisions_list_view() -> None:
             **{"data-testid": "decisions-loading"}
         )
 
-        with v3.VCardText():
+        # Decisions list content (GAP-UI-036: scrollable)
+        with v3.VCardText(style="max-height: 500px; overflow-y: auto;"):
             html.Div(
                 "{{ decisions.length }} decisions loaded",
                 classes="mb-2 text-grey"

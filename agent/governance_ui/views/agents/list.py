@@ -29,7 +29,18 @@ def build_agents_list_view() -> None:
                 __properties=["data-testid"],
                 **{"data-testid": "agents-refresh-btn"}
             )
-        with v3.VCardText():
+
+        # Loading indicator (GAP-UI-005)
+        v3.VProgressLinear(
+            v_if="is_loading",
+            indeterminate=True,
+            color="primary",
+            __properties=["data-testid"],
+            **{"data-testid": "agents-loading"}
+        )
+
+        # Agents list content (GAP-UI-036: scrollable)
+        with v3.VCardText(style="max-height: 500px; overflow-y: auto;"):
             html.Div(
                 "{{ agents.length }} agents registered",
                 classes="mb-2 text-grey"

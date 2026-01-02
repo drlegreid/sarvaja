@@ -44,7 +44,8 @@ def build_sessions_list_view() -> None:
             **{"data-testid": "sessions-loading"}
         )
 
-        with v3.VCardText():
+        # Sessions list content (GAP-UI-036: scrollable)
+        with v3.VCardText(style="max-height: 500px; overflow-y: auto;"):
             html.Div(
                 "{{ sessions.length }} sessions loaded",
                 classes="mb-2 text-grey"

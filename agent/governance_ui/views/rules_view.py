@@ -91,8 +91,8 @@ def build_rules_list_view() -> None:
                 **{"data-testid": "rules-filter-category"}
             )
 
-        # Rules list content
-        with v3.VCardText():
+        # Rules list content (GAP-UI-036: scrollable)
+        with v3.VCardText(style="max-height: 500px; overflow-y: auto;"):
             html.Div("{{ rules.length }} rules loaded", classes="mb-2 text-grey")
 
             with v3.VList(

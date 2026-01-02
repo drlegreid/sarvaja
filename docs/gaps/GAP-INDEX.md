@@ -1,7 +1,7 @@
 # Gap Index - Sim.ai PoC
 
 **Last Updated:** 2026-01-02
-**Total Gaps:** 194 | Status: 80 RESOLVED, 8 PARTIAL, 106 OPEN
+**Total Gaps:** 194 | Status: 81 RESOLVED, 8 PARTIAL, 105 OPEN
 **Format Migration:** GAP-WORKFLOW-003 - Replaced strikethrough with Status column
 
 ---
@@ -32,7 +32,7 @@
 | GAP-UI-033 | RESOLVED | Decision CRUD: API + UI implemented | HIGH | functionality | Decision | ALL | 2026-01-02: models, routes, typedb, view, controller |
 | GAP-UI-034 | RESOLVED | Session CRUD: API + UI implemented | HIGH | functionality | Session | ALL | 2026-01-02: models, routes, typedb, view, controller |
 | GAP-UI-035 | OPEN | No datetime columns in tables | MEDIUM | ux | All | READ | USER-2024-12-27 |
-| GAP-UI-036 | OPEN | No scrolling/paging in tables | MEDIUM | ux | All | READ | USER-2024-12-27 |
+| GAP-UI-036 | RESOLVED | No scrolling/paging in tables | MEDIUM | ux | All | READ | 2026-01-02: max-height 500px + overflow-y auto on all list views |
 | GAP-UI-037 | RESOLVED | Entity content previews added | HIGH | ux | All | READ | 2026-01-02: tasks/rules/decisions views have styled content cards |
 | GAP-UI-038 | RESOLVED | Fullscreen document viewer added | HIGH | functionality | Document | READ | 2026-01-02: views/dialogs.py with build_file_viewer_dialog |
 | GAP-UI-039 | OPEN | No document format support (CSV, Markdown, etc.) | MEDIUM | functionality | Document | READ | USER-2024-12-27 → RD-DOCVIEW |
