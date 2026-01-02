@@ -1,6 +1,6 @@
 # Sim.ai Rules Directives - Index
 
-**Status:** Active | **Updated:** 2024-12-28 | **Rules:** 30 (27 ACTIVE, 3 DRAFT)
+**Status:** Active | **Updated:** 2026-01-02 | **Rules:** 32 (29 ACTIVE, 3 DRAFT)
 
 ---
 
@@ -48,6 +48,8 @@
 | RULE-028 | Change Validation Protocol | testing | HIGH | ACTIVE |
 | RULE-029 | Executive Reporting Pattern | reporting | HIGH | ACTIVE |
 | RULE-030 | Docker Dev Container Workflow | development | HIGH | ACTIVE |
+| RULE-031 | Autonomous Task Continuation | operational | CRITICAL | ACTIVE |
+| RULE-032 | DEV Phase Workflow Protocol | operational | HIGH | ACTIVE |
 
 ---
 
@@ -55,7 +57,7 @@
 
 | Category | Priority | Rules |
 |----------|----------|-------|
-| `governance` | CRITICAL | 001, 003, 006, 011, 013 |
+| `governance` | CRITICAL | 001, 003, 006, 011, 013, 026, 029 |
 | `strategic` | CRITICAL | 008, 010, 017 |
 | `autonomy` | CRITICAL | 014, 015 |
 | `architecture` | HIGH | 002 |
@@ -64,10 +66,11 @@
 | `testing` | HIGH | 004, 020, 025, 027, 028 |
 | `stability` | CRITICAL | 005, 021 |
 | `maintenance` | CRITICAL | 012, 024 |
-| `reporting` | HIGH | 018, 019, 029 |
+| `reporting` | HIGH | 018, 019 |
 | `security` | HIGH | 022 |
 | `quality` | CRITICAL | 023 |
 | `development` | HIGH | 030 |
+| `operational` | CRITICAL | 031, 032 |
 
 ---
 
@@ -75,8 +78,8 @@
 
 | Level | Meaning | Rules |
 |-------|---------|-------|
-| **CRITICAL** | Must enforce always | 001, 008, 009, 010, 011, 014, 015, 016, 021, 023, 024 |
-| **HIGH** | Enforce in normal ops | 002, 003, 004, 005, 007, 012, 013, 017, 018, 019, 020, 022 |
+| **CRITICAL** | Must enforce always | 001, 008, 009, 010, 011, 014, 015, 016, 021, 023, 024, 031 |
+| **HIGH** | Enforce in normal ops | 002, 003, 004, 005, 007, 012, 013, 017, 018, 019, 020, 022, 025, 026, 027, 028, 029, 030, 032 |
 | **MEDIUM** | Advisory | 006 |
 
 ---
@@ -146,6 +149,8 @@ Rules are enforced via:
 | 2.3.0 | 2024-12-27 | Added RULE-028: Change Validation Protocol (exploratory heuristics) |
 | 2.4.0 | 2024-12-27 | Added RULE-029: Executive Reporting Pattern (enterprise reporting) |
 | 2.5.0 | 2024-12-28 | Added RULE-030: Docker Dev Container Workflow (autonomous validation) |
+| 2.6.0 | 2026-01-01 | Added RULE-031: Autonomous Task Continuation (multi-step execution) |
+| 2.7.0 | 2026-01-02 | Added RULE-032: DEV Phase Workflow Protocol (volume mapping, DSP cycles) |
 
 ---
 
