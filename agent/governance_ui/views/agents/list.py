@@ -68,10 +68,16 @@ def build_agents_list_view() -> None:
                     with v3.VListItemTitle():
                         html.Span("{{ agent.name || agent.agent_id }}")
                     with v3.VListItemSubtitle():
+                        # Agent metrics (GAP-UI-035: with last_active date)
                         html.Span(
                             "{{ agent.agent_type }} | "
                             "Tasks: {{ agent.tasks_executed || 0 }} | "
                             "Trust: {{ ((agent.trust_score || 0) * 100).toFixed(0) }}%"
+                        )
+                        html.Span(
+                            v_if="agent.last_active",
+                            v_text="' | Last: ' + agent.last_active",
+                            classes="text-caption"
                         )
                     with html.Template(v_slot_append=True):
                         v3.VChip(

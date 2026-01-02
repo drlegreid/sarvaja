@@ -1,7 +1,7 @@
 # Gap Index - Sim.ai PoC
 
 **Last Updated:** 2026-01-02
-**Total Gaps:** 194 | Status: 81 RESOLVED, 8 PARTIAL, 105 OPEN
+**Total Gaps:** 194 | Status: 82 RESOLVED, 8 PARTIAL, 104 OPEN
 **Format Migration:** GAP-WORKFLOW-003 - Replaced strikethrough with Status column
 
 ---
@@ -31,7 +31,7 @@
 | GAP-UI-032 | RESOLVED | Rule Delete button is mock-only | CRITICAL | functionality | Rule | DELETE | wired to API |
 | GAP-UI-033 | RESOLVED | Decision CRUD: API + UI implemented | HIGH | functionality | Decision | ALL | 2026-01-02: models, routes, typedb, view, controller |
 | GAP-UI-034 | RESOLVED | Session CRUD: API + UI implemented | HIGH | functionality | Session | ALL | 2026-01-02: models, routes, typedb, view, controller |
-| GAP-UI-035 | OPEN | No datetime columns in tables | MEDIUM | ux | All | READ | USER-2024-12-27 |
+| GAP-UI-035 | RESOLVED | No datetime columns in tables | MEDIUM | ux | All | READ | 2026-01-02: Added created_date, created_at, decision_date, last_active to list views |
 | GAP-UI-036 | RESOLVED | No scrolling/paging in tables | MEDIUM | ux | All | READ | 2026-01-02: max-height 500px + overflow-y auto on all list views |
 | GAP-UI-037 | RESOLVED | Entity content previews added | HIGH | ux | All | READ | 2026-01-02: tasks/rules/decisions views have styled content cards |
 | GAP-UI-038 | RESOLVED | Fullscreen document viewer added | HIGH | functionality | Document | READ | 2026-01-02: views/dialogs.py with build_file_viewer_dialog |

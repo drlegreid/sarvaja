@@ -113,7 +113,14 @@ def build_tasks_list_view() -> None:
                                 size="x-small",
                                 color="warning",
                                 variant="tonal",
-                                prepend_icon="mdi-alert-circle-outline"
+                                prepend_icon="mdi-alert-circle-outline",
+                                classes="mr-1"
+                            )
+                            # Date display (GAP-UI-035)
+                            html.Span(
+                                v_if="task.created_at",
+                                v_text="task.created_at",
+                                classes="text-caption text-grey ml-2"
                             )
                         # Linked rules and sessions count (GAP-UI-049)
                         with html.Div(

@@ -70,4 +70,18 @@ def build_decisions_list_view() -> None:
                             "{{ decision.name || decision.title }}"
                         )
                     with v3.VListItemSubtitle():
-                        html.Span("{{ decision.date }} | {{ decision.status }}")
+                        # Status + date (GAP-UI-035)
+                        v3.VChip(
+                            v_text="decision.status",
+                            size="x-small",
+                            v_bind_color=(
+                                "decision.status === 'APPROVED' ? 'success' : "
+                                "decision.status === 'PENDING' ? 'warning' : 'error'"
+                            ),
+                            variant="tonal",
+                            classes="mr-2"
+                        )
+                        html.Span(
+                            v_text="decision.decision_date || decision.date || 'No date'",
+                            classes="text-caption text-grey"
+                        )

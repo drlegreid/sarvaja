@@ -148,7 +148,14 @@ def build_rules_list_view() -> None:
                                     "rule.priority === 'HIGH' ? 'warning' : "
                                     "rule.priority === 'MEDIUM' ? 'info' : 'grey'"
                                 ),
-                                variant="tonal"
+                                variant="tonal",
+                                classes="mr-1"
+                            )
+                            # Date display (GAP-UI-035)
+                            html.Span(
+                                v_if="rule.created_date",
+                                v_text="rule.created_date",
+                                classes="text-caption text-grey ml-2"
                             )
                         # Directive excerpt (GAP-UI-047)
                         html.Div(
