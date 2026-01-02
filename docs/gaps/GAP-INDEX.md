@@ -1,7 +1,7 @@
 # Gap Index - Sim.ai PoC
 
 **Last Updated:** 2026-01-02
-**Total Gaps:** 193 | Status: 65 RESOLVED, 7 PARTIAL, 121 OPEN
+**Total Gaps:** 193 | Status: 70 RESOLVED, 7 PARTIAL, 116 OPEN
 **Format Migration:** GAP-WORKFLOW-003 - Replaced strikethrough with Status column
 
 ---
@@ -12,13 +12,13 @@
 
 | ID | Status | Gap | Priority | Category | Entity | Operation | Evidence |
 |----|--------|-----|----------|----------|--------|-----------|----------|
-| GAP-UI-001 | OPEN | No data-testid attributes on Trame components | HIGH | testability | All | N/A | POM requirement |
-| GAP-UI-002 | OPEN | No CRUD forms for Rules | HIGH | functionality | Rule | CREATE/UPDATE | ENTITY-API-UI-MAP |
-| GAP-UI-003 | OPEN | No detail drill-down views | HIGH | functionality | All | READ | ENTITY-API-UI-MAP |
+| GAP-UI-001 | RESOLVED | No data-testid attributes on Trame components | HIGH | testability | All | N/A | 2026-01-02: 304 data-testid attrs across 13 files |
+| GAP-UI-002 | RESOLVED | No CRUD forms for Rules | HIGH | functionality | Rule | CREATE/UPDATE | 2026-01-02: build_rule_form_view exists (rules_view.py:181) |
+| GAP-UI-003 | RESOLVED | No detail drill-down views | HIGH | functionality | All | READ | 2026-01-02: detail views for rules/tasks/sessions/decisions/agents |
 | GAP-UI-004 | RESOLVED | No REST API endpoints | HIGH | backend | All | ALL | governance/api.py |
 | GAP-UI-005 | OPEN | Missing loading/error states | MEDIUM | ux | All | READ | Exploratory |
-| GAP-UI-006 | OPEN | Rules list missing rule_id column | HIGH | data_binding | Rule | READ | EXP-P10-001 |
-| GAP-UI-007 | OPEN | List rows not clickable (no detail navigation) | HIGH | navigation | All | READ | EXP-P10-001 |
+| GAP-UI-006 | RESOLVED | Rules list missing rule_id column | HIGH | data_binding | Rule | READ | 2026-01-02: rule.id in list title (rules_view.py:105) |
+| GAP-UI-007 | RESOLVED | List rows not clickable (no detail navigation) | HIGH | navigation | All | READ | 2026-01-02: click handler navigates to detail (rules_view.py:97) |
 | GAP-UI-008 | RESOLVED | Tasks view shows empty table (no data source) | HIGH | data_binding | Task | READ | API seed data added |
 | GAP-UI-009 | OPEN | Search returns no results (unclear if functional) | MEDIUM | functionality | Evidence | SEARCH | EXP-P10-001 |
 | GAP-UI-010 | OPEN | No column sorting functionality | MEDIUM | ux | All | READ | EXP-P10-001 |
