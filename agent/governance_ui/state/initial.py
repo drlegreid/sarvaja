@@ -36,6 +36,24 @@ def get_initial_state() -> Dict[str, Any]:
         'selected_session': None,
         'selected_decision': None,
         'show_session_detail': False,
+        'show_decision_detail': False,
+
+        # Decision form state (GAP-UI-033)
+        'show_decision_form': False,
+        'decision_form_mode': 'create',
+        'form_decision_id': '',
+        'form_decision_name': '',
+        'form_decision_context': '',
+        'form_decision_rationale': '',
+        'form_decision_status': 'PENDING',
+
+        # Session form state (GAP-UI-034)
+        'show_session_form': False,
+        'session_form_mode': 'create',
+        'form_session_id': '',
+        'form_session_description': '',
+        'form_session_status': 'ACTIVE',
+        'form_session_agent_id': '',
 
         # Evidence Attachment (P11.5)
         'show_evidence_attach': False,

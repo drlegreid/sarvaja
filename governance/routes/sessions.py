@@ -16,7 +16,7 @@ import logging
 import uuid
 
 from pydantic import BaseModel
-from governance.models import SessionResponse, SessionCreate, SessionEnd
+from governance.models import SessionResponse, SessionCreate, SessionEnd, SessionUpdate
 from governance.stores import (
     get_typedb_client,
     # TypeDB-first wrappers (preferred)
@@ -99,6 +99,106 @@ async def create_session(session: SessionCreate):
     }
     _sessions_store[session_id] = session_data
     return SessionResponse(**session_data)
+
+
+@router.get("/sessions/{session_id}", response_model=SessionResponse)
+async def get_session(session_id: str):
+    """
+    Get a specific session by ID.
+
+    Per GAP-UI-034: Session CRUD operations.
+    """
+    try:
+        session = get_session_from_typedb(session_id, allow_fallback=True)
+        if session:
+            return SessionResponse(**session)
+        raise HTTPException(status_code=404, detail=f"Session {session_id} not found")
+    except TypeDBUnavailable as e:
+        logger.error(f"TypeDB unavailable: {e}")
+        raise HTTPException(status_code=503, detail="Database service unavailable")
+
+
+@router.put("/sessions/{session_id}", response_model=SessionResponse)
+async def update_session(session_id: str, data: SessionUpdate):
+    """
+    Update a session.
+
+    Per GAP-UI-034: Session CRUD operations.
+    """
+    client = get_typedb_client()
+
+    if not client:
+        # Fallback to in-memory
+        if session_id not in _sessions_store:
+            raise HTTPException(status_code=404, detail=f"Session {session_id} not found")
+
+        session = _sessions_store[session_id]
+        if data.description is not None:
+            session["description"] = data.description
+        if data.status is not None:
+            session["status"] = data.status
+        if data.tasks_completed is not None:
+            session["tasks_completed"] = data.tasks_completed
+        if data.agent_id is not None:
+            session["agent_id"] = data.agent_id
+        return SessionResponse(**session)
+
+    try:
+        # Check session exists in TypeDB
+        existing = client.get_session(session_id)
+        if not existing:
+            raise HTTPException(status_code=404, detail=f"Session {session_id} not found")
+
+        # Update session in TypeDB
+        updated = client.update_session(
+            session_id=session_id,
+            description=data.description,
+            status=data.status,
+            tasks_completed=data.tasks_completed,
+            agent_id=data.agent_id
+        )
+        if updated:
+            return session_to_response(updated)
+        raise HTTPException(status_code=500, detail="Failed to update session")
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error updating session: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.delete("/sessions/{session_id}", status_code=204)
+async def delete_session(session_id: str):
+    """
+    Delete a session.
+
+    Per GAP-UI-034: Session CRUD operations.
+    """
+    client = get_typedb_client()
+
+    if not client:
+        # Fallback to in-memory
+        if session_id not in _sessions_store:
+            raise HTTPException(status_code=404, detail=f"Session {session_id} not found")
+        del _sessions_store[session_id]
+        return None
+
+    try:
+        # Check session exists in TypeDB
+        existing = client.get_session(session_id)
+        if not existing:
+            raise HTTPException(status_code=404, detail=f"Session {session_id} not found")
+
+        # Delete session from TypeDB
+        deleted = client.delete_session(session_id)
+        if not deleted:
+            raise HTTPException(status_code=500, detail="Failed to delete session")
+        return None
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error deleting session: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.put("/sessions/{session_id}/end", response_model=SessionResponse)

@@ -113,6 +113,37 @@ class TaskExecutionResponse(BaseModel):
 
 
 # =============================================================================
+# DECISION MODELS (GAP-UI-033)
+# =============================================================================
+
+class DecisionCreate(BaseModel):
+    """Request model for creating a decision."""
+    decision_id: str = Field(..., description="Unique decision ID (e.g., DECISION-010)")
+    name: str = Field(..., description="Decision name/title")
+    context: str = Field(..., description="Context/problem statement")
+    rationale: str = Field(..., description="Reasoning for the decision")
+    status: str = Field(default="PENDING", description="Status: PENDING, APPROVED, REJECTED")
+
+
+class DecisionUpdate(BaseModel):
+    """Request model for updating a decision."""
+    name: Optional[str] = None
+    context: Optional[str] = None
+    rationale: Optional[str] = None
+    status: Optional[str] = None
+
+
+class DecisionResponse(BaseModel):
+    """Response model for a decision."""
+    id: str
+    name: str
+    context: str
+    rationale: str
+    status: str
+    decision_date: Optional[str] = None
+
+
+# =============================================================================
 # SESSION MODELS
 # =============================================================================
 
@@ -142,6 +173,14 @@ class SessionEnd(BaseModel):
     """Request model for ending a session."""
     tasks_completed: Optional[int] = None
     evidence_files: Optional[List[str]] = None
+
+
+class SessionUpdate(BaseModel):
+    """Request model for updating a session. Per GAP-UI-034."""
+    description: Optional[str] = None
+    status: Optional[str] = None
+    tasks_completed: Optional[int] = None
+    agent_id: Optional[str] = None
 
 
 # =============================================================================

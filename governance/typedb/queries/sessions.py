@@ -324,3 +324,173 @@ class SessionQueries:
         """
         results = self._execute_query(query)
         return [r.get("src") for r in results if r.get("src")]
+
+    def update_session(
+        self,
+        session_id: str,
+        description: Optional[str] = None,
+        status: Optional[str] = None,
+        tasks_completed: Optional[int] = None,
+        agent_id: Optional[str] = None
+    ) -> Optional[Session]:
+        """
+        Update a session's attributes in TypeDB.
+
+        Per GAP-UI-034: Session CRUD operations.
+
+        Uses delete-then-insert pattern for each optional attribute.
+        """
+        from typedb.driver import SessionType, TransactionType
+
+        # Check session exists first
+        existing = self.get_session(session_id)
+        if not existing:
+            return None
+
+        try:
+            with self._client.session(self.database, SessionType.DATA) as session:
+                with session.transaction(TransactionType.WRITE) as tx:
+                    # Update description
+                    if description is not None:
+                        # Delete old description
+                        delete_query = f"""
+                            match
+                                $s isa work-session, has session-id "{session_id}",
+                                    has session-description $desc;
+                            delete
+                                $s has $desc;
+                        """
+                        try:
+                            tx.query.delete(delete_query)
+                        except Exception:
+                            pass  # May not have existing description
+
+                        # Insert new description
+                        desc_escaped = description.replace('"', '\\"')
+                        insert_query = f"""
+                            match
+                                $s isa work-session, has session-id "{session_id}";
+                            insert
+                                $s has session-description "{desc_escaped}";
+                        """
+                        tx.query.insert(insert_query)
+
+                    # Update agent_id
+                    if agent_id is not None:
+                        # Delete old agent_id
+                        delete_query = f"""
+                            match
+                                $s isa work-session, has session-id "{session_id}",
+                                    has agent-id $aid;
+                            delete
+                                $s has $aid;
+                        """
+                        try:
+                            tx.query.delete(delete_query)
+                        except Exception:
+                            pass
+
+                        # Insert new agent_id
+                        insert_query = f"""
+                            match
+                                $s isa work-session, has session-id "{session_id}";
+                            insert
+                                $s has agent-id "{agent_id}";
+                        """
+                        tx.query.insert(insert_query)
+
+                    # Update status (complete session if COMPLETED)
+                    if status == "COMPLETED":
+                        now = datetime.now()
+                        timestamp_str = now.strftime('%Y-%m-%dT%H:%M:%S')
+                        insert_query = f"""
+                            match
+                                $s isa work-session, has session-id "{session_id}";
+                            insert
+                                $s has completed-at {timestamp_str};
+                        """
+                        try:
+                            tx.query.insert(insert_query)
+                        except Exception:
+                            pass  # May already have completed-at
+
+                    tx.commit()
+
+            return self.get_session(session_id)
+        except Exception as e:
+            print(f"Failed to update session {session_id}: {e}")
+            return None
+
+    def delete_session(self, session_id: str) -> bool:
+        """
+        Delete a session from TypeDB.
+
+        Per GAP-UI-034: Session CRUD operations.
+
+        Returns:
+            True if deleted successfully, False otherwise
+        """
+        from typedb.driver import SessionType, TransactionType
+
+        # Check session exists first
+        existing = self.get_session(session_id)
+        if not existing:
+            return False
+
+        try:
+            with self._client.session(self.database, SessionType.DATA) as session:
+                with session.transaction(TransactionType.WRITE) as tx:
+                    # Delete all relations first (has-evidence, session-applied-rule, etc.)
+                    # Delete has-evidence relations
+                    del_evidence = f"""
+                        match
+                            $s isa work-session, has session-id "{session_id}";
+                            $r (evidence-session: $s) isa has-evidence;
+                        delete
+                            $r isa has-evidence;
+                    """
+                    try:
+                        tx.query.delete(del_evidence)
+                    except Exception:
+                        pass
+
+                    # Delete session-applied-rule relations
+                    del_rules = f"""
+                        match
+                            $s isa work-session, has session-id "{session_id}";
+                            $r (applying-session: $s) isa session-applied-rule;
+                        delete
+                            $r isa session-applied-rule;
+                    """
+                    try:
+                        tx.query.delete(del_rules)
+                    except Exception:
+                        pass
+
+                    # Delete session-decision relations
+                    del_decisions = f"""
+                        match
+                            $s isa work-session, has session-id "{session_id}";
+                            $r (deciding-session: $s) isa session-decision;
+                        delete
+                            $r isa session-decision;
+                    """
+                    try:
+                        tx.query.delete(del_decisions)
+                    except Exception:
+                        pass
+
+                    # Delete the session entity itself
+                    delete_query = f"""
+                        match
+                            $s isa work-session, has session-id "{session_id}";
+                        delete
+                            $s isa work-session;
+                    """
+                    tx.query.delete(delete_query)
+                    tx.commit()
+
+            return True
+        except Exception as e:
+            print(f"Failed to delete session {session_id}: {e}")
+            return False

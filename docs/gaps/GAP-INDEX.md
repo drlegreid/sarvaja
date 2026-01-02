@@ -29,8 +29,8 @@
 | GAP-UI-EXP | OPEN | No exploratory UI testing workflow to discover UI gaps | MEDIUM | process | All | N/A | E2E-2024-12-27 |
 | GAP-UI-031 | RESOLVED | Rule Save button is mock-only | CRITICAL | functionality | Rule | CREATE/UPDATE | wired to API |
 | GAP-UI-032 | RESOLVED | Rule Delete button is mock-only | CRITICAL | functionality | Rule | DELETE | wired to API |
-| GAP-UI-033 | OPEN | No CRUD operations for Decisions | HIGH | functionality | Decision | ALL | UI-COVERAGE-2024-12-25 |
-| GAP-UI-034 | OPEN | No CRUD operations for Sessions | HIGH | functionality | Session | ALL | UI-COVERAGE-2024-12-25 |
+| GAP-UI-033 | RESOLVED | Decision CRUD: API + UI implemented | HIGH | functionality | Decision | ALL | 2026-01-02: models, routes, typedb, view, controller |
+| GAP-UI-034 | RESOLVED | Session CRUD: API + UI implemented | HIGH | functionality | Session | ALL | 2026-01-02: models, routes, typedb, view, controller |
 | GAP-UI-035 | OPEN | No datetime columns in tables | MEDIUM | ux | All | READ | USER-2024-12-27 |
 | GAP-UI-036 | OPEN | No scrolling/paging in tables | MEDIUM | ux | All | READ | USER-2024-12-27 |
 | GAP-UI-037 | OPEN | No entity content preview (unclear data) | HIGH | ux | All | READ | USER-2024-12-27 |
