@@ -101,7 +101,7 @@ Session: EXP-P10-001 | Date: 2024-12-25 | Target: Governance Dashboard
 | GAP-HEALTH-001 | OPEN | Healthcheck state file lacks retry history and rotation | MEDIUM | observability | RULE-021 | Should track all retry attempts |
 | GAP-HEALTH-002 | RESOLVED | Healthcheck now detects document entropy (RULE-012 DSP trigger) | HIGH | workflow | RULE-012 | 2026-01-02: _detect_document_entropy() checks gaps, files, DSM, evidence |
 | GAP-TEST-002 | PARTIAL | Test output blows context window - need reporting modes | HIGH | testing | RULE-023 | Implemented --report-minimal, --report-cert |
-| GAP-TEST-003 | OPEN | E2E tests require port 8082 API server (not Docker 8080) | HIGH | testing | RULE-023 | 35 tests fail on connection refused |
+| GAP-TEST-003 | PARTIAL | E2E tests require port 8082 API server (not Docker 8080) | HIGH | testing | RULE-023 | 2026-01-02: API containerized (TOOL-006), runs on 8082 in Docker |
 | GAP-HEUR-001 | PARTIAL | Exploratory tests lack SFDIPOT/CRUCSS heuristics framework | HIGH | testing | RULE-023 | 2026-01-02: Framework created (tests/heuristics/), 16 example tests |
 | GAP-META-001 | OPEN | GAPs lack evidence file references - context bloat risk | HIGH | architecture | RULE-012 | 2026-01-02: Index→Evidence split needed |
 | GAP-META-002 | OPEN | No standardized CATEGORY taxonomy for gaps/rules | HIGH | governance | RULE-013 | 2026-01-02: Need GOVERNANCE/TESTING/UI/etc |
