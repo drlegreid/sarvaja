@@ -207,7 +207,9 @@ class TestPhaseTransitions:
             )
 
             tracker.start_cycle()
+            tracker.checkpoint("Audit checkpoint for testing phase recording")  # Required before advance
             tracker.advance_phase()  # AUDIT
+            tracker.checkpoint("Hypothesize checkpoint for verification test")  # Required before advance
             tracker.advance_phase()  # HYPOTHESIZE
 
             assert "audit" in tracker.current_cycle.phases_completed
@@ -236,6 +238,14 @@ class TestPhaseTransitions:
             ]
 
             for expected in expected_phases:
+                # Get current phase before advancing
+                current = tracker.current_cycle.current_phase
+                # Add required checkpoint before advancing (MEASURE needs metrics)
+                if current == DSPPhase.MEASURE or current == "measure":
+                    tracker.update_metrics({"test_metric": 1})
+                    tracker.checkpoint("Measure checkpoint with metrics for test", metrics={"test_metric": 1})
+                elif expected != DSPPhase.COMPLETE:
+                    tracker.checkpoint(f"Checkpoint for phase {expected.name} transition test")
                 phase = tracker.advance_phase()
                 assert phase == expected
 
@@ -508,15 +518,17 @@ class TestStatus:
             )
 
             tracker.start_cycle("TEST")
-            tracker.advance_phase()
-            tracker.advance_phase()
+            tracker.checkpoint("Audit checkpoint for status active test verification")
+            tracker.advance_phase()  # AUDIT
+            tracker.checkpoint("Hypothesize checkpoint for status test verification")
+            tracker.advance_phase()  # HYPOTHESIZE
 
             status = tracker.get_status()
 
             assert status["active"] is True
             assert status["batch_id"] == "TEST"
-            assert status["current_phase"] == "hypothesize"
-            assert "1/7" in status["progress"]
+            assert status["current_phase"] == "hypothesize"  # IDLE->AUDIT->HYPOTHESIZE
+            assert "1/7" in status["progress"]  # 1 phase completed (AUDIT)
 
     def test_get_status_includes_required_mcps(self):
         """get_status includes required MCPs for current phase."""

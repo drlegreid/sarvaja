@@ -1,7 +1,7 @@
 # Gap Index - Sim.ai PoC
 
 **Last Updated:** 2026-01-02
-**Total Gaps:** 193 | Status: 70 RESOLVED, 8 PARTIAL, 115 OPEN
+**Total Gaps:** 194 | Status: 70 RESOLVED, 9 PARTIAL, 115 OPEN
 **Format Migration:** GAP-WORKFLOW-003 - Replaced strikethrough with Status column
 
 ---
@@ -102,6 +102,7 @@ Session: EXP-P10-001 | Date: 2024-12-25 | Target: Governance Dashboard
 | GAP-HEALTH-002 | OPEN | Healthcheck doesn't detect document entropy (RULE-012 DSP trigger) | HIGH | workflow | RULE-012 | Should ALERT and suggest DEEP SLEEP mode |
 | GAP-TEST-002 | PARTIAL | Test output blows context window - need reporting modes | HIGH | testing | RULE-023 | Implemented --report-minimal, --report-cert |
 | GAP-TEST-003 | OPEN | E2E tests require port 8082 API server (not Docker 8080) | HIGH | testing | RULE-023 | 35 tests fail on connection refused |
+| GAP-HEUR-001 | PARTIAL | Exploratory tests lack SFDIPOT/CRUCSS heuristics framework | HIGH | testing | RULE-023 | 2026-01-02: Framework created (tests/heuristics/), 16 example tests |
 | GAP-META-001 | OPEN | GAPs lack evidence file references - context bloat risk | HIGH | architecture | RULE-012 | 2026-01-02: Index→Evidence split needed |
 | GAP-META-002 | OPEN | No standardized CATEGORY taxonomy for gaps/rules | HIGH | governance | RULE-013 | 2026-01-02: Need GOVERNANCE/TESTING/UI/etc |
 | GAP-RULE-001 | OPEN | Rules lack applicability TYPE (FORBIDDEN/CONDITIONAL/RECOMMENDED) | HIGH | governance | RULE-013 | 2026-01-02: Schema needs TYPE column |
@@ -164,6 +165,40 @@ Session: EXP-P10-001 | Date: 2024-12-25 | Target: Governance Dashboard
 ### Evidence
 - [Link to evidence file]
 ```
+
+**GAP-HEUR-001 Exploratory Testing Heuristics Framework:**
+- **Problem:** Exploratory tests don't enforce established heuristics for systematic gap discovery
+- **Required Heuristics:**
+
+| Heuristic | Description | Test Level |
+|-----------|-------------|------------|
+| **SFDIPOT** | Structure, Function, Data, Interfaces, Platform, Operations, Time | API + UI |
+| **CRUCSS** | Capability, Reliability, Usability, Charisma, Security, Scalability | Integration + E2E |
+| **HICCUPPS** | History, Image, Claims, Competitors, Procedures, Products, Standards | Acceptance |
+
+- **Implementation Requirements:**
+  1. Create `tests/heuristics/` directory with heuristic test templates
+  2. Add `@pytest.mark.heuristic(name="SFDIPOT.Data")` markers to tests
+  3. Create heuristic coverage report showing which heuristics are tested
+  4. Integrate with Playwright MCP for UI-level heuristic testing
+  5. Add data integrity checks (lower layers) and coverage checks (upper layers)
+
+- **SFDIPOT Test Matrix:**
+  | Aspect | API Tests | UI Tests | Evidence |
+  |--------|-----------|----------|----------|
+  | Structure | Schema validation | Component hierarchy | TypeQL schema |
+  | Function | Endpoint behavior | User workflows | test_*.py |
+  | Data | Field validation | Form inputs | data.tql |
+  | Interfaces | API contracts | Navigation flows | OpenAPI spec |
+  | Platform | Container health | Browser compat | E2E results |
+  | Operations | Error handling | User experience | Error logs |
+  | Time | Response latency | Render performance | metrics.json |
+
+- **Files to Create:**
+  - `tests/heuristics/__init__.py`
+  - `tests/heuristics/sfdipot.py` - SFDIPOT test decorators + fixtures
+  - `tests/heuristics/crucss.py` - CRUCSS test decorators + fixtures
+  - `tests/heuristics/coverage_report.py` - Heuristic coverage analyzer
 
 **GAP-TEST-002 Test Reporting Modes:** ✅ IMPLEMENTED
 - **Usage:**

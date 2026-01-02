@@ -152,6 +152,7 @@ def pytest_configure(config):
     config.addinivalue_line("markers", "integration: Integration tests requiring running services")
     config.addinivalue_line("markers", "unit: Unit tests that don't require services")
     config.addinivalue_line("markers", "slow: Slow tests (model inference)")
+    config.addinivalue_line("markers", "heuristic(name): Exploratory test heuristic (SFDIPOT.*, CRUCSS.*)")
 
     # Determine report mode
     try:
