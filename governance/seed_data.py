@@ -286,6 +286,10 @@ def _get_seed_sessions():
             "description": "Phase 3-4: Stabilization and Cross-Workspace Integration",
             "linked_rules_applied": ["RULE-001", "RULE-007", "RULE-012"],
             "linked_decisions": ["DECISION-001"],
+            "evidence_files": [
+                "evidence/DECISION-001-Opik-Removal.md",
+                "evidence/SESSION-2024-12-24-PHASE-3-4.md"
+            ],
         },
         {
             "session_id": "SESSION-2024-12-25-001",
@@ -296,6 +300,10 @@ def _get_seed_sessions():
             "description": "Phase 9: Governance Dashboard UI + Agent Trust Dashboard",
             "linked_rules_applied": ["RULE-011", "RULE-019", "RULE-020"],
             "linked_decisions": ["DECISION-003"],
+            "evidence_files": [
+                "evidence/DECISION-003-TypeDB-First.md",
+                "evidence/SESSION-2024-12-25-PHASE-9.md"
+            ],
         },
         {
             "session_id": "SESSION-2024-12-26-001",
@@ -304,6 +312,9 @@ def _get_seed_sessions():
             "tasks_completed": 8,
             "description": "Phase 10-11: REST API, CRUD fixes, Data Integrity Resolution",
             "linked_rules_applied": ["RULE-001", "RULE-007", "RULE-019"],
+            "evidence_files": [
+                "evidence/SESSION-2024-12-26-PHASE-10-11.md"
+            ],
         },
         {
             "session_id": "SESSION-2024-12-28-001",
@@ -312,6 +323,10 @@ def _get_seed_sessions():
             "tasks_completed": 5,
             "description": "Phase 10: TypeDB-First Migration + GAP-FILE Resolution",
             "linked_rules_applied": ["RULE-007", "RULE-012", "RULE-030"],
+            "evidence_files": [
+                "evidence/SESSION-2024-12-28-PHASE-10.md",
+                "docs/gaps/GAP-INDEX.md"
+            ],
         },
     ]
 

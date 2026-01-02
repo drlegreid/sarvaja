@@ -93,7 +93,15 @@ def build_rules_list_view() -> None:
             ):
                 with v3.VListItem(
                     v_for="rule in rules",
-                    v_show="!rules_search_query || (rule.id && rule.id.toLowerCase().includes(rules_search_query.toLowerCase())) || (rule.name && rule.name.toLowerCase().includes(rules_search_query.toLowerCase()))",
+                    v_show=(
+                        "!rules_search_query || "
+                        "(rule.id && rule.id.toLowerCase()"
+                        ".includes(rules_search_query.toLowerCase())) || "
+                        "(rule.name && rule.name.toLowerCase()"
+                        ".includes(rules_search_query.toLowerCase())) || "
+                        "(rule.directive && rule.directive.toLowerCase()"
+                        ".includes(rules_search_query.toLowerCase()))"
+                    ),
                     click="selected_rule = rule; show_rule_detail = true",
                     **{":key": "rule.id"},
                     __properties=["data-testid"],
@@ -104,7 +112,49 @@ def build_rules_list_view() -> None:
                     with v3.VListItemTitle():
                         html.Span("{{ rule.id }}: {{ rule.name }}")
                     with v3.VListItemSubtitle():
-                        html.Span("{{ rule.category }} | {{ rule.status }} | {{ rule.priority }}")
+                        # Metadata chips
+                        with html.Div(classes="d-flex align-center mb-1"):
+                            v3.VChip(
+                                v_text="rule.category",
+                                size="x-small",
+                                color="primary",
+                                variant="tonal",
+                                classes="mr-1"
+                            )
+                            v3.VChip(
+                                v_text="rule.status",
+                                size="x-small",
+                                v_bind_color=(
+                                    "rule.status === 'ACTIVE' ? 'success' : "
+                                    "rule.status === 'DRAFT' ? 'warning' : 'grey'"
+                                ),
+                                variant="tonal",
+                                classes="mr-1"
+                            )
+                            v3.VChip(
+                                v_text="rule.priority",
+                                size="x-small",
+                                v_bind_color=(
+                                    "rule.priority === 'CRITICAL' ? 'error' : "
+                                    "rule.priority === 'HIGH' ? 'warning' : "
+                                    "rule.priority === 'MEDIUM' ? 'info' : 'grey'"
+                                ),
+                                variant="tonal"
+                            )
+                        # Directive excerpt (GAP-UI-047)
+                        html.Div(
+                            v_if="rule.directive",
+                            v_text=(
+                                "rule.directive.length > 100 ? "
+                                "rule.directive.substring(0, 100) + '...' : "
+                                "rule.directive"
+                            ),
+                            classes="text-caption text-grey",
+                            style="white-space: nowrap; overflow: hidden; "
+                                  "text-overflow: ellipsis; max-width: 600px;",
+                            __properties=["data-testid"],
+                            **{"data-testid": "rule-directive-excerpt"}
+                        )
 
 
 def build_rule_detail_view() -> None:

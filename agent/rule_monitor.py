@@ -349,17 +349,89 @@ class RuleMonitor:
 # FACTORY FUNCTION
 # =============================================================================
 
-def create_rule_monitor(max_events: int = 1000) -> RuleMonitor:
+def create_rule_monitor(max_events: int = 1000, seed_demo_data: bool = True) -> RuleMonitor:
     """
     Factory function to create Rule Monitor.
 
     Args:
         max_events: Maximum events to keep
+        seed_demo_data: Whether to add demo events for UI display
 
     Returns:
         RuleMonitor instance
     """
-    return RuleMonitor(max_events=max_events)
+    monitor = RuleMonitor(max_events=max_events)
+
+    # Add demo events so the monitor tab shows data (GAP-UI-051)
+    if seed_demo_data:
+        _seed_demo_events(monitor)
+
+    return monitor
+
+
+def _seed_demo_events(monitor: RuleMonitor) -> None:
+    """Seed demo events for UI demonstration (GAP-UI-051)."""
+    from datetime import datetime, timedelta
+
+    # Sample events for demonstration
+    demo_events = [
+        {
+            "event_type": "rule_query",
+            "source": "claude-code",
+            "details": {"rule_id": "RULE-001", "query_type": "get"},
+            "severity": "INFO"
+        },
+        {
+            "event_type": "compliance_check",
+            "source": "task-orchestrator",
+            "details": {"rule_id": "RULE-007", "result": "PASS"},
+            "severity": "INFO"
+        },
+        {
+            "event_type": "rule_query",
+            "source": "rules-curator",
+            "details": {"rule_id": "RULE-012", "query_type": "dependencies"},
+            "severity": "INFO"
+        },
+        {
+            "event_type": "trust_increase",
+            "source": "task-orchestrator",
+            "details": {"agent_id": "code-agent", "old_trust": 0.85, "new_trust": 0.88},
+            "severity": "INFO"
+        },
+        {
+            "event_type": "rule_change",
+            "source": "admin",
+            "details": {"rule_id": "RULE-024", "change": "status update"},
+            "severity": "WARNING"
+        },
+        {
+            "event_type": "compliance_check",
+            "source": "research-agent",
+            "details": {"rule_id": "RULE-021", "result": "PASS"},
+            "severity": "INFO"
+        },
+        {
+            "event_type": "violation",
+            "source": "external-api",
+            "details": {"rule_id": "RULE-007", "violation": "missing MCP healthcheck"},
+            "severity": "CRITICAL"
+        },
+        {
+            "event_type": "trust_decrease",
+            "source": "governance-system",
+            "details": {"agent_id": "external-api", "old_trust": 0.75, "new_trust": 0.60},
+            "severity": "WARNING"
+        },
+    ]
+
+    for event in demo_events:
+        monitor.log_event(
+            event_type=event["event_type"],
+            source=event["source"],
+            details=event["details"],
+            severity=event["severity"]
+        )
 
 
 # =============================================================================

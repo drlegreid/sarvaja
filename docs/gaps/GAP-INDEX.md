@@ -398,11 +398,11 @@ Session: EXP-P10-001 | Date: 2024-12-25 | Target: Governance Dashboard
 
 | ID | Status | Gap | Priority | Category | Entity | Evidence |
 |----|--------|-----|----------|----------|--------|----------|
-| GAP-UI-047 | OPEN | Rules tab: No directive/description shown | HIGH | ui | Rule | User feedback |
-| GAP-UI-048 | OPEN | No entity relationships displayed in UI | HIGH | ui | All | User feedback |
-| GAP-UI-049 | OPEN | Tasks: No description, no linkage to sessions/evidence/rules | HIGH | ui | Task | User feedback |
-| GAP-UI-050 | OPEN | Session evidence tab has no data | HIGH | functionality | Session | User feedback |
-| GAP-UI-051 | OPEN | Real-time rule monitoring tab not functional | HIGH | functionality | Monitor | User feedback |
+| GAP-UI-047 | RESOLVED | Rules tab: No directive/description shown | HIGH | ui | Rule | 2026-01-02: Added directive excerpt + chips to list view |
+| GAP-UI-048 | PARTIAL | No entity relationships displayed in UI | HIGH | ui | All | 2026-01-02: UI components exist - needs backend data for agents/sessions |
+| GAP-UI-049 | RESOLVED | Tasks: No description, no linkage to sessions/evidence/rules | HIGH | ui | Task | 2026-01-02: Enhanced list view with chips + linked rules/sessions/gap |
+| GAP-UI-050 | RESOLVED | Session evidence tab has no data | HIGH | functionality | Session | 2026-01-02: Added evidence_files to seed data + UI displays |
+| GAP-UI-051 | RESOLVED | Real-time rule monitoring tab not functional | HIGH | functionality | Monitor | 2026-01-02: Added demo event seeding to RuleMonitor factory |
 
 ### Document MCP Gaps (2024-12-27 Assessment)
 
