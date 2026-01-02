@@ -1,7 +1,7 @@
 # Gap Index - Sim.ai PoC
 
 **Last Updated:** 2026-01-02
-**Total Gaps:** 194 | Status: 79 RESOLVED, 8 PARTIAL, 107 OPEN
+**Total Gaps:** 194 | Status: 80 RESOLVED, 8 PARTIAL, 106 OPEN
 **Format Migration:** GAP-WORKFLOW-003 - Replaced strikethrough with Status column
 
 ---
@@ -20,7 +20,7 @@
 | GAP-UI-006 | RESOLVED | Rules list missing rule_id column | HIGH | data_binding | Rule | READ | 2026-01-02: rule.id in list title (rules_view.py:105) |
 | GAP-UI-007 | RESOLVED | List rows not clickable (no detail navigation) | HIGH | navigation | All | READ | 2026-01-02: click handler navigates to detail (rules_view.py:97) |
 | GAP-UI-008 | RESOLVED | Tasks view shows empty table (no data source) | HIGH | data_binding | Task | READ | API seed data added |
-| GAP-UI-009 | OPEN | Search returns no results (unclear if functional) | MEDIUM | functionality | Evidence | SEARCH | EXP-P10-001 |
+| GAP-UI-009 | RESOLVED | Search returns no results (unclear if functional) | MEDIUM | functionality | Evidence | SEARCH | 2026-01-02: Search controller + results list implemented (controllers/search.py, search_view.py) |
 | GAP-UI-010 | OPEN | No column sorting functionality | MEDIUM | ux | All | READ | EXP-P10-001 |
 | GAP-UI-011 | PARTIAL | No filtering/faceted search | MEDIUM | functionality | All | SEARCH | 2026-01-02: Rules + Monitor have filters, tasks/sessions pending |
 | GAP-UI-028 | RESOLVED | Tests pass but UI broken (lenient tests) | CRITICAL | testing | All | ALL | RULE-028 + 11 UI smoke tests |

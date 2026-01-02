@@ -19,9 +19,11 @@ Module Structure:
     monitor.py    - Monitoring controllers (P9.6)
     backlog.py    - Agent task backlog controllers
     chat.py       - Agent chat controllers (ORCH-006)
+    search.py     - Evidence search controllers (GAP-UI-009)
 """
 
 from .rules import register_rules_controllers
+from .search import register_search_controllers
 from .tasks import register_tasks_controllers
 from .sessions import register_sessions_controllers
 from .decisions import register_decisions_controllers
@@ -34,6 +36,7 @@ from .chat import register_chat_controllers
 
 __all__ = [
     'register_rules_controllers',
+    'register_search_controllers',
     'register_tasks_controllers',
     'register_sessions_controllers',
     'register_decisions_controllers',
@@ -63,6 +66,7 @@ def register_all_controllers(state, ctrl, api_base_url: str) -> dict:
     """
     # Register all controller groups
     register_rules_controllers(state, ctrl, api_base_url)
+    register_search_controllers(state, ctrl, api_base_url)
     register_tasks_controllers(state, ctrl, api_base_url)
     register_sessions_controllers(state, ctrl, api_base_url)
     register_decisions_controllers(state, ctrl, api_base_url)
