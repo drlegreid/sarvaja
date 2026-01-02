@@ -91,15 +91,15 @@ Session: EXP-P10-001 | Date: 2024-12-25 | Target: Governance Dashboard
 | GAP-DEPLOY-001 | RESOLVED | deploy.ps1 missing dev profile support | MEDIUM | tooling | RULE-028 | 2024-12-31: Added 'dev' to ValidateSet |
 | GAP-MCP-002 | PARTIAL | MCP governance healthcheck should force Claude Code to stop and resolve dependent services | HIGH | stability | RULE-021 | Tool implemented but not auto-called |
 | GAP-MCP-003 | RESOLVED | governance_health not called automatically at session start | CRITICAL | workflow | RULE-021 | 2026-01-01: Non-blocking healthcheck with 30s retry |
-| GAP-WORKFLOW-001 | OPEN | Session context not auto-saved to claude-mem before restart | HIGH | workflow | RULE-001 | 2024-12-31: /save not called, context lost |
+| GAP-WORKFLOW-001 | PARTIAL | Session context not auto-saved to claude-mem before restart | HIGH | workflow | RULE-001 | 2026-01-02: Added /save guidance in CLAUDE.md Session Directives |
 | GAP-WORKFLOW-002 | OPEN | Claude Code should prompt user to /save before major transitions | HIGH | workflow | RULE-001 | Autonomous work should include save prompts |
 | GAP-WORKFLOW-003 | RESOLVED | GAP-INDEX uses strikethrough instead of Status column | HIGH | data | RULE-012 | 2026-01-02: This migration |
 | GAP-INFRA-005 | OPEN | Ollama container not started with dev profile | MEDIUM | infra | RULE-021 | docker compose --profile dev issue |
 | GAP-INFRA-006 | OPEN | Ollama container suboptimal for laptop dev workflow | MEDIUM | infrastructure | RULE-021 | May need to disable for DEV |
-| GAP-MCP-004 | OPEN | Rule fallback to markdown files not implemented when TypeDB unavailable | HIGH | architecture | RULE-021 | Code doesn't read from docs/rules/*.md |
+| GAP-MCP-004 | RESOLVED | Rule fallback to markdown files now implemented | HIGH | architecture | RULE-021 | 2026-01-02: governance/mcp_tools/rule_fallback.py, 14 tests |
 | GAP-TEST-001 | OPEN | E2E tests lack Given/When/Then BDD paradigm and OOP reusability | MEDIUM | testing | RULE-023 | No pytest fixtures, BDD patterns |
 | GAP-HEALTH-001 | OPEN | Healthcheck state file lacks retry history and rotation | MEDIUM | observability | RULE-021 | Should track all retry attempts |
-| GAP-HEALTH-002 | OPEN | Healthcheck doesn't detect document entropy (RULE-012 DSP trigger) | HIGH | workflow | RULE-012 | Should ALERT and suggest DEEP SLEEP mode |
+| GAP-HEALTH-002 | RESOLVED | Healthcheck now detects document entropy (RULE-012 DSP trigger) | HIGH | workflow | RULE-012 | 2026-01-02: _detect_document_entropy() checks gaps, files, DSM, evidence |
 | GAP-TEST-002 | PARTIAL | Test output blows context window - need reporting modes | HIGH | testing | RULE-023 | Implemented --report-minimal, --report-cert |
 | GAP-TEST-003 | OPEN | E2E tests require port 8082 API server (not Docker 8080) | HIGH | testing | RULE-023 | 35 tests fail on connection refused |
 | GAP-HEUR-001 | PARTIAL | Exploratory tests lack SFDIPOT/CRUCSS heuristics framework | HIGH | testing | RULE-023 | 2026-01-02: Framework created (tests/heuristics/), 16 example tests |

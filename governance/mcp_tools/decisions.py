@@ -147,6 +147,7 @@ def register_decision_tools(mcp) -> None:
 
         # All healthy - get statistics
         stats = {}
+        entropy_alerts = []
         try:
             client = get_typedb_client()
             if client.connect():
@@ -159,11 +160,98 @@ def register_decision_tools(mcp) -> None:
         except Exception:
             pass
 
-        return json.dumps({
+        # GAP-HEALTH-002: Document entropy detection for DSP trigger
+        entropy_alerts = _detect_document_entropy()
+        dsp_suggested = len(entropy_alerts) >= 2  # Multiple entropy signals
+
+        result = {
             "status": "healthy",
-            "action_required": None,
             "details": service_status,
             "database": DATABASE_NAME,
             "statistics": stats,
             "timestamp": datetime.now().isoformat()
-        }, indent=2)
+        }
+
+        if dsp_suggested:
+            result["action_required"] = "DSP_SUGGESTED"
+            result["entropy_alerts"] = entropy_alerts
+            result["dsp_hint"] = "Document entropy high. Consider running DSP cycle (RULE-012)"
+        else:
+            result["action_required"] = None
+            if entropy_alerts:
+                result["entropy_alerts"] = entropy_alerts
+
+        return json.dumps(result, indent=2)
+
+
+def _detect_document_entropy() -> list:
+    """
+    Detect document entropy indicators for DSP trigger.
+
+    Per GAP-HEALTH-002 and RULE-012: Deep Sleep Protocol.
+
+    Entropy signals:
+    1. Many open gaps (>30 HIGH priority)
+    2. Large files (>300 lines) in key directories
+    3. DSM cycle not run recently (>7 days)
+    4. Session evidence files accumulating
+
+    Returns:
+        List of entropy alert messages
+    """
+    from pathlib import Path
+
+    alerts = []
+
+    # 1. Check gap entropy via GAP-INDEX parsing
+    try:
+        gap_index = Path(__file__).parent.parent.parent / "docs" / "gaps" / "GAP-INDEX.md"
+        if gap_index.exists():
+            content = gap_index.read_text(encoding="utf-8")
+            # Count OPEN + HIGH priority gaps
+            open_high = content.count("| OPEN |") + content.count("| PARTIAL |")
+            if open_high > 50:
+                alerts.append(f"HIGH gap entropy: {open_high} open gaps (threshold: 50)")
+    except Exception:
+        pass
+
+    # 2. Check for large Python files (>300 lines per RULE-012)
+    try:
+        governance_dir = Path(__file__).parent.parent
+        large_files = []
+        for py_file in governance_dir.glob("**/*.py"):
+            if py_file.stat().st_size > 15000:  # ~300 lines * 50 chars
+                line_count = len(py_file.read_text(encoding="utf-8").splitlines())
+                if line_count > 300:
+                    large_files.append(f"{py_file.name}:{line_count}")
+        if large_files:
+            alerts.append(f"Large files detected (>300 lines): {', '.join(large_files[:3])}")
+    except Exception:
+        pass
+
+    # 3. Check DSM state for last cycle
+    try:
+        dsm_state = Path(__file__).parent.parent.parent / ".dsm_state.json"
+        if dsm_state.exists():
+            import json as json_mod
+            state = json_mod.loads(dsm_state.read_text())
+            last_updated = state.get("last_updated")
+            if last_updated:
+                last_dt = datetime.fromisoformat(last_updated)
+                days_ago = (datetime.now() - last_dt).days
+                if days_ago > 7:
+                    alerts.append(f"No DSP cycle in {days_ago} days (threshold: 7)")
+    except Exception:
+        pass
+
+    # 4. Check evidence file accumulation
+    try:
+        evidence_dir = Path(__file__).parent.parent.parent / "evidence"
+        if evidence_dir.exists():
+            session_files = list(evidence_dir.glob("SESSION-*.md"))
+            if len(session_files) > 20:
+                alerts.append(f"Evidence accumulation: {len(session_files)} session files")
+    except Exception:
+        pass
+
+    return alerts

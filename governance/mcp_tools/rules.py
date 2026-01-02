@@ -5,6 +5,7 @@ Query and CRUD operations for governance rules.
 
 Per RULE-012: DSP Semantic Code Structure
 Per FP + Digital Twin Paradigm: Rule entity module
+Per GAP-MCP-004: Fallback to markdown when TypeDB unavailable
 """
 
 import json
@@ -12,6 +13,12 @@ from typing import Optional
 from dataclasses import asdict
 
 from governance.mcp_tools.common import get_typedb_client
+from governance.mcp_tools.rule_fallback import (
+    get_all_markdown_rules,
+    get_markdown_rule_by_id,
+    filter_markdown_rules,
+    markdown_rule_to_dict,
+)
 
 
 def register_rule_tools(mcp) -> None:
@@ -35,29 +42,50 @@ def register_rule_tools(mcp) -> None:
             JSON array of matching rules
         """
         client = get_typedb_client()
+        use_fallback = False
 
         try:
             if not client.connect():
-                return json.dumps({"error": "Failed to connect to TypeDB"})
-
-            # Build query based on filters
-            if status == "ACTIVE":
-                rules = client.get_active_rules()
+                use_fallback = True
             else:
-                rules = client.get_all_rules()
+                # Build query based on filters
+                if status == "ACTIVE":
+                    rules = client.get_active_rules()
+                else:
+                    rules = client.get_all_rules()
 
-            # Apply additional filters (pure functions)
-            if category:
-                rules = [r for r in rules if r.category == category]
-            if priority:
-                rules = [r for r in rules if r.priority == priority]
-            if status and status != "ACTIVE":
-                rules = [r for r in rules if r.status == status]
+                # Apply additional filters (pure functions)
+                if category:
+                    rules = [r for r in rules if r.category == category]
+                if priority:
+                    rules = [r for r in rules if r.priority == priority]
+                if status and status != "ACTIVE":
+                    rules = [r for r in rules if r.status == status]
 
-            return json.dumps([asdict(r) for r in rules], default=str, indent=2)
+                return json.dumps([asdict(r) for r in rules], default=str, indent=2)
+
+        except Exception:
+            use_fallback = True
 
         finally:
             client.close()
+
+        # Fallback to markdown files (GAP-MCP-004)
+        if use_fallback:
+            md_rules = get_all_markdown_rules()
+            if not md_rules:
+                return json.dumps({
+                    "error": "TypeDB unavailable and no markdown rules found",
+                    "hint": "Ensure docs/rules/*.md files exist"
+                })
+
+            filtered = filter_markdown_rules(md_rules, category, status, priority)
+            result = [markdown_rule_to_dict(r) for r in filtered]
+            return json.dumps({
+                "rules": result,
+                "source": "markdown_fallback",
+                "warning": "TypeDB unavailable - using markdown fallback (read-only)"
+            }, indent=2)
 
     @mcp.tool()
     def governance_get_rule(rule_id: str) -> str:
@@ -71,19 +99,34 @@ def register_rule_tools(mcp) -> None:
             JSON object with rule details or error
         """
         client = get_typedb_client()
+        use_fallback = False
 
         try:
             if not client.connect():
-                return json.dumps({"error": "Failed to connect to TypeDB"})
-
-            rule = client.get_rule_by_id(rule_id)
-            if rule:
-                return json.dumps(asdict(rule), default=str, indent=2)
+                use_fallback = True
             else:
-                return json.dumps({"error": f"Rule {rule_id} not found"})
+                rule = client.get_rule_by_id(rule_id)
+                if rule:
+                    return json.dumps(asdict(rule), default=str, indent=2)
+                else:
+                    # Rule not in TypeDB, try markdown
+                    use_fallback = True
+
+        except Exception:
+            use_fallback = True
 
         finally:
             client.close()
+
+        # Fallback to markdown files (GAP-MCP-004)
+        if use_fallback:
+            md_rule = get_markdown_rule_by_id(rule_id)
+            if md_rule:
+                result = markdown_rule_to_dict(md_rule)
+                result["warning"] = "TypeDB unavailable - using markdown fallback (read-only)"
+                return json.dumps(result, indent=2)
+            else:
+                return json.dumps({"error": f"Rule {rule_id} not found in TypeDB or markdown"})
 
     @mcp.tool()
     def governance_get_dependencies(rule_id: str) -> str:

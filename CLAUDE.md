@@ -359,6 +359,11 @@ Invoke-WebRequest -Uri "http://localhost:7777/health"
 - **Gap Tracking**: Add discovered gaps to TODO.md immediately
 - **Test Coverage**: Update tests when fixing issues
 - **Sync to GitHub**: Push significant changes to drlegreid/platform-gai
+- **Context Preservation** (GAP-WORKFLOW-001): Run `/save` before:
+  - Major task transitions
+  - Approaching context limit
+  - Before autonomous execution concludes
+  - When user indicates session ending
 
 ## Autonomous Execution (RULE-030)
 When instructed to "continue" or work "autonomously":
