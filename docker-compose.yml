@@ -165,8 +165,9 @@ services:
   # GOVERNANCE UI LAYER
   # =============================================================================
 
-  # Governance Dashboard - Trame UI for rules/decisions/sessions
+  # Governance Dashboard + API - Trame UI for rules/decisions/sessions
   # Production mode only - not included in dev/cpu profiles
+  # Per TOOL-006: API now runs in container with Dashboard
   governance-dashboard:
     build:
       context: .
@@ -174,14 +175,16 @@ services:
     profiles: ["prod", "full"]
     ports:
       - "8081:8081"
+      - "8082:8082"
     environment:
       - DASHBOARD_PORT=8081
+      - API_PORT=8082
       - TYPEDB_HOST=typedb
       - TYPEDB_PORT=1729
       - CHROMADB_HOST=chromadb
       - CHROMADB_PORT=8000
       - CHROMA_AUTH_TOKEN=${CHROMA_AUTH_TOKEN:-chroma-token-dev}
-      - GOVERNANCE_API_URL=http://host.docker.internal:8082
+      - GOVERNANCE_API_URL=http://localhost:8082
     depends_on:
       - typedb
       - chromadb
@@ -196,7 +199,8 @@ services:
       retries: 3
       start_period: 10s
 
-  # Governance Dashboard - Dev mode with live code reload
+  # Governance Dashboard + API - Dev mode with live code reload
+  # Per TOOL-006: API containerized with volume mounts for live reload
   governance-dashboard-dev:
     build:
       context: .
@@ -213,6 +217,7 @@ services:
       - CHROMADB_HOST=chromadb
       - CHROMADB_PORT=8000
       - CHROMA_AUTH_TOKEN=${CHROMA_AUTH_TOKEN:-chroma-token-dev}
+      - GOVERNANCE_API_URL=http://localhost:8082
     volumes:
       - ./agent:/app/agent:ro
       - ./governance:/app/governance:ro

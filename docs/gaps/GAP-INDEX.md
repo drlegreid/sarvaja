@@ -266,6 +266,7 @@ Session: EXP-P10-001 | Date: 2024-12-25 | Target: Governance Dashboard
 | GAP-ARCH-008 | RESOLVED | TypeDB-Filesystem Rule Linking | MEDIUM | architecture | DECISION-003 | P10.8: rule_linker.py + 4 MCP tools |
 | GAP-ARCH-009 | OPEN | TypeDB sessions created but not retrievable for end operation | MEDIUM | architecture | DECISION-003 | E2E test: test_end_session_via_api fails 404 |
 | GAP-ARCH-010 | RESOLVED | Workspace tasks not captured in TypeDB | HIGH | architecture | DECISION-003 | P10.10: workspace_scanner.py + 3 MCP tools |
+| GAP-ARCH-012 | RESOLVED | agents-1 container fails to start | HIGH | docker | RULE-030 | 2026-01-02: Fixed OrchestratorEngine type hint |
 
 ### Sync & Integration Gaps (2026-01-02)
 
@@ -356,7 +357,7 @@ Session: EXP-P10-001 | Date: 2024-12-25 | Target: Governance Dashboard
 
 | ID | Status | Gap | Priority | Category | Rule | Evidence |
 |----|--------|-----|----------|----------|------|----------|
-| GAP-DATA-001 | PARTIAL | Tasks have no descriptions/content/linkage | CRITICAL | data | DECISION-003 | 2026-01-02: stores.py _task_to_dict uses body for description |
+| GAP-DATA-001 | RESOLVED | Tasks have no descriptions/content/linkage | CRITICAL | data | DECISION-003 | 2026-01-02: _task_to_dict uses body>description>name fallback + linked_rules/sessions |
 | GAP-DATA-002 | RESOLVED | No entity relationships (Task→Rule, Session→Evidence) | CRITICAL | architecture | DECISION-003 | P11.3: TypeDB schema + relationships |
 | GAP-DATA-003 | RESOLVED | Session evidence attachments not loadable | HIGH | functionality | RULE-001 | P11.5: API + UI + TypeDB linkage |
 | GAP-ARCH-011 | RESOLVED | TypeDB migration incomplete (claude-mem disconnected) | CRITICAL | architecture | DECISION-003 | P11.4: session_memory.py + DSM |

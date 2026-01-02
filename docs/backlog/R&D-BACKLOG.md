@@ -167,7 +167,7 @@ This is the **root document** for R&D backlog. Each section links to detailed in
 | TOOL-003 | Playwright MCP heuristic catalog | 📋 TODO | HIGH |
 | TOOL-004 | PowerShell MCP use cases | 📋 TODO | LOW |
 | TOOL-005 | Desktop-Commander vs filesystem MCP | 📋 TODO | LOW |
-| **TOOL-006** | **Containerize MCP services in Docker** | 📋 TODO | **HIGH** |
+| **TOOL-006** | **Containerize MCP services in Docker** | 🔄 PARTIAL | **HIGH** |
 | **TOOL-007** | **Evaluate governance MCP split** | 📋 TODO | **MEDIUM** |
 | **TOOL-008** | **Memory tuning for VS Code + Claude Code** | 📋 TODO | **HIGH** |
 | **TOOL-009** | **MCP priority groupings & profiles** | 📋 TODO | **HIGH** |
@@ -178,7 +178,14 @@ This is the **root document** for R&D backlog. Each section links to detailed in
 
 ### TOOL-006: Containerize MCP Services in Docker
 
-**Status:** 📋 TODO | **Priority:** HIGH | **Complexity:** HIGH
+**Status:** 🔄 PARTIAL | **Priority:** HIGH | **Complexity:** HIGH
+
+**Progress (2026-01-02):**
+- ✅ Governance API containerized in governance-dashboard container
+- ✅ Both Dashboard (8081) and API (8082) run in single container
+- ✅ Volume mounts for live reload in dev mode (agent, governance, docs, evidence)
+- ✅ Updated Dockerfile.dashboard to run dual services
+- 🔲 Full MCP Gateway architecture (see below) not yet implemented
 
 **Problem Statement:**
 - NPX-based MCPs have cold-start delays causing timeouts

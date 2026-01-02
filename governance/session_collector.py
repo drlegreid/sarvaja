@@ -228,6 +228,10 @@ class SessionCollector:
             }
         ))
 
+        # Auto-index to TypeDB with session link if available
+        if TYPEDB_AVAILABLE:
+            self._index_task_to_typedb(task)
+
         return task
 
     def capture_error(self, error: str, context: str = None) -> None:
@@ -437,6 +441,81 @@ class SessionCollector:
             '''
 
             client.execute_query(query)
+            client.close()
+            return True
+
+        except Exception:
+            return False
+
+    def _index_task_to_typedb(self, task: Task) -> bool:
+        """
+        Index task to TypeDB with session linkage.
+
+        Per GAP-DATA-002: Tasks linked to sessions via completed-in relation.
+        Creates work-session if not exists, then links task.
+        """
+        if not TYPEDB_AVAILABLE:
+            return False
+
+        try:
+            client = TypeDBClient(
+                host=self.typedb_host,
+                port=self.typedb_port,
+                database=self.typedb_database
+            )
+
+            if not client.connect():
+                return False
+
+            # First ensure work-session exists
+            session_query = f'''
+                match $s isa work-session, has session-id "{self.session_id}";
+                get $s;
+            '''
+            existing_session = client.execute_query(session_query)
+
+            if not existing_session:
+                # Create work-session
+                create_session_query = f'''
+                    insert $s isa work-session,
+                        has session-id "{self.session_id}",
+                        has session-name "{self.topic}",
+                        has session-description "Session for {self.session_type}";
+                '''
+                client.execute_query(create_session_query)
+
+            # Insert or update task with session link
+            task_name_escaped = task.name.replace('"', '\\"')
+            task_desc_escaped = task.description.replace('"', '\\"') if task.description else ""
+
+            # Check if task exists
+            task_check = f'''
+                match $t isa task, has task-id "{task.id}";
+                get $t;
+            '''
+            existing_task = client.execute_query(task_check)
+
+            if not existing_task:
+                # Insert new task
+                insert_task_query = f'''
+                    insert $t isa task,
+                        has task-id "{task.id}",
+                        has task-name "{task_name_escaped}",
+                        has task-status "{task.status}",
+                        has phase "SESSION";
+                '''
+                client.execute_query(insert_task_query)
+
+            # Create completed-in relation (session-task link)
+            link_query = f'''
+                match
+                    $t isa task, has task-id "{task.id}";
+                    $s isa work-session, has session-id "{self.session_id}";
+                insert
+                    (completed-task: $t, hosting-session: $s) isa completed-in;
+            '''
+            client.execute_query(link_query)
+
             client.close()
             return True
 

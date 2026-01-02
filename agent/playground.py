@@ -205,7 +205,7 @@ def create_agents(config: dict) -> list[Agent]:
     return agents
 
 
-def create_orchestrator(agents: list[Agent], config: dict) -> Optional[OrchestratorEngine]:
+def create_orchestrator(agents: list[Agent], config: dict) -> Optional["OrchestratorEngine"]:
     """
     Create orchestrator engine for task polling.
 
@@ -267,7 +267,7 @@ def create_orchestrator(agents: list[Agent], config: dict) -> Optional[Orchestra
         return None
 
 
-async def start_orchestration(engine: OrchestratorEngine) -> None:
+async def start_orchestration(engine: "OrchestratorEngine") -> None:
     """
     Start orchestration loop in background.
 

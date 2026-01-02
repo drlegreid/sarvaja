@@ -20,15 +20,27 @@ RUN pip install --no-cache-dir -r /tmp/requirements.txt
 COPY agent /app/agent
 COPY governance /app/governance
 
-# Create entrypoint
+# Create entrypoint that runs both Dashboard + API
 RUN echo '#!/bin/sh\n\
-echo "=== Sim.ai Governance Dashboard ==="\n\
-echo "Port: ${DASHBOARD_PORT:-8081}"\n\
+echo "=== Sim.ai Governance Stack ==="\n\
+echo "Dashboard Port: ${DASHBOARD_PORT:-8081}"\n\
+echo "API Port: ${API_PORT:-8082}"\n\
 echo "TypeDB: ${TYPEDB_HOST:-typedb}:${TYPEDB_PORT:-1729}"\n\
 cd /app\n\
+\n\
+# Start API in background\n\
+echo "Starting Governance API on port ${API_PORT:-8082}..."\n\
+python -m governance.api --port ${API_PORT:-8082} &\n\
+API_PID=$!\n\
+\n\
+# Give API time to start\n\
+sleep 2\n\
+\n\
+# Start Dashboard in foreground\n\
+echo "Starting Governance Dashboard on port ${DASHBOARD_PORT:-8081}..."\n\
 exec python -m agent.governance_dashboard --port ${DASHBOARD_PORT:-8081}\n\
 ' > /entrypoint.sh && chmod +x /entrypoint.sh
 
-EXPOSE 8081
+EXPOSE 8081 8082
 
 ENTRYPOINT ["/entrypoint.sh"]

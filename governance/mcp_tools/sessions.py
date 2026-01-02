@@ -198,3 +198,53 @@ def register_session_tools(mcp) -> None:
             "active_sessions": sessions,
             "count": len(sessions)
         }, indent=2)
+
+    @mcp.tool()
+    def session_get_tasks(session_id: str) -> str:
+        """
+        Get all tasks linked to a specific session.
+
+        Per GAP-DATA-002: Query tasks by session via completed-in relation.
+        Enables referencing session data with tasks as requested.
+
+        Args:
+            session_id: Session ID (e.g., "SESSION-2026-01-02-PHASE11")
+
+        Returns:
+            JSON array of tasks linked to the session
+        """
+        if not TYPEDB_AVAILABLE:
+            return json.dumps({"error": "TypeDB not available"})
+
+        try:
+            client = TypeDBClient()
+            if not client.connect():
+                return json.dumps({"error": "Could not connect to TypeDB"})
+
+            # Query tasks linked to session via completed-in relation
+            query = f'''
+                match
+                    $s isa work-session, has session-id "{session_id}";
+                    (completed-task: $t, hosting-session: $s) isa completed-in;
+                    $t has task-id $tid, has task-name $name, has task-status $status;
+                get $tid, $name, $status;
+            '''
+            results = client.execute_query(query)
+            client.close()
+
+            tasks = []
+            for r in results:
+                tasks.append({
+                    "task_id": r.get("tid"),
+                    "name": r.get("name"),
+                    "status": r.get("status")
+                })
+
+            return json.dumps({
+                "session_id": session_id,
+                "tasks": tasks,
+                "count": len(tasks)
+            }, indent=2)
+
+        except Exception as e:
+            return json.dumps({"error": str(e)})
