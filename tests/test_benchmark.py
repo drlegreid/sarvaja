@@ -108,10 +108,10 @@ class TestBenchmarkFramework:
     @pytest.mark.unit
     def test_measure_function(self):
         """_measure should correctly time functions."""
-        from governance.benchmark import GovernanceBenchmark
+        from governance.benchmark import BenchmarkBase
         import time
 
-        benchmark = GovernanceBenchmark(iterations=5)
+        benchmark = BenchmarkBase(iterations=5)
 
         def slow_func():
             time.sleep(0.01)  # 10ms
@@ -130,9 +130,9 @@ class TestBenchmarkFramework:
     @pytest.mark.unit
     def test_measure_with_errors(self):
         """_measure should track errors."""
-        from governance.benchmark import GovernanceBenchmark
+        from governance.benchmark import BenchmarkBase
 
-        benchmark = GovernanceBenchmark(iterations=5)
+        benchmark = BenchmarkBase(iterations=5)
 
         def failing_func():
             raise ValueError("Test error")
@@ -149,9 +149,9 @@ class TestBenchmarkFramework:
     @pytest.mark.unit
     def test_measure_with_args(self):
         """_measure should pass arguments correctly."""
-        from governance.benchmark import GovernanceBenchmark
+        from governance.benchmark import BenchmarkBase
 
-        benchmark = GovernanceBenchmark(iterations=3)
+        benchmark = BenchmarkBase(iterations=3)
 
         def add_func(a, b):
             return a + b
@@ -209,15 +209,15 @@ class TestBenchmarkCLI:
 
     @pytest.mark.unit
     def test_main_function_exists(self):
-        """main function must exist."""
-        from governance.benchmark import main
+        """main function must exist in __main__.py."""
+        from governance.benchmark.__main__ import main
         assert callable(main)
 
     @pytest.mark.unit
     def test_argparse_defaults(self):
         """Default arguments should be reasonable."""
         import argparse
-        from governance.benchmark import main
+        from governance.benchmark.__main__ import main
 
         # Verify module can be imported without errors
         from governance import benchmark

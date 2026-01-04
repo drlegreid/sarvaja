@@ -90,14 +90,15 @@ def cleanup_test_data():
         except Exception as e:
             print(f"Task cleanup error: {e}")
 
-        # Cleanup sessions
+        # Cleanup sessions - END only (preserve data per user preference)
+        # Sessions may contain important context, so we only mark them complete
         try:
             sessions_resp = client.get("/api/sessions")
             if sessions_resp.status_code == 200:
                 for session in sessions_resp.json():
                     session_id = session.get("session_id", "")
                     if session_id.startswith("TEST-"):
-                        # Sessions can't be deleted, but we can end them
+                        # Only end, don't delete - preserves session history
                         try:
                             client.put(f"/api/sessions/{session_id}/end")
                             cleaned["sessions"] += 1
@@ -850,6 +851,190 @@ class TestUISmokeTests:
 
         tasks = response.json()
         assert isinstance(tasks, list), "Available Tasks should be a list"
+
+
+class TestPaginationSortingFiltering:
+    """
+    Pagination, Sorting, and Filtering Tests.
+
+    Per GAP-UI-036: Pagination support
+    Per GAP-UI-010: Sorting support
+    Per GAP-UI-011: Filtering support
+
+    Created: 2026-01-04 to certify pagination changes
+    """
+
+    def test_tasks_pagination_offset_limit(self, api_client, unique_id):
+        """Test tasks pagination with offset and limit."""
+        # Create 5 test tasks
+        for i in range(5):
+            api_client.post("/api/tasks", json={
+                "task_id": f"{unique_id}-PAGE-{i}",
+                "description": f"Pagination test task {i}",
+                "phase": "P10",
+                "status": "TODO"
+            })
+
+        # Test limit
+        response = api_client.get("/api/tasks", params={"limit": 3})
+        assert response.status_code == 200
+        tasks = response.json()
+        assert len(tasks) <= 3, "Limit should restrict results"
+
+        # Test offset with limit
+        response = api_client.get("/api/tasks", params={"offset": 2, "limit": 3})
+        assert response.status_code == 200
+        tasks_offset = response.json()
+        assert len(tasks_offset) <= 3, "Offset+Limit should work together"
+
+    def test_tasks_sorting(self, api_client, unique_id):
+        """Test tasks sorting by field and order."""
+        # Create tasks with different statuses
+        api_client.post("/api/tasks", json={
+            "task_id": f"{unique_id}-SORT-A",
+            "description": "A task",
+            "phase": "P10",
+            "status": "DONE"
+        })
+        api_client.post("/api/tasks", json={
+            "task_id": f"{unique_id}-SORT-B",
+            "description": "B task",
+            "phase": "P10",
+            "status": "TODO"
+        })
+
+        # Test sort_by and order
+        response = api_client.get("/api/tasks", params={"sort_by": "task_id", "order": "asc"})
+        assert response.status_code == 200
+
+        response = api_client.get("/api/tasks", params={"sort_by": "status", "order": "desc"})
+        assert response.status_code == 200
+
+    def test_tasks_filter_by_phase(self, api_client, unique_id):
+        """Test tasks filtering by phase."""
+        # Create tasks with different phases
+        api_client.post("/api/tasks", json={
+            "task_id": f"{unique_id}-PHASE-P10",
+            "description": "P10 task",
+            "phase": "P10",
+            "status": "TODO"
+        })
+        api_client.post("/api/tasks", json={
+            "task_id": f"{unique_id}-PHASE-P11",
+            "description": "P11 task",
+            "phase": "P11",
+            "status": "TODO"
+        })
+
+        # Filter by phase
+        response = api_client.get("/api/tasks", params={"phase": "P10"})
+        assert response.status_code == 200
+        tasks = response.json()
+        assert all(t["phase"] == "P10" for t in tasks), "Phase filter should work"
+
+    def test_sessions_pagination_offset_limit(self, api_client):
+        """Test sessions pagination with offset and limit."""
+        response = api_client.get("/api/sessions", params={"limit": 5, "offset": 0})
+        assert response.status_code == 200
+        sessions = response.json()
+        assert len(sessions) <= 5, "Sessions limit should restrict results"
+
+    def test_sessions_sorting(self, api_client):
+        """Test sessions sorting."""
+        response = api_client.get("/api/sessions", params={"sort_by": "started_at", "order": "desc"})
+        assert response.status_code == 200
+
+        response = api_client.get("/api/sessions", params={"sort_by": "session_id", "order": "asc"})
+        assert response.status_code == 200
+
+    def test_sessions_filter_by_status(self, api_client):
+        """Test sessions filtering by status."""
+        response = api_client.get("/api/sessions", params={"status": "ACTIVE"})
+        assert response.status_code == 200
+        sessions = response.json()
+        assert all(s["status"] == "ACTIVE" for s in sessions), "Status filter should work"
+
+    @pytest.mark.skipif(not TYPEDB_AVAILABLE, reason="TypeDB not connected")
+    def test_rules_pagination_offset_limit(self, api_client):
+        """Test rules pagination with offset and limit."""
+        response = api_client.get("/api/rules", params={"limit": 10, "offset": 0})
+        assert response.status_code == 200
+        rules = response.json()
+        assert len(rules) <= 10, "Rules limit should restrict results"
+
+    @pytest.mark.skipif(not TYPEDB_AVAILABLE, reason="TypeDB not connected")
+    def test_rules_sorting(self, api_client):
+        """Test rules sorting."""
+        response = api_client.get("/api/rules", params={"sort_by": "id", "order": "asc"})
+        assert response.status_code == 200
+
+        response = api_client.get("/api/rules", params={"sort_by": "priority", "order": "desc"})
+        assert response.status_code == 200
+
+    @pytest.mark.skipif(not TYPEDB_AVAILABLE, reason="TypeDB not connected")
+    def test_rules_filter_by_category(self, api_client):
+        """Test rules filtering by category."""
+        response = api_client.get("/api/rules", params={"category": "governance"})
+        assert response.status_code == 200
+        rules = response.json()
+        if rules:
+            assert all(r["category"] == "governance" for r in rules), "Category filter should work"
+
+    @pytest.mark.skipif(not TYPEDB_AVAILABLE, reason="TypeDB not connected")
+    def test_rules_filter_by_priority(self, api_client):
+        """Test rules filtering by priority."""
+        response = api_client.get("/api/rules", params={"priority": "CRITICAL"})
+        assert response.status_code == 200
+        rules = response.json()
+        if rules:
+            assert all(r["priority"] == "CRITICAL" for r in rules), "Priority filter should work"
+
+    def test_agents_pagination_offset_limit(self, api_client):
+        """Test agents pagination with offset and limit."""
+        response = api_client.get("/api/agents", params={"limit": 3, "offset": 0})
+        assert response.status_code == 200
+        agents = response.json()
+        assert len(agents) <= 3, "Agents limit should restrict results"
+
+    def test_agents_sorting(self, api_client):
+        """Test agents sorting."""
+        response = api_client.get("/api/agents", params={"sort_by": "trust_score", "order": "desc"})
+        assert response.status_code == 200
+        agents = response.json()
+        if len(agents) >= 2:
+            # Verify descending order
+            assert agents[0]["trust_score"] >= agents[-1]["trust_score"], "Trust score should be desc"
+
+    def test_agents_filter_by_status(self, api_client):
+        """Test agents filtering by status."""
+        response = api_client.get("/api/agents", params={"status": "ACTIVE"})
+        assert response.status_code == 200
+        agents = response.json()
+        assert all(a["status"] == "ACTIVE" for a in agents), "Status filter should work"
+
+    def test_combined_pagination_sorting_filtering(self, api_client, unique_id):
+        """Test combining pagination, sorting, and filtering."""
+        # Create test tasks
+        for i in range(5):
+            api_client.post("/api/tasks", json={
+                "task_id": f"{unique_id}-COMBO-{i}",
+                "description": f"Combined test {i}",
+                "phase": "P10",
+                "status": "TODO" if i % 2 == 0 else "DONE"
+            })
+
+        # Combine all params
+        response = api_client.get("/api/tasks", params={
+            "offset": 0,
+            "limit": 3,
+            "sort_by": "task_id",
+            "order": "asc",
+            "status": "TODO"
+        })
+        assert response.status_code == 200
+        tasks = response.json()
+        assert len(tasks) <= 3, "Combined params should work"
+        assert all(t["status"] == "TODO" for t in tasks), "Filter should apply"
 
 
 class TestDataIntegrity:

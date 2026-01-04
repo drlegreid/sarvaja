@@ -11,8 +11,8 @@ Created: 2024-12-28
 Updated: 2026-01-02
 """
 
-from fastapi import APIRouter, HTTPException
-from typing import List, Tuple
+from fastapi import APIRouter, HTTPException, Query
+from typing import List, Tuple, Optional
 from datetime import datetime
 import logging
 
@@ -32,43 +32,62 @@ router = APIRouter(tags=["Agents"])
 # HELPER FUNCTIONS
 # =============================================================================
 
-def _get_agent_relations(client, agent_id: str) -> Tuple[List[str], List[str]]:
+def _build_agent_relations_lookup(client) -> Tuple[dict, dict]:
     """
-    Get agent's recent sessions and active tasks from TypeDB.
+    Build lookup dicts for agent relations in a single batch.
+    Per GAP-UI-048: Agent relations data.
+    Per P11.3: Optimized to avoid N*M queries.
+
+    Returns:
+        Tuple of (sessions_by_agent, tasks_by_agent) dicts
+    """
+    sessions_by_agent = {}
+    tasks_by_agent = {}
+
+    if not client:
+        return sessions_by_agent, tasks_by_agent
+
+    try:
+        # Fetch all sessions ONCE
+        sessions = client.get_all_sessions()
+        if sessions:
+            for s in sessions:
+                agent_id = getattr(s, 'agent_id', None)
+                if agent_id:
+                    if agent_id not in sessions_by_agent:
+                        sessions_by_agent[agent_id] = []
+                    sessions_by_agent[agent_id].append(s.id)
+
+        # Fetch all tasks ONCE
+        tasks = client.get_all_tasks()
+        if tasks:
+            for t in tasks:
+                agent_id = getattr(t, 'agent_id', None)
+                if agent_id and getattr(t, 'status', '') in ("pending", "in_progress"):
+                    if agent_id not in tasks_by_agent:
+                        tasks_by_agent[agent_id] = []
+                    tasks_by_agent[agent_id].append(t.id)
+
+    except Exception as e:
+        logger.warning(f"Failed to build agent relations lookup: {e}")
+
+    return sessions_by_agent, tasks_by_agent
+
+
+def _get_agent_relations_from_lookup(
+    agent_id: str,
+    sessions_by_agent: dict,
+    tasks_by_agent: dict
+) -> Tuple[List[str], List[str]]:
+    """
+    Get agent's relations from pre-built lookup dicts.
     Per GAP-UI-048: Agent relations data.
 
     Returns:
-        Tuple of (recent_sessions, active_tasks)
+        Tuple of (recent_sessions[:5], active_tasks[:5])
     """
-    recent_sessions = []
-    active_tasks = []
-
-    if not client:
-        return recent_sessions, active_tasks
-
-    try:
-        # Get sessions where this agent is referenced
-        sessions = client.get_all_sessions()
-        if sessions:
-            agent_sessions = [
-                s.id for s in sessions
-                if s.agent_id == agent_id
-            ]
-            # Take most recent 5
-            recent_sessions = agent_sessions[:5]
-
-        # Get active tasks for this agent
-        tasks = client.get_all_tasks()
-        if tasks:
-            agent_tasks = [
-                t.id for t in tasks
-                if t.agent_id == agent_id and t.status in ("pending", "in_progress")
-            ]
-            active_tasks = agent_tasks[:5]
-
-    except Exception as e:
-        logger.warning(f"Failed to get agent relations for {agent_id}: {e}")
-
+    recent_sessions = sessions_by_agent.get(agent_id, [])[:5]
+    active_tasks = tasks_by_agent.get(agent_id, [])[:5]
     return recent_sessions, active_tasks
 
 
@@ -77,12 +96,21 @@ def _get_agent_relations(client, agent_id: str) -> Tuple[List[str], List[str]]:
 # =============================================================================
 
 @router.get("/agents", response_model=List[AgentResponse])
-async def list_agents():
+async def list_agents(
+    offset: int = Query(0, ge=0, description="Skip first N results"),
+    limit: int = Query(50, ge=1, le=200, description="Max results (1-200)"),
+    sort_by: str = Query("trust_score", description="Sort by: agent_id, name, trust_score, status"),
+    order: str = Query("desc", description="Sort order: asc or desc"),
+    agent_type: Optional[str] = Query(None, description="Filter by agent type"),
+    status: Optional[str] = Query(None, description="Filter by status: ACTIVE, INACTIVE")
+):
     """
-    List all agents.
+    List agents with pagination, sorting, and filtering.
 
     Per GAP-ARCH-003: Queries TypeDB for agent registry, merges with local metrics.
     Per GAP-UI-048: Includes recent_sessions and active_tasks relations.
+    Per GAP-UI-036: Pagination support.
+    Per P11.3: Optimized to batch relations queries (avoids N*M problem).
     """
     client = get_typedb_client()
 
@@ -92,6 +120,10 @@ async def list_agents():
             typedb_agents = client.get_all_agents()
             if typedb_agents:
                 metrics = _load_agent_metrics()
+
+                # Build relations lookup ONCE for all agents (optimization)
+                sessions_by_agent, tasks_by_agent = _build_agent_relations_lookup(client)
+
                 result = []
                 for agent in typedb_agents:
                     agent_metrics = metrics.get(agent.id, {})
@@ -99,8 +131,10 @@ async def list_agents():
                     last_active = agent_metrics.get("last_active", None)
                     base_trust = _AGENT_BASE_CONFIG.get(agent.id, {}).get("base_trust", agent.trust_score or 0.8)
 
-                    # Get relations (GAP-UI-048)
-                    recent_sessions, active_tasks = _get_agent_relations(client, agent.id)
+                    # Get relations from pre-built lookup (GAP-UI-048)
+                    recent_sessions, active_tasks = _get_agent_relations_from_lookup(
+                        agent.id, sessions_by_agent, tasks_by_agent
+                    )
 
                     result.append(AgentResponse(
                         agent_id=agent.id,
@@ -113,12 +147,29 @@ async def list_agents():
                         recent_sessions=recent_sessions,
                         active_tasks=active_tasks
                     ))
+
+                # Apply filters
+                if agent_type:
+                    result = [a for a in result if a.agent_type == agent_type]
+                if status:
+                    result = [a for a in result if a.status == status]
+
+                # Apply sorting
+                valid_sort_fields = ["agent_id", "name", "trust_score", "status", "tasks_executed"]
+                sort_field = sort_by if sort_by in valid_sort_fields else "trust_score"
+                reverse = order.lower() == "desc"
+                result.sort(key=lambda a: getattr(a, sort_field) or "", reverse=reverse)
+
+                # Apply pagination
+                result = result[offset:offset + limit]
+
                 return result
         except Exception as e:
             logger.warning(f"TypeDB agents query failed, using fallback: {e}")
 
     # Fallback to in-memory (no relations available)
-    return [AgentResponse(**a) for a in _agents_store.values()]
+    agents = [AgentResponse(**a) for a in _agents_store.values()]
+    return agents[offset:offset + limit]
 
 
 @router.get("/agents/{agent_id}", response_model=AgentResponse)
@@ -142,8 +193,11 @@ async def get_agent(agent_id: str):
                 last_active = agent_metrics.get("last_active", None)
                 base_trust = _AGENT_BASE_CONFIG.get(agent_id, {}).get("base_trust", agent.trust_score or 0.8)
 
-                # Get relations (GAP-UI-048)
-                recent_sessions, active_tasks = _get_agent_relations(client, agent_id)
+                # Get relations using batch lookup (2 queries total, not N*M)
+                sessions_by_agent, tasks_by_agent = _build_agent_relations_lookup(client)
+                recent_sessions, active_tasks = _get_agent_relations_from_lookup(
+                    agent_id, sessions_by_agent, tasks_by_agent
+                )
 
                 return AgentResponse(
                     agent_id=agent.id,
@@ -210,7 +264,11 @@ async def record_agent_task(agent_id: str):
         try:
             agent = client.get_agent(agent_id)
             if agent:
-                recent_sessions, active_tasks = _get_agent_relations(client, agent_id)
+                # Get relations using batch lookup
+                sessions_by_agent, tasks_by_agent = _build_agent_relations_lookup(client)
+                recent_sessions, active_tasks = _get_agent_relations_from_lookup(
+                    agent_id, sessions_by_agent, tasks_by_agent
+                )
                 return AgentResponse(
                     agent_id=agent.id,
                     name=agent.name,

@@ -234,4 +234,175 @@ def register_workspace_tools(mcp) -> None:
             logger.error(f"workspace_get_rules_for_document failed: {e}")
             return json.dumps({"error": str(e)})
 
-    logger.info("Registered workspace MCP tools (7 tools)")
+    # Sync Status Tool (GAP-SYNC-002)
+
+    @mcp.tool()
+    def governance_sync_status() -> str:
+        """
+        Report divergence between TypeDB and workspace files.
+
+        Per GAP-SYNC-002: Divergence Validation Workflow.
+
+        Compares:
+        - TypeDB rules vs docs/rules/*.md
+        - TypeDB tasks vs TODO.md
+        - TypeDB sessions vs evidence/*.md
+
+        Returns:
+            JSON divergence report with:
+            - rules: {typedb_count, files_count, missing_in_typedb, missing_in_files}
+            - tasks: {typedb_count, files_count, status_mismatches}
+            - sessions: {typedb_count, evidence_files}
+            - sync_needed: boolean
+        """
+        import os
+        import re
+
+        result = {
+            "rules": {
+                "typedb_count": 0,
+                "files_count": 0,
+                "missing_in_typedb": [],
+                "missing_in_files": [],
+                "synced": True,
+            },
+            "tasks": {
+                "typedb_count": 0,
+                "files_count": 0,
+                "status_mismatches": [],
+                "missing_in_typedb": [],
+                "synced": True,
+            },
+            "sessions": {
+                "typedb_count": 0,
+                "evidence_files": 0,
+                "synced": True,
+            },
+            "sync_needed": False,
+            "timestamp": None,
+        }
+
+        try:
+            from datetime import datetime
+            from governance.workspace_scanner import WORKSPACE_ROOT
+
+            result["timestamp"] = datetime.now().isoformat()
+
+            # 1. Compare Rules: TypeDB vs docs/rules/*.md
+            try:
+                from governance.client import TypeDBClient
+                from governance.rule_linker import scan_rule_documents
+
+                # Get rules from TypeDB
+                client = TypeDBClient()
+                typedb_rules = set()
+                try:
+                    all_rules = client.get_all_rules()
+                    typedb_rules = {r.id for r in all_rules}
+                    result["rules"]["typedb_count"] = len(typedb_rules)
+                except Exception as e:
+                    logger.warning(f"Could not get TypeDB rules: {e}")
+
+                # Get rules from markdown files
+                file_rules = set()
+                try:
+                    docs = scan_rule_documents()
+                    for doc in docs:
+                        if doc.rule_ids:
+                            file_rules.update(doc.rule_ids)
+                    result["rules"]["files_count"] = len(file_rules)
+                except Exception as e:
+                    logger.warning(f"Could not scan rule documents: {e}")
+
+                # Find divergence
+                missing_in_typedb = file_rules - typedb_rules
+                missing_in_files = typedb_rules - file_rules
+
+                result["rules"]["missing_in_typedb"] = sorted(list(missing_in_typedb))
+                result["rules"]["missing_in_files"] = sorted(list(missing_in_files))
+                result["rules"]["synced"] = len(missing_in_typedb) == 0 and len(missing_in_files) == 0
+
+            except Exception as e:
+                logger.error(f"Rules sync check failed: {e}")
+                result["rules"]["error"] = str(e)
+
+            # 2. Compare Tasks: TypeDB vs TODO.md
+            try:
+                from governance.workspace_scanner import scan_workspace
+
+                # Get tasks from TypeDB
+                typedb_tasks = {}
+                try:
+                    all_tasks = client.get_all_tasks()
+                    for t in all_tasks:
+                        typedb_tasks[t.id] = t.status
+                    result["tasks"]["typedb_count"] = len(typedb_tasks)
+                except Exception as e:
+                    logger.warning(f"Could not get TypeDB tasks: {e}")
+
+                # Get tasks from workspace files
+                file_tasks = {}
+                try:
+                    scanned = scan_workspace()
+                    for t in scanned:
+                        file_tasks[t.task_id] = t.status
+                    result["tasks"]["files_count"] = len(file_tasks)
+                except Exception as e:
+                    logger.warning(f"Could not scan workspace tasks: {e}")
+
+                # Find status mismatches and missing tasks
+                mismatches = []
+                missing_in_typedb = []
+
+                for task_id, file_status in file_tasks.items():
+                    if task_id not in typedb_tasks:
+                        missing_in_typedb.append(task_id)
+                    elif typedb_tasks[task_id] != file_status:
+                        mismatches.append({
+                            "task_id": task_id,
+                            "typedb_status": typedb_tasks[task_id],
+                            "file_status": file_status,
+                        })
+
+                result["tasks"]["status_mismatches"] = mismatches[:10]  # Limit output
+                result["tasks"]["missing_in_typedb"] = missing_in_typedb[:10]
+                result["tasks"]["synced"] = len(mismatches) == 0 and len(missing_in_typedb) == 0
+
+            except Exception as e:
+                logger.error(f"Tasks sync check failed: {e}")
+                result["tasks"]["error"] = str(e)
+
+            # 3. Count Sessions and Evidence files
+            try:
+                # Get sessions from TypeDB
+                try:
+                    all_sessions = client.get_all_sessions()
+                    result["sessions"]["typedb_count"] = len(all_sessions)
+                except Exception as e:
+                    logger.warning(f"Could not get TypeDB sessions: {e}")
+
+                # Count evidence files
+                evidence_dir = os.path.join(WORKSPACE_ROOT, "evidence")
+                if os.path.exists(evidence_dir):
+                    evidence_files = [f for f in os.listdir(evidence_dir)
+                                      if f.endswith(".md") and f.startswith("SESSION-")]
+                    result["sessions"]["evidence_files"] = len(evidence_files)
+
+            except Exception as e:
+                logger.error(f"Sessions sync check failed: {e}")
+                result["sessions"]["error"] = str(e)
+
+            # Determine if sync is needed
+            result["sync_needed"] = (
+                not result["rules"]["synced"] or
+                not result["tasks"]["synced"] or
+                not result["sessions"]["synced"]
+            )
+
+            return json.dumps(result, indent=2)
+
+        except Exception as e:
+            logger.error(f"governance_sync_status failed: {e}")
+            return json.dumps({"error": str(e)})
+
+    logger.info("Registered workspace MCP tools (8 tools)")

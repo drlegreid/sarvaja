@@ -25,10 +25,19 @@ router = APIRouter(tags=["Rules"])
 
 @router.get("/rules", response_model=List[RuleResponse])
 async def list_rules(
+    offset: int = Query(0, ge=0, description="Skip first N results"),
+    limit: int = Query(50, ge=1, le=200, description="Max results (1-200)"),
+    sort_by: str = Query("id", description="Sort by: id, name, priority, status, category"),
+    order: str = Query("asc", description="Sort order: asc or desc"),
     status: Optional[str] = Query(None, description="Filter by status"),
-    category: Optional[str] = Query(None, description="Filter by category")
+    category: Optional[str] = Query(None, description="Filter by category"),
+    priority: Optional[str] = Query(None, description="Filter by priority")
 ):
-    """List all governance rules."""
+    """
+    List governance rules with pagination, sorting, and filtering.
+
+    Per GAP-UI-036: Pagination support.
+    """
     client = get_client()
     if not client:
         raise HTTPException(status_code=503, detail="TypeDB not connected")
@@ -44,6 +53,19 @@ async def list_rules(
         # Filter by status if provided and not already filtered
         if status and status != "ACTIVE":
             rules = [r for r in rules if r.status == status]
+
+        # Filter by priority
+        if priority:
+            rules = [r for r in rules if r.priority == priority]
+
+        # Apply sorting
+        valid_sort_fields = ["id", "name", "priority", "status", "category"]
+        sort_field = sort_by if sort_by in valid_sort_fields else "id"
+        reverse = order.lower() == "desc"
+        rules.sort(key=lambda r: getattr(r, sort_field) or "", reverse=reverse)
+
+        # Apply pagination
+        rules = rules[offset:offset + limit]
 
         return [
             RuleResponse(

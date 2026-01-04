@@ -9,7 +9,7 @@ Created: 2024-12-28
 Updated: 2025-01-01 (TypeDB-first refactoring)
 """
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Query
 from typing import List, Optional
 from datetime import datetime
 import logging
@@ -42,15 +42,44 @@ router = APIRouter(tags=["Sessions"])
 # =============================================================================
 
 @router.get("/sessions", response_model=List[SessionResponse])
-async def list_sessions():
+async def list_sessions(
+    offset: int = Query(0, ge=0, description="Skip first N results"),
+    limit: int = Query(50, ge=1, le=200, description="Max results (1-200)"),
+    sort_by: str = Query("started_at", description="Sort by: started_at, session_id, status"),
+    order: str = Query("desc", description="Sort order: asc or desc"),
+    status: Optional[str] = Query(None, description="Filter by status: ACTIVE, COMPLETED"),
+    agent_id: Optional[str] = Query(None, description="Filter by agent ID")
+):
     """
-    List all sessions.
+    List sessions with pagination, sorting, and filtering.
 
     Per GAP-STUB-003/004: TypeDB is source of truth with fallback for resilience.
+    Per GAP-UI-036: Pagination support.
     """
     try:
         # Use TypeDB wrapper (handles fallback internally)
         sessions = get_all_sessions_from_typedb(allow_fallback=True)
+
+        # Apply filters
+        if status:
+            sessions = [s for s in sessions if s.get("status") == status]
+        if agent_id:
+            sessions = [s for s in sessions if s.get("agent_id") == agent_id]
+
+        # Apply sorting
+        valid_sort_fields = ["started_at", "session_id", "status", "start_time"]
+        sort_field = sort_by if sort_by in valid_sort_fields else "started_at"
+        # Map started_at to start_time for backward compatibility
+        if sort_field == "started_at":
+            sort_field = "start_time"
+        reverse = order.lower() == "desc"
+        sessions.sort(key=lambda s: s.get(sort_field) or "", reverse=reverse)
+
+        # Apply pagination
+        total = len(sessions)
+        sessions = sessions[offset:offset + limit]
+
+        # Add pagination metadata via headers would be ideal, but return in response for now
         return [SessionResponse(**s) for s in sessions]
     except TypeDBUnavailable as e:
         logger.error(f"TypeDB unavailable: {e}")

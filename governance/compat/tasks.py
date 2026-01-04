@@ -12,9 +12,17 @@ Created: 2024-12-28
 
 import json
 from dataclasses import asdict
+from datetime import datetime
 
 from governance.mcp_tools.common import get_typedb_client
 from governance.client import Task
+
+
+def _json_serializer(obj):
+    """JSON serializer for objects not serializable by default json code."""
+    if isinstance(obj, datetime):
+        return obj.isoformat()
+    raise TypeError(f"Object of type {type(obj).__name__} is not JSON serializable")
 
 
 def governance_create_task(task_id, name, description="", status="pending",
@@ -55,7 +63,7 @@ def governance_get_task(task_id):
             return json.dumps({"error": "Failed to connect to TypeDB"})
         task = client.get_task(task_id)
         if task:
-            return json.dumps(asdict(task), indent=2)
+            return json.dumps(asdict(task), indent=2, default=_json_serializer)
         return json.dumps({"error": f"Task {task_id} not found"})
     finally:
         client.close()
