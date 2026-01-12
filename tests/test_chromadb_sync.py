@@ -167,9 +167,16 @@ class TestCurrentSyncState:
 
     @pytest.mark.unit
     def test_mcp_server_exists(self):
-        """Governance MCP server must exist."""
-        mcp_file = GOVERNANCE_DIR / "mcp_server.py"
-        assert mcp_file.exists(), "governance/mcp_server.py not found"
+        """Governance MCP servers must exist (split per RULE-036)."""
+        # Per RULE-036: MCP servers were split into 4 specialized files
+        mcp_files = [
+            GOVERNANCE_DIR / "mcp_server_core.py",
+            GOVERNANCE_DIR / "mcp_server_agents.py",
+            GOVERNANCE_DIR / "mcp_server_sessions.py",
+            GOVERNANCE_DIR / "mcp_server_tasks.py",
+        ]
+        for mcp_file in mcp_files:
+            assert mcp_file.exists(), f"{mcp_file.name} not found"
 
     @pytest.mark.unit
     def test_schema_has_twentyfive_rules(self):

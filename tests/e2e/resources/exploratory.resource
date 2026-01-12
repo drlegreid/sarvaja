@@ -7,9 +7,10 @@ Library          Collections
 Library          String
 
 *** Variables ***
-${BASE_URL}              http://localhost:7777
-${UI_URL}                ${BASE_URL}/ui
-${API_URL}               ${BASE_URL}/tasks
+${BASE_URL}              http://localhost:8081
+${API_BASE_URL}          http://localhost:8082
+${UI_URL}                ${BASE_URL}
+${API_URL}               ${API_BASE_URL}/api/tasks
 ${TIMEOUT}               30s
 ${EXPLORATION_DEPTH}     3
 

@@ -4,9 +4,12 @@ Impact View Components (Graph and List).
 Per RULE-012: Single Responsibility - only impact visualization UI.
 Per RULE-032: File size limit (<300 lines).
 Per GAP-FILE-001: Modularization of governance_dashboard.py.
+Per RULE-039: Context Compression Standard (Mermaid diagrams).
 """
 
 from trame.widgets import vuetify3 as v3, html
+
+from agent.governance_ui.components.mermaid import build_mermaid_with_fallback
 
 
 def build_graph_view() -> None:
@@ -20,16 +23,8 @@ def build_graph_view() -> None:
             ):
                 v3.VCardTitle("Dependency Graph")
                 with v3.VCardText():
-                    # Mermaid diagram display
-                    html.Pre(
-                        "{{ mermaid_diagram }}",
-                        style=(
-                            "background: #f5f5f5; padding: 16px; "
-                            "border-radius: 4px; overflow-x: auto;"
-                        ),
-                        __properties=["data-testid"],
-                        **{"data-testid": "impact-mermaid"}
-                    )
+                    # Mermaid diagram with proper rendering
+                    build_mermaid_with_fallback("impact-graph", "mermaid_diagram")
                     # Graph stats
                     with v3.VRow(classes="mt-2"):
                         with v3.VCol(cols=3):

@@ -75,5 +75,11 @@ class PowerShellTools(Toolkit):
         Returns:
             JSON with command output
         """
-        # Wrapper for run_script with single command
-        return self.run_script(command)
+        # Implement directly instead of delegating (agno wraps methods)
+        return json.dumps({
+            "action": "run_script",
+            "code_length": len(command),
+            "timeout": self.config.timeout,
+            "status": "simulated",
+            "message": "Would execute PowerShell command"
+        })

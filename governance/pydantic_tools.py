@@ -36,7 +36,7 @@ Usage:
 """
 
 # Re-export everything from the package for backward compatibility
-from governance.pydantic import (
+from governance.pydantic_schemas import (
     # Input models
     RuleQueryConfig,
     DependencyConfig,

@@ -23,6 +23,9 @@ class RuleCreate(BaseModel):
     priority: str = Field(..., description="Priority: CRITICAL, HIGH, MEDIUM, LOW")
     directive: str = Field(..., description="Rule directive text")
     status: str = Field(default="DRAFT", description="Status: DRAFT, ACTIVE, DEPRECATED")
+    # RD-WORKSPACE Phase 3: Skill tags and applicable roles
+    tags: Optional[str] = Field(default=None, description="Comma-separated skill tags")
+    applicable_roles: Optional[str] = Field(default=None, description="Comma-separated agent roles")
 
 
 class RuleUpdate(BaseModel):
@@ -141,6 +144,8 @@ class DecisionResponse(BaseModel):
     rationale: str
     status: str
     decision_date: Optional[str] = None
+    # Per GAP-DECISION-001: Rules affected by this decision
+    linked_rules: List[str] = []
 
 
 # =============================================================================
@@ -196,6 +201,22 @@ class EvidenceResponse(BaseModel):
     session_id: Optional[str] = None
 
 
+class EvidenceSearchResult(BaseModel):
+    """Single search result for evidence search (GAP-UI-009)."""
+    source: str
+    source_type: str
+    score: float
+    content: str
+
+
+class EvidenceSearchResponse(BaseModel):
+    """Response model for evidence search (GAP-UI-009)."""
+    query: str
+    results: List[EvidenceSearchResult]
+    count: int
+    search_method: str
+
+
 class FileContentResponse(BaseModel):
     """Response model for file content (GAP-DATA-003)."""
     path: str
@@ -218,6 +239,8 @@ class AgentResponse(BaseModel):
     tasks_executed: int = 0
     trust_score: float = 0.0
     last_active: Optional[str] = None
+    # Capabilities per GAP-AGENT-004
+    capabilities: List[str] = []
     # Relations (GAP-UI-048)
     recent_sessions: List[str] = []
     active_tasks: List[str] = []

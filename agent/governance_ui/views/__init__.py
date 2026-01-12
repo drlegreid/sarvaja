@@ -23,6 +23,8 @@ from .monitor_view import build_monitor_view
 from .trust_view import build_trust_view
 from .search_view import build_search_view
 from .impact_view import build_impact_view
+from .infra_view import build_infra_view
+from .workflow_view import build_workflow_view
 from .dialogs import build_all_dialogs, build_file_viewer_dialog
 
 __all__ = [
@@ -38,6 +40,8 @@ __all__ = [
     "build_trust_view",
     "build_search_view",
     "build_impact_view",
+    "build_infra_view",
+    "build_workflow_view",
     "build_all_dialogs",
     "build_file_viewer_dialog",
 ]

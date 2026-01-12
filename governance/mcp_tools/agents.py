@@ -80,7 +80,7 @@ def register_agent_tools(mcp) -> None:
 
             agent = client.get_agent(agent_id)
             if agent:
-                return json.dumps(asdict(agent), indent=2)
+                return json.dumps(asdict(agent), indent=2, default=str)
             else:
                 return json.dumps({"error": f"Agent {agent_id} not found"})
         finally:
@@ -104,7 +104,7 @@ def register_agent_tools(mcp) -> None:
                 "agents": [asdict(a) for a in agents],
                 "count": len(agents),
                 "source": "typedb"
-            }, indent=2)
+            }, indent=2, default=str)
         finally:
             client.close()
 
@@ -141,7 +141,7 @@ def register_agent_tools(mcp) -> None:
                 if agent:
                     result = asdict(agent)
                     result["message"] = f"Agent {agent_id} trust updated to {trust_score}"
-                    return json.dumps(result, indent=2)
+                    return json.dumps(result, indent=2, default=str)
                 return json.dumps({
                     "agent_id": agent_id,
                     "trust_score": trust_score,
@@ -149,5 +149,135 @@ def register_agent_tools(mcp) -> None:
                 }, indent=2)
             else:
                 return json.dumps({"error": f"Failed to update agent {agent_id}"})
+        finally:
+            client.close()
+
+    @mcp.tool()
+    def governance_agent_dashboard() -> str:
+        """
+        Get agent observability dashboard.
+
+        Returns summary of all agents including:
+        - Active agent count
+        - Task execution stats
+        - Trust score distribution
+        - Handoff flow status
+
+        Per GAP-006: Agent observability for functional platform.
+
+        Returns:
+            JSON object with agent dashboard data
+        """
+        from governance.orchestrator.handoff import get_pending_handoffs
+
+        client = get_typedb_client()
+        try:
+            if not client.connect():
+                return json.dumps({"error": "Failed to connect to TypeDB"})
+
+            agents = client.get_all_agents()
+
+            # Compute stats
+            active_agents = [a for a in agents if getattr(a, 'status', 'ACTIVE') == 'ACTIVE']
+            trust_scores = [a.trust_score for a in agents if hasattr(a, 'trust_score')]
+            avg_trust = sum(trust_scores) / len(trust_scores) if trust_scores else 0
+
+            # Get task execution counts
+            total_tasks = sum(getattr(a, 'tasks_executed', 0) for a in agents)
+
+            # Get pending handoffs count
+            try:
+                handoffs = get_pending_handoffs()
+                pending_handoffs = len(handoffs)
+            except Exception:
+                pending_handoffs = 0
+
+            # Build dashboard
+            dashboard = {
+                "summary": {
+                    "total_agents": len(agents),
+                    "active_agents": len(active_agents),
+                    "avg_trust_score": round(avg_trust, 2),
+                    "total_tasks_executed": total_tasks,
+                    "pending_handoffs": pending_handoffs
+                },
+                "agents": [
+                    {
+                        "id": a.id,
+                        "name": getattr(a, 'name', a.id),
+                        "type": getattr(a, 'agent_type', 'unknown'),
+                        "trust": a.trust_score,
+                        "tasks": getattr(a, 'tasks_executed', 0),
+                        "last_active": str(getattr(a, 'last_active', None))
+                    }
+                    for a in agents
+                ],
+                "trust_distribution": {
+                    "high": len([a for a in agents if a.trust_score >= 0.8]),
+                    "medium": len([a for a in agents if 0.5 <= a.trust_score < 0.8]),
+                    "low": len([a for a in agents if a.trust_score < 0.5])
+                }
+            }
+
+            return json.dumps(dashboard, indent=2, default=str)
+        finally:
+            client.close()
+
+    @mcp.tool()
+    def governance_agent_activity(agent_id: Optional[str] = None, limit: int = 10) -> str:
+        """
+        Get recent agent activity (tasks executed, handoffs processed).
+
+        Args:
+            agent_id: Optional agent ID to filter by (None = all agents)
+            limit: Maximum number of activities to return (default: 10)
+
+        Returns:
+            JSON array of recent agent activities
+        """
+        client = get_typedb_client()
+        try:
+            if not client.connect():
+                return json.dumps({"error": "Failed to connect to TypeDB"})
+
+            # Get tasks linked to agents
+            query = """
+                match
+                $task isa task, has task-id $tid, has name $name, has status $status;
+                $agent isa agent, has agent-id $aid;
+                (executor: $agent, executed: $task) isa task-execution;
+            """
+            if agent_id:
+                query += f'$agent has agent-id "{agent_id}";'
+
+            query += """
+                fetch
+                $tid; $name; $status; $aid;
+            """
+
+            results = client.execute_fetch(query)
+
+            activities = []
+            for r in results[:limit]:
+                activities.append({
+                    "task_id": r.get("tid", {}).get("value", ""),
+                    "task_name": r.get("name", {}).get("value", ""),
+                    "status": r.get("status", {}).get("value", ""),
+                    "agent_id": r.get("aid", {}).get("value", "")
+                })
+
+            return json.dumps({
+                "activities": activities,
+                "count": len(activities),
+                "filter": agent_id or "all"
+            }, indent=2)
+        except Exception as e:
+            # If relation doesn't exist, return empty
+            return json.dumps({
+                "activities": [],
+                "count": 0,
+                "filter": agent_id or "all",
+                "note": "No task-execution relations found in TypeDB"
+            }, indent=2)
         finally:
             client.close()

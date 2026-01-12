@@ -149,3 +149,105 @@ def register_proposal_tools(mcp) -> None:
             dispute["message"] = f"Dispute filed. Resolution method: {resolution_method}"
 
         return json.dumps(dispute, indent=2)
+
+    @mcp.tool()
+    def governance_get_proposals(
+        status: Optional[str] = None
+    ) -> str:
+        """
+        List governance proposals (GAP-STUB-006).
+
+        Args:
+            status: Optional filter by status (pending, approved, rejected, disputed)
+
+        Returns:
+            JSON array of proposals
+        """
+        # Import TypeDB client
+        from governance.stores import get_typedb_client
+
+        client = get_typedb_client()
+        proposals = []
+
+        if client:
+            try:
+                # Query proposals from TypeDB
+                status_filter = f', has proposal-status "{status}"' if status else ""
+                query = f"""
+                    match
+                        $p isa proposal,
+                            has proposal-id $pid,
+                            has proposal-type $ptype,
+                            has proposal-status $pstatus{status_filter};
+                    get $pid, $ptype, $pstatus;
+                """
+                results = client._execute_query(query)
+
+                for r in results:
+                    proposals.append({
+                        "proposal_id": r.get("pid"),
+                        "type": r.get("ptype"),
+                        "status": r.get("pstatus")
+                    })
+            except Exception as e:
+                return json.dumps({
+                    "proposals": [],
+                    "count": 0,
+                    "note": f"Query error: {str(e)}. No proposals in TypeDB yet."
+                }, indent=2)
+
+        return json.dumps({
+            "proposals": proposals,
+            "count": len(proposals),
+            "note": "No proposals exist yet" if not proposals else None
+        }, indent=2)
+
+    @mcp.tool()
+    def governance_get_escalated_proposals() -> str:
+        """
+        List proposals requiring human escalation (GAP-STUB-007).
+
+        Per RULE-011: Bicameral model requires human oversight for escalated proposals.
+
+        Returns:
+            JSON array of escalated proposals with escalation triggers
+        """
+        # Import TypeDB client
+        from governance.stores import get_typedb_client
+
+        client = get_typedb_client()
+        escalated = []
+
+        if client:
+            try:
+                # Query escalated proposals using inference rule
+                query = """
+                    match
+                        (escalated-proposal: $p, escalation-reason: $d) isa requires-escalation;
+                        $p isa proposal,
+                            has proposal-id $pid,
+                            has proposal-status $pstatus;
+                        $d has escalation-trigger $trigger;
+                    get $pid, $pstatus, $trigger;
+                """
+                results = client._execute_query(query, infer=True)
+
+                for r in results:
+                    escalated.append({
+                        "proposal_id": r.get("pid"),
+                        "status": r.get("pstatus"),
+                        "escalation_trigger": r.get("trigger")
+                    })
+            except Exception as e:
+                return json.dumps({
+                    "escalated_proposals": [],
+                    "count": 0,
+                    "note": f"Query error: {str(e)}. No escalated proposals."
+                }, indent=2)
+
+        return json.dumps({
+            "escalated_proposals": escalated,
+            "count": len(escalated),
+            "requires_human_review": len(escalated) > 0,
+            "note": "No escalated proposals" if not escalated else "HUMAN OVERSIGHT REQUIRED"
+        }, indent=2)

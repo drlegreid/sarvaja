@@ -1,0 +1,43 @@
+{
+  "test_id": ".claude/hooks/tests/test_level1_unit.py::TestStateManager::test_history_tracking",
+  "test_name": "test_history_tracking",
+  "module": "test_level1_unit.py",
+  "category": "unit",
+  "business_intent": "History entries are added and limited.",
+  "given": [
+    {
+      "phase": "GIVEN",
+      "description": "Fixture 'event_loop_policy' is available",
+      "technical_details": null,
+      "timestamp": "2026-01-04T01:04:33.033530"
+    }
+  ],
+  "when": [
+    {
+      "phase": "WHEN",
+      "description": "Execute test 'test_history_tracking'",
+      "technical_details": {
+        "function": "test_history_tracking",
+        "module": "C:\\Users\\natik\\Documents\\Vibe\\sim-ai\\sim-ai\\.claude\\hooks\\tests\\test_level1_unit.py"
+      },
+      "timestamp": "2026-01-04T01:04:33.033530"
+    }
+  ],
+  "then": [
+    {
+      "phase": "THEN",
+      "description": "Test passed successfully",
+      "technical_details": {
+        "outcome": "passed",
+        "duration_ms": 16.7238712310791
+      },
+      "timestamp": "2026-01-04T01:04:33.050253"
+    }
+  ],
+  "status": "passed",
+  "result_details": null,
+  "error_message": null,
+  "duration_ms": 16.7238712310791,
+  "started_at": "2026-01-04T01:04:33.033530",
+  "completed_at": "2026-01-04T01:04:33.050253"
+}

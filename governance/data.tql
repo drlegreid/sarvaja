@@ -547,3 +547,112 @@ $task_p11_3 isa task,
 # Sessions made decisions
 (deciding-session: $session001, session-made-decision: $dec003) isa session-decision;
 (deciding-session: $session001, session-made-decision: $dec001) isa session-decision;
+
+# =============================================================================
+# GAPS (GAP-DSP-002 - Schema entities need data)
+# =============================================================================
+
+$gap_meta001 isa gap,
+    has gap-id "GAP-META-001",
+    has gap-name "GAPs lack evidence file references - context bloat",
+    has gap-status "RESOLVED",
+    has severity "HIGH",
+    has location "docs/gaps/GAP-INDEX.md";
+
+$gap_sync001 isa gap,
+    has gap-id "GAP-SYNC-001",
+    has gap-name "TypeDB rules/tasks may diverge from workspace",
+    has gap-status "OPEN",
+    has severity "HIGH",
+    has location "governance/typedb/";
+
+$gap_dsp002 isa gap,
+    has gap-id "GAP-DSP-002",
+    has gap-name "9 schema entities without data",
+    has gap-status "OPEN",
+    has severity "HIGH",
+    has location "governance/data.tql";
+
+$gap_file013 isa gap,
+    has gap-id "GAP-FILE-013",
+    has gap-name "typedb/queries/rules.py 699 lines",
+    has gap-status "OPEN",
+    has severity "MEDIUM",
+    has location "governance/typedb/queries/rules.py";
+
+$gap_file014 isa gap,
+    has gap-id "GAP-FILE-014",
+    has gap-name "sync_agent.py 687 lines",
+    has gap-status "OPEN",
+    has severity "MEDIUM",
+    has location "agent/sync_agent.py";
+
+# Gap references governing rules
+(referencing-gap: $gap_meta001, governing-rule: $rule012) isa gap-rule-reference;
+(referencing-gap: $gap_sync001, governing-rule: $rule012) isa gap-rule-reference;
+(referencing-gap: $gap_dsp002, governing-rule: $rule012) isa gap-rule-reference;
+(referencing-gap: $gap_file013, governing-rule: $rule012) isa gap-rule-reference;
+(referencing-gap: $gap_file014, governing-rule: $rule012) isa gap-rule-reference;
+
+# =============================================================================
+# DOCUMENTS (RULE-013 - Cross-referencing)
+# =============================================================================
+
+$doc_governance isa document,
+    has document-id "DOC-RULES-GOVERNANCE",
+    has document-title "Governance Rules",
+    has document-path "docs/rules/RULES-GOVERNANCE.md",
+    has document-type "markdown",
+    has document-storage "local";
+
+$doc_technical isa document,
+    has document-id "DOC-RULES-TECHNICAL",
+    has document-title "Technical Rules",
+    has document-path "docs/rules/RULES-TECHNICAL.md",
+    has document-type "markdown",
+    has document-storage "local";
+
+$doc_operational isa document,
+    has document-id "DOC-RULES-OPERATIONAL",
+    has document-title "Operational Rules",
+    has document-path "docs/rules/RULES-OPERATIONAL.md",
+    has document-type "markdown",
+    has document-storage "local";
+
+$doc_gap_index isa document,
+    has document-id "DOC-GAP-INDEX",
+    has document-title "Gap Index",
+    has document-path "docs/gaps/GAP-INDEX.md",
+    has document-type "markdown",
+    has document-storage "local";
+
+$doc_claude isa document,
+    has document-id "DOC-CLAUDE-MD",
+    has document-title "CLAUDE.md Project Instructions",
+    has document-path "CLAUDE.md",
+    has document-type "markdown",
+    has document-storage "local";
+
+# Document references rules
+(referencing-document: $doc_governance, referenced-rule: $rule001) isa document-references-rule;
+(referencing-document: $doc_governance, referenced-rule: $rule003) isa document-references-rule;
+(referencing-document: $doc_governance, referenced-rule: $rule006) isa document-references-rule;
+(referencing-document: $doc_governance, referenced-rule: $rule011) isa document-references-rule;
+(referencing-document: $doc_governance, referenced-rule: $rule013) isa document-references-rule;
+(referencing-document: $doc_technical, referenced-rule: $rule002) isa document-references-rule;
+(referencing-document: $doc_technical, referenced-rule: $rule007) isa document-references-rule;
+(referencing-document: $doc_technical, referenced-rule: $rule008) isa document-references-rule;
+(referencing-document: $doc_technical, referenced-rule: $rule009) isa document-references-rule;
+(referencing-document: $doc_technical, referenced-rule: $rule010) isa document-references-rule;
+(referencing-document: $doc_operational, referenced-rule: $rule004) isa document-references-rule;
+(referencing-document: $doc_operational, referenced-rule: $rule005) isa document-references-rule;
+(referencing-document: $doc_operational, referenced-rule: $rule012) isa document-references-rule;
+(referencing-document: $doc_operational, referenced-rule: $rule014) isa document-references-rule;
+(referencing-document: $doc_operational, referenced-rule: $rule021) isa document-references-rule;
+
+# Document references gaps
+(referencing-document: $doc_gap_index, referenced-gap: $gap_meta001) isa document-references-gap;
+(referencing-document: $doc_gap_index, referenced-gap: $gap_sync001) isa document-references-gap;
+(referencing-document: $doc_gap_index, referenced-gap: $gap_dsp002) isa document-references-gap;
+(referencing-document: $doc_gap_index, referenced-gap: $gap_file013) isa document-references-gap;
+(referencing-document: $doc_gap_index, referenced-gap: $gap_file014) isa document-references-gap;

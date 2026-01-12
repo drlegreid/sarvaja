@@ -8,7 +8,7 @@ Per FP + Digital Twin Paradigm: DSM entity module
 """
 
 import json
-from typing import Optional
+from typing import Optional, Union, Dict, Any
 
 # Import DSM tracker (with fallback)
 try:
@@ -82,7 +82,7 @@ def register_dsm_tools(mcp) -> None:
     @mcp.tool()
     def dsm_checkpoint(
         description: str,
-        metrics: Optional[str] = None,
+        metrics: Optional[Union[str, Dict[str, Any]]] = None,
         evidence: Optional[str] = None
     ) -> str:
         """
@@ -90,7 +90,7 @@ def register_dsm_tools(mcp) -> None:
 
         Args:
             description: What was accomplished
-            metrics: Optional JSON metrics (e.g., '{"tests_passed": 78}')
+            metrics: Optional metrics as JSON string or dict (e.g., {"tests_passed": 78})
             evidence: Optional evidence reference (file path or URL)
 
         Returns:
@@ -101,19 +101,25 @@ def register_dsm_tools(mcp) -> None:
 
         tracker = get_tracker()
 
-        # Parse optional JSON metrics
+        # Parse optional metrics (accepts both str and dict per GAP-DSM-002)
         parsed_metrics = None
         if metrics:
-            try:
-                parsed_metrics = json.loads(metrics)
-            except json.JSONDecodeError:
-                return json.dumps({"error": f"Invalid metrics JSON: {metrics}"})
+            if isinstance(metrics, dict):
+                # Already a dict (from Claude Code tool call deserialization)
+                parsed_metrics = metrics
+            elif isinstance(metrics, str):
+                try:
+                    parsed_metrics = json.loads(metrics)
+                except json.JSONDecodeError:
+                    return json.dumps({"error": f"Invalid metrics JSON: {metrics}"})
 
         try:
+            # Convert single evidence string to list (GAP-TDD-007 fix)
+            evidence_list = [evidence] if evidence else None
             checkpoint = tracker.checkpoint(
                 description=description,
                 metrics=parsed_metrics,
-                evidence=evidence
+                evidence=evidence_list
             )
             return json.dumps({
                 "phase": checkpoint.phase,
@@ -214,12 +220,12 @@ def register_dsm_tools(mcp) -> None:
             return json.dumps({"error": str(e)})
 
     @mcp.tool()
-    def dsm_metrics(metrics_json: str) -> str:
+    def dsm_metrics(metrics_json: Union[str, Dict[str, Any]]) -> str:
         """
         Update metrics for the current cycle.
 
         Args:
-            metrics_json: JSON object with metrics (e.g., '{"tests_passed": 78, "coverage": 85}')
+            metrics_json: Metrics as JSON string or dict (e.g., {"tests_passed": 78, "coverage": 85})
 
         Returns:
             JSON object with updated metrics
@@ -229,10 +235,14 @@ def register_dsm_tools(mcp) -> None:
 
         tracker = get_tracker()
 
-        try:
-            metrics = json.loads(metrics_json)
-        except json.JSONDecodeError:
-            return json.dumps({"error": f"Invalid metrics JSON: {metrics_json}"})
+        # Accept both str and dict per GAP-DSM-002
+        if isinstance(metrics_json, dict):
+            metrics = metrics_json
+        else:
+            try:
+                metrics = json.loads(metrics_json)
+            except json.JSONDecodeError:
+                return json.dumps({"error": f"Invalid metrics JSON: {metrics_json}"})
 
         try:
             tracker.update_metrics(metrics)

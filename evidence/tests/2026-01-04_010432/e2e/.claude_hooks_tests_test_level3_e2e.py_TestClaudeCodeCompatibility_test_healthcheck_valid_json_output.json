@@ -1,0 +1,43 @@
+{
+  "test_id": ".claude/hooks/tests/test_level3_e2e.py::TestClaudeCodeCompatibility::test_healthcheck_valid_json_output",
+  "test_name": "test_healthcheck_valid_json_output",
+  "module": "test_level3_e2e.py",
+  "category": "e2e",
+  "business_intent": "Healthcheck produces valid JSON for Claude Code.",
+  "given": [
+    {
+      "phase": "GIVEN",
+      "description": "Fixture 'event_loop_policy' is available",
+      "technical_details": null,
+      "timestamp": "2026-01-04T01:04:37.348605"
+    }
+  ],
+  "when": [
+    {
+      "phase": "WHEN",
+      "description": "Execute test 'test_healthcheck_valid_json_output'",
+      "technical_details": {
+        "function": "test_healthcheck_valid_json_output",
+        "module": "C:\\Users\\natik\\Documents\\Vibe\\sim-ai\\sim-ai\\.claude\\hooks\\tests\\test_level3_e2e.py"
+      },
+      "timestamp": "2026-01-04T01:04:37.349144"
+    }
+  ],
+  "then": [
+    {
+      "phase": "THEN",
+      "description": "Test passed successfully",
+      "technical_details": {
+        "outcome": "passed",
+        "duration_ms": 614.0093803405762
+      },
+      "timestamp": "2026-01-04T01:04:37.962615"
+    }
+  ],
+  "status": "passed",
+  "result_details": null,
+  "error_message": null,
+  "duration_ms": 614.0093803405762,
+  "started_at": "2026-01-04T01:04:37.348605",
+  "completed_at": "2026-01-04T01:04:37.962615"
+}

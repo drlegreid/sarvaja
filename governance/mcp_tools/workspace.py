@@ -295,6 +295,7 @@ def register_workspace_tools(mcp) -> None:
 
                 # Get rules from TypeDB
                 client = TypeDBClient()
+                client.connect()
                 typedb_rules = set()
                 try:
                     all_rules = client.get_all_rules()
@@ -398,6 +399,12 @@ def register_workspace_tools(mcp) -> None:
                 not result["tasks"]["synced"] or
                 not result["sessions"]["synced"]
             )
+
+            # Cleanup client connection
+            try:
+                client.close()
+            except Exception:
+                pass
 
             return json.dumps(result, indent=2)
 

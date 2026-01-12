@@ -29,7 +29,7 @@ if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
 # Import MCP tools
-from governance.mcp_server import (
+from governance.compat import (
     governance_list_sessions,
     governance_get_session,
     governance_evidence_search,

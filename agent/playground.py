@@ -5,6 +5,8 @@ Sim.ai PoC Agent with:
 - ChromaDB for vector storage
 - AgentOS for serving via FastAPI
 """
+from __future__ import annotations
+
 import os
 import sys
 from typing import Optional

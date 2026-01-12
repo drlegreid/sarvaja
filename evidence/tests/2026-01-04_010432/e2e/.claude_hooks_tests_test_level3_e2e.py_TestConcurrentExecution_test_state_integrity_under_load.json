@@ -1,0 +1,43 @@
+{
+  "test_id": ".claude/hooks/tests/test_level3_e2e.py::TestConcurrentExecution::test_state_integrity_under_load",
+  "test_name": "test_state_integrity_under_load",
+  "module": "test_level3_e2e.py",
+  "category": "e2e",
+  "business_intent": "State files maintain integrity under concurrent writes.",
+  "given": [
+    {
+      "phase": "GIVEN",
+      "description": "Fixture 'event_loop_policy' is available",
+      "technical_details": null,
+      "timestamp": "2026-01-04T01:04:39.733654"
+    }
+  ],
+  "when": [
+    {
+      "phase": "WHEN",
+      "description": "Execute test 'test_state_integrity_under_load'",
+      "technical_details": {
+        "function": "test_state_integrity_under_load",
+        "module": "C:\\Users\\natik\\Documents\\Vibe\\sim-ai\\sim-ai\\.claude\\hooks\\tests\\test_level3_e2e.py"
+      },
+      "timestamp": "2026-01-04T01:04:39.734655"
+    }
+  ],
+  "then": [
+    {
+      "phase": "THEN",
+      "description": "Test passed successfully",
+      "technical_details": {
+        "outcome": "passed",
+        "duration_ms": 3244.8244094848633
+      },
+      "timestamp": "2026-01-04T01:04:42.979479"
+    }
+  ],
+  "status": "passed",
+  "result_details": null,
+  "error_message": null,
+  "duration_ms": 3244.8244094848633,
+  "started_at": "2026-01-04T01:04:39.733654",
+  "completed_at": "2026-01-04T01:04:42.979479"
+}

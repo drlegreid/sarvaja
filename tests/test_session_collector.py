@@ -298,13 +298,13 @@ class TestMCPSessionTools:
 
     def test_session_start_tool_exists(self):
         """session_start MCP tool exists."""
-        from governance.mcp_server import session_start
+        from governance.compat import session_start
         assert session_start is not None
         assert callable(session_start)
 
     def test_session_start_returns_json(self):
         """session_start returns valid JSON."""
-        from governance.mcp_server import session_start
+        from governance.compat import session_start
         from governance.session_collector import _active_sessions
 
         _active_sessions.clear()
@@ -316,25 +316,25 @@ class TestMCPSessionTools:
 
     def test_session_decision_tool_exists(self):
         """session_decision MCP tool exists."""
-        from governance.mcp_server import session_decision
+        from governance.compat import session_decision
         assert session_decision is not None
         assert callable(session_decision)
 
     def test_session_task_tool_exists(self):
         """session_task MCP tool exists."""
-        from governance.mcp_server import session_task
+        from governance.compat import session_task
         assert session_task is not None
         assert callable(session_task)
 
     def test_session_end_tool_exists(self):
         """session_end MCP tool exists."""
-        from governance.mcp_server import session_end
+        from governance.compat import session_end
         assert session_end is not None
         assert callable(session_end)
 
     def test_session_list_tool_exists(self):
         """session_list MCP tool exists."""
-        from governance.mcp_server import session_list
+        from governance.compat import session_list
         assert session_list is not None
         assert callable(session_list)
 

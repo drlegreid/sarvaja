@@ -1,0 +1,32 @@
+{
+  "mcpServers": {
+    "governance-core": {
+      "type": "stdio",
+      "command": "bash",
+      "args": ["../../scripts/mcp-runner.sh", "governance.mcp_server_core"],
+      "cwd": "${workspaceFolder}/../..",
+      "env": {
+        "TYPEDB_HOST": "localhost",
+        "TYPEDB_PORT": "1729",
+        "CHROMADB_HOST": "localhost",
+        "CHROMADB_PORT": "8001"
+      }
+    },
+    "governance-tasks": {
+      "type": "stdio",
+      "command": "bash",
+      "args": ["../../scripts/mcp-runner.sh", "governance.mcp_server_tasks"],
+      "cwd": "${workspaceFolder}/../..",
+      "env": {
+        "TYPEDB_HOST": "localhost",
+        "TYPEDB_PORT": "1729"
+      }
+    },
+    "sequential-thinking": {
+      "type": "stdio",
+      "command": "/home/oderid/.config/nvm/versions/node/v20.19.6/bin/npx",
+      "args": ["-y", "@anthropic-ai/mcp-server-sequential-thinking"],
+      "env": {}
+    }
+  }
+}

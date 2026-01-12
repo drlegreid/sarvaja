@@ -12,7 +12,7 @@ from trame.widgets import vuetify3 as v3, html
 
 
 def build_backlog_header() -> None:
-    """Build backlog header with agent ID input and refresh."""
+    """Build backlog header with agent ID input, refresh, and auto-refresh toggle."""
     with v3.VCardTitle(classes="d-flex align-center"):
         html.Span("Agent Task Backlog")
         v3.VSpacer()
@@ -26,6 +26,18 @@ def build_backlog_header() -> None:
             prepend_inner_icon="mdi-robot",
             __properties=["data-testid"],
             **{"data-testid": "backlog-agent-id-input"}
+        )
+        # Auto-refresh toggle (GAP-005)
+        v3.VBtn(
+            icon=("backlog_auto_refresh ? 'mdi-pause-circle' : 'mdi-play-circle'",),
+            color=("backlog_auto_refresh ? 'success' : 'grey'",),
+            variant="text",
+            size="small",
+            classes="ml-2",
+            click="trigger('toggle_backlog_auto_refresh')",
+            title=("backlog_auto_refresh ? 'Stop auto-refresh (5s)' : 'Start auto-refresh (5s)'",),
+            __properties=["data-testid"],
+            **{"data-testid": "backlog-auto-refresh-btn"}
         )
         v3.VBtn(
             "Refresh",
@@ -86,7 +98,7 @@ def build_available_tasks_column() -> None:
                                 color="primary",
                                 size="x-small",
                                 variant="tonal",
-                                disabled="!backlog_agent_id",
+                                disabled=("!backlog_agent_id",),
                                 click="trigger('claim_backlog_task', task.task_id)",
                                 __properties=["data-testid"],
                                 **{"data-testid": "backlog-claim-btn"}

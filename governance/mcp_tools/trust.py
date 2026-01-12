@@ -69,7 +69,7 @@ def register_trust_tools(mcp) -> None:
                 vote_weight=calculate_vote_weight(trust_score)
             )
 
-            return json.dumps(asdict(score), indent=2)
+            return json.dumps(asdict(score), indent=2, default=str)
 
         finally:
             client.close()

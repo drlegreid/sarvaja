@@ -1,12 +1,71 @@
 {
   "mcpServers": {
-    "governance": {
+    "claude-mem": {
       "type": "stdio",
-      "command": "pythonw",
-      "args": ["-m", "governance.mcp_server"],
-      "cwd": "c:\\Users\\natik\\Documents\\Vibe\\sim-ai\\sim-ai",
+      "command": "bash",
+      "args": ["scripts/mcp-runner.sh", "claude_mem.mcp_server"],
+      "cwd": "${workspaceFolder}",
       "env": {
-        "PYTHONPATH": "c:\\Users\\natik\\Documents\\Vibe\\sim-ai\\sim-ai",
+        "CHROMADB_HOST": "localhost",
+        "CHROMADB_PORT": "8001"
+      },
+      "_comment": "Fallback memory for AMNESIA recovery per RULE-024"
+    },
+    "podman": {
+      "type": "stdio",
+      "command": "/home/oderid/.config/nvm/versions/node/v20.19.6/bin/npx",
+      "args": ["-y", "podman-mcp-server@latest"],
+      "env": {}
+    },
+    "rest-api": {
+      "type": "stdio",
+      "command": "/home/oderid/.config/nvm/versions/node/v20.19.6/bin/npx",
+      "args": ["-y", "dkmaker-mcp-rest-api"],
+      "env": {
+        "REST_BASE_URL": "http://localhost:8082"
+      },
+      "_docs": "https://playbooks.com/mcp/dkmaker/mcp-rest-api"
+    },
+    "governance-core": {
+      "type": "stdio",
+      "command": "bash",
+      "args": ["scripts/mcp-runner.sh", "governance.mcp_server_core"],
+      "cwd": "${workspaceFolder}",
+      "env": {
+        "TYPEDB_HOST": "localhost",
+        "TYPEDB_PORT": "1729",
+        "CHROMADB_HOST": "localhost",
+        "CHROMADB_PORT": "8001"
+      }
+    },
+    "governance-agents": {
+      "type": "stdio",
+      "command": "bash",
+      "args": ["scripts/mcp-runner.sh", "governance.mcp_server_agents"],
+      "cwd": "${workspaceFolder}",
+      "env": {
+        "TYPEDB_HOST": "localhost",
+        "TYPEDB_PORT": "1729"
+      }
+    },
+    "governance-sessions": {
+      "type": "stdio",
+      "command": "bash",
+      "args": ["scripts/mcp-runner.sh", "governance.mcp_server_sessions"],
+      "cwd": "${workspaceFolder}",
+      "env": {
+        "TYPEDB_HOST": "localhost",
+        "TYPEDB_PORT": "1729",
+        "CHROMADB_HOST": "localhost",
+        "CHROMADB_PORT": "8001"
+      }
+    },
+    "governance-tasks": {
+      "type": "stdio",
+      "command": "bash",
+      "args": ["scripts/mcp-runner.sh", "governance.mcp_server_tasks"],
+      "cwd": "${workspaceFolder}",
+      "env": {
         "TYPEDB_HOST": "localhost",
         "TYPEDB_PORT": "1729"
       }

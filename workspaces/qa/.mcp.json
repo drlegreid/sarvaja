@@ -1,0 +1,39 @@
+{
+  "mcpServers": {
+    "playwright": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "@anthropic/playwright-mcp"]
+    },
+    "rest-api": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "dkmaker-mcp-rest-api"],
+      "env": {
+        "REST_BASE_URL": "http://localhost:8082"
+      }
+    },
+    "governance-tasks": {
+      "type": "stdio",
+      "command": "bash",
+      "args": ["../../scripts/mcp-runner.sh", "governance.mcp_server_tasks"],
+      "cwd": "${workspaceFolder}/../..",
+      "env": {
+        "TYPEDB_HOST": "localhost",
+        "TYPEDB_PORT": "1729"
+      }
+    },
+    "governance-sessions": {
+      "type": "stdio",
+      "command": "bash",
+      "args": ["../../scripts/mcp-runner.sh", "governance.mcp_server_sessions"],
+      "cwd": "${workspaceFolder}/../..",
+      "env": {
+        "TYPEDB_HOST": "localhost",
+        "TYPEDB_PORT": "1729",
+        "CHROMADB_HOST": "localhost",
+        "CHROMADB_PORT": "8001"
+      }
+    }
+  }
+}

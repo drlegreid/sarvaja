@@ -3,17 +3,25 @@ Evidence Routes.
 
 Per RULE-012: DSP Semantic Code Structure.
 Per GAP-FILE-002: Extracted from api.py.
+Per GAP-UI-009: Evidence search API endpoint.
 
 Created: 2024-12-28
+Updated: 2026-01-10 (added search endpoint)
 """
 
 from fastapi import APIRouter, HTTPException, Query
-from typing import List
+from typing import List, Optional
 from datetime import datetime
+from pathlib import Path
+import glob
 import os
 import re
 
-from governance.models import EvidenceResponse
+from governance.models import (
+    EvidenceResponse,
+    EvidenceSearchResponse,
+    EvidenceSearchResult
+)
 
 router = APIRouter(tags=["Evidence"])
 
@@ -55,6 +63,96 @@ async def list_evidence(limit: int = Query(20, description="Max results")):
                     pass
 
     return evidence_list
+
+
+# NOTE: /evidence/search MUST be defined BEFORE /evidence/{evidence_id}
+# to avoid FastAPI matching "search" as an evidence_id parameter
+@router.get("/evidence/search", response_model=EvidenceSearchResponse)
+async def search_evidence(
+    query: str = Query(..., min_length=2, description="Search query"),
+    top_k: int = Query(5, ge=1, le=20, description="Max results"),
+    source_type: Optional[str] = Query(None, description="Filter: session, evidence, rule")
+):
+    """
+    Semantic search across evidence artifacts.
+
+    Per GAP-UI-009: Evidence search functionality.
+    Tries vector search first, falls back to keyword search.
+    """
+    evidence_dir = os.path.join(os.path.dirname(__file__), "..", "..", "evidence")
+    docs_dir = os.path.join(os.path.dirname(__file__), "..", "..", "docs")
+
+    # Try vector/semantic search first
+    semantic_results = []
+    try:
+        from governance.vector_store import VectorStore, MockEmbeddings
+
+        store = VectorStore()
+        generator = MockEmbeddings(dimension=384)
+
+        if store.connect():
+            query_embedding = generator.generate(query)
+            semantic_results = store.search(query_embedding, top_k=top_k, source_type=source_type)
+            store.close()
+
+            if semantic_results:
+                return EvidenceSearchResponse(
+                    query=query,
+                    results=[
+                        EvidenceSearchResult(
+                            source=r.source,
+                            source_type=r.source_type,
+                            score=round(r.score, 4),
+                            content=r.content[:200] + "..." if len(r.content) > 200 else r.content
+                        )
+                        for r in semantic_results
+                    ],
+                    count=len(semantic_results),
+                    search_method="semantic_vector"
+                )
+    except Exception:
+        pass  # Fall back to keyword search
+
+    # Keyword search fallback
+    results = []
+    query_lower = query.lower()
+
+    # Search evidence files
+    search_patterns = [
+        (os.path.join(evidence_dir, "*.md"), "evidence"),
+        (os.path.join(docs_dir, "rules", "*.md"), "rule"),
+    ]
+
+    for pattern, file_type in search_patterns:
+        # Skip if source_type filter doesn't match
+        if source_type and source_type != file_type:
+            continue
+
+        for filepath in glob.glob(pattern):
+            try:
+                path = Path(filepath)
+                content = path.read_text(encoding="utf-8")
+                if query_lower in content.lower():
+                    # Count occurrences as relevance score
+                    score = content.lower().count(query_lower)
+                    results.append(EvidenceSearchResult(
+                        source=path.stem,
+                        source_type=file_type,
+                        score=float(score),
+                        content=content[:200] + "..." if len(content) > 200 else content
+                    ))
+            except Exception:
+                continue
+
+    # Sort by score descending
+    results.sort(key=lambda x: x.score, reverse=True)
+
+    return EvidenceSearchResponse(
+        query=query,
+        results=results[:top_k],
+        count=len(results[:top_k]),
+        search_method="keyword_fallback"
+    )
 
 
 @router.get("/evidence/{evidence_id}", response_model=EvidenceResponse)

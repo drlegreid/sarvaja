@@ -230,8 +230,19 @@ def governance_evidence_search(query, top_k=5, source_type=None):
                 # Calculate simple relevance score
                 occurrences = content_lower.count(query_lower)
                 score = min(1.0, occurrences * 0.1)
+                # Determine source_type from filename pattern
+                stem = path.stem
+                if stem.startswith("SESSION-"):
+                    src_type = "session"
+                elif stem.startswith("DSM-"):
+                    src_type = "dsm"
+                elif stem.startswith("DECISION-"):
+                    src_type = "decision"
+                else:
+                    src_type = "evidence"
                 results.append({
-                    "source": path.stem,
+                    "source": stem,
+                    "source_type": src_type,
                     "content": content[:200],
                     "score": round(score, 2)
                 })

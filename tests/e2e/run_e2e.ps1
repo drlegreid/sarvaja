@@ -16,7 +16,7 @@
     Run in headless mode (default: true)
 
 .PARAMETER BaseUrl
-    Base URL for tests (default: http://localhost:7777)
+    Base URL for tests (default: http://localhost:8081)
 
 .EXAMPLE
     .\run_e2e.ps1
@@ -28,7 +28,7 @@ param(
     [string]$Suite = "*.robot",
     [string]$Tags = "",
     [bool]$Headless = $true,
-    [string]$BaseUrl = "http://localhost:7777",
+    [string]$BaseUrl = "http://localhost:8081",
     [switch]$Verbose
 )
 

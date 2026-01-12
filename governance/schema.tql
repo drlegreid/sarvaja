@@ -18,6 +18,8 @@ rule-entity sub entity,
     owns priority,
     owns status,
     owns directive,
+    owns rule-tags,              # RD-WORKSPACE: Comma-separated skill tags (e.g., "research,analysis")
+    owns applicable-roles,       # RD-WORKSPACE: Comma-separated agent roles (e.g., "RESEARCH,CODING")
     owns created-date,
     plays rule-dependency:dependent,
     plays rule-dependency:dependency,
@@ -55,6 +57,8 @@ task sub entity,
     owns agent-id,                               # Agent assigned to task (E2E tests)
     owns task-evidence,                          # Completion evidence/notes (E2E tests)
     owns task-completed-at,                      # Completion timestamp (E2E tests)
+    owns task-created-at,                        # Creation timestamp (GAP-UI-035)
+    owns task-claimed-at,                        # Claim timestamp (GAP-UI-035)
     owns gap-reference,                          # DEPRECATED: Use references-gap relation (P10.7)
     plays task-blocked:blocked-task,
     plays task-blocked:blocking-rule,
@@ -214,6 +218,7 @@ agent sub entity,
     owns agent-id,
     owns agent-name,
     owns agent-type,        # "claude-code", "docker-agent", "sync-agent"
+    owns agent-capabilities, # Per GAP-AGENT-004: comma-separated capability list
     owns trust-score,       # 0.0 to 1.0
     owns compliance-rate,   # Historical compliance percentage
     owns accuracy-rate,     # Decision accuracy
@@ -248,6 +253,8 @@ category sub attribute, value string;  # governance, architecture, testing, etc.
 priority sub attribute, value string;  # CRITICAL, HIGH, MEDIUM, LOW
 status sub attribute, value string;    # ACTIVE, DRAFT, DEPRECATED
 directive sub attribute, value string;
+rule-tags sub attribute, value string;        # RD-WORKSPACE: Comma-separated skill tags
+applicable-roles sub attribute, value string; # RD-WORKSPACE: Comma-separated agent roles
 created-date sub attribute, value datetime;
 
 # Decision attributes
@@ -265,6 +272,8 @@ task-status sub attribute, value string;  # TODO, IN_PROGRESS, DONE, BLOCKED
 task-body sub attribute, value string;    # P11.3: detailed task description
 task-evidence sub attribute, value string; # Completion evidence/notes (E2E tests)
 task-completed-at sub attribute, value datetime; # Completion timestamp (E2E tests)
+task-created-at sub attribute, value datetime;   # Creation timestamp (GAP-UI-035)
+task-claimed-at sub attribute, value datetime;   # Claim timestamp (GAP-UI-035)
 phase sub attribute, value string;
 gap-reference sub attribute, value string; # P11.3: linked gap ID
 
@@ -339,6 +348,7 @@ analysis-confidence sub attribute, value double; # 0.0 to 1.0
 agent-id sub attribute, value string;
 agent-name sub attribute, value string;
 agent-type sub attribute, value string;    # "claude-code", "docker-agent", "sync-agent"
+agent-capabilities sub attribute, value string; # Per GAP-AGENT-004: comma-separated list
 trust-score sub attribute, value double;   # 0.0 to 1.0
 compliance-rate sub attribute, value double;
 accuracy-rate sub attribute, value double;

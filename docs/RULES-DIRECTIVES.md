@@ -1,6 +1,6 @@
 # Sim.ai Rules Directives - Index
 
-**Status:** Active | **Updated:** 2026-01-02 | **Rules:** 33 (30 ACTIVE, 3 DRAFT)
+**Status:** Active | **Updated:** 2026-01-11 | **Rules:** 41 (38 ACTIVE, 3 DRAFT)
 
 ---
 
@@ -8,9 +8,9 @@
 
 | Document | Content | Rules |
 |----------|---------|-------|
-| [RULES-GOVERNANCE](rules/RULES-GOVERNANCE.md) | Process, documentation, collaboration, reporting | 001, 003, 006, 011, 013, 018, 019, 026, 029 |
-| [RULES-TECHNICAL](rules/RULES-TECHNICAL.md) | Architecture, technology, infrastructure | 002, 007, 008, 009, 010, 016, 017 |
-| [RULES-OPERATIONAL](rules/RULES-OPERATIONAL.md) | Testing, stability, maintenance, execution, security | 004, 005, 012, 014, 015, 020, 021, 022, 023, 024, 027, 028, 030, 031, 032, 033 |
+| [RULES-GOVERNANCE](rules/RULES-GOVERNANCE.md) | Process, documentation, collaboration, reporting | 001, 003, 006, 011, 013, 018, 019, 026, 029, 034 |
+| [RULES-TECHNICAL](rules/RULES-TECHNICAL.md) | Architecture, technology, infrastructure | 002, 007, 008, 009, 010, 016, 017, 036, 038, 040 |
+| [RULES-OPERATIONAL](rules/RULES-OPERATIONAL.md) | Testing, stability, maintenance, execution, security | 004, 005, 012, 014, 015, 020, 021, 022, 023, 024, 027, 028, 030, 031, 032, 033, 035, 037, 039, 041 |
 
 ---
 
@@ -51,6 +51,15 @@
 | RULE-031 | Autonomous Task Continuation | operational | CRITICAL | ACTIVE |
 | RULE-032 | File Size & OOP Standards | architecture | HIGH | ACTIVE |
 | RULE-033 | PARTIAL Task Handling | workflow | HIGH | ACTIVE |
+| RULE-034 | Relative Document Linking | documentation | HIGH | ACTIVE |
+| RULE-035 | Shell Command Environment Selection | devops | HIGH | ACTIVE |
+| RULE-036 | MCP Server Separation Pattern | architecture | HIGH | ACTIVE |
+| RULE-037 | Fix Validation Protocol | operational | CRITICAL | ACTIVE |
+| RULE-038 | Single Source of Truth | architecture | HIGH | ACTIVE |
+| RULE-039 | Context Compression Standard | operational | HIGH | ACTIVE |
+| RULE-040 | Portable Configuration Patterns | technical | HIGH | ACTIVE |
+| RULE-041 | Crash Investigation Protocol | operational | CRITICAL | ACTIVE |
+| RULE-042 | Destructive Command Prevention | operational | CRITICAL | ACTIVE |
 
 ---
 
@@ -58,11 +67,11 @@
 
 | Category | Priority | Rules |
 |----------|----------|-------|
-| `governance` | CRITICAL | 001, 003, 006, 011, 013, 026, 029 |
+| `governance` | CRITICAL | 001, 003, 006, 011, 013, 026, 029, 034 |
 | `strategic` | CRITICAL | 008, 010, 017 |
 | `autonomy` | CRITICAL | 014, 015 |
-| `architecture` | HIGH | 002 |
-| `devops` | CRITICAL | 009, 016 |
+| `architecture` | HIGH | 002, 032, 036, 038 |
+| `devops` | CRITICAL | 009, 016, 035 |
 | `productivity` | HIGH | 007 |
 | `testing` | HIGH | 004, 020, 025, 027, 028 |
 | `stability` | CRITICAL | 005, 021 |
@@ -71,9 +80,10 @@
 | `security` | HIGH | 022 |
 | `quality` | CRITICAL | 023 |
 | `development` | HIGH | 030 |
-| `operational` | CRITICAL | 031 |
-| `architecture` | HIGH | 002, 032 |
+| `operational` | CRITICAL | 031, 037, 039, 041 |
+| `technical` | HIGH | 040 |
 | `workflow` | HIGH | 033 |
+| `documentation` | HIGH | 034 |
 
 ---
 
@@ -81,8 +91,8 @@
 
 | Level | Meaning | Rules |
 |-------|---------|-------|
-| **CRITICAL** | Must enforce always | 001, 008, 009, 010, 011, 014, 015, 016, 021, 023, 024, 031 |
-| **HIGH** | Enforce in normal ops | 002, 003, 004, 005, 007, 012, 013, 017, 018, 019, 020, 022, 025, 026, 027, 028, 029, 030, 032, 033 |
+| **CRITICAL** | Must enforce always | 001, 008, 009, 010, 011, 014, 015, 016, 021, 023, 024, 031, 041 |
+| **HIGH** | Enforce in normal ops | 002, 003, 004, 005, 007, 012, 013, 017, 018, 019, 020, 022, 025, 026, 027, 028, 029, 030, 032, 033, 034, 035, 036, 037, 038, 039, 040 |
 | **MEDIUM** | Advisory | 006 |
 
 ---
@@ -155,6 +165,8 @@ Rules are enforced via:
 | 2.6.0 | 2026-01-01 | Added RULE-031: Autonomous Task Continuation (multi-step execution) |
 | 2.7.0 | 2026-01-02 | Added RULE-032: File Size & OOP Standards (300 line limit, modularization) |
 | 2.8.0 | 2026-01-02 | Added RULE-033: PARTIAL Task Handling (subtask breakdown protocol) |
+| 2.9.0 | 2026-01-02 | Added RULE-034: Relative Document Linking (mandatory relative paths) |
+| 3.0.0 | 2026-01-03 | Added RULE-035: Shell Command Environment Selection (Bash vs PowerShell) |
 
 ---
 

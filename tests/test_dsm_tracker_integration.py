@@ -331,60 +331,77 @@ class TestMCPToolsExistence:
 
     def test_dsm_start_tool_exists(self):
         """dsm_start MCP tool exists."""
-        from governance.mcp_server import dsm_start
+        from governance.compat import dsm_start
         assert dsm_start is not None
         assert callable(dsm_start)
 
     def test_dsm_advance_tool_exists(self):
         """dsm_advance MCP tool exists."""
-        from governance.mcp_server import dsm_advance
+        from governance.compat import dsm_advance
         assert dsm_advance is not None
         assert callable(dsm_advance)
 
     def test_dsm_checkpoint_tool_exists(self):
         """dsm_checkpoint MCP tool exists."""
-        from governance.mcp_server import dsm_checkpoint
+        from governance.compat import dsm_checkpoint
         assert dsm_checkpoint is not None
         assert callable(dsm_checkpoint)
 
     def test_dsm_status_tool_exists(self):
         """dsm_status MCP tool exists."""
-        from governance.mcp_server import dsm_status
+        from governance.compat import dsm_status
         assert dsm_status is not None
         assert callable(dsm_status)
 
     def test_dsm_complete_tool_exists(self):
         """dsm_complete MCP tool exists."""
-        from governance.mcp_server import dsm_complete
+        from governance.compat import dsm_complete
         assert dsm_complete is not None
         assert callable(dsm_complete)
 
     def test_dsm_finding_tool_exists(self):
         """dsm_finding MCP tool exists."""
-        from governance.mcp_server import dsm_finding
+        from governance.compat import dsm_finding
         assert dsm_finding is not None
         assert callable(dsm_finding)
 
     def test_dsm_metrics_tool_exists(self):
         """dsm_metrics MCP tool exists."""
-        from governance.mcp_server import dsm_metrics
+        from governance.compat import dsm_metrics
         assert dsm_metrics is not None
         assert callable(dsm_metrics)
+
+
+@pytest.fixture
+def clean_dsm_tracker():
+    """Fixture to ensure clean DSM tracker state for each test."""
+    # Import from the actual module where _tracker is defined
+    import governance.dsm.tracker as dt
+    from governance.dsm import reset_tracker, DSMTracker
+
+    # Save original tracker
+    original_tracker = dt._tracker
+
+    # Create a fresh tracker with a unique temp state file
+    import uuid
+    temp_state = Path(tempfile.gettempdir()) / f".dsm_state_test_{uuid.uuid4().hex}.json"
+    reset_tracker()
+    dt._tracker = DSMTracker(state_file=str(temp_state))
+
+    yield dt._tracker
+
+    # Cleanup: restore original tracker and remove temp file
+    dt._tracker = original_tracker
+    if temp_state.exists():
+        temp_state.unlink()
 
 
 class TestMCPToolsFunctionality:
     """Tests for MCP tool functionality."""
 
-    def test_dsm_start_returns_json(self):
+    def test_dsm_start_returns_json(self, clean_dsm_tracker):
         """dsm_start returns valid JSON."""
-        from governance.mcp_server import dsm_start
-        from governance.dsm_tracker import reset_tracker, get_tracker, DSMTracker
-
-        # Full reset: clear global and create fresh tracker with temp state
-        reset_tracker()
-        # Force a fresh tracker with no state file
-        import governance.dsm_tracker as dt
-        dt._tracker = DSMTracker(state_file=str(Path(tempfile.gettempdir()) / f".dsm_state_test_{id(self)}.json"))
+        from governance.compat import dsm_start
 
         result = dsm_start("MCP-TEST")
 
@@ -392,15 +409,9 @@ class TestMCPToolsFunctionality:
         assert "cycle_id" in parsed
         assert parsed["batch_id"] == "MCP-TEST"
 
-    def test_dsm_advance_returns_json(self):
+    def test_dsm_advance_returns_json(self, clean_dsm_tracker):
         """dsm_advance returns valid JSON."""
-        from governance.mcp_server import dsm_start, dsm_advance
-        from governance.dsm_tracker import reset_tracker, DSMTracker
-
-        # Full reset with temp state file
-        reset_tracker()
-        import governance.dsm_tracker as dt
-        dt._tracker = DSMTracker(state_file=str(Path(tempfile.gettempdir()) / f".dsm_state_test_adv_{id(self)}.json"))
+        from governance.compat import dsm_start, dsm_advance
 
         dsm_start("MCP-TEST")
         result = dsm_advance()
@@ -409,14 +420,9 @@ class TestMCPToolsFunctionality:
         assert parsed["new_phase"] == "audit"
         assert "required_mcps" in parsed
 
-    def test_dsm_status_returns_json(self):
+    def test_dsm_status_returns_json(self, clean_dsm_tracker):
         """dsm_status returns valid JSON."""
-        from governance.mcp_server import dsm_start, dsm_status
-        from governance.dsm_tracker import reset_tracker, DSMTracker
-
-        reset_tracker()
-        import governance.dsm_tracker as dt
-        dt._tracker = DSMTracker(state_file=str(Path(tempfile.gettempdir()) / f".dsm_state_test_status_{id(self)}.json"))
+        from governance.compat import dsm_start, dsm_status
 
         dsm_start("STATUS-TEST")
         result = dsm_status()
@@ -425,14 +431,9 @@ class TestMCPToolsFunctionality:
         assert "active" in parsed
         assert parsed["active"] is True
 
-    def test_dsm_checkpoint_returns_json(self):
+    def test_dsm_checkpoint_returns_json(self, clean_dsm_tracker):
         """dsm_checkpoint returns valid JSON."""
-        from governance.mcp_server import dsm_start, dsm_advance, dsm_checkpoint
-        from governance.dsm_tracker import reset_tracker, DSMTracker
-
-        reset_tracker()
-        import governance.dsm_tracker as dt
-        dt._tracker = DSMTracker(state_file=str(Path(tempfile.gettempdir()) / f".dsm_state_test_cp_{id(self)}.json"))
+        from governance.compat import dsm_start, dsm_advance, dsm_checkpoint
 
         dsm_start("CHECKPOINT-TEST")
         dsm_advance()
@@ -442,14 +443,9 @@ class TestMCPToolsFunctionality:
         assert parsed["description"] == "Test checkpoint"
         assert "timestamp" in parsed
 
-    def test_dsm_finding_returns_json(self):
+    def test_dsm_finding_returns_json(self, clean_dsm_tracker):
         """dsm_finding returns valid JSON."""
-        from governance.mcp_server import dsm_start, dsm_advance, dsm_finding
-        from governance.dsm_tracker import reset_tracker, DSMTracker
-
-        reset_tracker()
-        import governance.dsm_tracker as dt
-        dt._tracker = DSMTracker(state_file=str(Path(tempfile.gettempdir()) / f".dsm_state_test_find_{id(self)}.json"))
+        from governance.compat import dsm_start, dsm_advance, dsm_finding
 
         dsm_start("FINDING-TEST")
         dsm_advance()

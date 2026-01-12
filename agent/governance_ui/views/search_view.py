@@ -55,7 +55,7 @@ def build_search_view() -> None:
                         "Search",
                         color="primary",
                         click="trigger('perform_search')",
-                        disabled="!search_query",
+                        disabled=("!search_query",),
                         __properties=["data-testid"],
                         **{"data-testid": "search-btn"}
                     )

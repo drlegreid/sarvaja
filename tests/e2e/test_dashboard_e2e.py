@@ -36,7 +36,7 @@ class TestDashboardNavigation:
     def test_dashboard_loads(self, page: Page):
         """Dashboard loads with header and navigation."""
         expect(page.locator("text=Sim.ai Governance Dashboard")).to_be_visible()
-        expect(page.locator("text=Rules")).to_be_visible()
+        expect(page.locator("[data-testid='nav-rules']")).to_be_visible()
 
     def test_header_shows_stats(self, page: Page):
         """Header displays rule and decision counts."""
@@ -221,6 +221,44 @@ class TestPaginationUI:
 
         # Agents should be sorted by trust score by default
         page.wait_for_selector("text=Trust Score", timeout=5000)
+
+
+class TestInfraView:
+    """Test Infrastructure Health Dashboard. Per GAP-INFRA-004."""
+
+    @pytest.fixture(autouse=True)
+    def setup(self, page: Page):
+        """Navigate to Infrastructure view before each test."""
+        page.goto(DASHBOARD_URL)
+        page.wait_for_load_state("networkidle")
+        page.wait_for_selector("text=Sim.ai Governance Dashboard", timeout=10000)
+        page.click("[data-testid='nav-infra']")
+
+    def test_infra_dashboard_loads(self, page: Page):
+        """Infrastructure dashboard loads with header."""
+        expect(page.locator("text=Infrastructure Health")).to_be_visible()
+
+    def test_infra_shows_service_cards(self, page: Page):
+        """Service status cards are displayed."""
+        expect(page.locator("[data-testid='infra-card-typedb']")).to_be_visible()
+        expect(page.locator("[data-testid='infra-card-chromadb']")).to_be_visible()
+
+    def test_infra_shows_stats(self, page: Page):
+        """System stats are displayed."""
+        expect(page.locator("[data-testid='infra-stat-memory']")).to_be_visible()
+        expect(page.locator("[data-testid='infra-stat-hash']")).to_be_visible()
+
+    def test_infra_refresh_button(self, page: Page):
+        """Refresh button is clickable."""
+        refresh_btn = page.locator("[data-testid='infra-refresh-btn']")
+        expect(refresh_btn).to_be_visible()
+        refresh_btn.click()
+
+    def test_infra_recovery_actions(self, page: Page):
+        """Recovery action buttons are present."""
+        expect(page.locator("[data-testid='infra-start-all']")).to_be_visible()
+        expect(page.locator("[data-testid='infra-restart']")).to_be_visible()
+        expect(page.locator("[data-testid='infra-cleanup']")).to_be_visible()
 
 
 # Run with: pytest tests/e2e/test_dashboard_e2e.py -v --headed

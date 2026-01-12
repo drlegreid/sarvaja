@@ -33,15 +33,18 @@ exclude_tags:
 # Environments
 environments:
   local:
-    base_url: http://localhost:7777
+    base_url: http://localhost:8081
+    api_url: http://localhost:8082
     headless: true
 
   docker:
-    base_url: http://agents:7777
+    base_url: http://agents:8081
+    api_url: http://agents:8082
     headless: true
 
   ci:
-    base_url: http://localhost:7777
+    base_url: http://localhost:8081
+    api_url: http://localhost:8082
     headless: true
     timeout: 60000
 

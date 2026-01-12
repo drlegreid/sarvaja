@@ -1,0 +1,51 @@
+{
+  "test_id": ".claude/hooks/tests/test_level2_integration.py::TestServiceChecker::test_checker_detects_docker",
+  "test_name": "test_checker_detects_docker",
+  "module": "test_level2_integration.py",
+  "category": "integration",
+  "business_intent": "ServiceChecker detects Docker daemon.",
+  "given": [
+    {
+      "phase": "GIVEN",
+      "description": "Fixture 'event_loop_policy' is available",
+      "technical_details": null,
+      "timestamp": "2026-01-04T01:04:35.701450"
+    },
+    {
+      "phase": "GIVEN",
+      "description": "Test marked as 'skipif'",
+      "technical_details": {
+        "marker": "skipif"
+      },
+      "timestamp": "2026-01-04T01:04:35.701450"
+    }
+  ],
+  "when": [
+    {
+      "phase": "WHEN",
+      "description": "Execute test 'test_checker_detects_docker'",
+      "technical_details": {
+        "function": "test_checker_detects_docker",
+        "module": "C:\\Users\\natik\\Documents\\Vibe\\sim-ai\\sim-ai\\.claude\\hooks\\tests\\test_level2_integration.py"
+      },
+      "timestamp": "2026-01-04T01:04:35.701450"
+    }
+  ],
+  "then": [
+    {
+      "phase": "THEN",
+      "description": "Test passed successfully",
+      "technical_details": {
+        "outcome": "passed",
+        "duration_ms": 673.8564968109131
+      },
+      "timestamp": "2026-01-04T01:04:36.375307"
+    }
+  ],
+  "status": "passed",
+  "result_details": null,
+  "error_message": null,
+  "duration_ms": 673.8564968109131,
+  "started_at": "2026-01-04T01:04:35.701450",
+  "completed_at": "2026-01-04T01:04:36.375307"
+}

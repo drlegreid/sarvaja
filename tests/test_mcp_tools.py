@@ -10,6 +10,37 @@ import json
 from unittest.mock import Mock, patch, MagicMock
 
 
+def call_tool(tools, method_name, *args, **kwargs):
+    """
+    Call a tool method, handling both agno and stub cases.
+
+    When agno is available, methods are wrapped in Function objects
+    and must be called via their entrypoint.
+    When using the stub, methods are directly callable.
+    """
+    method = getattr(tools, method_name)
+
+    # Check if this is an agno Function object
+    if hasattr(method, 'entrypoint'):
+        # Agno case: call entrypoint with self bound
+        return method.entrypoint(tools, *args, **kwargs)
+    else:
+        # Stub case: direct call
+        return method(*args, **kwargs)
+
+
+def is_tool_callable(method):
+    """
+    Check if a method is callable as a tool.
+
+    For agno Functions, check if entrypoint is callable.
+    For stubs, check if method is directly callable.
+    """
+    if hasattr(method, 'entrypoint'):
+        return callable(method.entrypoint)
+    return callable(method)
+
+
 class TestGovernanceToolsUnit:
     """Unit tests for GovernanceTools class."""
 
@@ -58,49 +89,49 @@ class TestGovernanceToolsMethods:
         from agent.mcp_tools import GovernanceTools
         tools = GovernanceTools()
         assert hasattr(tools, 'query_rules')
-        assert callable(tools.query_rules)
+        assert is_tool_callable(tools.query_rules)
 
     def test_get_rule_method_exists(self):
         """get_rule method exists."""
         from agent.mcp_tools import GovernanceTools
         tools = GovernanceTools()
         assert hasattr(tools, 'get_rule')
-        assert callable(tools.get_rule)
+        assert is_tool_callable(tools.get_rule)
 
     def test_get_dependencies_method_exists(self):
         """get_dependencies method exists."""
         from agent.mcp_tools import GovernanceTools
         tools = GovernanceTools()
         assert hasattr(tools, 'get_dependencies')
-        assert callable(tools.get_dependencies)
+        assert is_tool_callable(tools.get_dependencies)
 
     def test_find_conflicts_method_exists(self):
         """find_conflicts method exists."""
         from agent.mcp_tools import GovernanceTools
         tools = GovernanceTools()
         assert hasattr(tools, 'find_conflicts')
-        assert callable(tools.find_conflicts)
+        assert is_tool_callable(tools.find_conflicts)
 
     def test_get_trust_score_method_exists(self):
         """get_trust_score method exists."""
         from agent.mcp_tools import GovernanceTools
         tools = GovernanceTools()
         assert hasattr(tools, 'get_trust_score')
-        assert callable(tools.get_trust_score)
+        assert is_tool_callable(tools.get_trust_score)
 
     def test_list_agents_method_exists(self):
         """list_agents method exists."""
         from agent.mcp_tools import GovernanceTools
         tools = GovernanceTools()
         assert hasattr(tools, 'list_agents')
-        assert callable(tools.list_agents)
+        assert is_tool_callable(tools.list_agents)
 
     def test_health_check_method_exists(self):
         """health_check method exists."""
         from agent.mcp_tools import GovernanceTools
         tools = GovernanceTools()
         assert hasattr(tools, 'health_check')
-        assert callable(tools.health_check)
+        assert is_tool_callable(tools.health_check)
 
 
 class TestGovernanceToolsReturnFormat:
@@ -110,7 +141,7 @@ class TestGovernanceToolsReturnFormat:
         """query_rules returns JSON string."""
         from agent.mcp_tools import GovernanceTools
         tools = GovernanceTools()
-        result = tools.query_rules()
+        result = call_tool(tools, 'query_rules')
         # Should be valid JSON even if error
         parsed = json.loads(result)
         assert isinstance(parsed, (list, dict))
@@ -119,7 +150,7 @@ class TestGovernanceToolsReturnFormat:
         """get_rule returns JSON string."""
         from agent.mcp_tools import GovernanceTools
         tools = GovernanceTools()
-        result = tools.get_rule("RULE-001")
+        result = call_tool(tools, 'get_rule', "RULE-001")
         parsed = json.loads(result)
         assert isinstance(parsed, dict)
 
@@ -127,7 +158,7 @@ class TestGovernanceToolsReturnFormat:
         """health_check returns JSON string."""
         from agent.mcp_tools import GovernanceTools
         tools = GovernanceTools()
-        result = tools.health_check()
+        result = call_tool(tools, 'health_check')
         parsed = json.loads(result)
         assert isinstance(parsed, dict)
         assert "status" in parsed
@@ -169,8 +200,14 @@ class TestToolDecorator:
         from agent.mcp_tools import GovernanceTools
         tools = GovernanceTools()
         # Check the function is registered in toolkit
-        assert 'query_rules' in [f.__name__ for f in tools.functions.values()] or \
-               len(tools.functions) > 0
+        # Agno Functions use 'name', stubs use '__name__'
+        func_names = []
+        for f in tools.functions.values():
+            if hasattr(f, 'name'):
+                func_names.append(f.name)
+            elif hasattr(f, '__name__'):
+                func_names.append(f.__name__)
+        assert 'query_rules' in func_names or len(tools.functions) > 0
 
     def test_all_seven_tools_registered(self):
         """All seven tools are registered in toolkit."""
@@ -230,7 +267,7 @@ class TestMockTypeDBClient:
         MockClient.return_value = mock_client
 
         tools = GovernanceTools()
-        result = tools.query_rules()
+        result = call_tool(tools, 'query_rules')
 
         parsed = json.loads(result)
         assert isinstance(parsed, list)
@@ -243,7 +280,7 @@ class TestMockTypeDBClient:
         from agent.mcp_tools import GovernanceTools
 
         tools = GovernanceTools()
-        result = tools.query_rules()
+        result = call_tool(tools, 'query_rules')
 
         parsed = json.loads(result)
         assert "error" in parsed
@@ -271,7 +308,7 @@ class TestVoteWeightCalculation:
         MockClient.return_value = mock_client
 
         tools = GovernanceTools()
-        result = tools.get_trust_score("AGENT-001")
+        result = call_tool(tools, 'get_trust_score', "AGENT-001")
 
         parsed = json.loads(result)
         assert parsed["vote_weight"] == 1.0
@@ -294,7 +331,7 @@ class TestVoteWeightCalculation:
         MockClient.return_value = mock_client
 
         tools = GovernanceTools()
-        result = tools.get_trust_score("AGENT-002")
+        result = call_tool(tools, 'get_trust_score', "AGENT-002")
 
         parsed = json.loads(result)
         assert parsed["vote_weight"] == 0.3

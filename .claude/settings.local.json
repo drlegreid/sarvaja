@@ -3,7 +3,58 @@
     "allow": [
       "Bash(powershell:*)",
       "Bash(curl:*)",
-      "Skill(remember)"
+      "Skill(remember)",
+      "Skill(save)",
+      "Bash(podman:*)",
+      "Bash(kubectl version:*)",
+      "Bash(podman-compose:*)",
+      "Bash(pip install:*)",
+      "Bash(pip3 --version:*)",
+      "Bash(systemctl:*)",
+      "Bash(bash -c 'echo > /dev/tcp/localhost/1729')",
+      "Bash(bash -c 'echo > /dev/tcp/localhost/11434')",
+      "Bash(bash -c 'echo > /dev/tcp/localhost/7777')",
+      "Bash(ls:*)",
+      "Bash(du:*)",
+      "Bash(docker exec:*)",
+      "Bash(/usr/bin/podman info:*)",
+      "Skill(entropy)",
+      "Bash(python:*)",
+      "Bash(python3:*)",
+      "Bash(CONTAINERS_STORAGE_CONF=/dev/null podman system reset:*)"
+    ]
+  },
+  "enableAllProjectMcpServers": true,
+  "enabledMcpjsonServers": [
+    "podman",
+    "rest-api",
+    "governance-core",
+    "governance-agents",
+    "governance-sessions",
+    "governance-tasks"
+  ],
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"$CLAUDE_PROJECT_DIR/.claude/hooks/healthcheck.py\"",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"$CLAUDE_PROJECT_DIR/.claude/hooks/prompt_healthcheck.py\"",
+            "timeout": 3
+          }
+        ]
+      }
     ]
   }
 }

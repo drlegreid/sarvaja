@@ -125,12 +125,15 @@ def get_initial_state() -> Dict[str, Any]:
         'knowledge_gaps': [],
         'question_history': [],
 
-        # Agent Task Backlog (TODO-6)
+        # Agent Task Backlog (TODO-6, GAP-005)
         'available_tasks': [],
         'claimed_tasks': [],
         'selected_task': None,
         'show_task_detail': False,
         'current_agent_id': None,
+        'backlog_agent_id': '',
+        'backlog_auto_refresh': False,
+        'backlog_refresh_interval': 5,  # seconds
 
         # Executive Reports (GAP-UI-044)
         'executive_report': None,
@@ -156,4 +159,17 @@ def get_initial_state() -> Dict[str, Any]:
         'task_execution_log': [],
         'task_execution_loading': False,
         'show_task_execution': False,
+
+        # Infrastructure Health (GAP-INFRA-004)
+        'infra_services': {},
+        'infra_stats': {},
+        'infra_loading': False,
+        'infra_last_action': '',
+
+        # Workflow Compliance (RD-WORKFLOW Phase 4)
+        'workflow_status': {'overall': 'UNKNOWN', 'passed': 0, 'failed': 0, 'warnings': 0},
+        'workflow_checks': [],
+        'workflow_violations': [],
+        'workflow_recommendations': [],
+        'workflow_loading': False,
     }

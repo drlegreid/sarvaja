@@ -163,6 +163,8 @@ from agent.governance_ui.views import (
     build_trust_view,
     build_search_view,
     build_impact_view,
+    build_infra_view,  # GAP-INFRA-004: Infrastructure health dashboard
+    build_workflow_view,  # RD-WORKFLOW Phase 4: Workflow compliance dashboard
     build_all_dialogs,  # GAP-UI-038: Shared dialogs
 )
 
@@ -353,6 +355,10 @@ class GovernanceDashboard:
                     load_executive_report_data()
 
             with VAppLayout(self._server, full_height=True) as layout:
+                # Inject mermaid.js for diagram rendering (RULE-039)
+                from agent.governance_ui.components.mermaid import inject_mermaid_script
+                inject_mermaid_script()
+
                 # App bar with data-testid
                 with v3.VAppBar(
                     color="deep-purple",
@@ -415,6 +421,8 @@ class GovernanceDashboard:
                         build_trust_view()
                         build_search_view()
                         build_impact_view()
+                        build_infra_view()
+                        build_workflow_view()
 
                     # =============================================================
                     # SHARED DIALOGS (GAP-UI-038)
@@ -478,52 +486,8 @@ class GovernanceDashboard:
                                 **{"data-testid": "confirm-yes"}
                             )
 
-                # =================================================================
-                # FILE VIEWER DIALOG (GAP-DATA-003)
-                # =================================================================
-                with v3.VDialog(
-                    v_model="show_file_viewer",
-                    max_width=900,
-                    scrollable=True,
-                    __properties=["data-testid"],
-                    **{"data-testid": "file-viewer-dialog"}
-                ):
-                    with v3.VCard():
-                        with v3.VCardTitle(classes="d-flex align-center"):
-                            v3.VIcon("mdi-file-document-outline", classes="mr-2")
-                            html.Span("{{ file_viewer_path }}")
-                            v3.VSpacer()
-                            v3.VBtn(
-                                icon="mdi-close",
-                                variant="text",
-                                click="show_file_viewer = false",
-                                __properties=["data-testid"],
-                                **{"data-testid": "file-viewer-close"}
-                            )
-
-                        with v3.VCardText():
-                            # Loading state
-                            with html.Div(v_if="file_viewer_loading", classes="text-center py-8"):
-                                v3.VProgressCircular(indeterminate=True, color="primary")
-                                html.Div("Loading file...", classes="mt-2 text-grey")
-
-                            # Error state
-                            with v3.VAlert(
-                                v_if="file_viewer_error",
-                                type="error",
-                                density="compact",
-                            ):
-                                html.Span("{{ file_viewer_error }}")
-
-                            # File content (markdown-style pre for readability)
-                            with html.Pre(
-                                v_if="!file_viewer_loading && !file_viewer_error && file_viewer_content",
-                                classes="pa-3 bg-grey-lighten-4 rounded overflow-auto",
-                                style="max-height: 60vh; font-size: 12px; line-height: 1.4;",
-                                __properties=["data-testid"],
-                                **{"data-testid": "file-viewer-content"}
-                            ):
-                                html.Code("{{ file_viewer_content }}")
+                # FILE VIEWER DIALOG: Now provided by build_all_dialogs() from views/dialogs.py
+                # Per GAP-UI-038: Fullscreen modal for document viewing
 
             # Initialize additional state for dialogs
             self._state.has_error = False

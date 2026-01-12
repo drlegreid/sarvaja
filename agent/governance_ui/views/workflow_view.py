@@ -1,0 +1,225 @@
+"""
+Workflow Compliance Dashboard View.
+
+Per RD-WORKFLOW Phase 4: Reporting & Alerts Dashboard.
+Per RULE-020: Test Before Claim Protocol.
+Per RULE-012: Single Responsibility - only workflow compliance UI.
+
+Shows:
+- Workflow compliance status
+- Validation checks (pass/fail/warning)
+- Rule violations and recommendations
+- Gap lifecycle tracking
+"""
+
+from trame.widgets import vuetify3 as v3, html
+
+
+def build_workflow_header() -> None:
+    """Build workflow dashboard header."""
+    with v3.VCardTitle(classes="d-flex align-center"):
+        v3.VIcon("mdi-check-decagram", classes="mr-2")
+        html.Span("Workflow Compliance")
+        v3.VSpacer()
+        v3.VBtn(
+            "Refresh",
+            prepend_icon="mdi-refresh",
+            variant="outlined",
+            size="small",
+            click="trigger('load_workflow_status')",
+            loading=("workflow_loading",),
+            __properties=["data-testid"],
+            **{"data-testid": "workflow-refresh-btn"}
+        )
+
+
+def build_compliance_summary() -> None:
+    """Build compliance summary cards."""
+    with v3.VRow():
+        # Overall Status Card
+        with v3.VCol(cols=12, md=4):
+            with v3.VCard(
+                variant="tonal",
+                color=(
+                    "workflow_status.overall === 'COMPLIANT' ? 'success' : "
+                    "workflow_status.overall === 'WARNINGS' ? 'warning' : 'error'"
+                ),
+                __properties=["data-testid"],
+                **{"data-testid": "workflow-status-card"}
+            ):
+                with v3.VCardText(classes="text-center"):
+                    v3.VIcon(
+                        icon=(
+                            "workflow_status.overall === 'COMPLIANT' ? 'mdi-check-circle' : "
+                            "workflow_status.overall === 'WARNINGS' ? 'mdi-alert' : 'mdi-close-circle'"
+                        ),
+                        size="64",
+                        color=(
+                            "workflow_status.overall === 'COMPLIANT' ? 'success' : "
+                            "workflow_status.overall === 'WARNINGS' ? 'warning' : 'error'"
+                        )
+                    )
+                    html.Div(
+                        "{{ workflow_status.overall || 'UNKNOWN' }}",
+                        classes="text-h5 font-weight-bold mt-2"
+                    )
+                    html.Div(
+                        "Compliance Status",
+                        classes="text-caption text-grey"
+                    )
+
+        # Checks Passed
+        with v3.VCol(cols=12, md=4):
+            with v3.VCard(
+                variant="tonal",
+                __properties=["data-testid"],
+                **{"data-testid": "workflow-passed-card"}
+            ):
+                with v3.VCardText(classes="text-center"):
+                    v3.VIcon(
+                        icon="mdi-check",
+                        size="64",
+                        color="success"
+                    )
+                    html.Div(
+                        "{{ workflow_status.passed || 0 }}",
+                        classes="text-h4 font-weight-bold mt-2"
+                    )
+                    html.Div(
+                        "Checks Passed",
+                        classes="text-caption text-grey"
+                    )
+
+        # Issues
+        with v3.VCol(cols=12, md=4):
+            with v3.VCard(
+                variant="tonal",
+                __properties=["data-testid"],
+                **{"data-testid": "workflow-issues-card"}
+            ):
+                with v3.VCardText(classes="text-center"):
+                    v3.VIcon(
+                        icon="mdi-alert-circle",
+                        size="64",
+                        color=(
+                            "(workflow_status.failed || 0) > 0 ? 'error' : "
+                            "(workflow_status.warnings || 0) > 0 ? 'warning' : 'grey'"
+                        )
+                    )
+                    html.Div(
+                        "{{ (workflow_status.failed || 0) + (workflow_status.warnings || 0) }}",
+                        classes="text-h4 font-weight-bold mt-2"
+                    )
+                    html.Div(
+                        "Issues Found",
+                        classes="text-caption text-grey"
+                    )
+
+
+def build_validation_checks() -> None:
+    """Build validation checks table."""
+    with v3.VRow(classes="mt-4"):
+        with v3.VCol(cols=12):
+            with v3.VCard(
+                variant="outlined",
+                __properties=["data-testid"],
+                **{"data-testid": "workflow-checks-card"}
+            ):
+                v3.VCardTitle("Validation Checks")
+                with v3.VCardText():
+                    v3.VDataTable(
+                        items=("workflow_checks",),
+                        headers=[
+                            {"title": "Rule", "key": "rule_id", "width": "120px"},
+                            {"title": "Check", "key": "check_name"},
+                            {"title": "Status", "key": "status", "width": "100px"},
+                            {"title": "Message", "key": "message"},
+                        ],
+                        density="compact",
+                        hide_default_footer=True,
+                        __properties=["data-testid"],
+                        **{"data-testid": "workflow-checks-table"}
+                    )
+
+
+def build_violations_panel() -> None:
+    """Build violations alert panel."""
+    with v3.VRow(classes="mt-4", v_if="workflow_violations && workflow_violations.length > 0"):
+        with v3.VCol(cols=12):
+            with v3.VCard(
+                variant="outlined",
+                color="error",
+                __properties=["data-testid"],
+                **{"data-testid": "workflow-violations-card"}
+            ):
+                with v3.VCardTitle(classes="text-error"):
+                    v3.VIcon("mdi-alert-octagon", classes="mr-2")
+                    html.Span("Violations")
+                with v3.VCardText():
+                    with v3.VList(density="compact"):
+                        with v3.VListItem(
+                            v_for="(violation, idx) in workflow_violations",
+                            key="idx",
+                            __properties=["data-testid"],
+                            **{"data-testid": "workflow-violation-item"}
+                        ):
+                            with v3.VListItemTitle():
+                                html.Span(
+                                    "{{ violation.rule_id }}",
+                                    classes="font-weight-bold mr-2"
+                                )
+                                html.Span("{{ violation.message }}")
+
+
+def build_recommendations() -> None:
+    """Build recommendations panel."""
+    with v3.VRow(
+        classes="mt-4",
+        v_if="workflow_recommendations && workflow_recommendations.length > 0"
+    ):
+        with v3.VCol(cols=12):
+            with v3.VCard(
+                variant="tonal",
+                color="info",
+                __properties=["data-testid"],
+                **{"data-testid": "workflow-recommendations-card"}
+            ):
+                with v3.VCardTitle():
+                    v3.VIcon("mdi-lightbulb", classes="mr-2")
+                    html.Span("Recommendations")
+                with v3.VCardText():
+                    with v3.VList(density="compact"):
+                        with v3.VListItem(
+                            v_for="(rec, idx) in workflow_recommendations",
+                            key="idx"
+                        ):
+                            v3.VListItemTitle("{{ rec }}")
+
+
+def build_workflow_view() -> None:
+    """
+    Build the Workflow Compliance Dashboard view.
+
+    Main entry point for the workflow view module.
+    Per RD-WORKFLOW Phase 4: Reporting & Alerts Dashboard.
+    """
+    with v3.VCard(
+        v_if="active_view === 'workflow'",
+        classes="fill-height",
+        __properties=["data-testid"],
+        **{"data-testid": "workflow-dashboard"}
+    ):
+        build_workflow_header()
+
+        with v3.VCardText():
+            # Compliance summary
+            build_compliance_summary()
+
+            # Validation checks table
+            build_validation_checks()
+
+            # Violations panel
+            build_violations_panel()
+
+            # Recommendations
+            build_recommendations()

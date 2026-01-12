@@ -213,3 +213,65 @@ async def delete_task(task_id: str):
 
     del _tasks_store[task_id]
     return None
+
+
+@router.post("/tasks/{task_id}/rules/{rule_id}", status_code=201)
+async def link_task_to_rule(task_id: str, rule_id: str):
+    """
+    Link a task to a rule via TypeDB implements-rule relation.
+
+    Per GAP-LINK-002: Task → Rule linkage enrichment.
+    Per GAP-DATA-002: Cross-entity relationships.
+    """
+    client = get_typedb_client()
+    if not client:
+        raise HTTPException(status_code=503, detail="TypeDB unavailable")
+
+    try:
+        # Verify task exists
+        task = client.get_task(task_id)
+        if not task:
+            raise HTTPException(status_code=404, detail=f"Task {task_id} not found")
+
+        # Create the link
+        success = client.link_task_to_rule(task_id, rule_id)
+        if success:
+            return {"task_id": task_id, "rule_id": rule_id, "linked": True}
+        else:
+            raise HTTPException(status_code=400, detail="Failed to create link")
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to link task {task_id} to rule {rule_id}: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/tasks/{task_id}/sessions/{session_id}", status_code=201)
+async def link_task_to_session(task_id: str, session_id: str):
+    """
+    Link a task to a session via TypeDB completed-in relation.
+
+    Per GAP-LINK-001: Task → Session linkage enrichment.
+    Per GAP-DATA-002: Cross-entity relationships.
+    """
+    client = get_typedb_client()
+    if not client:
+        raise HTTPException(status_code=503, detail="TypeDB unavailable")
+
+    try:
+        # Verify task exists
+        task = client.get_task(task_id)
+        if not task:
+            raise HTTPException(status_code=404, detail=f"Task {task_id} not found")
+
+        # Create the link
+        success = client.link_task_to_session(task_id, session_id)
+        if success:
+            return {"task_id": task_id, "session_id": session_id, "linked": True}
+        else:
+            raise HTTPException(status_code=400, detail="Failed to create link")
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to link task {task_id} to session {session_id}: {e}")
+        raise HTTPException(status_code=500, detail=str(e))

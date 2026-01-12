@@ -1,0 +1,20 @@
+{
+  "mcpServers": {
+    "governance-tasks": {
+      "type": "stdio",
+      "command": "bash",
+      "args": ["../../scripts/mcp-runner.sh", "governance.mcp_server_tasks"],
+      "cwd": "${workspaceFolder}/../..",
+      "env": {
+        "TYPEDB_HOST": "localhost",
+        "TYPEDB_PORT": "1729"
+      }
+    },
+    "podman": {
+      "type": "stdio",
+      "command": "/home/oderid/.config/nvm/versions/node/v20.19.6/bin/npx",
+      "args": ["-y", "podman-mcp-server@latest"],
+      "env": {}
+    }
+  }
+}

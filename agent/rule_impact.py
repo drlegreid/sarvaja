@@ -26,7 +26,7 @@ from dataclasses import dataclass, asdict
 from collections import defaultdict
 
 # Import MCP tools
-from governance.mcp_server import governance_query_rules
+from governance.compat import governance_query_rules
 
 # Project paths
 PROJECT_ROOT = Path(__file__).parent.parent

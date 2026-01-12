@@ -1,0 +1,43 @@
+{
+  "test_id": ".claude/hooks/tests/test_level1_unit.py::TestHashFunctions::test_frankel_hash_changes",
+  "test_name": "test_frankel_hash_changes",
+  "module": "test_level1_unit.py",
+  "category": "unit",
+  "business_intent": "Different input produces different hash.",
+  "given": [
+    {
+      "phase": "GIVEN",
+      "description": "Fixture 'event_loop_policy' is available",
+      "technical_details": null,
+      "timestamp": "2026-01-04T01:04:32.996740"
+    }
+  ],
+  "when": [
+    {
+      "phase": "WHEN",
+      "description": "Execute test 'test_frankel_hash_changes'",
+      "technical_details": {
+        "function": "test_frankel_hash_changes",
+        "module": "C:\\Users\\natik\\Documents\\Vibe\\sim-ai\\sim-ai\\.claude\\hooks\\tests\\test_level1_unit.py"
+      },
+      "timestamp": "2026-01-04T01:04:32.996740"
+    }
+  ],
+  "then": [
+    {
+      "phase": "THEN",
+      "description": "Test passed successfully",
+      "technical_details": {
+        "outcome": "passed",
+        "duration_ms": 1.2519359588623047
+      },
+      "timestamp": "2026-01-04T01:04:32.997992"
+    }
+  ],
+  "status": "passed",
+  "result_details": null,
+  "error_message": null,
+  "duration_ms": 1.2519359588623047,
+  "started_at": "2026-01-04T01:04:32.996740",
+  "completed_at": "2026-01-04T01:04:32.997992"
+}

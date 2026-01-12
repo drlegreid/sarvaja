@@ -14,8 +14,8 @@ Suite Teardown   Close All Browsers Safely
 Test Timeout     60 seconds
 
 *** Variables ***
-${AGENT_URL}     http://localhost:7777
-${UI_URL}        ${AGENT_URL}/ui
+${AGENT_URL}     http://localhost:8081
+${UI_URL}        ${AGENT_URL}
 ${HEADLESS}      true
 
 *** Test Cases ***

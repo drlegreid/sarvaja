@@ -205,10 +205,200 @@ def register_data_loader_controllers(
         """Trigger to load executive report."""
         load_executive_report_data()
 
+    def load_infra_status():
+        """Load infrastructure health status. Per GAP-INFRA-004."""
+        import json
+        import socket
+        import subprocess
+        from pathlib import Path
+        from datetime import datetime
+
+        def check_port(host: str, port: int) -> bool:
+            try:
+                sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                sock.settimeout(1)
+                result = sock.connect_ex((host, port))
+                sock.close()
+                return result == 0
+            except Exception:
+                return False
+
+        def check_podman() -> bool:
+            try:
+                result = subprocess.run(
+                    ["podman", "info"],
+                    capture_output=True, timeout=2
+                )
+                return result.returncode == 0
+            except Exception:
+                return False
+
+        # Check services
+        podman_ok = check_podman()
+        services = {
+            "podman": {"status": "OK" if podman_ok else "DOWN", "ok": podman_ok},
+            "typedb": {"status": "OK" if check_port("localhost", 1729) else "DOWN", "ok": check_port("localhost", 1729), "port": 1729},
+            "chromadb": {"status": "OK" if check_port("localhost", 8001) else "DOWN", "ok": check_port("localhost", 8001), "port": 8001},
+            "litellm": {"status": "OK" if check_port("localhost", 4000) else "OFF", "ok": check_port("localhost", 4000), "port": 4000},
+            "ollama": {"status": "OK" if check_port("localhost", 11434) else "OFF", "ok": check_port("localhost", 11434), "port": 11434},
+        }
+        state.infra_services = services
+
+        # Load stats from healthcheck state
+        state_file = Path(__file__).parent.parent.parent.parent / ".claude/hooks/.healthcheck_state.json"
+        stats = {"memory_pct": 0, "python_procs": 0, "frankel_hash": "--------", "last_check": "Never"}
+        try:
+            if state_file.exists():
+                with open(state_file) as f:
+                    hc_state = json.load(f)
+                stats["frankel_hash"] = hc_state.get("master_hash", "--------")
+                stats["last_check"] = hc_state.get("last_check", "Never")[:19]
+        except Exception:
+            pass
+
+        # Get memory usage
+        try:
+            with open("/proc/meminfo") as f:
+                meminfo = f.read()
+            total = int([l for l in meminfo.split("\n") if "MemTotal" in l][0].split()[1])
+            avail = int([l for l in meminfo.split("\n") if "MemAvailable" in l][0].split()[1])
+            stats["memory_pct"] = round((total - avail) / total * 100, 1)
+        except Exception:
+            pass
+
+        # Count python processes
+        try:
+            result = subprocess.run(["pgrep", "-c", "python3"], capture_output=True, text=True, timeout=2)
+            stats["python_procs"] = int(result.stdout.strip() or "0")
+        except Exception:
+            pass
+
+        state.infra_stats = stats
+        state.infra_loading = False
+
+    @ctrl.trigger("load_infra_status")
+    def trigger_load_infra_status():
+        """Trigger for loading infrastructure status."""
+        state.infra_loading = True
+        load_infra_status()
+
+    @ctrl.trigger("start_service")
+    def start_service(service: str):
+        """Start a specific service. Per GAP-INFRA-004."""
+        import subprocess
+        try:
+            subprocess.Popen(
+                ["podman", "compose", "--profile", "cpu", "up", "-d", service],
+                stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
+            )
+            state.infra_last_action = f"Starting {service}... (refresh in 10s)"
+        except Exception as e:
+            state.infra_last_action = f"Failed to start {service}: {e}"
+
+    @ctrl.trigger("start_all_services")
+    def start_all_services():
+        """Start all services. Per GAP-INFRA-004."""
+        import subprocess
+        try:
+            subprocess.Popen(
+                ["podman", "compose", "--profile", "cpu", "up", "-d"],
+                stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
+            )
+            state.infra_last_action = "Starting all services... (refresh in 30s)"
+        except Exception as e:
+            state.infra_last_action = f"Failed to start services: {e}"
+
+    @ctrl.trigger("restart_stack")
+    def restart_stack():
+        """Restart the entire stack. Per GAP-INFRA-004."""
+        import subprocess
+        try:
+            subprocess.Popen(
+                ["podman", "compose", "--profile", "cpu", "restart"],
+                stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
+            )
+            state.infra_last_action = "Restarting stack... (refresh in 60s)"
+        except Exception as e:
+            state.infra_last_action = f"Failed to restart stack: {e}"
+
+    @ctrl.trigger("cleanup_zombies")
+    def cleanup_zombies():
+        """Cleanup zombie MCP processes. Per GAP-INFRA-004."""
+        import subprocess
+        try:
+            subprocess.run(
+                ["pkill", "-9", "-f", "governance.mcp_server"],
+                capture_output=True, timeout=5
+            )
+            state.infra_last_action = "Cleaned up zombie MCP processes"
+        except Exception as e:
+            state.infra_last_action = f"Cleanup failed: {e}"
+
+    def load_workflow_status():
+        """Load workflow compliance status. Per RD-WORKFLOW Phase 4."""
+        from pathlib import Path
+        import sys
+
+        project_root = Path(__file__).parent.parent.parent.parent
+        # Import workflow_checker module
+        try:
+            import importlib.util
+            checker_path = project_root / ".claude" / "hooks" / "checkers" / "workflow_checker.py"
+            spec = importlib.util.spec_from_file_location("workflow_checker", checker_path)
+            module = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(module)
+
+            compliance = module.check_workflow_compliance(project_root)
+
+            state.workflow_status = {
+                'overall': compliance.get('overall_status', 'UNKNOWN'),
+                'passed': compliance.get('checks_passed', 0),
+                'failed': compliance.get('checks_failed', 0),
+                'warnings': compliance.get('checks_warning', 0),
+            }
+
+            # Build checks list for table
+            checks = []
+            for v in compliance.get('violations', []):
+                checks.append({
+                    'rule_id': v.get('rule_id', ''),
+                    'check_name': v.get('check_name', ''),
+                    'status': 'FAIL',
+                    'message': v.get('message', '')
+                })
+            for w in compliance.get('warnings', []):
+                checks.append({
+                    'rule_id': w.get('rule_id', ''),
+                    'check_name': w.get('check_name', ''),
+                    'status': 'WARNING',
+                    'message': w.get('message', '')
+                })
+            state.workflow_checks = checks
+
+            state.workflow_violations = compliance.get('violations', [])
+            state.workflow_recommendations = compliance.get('recommendations', [])
+
+        except Exception as e:
+            print(f"Error loading workflow status: {e}")
+            state.workflow_status = {'overall': 'ERROR', 'passed': 0, 'failed': 0, 'warnings': 0}
+            state.workflow_checks = []
+            state.workflow_violations = []
+            state.workflow_recommendations = [str(e)]
+
+        state.workflow_loading = False
+
+    @ctrl.trigger("load_workflow_status")
+    def trigger_load_workflow_status():
+        """Trigger for loading workflow status."""
+        state.workflow_loading = True
+        load_workflow_status()
+
     # Return loaders for internal use
     return {
         'load_trust_data': load_trust_data,
         'load_monitor_data': load_monitor_data,
         'load_backlog_data': load_backlog_data,
         'load_executive_report_data': load_executive_report_data,
+        'load_infra_status': load_infra_status,
+        'load_workflow_status': load_workflow_status,
     }

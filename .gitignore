@@ -29,6 +29,10 @@ logs/
 # Test results (GAP-TEST-002)
 results/
 
+# Test audit trails (EPIC-006)
+evidence/tests/claude/
+evidence/tests/platform/
+
 # OS
 .DS_Store
 Thumbs.db

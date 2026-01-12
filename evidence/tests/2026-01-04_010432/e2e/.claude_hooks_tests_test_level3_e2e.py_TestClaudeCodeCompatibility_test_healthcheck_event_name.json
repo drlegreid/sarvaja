@@ -1,0 +1,43 @@
+{
+  "test_id": ".claude/hooks/tests/test_level3_e2e.py::TestClaudeCodeCompatibility::test_healthcheck_event_name",
+  "test_name": "test_healthcheck_event_name",
+  "module": "test_level3_e2e.py",
+  "category": "e2e",
+  "business_intent": "Healthcheck has correct hookEventName.",
+  "given": [
+    {
+      "phase": "GIVEN",
+      "description": "Fixture 'event_loop_policy' is available",
+      "technical_details": null,
+      "timestamp": "2026-01-04T01:04:37.967916"
+    }
+  ],
+  "when": [
+    {
+      "phase": "WHEN",
+      "description": "Execute test 'test_healthcheck_event_name'",
+      "technical_details": {
+        "function": "test_healthcheck_event_name",
+        "module": "C:\\Users\\natik\\Documents\\Vibe\\sim-ai\\sim-ai\\.claude\\hooks\\tests\\test_level3_e2e.py"
+      },
+      "timestamp": "2026-01-04T01:04:37.967916"
+    }
+  ],
+  "then": [
+    {
+      "phase": "THEN",
+      "description": "Test passed successfully",
+      "technical_details": {
+        "outcome": "passed",
+        "duration_ms": 660.3682041168213
+      },
+      "timestamp": "2026-01-04T01:04:38.628285"
+    }
+  ],
+  "status": "passed",
+  "result_details": null,
+  "error_message": null,
+  "duration_ms": 660.3682041168213,
+  "started_at": "2026-01-04T01:04:37.967916",
+  "completed_at": "2026-01-04T01:04:38.628285"
+}

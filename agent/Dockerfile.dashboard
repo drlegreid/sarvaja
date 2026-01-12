@@ -19,6 +19,9 @@ RUN pip install --no-cache-dir -r /tmp/requirements.txt
 # Copy application code (context is project root)
 COPY agent /app/agent
 COPY governance /app/governance
+# GAP-UI-038: Include docs and evidence for file viewer API
+COPY docs /app/docs
+COPY evidence /app/evidence
 
 # Create entrypoint that runs both Dashboard + API
 RUN echo '#!/bin/sh\n\

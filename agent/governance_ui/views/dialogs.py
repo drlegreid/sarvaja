@@ -3,11 +3,17 @@ Shared Dialogs for Governance Dashboard.
 
 Per RULE-012: Single Responsibility - shared dialog components.
 Per GAP-UI-038: Document reference viewer (fullscreen modal).
+Per GAP-UI-005: Global error/loading states.
 
 Created: 2026-01-02
 """
 
 from trame.widgets import vuetify3 as v3, html
+
+from agent.governance_ui.components.dialogs import (
+    build_error_dialog,
+    build_loading_overlay,
+)
 
 
 def build_file_viewer_dialog() -> None:
@@ -132,3 +138,5 @@ def build_all_dialogs() -> None:
     """Build all shared dialogs. Call this once in main dashboard."""
     build_file_viewer_dialog()
     build_confirm_dialog()
+    build_error_dialog()      # GAP-UI-005: Global error dialog
+    build_loading_overlay()   # GAP-UI-005: Global loading overlay

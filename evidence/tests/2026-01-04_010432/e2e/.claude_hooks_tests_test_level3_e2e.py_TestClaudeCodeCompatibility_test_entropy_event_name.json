@@ -1,0 +1,43 @@
+{
+  "test_id": ".claude/hooks/tests/test_level3_e2e.py::TestClaudeCodeCompatibility::test_entropy_event_name",
+  "test_name": "test_entropy_event_name",
+  "module": "test_level3_e2e.py",
+  "category": "e2e",
+  "business_intent": "Entropy monitor uses PostToolUse event.",
+  "given": [
+    {
+      "phase": "GIVEN",
+      "description": "Fixture 'event_loop_policy' is available",
+      "technical_details": null,
+      "timestamp": "2026-01-04T01:04:38.718474"
+    }
+  ],
+  "when": [
+    {
+      "phase": "WHEN",
+      "description": "Execute test 'test_entropy_event_name'",
+      "technical_details": {
+        "function": "test_entropy_event_name",
+        "module": "C:\\Users\\natik\\Documents\\Vibe\\sim-ai\\sim-ai\\.claude\\hooks\\tests\\test_level3_e2e.py"
+      },
+      "timestamp": "2026-01-04T01:04:38.719719"
+    }
+  ],
+  "then": [
+    {
+      "phase": "THEN",
+      "description": "Test passed successfully",
+      "technical_details": {
+        "outcome": "passed",
+        "duration_ms": 87.54301071166992
+      },
+      "timestamp": "2026-01-04T01:04:38.806017"
+    }
+  ],
+  "status": "passed",
+  "result_details": null,
+  "error_message": null,
+  "duration_ms": 87.54301071166992,
+  "started_at": "2026-01-04T01:04:38.718474",
+  "completed_at": "2026-01-04T01:04:38.806017"
+}

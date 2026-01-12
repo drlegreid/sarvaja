@@ -21,6 +21,8 @@ NAVIGATION_ITEMS = [
     {"icon": "mdi-graph", "title": "Impact", "value": "impact"},
     {"icon": "mdi-shield-account", "title": "Trust", "value": "trust"},
     {"icon": "mdi-monitor-dashboard", "title": "Monitor", "value": "monitor"},
+    {"icon": "mdi-check-decagram", "title": "Workflow", "value": "workflow"},
+    {"icon": "mdi-server", "title": "Infrastructure", "value": "infra"},
     {"icon": "mdi-magnify", "title": "Search", "value": "search"},
 ]
 

@@ -220,31 +220,39 @@ async def delete_rule(rule_id: str, archive: bool = Query(True, description="Arc
 
 @router.get("/decisions", response_model=List[Dict[str, Any]])
 async def list_decisions():
-    """List all strategic decisions."""
+    """List all strategic decisions with linked rules. Per GAP-DECISION-001."""
     client = get_client()
     if not client:
         raise HTTPException(status_code=503, detail="TypeDB not connected")
 
     try:
         decisions = client.get_all_decisions()
-        return [
-            {
+        result = []
+        for d in decisions:
+            # Get linked rules per GAP-DECISION-001
+            linked_rules = []
+            try:
+                linked_rules = client.get_decision_impacts(d.id)
+            except Exception:
+                pass  # Non-critical, return empty list
+
+            result.append({
                 "id": d.id,
                 "name": d.name,
                 "context": d.context,
                 "rationale": d.rationale,
                 "status": d.status,
-                "decision_date": d.decision_date.isoformat() if d.decision_date else None
-            }
-            for d in decisions
-        ]
+                "decision_date": d.decision_date.isoformat() if d.decision_date else None,
+                "linked_rules": linked_rules
+            })
+        return result
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.get("/decisions/{decision_id}", response_model=DecisionResponse)
 async def get_decision(decision_id: str):
-    """Get a specific decision by ID."""
+    """Get a specific decision by ID with linked rules. Per GAP-DECISION-001."""
     client = get_client()
     if not client:
         raise HTTPException(status_code=503, detail="TypeDB not connected")
@@ -253,13 +261,21 @@ async def get_decision(decision_id: str):
         decisions = client.get_all_decisions()
         for d in decisions:
             if d.id == decision_id:
+                # Get linked rules per GAP-DECISION-001
+                linked_rules = []
+                try:
+                    linked_rules = client.get_decision_impacts(decision_id)
+                except Exception:
+                    pass  # Non-critical
+
                 return DecisionResponse(
                     id=d.id,
                     name=d.name,
                     context=d.context,
                     rationale=d.rationale,
                     status=d.status,
-                    decision_date=d.decision_date.isoformat() if d.decision_date else None
+                    decision_date=d.decision_date.isoformat() if d.decision_date else None,
+                    linked_rules=linked_rules
                 )
         raise HTTPException(status_code=404, detail=f"Decision {decision_id} not found")
     except HTTPException:
@@ -297,7 +313,8 @@ async def create_decision(decision: DecisionCreate):
                 context=created.context,
                 rationale=created.rationale,
                 status=created.status,
-                decision_date=created.decision_date.isoformat() if created.decision_date else None
+                decision_date=created.decision_date.isoformat() if created.decision_date else None,
+                linked_rules=[]  # New decisions have no linked rules initially
             )
         raise HTTPException(status_code=500, detail="Failed to create decision")
     except HTTPException:
@@ -323,13 +340,21 @@ async def update_decision(decision_id: str, decision: DecisionUpdate):
         )
 
         if updated:
+            # Get linked rules per GAP-DECISION-001
+            linked_rules = []
+            try:
+                linked_rules = client.get_decision_impacts(decision_id)
+            except Exception:
+                pass  # Non-critical
+
             return DecisionResponse(
                 id=updated.id,
                 name=updated.name,
                 context=updated.context,
                 rationale=updated.rationale,
                 status=updated.status,
-                decision_date=updated.decision_date.isoformat() if updated.decision_date else None
+                decision_date=updated.decision_date.isoformat() if updated.decision_date else None,
+                linked_rules=linked_rules
             )
         raise HTTPException(status_code=404, detail=f"Decision {decision_id} not found")
     except HTTPException:

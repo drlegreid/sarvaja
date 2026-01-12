@@ -13,7 +13,7 @@ import json
 from typing import Dict, List, Any, Callable
 
 # Import MCP tools
-from governance.mcp_server import (
+from governance.compat import (
     governance_list_sessions,
     governance_get_session,
     governance_list_decisions,

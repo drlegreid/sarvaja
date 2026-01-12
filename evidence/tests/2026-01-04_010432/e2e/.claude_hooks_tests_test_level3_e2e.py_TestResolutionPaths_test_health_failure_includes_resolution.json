@@ -1,0 +1,43 @@
+{
+  "test_id": ".claude/hooks/tests/test_level3_e2e.py::TestResolutionPaths::test_health_failure_includes_resolution",
+  "test_name": "test_health_failure_includes_resolution",
+  "module": "test_level3_e2e.py",
+  "category": "e2e",
+  "business_intent": "Health failures include actionable resolution paths.",
+  "given": [
+    {
+      "phase": "GIVEN",
+      "description": "Fixture 'event_loop_policy' is available",
+      "technical_details": null,
+      "timestamp": "2026-01-04T01:04:42.997706"
+    }
+  ],
+  "when": [
+    {
+      "phase": "WHEN",
+      "description": "Execute test 'test_health_failure_includes_resolution'",
+      "technical_details": {
+        "function": "test_health_failure_includes_resolution",
+        "module": "C:\\Users\\natik\\Documents\\Vibe\\sim-ai\\sim-ai\\.claude\\hooks\\tests\\test_level3_e2e.py"
+      },
+      "timestamp": "2026-01-04T01:04:42.999052"
+    }
+  ],
+  "then": [
+    {
+      "phase": "THEN",
+      "description": "Test passed successfully",
+      "technical_details": {
+        "outcome": "passed",
+        "duration_ms": 646.5859413146973
+      },
+      "timestamp": "2026-01-04T01:04:43.644292"
+    }
+  ],
+  "status": "passed",
+  "result_details": null,
+  "error_message": null,
+  "duration_ms": 646.5859413146973,
+  "started_at": "2026-01-04T01:04:42.997706",
+  "completed_at": "2026-01-04T01:04:43.644292"
+}

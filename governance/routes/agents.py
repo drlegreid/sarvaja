@@ -136,6 +136,9 @@ async def list_agents(
                         agent.id, sessions_by_agent, tasks_by_agent
                     )
 
+                    # Get capabilities from config (GAP-AGENT-004)
+                    capabilities = _AGENT_BASE_CONFIG.get(agent.id, {}).get("capabilities", [])
+
                     result.append(AgentResponse(
                         agent_id=agent.id,
                         name=agent.name,
@@ -144,6 +147,7 @@ async def list_agents(
                         tasks_executed=tasks_executed,
                         trust_score=_calculate_trust_score(agent.id, tasks_executed, base_trust),
                         last_active=last_active,
+                        capabilities=capabilities,
                         recent_sessions=recent_sessions,
                         active_tasks=active_tasks
                     ))
@@ -199,6 +203,9 @@ async def get_agent(agent_id: str):
                     agent_id, sessions_by_agent, tasks_by_agent
                 )
 
+                # Get capabilities from config (GAP-AGENT-004)
+                capabilities = _AGENT_BASE_CONFIG.get(agent_id, {}).get("capabilities", [])
+
                 return AgentResponse(
                     agent_id=agent.id,
                     name=agent.name,
@@ -207,6 +214,7 @@ async def get_agent(agent_id: str):
                     tasks_executed=tasks_executed,
                     trust_score=_calculate_trust_score(agent_id, tasks_executed, base_trust),
                     last_active=last_active,
+                    capabilities=capabilities,
                     recent_sessions=recent_sessions,
                     active_tasks=active_tasks
                 )
@@ -269,6 +277,8 @@ async def record_agent_task(agent_id: str):
                 recent_sessions, active_tasks = _get_agent_relations_from_lookup(
                     agent_id, sessions_by_agent, tasks_by_agent
                 )
+                # Get capabilities from config (GAP-AGENT-004)
+                capabilities = _AGENT_BASE_CONFIG.get(agent_id, {}).get("capabilities", [])
                 return AgentResponse(
                     agent_id=agent.id,
                     name=agent.name,
@@ -277,6 +287,7 @@ async def record_agent_task(agent_id: str):
                     tasks_executed=tasks_executed,
                     trust_score=new_trust_score,
                     last_active=now,
+                    capabilities=capabilities,
                     recent_sessions=recent_sessions,
                     active_tasks=active_tasks
                 )

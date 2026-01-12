@@ -23,6 +23,7 @@ from governance.stores import (
     _sessions_store, generate_chat_session_id,
     get_available_agents_for_chat
 )
+from governance.context_preloader import preload_session_context, ContextSummary
 
 logger = logging.getLogger(__name__)
 router = APIRouter(tags=["Chat"])
@@ -203,11 +204,20 @@ def _process_chat_command(content: str, agent_id: str) -> str:
 - /tasks - List pending tasks
 - /rules - List active rules
 - /agents - List available agents
+- /context - Show loaded strategic context
 - /search <query> - Search evidence
 - /delegate <task> - Delegate a task
 - /help - Show this help message
 
 You can also type natural language commands and I'll do my best to help!"""
+
+    elif content_lower.startswith("/context"):
+        # P12.6: Show preloaded context
+        try:
+            context = preload_session_context()
+            return context.to_agent_prompt()
+        except Exception as e:
+            return f"Failed to load context: {str(e)}"
 
     elif content_lower.startswith("/agents"):
         agents = list(_agents_store.values())
@@ -276,14 +286,26 @@ async def send_chat_message(request: ChatMessageRequest):
     """
     # Get or create session
     session_id = request.session_id
+    is_new_session = False
     if not session_id:
         session_id = generate_chat_session_id()
+        is_new_session = True
+
+        # P12.6: Auto-load strategic context on session start
+        try:
+            context = preload_session_context()
+            context_dict = context.to_dict()
+        except Exception as e:
+            logger.warning(f"Failed to preload context: {e}")
+            context_dict = {}
+
         _chat_sessions[session_id] = {
             "session_id": session_id,
             "messages": [],
             "active_task_id": None,
             "selected_agent_id": request.agent_id,
             "created_at": datetime.now().isoformat(),
+            "context": context_dict,  # P12.6: Strategic context
         }
 
     session = _chat_sessions.get(session_id, {

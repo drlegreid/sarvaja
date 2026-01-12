@@ -1,0 +1,46 @@
+{
+  "mcpServers": {
+    "governance-core": {
+      "type": "stdio",
+      "command": "bash",
+      "args": ["../../scripts/mcp-runner.sh", "governance.mcp_server_core"],
+      "cwd": "${workspaceFolder}/../..",
+      "env": {
+        "TYPEDB_HOST": "localhost",
+        "TYPEDB_PORT": "1729",
+        "CHROMADB_HOST": "localhost",
+        "CHROMADB_PORT": "8001"
+      }
+    },
+    "governance-agents": {
+      "type": "stdio",
+      "command": "bash",
+      "args": ["../../scripts/mcp-runner.sh", "governance.mcp_server_agents"],
+      "cwd": "${workspaceFolder}/../..",
+      "env": {
+        "TYPEDB_HOST": "localhost",
+        "TYPEDB_PORT": "1729"
+      }
+    },
+    "governance-sessions": {
+      "type": "stdio",
+      "command": "bash",
+      "args": ["../../scripts/mcp-runner.sh", "governance.mcp_server_sessions"],
+      "cwd": "${workspaceFolder}/../..",
+      "env": {
+        "TYPEDB_HOST": "localhost",
+        "TYPEDB_PORT": "1729",
+        "CHROMADB_HOST": "localhost",
+        "CHROMADB_PORT": "8001"
+      }
+    },
+    "playwright": {
+      "type": "stdio",
+      "command": "/home/oderid/.config/nvm/versions/node/v20.19.6/bin/npx",
+      "args": ["-y", "@playwright/mcp@latest", "--browser", "firefox", "--executable-path", "/home/oderid/.cache/ms-playwright/firefox-1497/firefox/firefox"],
+      "env": {
+        "PLAYWRIGHT_BROWSERS_PATH": "/home/oderid/.cache/ms-playwright"
+      }
+    }
+  }
+}

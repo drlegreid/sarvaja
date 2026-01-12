@@ -1,0 +1,16 @@
+{
+  "rule": {
+    "id": "TEST-CF717237",
+    "name": "Test Rule TEST-CF717237",
+    "category": "technical",
+    "priority": "HIGH",
+    "status": "DRAFT",
+    "directive": "This is a test rule created via E2E test",
+    "created_date": null
+  },
+  "archived_at": "2026-01-04T00:27:05.643815",
+  "reason": "deleted",
+  "archived_from_db": "sim-ai-governance",
+  "dependencies": [],
+  "dependents": []
+}

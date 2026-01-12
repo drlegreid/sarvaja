@@ -113,7 +113,7 @@ def link_rules_to_documents() -> Dict[str, Any]:
 
     Returns dict with sync statistics.
     """
-    from governance.client import get_client
+    from governance.client import TypeDBClient
 
     stats = {
         "documents_inserted": 0,
@@ -125,53 +125,52 @@ def link_rules_to_documents() -> Dict[str, Any]:
 
     documents = scan_rule_documents()
 
+    client = TypeDBClient()
     try:
-        client = get_client()
-        if not client or not client.is_connected():
-            logger.error("TypeDB client not available")
+        if not client.connect():
+            logger.error("Failed to connect to TypeDB for link_rules_to_documents")
             return stats
-    except Exception as e:
-        logger.error(f"Failed to connect to TypeDB: {e}")
-        return stats
 
-    for doc in documents:
-        try:
-            # Check if document exists
-            existing = _get_document(client, doc.document_id)
+        for doc in documents:
+            try:
+                # Check if document exists
+                existing = _get_document(client, doc.document_id)
 
-            if existing:
-                stats["documents_existing"] += 1
-            else:
-                # Insert new document
-                _insert_document(client, doc)
-                stats["documents_inserted"] += 1
-                logger.debug(f"Inserted document {doc.document_id}")
+                if existing:
+                    stats["documents_existing"] += 1
+                else:
+                    # Insert new document
+                    _insert_document(client, doc)
+                    stats["documents_inserted"] += 1
+                    logger.debug(f"Inserted document {doc.document_id}")
 
-            # Create document-references-rule relations
-            if doc.rule_ids:
-                for rule_id in doc.rule_ids:
-                    try:
-                        relation_exists = _check_document_rule_relation(
-                            client, doc.document_id, rule_id
-                        )
-                        if relation_exists:
-                            stats["relations_existing"] += 1
-                        else:
-                            _create_document_rule_relation(
+                # Create document-references-rule relations
+                if doc.rule_ids:
+                    for rule_id in doc.rule_ids:
+                        try:
+                            relation_exists = _check_document_rule_relation(
                                 client, doc.document_id, rule_id
                             )
-                            stats["relations_created"] += 1
-                            logger.debug(f"Linked {doc.document_id} → {rule_id}")
-                    except Exception as e:
-                        logger.warning(f"Failed to link {doc.document_id} → {rule_id}: {e}")
-                        stats["errors"] += 1
+                            if relation_exists:
+                                stats["relations_existing"] += 1
+                            else:
+                                _create_document_rule_relation(
+                                    client, doc.document_id, rule_id
+                                )
+                                stats["relations_created"] += 1
+                                logger.debug(f"Linked {doc.document_id} → {rule_id}")
+                        except Exception as e:
+                            logger.warning(f"Failed to link {doc.document_id} → {rule_id}: {e}")
+                            stats["errors"] += 1
 
-        except Exception as e:
-            logger.warning(f"Failed to sync document {doc.document_id}: {e}")
-            stats["errors"] += 1
+            except Exception as e:
+                logger.warning(f"Failed to sync document {doc.document_id}: {e}")
+                stats["errors"] += 1
 
-    logger.info(f"Rule-document linking complete: {stats}")
-    return stats
+        logger.info(f"Rule-document linking complete: {stats}")
+        return stats
+    finally:
+        client.close()
 
 
 def _get_document(client, document_id: str) -> Optional[Dict]:
@@ -248,33 +247,34 @@ def get_rules_for_document(document_id: str) -> List[str]:
     Query TypeDB for all rules referenced by a document.
 
     Args:
-        document_id: Document ID (e.g., "RULES-GOVERNANCE")
+        document_id: Document ID (e.g., "DOC-RULES-GOVERNANCE")
 
     Returns:
         List of rule IDs
     """
-    from governance.client import get_client
+    from governance.client import TypeDBClient
 
+    client = TypeDBClient()
     try:
-        client = get_client()
-        if not client or not client.is_connected():
+        if not client.connect():
+            logger.warning("Failed to connect to TypeDB for get_rules_for_document")
             return []
-    except Exception:
-        return []
 
-    query = f"""
-    match
-      $d isa document, has document-id "{document_id}";
-      $r isa rule-entity, has rule-id $rid;
-      (referencing-document: $d, referenced-rule: $r) isa document-references-rule;
-    get $rid;
-    """
+        query = f"""
+        match
+          $d isa document, has document-id "{document_id}";
+          $r isa rule-entity, has rule-id $rid;
+          (referencing-document: $d, referenced-rule: $r) isa document-references-rule;
+        get $rid;
+        """
 
-    try:
         results = client.execute_query(query)
-        return [r.get("rid", {}).get("value", "") for r in results if r.get("rid")]
-    except Exception:
+        return [r.get("rid") for r in results if r.get("rid")]
+    except Exception as e:
+        logger.warning(f"get_rules_for_document failed: {e}")
         return []
+    finally:
+        client.close()
 
 
 def get_document_for_rule(rule_id: str) -> Optional[str]:
@@ -287,30 +287,31 @@ def get_document_for_rule(rule_id: str) -> Optional[str]:
     Returns:
         Document path or None
     """
-    from governance.client import get_client
+    from governance.client import TypeDBClient
 
+    client = TypeDBClient()
     try:
-        client = get_client()
-        if not client or not client.is_connected():
+        if not client.connect():
+            logger.warning("Failed to connect to TypeDB for get_document_for_rule")
             return None
-    except Exception:
-        return None
 
-    query = f"""
-    match
-      $r isa rule-entity, has rule-id "{rule_id}";
-      $d isa document, has document-path $path;
-      (referencing-document: $d, referenced-rule: $r) isa document-references-rule;
-    get $path;
-    """
+        query = f"""
+        match
+          $r isa rule-entity, has rule-id "{rule_id}";
+          $d isa document, has document-path $path;
+          (referencing-document: $d, referenced-rule: $r) isa document-references-rule;
+        get $path;
+        """
 
-    try:
         results = client.execute_query(query)
         if results:
-            return results[0].get("path", {}).get("value")
+            return results[0].get("path")
         return None
-    except Exception:
+    except Exception as e:
+        logger.warning(f"get_document_for_rule failed: {e}")
         return None
+    finally:
+        client.close()
 
 
 # CLI for testing

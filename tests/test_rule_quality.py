@@ -337,19 +337,19 @@ class TestMCPRuleQualityTools:
 
     def test_governance_analyze_rules_exists(self):
         """governance_analyze_rules MCP tool exists."""
-        from governance.mcp_server import governance_analyze_rules
+        from governance.compat import governance_analyze_rules
         assert governance_analyze_rules is not None
         assert callable(governance_analyze_rules)
 
     def test_governance_rule_impact_exists(self):
         """governance_rule_impact MCP tool exists."""
-        from governance.mcp_server import governance_rule_impact
+        from governance.compat import governance_rule_impact
         assert governance_rule_impact is not None
         assert callable(governance_rule_impact)
 
     def test_governance_find_issues_exists(self):
         """governance_find_issues MCP tool exists."""
-        from governance.mcp_server import governance_find_issues
+        from governance.compat import governance_find_issues
         assert governance_find_issues is not None
         assert callable(governance_find_issues)
 

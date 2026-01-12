@@ -1,25 +1,9 @@
 {
-  "_comment": "Backup of disabled MCP servers - 2026-01-01",
-  "_reason": "Memory optimization - 93% RAM spike with 9 MCPs active",
+  "_comment": "Backup of disabled MCP servers - 2026-01-04",
+  "_reason": "Memory optimization - only truly unused MCPs remain disabled",
   "_restore": "Copy desired entries to C:\\Users\\natik\\.claude.json mcpServers section",
 
   "disabled_mcps": {
-    "desktop-commander": {
-      "type": "stdio",
-      "command": "npx",
-      "args": ["-y", "@wonderwhy-er/desktop-commander@latest"],
-      "env": {},
-      "disabled_date": "2026-01-01",
-      "reason": "Memory overhead, redundant with Bash tool"
-    },
-    "playwright": {
-      "type": "stdio",
-      "command": "npx",
-      "args": ["-y", "@playwright/mcp@latest", "--browser", "msedge"],
-      "env": {},
-      "disabled_date": "2026-01-01",
-      "reason": "Browser automation heavy, only needed for web testing"
-    },
     "filesystem": {
       "type": "stdio",
       "command": "npx",
@@ -49,5 +33,12 @@
       "disabled_date": "2026-01-01",
       "reason": "HIGH RISK - Rate limits, external API, caused crashes"
     }
+  },
+
+  "enabled_2026_01_04": {
+    "_note": "These MCPs were re-enabled as CORE services",
+    "desktop-commander": "Enabled for desktop interaction and exploratory testing",
+    "playwright": "Enabled for browser automation and UI testing",
+    "sequential-thinking": "Already enabled - now classified as CORE"
   }
 }

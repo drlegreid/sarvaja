@@ -21,6 +21,7 @@ services:
   litellm:
     image: ghcr.io/berriai/litellm:main-latest
     profiles: ["cpu", "full", "dev"]
+    restart: unless-stopped
     ports:
       - "4000:4000"
     volumes:
@@ -31,8 +32,8 @@ services:
       - XAI_API_KEY=${XAI_API_KEY:-}
     command: ["--config", "/app/config.yaml", "--port", "4000"]
     healthcheck:
-      # LiteLLM /health endpoint - use /health/liveliness for auth-free check
-      test: ["CMD", "curl", "-f", "http://localhost:4000/health/liveliness"]
+      # LiteLLM /health endpoint - use python (curl not available in image)
+      test: ["CMD-SHELL", "python3 -c \"import urllib.request; urllib.request.urlopen('http://localhost:4000/health/liveliness', timeout=5)\""]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -44,12 +45,13 @@ services:
 
   # Ollama - Local CPU inference (gemma3:4b for lightweight tasks)
   ollama:
-    image: ollama/ollama:latest
+    image: docker.io/ollama/ollama:latest
     profiles: ["cpu", "full"]
+    restart: unless-stopped
     ports:
       - "11434:11434"
     volumes:
-      - ollama_data:/root/.ollama
+      - /home/oderid/Documents/Docker/ollama_data:/root/.ollama
     environment:
       - OLLAMA_NUM_PARALLEL=1
       - OLLAMA_MAX_LOADED_MODELS=1
@@ -59,7 +61,8 @@ services:
           memory: 4G
           cpus: '2'
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:11434/api/tags"]
+      # Ollama health - use bash /dev/tcp (curl not available in image)
+      test: ["CMD-SHELL", "bash -c 'echo > /dev/tcp/localhost/11434' 2>/dev/null"]
       interval: 30s
       timeout: 10s
       retries: 5
@@ -70,12 +73,14 @@ services:
   
   # ChromaDB - Vector database for rules/memories embeddings
   chromadb:
-    image: chromadb/chroma:latest
+    image: docker.io/chromadb/chroma:latest
     profiles: ["cpu", "full", "dev"]
+    restart: unless-stopped
     ports:
       - "8001:8000"
     volumes:
-      - chromadb_data:/chroma/chroma
+      # FIXED: ChromaDB persist_path is /data not /chroma/chroma (GAP-PERSIST-002)
+      - /home/oderid/Documents/Docker/chromadb_data:/data
     environment:
       - IS_PERSISTENT=TRUE
       - ANONYMIZED_TELEMETRY=FALSE
@@ -88,8 +93,8 @@ services:
         limits:
           memory: 1G
     healthcheck:
-      # ChromaDB v2 API uses /api/v2/heartbeat (not v1)
-      test: ["CMD", "curl", "-f", "http://localhost:8000/api/v2/heartbeat"]
+      # ChromaDB health - use bash /dev/tcp (curl not available in image)
+      test: ["CMD-SHELL", "bash -c 'echo > /dev/tcp/localhost/8000' 2>/dev/null"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -99,18 +104,20 @@ services:
   # Provides: rule inference, type safety, knowledge reasoning
   # Architecture: Hybrid with ChromaDB (semantic search + inference)
   typedb:
-    image: vaticle/typedb:latest
+    image: docker.io/vaticle/typedb:latest
     profiles: ["cpu", "full", "dev"]
+    restart: unless-stopped
     ports:
       - "1729:1729"
     volumes:
-      - typedb_data:/opt/typedb-all-linux-x86_64/server/data
+      - /home/oderid/Documents/Docker/typedb_data:/opt/typedb-all-linux-x86_64/server/data
     deploy:
       resources:
         limits:
           memory: 2G
     healthcheck:
-      test: ["CMD-SHELL", "echo > /dev/tcp/localhost/1729 || exit 1"]
+      # TypeDB health - use bash explicitly (/dev/tcp is bash-only, not sh)
+      test: ["CMD-SHELL", "bash -c 'echo > /dev/tcp/localhost/1729' 2>/dev/null"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -126,6 +133,7 @@ services:
       context: ./agent
       dockerfile: Dockerfile
     profiles: ["cpu", "full", "dev"]
+    restart: unless-stopped
     ports:
       - "7777:7777"
     environment:
@@ -149,56 +157,6 @@ services:
         limits:
           memory: 1G
 
-  # Agent UI - Web interface (DISABLED: image agnohq/agent-ui doesn't exist)
-  # See GAP-008: Need to find or build alternative agent UI
-  # agent-ui:
-  #   image: agnohq/agent-ui:latest
-  #   profiles: ["full"]
-  #   ports:
-  #     - "3000:3000"
-  #   environment:
-  #     - NEXT_PUBLIC_API_URL=http://localhost:7777
-  #   depends_on:
-  #     - agents
-
-  # =============================================================================
-  # GOVERNANCE UI LAYER
-  # =============================================================================
-
-  # Governance Dashboard + API - Trame UI for rules/decisions/sessions
-  # Production mode only - not included in dev/cpu profiles
-  # Per TOOL-006: API now runs in container with Dashboard
-  governance-dashboard:
-    build:
-      context: .
-      dockerfile: agent/Dockerfile.dashboard
-    profiles: ["prod", "full"]
-    ports:
-      - "8081:8081"
-      - "8082:8082"
-    environment:
-      - DASHBOARD_PORT=8081
-      - API_PORT=8082
-      - TYPEDB_HOST=typedb
-      - TYPEDB_PORT=1729
-      - CHROMADB_HOST=chromadb
-      - CHROMADB_PORT=8000
-      - CHROMA_AUTH_TOKEN=${CHROMA_AUTH_TOKEN:-chroma-token-dev}
-      - GOVERNANCE_API_URL=http://localhost:8082
-    depends_on:
-      - typedb
-      - chromadb
-    deploy:
-      resources:
-        limits:
-          memory: 512M
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8081/"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 10s
-
   # Governance Dashboard + API - Dev mode with live code reload
   # Per TOOL-006: API containerized with volume mounts for live reload
   governance-dashboard-dev:
@@ -206,6 +164,7 @@ services:
       context: .
       dockerfile: agent/Dockerfile.dashboard
     profiles: ["dev", "dashboard-dev"]
+    restart: unless-stopped
     ports:
       - "8081:8081"
       - "8082:8082"
@@ -227,7 +186,8 @@ services:
       - typedb
       - chromadb
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8081/"]
+      # GAP-UI-038: Verify both HTTP and evidence directory access
+      test: ["CMD-SHELL", "curl -sf http://localhost:8081/ && test -d /app/evidence"]
       interval: 30s
       timeout: 10s
       retries: 3

@@ -32,6 +32,51 @@ from agent.external_mcp_tools import (
 )
 
 
+def call_tool(tools, method_name, *args, **kwargs):
+    """
+    Call a tool method, handling both agno and stub cases.
+
+    When agno is available, methods are wrapped in Function objects
+    and must be called via their entrypoint.
+    When using the stub, methods are directly callable.
+    """
+    method = getattr(tools, method_name)
+
+    # Check if this is an agno Function object
+    if hasattr(method, 'entrypoint'):
+        # Agno case: call entrypoint with self bound
+        return method.entrypoint(tools, *args, **kwargs)
+    else:
+        # Stub case: direct call
+        return method(*args, **kwargs)
+
+
+def is_tool_callable(method):
+    """
+    Check if a method is callable as a tool.
+
+    For agno Functions, check if entrypoint is callable.
+    For stubs, check if method is directly callable.
+    """
+    if hasattr(method, 'entrypoint'):
+        return callable(method.entrypoint)
+    return callable(method)
+
+
+def is_valid_tool(method):
+    """
+    Check if a method is a valid registered tool.
+
+    For agno Functions, check for 'name' attribute.
+    For stubs, check for '_is_tool' attribute or callable.
+    """
+    if hasattr(method, 'name') and hasattr(method, 'entrypoint'):
+        return True  # Agno Function
+    if hasattr(method, '_is_tool'):
+        return True  # Stub with marker
+    return callable(method)
+
+
 # =============================================================================
 # P5.1: PLAYWRIGHT TOOLS TESTS
 # =============================================================================
@@ -86,7 +131,7 @@ class TestPlaywrightTools:
     def test_navigate_tool(self):
         """Test navigate tool returns valid JSON."""
         tools = PlaywrightTools()
-        result = tools.navigate("https://example.com")
+        result = call_tool(tools, 'navigate', url="https://example.com")
         parsed = json.loads(result)
         assert parsed["action"] == "navigate"
         assert parsed["url"] == "https://example.com"
@@ -95,7 +140,7 @@ class TestPlaywrightTools:
     def test_snapshot_tool(self):
         """Test snapshot tool returns valid JSON."""
         tools = PlaywrightTools()
-        result = tools.snapshot("test.md")
+        result = call_tool(tools, 'snapshot', filename="test.md")
         parsed = json.loads(result)
         assert parsed["action"] == "snapshot"
         assert parsed["filename"] == "test.md"
@@ -103,7 +148,7 @@ class TestPlaywrightTools:
     def test_click_tool(self):
         """Test click tool returns valid JSON."""
         tools = PlaywrightTools()
-        result = tools.click("Submit button", "btn-submit")
+        result = call_tool(tools, 'click', element="Submit button", ref="btn-submit")
         parsed = json.loads(result)
         assert parsed["action"] == "click"
         assert parsed["element"] == "Submit button"
@@ -112,7 +157,7 @@ class TestPlaywrightTools:
     def test_type_text_tool(self):
         """Test type_text tool returns valid JSON."""
         tools = PlaywrightTools()
-        result = tools.type_text("Username field", "input-user", "admin", submit=True)
+        result = call_tool(tools, 'type_text', element="Username field", ref="input-user", text="admin", submit=True)
         parsed = json.loads(result)
         assert parsed["action"] == "type"
         assert parsed["text"] == "admin"
@@ -121,7 +166,7 @@ class TestPlaywrightTools:
     def test_screenshot_tool(self):
         """Test screenshot tool returns valid JSON."""
         tools = PlaywrightTools()
-        result = tools.screenshot("page.png", full_page=True)
+        result = call_tool(tools, 'screenshot', filename="page.png", full_page=True)
         parsed = json.loads(result)
         assert parsed["action"] == "screenshot"
         assert parsed["full_page"] is True
@@ -129,7 +174,7 @@ class TestPlaywrightTools:
     def test_evaluate_tool(self):
         """Test evaluate tool returns valid JSON."""
         tools = PlaywrightTools()
-        result = tools.evaluate("() => document.title")
+        result = call_tool(tools, 'evaluate', function="() => document.title")
         parsed = json.loads(result)
         assert parsed["action"] == "evaluate"
         assert parsed["function"] == "() => document.title"
@@ -137,7 +182,7 @@ class TestPlaywrightTools:
     def test_wait_for_text(self):
         """Test wait_for with text."""
         tools = PlaywrightTools()
-        result = tools.wait_for(text="Loading complete")
+        result = call_tool(tools, 'wait_for', text="Loading complete")
         parsed = json.loads(result)
         assert parsed["action"] == "wait"
         assert parsed["text"] == "Loading complete"
@@ -145,7 +190,7 @@ class TestPlaywrightTools:
     def test_wait_for_time(self):
         """Test wait_for with time."""
         tools = PlaywrightTools()
-        result = tools.wait_for(time=5)
+        result = call_tool(tools, 'wait_for', time=5)
         parsed = json.loads(result)
         assert parsed["time"] == 5
 
@@ -188,7 +233,7 @@ class TestPowerShellTools:
         """Test run_script tool returns valid JSON."""
         tools = PowerShellTools()
         code = "Get-Process | Select-Object -First 5"
-        result = tools.run_script(code)
+        result = call_tool(tools, 'run_script', code=code)
         parsed = json.loads(result)
         assert parsed["action"] == "run_script"
         assert parsed["code_length"] == len(code)
@@ -197,14 +242,14 @@ class TestPowerShellTools:
     def test_run_script_with_timeout(self):
         """Test run_script with custom timeout."""
         tools = PowerShellTools()
-        result = tools.run_script("Get-Date", timeout=60)
+        result = call_tool(tools, 'run_script', code="Get-Date", timeout=60)
         parsed = json.loads(result)
         assert parsed["timeout"] == 60
 
     def test_run_command_tool(self):
         """Test run_command wraps run_script."""
         tools = PowerShellTools()
-        result = tools.run_command("Get-Location")
+        result = call_tool(tools, 'run_command', command="Get-Location")
         parsed = json.loads(result)
         assert parsed["action"] == "run_script"
 
@@ -253,7 +298,7 @@ class TestDesktopCommanderTools:
     def test_read_file_tool(self):
         """Test read_file tool returns valid JSON."""
         tools = DesktopCommanderTools()
-        result = tools.read_file("C:\\test.txt", offset=10, length=50)
+        result = call_tool(tools, 'read_file', path="C:\\test.txt", offset=10, length=50)
         parsed = json.loads(result)
         assert parsed["action"] == "read_file"
         assert parsed["path"] == "C:\\test.txt"
@@ -263,7 +308,7 @@ class TestDesktopCommanderTools:
     def test_write_file_tool(self):
         """Test write_file tool returns valid JSON."""
         tools = DesktopCommanderTools()
-        result = tools.write_file("C:\\output.txt", "Hello World", mode="append")
+        result = call_tool(tools, 'write_file', path="C:\\output.txt", content="Hello World", mode="append")
         parsed = json.loads(result)
         assert parsed["action"] == "write_file"
         assert parsed["content_length"] == 11
@@ -272,7 +317,7 @@ class TestDesktopCommanderTools:
     def test_list_directory_tool(self):
         """Test list_directory tool returns valid JSON."""
         tools = DesktopCommanderTools()
-        result = tools.list_directory("C:\\Projects", depth=1)
+        result = call_tool(tools, 'list_directory', path="C:\\Projects", depth=1)
         parsed = json.loads(result)
         assert parsed["action"] == "list_directory"
         assert parsed["path"] == "C:\\Projects"
@@ -281,7 +326,7 @@ class TestDesktopCommanderTools:
     def test_search_files_tool(self):
         """Test search_files tool returns valid JSON."""
         tools = DesktopCommanderTools()
-        result = tools.search_files("C:\\Code", "*.py", search_type="files")
+        result = call_tool(tools, 'search_files', path="C:\\Code", pattern="*.py", search_type="files")
         parsed = json.loads(result)
         assert parsed["action"] == "search"
         assert parsed["pattern"] == "*.py"
@@ -290,14 +335,14 @@ class TestDesktopCommanderTools:
     def test_search_content(self):
         """Test search_files for content."""
         tools = DesktopCommanderTools()
-        result = tools.search_files("C:\\Code", "TODO", search_type="content")
+        result = call_tool(tools, 'search_files', path="C:\\Code", pattern="TODO", search_type="content")
         parsed = json.loads(result)
         assert parsed["search_type"] == "content"
 
     def test_get_file_info_tool(self):
         """Test get_file_info tool returns valid JSON."""
         tools = DesktopCommanderTools()
-        result = tools.get_file_info("C:\\test.txt")
+        result = call_tool(tools, 'get_file_info', path="C:\\test.txt")
         parsed = json.loads(result)
         assert parsed["action"] == "get_file_info"
         assert parsed["path"] == "C:\\test.txt"
@@ -305,7 +350,7 @@ class TestDesktopCommanderTools:
     def test_create_directory_tool(self):
         """Test create_directory tool returns valid JSON."""
         tools = DesktopCommanderTools()
-        result = tools.create_directory("C:\\NewFolder")
+        result = call_tool(tools, 'create_directory', path="C:\\NewFolder")
         parsed = json.loads(result)
         assert parsed["action"] == "create_directory"
         assert parsed["path"] == "C:\\NewFolder"
@@ -313,7 +358,7 @@ class TestDesktopCommanderTools:
     def test_move_file_tool(self):
         """Test move_file tool returns valid JSON."""
         tools = DesktopCommanderTools()
-        result = tools.move_file("C:\\old.txt", "C:\\new.txt")
+        result = call_tool(tools, 'move_file', source="C:\\old.txt", destination="C:\\new.txt")
         parsed = json.loads(result)
         assert parsed["action"] == "move_file"
         assert parsed["source"] == "C:\\old.txt"
@@ -361,7 +406,7 @@ class TestOctoCodeTools:
     def test_search_code_tool(self):
         """Test search_code tool returns valid JSON."""
         tools = OctoCodeTools()
-        result = tools.search_code("useState", owner="facebook", repo="react", match="file")
+        result = call_tool(tools, 'search_code', keywords="useState", owner="facebook", repo="react", match="file")
         parsed = json.loads(result)
         assert parsed["action"] == "search_code"
         assert parsed["keywords"] == "useState"
@@ -372,7 +417,7 @@ class TestOctoCodeTools:
     def test_search_code_no_owner(self):
         """Test search_code without owner/repo."""
         tools = OctoCodeTools()
-        result = tools.search_code("authentication")
+        result = call_tool(tools, 'search_code', keywords="authentication")
         parsed = json.loads(result)
         assert parsed["owner"] is None
         assert parsed["repo"] is None
@@ -380,7 +425,7 @@ class TestOctoCodeTools:
     def test_get_file_content_tool(self):
         """Test get_file_content tool returns valid JSON."""
         tools = OctoCodeTools()
-        result = tools.get_file_content(
+        result = call_tool(tools, 'get_file_content',
             owner="anthropics",
             repo="claude-code",
             path="README.md",
@@ -396,7 +441,7 @@ class TestOctoCodeTools:
     def test_get_file_content_with_match(self):
         """Test get_file_content with match_string."""
         tools = OctoCodeTools()
-        result = tools.get_file_content(
+        result = call_tool(tools, 'get_file_content',
             owner="test",
             repo="repo",
             path="file.py",
@@ -408,7 +453,7 @@ class TestOctoCodeTools:
     def test_view_repo_structure_tool(self):
         """Test view_repo_structure tool returns valid JSON."""
         tools = OctoCodeTools()
-        result = tools.view_repo_structure(
+        result = call_tool(tools, 'view_repo_structure',
             owner="microsoft",
             repo="vscode",
             branch="main",
@@ -425,7 +470,7 @@ class TestOctoCodeTools:
     def test_search_repositories_tool(self):
         """Test search_repositories tool returns valid JSON."""
         tools = OctoCodeTools()
-        result = tools.search_repositories(
+        result = call_tool(tools, 'search_repositories',
             keywords="machine learning",
             topics="python,ai",
             stars=">1000",
@@ -441,7 +486,7 @@ class TestOctoCodeTools:
     def test_search_pull_requests_tool(self):
         """Test search_pull_requests tool returns valid JSON."""
         tools = OctoCodeTools()
-        result = tools.search_pull_requests(
+        result = call_tool(tools, 'search_pull_requests',
             owner="drlegreid",
             repo="platform-gai",
             query="fix bug",
@@ -458,7 +503,7 @@ class TestOctoCodeTools:
     def test_search_pull_requests_open(self):
         """Test search_pull_requests for open PRs."""
         tools = OctoCodeTools()
-        result = tools.search_pull_requests(state="open")
+        result = call_tool(tools, 'search_pull_requests', state="open")
         parsed = json.loads(result)
         assert parsed["state"] == "open"
 
@@ -574,8 +619,8 @@ class TestModuleLevel:
     def test_stub_decorator_when_no_agno(self):
         """Test stub decorator marks functions."""
         tools = PlaywrightTools()
-        # Check that navigate has been decorated
-        assert hasattr(tools.navigate, '_is_tool') or callable(tools.navigate)
+        # Check that navigate has been decorated (agno Function or stub)
+        assert is_valid_tool(tools.navigate)
 
 
 # =============================================================================
@@ -621,8 +666,7 @@ class TestJsonOutputFormat:
 
         for toolkit, tool_calls in tools_to_test:
             for tool_name, kwargs in tool_calls:
-                tool_func = getattr(toolkit, tool_name)
-                result = tool_func(**kwargs)
+                result = call_tool(toolkit, tool_name, **kwargs)
                 # Should not raise
                 parsed = json.loads(result)
                 assert "status" in parsed, f"{tool_name} missing status"
@@ -631,14 +675,14 @@ class TestJsonOutputFormat:
     def test_all_results_have_action_field(self):
         """Test all results include action field."""
         toolkit = PlaywrightTools()
-        result = toolkit.navigate("https://example.com")
+        result = call_tool(toolkit, 'navigate', url="https://example.com")
         parsed = json.loads(result)
         assert "action" in parsed
 
     def test_all_results_have_message_field(self):
         """Test all results include message field."""
         toolkit = DesktopCommanderTools()
-        result = toolkit.read_file("C:\\test.txt")
+        result = call_tool(toolkit, 'read_file', path="C:\\test.txt")
         parsed = json.loads(result)
         assert "message" in parsed
 
@@ -659,10 +703,11 @@ class TestAgnoIntegration:
 
     def test_tool_decorator_applied(self):
         """Test @tool decorator applied correctly."""
-        from agno.tools import tool as real_tool
         tools = PlaywrightTools()
-        # Check navigate is properly decorated
-        assert hasattr(tools.navigate, '__wrapped__')
+        # Check navigate is an agno Function with entrypoint
+        assert hasattr(tools.navigate, 'entrypoint'), "navigate should be an agno Function"
+        assert hasattr(tools.navigate, 'name'), "navigate Function should have name"
+        assert callable(tools.navigate.entrypoint), "entrypoint should be callable"
 
 
 # =============================================================================

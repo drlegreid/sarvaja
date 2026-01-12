@@ -1,10 +1,11 @@
 """
 MCP Server Configuration Tests
 Created: 2024-12-26
+Updated: 2026-01-04 - Migrated to split server architecture
 Per RULE-023: Test Before Ship
 
 TDD tests to validate MCP server configuration BEFORE integration.
-These tests should have been written BEFORE creating .mcp.json.
+Tests the 4-server split architecture (governance-core, agents, sessions, tasks).
 """
 import pytest
 import json
@@ -15,7 +16,6 @@ from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).parent.parent
 MCP_CONFIG = PROJECT_ROOT / ".mcp.json"
-MCP_SERVER = PROJECT_ROOT / "governance" / "mcp_server.py"
 
 
 class TestMCPServerConfig:
@@ -34,45 +34,55 @@ class TestMCPServerConfig:
         assert "mcpServers" in config, "mcpServers key missing"
 
     @pytest.mark.unit
-    def test_governance_server_defined(self):
-        """Governance server must be defined in config."""
+    def test_split_servers_defined(self):
+        """All 4 split servers must be defined in config."""
         with open(MCP_CONFIG) as f:
             config = json.load(f)
-        assert "governance" in config["mcpServers"], "governance server not defined"
+
+        expected = ["governance-core", "governance-agents",
+                    "governance-sessions", "governance-tasks"]
+        for server in expected:
+            assert server in config["mcpServers"], f"{server} not defined"
 
     @pytest.mark.unit
-    def test_governance_server_has_required_fields(self):
-        """Governance server config must have required fields."""
+    def test_monolith_removed(self):
+        """Monolith 'governance' server must NOT be in config."""
         with open(MCP_CONFIG) as f:
             config = json.load(f)
-        gov = config["mcpServers"]["governance"]
-
-        assert "type" in gov, "type field missing"
-        assert gov["type"] == "stdio", f"Expected stdio, got {gov['type']}"
-        assert "command" in gov, "command field missing"
-        assert "args" in gov, "args field missing"
+        assert "governance" not in config["mcpServers"], \
+            "Deprecated 'governance' monolith should be removed"
 
     @pytest.mark.unit
-    def test_governance_server_env_has_typedb(self):
-        """Governance server must have TypeDB env vars."""
+    def test_each_server_has_required_fields(self):
+        """Each governance server config must have required fields."""
         with open(MCP_CONFIG) as f:
             config = json.load(f)
-        gov = config["mcpServers"]["governance"]
 
-        assert "env" in gov, "env field missing"
-        assert "TYPEDB_HOST" in gov["env"], "TYPEDB_HOST missing"
-        assert "TYPEDB_PORT" in gov["env"], "TYPEDB_PORT missing"
+        governance_servers = ["governance-core", "governance-agents",
+                              "governance-sessions", "governance-tasks"]
+
+        for name in governance_servers:
+            server = config.get("mcpServers", {}).get(name)
+            assert server is not None, f"{name} not defined"
+            assert "type" in server, f"{name} missing 'type'"
+            assert server["type"] == "stdio", f"{name} type should be stdio"
+            assert "command" in server, f"{name} missing 'command'"
+            assert "args" in server, f"{name} missing 'args'"
+            assert "env" in server, f"{name} missing 'env'"
+            assert "TYPEDB_HOST" in server["env"], f"{name} missing TYPEDB_HOST"
+            assert "TYPEDB_PORT" in server["env"], f"{name} missing TYPEDB_PORT"
 
 
 class TestMCPServerStartup:
-    """Validate MCP server can actually start."""
+    """Validate MCP split servers can start."""
 
     @pytest.mark.integration
-    def test_mcp_server_module_imports(self):
-        """MCP server module must import without errors."""
-        # This was the bug - module import failed due to path issues
+    def test_core_server_imports(self):
+        """Core server module must import without errors."""
         result = subprocess.run(
-            [sys.executable, "-c", "import sys; sys.path.insert(0, '.'); from governance.mcp_server import mcp"],
+            [sys.executable, "-c",
+             "import sys; sys.path.insert(0, '.'); "
+             "from governance.mcp_server_core import mcp"],
             cwd=str(PROJECT_ROOT),
             capture_output=True,
             text=True,
@@ -81,16 +91,15 @@ class TestMCPServerStartup:
         assert result.returncode == 0, f"Import failed: {result.stderr}"
 
     @pytest.mark.integration
-    def test_mcp_server_starts_with_module_flag(self):
-        """MCP server must start with python -m."""
+    def test_core_server_starts(self):
+        """Core server must start with python -m."""
         env = os.environ.copy()
         env["PYTHONPATH"] = str(PROJECT_ROOT)
         env["TYPEDB_HOST"] = "localhost"
         env["TYPEDB_PORT"] = "1729"
 
-        # Start server and immediately send EOF to stop it
         result = subprocess.run(
-            [sys.executable, "-m", "governance.mcp_server"],
+            [sys.executable, "-m", "governance.mcp_server_core"],
             cwd=str(PROJECT_ROOT),
             env=env,
             input="",  # EOF
@@ -98,26 +107,27 @@ class TestMCPServerStartup:
             text=True,
             timeout=5
         )
-        # Server should exit cleanly (0) or with expected code
-        # The important thing is no import errors
-        assert "ModuleNotFoundError" not in result.stderr, f"Module import failed: {result.stderr}"
-        assert "ImportError" not in result.stderr, f"Import failed: {result.stderr}"
+        assert "ModuleNotFoundError" not in result.stderr
+        assert "ImportError" not in result.stderr
 
 
 class TestMCPToolsAvailable:
-    """Validate MCP tools are callable."""
+    """Validate MCP tools are callable via compat package."""
 
     @pytest.mark.integration
     def test_governance_query_rules_callable(self):
         """governance_query_rules must be callable."""
         import sys
         sys.path.insert(0, str(PROJECT_ROOT))
-        from governance.mcp_server import governance_query_rules
+        from governance.compat import governance_query_rules
 
         result = governance_query_rules()
         assert result is not None, "governance_query_rules returned None"
 
         data = json.loads(result)
+        # Accept either list of rules or error dict (if TypeDB not available)
+        if isinstance(data, dict) and "error" in data:
+            pytest.skip(f"TypeDB not available: {data['error']}")
         assert isinstance(data, list), "Expected list of rules"
 
     @pytest.mark.integration
@@ -125,10 +135,14 @@ class TestMCPToolsAvailable:
         """Rules must have full directive content, not just descriptions."""
         import sys
         sys.path.insert(0, str(PROJECT_ROOT))
-        from governance.mcp_server import governance_query_rules
+        from governance.compat import governance_query_rules
 
         result = governance_query_rules()
         rules = json.loads(result)
+
+        # Skip if TypeDB not available
+        if isinstance(rules, dict) and "error" in rules:
+            pytest.skip(f"TypeDB not available: {rules['error']}")
 
         assert len(rules) > 0, "No rules found"
 
@@ -142,7 +156,7 @@ class TestMCPToolsAvailable:
         """governance_list_tasks must be callable."""
         import sys
         sys.path.insert(0, str(PROJECT_ROOT))
-        from governance.mcp_server import governance_list_tasks
+        from governance.compat import governance_list_tasks
 
         result = governance_list_tasks()
         assert result is not None, "governance_list_tasks returned None"

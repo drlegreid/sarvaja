@@ -41,6 +41,7 @@ def register_search_tools(mcp) -> None:
             JSON array of matching evidence with relevance scores
         """
         # Try to use vector store for semantic search
+        semantic_results = []
         try:
             from governance.vector_store import VectorStore, MockEmbeddings
 
@@ -50,23 +51,25 @@ def register_search_tools(mcp) -> None:
             # Connect if possible
             if store.connect():
                 query_embedding = generator.generate(query)
-                results = store.search(query_embedding, top_k=top_k, source_type=source_type)
+                semantic_results = store.search(query_embedding, top_k=top_k, source_type=source_type)
                 store.close()
 
-                return json.dumps({
-                    "query": query,
-                    "results": [
-                        {
-                            "source": r.source,
-                            "source_type": r.source_type,
-                            "score": round(r.score, 4),
-                            "content": r.content[:200] + "..." if len(r.content) > 200 else r.content
-                        }
-                        for r in results
-                    ],
-                    "count": len(results),
-                    "search_method": "semantic_vector"
-                }, indent=2)
+                # Only return semantic results if we found something
+                if semantic_results:
+                    return json.dumps({
+                        "query": query,
+                        "results": [
+                            {
+                                "source": r.source,
+                                "source_type": r.source_type,
+                                "score": round(r.score, 4),
+                                "content": r.content[:200] + "..." if len(r.content) > 200 else r.content
+                            }
+                            for r in semantic_results
+                        ],
+                        "count": len(semantic_results),
+                        "search_method": "semantic_vector"
+                    }, indent=2)
         except Exception:
             pass
 

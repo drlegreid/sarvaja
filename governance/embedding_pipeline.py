@@ -31,7 +31,7 @@ from governance.vector_store import (
     create_vector_from_decision,
     create_vector_from_session,
 )
-from governance.mcp_server import (
+from governance.compat import (
     governance_query_rules,
     governance_list_decisions,
     governance_list_sessions,
