@@ -59,7 +59,7 @@ def get_minimal_settings() -> dict:
             "SessionStart": [
                 {
                     "type": "command",
-                    "command": f"python {CLAUDE_DIR / 'hooks' / 'healthcheck.py'}",
+                    "command": f"python3 {CLAUDE_DIR / 'hooks' / 'healthcheck.py'}",
                     "timeout": 3000
                 }
             ]

@@ -2,24 +2,39 @@
 Tests for Kanren Constraint Engine (KAN-002).
 
 Per RULE-023: Test Coverage Protocol
+
+Note: kanren is an optional dependency. Tests are skipped if not installed.
+Install with: pip install kanren
 """
 
 import pytest
-from governance.kanren_constraints import (
-    trust_level,
-    requires_supervisor,
-    can_execute_priority,
-    task_requires_evidence,
-    valid_task_assignment,
-    valid_rag_chunk,
-    filter_rag_chunks,
-    conflicting_priorities,
-    find_rule_conflicts,
-    assemble_context,
-    validate_agent_for_task,
-    AgentContext,
-    TaskContext,
-    RuleContext,
+
+# Try to import kanren module - skip all tests if not available
+try:
+    from governance.kanren_constraints import (
+        trust_level,
+        requires_supervisor,
+        can_execute_priority,
+        task_requires_evidence,
+        valid_task_assignment,
+        valid_rag_chunk,
+        filter_rag_chunks,
+        conflicting_priorities,
+        find_rule_conflicts,
+        assemble_context,
+        validate_agent_for_task,
+        AgentContext,
+        TaskContext,
+        RuleContext,
+    )
+    KANREN_AVAILABLE = True
+except ImportError:
+    KANREN_AVAILABLE = False
+
+# Skip entire module if kanren not installed
+pytestmark = pytest.mark.skipif(
+    not KANREN_AVAILABLE,
+    reason="kanren not installed - optional dependency"
 )
 
 

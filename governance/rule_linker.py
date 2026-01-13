@@ -81,6 +81,7 @@ SEMANTIC_TO_LEGACY = {
     "RECOVER-CRASH-01-v1": "RULE-041",
     "SAFETY-DESTR-01-v1": "RULE-042",
     "META-TAXON-01-v1": "RULE-043",  # New META rule
+    "TEST-EXEC-01-v1": "RULE-044",  # Split test execution
 }
 
 # Reverse mapping

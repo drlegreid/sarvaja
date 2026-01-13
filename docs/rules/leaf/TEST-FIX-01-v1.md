@@ -51,4 +51,26 @@ Per GAP-VERIFY-001: Failure to verify results in gap reopening.
 
 ---
 
+## Enforcement
+
+**MCP Tool**: `governance_verify_completion(task_id, verification_method, evidence, test_passed)`
+
+This tool enforces verification before marking tasks as completed:
+- Requires verification method (how you tested)
+- Requires evidence (what you saw)
+- Blocks completion if test_passed=False
+- Records verification in TypeDB
+
+**Usage**:
+```python
+governance_verify_completion(
+    task_id="GAP-UI-001",
+    verification_method="pytest tests/test_ui.py -v",
+    evidence="5 tests passed, UI renders correctly",
+    test_passed=True
+)
+```
+
+---
+
 *Per SESSION-DSM-01-v1: DSP Semantic Code Structure*

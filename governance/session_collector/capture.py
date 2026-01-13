@@ -174,6 +174,75 @@ class SessionCaptureMixin:
             }
         ))
 
+    def capture_tool_call(
+        self,
+        tool_name: str,
+        arguments: Dict[str, Any] = None,
+        result: str = None,
+        duration_ms: int = None,
+        success: bool = True
+    ) -> None:
+        """
+        Capture MCP tool call event.
+
+        Per Task 2.3: Track tool calls with arguments as part of session evidence.
+        Enables debugging and replay of agent actions.
+
+        Args:
+            tool_name: MCP tool name (e.g., "governance_get_rule", "Bash")
+            arguments: Tool arguments passed
+            result: Tool result summary (truncated for large results)
+            duration_ms: Execution time in milliseconds
+            success: Whether the tool call succeeded
+        """
+        # Truncate result for storage (keep first 500 chars for summary)
+        result_summary = result[:500] + "..." if result and len(result) > 500 else result
+
+        self.events.append(SessionEvent(
+            timestamp=datetime.now().isoformat(),
+            event_type="tool_call",
+            content=f"{tool_name}({', '.join(f'{k}={v}' for k, v in (arguments or {}).items())[:100]})",
+            metadata={
+                "session_id": self.session_id,
+                "tool_name": tool_name,
+                "arguments": arguments,
+                "result_summary": result_summary,
+                "duration_ms": duration_ms,
+                "success": success
+            }
+        ))
+
+    def capture_thought(
+        self,
+        thought: str,
+        thought_type: str = "reasoning",
+        related_tools: Optional[List[str]] = None,
+        confidence: float = None
+    ) -> None:
+        """
+        Capture assistant thought/reasoning event.
+
+        Per Task 2.3: Track thoughts with holographic detailisation.
+        Enables understanding of agent reasoning chains.
+
+        Args:
+            thought: The thought/reasoning text
+            thought_type: Type of thought (reasoning, planning, reflection, hypothesis)
+            related_tools: Tools this thought relates to
+            confidence: Optional confidence score (0.0-1.0)
+        """
+        self.events.append(SessionEvent(
+            timestamp=datetime.now().isoformat(),
+            event_type="thought",
+            content=thought,
+            metadata={
+                "session_id": self.session_id,
+                "thought_type": thought_type,
+                "related_tools": related_tools or [],
+                "confidence": confidence
+            }
+        ))
+
     def capture_intent(
         self,
         goal: str,

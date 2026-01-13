@@ -13,6 +13,7 @@ from .entropy import EntropyChecker
 from .amnesia import AmnesiaDetector
 from .intent_checker import check_intent_continuity, get_intent_status, format_intent_for_healthcheck
 from .zombies import check_zombie_processes, cleanup_zombie_pids
+from .destructive import check_destructive_command, format_warning, get_safe_alternative
 
 __all__ = [
     "ServiceChecker",
@@ -29,4 +30,8 @@ __all__ = [
     # GAP-ZOMBIE-001
     "check_zombie_processes",
     "cleanup_zombie_pids",
+    # GAP-DESTRUCT-001: Destructive command detection
+    "check_destructive_command",
+    "format_warning",
+    "get_safe_alternative",
 ]

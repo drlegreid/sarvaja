@@ -25,7 +25,7 @@
 | First N lines | `head -n 20` | `Select-Object -First 20` |
 | Last N lines | `tail -n 30` | `Select-Object -Last 30` |
 | List files | `ls -la` | `Get-ChildItem` |
-| Run pytest | N/A (use PowerShell) | `python -m pytest ... \| Select-Object -Last 30` |
+| Run pytest | `python3 -m pytest ... \| tail -30` | `python -m pytest ... \| Select-Object -Last 30` |
 | Docker commands | `docker compose up -d` | Same (Docker CLI works in both) |
 
 ---
@@ -54,6 +54,7 @@ mcp__powershell__run_powershell(code="Invoke-WebRequest -Uri 'http://localhost:8
 | ❌ `Select-Object` in Bash | ✅ Use `head -n 20` instead |
 | ❌ `Invoke-WebRequest` in Bash | ✅ Use `curl` instead |
 | ❌ `$variable` in Bash | ✅ Use `${variable}` or escape as `\$variable` |
+| ❌ `python script.py` in Bash | ✅ Use `python3 script.py` (per GAP-PYTHON-001) |
 
 ---
 

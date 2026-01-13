@@ -55,6 +55,18 @@
           }
         ]
       }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"$CLAUDE_PROJECT_DIR/.claude/hooks/pre_bash_check.py\"",
+            "timeout": 2
+          }
+        ]
+      }
     ]
   }
 }

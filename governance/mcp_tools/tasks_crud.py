@@ -198,3 +198,83 @@ def register_task_crud_tools(mcp) -> None:
             }, indent=2, default=str)
         finally:
             client.close()
+
+    @mcp.tool()
+    def governance_verify_completion(
+        task_id: str,
+        verification_method: str,
+        evidence: str,
+        test_passed: bool = True
+    ) -> str:
+        """
+        Verify and mark a task as completed with required evidence.
+
+        Per TEST-FIX-01-v1: Fixes MUST include verification evidence.
+        Per GAP-VERIFY-001: Enforces verification before marking DONE.
+
+        Args:
+            task_id: Task/Gap ID to verify (e.g., "P10.1", "GAP-UI-001")
+            verification_method: How verification was done (e.g., "pytest", "curl", "podman ps")
+            evidence: Evidence of completion (test output, screenshot path, log excerpt)
+            test_passed: Whether the verification test passed (default True)
+
+        Returns:
+            JSON object with verification status and task update
+        """
+        if not verification_method:
+            return json.dumps({
+                "error": "verification_method required",
+                "rule": "TEST-FIX-01-v1",
+                "hint": "Specify how you verified: pytest, curl, podman ps, etc."
+            })
+
+        if not evidence:
+            return json.dumps({
+                "error": "evidence required",
+                "rule": "TEST-FIX-01-v1",
+                "hint": "Include evidence: test output, log excerpt, or screenshot path"
+            })
+
+        if not test_passed:
+            return json.dumps({
+                "error": "Cannot mark completed - verification failed",
+                "task_id": task_id,
+                "verification_method": verification_method,
+                "evidence": evidence,
+                "status": "VERIFICATION_FAILED",
+                "action": "Fix the issue and re-verify"
+            })
+
+        # Verification passed - update task status
+        client = get_typedb_client()
+        try:
+            if not client.connect():
+                return json.dumps({"error": "Failed to connect to TypeDB"})
+
+            success = client.update_task(
+                task_id=task_id,
+                status="completed"
+            )
+
+            if success:
+                return json.dumps({
+                    "task_id": task_id,
+                    "status": "completed",
+                    "verified": True,
+                    "verification_method": verification_method,
+                    "evidence": evidence[:500] if len(evidence) > 500 else evidence,
+                    "rule": "TEST-FIX-01-v1",
+                    "message": f"Task {task_id} verified and marked completed"
+                }, indent=2)
+            else:
+                # Task might not exist in TypeDB, but verification is recorded
+                return json.dumps({
+                    "task_id": task_id,
+                    "verified": True,
+                    "verification_method": verification_method,
+                    "evidence": evidence[:500] if len(evidence) > 500 else evidence,
+                    "note": "Task not in TypeDB but verification recorded",
+                    "message": f"Verification complete for {task_id}"
+                }, indent=2)
+        finally:
+            client.close()

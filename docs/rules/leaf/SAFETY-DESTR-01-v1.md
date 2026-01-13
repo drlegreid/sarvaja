@@ -51,9 +51,24 @@ Per GAP-DESTRUCT-001: Executing destructive commands without verification create
 
 ---
 
+## Enforcement
+
+**PreToolUse Hook**: `.claude/hooks/pre_bash_check.py`
+
+The hook automatically:
+1. Checks all Bash commands for destructive patterns
+2. **BLOCKS** catastrophic commands (rm -rf /, fork bombs)
+3. **WARNS** about risky commands with safer alternatives
+4. **LOGS** all destructive attempts to `.destructive_log/`
+
+**Checker Module**: `.claude/hooks/checkers/destructive.py`
+
+---
+
 ## Validation
 
-- [ ] Destructive commands require confirmation
+- [x] Destructive commands require confirmation (PreToolUse hook)
+- [x] Audit trail for destructive attempts (.destructive_log/)
 - [ ] State checked before action
 - [ ] Backups created when needed
 

@@ -4,6 +4,7 @@
 # Updated: 2024-12-24 (RULE-011) - Added multi-agent governance entities
 # Updated: 2024-12-24 (RULE-013) - Added document entity and gap-rule cross-referencing
 # Updated: 2024-12-25 (RULE-020) - Added E2E exploration session entities
+# Updated: 2026-01-13 (META-TAXON-01-v1) - Added semantic-id attribute to rule-entity
 
 define
 
@@ -13,6 +14,7 @@ define
 
 rule-entity sub entity,
     owns rule-id,
+    owns semantic-id,            # META-TAXON-01-v1: Semantic ID (e.g., SESSION-EVID-01-v1)
     owns rule-name,
     owns category,
     owns priority,
@@ -249,6 +251,7 @@ proposal sub entity,
 
 # Rule attributes
 rule-id sub attribute, value string;
+semantic-id sub attribute, value string;  # META-TAXON-01-v1: Semantic ID (e.g., SESSION-EVID-01-v1)
 rule-name sub attribute, value string;
 category sub attribute, value string;  # governance, architecture, testing, etc.
 priority sub attribute, value string;  # CRITICAL, HIGH, MEDIUM, LOW

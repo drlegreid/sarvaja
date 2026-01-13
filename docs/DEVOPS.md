@@ -238,6 +238,40 @@ git add -A && git commit -m "message" && git push origin master
 
 ---
 
+## Pre-commit Hooks (GAP-009)
+
+Code quality enforcement via pre-commit hooks.
+
+### Setup (One-time)
+
+```bash
+source ~/.venv/sim-ai/bin/activate
+pip install pre-commit
+pre-commit install
+```
+
+### What's Enforced
+
+| Hook | Purpose |
+|------|---------|
+| trailing-whitespace | Remove trailing spaces |
+| end-of-file-fixer | Ensure newline at EOF |
+| check-yaml/json | Validate syntax |
+| black | Python formatting |
+| isort | Import sorting |
+| ruff | Python linting |
+| detect-secrets | Security check |
+| no-commit-to-branch | Block direct main/master commits |
+
+### Manual Run
+
+```bash
+pre-commit run --all-files  # Check all
+pre-commit run black        # Single hook
+```
+
+---
+
 ## E2E Testing (RULE-037)
 
 Browser tests require dashboard running on port 8081.

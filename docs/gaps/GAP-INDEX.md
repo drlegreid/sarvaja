@@ -1,7 +1,7 @@
 # Gap Index - Sim.ai PoC
 
 **Last Updated:** 2026-01-13
-**Total Gaps:** 202 | Status: 167 RESOLVED, 35 OPEN
+**Total Gaps:** 202 | Status: 171 RESOLVED, 31 OPEN
 **Format Migration:** GAP-WORKFLOW-003 - Replaced strikethrough with Status column
 
 > **Evidence Files:** Detailed analysis moved to [evidence/](evidence/) per GAP-META-001
@@ -59,13 +59,13 @@
 
 | ID | Status | Gap | Priority | Category | Rule | Evidence |
 |----|--------|-----|----------|----------|------|----------|
-| GAP-DESTRUCT-001 | OPEN | No enforcement for destructive commands (rm -rf, reset --force, wipe) | CRITICAL | safety | RULE-042 | Agent wiped 3GB images unnecessarily |
-| GAP-VERIFY-001 | OPEN | No verification protocol when marking fixes DONE | CRITICAL | workflow | RULE-037 | claude-mem marked DONE but still broken |
+| GAP-DESTRUCT-001 | RESOLVED | No enforcement for destructive commands (rm -rf, reset --force, wipe) | CRITICAL | safety | RULE-042 | FIXED 2026-01-13: PreToolUse hook `.claude/hooks/pre_bash_check.py` + checker module `.claude/hooks/checkers/destructive.py`. Blocks catastrophic commands, warns on risky. |
+| GAP-VERIFY-001 | RESOLVED | No verification protocol when marking fixes DONE | CRITICAL | workflow | RULE-037 | FIXED 2026-01-13: `governance_verify_completion()` MCP tool enforces evidence before marking complete. Per TEST-FIX-01-v1. |
 | GAP-PERSIST-001 | RESOLVED | Containers lost on reboot - restart policy not sufficient | CRITICAL | infra | RULE-021 | FIXED 2026-01-12: Healthcheck hook auto-recovers via `ContainerRecovery.start_containers()`. Audit: `~/.claude/recovery_logs/`. E2E tested post-reboot. |
 | GAP-PERSIST-002 | RESOLVED | ChromaDB data lost on reboot (0 documents) | CRITICAL | data | RULE-021 | FIXED: Mount was /chroma/chroma but persist_path=/data. Changed to /data |
 | GAP-CODE-001 | RESOLVED | healthcheck.py has duplicate recovery logic (line 509) | HIGH | architecture | RULE-032 | FIXED: Uses ContainerRecovery class (runtime-agnostic, 2026-01-12) |
 | GAP-REFACTOR-001 | PARTIAL | healthcheck.py exceeds 300 line limit (now 510 lines, was 1002) | HIGH | architecture | RULE-032 | 2026-01-12: Removed redundant fallbacks, unused functions. Uses shared modules. |
-| GAP-PYTHON-001 | OPEN | Agent uses `python` instead of `python3` | MEDIUM | devops | RULE-035 | Always use python3 explicitly |
+| GAP-PYTHON-001 | RESOLVED | Agent uses `python` instead of `python3` | MEDIUM | devops | RULE-035 | FIXED 2026-01-13: Updated recover.py, SHELL-GUIDE.md. Added python3 pitfall warning. |
 | GAP-PODMAN-DESKTOP-001 | OPEN | Podman Desktop shows "CREATED" for running containers | LOW | tooling | RULE-021 | Bug in 1.24.x with healthcheck "starting" state. Workaround: `scripts/fix-podman-desktop.sh` |
 
 ---
@@ -126,7 +126,7 @@
 | GAP-006 | RESOLVED | Sync Agent Implementation | Medium | functionality | RULE-003 | GovernanceSync in agent/sync_agent/ |
 | GAP-007 | OPEN | ChromaDB v2 Test Update | Low | testing | RULE-009 | UUID error |
 | GAP-008 | RESOLVED | Agent UI Image | Low | configuration | RULE-009 | Disabled |
-| GAP-009 | PARTIAL | Pre-commit Hooks | Medium | tooling | RULE-001 | Config exists, needs `pip install pre-commit && pre-commit install` |
+| GAP-009 | RESOLVED | Pre-commit Hooks | Medium | tooling | RULE-001 | FIXED 2026-01-13: Added setup docs to DEVOPS.md. Config complete in .pre-commit-config.yaml |
 | GAP-010 | OPEN | CI/CD Pipeline | Low | tooling | RULE-009 | - |
 | GAP-014 | DEFERRED | IntelliJ Windsurf MCP not loading | Medium | tooling | RULE-005 | Environment-specific |
 | GAP-015 | RESOLVED | Consolidated STRATEGY.md | Medium | docs | RULE-001 | docs/STRATEGY.md |

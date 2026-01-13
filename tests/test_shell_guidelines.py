@@ -1,11 +1,15 @@
 """
 Shell Command Guidelines Tests
 Created: 2026-01-03
+Updated: 2026-01-13 - Point to SHELL-GUIDE.md per doc refactor
 Per RULE-023: Test Before Ship
 Per P11.3: Shell MCP documentation validation
 
 Tests that validate shell command documentation and prevent
 mixing Bash/PowerShell syntax.
+
+Note: Shell documentation moved from CLAUDE.md to docs/SHELL-GUIDE.md
+per RULE-032 (file size limits) and modularization.
 """
 import pytest
 import re
@@ -13,10 +17,11 @@ from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).parent.parent
 CLAUDE_MD = PROJECT_ROOT / "CLAUDE.md"
+SHELL_GUIDE = PROJECT_ROOT / "docs" / "SHELL-GUIDE.md"
 
 
 class TestShellDocumentation:
-    """Validate shell command documentation exists in CLAUDE.md."""
+    """Validate shell command documentation exists in SHELL-GUIDE.md."""
 
     @pytest.mark.unit
     def test_claude_md_exists(self):
@@ -24,49 +29,54 @@ class TestShellDocumentation:
         assert CLAUDE_MD.exists(), "CLAUDE.md not found"
 
     @pytest.mark.unit
-    def test_shell_guidelines_section_exists(self):
-        """Shell Command Guidelines section must exist in CLAUDE.md."""
+    def test_shell_guide_exists(self):
+        """SHELL-GUIDE.md must exist."""
+        assert SHELL_GUIDE.exists(), "docs/SHELL-GUIDE.md not found"
+
+    @pytest.mark.unit
+    def test_claude_md_links_to_shell_guide(self):
+        """CLAUDE.md must link to SHELL-GUIDE.md."""
         content = CLAUDE_MD.read_text(encoding="utf-8")
-        assert "Shell Command Guidelines" in content, \
-            "Shell Command Guidelines section missing from CLAUDE.md"
+        assert "SHELL-GUIDE.md" in content or "Shell Guide" in content, \
+            "CLAUDE.md should link to Shell Guide"
 
     @pytest.mark.unit
     def test_bash_tool_documented(self):
-        """Bash tool usage must be documented."""
-        content = CLAUDE_MD.read_text(encoding="utf-8")
-        assert "Bash" in content and ("Linux" in content or "linux" in content), \
-            "Bash tool documentation missing"
+        """Bash tool usage must be documented in SHELL-GUIDE.md."""
+        content = SHELL_GUIDE.read_text(encoding="utf-8")
+        assert "Bash" in content and "Linux" in content, \
+            "Bash tool documentation missing from SHELL-GUIDE.md"
 
     @pytest.mark.unit
     def test_powershell_mcp_documented(self):
-        """PowerShell MCP usage must be documented."""
-        content = CLAUDE_MD.read_text(encoding="utf-8")
+        """PowerShell MCP usage must be documented in SHELL-GUIDE.md."""
+        content = SHELL_GUIDE.read_text(encoding="utf-8")
         assert "mcp__powershell__run_powershell" in content or "PowerShell MCP" in content, \
-            "PowerShell MCP documentation missing"
+            "PowerShell MCP documentation missing from SHELL-GUIDE.md"
 
     @pytest.mark.unit
     def test_common_pitfalls_documented(self):
-        """Common shell pitfalls must be documented."""
-        content = CLAUDE_MD.read_text(encoding="utf-8")
+        """Common shell pitfalls must be documented in SHELL-GUIDE.md."""
+        content = SHELL_GUIDE.read_text(encoding="utf-8")
         # Check for common mistake documentation
         assert "Start-Sleep" in content, "Start-Sleep pitfall not documented"
         assert "sleep" in content, "sleep equivalent not documented"
 
 
 class TestShellCommandEquivalents:
-    """Validate shell command equivalent documentation."""
+    """Validate shell command equivalent documentation in SHELL-GUIDE.md."""
 
     @pytest.mark.unit
     def test_wait_command_documented(self):
         """Wait/sleep command equivalents must be documented."""
-        content = CLAUDE_MD.read_text(encoding="utf-8")
+        content = SHELL_GUIDE.read_text(encoding="utf-8")
         # Bash: sleep N, PowerShell: Start-Sleep -Seconds N
         assert "sleep" in content.lower(), "sleep command not documented"
 
     @pytest.mark.unit
     def test_http_request_documented(self):
         """HTTP request command equivalents must be documented."""
-        content = CLAUDE_MD.read_text(encoding="utf-8")
+        content = SHELL_GUIDE.read_text(encoding="utf-8")
         # Bash: curl, PowerShell: Invoke-WebRequest
         assert "curl" in content, "curl not documented"
         assert "Invoke-WebRequest" in content, "Invoke-WebRequest not documented"
@@ -74,7 +84,7 @@ class TestShellCommandEquivalents:
     @pytest.mark.unit
     def test_head_tail_documented(self):
         """Head/tail command equivalents must be documented."""
-        content = CLAUDE_MD.read_text(encoding="utf-8")
+        content = SHELL_GUIDE.read_text(encoding="utf-8")
         # Bash: head -n N, PowerShell: Select-Object -First N
         assert "head" in content, "head command not documented"
         assert "tail" in content, "tail command not documented"
@@ -83,7 +93,7 @@ class TestShellCommandEquivalents:
     @pytest.mark.unit
     def test_last_n_lines_documented(self):
         """Last N lines equivalents must be documented (common pitfall)."""
-        content = CLAUDE_MD.read_text(encoding="utf-8")
+        content = SHELL_GUIDE.read_text(encoding="utf-8")
         # This was a common mistake: using Select-Object -Last in Bash
         assert "Last N lines" in content or "Last 30" in content, \
             "Last N lines equivalents not documented - common pitfall!"

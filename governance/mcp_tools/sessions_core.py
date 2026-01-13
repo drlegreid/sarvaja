@@ -201,3 +201,112 @@ def register_session_core_tools(mcp) -> None:
             "active_sessions": sessions,
             "count": len(sessions)
         }, indent=2)
+
+    @mcp.tool()
+    def session_tool_call(
+        tool_name: str,
+        arguments: str = "{}",
+        result_summary: Optional[str] = None,
+        duration_ms: int = 0,
+        success: bool = True,
+        topic: Optional[str] = None
+    ) -> str:
+        """
+        Record a tool call in the current session.
+
+        Per Task 2.3: Track tool calls with arguments for session evidence.
+        Enables debugging and replay of agent actions.
+
+        Args:
+            tool_name: MCP tool name (e.g., "governance_get_rule", "Bash")
+            arguments: Tool arguments as JSON string
+            result_summary: Summary of tool result (truncated for large results)
+            duration_ms: Execution time in milliseconds
+            success: Whether the tool call succeeded
+            topic: Session topic (uses last session if not provided)
+
+        Returns:
+            JSON object with tool call confirmation
+        """
+        if not SESSION_COLLECTOR_AVAILABLE:
+            return json.dumps({"error": "SessionCollector not available"})
+
+        # Get or create session
+        sessions = list_active_sessions()
+        if not sessions and not topic:
+            return json.dumps({"error": "No active session. Call session_start first."})
+
+        collector = get_or_create_session(topic or sessions[-1].split("-")[-1].lower())
+
+        # Parse arguments JSON
+        try:
+            args_dict = json.loads(arguments) if arguments else {}
+        except json.JSONDecodeError:
+            args_dict = {"raw": arguments}
+
+        collector.capture_tool_call(
+            tool_name=tool_name,
+            arguments=args_dict,
+            result=result_summary,
+            duration_ms=duration_ms,
+            success=success
+        )
+
+        return json.dumps({
+            "tool_name": tool_name,
+            "session_id": collector.session_id,
+            "duration_ms": duration_ms,
+            "success": success,
+            "message": f"Tool call {tool_name} recorded"
+        }, indent=2)
+
+    @mcp.tool()
+    def session_thought(
+        thought: str,
+        thought_type: str = "reasoning",
+        related_tools: Optional[str] = None,
+        confidence: float = 0.0,
+        topic: Optional[str] = None
+    ) -> str:
+        """
+        Record a thought/reasoning step in the current session.
+
+        Per Task 2.3: Track thoughts with holographic detailisation.
+        Enables understanding of agent reasoning chains.
+
+        Args:
+            thought: The thought/reasoning text
+            thought_type: Type of thought (reasoning, planning, reflection, hypothesis)
+            related_tools: Comma-separated list of related tool names
+            confidence: Confidence score (0.0-1.0)
+            topic: Session topic (uses last session if not provided)
+
+        Returns:
+            JSON object with thought confirmation
+        """
+        if not SESSION_COLLECTOR_AVAILABLE:
+            return json.dumps({"error": "SessionCollector not available"})
+
+        # Get or create session
+        sessions = list_active_sessions()
+        if not sessions and not topic:
+            return json.dumps({"error": "No active session. Call session_start first."})
+
+        collector = get_or_create_session(topic or sessions[-1].split("-")[-1].lower())
+
+        # Parse related tools
+        tools_list = [t.strip() for t in related_tools.split(",")] if related_tools else []
+
+        collector.capture_thought(
+            thought=thought,
+            thought_type=thought_type,
+            related_tools=tools_list,
+            confidence=confidence if confidence > 0 else None
+        )
+
+        return json.dumps({
+            "thought_type": thought_type,
+            "session_id": collector.session_id,
+            "related_tools": tools_list,
+            "message": f"Thought ({thought_type}) recorded"
+        }, indent=2)

@@ -12,9 +12,22 @@ from typing import Dict, Any, Optional
 
 @dataclass
 class SessionEvent:
-    """Single event in a session."""
+    """
+    Single event in a session.
+
+    Event types:
+    - prompt: User prompt/input
+    - response: Assistant response
+    - decision: Strategic decision recorded
+    - task: Task creation/update
+    - error: Error event
+    - intent: Session intent (start)
+    - outcome: Session outcome (end)
+    - tool_call: MCP tool call with arguments (Task 2.3)
+    - thought: Assistant reasoning/thinking (Task 2.3)
+    """
     timestamp: str
-    event_type: str  # prompt, response, decision, task, error
+    event_type: str
     content: str
     metadata: Dict[str, Any] = field(default_factory=dict)
 
