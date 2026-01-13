@@ -1,103 +1,191 @@
-# REPORT-ISSUE-01-v1: GitHub Certification Issue Protocol
+# REPORT-ISSUE-01-v1: GitHub Issue Protocol (CERT & STATUS)
 
 **Category:** `governance` | **Priority:** HIGH | **Status:** ACTIVE | **Type:** OPERATIONAL
 
 > **Legacy ID:** RULE-049
 > **Location:** [RULES-GOVERNANCE.md](../governance/RULES-GOVERNANCE.md)
-> **Tags:** `reporting`, `github`, `certification`, `milestone`
+> **Tags:** `reporting`, `github`, `certification`, `status`, `milestone`
 
 ---
 
 ## Directive
 
-All milestone completions MUST be posted as GitHub issues with symbolic naming:
+GitHub issues follow two patterns based on scope:
 
-1. **Title Format:** `[CERT-{epoch}] {koan_name}: Status {STATUS}`
-   - `{epoch}`: Unix timestamp (e.g., `1736776800`)
-   - `{koan_name}`: Session wisdom koan name, kebab-case (e.g., `Misread-Intent`)
-2. **Labels:** `certification`, `status:{status}`, `milestone`
-3. **Auto-Close:** Issues with `Status: COMPLETE` should be closed immediately
+| Type | Purpose | Scope | Attachments |
+|------|---------|-------|-------------|
+| **CERT** | Strategic milestone certification | Comprehensive | Full evidence |
+| **STATUS** | Tactical workflow check (DEV/SLEEP) | Quick update | Minimal |
 
-**Example Titles:**
-- `[CERT-1736776800] Misread-Intent: Status COMPLETE`
-- `[CERT-1736780400] Three-ULTRAs: Status COMPLETE`
-- `[CERT-1736784000] Shipping-Haiku: Status PARTIAL`
+**CERT validates STATUS:** Certification issues assess delivered items from STATUS reports as part of Definition of Done.
 
 ---
 
-## Issue Template
+## Issue Types
+
+### 1. STATUS Issues (Tactical)
+
+**Purpose:** DEV and SLEEP mode workflow status checks.
+
+**Title Format:** `[STATUS-{epoch}] {koan_name}: {DEV|SLEEP|BLOCKED}`
+
+**Required Content:**
+- Session summary (1-3 sentences)
+- Tasks completed/in-progress
+- Blockers (if any)
+- Next actions
+
+**Example:**
+```
+[STATUS-1768313000] Three-ULTRAs: DEV
+```
+
+### 2. CERT Issues (Strategic)
+
+**Purpose:** Certification of strategic milestones with full evidence.
+
+**Title Format:** `[CERT-{epoch}] {koan_name}: {COMPLETE|PARTIAL|BLOCKED}`
+
+**Required Attachments (Definition of Done):**
+
+| Category | Required Evidence |
+|----------|-------------------|
+| **Tests (All Levels)** | Unit, integration, E2E test results |
+| **Living Documentation** | Technical details: request/response payloads |
+| **Exploratory Tests** | Screenshots + payloads + intent description |
+| **Static Documentation** | Updated docs, README, CHANGELOG |
+| **UX Artifacts** | Wireframes, mockups, user flows |
+| **Design Artifacts** | Architecture diagrams, sequence diagrams |
+| **Software Artifacts** | API specs, schema changes, config updates |
+
+**Validation:** CERT issue MUST reference STATUS issues it validates.
+
+**Example:**
+```
+[CERT-1768312800] Misread-Intent: COMPLETE
+Validates: STATUS-1768310000, STATUS-1768311000, STATUS-1768312000
+```
+
+---
+
+## STATUS Template
 
 ```markdown
-## Certification: {TOPIC}
+## Status: {TOPIC}
 
-**Date:** {YYYY-MM-DD}
-**Session:** SESSION-{date}-{topic}
-**Status:** {COMPLETE | PARTIAL | BLOCKED}
+**Epoch:** {timestamp}
+**Mode:** DEV | SLEEP
+**Koan:** {wisdom_name}
 
-### Summary
-{1-3 sentence overview of what was accomplished}
+### Progress
+- [x] Task 1
+- [x] Task 2
+- [ ] Task 3 (in progress)
 
-### Changes Made
-| Category | Count | Details |
-|----------|-------|---------|
-| Files Modified | N | list... |
-| Rules Created | N | list... |
-| Gaps Resolved | N | GAP-XXX |
-| Tests Added | N | list... |
+### Blockers
+{None | List blockers}
 
-### Evidence
-- Commit: `{sha}` - {message}
-- Tests: {pass/fail status}
-- Health: {governance_health output}
-
-### Rules Applied
-- {RULE-ID}: {brief description}
-
-### Session Wisdom
-> {Zen koan or relevant insight per REPORT-HUMOR-01-v1}
+### Next Actions
+1. Action 1
+2. Action 2
 
 ---
-*Generated per REPORT-ISSUE-01-v1*
+*Per REPORT-ISSUE-01-v1*
 ```
+
+---
+
+## CERT Template
+
+```markdown
+## Certification: {MILESTONE}
+
+**Epoch:** {timestamp}
+**Koan:** {wisdom_name}
+**Status:** COMPLETE | PARTIAL | BLOCKED
+
+### Validates STATUS Issues
+- STATUS-{epoch1}: {summary}
+- STATUS-{epoch2}: {summary}
+
+### Definition of Done Checklist
+
+#### Tests Delivered
+- [ ] Unit tests: {count} passing
+- [ ] Integration tests: {count} passing
+- [ ] E2E tests: {count} passing
+- [ ] Test coverage: {percentage}
+
+#### Living Documentation
+- [ ] API request/response examples attached
+- [ ] Error scenarios documented
+- [ ] Edge cases covered
+
+#### Exploratory Test Results
+- [ ] Screenshots attached
+- [ ] Payloads documented
+- [ ] Intent described for each test
+
+#### Static Documentation
+- [ ] README updated
+- [ ] CHANGELOG entry added
+- [ ] API docs updated
+
+#### UX/Design/Architecture
+- [ ] UX artifacts attached (if applicable)
+- [ ] Architecture diagrams updated
+- [ ] Design decisions documented
+
+### Evidence Attachments
+| Type | File | Description |
+|------|------|-------------|
+| Test Results | test-output.log | pytest results |
+| Screenshot | ui-validation.png | Final UI state |
+| Payload | api-response.json | Sample response |
+
+### Session Wisdom
+> {Zen koan or insight}
+
+---
+*Per REPORT-ISSUE-01-v1 | CERT validates STATUS*
+```
+
+---
+
+## Workflow
+
+```
+DEV Mode:
+  STATUS → STATUS → STATUS → ... → CERT
+     ↓        ↓        ↓            ↓
+  tactical  tactical  tactical  strategic
+  updates   updates   updates   validation
+
+SLEEP Mode:
+  STATUS (SLEEP) → Review backlog → Resume DEV
+```
+
+1. **During DEV:** Post STATUS issues for workflow checkpoints
+2. **At Milestone:** Post CERT issue that validates all STATUS issues
+3. **During SLEEP:** Post STATUS (SLEEP) with handoff notes
 
 ---
 
 ## Status Values
 
-| Status | Meaning | Action |
-|--------|---------|--------|
-| `COMPLETE` | All objectives met | Close issue |
-| `PARTIAL` | Some objectives met | Keep open, link follow-up |
-| `BLOCKED` | Cannot proceed | Keep open, document blocker |
+### STATUS Issue States
+| State | Meaning |
+|-------|---------|
+| `DEV` | Active development |
+| `SLEEP` | Paused, context saved |
+| `BLOCKED` | Cannot proceed |
 
----
-
-## Automation
-
-**gh CLI Command:**
-```bash
-# Get epoch timestamp
-EPOCH=$(date +%s)
-KOAN="Misread-Intent"  # From session wisdom
-
-gh issue create \
-  --title "[CERT-${EPOCH}] ${KOAN}: Status COMPLETE" \
-  --body "$(cat certification.md)" \
-  --label "certification,status:complete,milestone"
-
-# Auto-close if complete
-gh issue close {issue_number} --comment "Milestone verified and closed per ${KOAN}."
-```
-
----
-
-## Workflow Integration
-
-1. Session produces summary per REPORT-SUMM-01-v1
-2. Agent formats as GitHub issue per this rule
-3. Issue created with appropriate labels
-4. If COMPLETE: auto-close with verification comment
-5. If PARTIAL/BLOCKED: link to follow-up tasks
+### CERT Issue States
+| State | Meaning | Action |
+|-------|---------|--------|
+| `COMPLETE` | All DoD items met | Close issue |
+| `PARTIAL` | Some items met | Keep open |
+| `BLOCKED` | Cannot certify | Document blocker |
 
 ---
 
@@ -105,21 +193,30 @@ gh issue close {issue_number} --comment "Milestone verified and closed per ${KOA
 
 | Don't | Do Instead |
 |-------|------------|
-| Skip GitHub issue | Always post milestone completions |
-| Leave COMPLETE issues open | Close with verification comment |
-| Use inconsistent titles | Follow `[CERT] Topic: Status X` format |
-| Forget labels | Apply certification + status labels |
+| Use CERT for quick updates | Use STATUS for tactical checks |
+| Skip evidence in CERT | Attach all DoD artifacts |
+| Close PARTIAL CERT issues | Keep open until COMPLETE |
+| Forget to link STATUS in CERT | Reference all validated STATUS issues |
 
 ---
 
 ## Validation
 
-- [ ] Issue title follows format
-- [ ] Status label applied
-- [ ] Evidence section complete
+**STATUS Issues:**
+- [ ] Epoch timestamp in title
+- [ ] Koan name present
+- [ ] Mode specified (DEV/SLEEP/BLOCKED)
+- [ ] Next actions listed
+
+**CERT Issues:**
+- [ ] References STATUS issues it validates
+- [ ] DoD checklist completed
+- [ ] Evidence attachments present
+- [ ] Tests at all levels documented
+- [ ] Exploratory results with screenshots
 - [ ] COMPLETE issues closed
 
 ---
 
 *Per REPORT-SUMM-01-v1: Session Summary Reporting*
-*Per REPORT-HUMOR-01-v1: Session Wisdom*
+*Per REPORT-HUMOR-01-v1: Session Wisdom (Koan naming)*
