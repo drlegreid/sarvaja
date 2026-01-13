@@ -90,7 +90,7 @@
 | GAP-UI-028 | RESOLVED | Tests pass but UI broken | CRITICAL | testing | RULE-028 + smoke tests |
 | GAP-UI-029 | RESOLVED | Executive Report shows 0 Rules/Agents | HIGH | data | Field name fixed |
 | GAP-UI-030 | RESOLVED | Tasks polluted with TEST-* tasks | MEDIUM | data | Deleted 154 tasks |
-| GAP-UI-EXP | PARTIAL | No exploratory UI testing workflow | MEDIUM | process | SFDIPOT+CRUCSS framework exists in tests/heuristics/ |
+| GAP-UI-EXP | RESOLVED | No exploratory UI testing workflow | MEDIUM | process | FIXED: SFDIPOT+CRUCSS framework in tests/heuristics/ (sfdipot.py, crucss.py, coverage_report.py) |
 | GAP-UI-031 | RESOLVED | Rule Save button mock-only | CRITICAL | functionality | Wired to API |
 | GAP-UI-032 | RESOLVED | Rule Delete button mock-only | CRITICAL | functionality | Wired to API |
 | GAP-UI-033 | RESOLVED | Decision CRUD | HIGH | functionality | Full implementation |
@@ -150,7 +150,7 @@
 | GAP-TRAME-001 | RESOLVED | nav-infra not rendered despite code | HIGH | framework | RULE-037 | Fixed: duplicate NAVIGATION_ITEMS in constants.py |
 | GAP-INFRA-006 | DEFERRED | Ollama container high memory | LOW | infrastructure | RULE-021 | Optional: depends on GAP-INFRA-005 |
 | GAP-MCP-004 | RESOLVED | Rule fallback to markdown | HIGH | architecture | RULE-021 | rule_fallback.py |
-| GAP-TEST-001 | OPEN | E2E tests lack BDD paradigm | MEDIUM | testing | RULE-023 | - |
+| GAP-TEST-001 | DEFERRED | E2E tests lack BDD paradigm | MEDIUM | testing | RULE-023 | R&D item: Requires test methodology refactoring. Current tests use pytest+playwright. |
 | GAP-HEALTH-001 | RESOLVED | Healthcheck file size exceeds RULE-032 | MEDIUM | architecture | RULE-032 | FIXED 2026-01-13: 522 lines (was 1002). Modular checkers integrated: services, entropy, amnesia, zombies, destructive, intent, workflow. See GAP-REFACTOR-001. |
 | GAP-HEALTH-002 | RESOLVED | Entropy detection for DSP | HIGH | workflow | RULE-012 | healthcheck.py |
 | GAP-TEST-002 | RESOLVED | Test output blows context | HIGH | testing | RULE-023 | --report-minimal/trace/cert modes in conftest.py |
