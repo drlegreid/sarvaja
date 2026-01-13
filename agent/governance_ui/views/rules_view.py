@@ -3,6 +3,7 @@ Rules View for Governance Dashboard.
 
 Per RULE-012: Single Responsibility - only rules list/detail/form UI.
 Per RULE-019: UI/UX Standards - consistent view patterns.
+Per GAP-MCP-008: Semantic rule ID display support.
 
 This module builds the Rules view components using Trame/Vuetify 3.
 """
@@ -106,6 +107,8 @@ def build_rules_list_view() -> None:
                         "!rules_search_query || "
                         "(rule.id && rule.id.toLowerCase()"
                         ".includes(rules_search_query.toLowerCase())) || "
+                        "(rule.semantic_id && rule.semantic_id.toLowerCase()"
+                        ".includes(rules_search_query.toLowerCase())) || "
                         "(rule.name && rule.name.toLowerCase()"
                         ".includes(rules_search_query.toLowerCase())) || "
                         "(rule.directive && rule.directive.toLowerCase()"
@@ -120,6 +123,15 @@ def build_rules_list_view() -> None:
                         v3.VIcon("mdi-gavel", color="primary")
                     with v3.VListItemTitle():
                         html.Span("{{ rule.id }}: {{ rule.name }}")
+                        # Semantic ID (GAP-MCP-008)
+                        v3.VChip(
+                            v_if="rule.semantic_id",
+                            v_text="rule.semantic_id",
+                            size="x-small",
+                            color="secondary",
+                            variant="outlined",
+                            classes="ml-2"
+                        )
                     with v3.VListItemSubtitle():
                         # Metadata chips
                         with html.Div(classes="d-flex align-center mb-1"):
@@ -214,6 +226,22 @@ def build_rule_detail_view() -> None:
             )
 
         with v3.VCardText():
+            # Semantic ID display (GAP-MCP-008)
+            with html.Div(
+                v_if="selected_rule.semantic_id",
+                classes="mb-4",
+                __properties=["data-testid"],
+                **{"data-testid": "rule-semantic-id"}
+            ):
+                html.Div("Semantic ID", classes="text-caption text-grey")
+                v3.VChip(
+                    "{{ selected_rule.semantic_id }}",
+                    size="small",
+                    color="secondary",
+                    variant="outlined",
+                    prepend_icon="mdi-tag-outline"
+                )
+
             # Rule info fields
             with v3.VRow():
                 with v3.VCol(cols="6"):
