@@ -10,11 +10,18 @@
 
 ## Directive
 
-All milestone completions MUST be posted as GitHub issues with standardized format:
+All milestone completions MUST be posted as GitHub issues with symbolic naming:
 
-1. **Title Format:** `[CERT] {Topic}: Status {STATUS}`
+1. **Title Format:** `[CERT-{epoch}] {koan_name}: Status {STATUS}`
+   - `{epoch}`: Unix timestamp (e.g., `1736776800`)
+   - `{koan_name}`: Session wisdom koan name, kebab-case (e.g., `Misread-Intent`)
 2. **Labels:** `certification`, `status:{status}`, `milestone`
 3. **Auto-Close:** Issues with `Status: COMPLETE` should be closed immediately
+
+**Example Titles:**
+- `[CERT-1736776800] Misread-Intent: Status COMPLETE`
+- `[CERT-1736780400] Three-ULTRAs: Status COMPLETE`
+- `[CERT-1736784000] Shipping-Haiku: Status PARTIAL`
 
 ---
 
@@ -69,13 +76,17 @@ All milestone completions MUST be posted as GitHub issues with standardized form
 
 **gh CLI Command:**
 ```bash
+# Get epoch timestamp
+EPOCH=$(date +%s)
+KOAN="Misread-Intent"  # From session wisdom
+
 gh issue create \
-  --title "[CERT] Topic: Status COMPLETE" \
+  --title "[CERT-${EPOCH}] ${KOAN}: Status COMPLETE" \
   --body "$(cat certification.md)" \
   --label "certification,status:complete,milestone"
 
 # Auto-close if complete
-gh issue close {issue_number} --comment "Milestone verified and closed."
+gh issue close {issue_number} --comment "Milestone verified and closed per ${KOAN}."
 ```
 
 ---
