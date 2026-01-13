@@ -189,6 +189,8 @@
 
 #### Solution Implemented
 
+**Phase 1: MCP Tools** (2026-01-13)
+
 Updated `governance/rule_linker.py` with:
 
 1. **Dual pattern matching**: `extract_rule_ids()` function matches both legacy and semantic patterns
@@ -196,46 +198,49 @@ Updated `governance/rule_linker.py` with:
 3. **ID normalization**: `normalize_rule_id()` converts semantic IDs to legacy for TypeDB compatibility
 4. **Mapping table**: `SEMANTIC_TO_LEGACY` dict with 43 rule ID mappings
 
-**Implementation:**
-```python
-# governance/rule_linker.py
-LEGACY_RULE_PATTERN = r'RULE-\d{3}'
-SEMANTIC_RULE_PATTERN = r'[A-Z]+-[A-Z]+-\d{2}-v\d+'
+**Phase 2: REST API** (2026-01-13)
 
-def extract_rule_ids(content: str) -> List[str]:
-    # Matches both patterns, converts semantic to legacy
-    ...
-```
+Updated `governance/routes/rules.py` and `governance/models.py`:
+
+1. **RuleResponse model**: Added `semantic_id: Optional[str]` field
+2. **get_rule endpoint**: Accepts semantic IDs via `normalize_rule_id()`
+3. **list_rules endpoint**: Returns `semantic_id` for each rule
+4. **update/delete endpoints**: Accept semantic IDs
+
+**Phase 3: UI** (2026-01-13)
+
+Updated `agent/governance_ui/views/rules_view.py`:
+
+1. **List view**: Shows semantic_id chip next to rule title
+2. **Detail view**: Displays semantic_id prominently with icon
+3. **Search filter**: Includes semantic_id in search
 
 **Results:**
 - 54 documents scanned (up from 9)
 - 203 document-rule relations created
 - TypeDB now has 41 rules (RULE-001 to RULE-043)
+- API returns semantic_id in all rule responses
+- UI displays semantic_id in list and detail views
 
-#### Files Requiring Update
+#### Files Updated
 
-| File | Function | Change |
-|------|----------|--------|
-| `governance_mcp/workspace/scanner.py` | `_extract_rule_refs()` | Dual pattern matching |
-| `governance_mcp/typedb/rules.py` | `get_rule()` | Accept semantic IDs |
-| `governance_mcp/typedb/schema.typeql` | - | Add `legacy_id` attribute |
+| File | Change | Status |
+|------|--------|--------|
+| `governance/rule_linker.py` | Dual pattern matching + ID mapping | DONE |
+| `governance/models.py` | Added semantic_id to RuleResponse | DONE |
+| `governance/routes/rules.py` | Accept semantic IDs in all endpoints | DONE |
+| `agent/governance_ui/views/rules_view.py` | Display semantic_id in list/detail | DONE |
 
 #### Acceptance Criteria
 
-1. `workspace_link_rules_to_documents()` finds rules referenced by semantic ID
-2. `governance_get_rule("SESSION-EVID-01-v1")` returns rule data
-3. `governance_query_rules()` can filter by `rule_type` (FOUNDATIONAL, OPERATIONAL, LEAF, META)
-4. Legacy IDs still work (backward compatible)
-
-#### Implementation Steps
-
-1. **Add legacy ID field to TypeDB**
-   - `legacy_id` attribute for backward compatibility
-
-2. **Update MCP tools to support semantic IDs**
-   - Accept both RULE-XXX and DOMAIN-SUB-NN-vN formats
-
-3. **Add rule_type to governance_query_rules**
+| Criteria | Status |
+|----------|--------|
+| `workspace_link_rules_to_documents()` finds rules by semantic ID | PASS |
+| API `/api/rules/SESSION-EVID-01-v1` returns rule data | PASS |
+| API `/api/rules/RULE-001` still works (backward compatible) | PASS |
+| UI displays semantic_id in rules list | PASS |
+| UI displays semantic_id in rule detail view | PASS |
+| Search includes semantic_id | PASS |
 
 ---
 
