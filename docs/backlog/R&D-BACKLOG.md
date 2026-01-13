@@ -1434,5 +1434,132 @@ See: [STRATEGY-CYCLE-DIRECTIVES.md](../STRATEGY-CYCLE-DIRECTIVES.md) (to be extr
 
 ---
 
+## Post-PoC R&D Backlog (2026-01-13)
+
+> **Source:** Gap resolution session feedback
+> **Priority:** After GAP-010 (CI/CD Pipeline)
+> **Pattern:** Exploratory research with evidence collection
+
+| ID | Task | Priority | Status | Dependencies |
+|----|------|----------|--------|--------------|
+| RD-DOC-SERVICE | Document Service for file retrieval & linking | HIGH | TODO | GAP-UI-039 |
+| RD-DEBUG-AUDIT | Debugability - audit trails for tests/agents/MCPs | HIGH | TODO | - |
+| RD-AGENTIC-READY | Assess readiness for agentic workspaces | MEDIUM | TODO | RD-WORKSPACE |
+| RD-SESSION-TRACE | Track thoughts, tool calls with holographic detailisation | HIGH | TODO | SESSION-EVID-01-v1 |
+| RD-META-RULES | Metarules for rule management (deprecation, versioning) | MEDIUM | TODO | META-TAXON-01-v1 |
+| RD-TOON | Evaluate TOON notation for context compression | LOW | RESEARCH | - |
+| RD-MINIKANREN | Evaluate miniKanren for constraint solving | HIGH | RESEARCH | RD-KANREN-CONTEXT |
+| RD-HASKELL-READY | Assess migration readiness to Haskell | LOW | FUTURE | RD-HASKELL-MCP |
+
+### RD-DOC-SERVICE: Document Service Architecture
+
+**Status:** TODO | **Priority:** HIGH
+
+**Problem:**
+- Multiple file types need unified retrieval: MD, logs, XML, JSON, YAML, code
+- Code support: Python, Haskell, JavaScript, Java, PowerShell, Shell
+- Large files need lazy loading to prevent context exhaustion
+- Currently GAP-UI-039 deferred pending this research
+
+**Research Questions:**
+1. Should document service be MCP or internal module?
+2. What lazy loading strategy for files >1000 lines?
+3. How to detect file type and apply appropriate rendering?
+4. Integration with TypeDB document linking?
+
+### RD-DEBUG-AUDIT: Audit Trail Debugability
+
+**Status:** TODO | **Priority:** HIGH
+
+**Problem:**
+- Need to trace: tests → agents → MCPs end-to-end
+- Current session evidence captures high-level, not execution trace
+- MCP tool calls lack argument/result logging
+- Agent decisions not linkable to specific rule applications
+
+**Research Questions:**
+1. What granularity of tracing is needed?
+2. How to correlate cross-agent traces?
+3. Storage format for tool call traces?
+4. Integration with existing session_tool_call MCP?
+
+### RD-SESSION-TRACE: Holographic Detailisation
+
+**Status:** TODO | **Priority:** HIGH
+
+**Problem:**
+- Per SESSION-EVID-01-v1: need thought chains with decisions/rationale
+- Current session_thought MCP captures but doesn't structure levels
+- Need multi-tier abstraction: summary → details → evidence
+
+**Research Questions:**
+1. What abstraction levels for holographic approach?
+2. How to auto-generate summaries from detailed traces?
+3. Integration with existing session evidence format?
+4. Storage in TypeDB vs markdown?
+
+### RD-META-RULES: Rule Management Metarules
+
+**Status:** TODO | **Priority:** MEDIUM
+
+**Problem:**
+- Per META-TAXON-01-v1: semantic IDs now in use
+- No formal deprecation workflow (only status=DEPRECATED)
+- No versioning beyond -v1 suffix
+- No cross-rule consistency checks
+
+**Research Questions:**
+1. What triggers rule deprecation vs modification?
+2. How to track rule lineage (v1 → v2 → v3)?
+3. What consistency checks between related rules?
+4. Automated rule health scoring?
+
+### RD-TOON: Evaluate TOON Notation
+
+**Status:** RESEARCH | **Priority:** LOW
+
+**Problem:**
+- Context compression remains critical (EPIC-005)
+- TOON (Truncated Object-Oriented Notation) may compress better than current markdown
+
+**Research Questions:**
+1. What is TOON and where is it documented?
+2. How does it compare to Mermaid for diagrams?
+3. Is it LLM-native or does it require parsing?
+4. Integration with existing rule format?
+
+### RD-MINIKANREN: Constraint Solving Integration
+
+**Status:** RESEARCH | **Priority:** HIGH
+
+**Problem:**
+- Per RD-KANREN-CONTEXT: constraint logic for context engineering
+- miniKanren is mature, well-documented
+- Python bindings available (kanren, microkanren)
+- Could enhance TypeDB inference with constraint solving
+
+**Research Questions:**
+1. What problems are best solved by constraint logic vs TypeDB inference?
+2. How to integrate miniKanren with MCP tools?
+3. Can it validate rule consistency automatically?
+4. Performance characteristics for real-time inference?
+
+### RD-HASKELL-READY: Migration Readiness Assessment
+
+**Status:** FUTURE | **Priority:** LOW
+
+**Problem:**
+- Per RD-HASKELL-MCP: Haskell for pure functional inference
+- Need to assess what we've achieved before migration
+- Migration requires feature parity + benefits
+
+**Research Questions:**
+1. What is current TypeDB inference coverage?
+2. What Haskell gains would justify migration?
+3. What Python patterns translate well to Haskell?
+4. Estimated effort for core MCP port?
+
+---
+
 *R&D tracking per RULE-010: Evidence-Based Wisdom*
 *Document pattern: Table-of-Contents per user directive (2024-12-27)*

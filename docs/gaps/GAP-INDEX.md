@@ -66,7 +66,7 @@
 | GAP-CODE-001 | RESOLVED | healthcheck.py has duplicate recovery logic (line 509) | HIGH | architecture | RULE-032 | FIXED: Uses ContainerRecovery class (runtime-agnostic, 2026-01-12) |
 | GAP-REFACTOR-001 | RESOLVED | healthcheck.py exceeds 300 line limit (now 522 lines, was 1002) | HIGH | architecture | RULE-032 | FIXED 2026-01-13: 50% reduction achieved. Modular architecture: 8 checker modules in hooks/checkers/, ContainerRecovery class. Further reduction → RD-REFACTOR-001. |
 | GAP-PYTHON-001 | RESOLVED | Agent uses `python` instead of `python3` | MEDIUM | devops | RULE-035 | FIXED 2026-01-13: Updated recover.py, SHELL-GUIDE.md. Added python3 pitfall warning. |
-| GAP-PODMAN-DESKTOP-001 | OPEN | Podman Desktop shows "CREATED" for running containers | LOW | tooling | RULE-021 | Bug in 1.24.x with healthcheck "starting" state. Workaround: `scripts/fix-podman-desktop.sh` |
+| GAP-PODMAN-DESKTOP-001 | DEFERRED | Podman Desktop shows "CREATED" for running containers | LOW | tooling | RULE-021 | Bug in 1.24.x. Needs desktop automation MCP (playwright/xdotool) for validation. Workaround: `scripts/fix-podman-desktop.sh` |
 
 ---
 
@@ -99,7 +99,7 @@
 | GAP-UI-036 | RESOLVED | No scrolling/paging | MEDIUM | ux | API pagination: sessions/tasks/rules/agents |
 | GAP-UI-037 | RESOLVED | Entity content previews | HIGH | ux | Styled cards added |
 | GAP-UI-038 | RESOLVED | Fullscreen document viewer | HIGH | functionality | views/dialogs.py |
-| GAP-UI-039 | OPEN | No document format support | MEDIUM | functionality | RD-DOCVIEW |
+| GAP-UI-039 | DEFERRED | No document format support | LOW | functionality | SCOPE: MD, logs, XML, JSON, YAML, code (py, hs, js, java, ps1, sh). Large files use lazy loading. → RD-DOCVIEW |
 | GAP-UI-040 | RESOLVED | Agent config/instructions display | HIGH | functionality | agents_view.py |
 | GAP-UI-041 | RESOLVED | Agent-session/task relation links | HIGH | functionality | agents_view.py |
 | GAP-UI-042 | RESOLVED | Trust score history | HIGH | functionality | Trust history card |
@@ -132,7 +132,7 @@
 | GAP-015 | RESOLVED | Consolidated STRATEGY.md | Medium | docs | RULE-001 | docs/STRATEGY.md |
 | GAP-019 | RESOLVED | MCP usage documentation | Medium | docs | RULE-007 | MCP-USAGE.md |
 | GAP-020 | RESOLVED | Cross-project knowledge queries | HIGH | workflow | RULE-007 | MCP-USAGE.md |
-| GAP-021 | DEFERRED | OctoCode for external research | Medium | workflow | RULE-007 | Tool integration pending |
+| GAP-021 | DEFERRED | OctoCode for external research | LOW | workflow | RULE-007 | INDEFINITE: External tool not available. Use WebSearch MCP instead. |
 | GAP-MCP-006 | RESOLVED | REST MCP server integration | Medium | tooling | RULE-036 | Added to .mcp.json |
 | GAP-MCP-007 | RESOLVED | Podman MCP server integration | Medium | tooling | RULE-036 | Added to .mcp.json |
 | GAP-MCP-008 | RESOLVED | MCP semantic ID support for workspace_link_rules_to_documents | HIGH | mcp | META-TAXON-01-v1 | FIXED: rule_linker.py dual pattern + subdirs + normalize_rule_id() |
@@ -146,9 +146,9 @@
 | GAP-INFRA-002 | RESOLVED | Dev vs Prod workflow undocumented | HIGH | documentation | RULE-030 | DEPLOYMENT.md |
 | GAP-INFRA-003 | RESOLVED | deploy.ps1 missing dev profile | MEDIUM | tooling | RULE-028 | Added 'dev' |
 | GAP-INFRA-004 | RESOLVED | No Docker health dashboard | HIGH | observability | RULE-021 | infra_view.py + nav fixed |
-| GAP-INFRA-005 | DEFERRED | Ollama container not started | LOW | infra | RULE-021 | Optional: local LLM not required |
+| GAP-INFRA-005 | DEFERRED | Ollama container not started | LOW | infra | RULE-021 | INDEFINITE: Local LLM optional. LiteLLM routes to cloud APIs. |
 | GAP-TRAME-001 | RESOLVED | nav-infra not rendered despite code | HIGH | framework | RULE-037 | Fixed: duplicate NAVIGATION_ITEMS in constants.py |
-| GAP-INFRA-006 | DEFERRED | Ollama container high memory | LOW | infrastructure | RULE-021 | Optional: depends on GAP-INFRA-005 |
+| GAP-INFRA-006 | DEFERRED | Ollama container high memory | LOW | infrastructure | RULE-021 | INDEFINITE: Depends on GAP-INFRA-005. |
 | GAP-MCP-004 | RESOLVED | Rule fallback to markdown | HIGH | architecture | RULE-021 | rule_fallback.py |
 | GAP-TEST-001 | DEFERRED | E2E tests lack BDD paradigm | MEDIUM | testing | RULE-023 | R&D item: Requires test methodology refactoring. Current tests use pytest+playwright. |
 | GAP-HEALTH-001 | RESOLVED | Healthcheck file size exceeds RULE-032 | MEDIUM | architecture | RULE-032 | FIXED 2026-01-13: 522 lines (was 1002). Modular checkers integrated: services, entropy, amnesia, zombies, destructive, intent, workflow. See GAP-REFACTOR-001. |

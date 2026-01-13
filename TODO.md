@@ -25,14 +25,29 @@
 
 ---
 
-## Current Stats (2026-01-12)
+## Current Stats (2026-01-13)
 
 | Metric | Count |
 |--------|-------|
-| Total Gaps | 192 |
-| RESOLVED | 162 |
-| OPEN | 30 |
-| Rules | 38 (all synced to TypeDB) |
+| Total Gaps | 202 |
+| RESOLVED | 175 |
+| OPEN | 27 |
+| DEFERRED | ~15 |
+| Rules | 43 (all synced to TypeDB) |
+
+---
+
+## ULTRA HIGH Priority (Intent-Based Workflow)
+
+> **Purpose:** Group tasks by strategic intent to enforce completion workflow
+> **Workflow:** implement → validate (static) → test (exploratory) → evidence → commit
+> **Rule:** Per REPORT-SUMM-01-v1: All work must produce summary with evidence
+
+| ID | Task | Status | Intent |
+|----|------|--------|--------|
+| ULTRA-001 | Data Integrity Tests (bottom-up) | TODO | Validate foundation |
+| ULTRA-002 | Certification Issue + Evidence | TODO | Milestone closure |
+| ULTRA-003 | Push all changes to GitHub | TODO | Ship it |
 
 ---
 
@@ -44,8 +59,8 @@
 |----------|-------|-------------|
 | **CRITICAL** | 0 | All resolved! |
 | **HIGH** | 0 | All resolved! |
-| **MEDIUM** | 15 | UI polish, documentation |
-| **LOW** | 15 | Minor items |
+| **MEDIUM** | 7 | Deferred/R&D |
+| **LOW** | 20 | Tech debt, future |
 
 ---
 
