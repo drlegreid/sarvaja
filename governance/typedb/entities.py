@@ -19,8 +19,9 @@ class Rule:
     name: str
     category: str
     priority: str
-    status: str
+    status: str  # ACTIVE, PROPOSED, DISABLED
     directive: str
+    rule_type: Optional[str] = None  # FOUNDATIONAL, OPERATIONAL, TECHNICAL, META, LEAF
     created_date: Optional[datetime] = None
 
 

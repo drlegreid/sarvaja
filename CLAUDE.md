@@ -2,7 +2,7 @@
 
 ## Quick Context
 - **Project**: Multi-agent platform with TypeDB Governance, LiteLLM, ChromaDB
-- **Version**: 1.1.0 | **Updated**: 2026-01-11
+- **Version**: 1.2.0 | **Updated**: 2026-01-13
 - **Repo**: https://github.com/drlegreid/platform-gai
 
 ## Document Map
@@ -11,12 +11,12 @@
 |------|----------|
 | **Tasks** | [TODO.md](TODO.md) |
 | **Gaps** | [docs/gaps/GAP-INDEX.md](docs/gaps/GAP-INDEX.md) |
-| **Rules** | [docs/RULES-DIRECTIVES.md](docs/RULES-DIRECTIVES.md) (42 total) |
+| **Rules** | [docs/RULES-DIRECTIVES.md](docs/RULES-DIRECTIVES.md) (41 total) |
 | **DevOps** | [docs/DEVOPS.md](docs/DEVOPS.md) |
 | **Shell Guide** | [docs/SHELL-GUIDE.md](docs/SHELL-GUIDE.md) |
 | **MCP Config** | [.claude/MCP.md](.claude/MCP.md) |
 | **Hooks** | [.claude/HOOKS.md](.claude/HOOKS.md) |
-| **Workflows** | [.windsurf/workflows.md](.windsurf/workflows.md) |
+| **Taxonomy** | [docs/rules/leaf/META-TAXON-01-v1.md](docs/rules/leaf/META-TAXON-01-v1.md) |
 
 ## Architecture
 
@@ -42,27 +42,17 @@ Claude Code Host                    Podman Stack (5 containers)
 
 Data persistence: `/home/oderid/Documents/Docker/` (bind mounts)
 
-> Per DECISION-003 (TypeDB-First) | Per RULE-036 (MCP Split)
+> Per DECISION-003 (TypeDB-First) | Per ARCH-MCP-02-v1 (MCP Split)
 
-## Technology Decisions
+## Rules Atlas (41 Rules) - Semantic IDs
 
-| Decision | Choice | Rationale |
-|----------|--------|-----------|
-| UI | Trame + Vuetify | Python-first |
-| Rules | TypeDB (1729) | Inference engine |
-| Search | ChromaDB (8001) | Vector embeddings |
-| LLM | LiteLLM (4000) | Multi-provider |
-| Agents | Agno | TypeDB integration |
+| Domain | Rules | File |
+|--------|-------|------|
+| SESSION, REPORT, GOV | Evidence, Decisions, Trust | [RULES-GOVERNANCE.md](docs/rules/RULES-GOVERNANCE.md) |
+| ARCH, UI | Architecture, Infrastructure | [RULES-TECHNICAL.md](docs/rules/RULES-TECHNICAL.md) |
+| WORKFLOW, TEST, SAFETY, CONTAINER, DOC | Operations | [RULES-OPERATIONAL.md](docs/rules/RULES-OPERATIONAL.md) |
 
-## Rules Atlas (42 Rules)
-
-| Category | Rules | File |
-|----------|-------|------|
-| Governance | 001, 003, 006, 011, 013, 018, 019, 026, 029, 034 | [RULES-GOVERNANCE.md](docs/rules/RULES-GOVERNANCE.md) |
-| Technical | 002, 007-010, 016, 017, 035, 036, 040 | [RULES-TECHNICAL.md](docs/rules/RULES-TECHNICAL.md) |
-| Operational | 004, 005, 012, 014, 015, 020-033, 037, 041, 042 | [RULES-OPERATIONAL.md](docs/rules/RULES-OPERATIONAL.md) |
-
-**CRITICAL Rules (16):** 001 (evidence), 008 (rewrite), 009 (versions), 010 (wisdom), 011 (governance), 014 (halt), 015 (R&D), 016 (infra), 021 (health), 023 (test), 024 (AMNESIA), 031 (continue), 034 (links), 037 (fix-validation), 041 (crash), 042 (no-destructive)
+**CRITICAL Rules:** SESSION-EVID-01, TEST-GUARD-01, CONTAINER-DEV-01, GOV-RULE-01, GOV-BICAM-01, WORKFLOW-AUTO-01, WORKFLOW-RD-01, ARCH-INFRA-01, SAFETY-HEALTH-01, TEST-COMP-02, RECOVER-AMNES-01, WORKFLOW-AUTO-02, DOC-LINK-01, TEST-FIX-01, RECOVER-CRASH-01, SAFETY-DESTR-01
 
 ## Session Start Protocol
 
@@ -72,7 +62,7 @@ Data persistence: `/home/oderid/Documents/Docker/` (bind mounts)
 3. Load to todo list                → Track progress
 ```
 
-## Context Recovery Protocol (RULE-024)
+## Context Recovery Protocol (RECOVER-AMNES-01-v1)
 
 **On compaction/amnesia, ALWAYS check in order:**
 ```
@@ -91,47 +81,34 @@ Data persistence: `/home/oderid/Documents/Docker/` (bind mounts)
 3. Read docs/DEVOPS.md              → Correct commands for environment
 ```
 
-**Claude-Mem Fallback (when TypeDB/ChromaDB down):**
-```
-mcp__claude-mem__chroma_query_documents(["sim-ai 2026-01 infrastructure"])
-```
-
 **Key ports:** Dashboard=8081, API=8082, TypeDB=1729, ChromaDB=8001
 
 **Never ask user "what were we doing?" - recover context autonomously.**
 
-## Crash Prevention (RULE-041)
+## Crash Prevention (RECOVER-CRASH-01-v1)
 
 **File Size Limits (CRITICAL):**
 - Max tokens per file read: **25,000 tokens** (~500-750 lines)
 - Before reading large files: `wc -l <file>` to check line count
 - Use `offset/limit` parameters or `Grep` for large files
-- Exception: JSON/log files often exceed limits - always use Grep
 
 **Save Context Before Risk:**
 ```python
-# Before complex operations, save session context
 chroma_save_session_context(
     session_id="SESSION-YYYY-MM-DD-TOPIC",
     summary="What was accomplished",
-    key_decisions=["decision1", "decision2"],
-    files_modified=["file1.py", "file2.py"],
+    key_decisions=["decision1"],
+    files_modified=["file1.py"],
     gaps_discovered=["GAP-XXX"]
 )
-```
-
-**On Crash (exit code 1):**
-```bash
-# Check logs first
-grep -i "error\|crash" ~/.config/Code/logs/*/window1/exthost/Anthropic.claude-code/*.log | tail -20
 ```
 
 ## Development Philosophy
 
 - **Incremental progress** - Small changes that compile and pass tests
-- **Files ≤300 lines** - Per RULE-032, modularize larger files
-- **PARTIAL = Subtasks** - Per RULE-033, break down large tasks
-- **Max 3 attempts** - Then document, research alternatives, try different angle
+- **Files ≤300 lines** - Per DOC-SIZE-01-v1, modularize larger files
+- **PARTIAL = Subtasks** - Per DOC-PARTIAL-01-v1, break down large tasks
+- **Max 3 attempts** - Then document, research alternatives
 
 ## Quick Checks
 
@@ -140,7 +117,7 @@ grep -i "error\|crash" ~/.config/Code/logs/*/window1/exthost/Anthropic.claude-co
 - [ ] Gaps tracked in TODO.md
 - [ ] No secrets in code (use `.env`)
 
-## Halt Commands (RULE-014)
+## Halt Commands (WORKFLOW-AUTO-01-v1)
 
 | Command | Action |
 |---------|--------|

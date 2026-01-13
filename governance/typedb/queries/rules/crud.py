@@ -27,7 +27,8 @@ class RuleCRUDOperations:
         category: str,
         priority: str,
         directive: str,
-        status: str = "DRAFT"
+        status: str = "DRAFT",
+        rule_type: Optional[str] = None
     ) -> Optional[Rule]:
         """
         Create a new governance rule.
@@ -39,14 +40,18 @@ class RuleCRUDOperations:
             priority: Priority level (CRITICAL, HIGH, MEDIUM, LOW)
             directive: The rule directive text
             status: Initial status (default: DRAFT)
+            rule_type: Rule type (FOUNDATIONAL, OPERATIONAL, TECHNICAL, META, LEAF)
 
         Returns:
             Created Rule object or None if failed
         """
         # Validate inputs
-        valid_categories = ["governance", "technical", "operational", "architecture", "testing"]
+        valid_categories = ["governance", "technical", "operational", "architecture", "testing",
+                          "reporting", "autonomy", "maintenance", "traceability", "stability",
+                          "strategic", "devops", "development", "workflow", "documentation", "quality", "safety"]
         valid_priorities = ["CRITICAL", "HIGH", "MEDIUM", "LOW"]
-        valid_statuses = ["ACTIVE", "DRAFT", "DEPRECATED"]
+        valid_statuses = ["ACTIVE", "DRAFT", "DEPRECATED", "PROPOSED", "DISABLED"]
+        valid_types = ["FOUNDATIONAL", "OPERATIONAL", "TECHNICAL", "META", "LEAF", None]
 
         if category not in valid_categories:
             raise ValueError(f"Invalid category: {category}. Must be one of {valid_categories}")
@@ -54,6 +59,8 @@ class RuleCRUDOperations:
             raise ValueError(f"Invalid priority: {priority}. Must be one of {valid_priorities}")
         if status not in valid_statuses:
             raise ValueError(f"Invalid status: {status}. Must be one of {valid_statuses}")
+        if rule_type not in valid_types:
+            raise ValueError(f"Invalid rule_type: {rule_type}. Must be one of {valid_types}")
 
         # Check if rule already exists
         existing = self.get_rule_by_id(rule_id)
@@ -63,6 +70,8 @@ class RuleCRUDOperations:
         # Escape quotes in directive
         directive_escaped = directive.replace('"', '\\"')
 
+        # Build query with optional rule_type
+        type_clause = f',\n                has rule-type "{rule_type}"' if rule_type else ''
         query = f'''
             insert $r isa rule-entity,
                 has rule-id "{rule_id}",
@@ -70,7 +79,7 @@ class RuleCRUDOperations:
                 has category "{category}",
                 has priority "{priority}",
                 has status "{status}",
-                has directive "{directive_escaped}";
+                has directive "{directive_escaped}"{type_clause};
         '''
 
         self._execute_write(query)
@@ -85,7 +94,8 @@ class RuleCRUDOperations:
         category: Optional[str] = None,
         priority: Optional[str] = None,
         directive: Optional[str] = None,
-        status: Optional[str] = None
+        status: Optional[str] = None,
+        rule_type: Optional[str] = None
     ) -> Optional[Rule]:
         """
         Update an existing rule's attributes.
@@ -99,6 +109,7 @@ class RuleCRUDOperations:
             priority: New priority (optional)
             directive: New directive (optional)
             status: New status (optional)
+            rule_type: New rule type (optional)
 
         Returns:
             Updated Rule object or None if not found
@@ -112,6 +123,7 @@ class RuleCRUDOperations:
 
         # Build update queries for each changed attribute
         updates = []
+        new_attrs = []  # For attributes that don't exist yet
         if name is not None and name != existing.name:
             updates.append(('rule-name', existing.name, name))
         if category is not None and category != existing.category:
@@ -122,8 +134,13 @@ class RuleCRUDOperations:
             updates.append(('status', existing.status, status))
         if directive is not None and directive != existing.directive:
             updates.append(('directive', existing.directive.replace('"', '\\"'), directive.replace('"', '\\"')))
+        if rule_type is not None:
+            if existing.rule_type is None:
+                new_attrs.append(('rule-type', rule_type))
+            elif rule_type != existing.rule_type:
+                updates.append(('rule-type', existing.rule_type, rule_type))
 
-        if not updates:
+        if not updates and not new_attrs:
             return existing  # Nothing to update
 
         # Execute updates in a single transaction
@@ -141,6 +158,16 @@ class RuleCRUDOperations:
                     '''
                     tx.query.delete(delete_query)
 
+                    insert_query = f'''
+                        match
+                            $r isa rule-entity, has rule-id "{rule_id}";
+                        insert
+                            $r has {attr_type} "{new_val}";
+                    '''
+                    tx.query.insert(insert_query)
+
+                # Insert new attributes (that didn't exist before)
+                for attr_type, new_val in new_attrs:
                     insert_query = f'''
                         match
                             $r isa rule-entity, has rule-id "{rule_id}";

@@ -3,11 +3,13 @@ MCP Tools for Workspace Operations.
 
 Per P10.10: Workspace Task Capture.
 Per P10.8: TypeDB-Filesystem Rule Linking.
+Per GAP-MCP-008: Semantic Rule ID Support.
 Per DECISION-003: TypeDB-First Strategy.
 
 Provides tools to:
 - Scan workspace files and sync tasks to TypeDB
 - Link rules to their filesystem markdown documents
+- Support both legacy (RULE-XXX) and semantic (DOMAIN-SUB-NN-vN) rule IDs
 """
 
 import json
@@ -133,8 +135,11 @@ def register_workspace_tools(mcp) -> None:
         Scan rule markdown documents and extract rule references (dry run).
 
         Per P10.8: TypeDB-Filesystem Rule Linking.
+        Per GAP-MCP-008: Supports both legacy and semantic rule IDs.
 
-        Scans docs/rules/*.md files and extracts RULE-XXX references.
+        Scans docs/rules/**/*.md files (including subdirectories) and extracts:
+        - Legacy IDs: RULE-001, RULE-042
+        - Semantic IDs: SESSION-EVID-01-v1, GOV-BICAM-01-v1
 
         Returns:
             JSON summary of documents and their linked rules
@@ -189,9 +194,10 @@ def register_workspace_tools(mcp) -> None:
         Get the markdown document path for a rule.
 
         Per P10.8: TypeDB-Filesystem Rule Linking.
+        Per GAP-MCP-008: Accepts both legacy and semantic rule IDs.
 
         Args:
-            rule_id: Rule ID (e.g., "RULE-001")
+            rule_id: Rule ID (e.g., "RULE-001" or "SESSION-EVID-01-v1")
 
         Returns:
             JSON with document path or null if not found

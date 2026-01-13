@@ -1,7 +1,7 @@
 # Gap Index - Sim.ai PoC
 
-**Last Updated:** 2026-01-12
-**Total Gaps:** 201 | Status: 166 RESOLVED, 35 OPEN
+**Last Updated:** 2026-01-13
+**Total Gaps:** 202 | Status: 167 RESOLVED, 35 OPEN
 **Format Migration:** GAP-WORKFLOW-003 - Replaced strikethrough with Status column
 
 > **Evidence Files:** Detailed analysis moved to [evidence/](evidence/) per GAP-META-001
@@ -135,6 +135,7 @@
 | GAP-021 | DEFERRED | OctoCode for external research | Medium | workflow | RULE-007 | Tool integration pending |
 | GAP-MCP-006 | RESOLVED | REST MCP server integration | Medium | tooling | RULE-036 | Added to .mcp.json |
 | GAP-MCP-007 | RESOLVED | Podman MCP server integration | Medium | tooling | RULE-036 | Added to .mcp.json |
+| GAP-MCP-008 | RESOLVED | MCP semantic ID support for workspace_link_rules_to_documents | HIGH | mcp | META-TAXON-01-v1 | FIXED: rule_linker.py dual pattern + subdirs + normalize_rule_id() |
 | GAP-DEPLOY-001 | RESOLVED | deploy.ps1 missing dev profile | MEDIUM | tooling | RULE-028 | Added 'dev' |
 | GAP-MCP-002 | RESOLVED | MCP healthcheck should stop Claude Code | HIGH | stability | RULE-021 | healthcheck.py auto-recovery |
 | GAP-MCP-003 | RESOLVED | governance_health not called at start | CRITICAL | workflow | RULE-021 | Non-blocking retry |

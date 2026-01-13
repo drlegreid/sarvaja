@@ -2,39 +2,40 @@
 
 Rules governing process, documentation, and agent collaboration.
 
-> **Per RULE-032:** Split from 633 lines to 2 thematic files (2026-01-03)
+> **Per DOC-SIZE-01-v1:** Split from 633 lines to 2 thematic files (2026-01-03)
 
 ---
 
 ## Rule Files
 
-| File | Rules | Lines | Description |
-|------|-------|-------|-------------|
-| [RULES-SESSION.md](governance/RULES-SESSION.md) | 001, 003, 006, 018, 026, 029 | ~130 | Session evidence, decisions, reporting |
-| [RULES-MULTI-AGENT.md](governance/RULES-MULTI-AGENT.md) | 011, 013, 019 | ~120 | Multi-agent governance, UI standards |
+| File | Domains | Lines | Description |
+|------|---------|-------|-------------|
+| [RULES-SESSION.md](governance/RULES-SESSION.md) | SESSION, REPORT, GOV | ~130 | Session evidence, decisions, governance |
+| [RULES-MULTI-AGENT.md](governance/RULES-MULTI-AGENT.md) | GOV | ~120 | Multi-agent governance, proposals |
 
 ---
 
 ## Quick Reference
 
-### Session & Reporting Rules (RULES-SESSION.md)
+### Session & Governance Rules (RULES-SESSION.md)
 
 | Rule | Name | Priority |
 |------|------|----------|
-| **RULE-001** | Session Evidence Logging | CRITICAL |
-| **RULE-003** | Sync Protocol for Skills & Sessions | HIGH |
-| **RULE-006** | Decision Logging | MEDIUM |
-| **RULE-018** | Objective Reporting | HIGH |
-| **RULE-026** | Decision Context Communication | HIGH |
-| **RULE-029** | Executive Reporting Pattern | HIGH |
+| **SESSION-EVID-01-v1** | Session Evidence Logging | CRITICAL |
+| **REPORT-DEC-01-v1** | Decision Logging & Rationale | HIGH |
+| **GOV-TRUST-01-v1** | Governance Audit & Review | MEDIUM |
+| **GOV-TRUST-02-v1** | Agent Trust Scoring | HIGH |
+| **GOV-RULE-02-v1** | Rule Compliance Verification | HIGH |
+| **GOV-RULE-03-v1** | Rule Deprecation Protocol | HIGH |
 
 ### Multi-Agent Rules (RULES-MULTI-AGENT.md)
 
 | Rule | Name | Priority |
 |------|------|----------|
-| **RULE-011** | Multi-Agent Governance Protocol | CRITICAL |
-| **RULE-013** | Rules Applicability Convention | HIGH |
-| **RULE-019** | UI/UX Design Standards | HIGH |
+| **GOV-BICAM-01-v1** | Bicameral Governance Model | CRITICAL |
+| **GOV-PROP-01-v1** | GAP Resolution Workflow | HIGH |
+| **GOV-PROP-02-v1** | Proposal Review Process | HIGH |
+| **GOV-PROP-03-v1** | Handoff Protocol | HIGH |
 
 ---
 
@@ -45,8 +46,9 @@ Rules governing process, documentation, and agent collaboration.
 | Operational | [RULES-OPERATIONAL.md](RULES-OPERATIONAL.md) |
 | Technical | [RULES-TECHNICAL.md](RULES-TECHNICAL.md) |
 | All Rules | [RULES-DIRECTIVES.md](../RULES-DIRECTIVES.md) |
+| Migration | [RULE-MIGRATION.md](RULE-MIGRATION.md) |
 
 ---
 
-*Per RULE-012: DSP Semantic Code Structure*
-*Per RULE-032: File Size ≤300 lines*
+*Per SESSION-DSM-01-v1: DSP Semantic Code Structure*
+*Per DOC-SIZE-01-v1: File Size ≤300 lines*

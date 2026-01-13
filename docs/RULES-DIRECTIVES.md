@@ -1,99 +1,106 @@
 # Sim.ai Rules Directives - Index
 
-**Status:** Active | **Updated:** 2026-01-11 | **Rules:** 41 (38 ACTIVE, 3 DRAFT)
+**Status:** Active | **Updated:** 2026-01-13 | **Rules:** 41 (38 ACTIVE, 3 DRAFT/DISABLED)
+
+> **Taxonomy:** [META-TAXON-01-v1](rules/leaf/META-TAXON-01-v1.md) | **Migration:** [RULE-MIGRATION.md](rules/RULE-MIGRATION.md)
 
 ---
 
 ## Quick Links
 
-| Document | Content | Rules |
-|----------|---------|-------|
-| [RULES-GOVERNANCE](rules/RULES-GOVERNANCE.md) | Process, documentation, collaboration, reporting | 001, 003, 006, 011, 013, 018, 019, 026, 029, 034 |
-| [RULES-TECHNICAL](rules/RULES-TECHNICAL.md) | Architecture, technology, infrastructure | 002, 007, 008, 009, 010, 016, 017, 036, 038, 040 |
-| [RULES-OPERATIONAL](rules/RULES-OPERATIONAL.md) | Testing, stability, maintenance, execution, security | 004, 005, 012, 014, 015, 020, 021, 022, 023, 024, 027, 028, 030, 031, 032, 033, 035, 037, 039, 041 |
+| Document | Content | Domains |
+|----------|---------|---------|
+| [RULES-GOVERNANCE](rules/RULES-GOVERNANCE.md) | Process, documentation, collaboration, reporting | SESSION, REPORT, GOV |
+| [RULES-TECHNICAL](rules/RULES-TECHNICAL.md) | Architecture, technology, infrastructure | ARCH, UI |
+| [RULES-OPERATIONAL](rules/RULES-OPERATIONAL.md) | Testing, stability, maintenance, execution | WORKFLOW, RECOVER, TEST, SAFETY, CONTAINER, DOC |
 
 ---
 
-## Rules Summary
+## Rules Summary (Semantic IDs)
 
-| Rule | Name | Category | Priority | Status |
-|------|------|----------|----------|--------|
-| RULE-001 | Session Evidence Logging | governance | CRITICAL | ACTIVE |
-| RULE-002 | Architectural Best Practices | architecture | HIGH | ACTIVE |
-| RULE-003 | Sync Protocol | governance | HIGH | DRAFT |
-| RULE-004 | Exploratory Testing, Executable Spec & Insight Capture | testing | HIGH | ACTIVE |
-| RULE-005 | Memory & MCP Stability | stability | HIGH | ACTIVE |
-| RULE-006 | Decision Logging | governance | MEDIUM | ACTIVE |
-| RULE-007 | MCP Usage Protocol | productivity | HIGH | ACTIVE |
-| RULE-008 | In-House Rewrite Principle | strategic | CRITICAL | ACTIVE |
-| RULE-009 | Version Compatibility | devops | CRITICAL | ACTIVE |
-| RULE-010 | Evidence-Based Wisdom | strategic | CRITICAL | ACTIVE |
-| RULE-011 | Multi-Agent Governance | governance | CRITICAL | ACTIVE |
-| RULE-012 | Deep Sleep Protocol (DSP) | maintenance | HIGH | ACTIVE |
-| RULE-013 | Rules Applicability Convention | governance | HIGH | ACTIVE |
-| RULE-014 | Autonomous Task Sequencing | autonomy | CRITICAL | ACTIVE |
-| RULE-015 | R&D Workflow Human Gate | autonomy | CRITICAL | ACTIVE |
-| RULE-016 | Infrastructure Identity & Hardware | devops | CRITICAL | ACTIVE |
-| RULE-017 | Cross-Workspace Pattern Reuse | strategic | HIGH | ACTIVE |
-| RULE-018 | Objective Reporting | reporting | HIGH | ACTIVE |
-| RULE-019 | UI/UX Design Standards | reporting | HIGH | ACTIVE |
-| RULE-020 | LLM-Driven E2E Test Generation | testing | HIGH | ACTIVE |
-| RULE-021 | MCP Healthcheck Protocol | stability | CRITICAL | ACTIVE |
-| RULE-022 | Integrity Verification (Frankel Hash) | security | HIGH | DRAFT |
-| RULE-023 | Test Before Ship | quality | CRITICAL | ACTIVE |
-| RULE-024 | AMNESIA Protocol (Context Recovery) | maintenance | CRITICAL | ACTIVE |
-| RULE-025 | Test Data Integrity Requirements | testing | HIGH | DRAFT |
-| RULE-026 | Decision Context Communication | governance | HIGH | ACTIVE |
-| RULE-027 | API Server Restart Protocol | testing | HIGH | ACTIVE |
-| RULE-028 | Change Validation Protocol | testing | HIGH | ACTIVE |
-| RULE-029 | Executive Reporting Pattern | reporting | HIGH | ACTIVE |
-| RULE-030 | Docker Dev Container Workflow | development | HIGH | ACTIVE |
-| RULE-031 | Autonomous Task Continuation | operational | CRITICAL | ACTIVE |
-| RULE-032 | File Size & OOP Standards | architecture | HIGH | ACTIVE |
-| RULE-033 | PARTIAL Task Handling | workflow | HIGH | ACTIVE |
-| RULE-034 | Relative Document Linking | documentation | HIGH | ACTIVE |
-| RULE-035 | Shell Command Environment Selection | devops | HIGH | ACTIVE |
-| RULE-036 | MCP Server Separation Pattern | architecture | HIGH | ACTIVE |
-| RULE-037 | Fix Validation Protocol | operational | CRITICAL | ACTIVE |
-| RULE-038 | Single Source of Truth | architecture | HIGH | ACTIVE |
-| RULE-039 | Context Compression Standard | operational | HIGH | ACTIVE |
-| RULE-040 | Portable Configuration Patterns | technical | HIGH | ACTIVE |
-| RULE-041 | Crash Investigation Protocol | operational | CRITICAL | ACTIVE |
-| RULE-042 | Destructive Command Prevention | operational | CRITICAL | ACTIVE |
+| Semantic ID | Legacy | Name | Priority | Status |
+|-------------|--------|------|----------|--------|
+| SESSION-EVID-01-v1 | RULE-001 | Session Evidence Logging | CRITICAL | ACTIVE |
+| SESSION-DSM-01-v1 | RULE-012 | Deep Sleep Protocol (DSP) | HIGH | ACTIVE |
+| REPORT-DEC-01-v1 | RULE-003 | Decision Logging & Rationale | HIGH | ACTIVE |
+| REPORT-DEC-02-v1 | RULE-004 | Incremental Reporting | HIGH | ACTIVE |
+| GOV-TRUST-01-v1 | RULE-006 | Governance Audit & Review | MEDIUM | ACTIVE |
+| GOV-TRUST-02-v1 | RULE-018 | Agent Trust Scoring | HIGH | ACTIVE |
+| GOV-BICAM-01-v1 | RULE-011 | Bicameral Governance Model | CRITICAL | ACTIVE |
+| GOV-PROP-01-v1 | RULE-013 | GAP Resolution Workflow | HIGH | ACTIVE |
+| GOV-PROP-02-v1 | RULE-019 | Proposal Review Process | HIGH | ACTIVE |
+| GOV-PROP-03-v1 | RULE-025 | Handoff Protocol | HIGH | DRAFT |
+| GOV-RULE-01-v1 | RULE-010 | Agent Wisdom Transmission | CRITICAL | ACTIVE |
+| GOV-RULE-02-v1 | RULE-026 | Rule Compliance Verification | HIGH | ACTIVE |
+| GOV-RULE-03-v1 | RULE-029 | Rule Deprecation Protocol | HIGH | ACTIVE |
+| ARCH-BEST-01-v1 | RULE-002 | Architectural Best Practices | HIGH | ACTIVE |
+| ARCH-MCP-01-v1 | RULE-007 | MCP Usage Protocol | HIGH | ACTIVE |
+| ARCH-MCP-02-v1 | RULE-036 | MCP Server Separation Pattern | HIGH | ACTIVE |
+| ARCH-INFRA-01-v1 | RULE-016 | Infrastructure Identity & Hardware | CRITICAL | ACTIVE |
+| ARCH-INFRA-02-v1 | RULE-040 | Portable Configuration Patterns | HIGH | ACTIVE |
+| UI-TRAME-01-v1 | RULE-017 | Trame UI Patterns | HIGH | ACTIVE |
+| WORKFLOW-AUTO-01-v1 | RULE-014 | Autonomous Task Sequencing | CRITICAL | ACTIVE |
+| WORKFLOW-AUTO-02-v1 | RULE-031 | Autonomous Task Continuation | CRITICAL | ACTIVE |
+| WORKFLOW-RD-01-v1 | RULE-015 | R&D Workflow with Human Approval | CRITICAL | ACTIVE |
+| WORKFLOW-SEQ-01-v1 | RULE-028 | Multi-Session Task Continuity | HIGH | ACTIVE |
+| RECOVER-MEM-01-v1 | RULE-005 | Memory & MCP Stability | HIGH | ACTIVE |
+| RECOVER-AMNES-01-v1 | RULE-024 | AMNESIA Protocol | CRITICAL | ACTIVE |
+| RECOVER-CRASH-01-v1 | RULE-041 | Crash Investigation Protocol | CRITICAL | ACTIVE |
+| TEST-GUARD-01-v1 | RULE-008 | Rewrite Guardrails | CRITICAL | ACTIVE |
+| TEST-COMP-01-v1 | RULE-020 | Comprehensive Testing Protocol | HIGH | ACTIVE |
+| TEST-COMP-02-v1 | RULE-023 | Test Before Commit | CRITICAL | ACTIVE |
+| TEST-FIX-01-v1 | RULE-037 | Fix Validation Protocol | CRITICAL | ACTIVE |
+| SAFETY-HEALTH-01-v1 | RULE-021 | MCP Healthcheck Protocol | CRITICAL | ACTIVE |
+| SAFETY-INTEG-01-v1 | RULE-022 | Integrity Verification (Frankel Hash) | HIGH | DRAFT |
+| SAFETY-DESTR-01-v1 | RULE-042 | Destructive Command Prevention | CRITICAL | ACTIVE |
+| CONTAINER-DEV-01-v1 | RULE-009 | DevOps Version Compatibility | CRITICAL | ACTIVE |
+| CONTAINER-DEV-02-v1 | RULE-030 | Docker Dev Container Workflow | HIGH | DISABLED |
+| CONTAINER-RESTART-01-v1 | RULE-027 | API Server Restart Protocol | HIGH | ACTIVE |
+| CONTAINER-SHELL-01-v1 | RULE-035 | Shell Command Environment Selection | HIGH | ACTIVE |
+| DOC-SIZE-01-v1 | RULE-032 | File Size & OOP Standards | HIGH | ACTIVE |
+| DOC-PARTIAL-01-v1 | RULE-033 | PARTIAL Task Handling | HIGH | ACTIVE |
+| DOC-LINK-01-v1 | RULE-034 | Relative Document Linking | CRITICAL | ACTIVE |
+| META-TAXON-01-v1 | (new) | Rule Taxonomy & Management | HIGH | ACTIVE |
 
 ---
 
-## Categories
+## Domain Index
 
-| Category | Priority | Rules |
-|----------|----------|-------|
-| `governance` | CRITICAL | 001, 003, 006, 011, 013, 026, 029, 034 |
-| `strategic` | CRITICAL | 008, 010, 017 |
-| `autonomy` | CRITICAL | 014, 015 |
-| `architecture` | HIGH | 002, 032, 036, 038 |
-| `devops` | CRITICAL | 009, 016, 035 |
-| `productivity` | HIGH | 007 |
-| `testing` | HIGH | 004, 020, 025, 027, 028 |
-| `stability` | CRITICAL | 005, 021 |
-| `maintenance` | CRITICAL | 012, 024 |
-| `reporting` | HIGH | 018, 019 |
-| `security` | HIGH | 022 |
-| `quality` | CRITICAL | 023 |
-| `development` | HIGH | 030 |
-| `operational` | CRITICAL | 031, 037, 039, 041 |
-| `technical` | HIGH | 040 |
-| `workflow` | HIGH | 033 |
-| `documentation` | HIGH | 034 |
+| Domain | Description | Count | Rules |
+|--------|-------------|-------|-------|
+| **SESSION** | Session management | 2 | EVID-01, DSM-01 |
+| **REPORT** | Reporting & decisions | 2 | DEC-01, DEC-02 |
+| **GOV** | Governance & trust | 8 | TRUST-01/02, BICAM-01, PROP-01/02/03, RULE-01/02/03 |
+| **ARCH** | Architecture | 5 | BEST-01, MCP-01/02, INFRA-01/02 |
+| **UI** | User interface | 1 | TRAME-01 |
+| **WORKFLOW** | Workflow & autonomy | 4 | AUTO-01/02, RD-01, SEQ-01 |
+| **RECOVER** | Recovery & resilience | 3 | MEM-01, AMNES-01, CRASH-01 |
+| **TEST** | Testing & validation | 4 | GUARD-01, COMP-01/02, FIX-01 |
+| **SAFETY** | Safety & prevention | 3 | HEALTH-01, INTEG-01, DESTR-01 |
+| **CONTAINER** | Container operations | 4 | DEV-01/02, RESTART-01, SHELL-01 |
+| **DOC** | Documentation | 3 | SIZE-01, PARTIAL-01, LINK-01 |
+| **META** | Meta-rules | 1 | TAXON-01 |
 
 ---
 
 ## Priority Levels
 
-| Level | Meaning | Rules |
-|-------|---------|-------|
-| **CRITICAL** | Must enforce always | 001, 008, 009, 010, 011, 014, 015, 016, 021, 023, 024, 031, 041 |
-| **HIGH** | Enforce in normal ops | 002, 003, 004, 005, 007, 012, 013, 017, 018, 019, 020, 022, 025, 026, 027, 028, 029, 030, 032, 033, 034, 035, 036, 037, 038, 039, 040 |
-| **MEDIUM** | Advisory | 006 |
+| Level | Meaning | Count | Key Rules |
+|-------|---------|-------|-----------|
+| **CRITICAL** | Must enforce always | 16 | SESSION-EVID, GOV-BICAM, WORKFLOW-AUTO, RECOVER-AMNES, TEST-COMP-02, SAFETY-HEALTH |
+| **HIGH** | Enforce in normal ops | 23 | ARCH-*, TEST-COMP-01, CONTAINER-*, DOC-* |
+| **MEDIUM** | Advisory | 1 | GOV-TRUST-01 |
+
+---
+
+## Halt Commands (WORKFLOW-AUTO-01-v1)
+
+| Command | Action |
+|---------|--------|
+| `STOP` | Immediate halt, save state |
+| `HALT` | Immediate halt, save state |
+| `STAI` | Immediate halt, save state |
+| `RED ALERT` | Emergency stop |
 
 ---
 
@@ -103,38 +110,7 @@ Rules are enforced via:
 1. **Pre-commit hooks** - Static validation
 2. **CI/CD checks** - Test suite compliance
 3. **Runtime guards** - Agent checks before execution
-4. **DSP audits** - Periodic hygiene checks
-
----
-
-## Halt Commands (RULE-014)
-
-| Command | Action |
-|---------|--------|
-| `STOP` | Immediate halt, save state |
-| `HALT` | Immediate halt, save state |
-| `STAI` | Immediate halt, save state |
-| `RED ALERT` | Emergency stop |
-| `ALERT` | Pause and await |
-
----
-
-## ChromaDB Index
-
-```json
-{
-  "collection": "sim_ai_rules",
-  "schema": {
-    "id": "rule_{number}",
-    "document": "Full rule text",
-    "metadata": {
-      "category": "string",
-      "priority": "CRITICAL|HIGH|MEDIUM",
-      "status": "ACTIVE|DRAFT|DEPRECATED"
-    }
-  }
-}
-```
+4. **DSP audits** - Periodic hygiene checks (SESSION-DSM-01-v1)
 
 ---
 
@@ -142,32 +118,16 @@ Rules are enforced via:
 
 | Version | Date | Change |
 |---------|------|--------|
-| 0.1.0 | 2024-12-24 | Initial: RULE-001, RULE-002 |
-| 0.5.0 | 2024-12-24 | Added RULE-003 to RULE-007 |
-| 0.9.0 | 2024-12-24 | Added RULE-008 to RULE-011 |
-| 0.12.0 | 2024-12-24 | Added RULE-012 to RULE-014 |
-| 1.0.0 | 2024-12-24 | Split into modular files |
-| 1.1.0 | 2024-12-24 | Added RULE-015: R&D Workflow, Enhanced RULE-012 with MCP checks |
-| 1.2.0 | 2024-12-24 | Added RULE-016: Infrastructure Identity, RULE-017: Cross-Workspace Patterns |
-| 1.3.0 | 2024-12-24 | Added RULE-018: Objective Reporting, RULE-019: UI/UX Standards |
-| 1.4.0 | 2024-12-25 | Added RULE-020: LLM-Driven E2E Test Generation |
-| 1.5.0 | 2024-12-25 | Added RULE-021: MCP Healthcheck Protocol, RULE-022: Integrity Verification |
-| 1.6.0 | 2024-12-25 | Added RULE-023: Test Before Ship |
-| 1.7.0 | 2024-12-25 | Enhanced RULE-004: Added Insight Capture Protocol, Spec-First TDD workflow mode |
-| 1.8.0 | 2024-12-25 | Enhanced RULE-012: Added Semantic Code Structure (DSP Hygiene) - FP + Digital Twin paradigm |
-| 1.9.0 | 2024-12-25 | Enhanced RULE-011: Added R&D Rule Quality & Decomposition (Category/Group Theory patterns) |
-| 2.0.0 | 2024-12-25 | Added RULE-024: AMNESIA Protocol (Autonomous Context Recovery) |
-| 2.1.0 | 2024-12-26 | Added RULE-025: Test Data Integrity Requirements |
-| 2.2.0 | 2024-12-26 | Added RULE-027: API Server Restart Protocol (TODO-6 discovery) |
-| 2.3.0 | 2024-12-27 | Added RULE-028: Change Validation Protocol (exploratory heuristics) |
-| 2.4.0 | 2024-12-27 | Added RULE-029: Executive Reporting Pattern (enterprise reporting) |
-| 2.5.0 | 2024-12-28 | Added RULE-030: Docker Dev Container Workflow (autonomous validation) |
-| 2.6.0 | 2026-01-01 | Added RULE-031: Autonomous Task Continuation (multi-step execution) |
-| 2.7.0 | 2026-01-02 | Added RULE-032: File Size & OOP Standards (300 line limit, modularization) |
-| 2.8.0 | 2026-01-02 | Added RULE-033: PARTIAL Task Handling (subtask breakdown protocol) |
-| 2.9.0 | 2026-01-02 | Added RULE-034: Relative Document Linking (mandatory relative paths) |
-| 3.0.0 | 2026-01-03 | Added RULE-035: Shell Command Environment Selection (Bash vs PowerShell) |
+| 4.0.0 | 2026-01-13 | **Semantic Rule ID Migration** - All rules migrated to `{DOMAIN}-{SUB}-{NN}-v{N}` format per META-TAXON-01-v1 |
+| 3.1.0 | 2026-01-11 | Added RULE-041: Crash Investigation, RULE-042: Destructive Command Prevention |
+| 3.0.0 | 2026-01-03 | Added RULE-035: Shell Command Environment Selection |
+| 2.9.0 | 2026-01-02 | Added RULE-034: Relative Document Linking |
+| 2.8.0 | 2026-01-02 | Added RULE-033: PARTIAL Task Handling |
+| 2.7.0 | 2026-01-02 | Added RULE-032: File Size & OOP Standards |
+| 2.6.0 | 2026-01-01 | Added RULE-031: Autonomous Task Continuation |
+| 2.0.0 | 2024-12-25 | Added RULE-024: AMNESIA Protocol |
+| 1.0.0 | 2024-12-24 | Initial split into modular files |
 
 ---
 
-*Per RULE-012: Deep Sleep Protocol - document hygiene*
+*Per SESSION-DSM-01-v1: Deep Sleep Protocol - document hygiene*

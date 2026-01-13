@@ -17,6 +17,7 @@ rule-entity sub entity,
     owns category,
     owns priority,
     owns status,
+    owns rule-type,
     owns directive,
     owns rule-tags,              # RD-WORKSPACE: Comma-separated skill tags (e.g., "research,analysis")
     owns applicable-roles,       # RD-WORKSPACE: Comma-separated agent roles (e.g., "RESEARCH,CODING")
@@ -251,7 +252,8 @@ rule-id sub attribute, value string;
 rule-name sub attribute, value string;
 category sub attribute, value string;  # governance, architecture, testing, etc.
 priority sub attribute, value string;  # CRITICAL, HIGH, MEDIUM, LOW
-status sub attribute, value string;    # ACTIVE, DRAFT, DEPRECATED
+status sub attribute, value string;    # ACTIVE, PROPOSED, DISABLED (DEPRECATED maps to DISABLED)
+rule-type sub attribute, value string; # FOUNDATIONAL, OPERATIONAL, TECHNICAL, META, LEAF
 directive sub attribute, value string;
 rule-tags sub attribute, value string;        # RD-WORKSPACE: Comma-separated skill tags
 applicable-roles sub attribute, value string; # RD-WORKSPACE: Comma-separated agent roles

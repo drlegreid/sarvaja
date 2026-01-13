@@ -61,6 +61,7 @@ class RuleReadQueries:
 
     def get_rule_by_id(self, rule_id: str) -> Optional[Rule]:
         """Get a specific rule by ID."""
+        # First get core attributes
         query = f"""
             match $r isa rule-entity,
                 has rule-id "{rule_id}",
@@ -72,17 +73,32 @@ class RuleReadQueries:
             get $name, $cat, $pri, $stat, $dir;
         """
         results = self._execute_query(query)
-        if results:
-            r = results[0]
-            return Rule(
-                id=rule_id,
-                name=r.get("name"),
-                category=r.get("cat"),
-                priority=r.get("pri"),
-                status=r.get("stat"),
-                directive=r.get("dir")
-            )
-        return None
+        if not results:
+            return None
+
+        r = results[0]
+
+        # Try to get optional rule_type
+        rule_type = None
+        type_query = f"""
+            match $r isa rule-entity,
+                has rule-id "{rule_id}",
+                has rule-type $type;
+            get $type;
+        """
+        type_results = self._execute_query(type_query)
+        if type_results:
+            rule_type = type_results[0].get("type")
+
+        return Rule(
+            id=rule_id,
+            name=r.get("name"),
+            category=r.get("cat"),
+            priority=r.get("pri"),
+            status=r.get("stat"),
+            directive=r.get("dir"),
+            rule_type=rule_type
+        )
 
     def get_rules_by_category(self, category: str) -> List[Rule]:
         """Get rules by category."""

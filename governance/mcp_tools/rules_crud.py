@@ -28,7 +28,8 @@ def register_rule_crud_tools(mcp) -> None:
         category: str,
         priority: str,
         directive: str,
-        status: str = "DRAFT"
+        status: str = "DRAFT",
+        rule_type: Optional[str] = None
     ) -> str:
         """
         Create a new governance rule.
@@ -39,7 +40,8 @@ def register_rule_crud_tools(mcp) -> None:
             category: Rule category (governance, technical, operational, architecture, testing)
             priority: Priority level (CRITICAL, HIGH, MEDIUM, LOW)
             directive: The rule directive text
-            status: Initial status (ACTIVE, DRAFT, DEPRECATED). Default: DRAFT
+            status: Initial status (ACTIVE, PROPOSED, DISABLED). Default: DRAFT
+            rule_type: Rule type (FOUNDATIONAL, OPERATIONAL, TECHNICAL, META, LEAF)
 
         Returns:
             JSON object with created rule or error
@@ -56,7 +58,8 @@ def register_rule_crud_tools(mcp) -> None:
                 category=category,
                 priority=priority,
                 directive=directive,
-                status=status
+                status=status,
+                rule_type=rule_type
             )
 
             if rule:
@@ -81,7 +84,8 @@ def register_rule_crud_tools(mcp) -> None:
         category: Optional[str] = None,
         priority: Optional[str] = None,
         directive: Optional[str] = None,
-        status: Optional[str] = None
+        status: Optional[str] = None,
+        rule_type: Optional[str] = None
     ) -> str:
         """
         Update an existing rule. Only provided fields will be updated.
@@ -92,7 +96,8 @@ def register_rule_crud_tools(mcp) -> None:
             category: New category (optional)
             priority: New priority (optional)
             directive: New directive text (optional)
-            status: New status (optional)
+            status: New status (ACTIVE, PROPOSED, DISABLED)
+            rule_type: New rule type (FOUNDATIONAL, OPERATIONAL, TECHNICAL, META, LEAF)
 
         Returns:
             JSON object with updated rule or error
@@ -109,7 +114,8 @@ def register_rule_crud_tools(mcp) -> None:
                 category=category,
                 priority=priority,
                 directive=directive,
-                status=status
+                status=status,
+                rule_type=rule_type
             )
 
             if rule:
