@@ -95,7 +95,8 @@ class RuleCRUDOperations:
         priority: Optional[str] = None,
         directive: Optional[str] = None,
         status: Optional[str] = None,
-        rule_type: Optional[str] = None
+        rule_type: Optional[str] = None,
+        semantic_id: Optional[str] = None
     ) -> Optional[Rule]:
         """
         Update an existing rule's attributes.
@@ -110,6 +111,7 @@ class RuleCRUDOperations:
             directive: New directive (optional)
             status: New status (optional)
             rule_type: New rule type (optional)
+            semantic_id: New semantic ID (optional) - per META-TAXON-01-v1
 
         Returns:
             Updated Rule object or None if not found
@@ -139,6 +141,11 @@ class RuleCRUDOperations:
                 new_attrs.append(('rule-type', rule_type))
             elif rule_type != existing.rule_type:
                 updates.append(('rule-type', existing.rule_type, rule_type))
+        if semantic_id is not None:
+            if existing.semantic_id is None:
+                new_attrs.append(('semantic-id', semantic_id))
+            elif semantic_id != existing.semantic_id:
+                updates.append(('semantic-id', existing.semantic_id, semantic_id))
 
         if not updates and not new_attrs:
             return existing  # Nothing to update

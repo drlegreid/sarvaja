@@ -85,7 +85,8 @@ def register_rule_crud_tools(mcp) -> None:
         priority: Optional[str] = None,
         directive: Optional[str] = None,
         status: Optional[str] = None,
-        rule_type: Optional[str] = None
+        rule_type: Optional[str] = None,
+        semantic_id: Optional[str] = None
     ) -> str:
         """
         Update an existing rule. Only provided fields will be updated.
@@ -98,6 +99,7 @@ def register_rule_crud_tools(mcp) -> None:
             directive: New directive text (optional)
             status: New status (ACTIVE, PROPOSED, DISABLED)
             rule_type: New rule type (FOUNDATIONAL, OPERATIONAL, TECHNICAL, META, LEAF)
+            semantic_id: New semantic ID (optional) - per META-TAXON-01-v1
 
         Returns:
             JSON object with updated rule or error
@@ -115,7 +117,8 @@ def register_rule_crud_tools(mcp) -> None:
                 priority=priority,
                 directive=directive,
                 status=status,
-                rule_type=rule_type
+                rule_type=rule_type,
+                semantic_id=semantic_id
             )
 
             if rule:

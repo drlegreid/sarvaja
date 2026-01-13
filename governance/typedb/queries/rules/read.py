@@ -21,7 +21,8 @@ class RuleReadQueries:
     """
 
     def get_all_rules(self) -> List[Rule]:
-        """Get all governance rules."""
+        """Get all governance rules including optional attributes."""
+        # First get core attributes (required)
         query = """
             match $r isa rule-entity,
                 has rule-id $id,
@@ -32,10 +33,58 @@ class RuleReadQueries:
                 has directive $dir;
             get $id, $name, $cat, $pri, $stat, $dir;
         """
-        return self._execute_rule_query(query)
+        results = self._execute_query(query)
+
+        # Build rules with core attributes
+        rules = []
+        for r in results:
+            rule_id = r.get("id")
+
+            # Try to get optional rule_type
+            rule_type = None
+            type_query = f"""
+                match $r isa rule-entity,
+                    has rule-id "{rule_id}",
+                    has rule-type $type;
+                get $type;
+            """
+            try:
+                type_results = self._execute_query(type_query)
+                if type_results:
+                    rule_type = type_results[0].get("type")
+            except Exception:
+                pass  # rule_type is optional
+
+            # Try to get optional semantic_id (META-TAXON-01-v1)
+            semantic_id = None
+            sid_query = f"""
+                match $r isa rule-entity,
+                    has rule-id "{rule_id}",
+                    has semantic-id $sid;
+                get $sid;
+            """
+            try:
+                sid_results = self._execute_query(sid_query)
+                if sid_results:
+                    semantic_id = sid_results[0].get("sid")
+            except Exception:
+                pass  # semantic_id is optional
+
+            rules.append(Rule(
+                id=rule_id,
+                name=r.get("name"),
+                category=r.get("cat"),
+                priority=r.get("pri"),
+                status=r.get("stat"),
+                directive=r.get("dir"),
+                rule_type=rule_type,
+                semantic_id=semantic_id
+            ))
+
+        return rules
 
     def get_active_rules(self) -> List[Rule]:
-        """Get only active rules."""
+        """Get only active rules including optional attributes."""
         query = """
             match $r isa rule-entity,
                 has rule-id $id,
@@ -47,17 +96,53 @@ class RuleReadQueries:
             get $id, $name, $cat, $pri, $dir;
         """
         results = self._execute_query(query)
-        return [
-            Rule(
-                id=r.get("id"),
+
+        rules = []
+        for r in results:
+            rule_id = r.get("id")
+
+            # Try to get optional rule_type
+            rule_type = None
+            type_query = f"""
+                match $r isa rule-entity,
+                    has rule-id "{rule_id}",
+                    has rule-type $type;
+                get $type;
+            """
+            try:
+                type_results = self._execute_query(type_query)
+                if type_results:
+                    rule_type = type_results[0].get("type")
+            except Exception:
+                pass
+
+            # Try to get optional semantic_id
+            semantic_id = None
+            sid_query = f"""
+                match $r isa rule-entity,
+                    has rule-id "{rule_id}",
+                    has semantic-id $sid;
+                get $sid;
+            """
+            try:
+                sid_results = self._execute_query(sid_query)
+                if sid_results:
+                    semantic_id = sid_results[0].get("sid")
+            except Exception:
+                pass
+
+            rules.append(Rule(
+                id=rule_id,
                 name=r.get("name"),
                 category=r.get("cat"),
                 priority=r.get("pri"),
                 status="ACTIVE",
-                directive=r.get("dir")
-            )
-            for r in results
-        ]
+                directive=r.get("dir"),
+                rule_type=rule_type,
+                semantic_id=semantic_id
+            ))
+
+        return rules
 
     def get_rule_by_id(self, rule_id: str) -> Optional[Rule]:
         """Get a specific rule by ID."""
@@ -90,6 +175,18 @@ class RuleReadQueries:
         if type_results:
             rule_type = type_results[0].get("type")
 
+        # Try to get optional semantic_id (META-TAXON-01-v1)
+        semantic_id = None
+        sid_query = f"""
+            match $r isa rule-entity,
+                has rule-id "{rule_id}",
+                has semantic-id $sid;
+            get $sid;
+        """
+        sid_results = self._execute_query(sid_query)
+        if sid_results:
+            semantic_id = sid_results[0].get("sid")
+
         return Rule(
             id=rule_id,
             name=r.get("name"),
@@ -97,7 +194,8 @@ class RuleReadQueries:
             priority=r.get("pri"),
             status=r.get("stat"),
             directive=r.get("dir"),
-            rule_type=rule_type
+            rule_type=rule_type,
+            semantic_id=semantic_id
         )
 
     def get_rules_by_category(self, category: str) -> List[Rule]:

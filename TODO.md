@@ -29,11 +29,11 @@
 
 | Metric | Count |
 |--------|-------|
-| Total Gaps | 202 |
-| RESOLVED | 175 |
-| OPEN | 27 |
-| DEFERRED | ~15 |
-| Rules | 47 (all synced to TypeDB) |
+| Total Gaps | 201 |
+| RESOLVED | 179 |
+| OPEN | 0 |
+| DEFERRED | 22 |
+| Rules | 49 (all synced to TypeDB) |
 
 ---
 

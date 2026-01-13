@@ -22,6 +22,7 @@ class Rule:
     status: str  # ACTIVE, PROPOSED, DISABLED
     directive: str
     rule_type: Optional[str] = None  # FOUNDATIONAL, OPERATIONAL, TECHNICAL, META, LEAF
+    semantic_id: Optional[str] = None  # META-TAXON-01-v1: e.g., SESSION-EVID-01-v1
     created_date: Optional[datetime] = None
 
 
