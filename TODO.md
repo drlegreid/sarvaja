@@ -33,7 +33,7 @@
 | RESOLVED | 175 |
 | OPEN | 27 |
 | DEFERRED | ~15 |
-| Rules | 43 (all synced to TypeDB) |
+| Rules | 47 (all synced to TypeDB) |
 
 ---
 
@@ -46,8 +46,8 @@
 | ID | Task | Status | Intent |
 |----|------|--------|--------|
 | ULTRA-001 | Data Integrity Tests (bottom-up) | TODO | Validate foundation |
-| ULTRA-002 | Certification Issue + Evidence | TODO | Milestone closure |
-| ULTRA-003 | Push all changes to GitHub | TODO | Ship it |
+| ULTRA-002 | Certification Issue + Evidence | DONE | Milestone closure |
+| ULTRA-003 | Push all changes to GitHub | DONE | Ship it |
 
 ---
 
