@@ -3,8 +3,10 @@ Rules and Decisions Routes.
 
 Per RULE-012: DSP Semantic Code Structure.
 Per GAP-FILE-002: Extracted from api.py.
+Per GAP-MCP-008: Semantic rule ID support.
 
 Created: 2024-12-28
+Updated: 2026-01-13 - Added semantic ID support
 """
 
 from fastapi import APIRouter, HTTPException, Query
@@ -15,8 +17,18 @@ from governance.models import (
     RuleCreate, RuleUpdate, RuleResponse,
     DecisionCreate, DecisionUpdate, DecisionResponse
 )
+from governance.rule_linker import (
+    LEGACY_TO_SEMANTIC,
+    SEMANTIC_TO_LEGACY,
+    normalize_rule_id
+)
 
 router = APIRouter(tags=["Rules"])
+
+
+def get_semantic_id(legacy_id: str) -> Optional[str]:
+    """Get semantic ID for a legacy rule ID. Per GAP-MCP-008."""
+    return LEGACY_TO_SEMANTIC.get(legacy_id)
 
 
 # =============================================================================
@@ -70,6 +82,7 @@ async def list_rules(
         return [
             RuleResponse(
                 id=r.id,
+                semantic_id=get_semantic_id(r.id),
                 name=r.name,
                 category=r.category,
                 priority=r.priority,
@@ -85,18 +98,27 @@ async def list_rules(
 
 @router.get("/rules/{rule_id}", response_model=RuleResponse)
 async def get_rule(rule_id: str):
-    """Get a specific rule by ID."""
+    """
+    Get a specific rule by ID.
+
+    Per GAP-MCP-008: Accepts both legacy (RULE-XXX) and semantic
+    (DOMAIN-SUB-NN-vN) ID formats.
+    """
     client = get_client()
     if not client:
         raise HTTPException(status_code=503, detail="TypeDB not connected")
 
     try:
-        rule = client.get_rule_by_id(rule_id)
+        # Normalize rule_id to legacy format for TypeDB query
+        legacy_id = normalize_rule_id(rule_id)
+
+        rule = client.get_rule_by_id(legacy_id)
         if not rule:
             raise HTTPException(status_code=404, detail=f"Rule {rule_id} not found")
 
         return RuleResponse(
             id=rule.id,
+            semantic_id=get_semantic_id(rule.id),
             name=rule.name,
             category=rule.category,
             priority=rule.priority,
@@ -137,6 +159,7 @@ async def create_rule(rule: RuleCreate):
 
         return RuleResponse(
             id=created.id,
+            semantic_id=get_semantic_id(created.id),
             name=created.name,
             category=created.category,
             priority=created.priority,
@@ -152,19 +175,22 @@ async def create_rule(rule: RuleCreate):
 
 @router.put("/rules/{rule_id}", response_model=RuleResponse)
 async def update_rule(rule_id: str, rule: RuleUpdate):
-    """Update an existing rule."""
+    """Update an existing rule. Per GAP-MCP-008: Accepts semantic IDs."""
     client = get_client()
     if not client:
         raise HTTPException(status_code=503, detail="TypeDB not connected")
 
     try:
+        # Normalize rule_id to legacy format for TypeDB query
+        legacy_id = normalize_rule_id(rule_id)
+
         # Check if rule exists
-        existing = client.get_rule_by_id(rule_id)
+        existing = client.get_rule_by_id(legacy_id)
         if not existing:
             raise HTTPException(status_code=404, detail=f"Rule {rule_id} not found")
 
         updated = client.update_rule(
-            rule_id=rule_id,
+            rule_id=legacy_id,
             name=rule.name,
             category=rule.category,
             priority=rule.priority,
@@ -177,6 +203,7 @@ async def update_rule(rule_id: str, rule: RuleUpdate):
 
         return RuleResponse(
             id=updated.id,
+            semantic_id=get_semantic_id(updated.id),
             name=updated.name,
             category=updated.category,
             priority=updated.priority,
@@ -192,18 +219,21 @@ async def update_rule(rule_id: str, rule: RuleUpdate):
 
 @router.delete("/rules/{rule_id}", status_code=204)
 async def delete_rule(rule_id: str, archive: bool = Query(True, description="Archive before delete")):
-    """Delete a rule (archives by default)."""
+    """Delete a rule (archives by default). Per GAP-MCP-008: Accepts semantic IDs."""
     client = get_client()
     if not client:
         raise HTTPException(status_code=503, detail="TypeDB not connected")
 
     try:
+        # Normalize rule_id to legacy format for TypeDB query
+        legacy_id = normalize_rule_id(rule_id)
+
         # Check if rule exists
-        existing = client.get_rule_by_id(rule_id)
+        existing = client.get_rule_by_id(legacy_id)
         if not existing:
             raise HTTPException(status_code=404, detail=f"Rule {rule_id} not found")
 
-        deleted = client.delete_rule(rule_id, archive=archive)
+        deleted = client.delete_rule(legacy_id, archive=archive)
         if not deleted:
             raise HTTPException(status_code=500, detail="Failed to delete rule")
 

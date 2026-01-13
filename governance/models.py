@@ -3,8 +3,10 @@ Governance API Pydantic Models.
 
 Per RULE-012: DSP Semantic Code Structure - extracted from api.py.
 Per GAP-FILE-002: API modularization.
+Per GAP-MCP-008: Semantic rule ID support.
 
 Created: 2024-12-28
+Updated: 2026-01-13 - Added semantic_id field
 """
 
 from pydantic import BaseModel, Field
@@ -38,8 +40,9 @@ class RuleUpdate(BaseModel):
 
 
 class RuleResponse(BaseModel):
-    """Response model for a rule."""
-    id: str
+    """Response model for a rule. Per GAP-MCP-008: includes semantic_id."""
+    id: str  # Legacy ID: RULE-XXX
+    semantic_id: Optional[str] = None  # Semantic ID: DOMAIN-SUB-NN-vN
     name: str
     category: str
     priority: str
