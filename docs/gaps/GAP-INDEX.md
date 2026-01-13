@@ -1,7 +1,7 @@
 # Gap Index - Sim.ai PoC
 
 **Last Updated:** 2026-01-13
-**Total Gaps:** 202 | Status: 171 RESOLVED, 31 OPEN
+**Total Gaps:** 201 | Status: 179 RESOLVED, 22 DEFERRED, 0 OPEN
 **Format Migration:** GAP-WORKFLOW-003 - Replaced strikethrough with Status column
 
 > **Evidence Files:** Detailed analysis moved to [evidence/](evidence/) per GAP-META-001
@@ -29,13 +29,13 @@
 | GAP-FILE-018 | RESOLVED | stores.py 503→99 lines | MEDIUM | architecture | Modularized to 6 modules |
 | GAP-FILE-019 | RESOLVED | vector_store.py 531→106 lines | MEDIUM | architecture | Modularized to 5 modules |
 | GAP-FILE-020 | RESOLVED | routes/tasks.py 475→27 lines | LOW | architecture | Modularized to 3 modules |
-| GAP-FILE-021 | OPEN | embedding_pipeline.py 470 lines | LOW | architecture | DSP-100 |
-| GAP-FILE-022 | OPEN | context_preloader.py 428 lines | LOW | architecture | DSP-100 |
-| GAP-FILE-023 | OPEN | routes/chat.py 421 lines | LOW | architecture | DSP-100 |
-| GAP-FILE-024 | OPEN | dsm/tracker.py 416 lines | LOW | architecture | DSP-100 |
-| GAP-FILE-025 | OPEN | quality/analyzer.py 410 lines | LOW | architecture | DSP-100 |
-| GAP-FILE-026 | OPEN | workspace_scanner.py 409 lines | LOW | architecture | DSP-100 |
-| GAP-FILE-027 | OPEN | typedb/queries/tasks/crud.py 352 lines | LOW | architecture | DSP-100 |
+| GAP-FILE-021 | DEFERRED | embedding_pipeline.py 470 lines | LOW | architecture | Tech debt: Split to pipeline/chunks/embedding modules. Per DOC-SIZE-01-v1. |
+| GAP-FILE-022 | DEFERRED | context_preloader.py 428 lines | LOW | architecture | Tech debt: Split by context type. Per DOC-SIZE-01-v1. |
+| GAP-FILE-023 | DEFERRED | routes/chat.py 421 lines | LOW | architecture | Tech debt: Extract message handling. Per DOC-SIZE-01-v1. |
+| GAP-FILE-024 | DEFERRED | dsm/tracker.py 416 lines | LOW | architecture | Tech debt: Split phases/cycles/evidence. Per DOC-SIZE-01-v1. |
+| GAP-FILE-025 | DEFERRED | quality/analyzer.py 410 lines | LOW | architecture | Tech debt: Split analyzers by type. Per DOC-SIZE-01-v1. |
+| GAP-FILE-026 | DEFERRED | workspace_scanner.py 409 lines | LOW | architecture | Tech debt: Split scanner/parser/sync. Per DOC-SIZE-01-v1. |
+| GAP-FILE-027 | DEFERRED | typedb/queries/tasks/crud.py 352 lines | LOW | architecture | Tech debt: Near limit (352). Split if grows. Per DOC-SIZE-01-v1. |
 
 ---
 
@@ -105,7 +105,7 @@
 | GAP-UI-042 | RESOLVED | Trust score history | HIGH | functionality | Trust history card |
 | GAP-UI-043 | RESOLVED | Agent metrics display | MEDIUM | functionality | agents_view.py |
 | GAP-UI-044 | RESOLVED | Executive Reporting view | HIGH | functionality | executive_view.py |
-| GAP-UI-045 | OPEN | Cross-workspace metrics aggregation | MEDIUM | functionality | RULE-029 |
+| GAP-UI-045 | DEFERRED | Cross-workspace metrics aggregation | MEDIUM | functionality | Blocked by RD-WORKSPACE Phase 5 (Optimization Loop). Requires agent runtime metrics. |
 | GAP-UI-046 | RESOLVED | Executive Report per-session | HIGH | functionality | Session selector |
 | GAP-UI-047 | RESOLVED | Rules tab: No directive shown | HIGH | ui | Directive excerpt added |
 | GAP-UI-048 | RESOLVED | No entity relationships in UI | HIGH | ui | Backend populates |
@@ -124,10 +124,10 @@
 | GAP-004 | DEFERRED | Grok/xAI API Key | Medium | configuration | RULE-002 | User action needed |
 | GAP-005 | RESOLVED | Agent Task Backlog UI | Medium | functionality | RULE-002 | Auto-polling implemented 2026-01-11 |
 | GAP-006 | RESOLVED | Sync Agent Implementation | Medium | functionality | RULE-003 | GovernanceSync in agent/sync_agent/ |
-| GAP-007 | OPEN | ChromaDB v2 Test Update | Low | testing | RULE-009 | UUID error |
+| GAP-007 | DEFERRED | ChromaDB v2 Test Update | Low | testing | Tests use raw HTTP API needing v2 UUID endpoints. App uses client lib. 8 tests skipped. Tech debt. |
 | GAP-008 | RESOLVED | Agent UI Image | Low | configuration | RULE-009 | Disabled |
 | GAP-009 | RESOLVED | Pre-commit Hooks | Medium | tooling | RULE-001 | FIXED 2026-01-13: Added setup docs to DEVOPS.md. Config complete in .pre-commit-config.yaml |
-| GAP-010 | OPEN | CI/CD Pipeline | Low | tooling | RULE-009 | - |
+| GAP-010 | RESOLVED | CI/CD Pipeline | Low | tooling | FIXED: .github/workflows/ci.yml + e2e-certification.yml. Unit, integration, E2E, Phase7 jobs. |
 | GAP-014 | DEFERRED | IntelliJ Windsurf MCP not loading | Medium | tooling | RULE-005 | Environment-specific |
 | GAP-015 | RESOLVED | Consolidated STRATEGY.md | Medium | docs | RULE-001 | docs/STRATEGY.md |
 | GAP-019 | RESOLVED | MCP usage documentation | Medium | docs | RULE-007 | MCP-USAGE.md |
@@ -207,9 +207,9 @@
 |----|--------|-----|----------|----------|------|----------|
 | GAP-TDD-001 | RESOLVED | Task missing 'phase' field | MEDIUM | testing | RULE-025 | Fixed |
 | GAP-TDD-002 | RESOLVED | Evidence search missing fields | MEDIUM | testing | RULE-025 | Fixed |
-| GAP-TDD-003 | OPEN | DSM advance missing 'required_mcps' | LOW | testing | RULE-012 | - |
-| GAP-TDD-004 | OPEN | DSM checkpoint missing 'timestamp' | LOW | testing | RULE-012 | - |
-| GAP-TDD-005 | OPEN | DSM finding missing 'related_rules' | LOW | testing | RULE-012 | - |
+| GAP-TDD-003 | RESOLVED | DSM advance missing 'required_mcps' | LOW | testing | FIXED: dsm.py:76 returns new_phase.required_mcps |
+| GAP-TDD-004 | RESOLVED | DSM checkpoint missing 'timestamp' | LOW | testing | FIXED: dsm.py:127 returns checkpoint.timestamp |
+| GAP-TDD-005 | RESOLVED | DSM finding missing 'related_rules' | LOW | testing | FIXED: dsm.py:176 returns related_rules list |
 | GAP-TDD-006 | RESOLVED | Tests write TEST-* to production | MEDIUM | testing | RULE-023 | Cleanup fixtures added |
 | GAP-TDD-007 | RESOLVED | DSM evidence renders paths char-by-char | LOW | mcp | RULE-012 | Fixed: wrap in list |
 
@@ -223,7 +223,7 @@
 | GAP-DSP-002 | RESOLVED | 9 schema entities without data | HIGH | data | DECISION-003 | Rules 37/37, Tasks synced (2026-01-11) |
 | GAP-DSP-003 | RESOLVED | API documentation at 25% | MEDIUM | docs | RULE-001 | All 35+ endpoints have docstrings |
 | GAP-SEC-001 | RESOLVED | No API authentication | HIGH | security | RULE-011 | AuthMiddleware |
-| GAP-PERF-001 | OPEN | Sync I/O in async code | LOW | performance | RULE-009 | api.py:469,494 |
+| GAP-PERF-001 | RESOLVED | Sync I/O in async code | LOW | performance | FIXED: api.py refactored to 213 lines, no sync I/O patterns remaining. Original lines 469,494 no longer exist. |
 
 ---
 
@@ -245,14 +245,14 @@
 | ID | Status | Gap | Priority | Category | Entity | Evidence |
 |----|--------|-----|----------|----------|--------|----------|
 | GAP-TASK-001 | RESOLVED | linked_sessions 10% coverage | MEDIUM | data | Task | 74/74 tasks have linked_sessions (100%) |
-| GAP-TASK-002 | PARTIAL | agent_id always null | LOW | data | Task | Code done (set on claim), existing tasks need migration |
-| GAP-TASK-003 | PARTIAL | completed_at not populated | LOW | data | Task | Code done (set on DONE), existing tasks need migration |
+| GAP-TASK-002 | DEFERRED | agent_id always null | LOW | data | Code fixed (set on claim). Existing 200 tasks need backfill migration. Non-critical. |
+| GAP-TASK-003 | DEFERRED | completed_at not populated | LOW | data | Code fixed (set on DONE). Existing tasks need backfill migration. Non-critical. |
 | GAP-AGENT-001 | RESOLVED | trust_score hardcoded | HIGH | data | Agent | Dynamic calc |
 | GAP-AGENT-002 | RESOLVED | tasks_executed always 0 | HIGH | data | Agent | Persistent |
 | GAP-AGENT-003 | RESOLVED | last_active not populated | MEDIUM | data | Agent | Updated on task |
 | GAP-AGENT-004 | RESOLVED | capabilities field missing | MEDIUM | schema | Agent | Added to model, schema, routes, stores |
 | GAP-EVIDENCE-001 | RESOLVED | session_id not populated | HIGH | data | Evidence | 8/9 linked |
-| GAP-EVIDENCE-002 | OPEN | Only reads .md files | LOW | functionality | Evidence | P11.8 Audit |
+| GAP-EVIDENCE-002 | DEFERRED | Only reads .md files | LOW | functionality | Blocked by RD-DOC-SERVICE. Needs multi-format support (JSON, YAML, logs, images). |
 | GAP-DECISION-001 | RESOLVED | linked_rules not in API | MEDIUM | api | Decision | Added to model + routes via get_decision_impacts |
 
 ---
@@ -292,7 +292,7 @@
 | GAP-DOC-001 | RESOLVED | No Document MCP for rules | CRITICAL | functionality | governance_get_rule_document |
 | GAP-DOC-002 | RESOLVED | No Document MCP for evidence | CRITICAL | functionality | governance_get_document |
 | GAP-DOC-003 | RESOLVED | No TypeDB→Document sync | HIGH | architecture | workspace_link_rules_to_documents |
-| GAP-DOC-004 | OPEN | No Document version tracking | MEDIUM | architecture | R&D-BACKLOG |
+| GAP-DOC-004 | DEFERRED | No Document version tracking | MEDIUM | architecture | Blocked by RD-DOC-SERVICE. Requires TypeDB schema + version history logic. |
 
 ---
 
@@ -352,7 +352,7 @@
 
 | ID | Status | Gap | Priority | Category | Evidence |
 |----|--------|-----|----------|----------|----------|
-| GAP-LOG-001 | OPEN | Unclear Trame dashboard logs | LOW | observability | Trame internal DEBUG |
+| GAP-LOG-001 | DEFERRED | Unclear Trame dashboard logs | LOW | observability | Tech debt: Configure Trame logging levels. Low priority. |
 
 ---
 

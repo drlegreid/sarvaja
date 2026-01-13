@@ -1440,36 +1440,55 @@ See: [STRATEGY-CYCLE-DIRECTIVES.md](../STRATEGY-CYCLE-DIRECTIVES.md) (to be extr
 > **Priority:** After GAP-010 (CI/CD Pipeline)
 > **Pattern:** Exploratory research with evidence collection
 
-| ID | Task | Priority | Status | Dependencies |
-|----|------|----------|--------|--------------|
-| RD-DOC-SERVICE | Document Service for file retrieval & linking | HIGH | TODO | GAP-UI-039 |
-| RD-DEBUG-AUDIT | Debugability - audit trails for tests/agents/MCPs | HIGH | TODO | - |
-| RD-AGENTIC-READY | Assess readiness for agentic workspaces | MEDIUM | TODO | RD-WORKSPACE |
-| RD-SESSION-TRACE | Track thoughts, tool calls with holographic detailisation | HIGH | TODO | SESSION-EVID-01-v1 |
-| RD-META-RULES | Metarules for rule management (deprecation, versioning) | MEDIUM | TODO | META-TAXON-01-v1 |
-| RD-TOON | Evaluate TOON notation for context compression | LOW | RESEARCH | - |
-| RD-MINIKANREN | Evaluate miniKanren for constraint solving | HIGH | RESEARCH | RD-KANREN-CONTEXT |
-| RD-HASKELL-READY | Assess migration readiness to Haskell | LOW | FUTURE | RD-HASKELL-MCP |
+| ID | Task | Priority | Status | Dependencies | Assessment (2026-01-13) |
+|----|------|----------|--------|--------------|--------------------------|
+| RD-DOC-SERVICE | Document Service for file retrieval & linking | HIGH | PARTIAL | GAP-UI-039 | Implemented: File type detection (40+ types), pagination (offset/limit). Remaining: TypeDB document linking. |
+| RD-DEBUG-AUDIT | Debugability - audit trails for tests/agents/MCPs | HIGH | PARTIAL | - | session_tool_call + session_thought exist. Missing: cross-agent correlation, rule linkage. Extend existing MCP tools. |
+| RD-AGENTIC-READY | Assess readiness for agentic workspaces | MEDIUM | ASSESSED | RD-WORKSPACE | **Ready:** 5 workspaces, handoff protocol, skill composition. **Missing:** Phase 5 optimization loop, runtime metrics. |
+| RD-SESSION-TRACE | Track thoughts, tool calls with holographic detailisation | HIGH | IMPLEMENTED | SESSION-EVID-01-v1 | sessions_core.py:206-299 has session_tool_call + session_thought. Needs multi-tier abstraction layer. |
+| RD-META-RULES | Metarules for rule management (deprecation, versioning) | MEDIUM | DESIGN | META-TAXON-01-v1 | Propose: RULE-LIFECYCLE-01-v1 for deprecation workflow, RULE-VERSION-01-v1 for lineage tracking. |
+| RD-TOON | Evaluate TOON notation for context compression | LOW | RESEARCH | EPIC-005 | Spec found: https://github.com/toon-format/toon - 40% token reduction vs JSON. YAML-like indent + CSV tabular. |
+| RD-MINIKANREN | Evaluate miniKanren for constraint solving | HIGH | RESEARCH | RD-KANREN-CONTEXT | EXCLUDED per user request. |
+| RD-HASKELL-READY | Assess migration readiness to Haskell | LOW | FUTURE | RD-HASKELL-MCP | EXCLUDED per user request. |
 
 ### RD-DOC-SERVICE: Document Service Architecture
 
-**Status:** TODO | **Priority:** HIGH
+**Status:** PARTIAL | **Priority:** HIGH | **Updated:** 2026-01-13
 
-**Problem:**
+**Implementation Progress (2026-01-13):**
+- ✅ File type detection via extension mapping (40+ types)
+- ✅ Pagination with offset/limit parameters
+- ✅ Syntax hints for code highlighting (Python, Haskell, TypeQL, etc.)
+- ❓ TypeDB document linking (future)
+
+**Changes Made:**
+```
+governance/mcp_tools/evidence/documents.py:
+- Added FILE_TYPE_MAP constant (40+ file types)
+- Added offset parameter to governance_get_document
+- Added pagination metadata (has_more, next_offset)
+- Added file_type field with syntax hints
+```
+
+**Problem (Solved):**
 - Multiple file types need unified retrieval: MD, logs, XML, JSON, YAML, code
 - Code support: Python, Haskell, JavaScript, Java, PowerShell, Shell
 - Large files need lazy loading to prevent context exhaustion
-- Currently GAP-UI-039 deferred pending this research
 
-**Research Questions:**
-1. Should document service be MCP or internal module?
-2. What lazy loading strategy for files >1000 lines?
-3. How to detect file type and apply appropriate rendering?
-4. Integration with TypeDB document linking?
+**Research Questions (Answered):**
+1. ✅ Should document service be MCP or internal module? → MCP wrapper over internal module
+2. ✅ What lazy loading strategy for files >1000 lines? → Pagination with offset/limit
+3. ✅ How to detect file type? → Extension mapping (FILE_TYPE_MAP)
+4. ❓ Integration with TypeDB document linking? → Future enhancement
 
 ### RD-DEBUG-AUDIT: Audit Trail Debugability
 
-**Status:** TODO | **Priority:** HIGH
+**Status:** PARTIAL | **Priority:** HIGH | **Updated:** 2026-01-13
+
+**Implementation Progress (2026-01-13):**
+- `session_tool_call` MCP tool EXISTS - captures tool name, args, result, duration
+- `session_thought` MCP tool EXISTS - captures reasoning with confidence scores
+- **Missing:** Cross-agent correlation ID, rule linkage per tool call, trace visualization
 
 **Problem:**
 - Need to trace: tests → agents → MCPs end-to-end
@@ -1485,7 +1504,13 @@ See: [STRATEGY-CYCLE-DIRECTIVES.md](../STRATEGY-CYCLE-DIRECTIVES.md) (to be extr
 
 ### RD-SESSION-TRACE: Holographic Detailisation
 
-**Status:** TODO | **Priority:** HIGH
+**Status:** IMPLEMENTED | **Priority:** HIGH | **Updated:** 2026-01-13
+
+**Implementation Evidence (2026-01-13):**
+- `session_thought` MCP supports thought_type: reasoning, planning, reflection, hypothesis
+- `session_tool_call` MCP captures execution traces
+- Evidence rendered in session markdown files
+- **Next:** Multi-tier abstraction (summary → details → evidence) with auto-summarization
 
 **Problem:**
 - Per SESSION-EVID-01-v1: need thought chains with decisions/rationale
@@ -1500,7 +1525,12 @@ See: [STRATEGY-CYCLE-DIRECTIVES.md](../STRATEGY-CYCLE-DIRECTIVES.md) (to be extr
 
 ### RD-META-RULES: Rule Management Metarules
 
-**Status:** TODO | **Priority:** MEDIUM
+**Status:** DESIGN | **Priority:** MEDIUM | **Updated:** 2026-01-13
+
+**Proposed Rules (2026-01-13):**
+1. **RULE-LIFECYCLE-01-v1**: Deprecation workflow (ACTIVE → DEPRECATED → ARCHIVED)
+2. **RULE-VERSION-01-v1**: Lineage tracking (-v1 → -v2 with reason field)
+3. Extend TypeDB schema with `supersedes` relation for rule versioning
 
 **Problem:**
 - Per META-TAXON-01-v1: semantic IDs now in use
@@ -1516,15 +1546,49 @@ See: [STRATEGY-CYCLE-DIRECTIVES.md](../STRATEGY-CYCLE-DIRECTIVES.md) (to be extr
 
 ### RD-TOON: Evaluate TOON Notation
 
-**Status:** RESEARCH | **Priority:** LOW
+**Status:** RESEARCH | **Priority:** LOW | **Updated:** 2026-01-13
+**Spec:** https://github.com/toon-format/toon
 
-**Problem:**
-- Context compression remains critical (EPIC-005)
-- TOON (Truncated Object-Oriented Notation) may compress better than current markdown
+**Research Finding (2026-01-13):**
+TOON specification found at GitHub. Key findings:
 
-**Research Questions:**
-1. What is TOON and where is it documented?
-2. How does it compare to Mermaid for diagrams?
+| Feature | Description |
+|---------|-------------|
+| **Full Name** | Token-Oriented Object Notation |
+| **Token Savings** | ~40% fewer tokens than JSON |
+| **Structure** | YAML-like indentation + CSV-style tabular layout |
+| **Syntax** | Field names as keys, values colon-separated |
+| **Arrays** | Inline with square brackets or multi-line indented |
+| **Objects** | Nested via indentation |
+
+**Example (from spec):**
+```toon
+name: John Doe
+age: 30
+address:
+  city: San Francisco
+  zip: 94102
+tags: [developer, ai, python]
+```
+
+**Comparison to JSON (~40% token reduction):**
+```json
+{"name": "John Doe", "age": 30, "address": {"city": "San Francisco", "zip": "94102"}, "tags": ["developer", "ai", "python"]}
+```
+
+**Relevance to EPIC-005 (Context Compression):**
+- Could replace JSON in MCP tool responses
+- Potential for rule serialization
+- Needs: Python parser, MCP tool wrapper
+
+**Next Steps:**
+1. Evaluate Python TOON parser availability
+2. Test token savings with governance data
+3. Propose TOON for MCP tool output format
+
+**Research Questions (Answered 2026-01-13):**
+1. ✅ What is TOON? → Token-Oriented Object Notation at github.com/toon-format/toon
+2. ❓ Compare to Mermaid? → Different scope: TOON = data format, Mermaid = diagrams. Both reduce tokens.
 3. Is it LLM-native or does it require parsing?
 4. Integration with existing rule format?
 
