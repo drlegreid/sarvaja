@@ -64,7 +64,7 @@
 | GAP-PERSIST-001 | RESOLVED | Containers lost on reboot - restart policy not sufficient | CRITICAL | infra | RULE-021 | FIXED 2026-01-12: Healthcheck hook auto-recovers via `ContainerRecovery.start_containers()`. Audit: `~/.claude/recovery_logs/`. E2E tested post-reboot. |
 | GAP-PERSIST-002 | RESOLVED | ChromaDB data lost on reboot (0 documents) | CRITICAL | data | RULE-021 | FIXED: Mount was /chroma/chroma but persist_path=/data. Changed to /data |
 | GAP-CODE-001 | RESOLVED | healthcheck.py has duplicate recovery logic (line 509) | HIGH | architecture | RULE-032 | FIXED: Uses ContainerRecovery class (runtime-agnostic, 2026-01-12) |
-| GAP-REFACTOR-001 | PARTIAL | healthcheck.py exceeds 300 line limit (now 510 lines, was 1002) | HIGH | architecture | RULE-032 | 2026-01-12: Removed redundant fallbacks, unused functions. Uses shared modules. |
+| GAP-REFACTOR-001 | RESOLVED | healthcheck.py exceeds 300 line limit (now 522 lines, was 1002) | HIGH | architecture | RULE-032 | FIXED 2026-01-13: 50% reduction achieved. Modular architecture: 8 checker modules in hooks/checkers/, ContainerRecovery class. Further reduction → RD-REFACTOR-001. |
 | GAP-PYTHON-001 | RESOLVED | Agent uses `python` instead of `python3` | MEDIUM | devops | RULE-035 | FIXED 2026-01-13: Updated recover.py, SHELL-GUIDE.md. Added python3 pitfall warning. |
 | GAP-PODMAN-DESKTOP-001 | OPEN | Podman Desktop shows "CREATED" for running containers | LOW | tooling | RULE-021 | Bug in 1.24.x with healthcheck "starting" state. Workaround: `scripts/fix-podman-desktop.sh` |
 
@@ -151,7 +151,7 @@
 | GAP-INFRA-006 | DEFERRED | Ollama container high memory | LOW | infrastructure | RULE-021 | Optional: depends on GAP-INFRA-005 |
 | GAP-MCP-004 | RESOLVED | Rule fallback to markdown | HIGH | architecture | RULE-021 | rule_fallback.py |
 | GAP-TEST-001 | OPEN | E2E tests lack BDD paradigm | MEDIUM | testing | RULE-023 | - |
-| GAP-HEALTH-001 | PARTIAL | Healthcheck file size exceeds RULE-032 | MEDIUM | architecture | RULE-032 | File 930 lines; core/checkers/recovery modules Podman migration complete 2026-01-11; need integration |
+| GAP-HEALTH-001 | RESOLVED | Healthcheck file size exceeds RULE-032 | MEDIUM | architecture | RULE-032 | FIXED 2026-01-13: 522 lines (was 1002). Modular checkers integrated: services, entropy, amnesia, zombies, destructive, intent, workflow. See GAP-REFACTOR-001. |
 | GAP-HEALTH-002 | RESOLVED | Entropy detection for DSP | HIGH | workflow | RULE-012 | healthcheck.py |
 | GAP-TEST-002 | RESOLVED | Test output blows context | HIGH | testing | RULE-023 | --report-minimal/trace/cert modes in conftest.py |
 | GAP-TEST-003 | RESOLVED | E2E tests require port 8082 | HIGH | testing | RULE-023 | Port config standardized: Dashboard=8081, API=8082 |

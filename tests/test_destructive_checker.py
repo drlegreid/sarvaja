@@ -9,17 +9,22 @@ import pytest
 import sys
 from pathlib import Path
 
-# Add hooks directory to path
+# Add hooks directory to path for imports
 HOOKS_DIR = Path(__file__).parent.parent / ".claude" / "hooks"
-sys.path.insert(0, str(HOOKS_DIR))
+CHECKERS_DIR = HOOKS_DIR / "checkers"
+sys.path.insert(0, str(CHECKERS_DIR))
 
-from checkers.destructive import (
-    check_destructive_command,
-    format_warning,
-    get_safe_alternative,
-    DESTRUCTIVE_PATTERNS,
-    BLOCKED_PATTERNS,
-)
+# Import directly from the module file
+import importlib.util
+_spec = importlib.util.spec_from_file_location("destructive", CHECKERS_DIR / "destructive.py")
+_module = importlib.util.module_from_spec(_spec)
+_spec.loader.exec_module(_module)
+
+check_destructive_command = _module.check_destructive_command
+format_warning = _module.format_warning
+get_safe_alternative = _module.get_safe_alternative
+DESTRUCTIVE_PATTERNS = _module.DESTRUCTIVE_PATTERNS
+BLOCKED_PATTERNS = _module.BLOCKED_PATTERNS
 
 
 class TestDestructiveCommandDetection:

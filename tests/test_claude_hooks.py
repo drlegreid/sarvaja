@@ -1122,10 +1122,11 @@ class TestResolutionPathInjection:
             recovery = DockerRecovery()
 
             # Test various failure scenarios
+            # Per DEVOPS.md: xubuntu migration uses Podman, not Docker
             test_cases = [
-                ({"docker": {"ok": False}}, "Docker Desktop"),
-                ({"docker": {"ok": True}, "typedb": {"ok": False}}, "docker compose"),
-                ({"docker": {"ok": True}, "chromadb": {"ok": False}}, "docker compose"),
+                ({"podman": {"ok": False}}, "Podman"),
+                ({"podman": {"ok": True}, "typedb": {"ok": False}}, "podman compose"),
+                ({"podman": {"ok": True}, "chromadb": {"ok": False}}, "podman compose"),
             ]
 
             for services, expected_keyword in test_cases:
