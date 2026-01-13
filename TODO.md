@@ -45,7 +45,7 @@
 
 | ID | Task | Status | Intent |
 |----|------|--------|--------|
-| ULTRA-001 | Data Integrity Tests (bottom-up) | TODO | Validate foundation |
+| ULTRA-001 | Data Integrity Tests (bottom-up) | DONE | Validate foundation |
 | ULTRA-002 | Certification Issue + Evidence | DONE | Milestone closure |
 | ULTRA-003 | Push all changes to GitHub | DONE | Ship it |
 
