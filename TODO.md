@@ -30,10 +30,10 @@
 | Metric | Count |
 |--------|-------|
 | Total Gaps | 218 |
-| RESOLVED | 199 |
+| RESOLVED | 200 |
 | OPEN | 0 |
-| DEFERRED | 17 |
-| Rules | 51 (all synced to TypeDB) |
+| DEFERRED | 16 |
+| Rules | 52 (all synced to TypeDB) |
 
 ---
 
@@ -81,7 +81,8 @@
 
 | Suite | Count | Status |
 |-------|-------|--------|
-| Full Suite | 1,106+ | ✅ Passing |
+| Full Suite | 1,690+ | ✅ Passing |
+| E2E BDD | 9 scenarios | ✅ |
 | E2E CRUD | 20 | ✅ |
 | Skipped | 46 | ⏸️ |
 
