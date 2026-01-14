@@ -44,10 +44,10 @@ Tests are living contracts that evolve with business requirements. During active
 
 | ID | Task | Status | Priority | Notes |
 |----|------|--------|----------|-------|
-| TEST-001 | Refine testing rules for reusability | 📋 TODO | **HIGH** | Shared models, page objects |
+| TEST-001 | Refine testing rules for reusability | ✅ DONE | **HIGH** | tests/shared/factories.py, pages.py |
 | TEST-002 | Evidence collection at trace level | 📋 TODO | **HIGH** | Full traces during certification |
 | TEST-003 | Debug workflow trace minimization | 📋 TODO | HIGH | Minimize to error for LLM context |
-| TEST-004 | Test restructuring for rules conformity | 📋 TODO | **HIGH** | Align tests with RULE-* structure |
+| TEST-004 | Test restructuring for rules conformity | ✅ DONE | **HIGH** | tests/TEST_REGISTRY.md rule traceability |
 | TEST-005 | GitHub milestone certification reporting | 📋 TODO | **HIGH** | Full test trace at each milestone |
 | TEST-006 | DevOps test strategy | 📋 TODO | HIGH | CI/CD integration patterns |
 

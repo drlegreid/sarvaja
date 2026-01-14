@@ -1,7 +1,7 @@
 # Gap Index - Sim.ai PoC
 
 **Last Updated:** 2026-01-14
-**Total Gaps:** 218 | Status: 199 RESOLVED, 17 DEFERRED, 0 OPEN, 2 NOT_IMPLEMENTED
+**Total Gaps:** 218 | Status: 200 RESOLVED, 16 DEFERRED, 0 OPEN, 2 NOT_IMPLEMENTED
 **Format Migration:** GAP-WORKFLOW-003 - Replaced strikethrough with Status column
 
 > **Evidence Files:** Detailed analysis moved to [evidence/](evidence/) per GAP-META-001
@@ -182,7 +182,7 @@
 | GAP-TRAME-001 | RESOLVED | nav-infra not rendered despite code | HIGH | framework | RULE-037 | Fixed: duplicate NAVIGATION_ITEMS in constants.py |
 | GAP-INFRA-006 | DEFERRED | Ollama container high memory | LOW | infrastructure | RULE-021 | INDEFINITE: Depends on GAP-INFRA-005. |
 | GAP-MCP-004 | RESOLVED | Rule fallback to markdown | HIGH | architecture | RULE-021 | rule_fallback.py |
-| GAP-TEST-001 | DEFERRED | E2E tests lack BDD paradigm | MEDIUM | testing | RULE-023 | R&D item: Requires test methodology refactoring. Current tests use pytest+playwright. |
+| GAP-TEST-001 | RESOLVED | E2E tests lack BDD paradigm | MEDIUM | testing | RULE-023 | FIXED 2026-01-14: pytest-bdd + Gherkin features + step definitions. TEST-BDD-01-v1 rule created. 9 BDD scenarios. |
 | GAP-HEALTH-001 | RESOLVED | Healthcheck file size exceeds RULE-032 | MEDIUM | architecture | RULE-032 | FIXED 2026-01-13: 522 lines (was 1002). Modular checkers integrated: services, entropy, amnesia, zombies, destructive, intent, workflow. See GAP-REFACTOR-001. |
 | GAP-HEALTH-002 | RESOLVED | Entropy detection for DSP | HIGH | workflow | RULE-012 | healthcheck.py |
 | GAP-TEST-002 | RESOLVED | Test output blows context | HIGH | testing | RULE-023 | --report-minimal/trace/cert modes in conftest.py |
