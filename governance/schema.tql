@@ -55,6 +55,7 @@ task sub entity,
     owns task-id,
     owns task-name,
     owns task-status,
+    owns task-resolution,                        # GAP-UI-046: NONE, DEFERRED, IMPLEMENTED, VALIDATED, CERTIFIED
     owns task-body,
     owns phase,
     owns agent-id,                               # Agent assigned to task (E2E tests)
@@ -63,13 +64,26 @@ task sub entity,
     owns task-created-at,                        # Creation timestamp (GAP-UI-035)
     owns task-claimed-at,                        # Claim timestamp (GAP-UI-035)
     owns gap-reference,                          # DEPRECATED: Use references-gap relation (P10.7)
+    # GAP-TASK-LINK-004: Task detail sections (per TASK-TECH-01-v1)
+    owns task-business,                          # Why - User problem, business value
+    owns task-design,                            # What - Functional requirements
+    owns task-architecture,                      # How - Technical approach
+    owns task-test,                              # Verification - Test plan, evidence
     plays task-blocked:blocked-task,
     plays task-blocked:blocking-rule,
     plays implements-rule:implementing-task,
     plays completed-in:completed-task,
     plays evidence-supports:supported-task,
     plays references-gap:referencing-task,       # P10.7: Typed task→gap reference
-    plays task-outcome:source-task;              # P10.7: Task can produce decisions
+    plays task-outcome:source-task,              # P10.7: Task can produce decisions
+    # GAP-TASK-LINK-003: Task relationship roles
+    plays task-hierarchy:parent-task,
+    plays task-hierarchy:child-task,
+    plays task-blocks-task:blocking-task,
+    plays task-blocks-task:blocked-dep-task,
+    plays task-related:related-task-a,
+    plays task-related:related-task-b,
+    plays task-commit:implemented-task;  # GAP-TASK-LINK-002
 
 gap sub entity,
     owns gap-id,
@@ -110,6 +124,12 @@ evidence-file sub entity,
     owns evidence-created-at,
     plays has-evidence:session-evidence,
     plays evidence-supports:supporting-evidence;
+
+# Git commit entity (GAP-TASK-LINK-002)
+git-commit sub entity,
+    owns commit-sha,
+    owns commit-message,
+    plays task-commit:implementing-commit;
 
 # =============================================================================
 # DOCUMENT CROSS-REFERENCING ENTITIES (RULE-013)
@@ -273,7 +293,8 @@ decision-date sub attribute, value datetime;
 # Task attributes
 task-id sub attribute, value string;
 task-name sub attribute, value string;
-task-status sub attribute, value string;  # TODO, IN_PROGRESS, DONE, BLOCKED
+task-status sub attribute, value string;  # GAP-UI-046: OPEN, IN_PROGRESS, CLOSED (lifecycle)
+task-resolution sub attribute, value string;  # GAP-UI-046: NONE, DEFERRED, IMPLEMENTED, VALIDATED, CERTIFIED (outcome)
 task-body sub attribute, value string;    # P11.3: detailed task description
 task-evidence sub attribute, value string; # Completion evidence/notes (E2E tests)
 task-completed-at sub attribute, value datetime; # Completion timestamp (E2E tests)
@@ -281,6 +302,16 @@ task-created-at sub attribute, value datetime;   # Creation timestamp (GAP-UI-03
 task-claimed-at sub attribute, value datetime;   # Claim timestamp (GAP-UI-035)
 phase sub attribute, value string;
 gap-reference sub attribute, value string; # P11.3: linked gap ID
+
+# Task detail section attributes (GAP-TASK-LINK-004, TASK-TECH-01-v1)
+task-business sub attribute, value string;      # Why - User problem, business value
+task-design sub attribute, value string;        # What - Functional requirements
+task-architecture sub attribute, value string;  # How - Technical approach
+task-test sub attribute, value string;          # Verification - Test plan, evidence
+
+# Git commit attributes (GAP-TASK-LINK-002)
+commit-sha sub attribute, value string;    # Short (7) or full (40) SHA
+commit-message sub attribute, value string; # Commit message
 
 # Work Session attributes (P11.3)
 session-description sub attribute, value string;
@@ -411,6 +442,30 @@ decision-supersedes sub relation,
 task-blocked sub relation,
     relates blocked-task,
     relates blocking-rule;
+
+# =============================================================================
+# TASK RELATIONSHIP RELATIONS (GAP-TASK-LINK-003)
+# =============================================================================
+
+# Task parent-child hierarchy (task decomposition)
+task-hierarchy sub relation,
+    relates parent-task,
+    relates child-task;
+
+# Task blocks another task (sequencing dependency)
+task-blocks-task sub relation,
+    relates blocking-task,
+    relates blocked-dep-task;
+
+# Task is related to another task (soft association)
+task-related sub relation,
+    relates related-task-a,
+    relates related-task-b;
+
+# Task implemented by git commit (GAP-TASK-LINK-002)
+task-commit sub relation,
+    relates implementing-commit,
+    relates implemented-task;
 
 # Gap requires Rule to be resolved
 gap-requires sub relation,

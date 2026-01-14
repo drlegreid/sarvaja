@@ -15,6 +15,7 @@ from governance.dsm.phases import DSPPhase
 from governance.dsm.models import DSMCycle, PhaseCheckpoint
 from governance.dsm.validation import validate_phase_evidence
 from governance.dsm.evidence import generate_evidence
+from governance.dsm.memory import get_session_memory_payload as _get_memory_payload
 
 
 class DSMTracker:
@@ -351,38 +352,8 @@ class DSMTracker:
         }
 
     def get_session_memory_payload(self) -> Optional[Dict[str, Any]]:
-        """
-        Get payload for saving cycle context to claude-mem (P11.4).
-
-        Returns dict ready for chroma_add_documents MCP call, or None if no cycle.
-        Per RULE-024 (AMNESIA Protocol): Save session context for recovery.
-        """
-        if not self.current_cycle:
-            return None
-
-        try:
-            from governance.session_memory import create_dsp_session_context
-
-            # Create session context from cycle data
-            ctx = create_dsp_session_context(
-                cycle_id=self.current_cycle.cycle_id,
-                batch_id=self.current_cycle.batch_id,
-                phases_completed=self.current_cycle.phases_completed,
-                findings=self.current_cycle.findings,
-                checkpoints=[asdict(cp) for cp in self.current_cycle.checkpoints],
-                metrics=self.current_cycle.metrics,
-            )
-
-            # Return payload for MCP call
-            doc_id = f"sim-ai-dsp-{self.current_cycle.cycle_id}"
-            return {
-                "collection_name": "claude_memories",
-                "documents": [ctx.to_document()],
-                "ids": [doc_id],
-                "metadatas": [ctx.to_metadata()],
-            }
-        except ImportError:
-            return None
+        """Get payload for saving cycle context to claude-mem (P11.4)."""
+        return _get_memory_payload(self.current_cycle)
 
     def to_dict(self) -> Dict[str, Any]:
         """Convert tracker state to dictionary."""

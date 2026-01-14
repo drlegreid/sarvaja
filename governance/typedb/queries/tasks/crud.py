@@ -1,16 +1,18 @@
 """
 TypeDB Task CRUD Operations.
 
-Per RULE-032: File Size Limit (< 300 lines)
+Per DOC-SIZE-01-v1: File Size Limit (< 300 lines)
 Extracted from: governance/typedb/queries/tasks.py
 
 Created: 2026-01-04
+Updated: 2026-01-14 - Extracted update_task_status to status.py
 """
 
 from datetime import datetime
 from typing import List, Optional
 
 from ...entities import Task
+from .status import update_task_status as _update_task_status
 
 
 class TaskCRUDOperations:
@@ -30,22 +32,25 @@ class TaskCRUDOperations:
         body: str = None,
         gap_id: str = None,
         linked_rules: List[str] = None,
-        linked_sessions: List[str] = None
+        linked_sessions: List[str] = None,
+        resolution: str = "NONE"
     ) -> Optional[Task]:
         """
         Insert a new task into TypeDB.
 
         Per GAP-ARCH-001: Full task insertion with optional attributes.
+        Per GAP-UI-046: Status/resolution lifecycle.
 
         Args:
             task_id: Unique task ID
             name: Task name/description
-            status: Task status (TODO, IN_PROGRESS, DONE, BLOCKED)
+            status: Task status (OPEN, IN_PROGRESS, CLOSED per GAP-UI-046)
             phase: Phase (P1, P10, etc.)
             body: Optional detailed description
             gap_id: Optional linked gap ID
             linked_rules: Optional list of rule IDs this task implements
             linked_sessions: Optional list of session IDs where task was completed
+            resolution: Task resolution (NONE, DEFERRED, IMPLEMENTED, VALIDATED, CERTIFIED)
 
         Returns:
             Created Task object or None if failed
@@ -67,6 +72,7 @@ class TaskCRUDOperations:
                         f'has task-id "{task_id}"',
                         f'has task-name "{name_escaped}"',
                         f'has task-status "{status}"',
+                        f'has task-resolution "{resolution}"',  # GAP-UI-046
                         f'has phase "{phase}"',
                         f'has task-created-at {timestamp_str}'
                     ]
@@ -112,126 +118,32 @@ class TaskCRUDOperations:
             print(f"Failed to insert task {task_id}: {e}")
             return None
 
-    def update_task_status(self, task_id: str, status: str, agent_id: str = None, evidence: str = None) -> Optional[Task]:
+    def update_task_status(
+        self,
+        task_id: str,
+        status: str,
+        agent_id: str = None,
+        evidence: str = None,
+        resolution: str = None
+    ) -> Optional[Task]:
         """
-        Update a task's status (and optionally assign agent and evidence).
+        Update a task's status (and optionally assign agent, evidence, resolution).
 
         Per TODO-6: Agent task claiming uses this method.
+        Per GAP-UI-046: Status/resolution lifecycle.
+        Delegates to status.py per DOC-SIZE-01-v1.
 
         Args:
             task_id: Task ID to update
-            status: New status (TODO, IN_PROGRESS, DONE, BLOCKED)
+            status: New status (OPEN, IN_PROGRESS, CLOSED per GAP-UI-046)
             agent_id: Optional agent ID to assign
             evidence: Optional completion evidence/notes
+            resolution: Optional resolution (NONE, DEFERRED, IMPLEMENTED, VALIDATED, CERTIFIED)
 
         Returns:
             Updated Task object or None if not found
         """
-        current = self.get_task(task_id)
-        if not current:
-            return None
-
-        from typedb.driver import SessionType, TransactionType
-
-        try:
-            with self._client.session(self.database, SessionType.DATA) as session:
-                with session.transaction(TransactionType.WRITE) as tx:
-                    # Delete old status
-                    delete_query = f"""
-                        match
-                            $t isa task, has task-id "{task_id}";
-                            $a isa task-status; $a "{current.status}";
-                            $t has $a;
-                        delete
-                            $t has $a;
-                    """
-                    tx.query.delete(delete_query)
-
-                    # Insert new status
-                    insert_query = f"""
-                        match
-                            $t isa task, has task-id "{task_id}";
-                        insert
-                            $t has task-status "{status}";
-                    """
-                    tx.query.insert(insert_query)
-
-                    # Update agent_id if provided (per E2E test requirements)
-                    if agent_id:
-                        # First delete old agent-id if exists
-                        if current.agent_id:
-                            delete_agent_query = f"""
-                                match
-                                    $t isa task, has task-id "{task_id}";
-                                    $a isa agent-id; $a "{current.agent_id}";
-                                    $t has $a;
-                                delete
-                                    $t has $a;
-                            """
-                            tx.query.delete(delete_agent_query)
-
-                        # Insert new agent-id
-                        insert_agent_query = f"""
-                            match
-                                $t isa task, has task-id "{task_id}";
-                            insert
-                                $t has agent-id "{agent_id}";
-                        """
-                        tx.query.insert(insert_agent_query)
-
-                    # Update evidence if provided (per E2E test requirements)
-                    if evidence:
-                        evidence_escaped = evidence.replace('"', '\\"')
-                        # First delete old evidence if exists
-                        if current.evidence:
-                            delete_evidence_query = f"""
-                                match
-                                    $t isa task, has task-id "{task_id}";
-                                    $e isa task-evidence; $t has $e;
-                                delete
-                                    $t has $e;
-                            """
-                            tx.query.delete(delete_evidence_query)
-
-                        # Insert new evidence
-                        insert_evidence_query = f"""
-                            match
-                                $t isa task, has task-id "{task_id}";
-                            insert
-                                $t has task-evidence "{evidence_escaped}";
-                        """
-                        tx.query.insert(insert_evidence_query)
-
-                    # Set claimed_at when status is IN_PROGRESS (GAP-UI-035)
-                    if status == "IN_PROGRESS" and not current.claimed_at:
-                        now = datetime.now()
-                        timestamp_str = now.strftime('%Y-%m-%dT%H:%M:%S')
-                        insert_claimed_query = f"""
-                            match
-                                $t isa task, has task-id "{task_id}";
-                            insert
-                                $t has task-claimed-at {timestamp_str};
-                        """
-                        tx.query.insert(insert_claimed_query)
-
-                    # Set completed_at when status is DONE (per E2E test requirements)
-                    if status == "DONE" and not current.completed_at:
-                        now = datetime.now()
-                        timestamp_str = now.strftime('%Y-%m-%dT%H:%M:%S')
-                        insert_completed_query = f"""
-                            match
-                                $t isa task, has task-id "{task_id}";
-                            insert
-                                $t has task-completed-at {timestamp_str};
-                        """
-                        tx.query.insert(insert_completed_query)
-
-                    tx.commit()
-
-            return self.get_task(task_id)
-        except Exception as e:
-            print(f"Failed to update task {task_id}: {e}")
-            return None
+        return _update_task_status(self, task_id, status, agent_id, evidence, resolution)
 
     def update_task(self, task_id: str, status: str = None, name: str = None, phase: str = None) -> bool:
         """

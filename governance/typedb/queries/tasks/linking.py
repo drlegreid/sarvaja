@@ -163,3 +163,77 @@ class TaskLinkingOperations:
         """
         results = self._execute_query(query)
         return [r.get("src") for r in results if r.get("src")]
+
+    def link_task_to_commit(self, task_id: str, commit_sha: str, commit_message: str = None) -> bool:
+        """
+        Link a task to a git commit via task-commit relation.
+
+        Per GAP-TASK-LINK-002: Task-to-commit traceability.
+
+        Args:
+            task_id: Task ID (e.g., "P10.1")
+            commit_sha: Git commit SHA (short or full)
+            commit_message: Optional commit message
+
+        Returns:
+            True if link created successfully, False otherwise
+        """
+        from typedb.driver import SessionType, TransactionType
+
+        try:
+            with self._client.session(self.database, SessionType.DATA) as session:
+                with session.transaction(TransactionType.WRITE) as tx:
+                    # Insert git-commit entity
+                    msg_escaped = commit_message.replace('"', '\\"') if commit_message else ""
+                    commit_parts = [f'has commit-sha "{commit_sha}"']
+                    if commit_message:
+                        commit_parts.append(f'has commit-message "{msg_escaped}"')
+
+                    insert_commit = f"""
+                        insert $c isa git-commit,
+                            {", ".join(commit_parts)};
+                    """
+                    try:
+                        tx.query.insert(insert_commit)
+                    except Exception:
+                        pass  # Commit might already exist
+
+                    # Create the task-commit relation
+                    link_query = f"""
+                        match
+                            $t isa task, has task-id "{task_id}";
+                            $c isa git-commit, has commit-sha "{commit_sha}";
+                        insert
+                            (implementing-commit: $c, implemented-task: $t) isa task-commit;
+                    """
+                    tx.query.insert(link_query)
+                    tx.commit()
+
+            return True
+        except Exception as e:
+            print(f"Failed to link task {task_id} to commit {commit_sha}: {e}")
+            return False
+
+    def get_task_commits(self, task_id: str) -> List[str]:
+        """
+        Get all commit SHAs linked to a task.
+
+        Per GAP-TASK-LINK-002: Task-to-commit traceability.
+
+        Args:
+            task_id: Task ID
+
+        Returns:
+            List of commit SHAs
+        """
+        query = f"""
+            match
+                $t isa task, has task-id "{task_id}";
+                (implementing-commit: $c, implemented-task: $t) isa task-commit;
+                $c has commit-sha $sha;
+            get $sha;
+        """
+        results = self._execute_query(query)
+        return [r.get("sha") for r in results if r.get("sha")]
+
+    # Task relationship operations moved to relationships.py per DOC-SIZE-01-v1

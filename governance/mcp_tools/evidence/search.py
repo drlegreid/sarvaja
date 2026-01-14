@@ -41,12 +41,14 @@ def register_search_tools(mcp) -> None:
             JSON array of matching evidence with relevance scores
         """
         # Try to use vector store for semantic search
+        # Per GAP-EMBED-001: Use env-configured embedding generator
         semantic_results = []
         try:
-            from governance.vector_store import VectorStore, MockEmbeddings
+            from governance.vector_store import VectorStore
+            from governance.embedding_config import create_embedding_generator
 
             store = VectorStore()
-            generator = MockEmbeddings(dimension=384)
+            generator = create_embedding_generator()
 
             # Connect if possible
             if store.connect():

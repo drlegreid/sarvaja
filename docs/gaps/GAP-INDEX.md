@@ -1,10 +1,42 @@
 # Gap Index - Sim.ai PoC
 
-**Last Updated:** 2026-01-13
-**Total Gaps:** 201 | Status: 179 RESOLVED, 22 DEFERRED, 0 OPEN
+**Last Updated:** 2026-01-14
+**Total Gaps:** 218 | Status: 199 RESOLVED, 17 DEFERRED, 0 OPEN, 2 NOT_IMPLEMENTED
 **Format Migration:** GAP-WORKFLOW-003 - Replaced strikethrough with Status column
 
 > **Evidence Files:** Detailed analysis moved to [evidence/](evidence/) per GAP-META-001
+
+---
+
+## UI Exploratory Testing Gaps (2026-01-14)
+
+> **Source:** LLM-driven exploratory testing via Playwright MCP
+> **Evidence:** Session exploratory testing with real UI interaction
+
+| ID | Status | Gap | Priority | Category | Evidence |
+|----|--------|-----|----------|----------|----------|
+| GAP-UI-EXP-001 | RESOLVED | Decisions view shows "No date" for all decisions | MEDIUM | data_integrity | FIXED: TypeDB query + compat layer now return decision_date |
+| GAP-UI-EXP-002 | DEFERRED | Sessions lack descriptions | LOW | data_integrity | Requires markdown parsing to extract description from evidence files |
+| GAP-UI-EXP-003 | DEFERRED | Task list shows only DONE tasks at top | LOW | ux | UX enhancement - add filtering/sorting controls |
+
+---
+
+## Architecture & UX Gaps (2026-01-14)
+
+> **Source:** Entropy alerts, user feedback, Agile best practices
+> **Status:** ALL RESOLVED (2026-01-14)
+
+| ID | Status | Gap | Priority | Category | Evidence |
+|----|--------|-----|----------|----------|----------|
+| GAP-FILE-028 | RESOLVED | routes/agents.py 537→230 lines (package) | MEDIUM | architecture | FIXED 2026-01-14: Split to package with crud.py (230), observability.py (130), visibility.py (129), helpers.py (72). |
+| GAP-UI-046 | RESOLVED | Task status/resolution per Agile DoR/DoD | MEDIUM | ux | FIXED 2026-01-14: Schema+entities+lifecycle module+TDD tests. Rule TASK-LIFE-01-v1 created. 24 unit tests pass. |
+| GAP-UI-047 | RESOLVED | Reactive loaders with trace status | MEDIUM | ux | FIXED 2026-01-14: LoaderState + APITrace dataclasses, transforms module, initial state integration. 33 TDD tests pass. Rule UI-LOADER-01-v1 created. |
+| GAP-UI-048 | RESOLVED | Bottom bar with technical traces | LOW | ux | FIXED 2026-01-14: TraceEvent + TraceStore dataclasses, transforms module, initial state integration. 35 TDD tests pass. Rule UI-TRACE-01-v1 created. |
+| GAP-RULE-001 | RESOLVED | Task rule covering tech solutions | MEDIUM | governance | FIXED 2026-01-14: Created TASK-TECH-01-v1.md - Technology Solution Documentation rule. |
+| GAP-TASK-LINK-001 | RESOLVED | Tasks linked to session documents | MEDIUM | data_integrity | FIXED 2026-01-14: link_task_to_session, governance_task_link_session MCP tool, 14 TDD tests pass. |
+| GAP-TASK-LINK-002 | RESOLVED | Tasks linked to github commits | MEDIUM | data_integrity | FIXED 2026-01-14: Schema (git-commit entity, task-commit relation), linking methods, MCP tools, 14 TDD tests pass. |
+| GAP-TASK-LINK-003 | RESOLVED | Tasks with related tasks (dependencies) | HIGH | data_integrity | FIXED 2026-01-14: Schema + entities + queries for task-hierarchy, task-blocks-task, task-related relations. |
+| GAP-TASK-LINK-004 | RESOLVED | Task details: business, design, arch, test | MEDIUM | data_integrity | FIXED 2026-01-14: Schema + entity fields + details.py operations + MCP tools + read.py queries. 16 TDD tests pass. Per TASK-TECH-01-v1. |
 
 ---
 
@@ -29,13 +61,13 @@
 | GAP-FILE-018 | RESOLVED | stores.py 503→99 lines | MEDIUM | architecture | Modularized to 6 modules |
 | GAP-FILE-019 | RESOLVED | vector_store.py 531→106 lines | MEDIUM | architecture | Modularized to 5 modules |
 | GAP-FILE-020 | RESOLVED | routes/tasks.py 475→27 lines | LOW | architecture | Modularized to 3 modules |
-| GAP-FILE-021 | DEFERRED | embedding_pipeline.py 470 lines | LOW | architecture | Tech debt: Split to pipeline/chunks/embedding modules. Per DOC-SIZE-01-v1. |
-| GAP-FILE-022 | DEFERRED | context_preloader.py 428 lines | LOW | architecture | Tech debt: Split by context type. Per DOC-SIZE-01-v1. |
-| GAP-FILE-023 | DEFERRED | routes/chat.py 421 lines | LOW | architecture | Tech debt: Extract message handling. Per DOC-SIZE-01-v1. |
-| GAP-FILE-024 | DEFERRED | dsm/tracker.py 416 lines | LOW | architecture | Tech debt: Split phases/cycles/evidence. Per DOC-SIZE-01-v1. |
-| GAP-FILE-025 | DEFERRED | quality/analyzer.py 410 lines | LOW | architecture | Tech debt: Split analyzers by type. Per DOC-SIZE-01-v1. |
-| GAP-FILE-026 | DEFERRED | workspace_scanner.py 409 lines | LOW | architecture | Tech debt: Split scanner/parser/sync. Per DOC-SIZE-01-v1. |
-| GAP-FILE-027 | DEFERRED | typedb/queries/tasks/crud.py 352 lines | LOW | architecture | Tech debt: Near limit (352). Split if grows. Per DOC-SIZE-01-v1. |
+| GAP-FILE-021 | RESOLVED | embedding_pipeline.py 476→323 lines | LOW | architecture | FIXED 2026-01-14: Split to package with chunking.py (78 lines), pipeline.py (323 lines). 59 tests pass. |
+| GAP-FILE-022 | RESOLVED | context_preloader.py 428→328 lines | LOW | architecture | FIXED 2026-01-14: Split to package with models.py (110 lines), preloader.py (328 lines). 19 tests pass. |
+| GAP-FILE-023 | RESOLVED | routes/chat.py 421→262 lines | LOW | architecture | FIXED 2026-01-14: Split to package with commands.py (165 lines), endpoints.py (262 lines). 12 tests pass. |
+| GAP-FILE-024 | RESOLVED | dsm/tracker.py 416→387 lines | LOW | architecture | FIXED 2026-01-14: Extracted memory.py (64 lines). 12 tests pass. |
+| GAP-FILE-025 | RESOLVED | quality/analyzer.py 410→365 lines | LOW | architecture | Extracted impact.py. Per DOC-SIZE-01-v1. |
+| GAP-FILE-026 | RESOLVED | workspace_scanner.py 409→320 lines | LOW | architecture | FIXED 2026-01-14: Extracted task_parsers.py (108 lines). 15 tests pass. |
+| GAP-FILE-027 | RESOLVED | typedb/queries/tasks/crud.py 368→267 lines | LOW | architecture | FIXED 2026-01-14: Extracted status.py (142 lines). Imports verified. |
 
 ---
 
@@ -121,7 +153,7 @@
 
 | ID | Status | Gap | Priority | Category | Rule | Evidence |
 |----|--------|-----|----------|----------|------|----------|
-| GAP-004 | DEFERRED | Grok/xAI API Key | Medium | configuration | RULE-002 | User action needed |
+| GAP-004 | NOT_IMPLEMENTED | Grok/xAI API Key | Medium | configuration | CLOSED: Not to be implemented. Using other LLM providers. |
 | GAP-005 | RESOLVED | Agent Task Backlog UI | Medium | functionality | RULE-002 | Auto-polling implemented 2026-01-11 |
 | GAP-006 | RESOLVED | Sync Agent Implementation | Medium | functionality | RULE-003 | GovernanceSync in agent/sync_agent/ |
 | GAP-007 | DEFERRED | ChromaDB v2 Test Update | Low | testing | Tests use raw HTTP API needing v2 UUID endpoints. App uses client lib. 8 tests skipped. Tech debt. |
@@ -132,7 +164,7 @@
 | GAP-015 | RESOLVED | Consolidated STRATEGY.md | Medium | docs | RULE-001 | docs/STRATEGY.md |
 | GAP-019 | RESOLVED | MCP usage documentation | Medium | docs | RULE-007 | MCP-USAGE.md |
 | GAP-020 | RESOLVED | Cross-project knowledge queries | HIGH | workflow | RULE-007 | MCP-USAGE.md |
-| GAP-021 | DEFERRED | OctoCode for external research | LOW | workflow | RULE-007 | INDEFINITE: External tool not available. Use WebSearch MCP instead. |
+| GAP-021 | NOT_IMPLEMENTED | OctoCode for external research | LOW | workflow | CLOSED: Not to be implemented. Using WebSearch MCP instead. |
 | GAP-MCP-006 | RESOLVED | REST MCP server integration | Medium | tooling | RULE-036 | Added to .mcp.json |
 | GAP-MCP-007 | RESOLVED | Podman MCP server integration | Medium | tooling | RULE-036 | Added to .mcp.json |
 | GAP-MCP-008 | RESOLVED | MCP semantic ID support for workspace_link_rules_to_documents | HIGH | mcp | META-TAXON-01-v1 | FIXED: rule_linker.py dual pattern + subdirs + normalize_rule_id() |
@@ -212,6 +244,20 @@
 | GAP-TDD-005 | RESOLVED | DSM finding missing 'related_rules' | LOW | testing | FIXED: dsm.py:176 returns related_rules list |
 | GAP-TDD-006 | RESOLVED | Tests write TEST-* to production | MEDIUM | testing | RULE-023 | Cleanup fixtures added |
 | GAP-TDD-007 | RESOLVED | DSM evidence renders paths char-by-char | LOW | mcp | RULE-012 | Fixed: wrap in list |
+
+---
+
+## Mock/Stub Configuration Gaps (2026-01-14)
+
+> **Source:** Audit of stubs/mocks in production code
+> **Evidence:** Session 2026-01-14 - TDD test coverage analysis
+
+| ID | Status | Gap | Priority | Category | Rule | Evidence |
+|----|--------|-----|----------|----------|------|----------|
+| GAP-EMBED-001 | RESOLVED | MockEmbeddings hardcoded as default in production code | CRITICAL | testing | RULE-004 | FIXED 2026-01-14: governance/embedding_config.py created. 24 tests in test_embedding_config.py. |
+| GAP-EMBED-002 | RESOLVED | No USE_MOCK_EMBEDDINGS env var | HIGH | config | RULE-021 | FIXED 2026-01-14: Added USE_MOCK_EMBEDDINGS, EMBEDDING_PROVIDER env vars. See .env.example. |
+| GAP-EMBED-003 | RESOLVED | create_embedding_pipeline use_mock=True default | HIGH | testing | RULE-004 | FIXED 2026-01-14: Default now uses env config (production = real embeddings). |
+| GAP-EMBED-004 | RESOLVED | Evidence search uses hardcoded MockEmbeddings | HIGH | functionality | RULE-004 | FIXED 2026-01-14: search.py and evidence.py now use create_embedding_generator(). |
 
 ---
 

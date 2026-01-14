@@ -39,11 +39,12 @@ class Decision:
 
 @dataclass
 class Task:
-    """Task entity for P10 TypeDB migration. Per GAP-ARCH-001."""
+    """Task entity for P10 TypeDB migration. Per GAP-ARCH-001, GAP-UI-046."""
     id: str
     name: str
-    status: str
+    status: str  # GAP-UI-046: OPEN, IN_PROGRESS, CLOSED (lifecycle)
     phase: str
+    resolution: str = "NONE"  # GAP-UI-046: NONE, DEFERRED, IMPLEMENTED, VALIDATED, CERTIFIED
     description: Optional[str] = None
     body: Optional[str] = None
     agent_id: Optional[str] = None
@@ -54,6 +55,19 @@ class Task:
     claimed_at: Optional[datetime] = None
     completed_at: Optional[datetime] = None
     evidence: Optional[str] = None
+    # GAP-TASK-LINK-002: Git commit linking
+    linked_commits: Optional[List[str]] = None
+    # GAP-TASK-LINK-004: Task detail sections (per TASK-TECH-01-v1)
+    business: Optional[str] = None  # Why - User problem, business value
+    design: Optional[str] = None  # What - Functional requirements, acceptance criteria
+    architecture: Optional[str] = None  # How - Technical approach, technology choices
+    test_section: Optional[str] = None  # Verification - Test plan, evidence
+    # GAP-TASK-LINK-003: Task relationships
+    parent_task: Optional[str] = None
+    child_tasks: Optional[List[str]] = None
+    blocks: Optional[List[str]] = None
+    blocked_by: Optional[List[str]] = None
+    related_tasks: Optional[List[str]] = None
 
 
 @dataclass

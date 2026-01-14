@@ -5,11 +5,18 @@ Factory function returning fresh initial state.
 
 Per RULE-012: DSP Semantic Code Structure
 Per GAP-FILE-004: Extracted from state.py
+Per GAP-UI-047: Added reactive loader states with trace status
+Per GAP-UI-048: Added trace bar states
 
 Created: 2024-12-28
+Updated: 2026-01-14 - Added loader states with trace metadata
+Updated: 2026-01-14 - Added trace bar states
 """
 
 from typing import Dict, Any
+
+from ..loaders.loader_state import get_initial_loader_states
+from ..trace_bar.trace_store import get_initial_trace_state
 
 
 def get_initial_state() -> Dict[str, Any]:
@@ -172,4 +179,12 @@ def get_initial_state() -> Dict[str, Any]:
         'workflow_violations': [],
         'workflow_recommendations': [],
         'workflow_loading': False,
+
+        # Reactive Loader States (GAP-UI-047)
+        # Per-component loading with trace status
+        **get_initial_loader_states(),
+
+        # Trace Bar States (GAP-UI-048)
+        # Bottom bar with technical traces for developer visibility
+        **get_initial_trace_state(),
     }

@@ -1,6 +1,6 @@
 # TODO Index - Sim.ai PoC
 
-**Updated:** 2026-01-12 | **Backlog System:** [GAP-INDEX.md](docs/gaps/GAP-INDEX.md)
+**Updated:** 2026-01-14 | **Backlog System:** [GAP-INDEX.md](docs/gaps/GAP-INDEX.md)
 
 ---
 
@@ -25,15 +25,15 @@
 
 ---
 
-## Current Stats (2026-01-13)
+## Current Stats (2026-01-14)
 
 | Metric | Count |
 |--------|-------|
-| Total Gaps | 201 |
-| RESOLVED | 179 |
+| Total Gaps | 218 |
+| RESOLVED | 199 |
 | OPEN | 0 |
-| DEFERRED | 22 |
-| Rules | 49 (all synced to TypeDB) |
+| DEFERRED | 17 |
+| Rules | 51 (all synced to TypeDB) |
 
 ---
 
@@ -97,6 +97,9 @@
 | RD-INFRA | Infrastructure Health Backend | DONE | Handlers working, E2E validated |
 | RD-WORKFLOW | Agentic Workflow Integrity | DONE | All 4 phases complete |
 | RD-WORKSPACE | Multi-Agent Workspace Split | PHASE 4 | Phase 4 complete (2026-01-11) |
+| RD-DOC-SERVICE | Document Service Architecture | PARTIAL | Code ready, MCP caching blocks (2026-01-14) |
+| RD-DEBUG-AUDIT | Audit Trail Debugability | PARTIAL | correlation_id + applied_rules added (2026-01-14) |
+| MULTI-007 | Observability Infrastructure | MOSTLY DONE | Visibility complete: session→tasks→rules, tokens. Only merge conflict TODO |
 
 ### RD-INTENT: Session Intent Reconciliation (DONE)
 

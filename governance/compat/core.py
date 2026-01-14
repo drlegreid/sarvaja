@@ -96,7 +96,8 @@ def governance_list_decisions():
                 decisions.append({
                     "decision_id": d.id,
                     "name": d.name,
-                    "status": d.status
+                    "status": d.status,
+                    "decision_date": d.decision_date.isoformat() if d.decision_date else None
                 })
             client.close()
     except Exception:

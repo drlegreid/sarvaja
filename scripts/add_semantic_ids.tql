@@ -1,0 +1,135 @@
+# TypeDB migration: Add semantic-id to all rules
+# Per META-TAXON-01-v1: Rule Taxonomy & Management
+# Generated: 2026-01-13
+#
+# Run with: podman exec sim-ai_typedb_1 /opt/typedb-all-linux-x86_64/typedb console \
+#   --script /scripts/add_semantic_ids.tql
+
+# RULE-001 -> SESSION-EVID-01-v1
+match $r isa rule-entity, has rule-id "RULE-001"; insert $r has semantic-id "SESSION-EVID-01-v1";
+
+# RULE-002 -> ARCH-EBMSF-01-v1
+match $r isa rule-entity, has rule-id "RULE-002"; insert $r has semantic-id "ARCH-EBMSF-01-v1";
+
+# RULE-003 -> GOV-AUDIT-01-v1
+match $r isa rule-entity, has rule-id "RULE-003"; insert $r has semantic-id "GOV-AUDIT-01-v1";
+
+# RULE-004 -> SESSION-DSP-01-v1
+match $r isa rule-entity, has rule-id "RULE-004"; insert $r has semantic-id "SESSION-DSP-01-v1";
+
+# RULE-005 -> RECOVER-MEM-01-v1
+match $r isa rule-entity, has rule-id "RULE-005"; insert $r has semantic-id "RECOVER-MEM-01-v1";
+
+# RULE-006 -> GOV-TRUST-01-v1
+match $r isa rule-entity, has rule-id "RULE-006"; insert $r has semantic-id "GOV-TRUST-01-v1";
+
+# RULE-007 -> ARCH-MCP-01-v1
+match $r isa rule-entity, has rule-id "RULE-007"; insert $r has semantic-id "ARCH-MCP-01-v1";
+
+# RULE-008 -> TEST-GUARD-01-v1
+match $r isa rule-entity, has rule-id "RULE-008"; insert $r has semantic-id "TEST-GUARD-01-v1";
+
+# RULE-009 -> ARCH-VERSION-01-v1
+match $r isa rule-entity, has rule-id "RULE-009"; insert $r has semantic-id "ARCH-VERSION-01-v1";
+
+# RULE-010 -> GOV-RULE-01-v1
+match $r isa rule-entity, has rule-id "RULE-010"; insert $r has semantic-id "GOV-RULE-01-v1";
+
+# RULE-011 -> GOV-BICAM-01-v1
+match $r isa rule-entity, has rule-id "RULE-011"; insert $r has semantic-id "GOV-BICAM-01-v1";
+
+# RULE-012 -> SESSION-DSM-01-v1
+match $r isa rule-entity, has rule-id "RULE-012"; insert $r has semantic-id "SESSION-DSM-01-v1";
+
+# RULE-013 -> GOV-PROP-01-v1
+match $r isa rule-entity, has rule-id "RULE-013"; insert $r has semantic-id "GOV-PROP-01-v1";
+
+# RULE-014 -> WORKFLOW-AUTO-01-v1
+match $r isa rule-entity, has rule-id "RULE-014"; insert $r has semantic-id "WORKFLOW-AUTO-01-v1";
+
+# RULE-015 -> WORKFLOW-RD-01-v1
+match $r isa rule-entity, has rule-id "RULE-015"; insert $r has semantic-id "WORKFLOW-RD-01-v1";
+
+# RULE-016 -> ARCH-INFRA-01-v1
+match $r isa rule-entity, has rule-id "RULE-016"; insert $r has semantic-id "ARCH-INFRA-01-v1";
+
+# RULE-017 -> UI-TRAME-01-v1
+match $r isa rule-entity, has rule-id "RULE-017"; insert $r has semantic-id "UI-TRAME-01-v1";
+
+# RULE-018 -> GOV-TRUST-02-v1
+match $r isa rule-entity, has rule-id "RULE-018"; insert $r has semantic-id "GOV-TRUST-02-v1";
+
+# RULE-019 -> GOV-PROP-02-v1
+match $r isa rule-entity, has rule-id "RULE-019"; insert $r has semantic-id "GOV-PROP-02-v1";
+
+# RULE-020 -> TEST-COMP-01-v1
+match $r isa rule-entity, has rule-id "RULE-020"; insert $r has semantic-id "TEST-COMP-01-v1";
+
+# RULE-021 -> SAFETY-HEALTH-01-v1
+match $r isa rule-entity, has rule-id "RULE-021"; insert $r has semantic-id "SAFETY-HEALTH-01-v1";
+
+# RULE-022 -> REPORT-EXEC-01-v1
+match $r isa rule-entity, has rule-id "RULE-022"; insert $r has semantic-id "REPORT-EXEC-01-v1";
+
+# RULE-023 -> TEST-E2E-01-v1
+match $r isa rule-entity, has rule-id "RULE-023"; insert $r has semantic-id "TEST-E2E-01-v1";
+
+# RULE-024 -> RECOVER-AMNES-01-v1
+match $r isa rule-entity, has rule-id "RULE-024"; insert $r has semantic-id "RECOVER-AMNES-01-v1";
+
+# RULE-025 -> GOV-PROP-03-v1
+match $r isa rule-entity, has rule-id "RULE-025"; insert $r has semantic-id "GOV-PROP-03-v1";
+
+# RULE-026 -> GOV-RULE-02-v1
+match $r isa rule-entity, has rule-id "RULE-026"; insert $r has semantic-id "GOV-RULE-02-v1";
+
+# RULE-027 -> CONTAINER-RESTART-01-v1
+match $r isa rule-entity, has rule-id "RULE-027"; insert $r has semantic-id "CONTAINER-RESTART-01-v1";
+
+# RULE-028 -> WORKFLOW-SEQ-01-v1
+match $r isa rule-entity, has rule-id "RULE-028"; insert $r has semantic-id "WORKFLOW-SEQ-01-v1";
+
+# RULE-029 -> GOV-RULE-03-v1
+match $r isa rule-entity, has rule-id "RULE-029"; insert $r has semantic-id "GOV-RULE-03-v1";
+
+# RULE-030 -> WORKFLOW-DEPLOY-01-v1
+match $r isa rule-entity, has rule-id "RULE-030"; insert $r has semantic-id "WORKFLOW-DEPLOY-01-v1";
+
+# RULE-031 -> WORKFLOW-AUTO-02-v1
+match $r isa rule-entity, has rule-id "RULE-031"; insert $r has semantic-id "WORKFLOW-AUTO-02-v1";
+
+# RULE-032 -> DOC-SIZE-01-v1
+match $r isa rule-entity, has rule-id "RULE-032"; insert $r has semantic-id "DOC-SIZE-01-v1";
+
+# RULE-033 -> DOC-PARTIAL-01-v1
+match $r isa rule-entity, has rule-id "RULE-033"; insert $r has semantic-id "DOC-PARTIAL-01-v1";
+
+# RULE-034 -> DOC-LINK-01-v1
+match $r isa rule-entity, has rule-id "RULE-034"; insert $r has semantic-id "DOC-LINK-01-v1";
+
+# RULE-035 -> CONTAINER-SHELL-01-v1
+match $r isa rule-entity, has rule-id "RULE-035"; insert $r has semantic-id "CONTAINER-SHELL-01-v1";
+
+# RULE-036 -> ARCH-MCP-02-v1
+match $r isa rule-entity, has rule-id "RULE-036"; insert $r has semantic-id "ARCH-MCP-02-v1";
+
+# RULE-037 -> WORKFLOW-VALID-01-v1
+match $r isa rule-entity, has rule-id "RULE-037"; insert $r has semantic-id "WORKFLOW-VALID-01-v1";
+
+# RULE-038 -> RECOVER-ENTROPY-01-v1 (if exists)
+match $r isa rule-entity, has rule-id "RULE-038"; insert $r has semantic-id "RECOVER-ENTROPY-01-v1";
+
+# RULE-039 -> TEST-FAIL-01-v1 (if exists)
+match $r isa rule-entity, has rule-id "RULE-039"; insert $r has semantic-id "TEST-FAIL-01-v1";
+
+# RULE-040 -> ARCH-INFRA-02-v1
+match $r isa rule-entity, has rule-id "RULE-040"; insert $r has semantic-id "ARCH-INFRA-02-v1";
+
+# RULE-041 -> RECOVER-CRASH-01-v1
+match $r isa rule-entity, has rule-id "RULE-041"; insert $r has semantic-id "RECOVER-CRASH-01-v1";
+
+# RULE-042 -> SAFETY-DESTR-01-v1
+match $r isa rule-entity, has rule-id "RULE-042"; insert $r has semantic-id "SAFETY-DESTR-01-v1";
+
+# RULE-043 -> META-TAXON-01-v1
+match $r isa rule-entity, has rule-id "RULE-043"; insert $r has semantic-id "META-TAXON-01-v1";

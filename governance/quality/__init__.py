@@ -37,6 +37,7 @@ from governance.quality.functions import (
     get_rule_impact,
     find_rule_issues,
 )
+from governance.quality import impact
 
 __all__ = [
     # Models
@@ -50,4 +51,6 @@ __all__ = [
     "analyze_rule_quality",
     "get_rule_impact",
     "find_rule_issues",
+    # Modules
+    "impact",
 ]

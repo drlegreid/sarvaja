@@ -73,9 +73,10 @@ class DataRouter(
         self.post_route_hook = post_route_hook
 
         # Initialize embedding pipeline if needed
+        # Per GAP-EMBED-001: Use env config, not hardcoded mock
         self.embedding_pipeline = None
         if embed:
-            self.embedding_pipeline = create_embedding_pipeline(use_mock=True)
+            self.embedding_pipeline = create_embedding_pipeline()
 
     def _execute_typeql(self, typeql: str) -> bool:
         """Execute TypeQL against TypeDB."""

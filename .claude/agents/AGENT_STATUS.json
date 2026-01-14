@@ -1,0 +1,19 @@
+{
+  "agents": {
+    "claude-code-main": {
+      "agent_type": "cli-test",
+      "last_heartbeat": "2026-01-14T10:01:33.326970",
+      "current_task": "Working on MULTI-007",
+      "status": "active",
+      "heartbeat_count": 1
+    },
+    "test-agent": {
+      "agent_type": "test-type",
+      "last_heartbeat": "2026-01-14T10:03:14.310414",
+      "current_task": "MULTI-007 testing",
+      "status": "active",
+      "heartbeat_count": 1
+    }
+  },
+  "last_updated": "2026-01-14T10:03:14.310496"
+}

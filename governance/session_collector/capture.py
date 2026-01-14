@@ -180,12 +180,15 @@ class SessionCaptureMixin:
         arguments: Dict[str, Any] = None,
         result: str = None,
         duration_ms: int = None,
-        success: bool = True
+        success: bool = True,
+        correlation_id: str = None,
+        applied_rules: List[str] = None
     ) -> None:
         """
         Capture MCP tool call event.
 
         Per Task 2.3: Track tool calls with arguments as part of session evidence.
+        Per RD-DEBUG-AUDIT: Cross-agent correlation and rule linkage.
         Enables debugging and replay of agent actions.
 
         Args:
@@ -194,6 +197,8 @@ class SessionCaptureMixin:
             result: Tool result summary (truncated for large results)
             duration_ms: Execution time in milliseconds
             success: Whether the tool call succeeded
+            correlation_id: Cross-agent trace ID for request correlation
+            applied_rules: List of rule IDs applied during this call
         """
         # Truncate result for storage (keep first 500 chars for summary)
         result_summary = result[:500] + "..." if result and len(result) > 500 else result
@@ -208,7 +213,9 @@ class SessionCaptureMixin:
                 "arguments": arguments,
                 "result_summary": result_summary,
                 "duration_ms": duration_ms,
-                "success": success
+                "success": success,
+                "correlation_id": correlation_id,
+                "applied_rules": applied_rules or []
             }
         ))
 

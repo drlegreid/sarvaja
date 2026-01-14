@@ -27,9 +27,10 @@ GitHub issues follow two patterns based on scope:
 
 **Purpose:** DEV and SLEEP mode workflow status checks.
 
-**Title Format:** `[STATUS-{epoch}] {koan_name}: {DEV|SLEEP|BLOCKED}`
+**Title Format:** `[STATUS]: {epoch}: {koan_name}`
 
 **Required Content:**
+- Status in body: DEV | SLEEP | BLOCKED
 - Session summary (1-3 sentences)
 - Tasks completed/in-progress
 - Blockers (if any)
@@ -37,14 +38,16 @@ GitHub issues follow two patterns based on scope:
 
 **Example:**
 ```
-[STATUS-1768313000] Three-ULTRAs: DEV
+[STATUS]: 1768313000: Three-ULTRAs
 ```
 
 ### 2. CERT Issues (Strategic)
 
 **Purpose:** Certification of strategic milestones with full evidence.
 
-**Title Format:** `[CERT-{epoch}] {koan_name}: {COMPLETE|PARTIAL|BLOCKED}`
+**Title Format:** `[CERT]: {epoch}: {koan_name}`
+
+**Status in body:** COMPLETE | PARTIAL | BLOCKED
 
 **Required Attachments (Definition of Done):**
 

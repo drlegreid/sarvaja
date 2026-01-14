@@ -25,7 +25,10 @@ class DecisionQueries:
     # =========================================================================
 
     def get_all_decisions(self) -> List[Decision]:
-        """Get all strategic decisions."""
+        """Get all strategic decisions including dates."""
+        from datetime import datetime
+
+        # First get core attributes (required)
         query = """
             match $d isa decision,
                 has decision-id $id,
@@ -36,16 +39,42 @@ class DecisionQueries:
             get $id, $name, $ctx, $rat, $stat;
         """
         results = self._execute_query(query)
-        return [
-            Decision(
-                id=r.get("id"),
+        decisions = []
+        for r in results:
+            decision_id = r.get("id")
+
+            # Try to get optional decision-date
+            decision_date = None
+            date_query = f"""
+                match $d isa decision,
+                    has decision-id "{decision_id}",
+                    has decision-date $date;
+                get $date;
+            """
+            try:
+                date_results = self._execute_query(date_query)
+                if date_results:
+                    date_val = date_results[0].get("date")
+                    if isinstance(date_val, datetime):
+                        decision_date = date_val
+                    elif isinstance(date_val, str):
+                        try:
+                            decision_date = datetime.fromisoformat(
+                                date_val.replace("Z", "+00:00"))
+                        except (ValueError, AttributeError):
+                            pass
+            except Exception:
+                pass  # decision_date is optional
+
+            decisions.append(Decision(
+                id=decision_id,
                 name=r.get("name"),
                 context=r.get("ctx"),
                 rationale=r.get("rat"),
-                status=r.get("stat")
-            )
-            for r in results
-        ]
+                status=r.get("stat"),
+                decision_date=decision_date
+            ))
+        return decisions
 
     def get_superseded_decisions(self) -> List[Dict[str, str]]:
         """Get decision supersession chain."""

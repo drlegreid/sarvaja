@@ -1,18 +1,14 @@
 """
-Agents Routes.
+Agents CRUD Routes.
 
-Per RULE-012: DSP Semantic Code Structure.
-Per GAP-FILE-002: Extracted from api.py.
-Per GAP-ARCH-003: TypeDB-first with in-memory fallback.
-Per GAP-STUB-005: TypeDB agent store migration.
-Per GAP-UI-048: Agent relations (recent_sessions, active_tasks).
+Per DOC-SIZE-01-v1: Files under 300 lines.
+Extracted from: governance/routes/agents.py
 
-Created: 2024-12-28
-Updated: 2026-01-02
+Created: 2026-01-14
 """
 
 from fastapi import APIRouter, HTTPException, Query
-from typing import List, Tuple, Optional
+from typing import List, Optional
 from datetime import datetime
 import logging
 
@@ -23,77 +19,11 @@ from governance.stores import (
     _load_agent_metrics, _save_agent_metrics,
     _calculate_trust_score
 )
+from .helpers import build_agent_relations_lookup, get_agent_relations_from_lookup
 
 logger = logging.getLogger(__name__)
 router = APIRouter(tags=["Agents"])
 
-
-# =============================================================================
-# HELPER FUNCTIONS
-# =============================================================================
-
-def _build_agent_relations_lookup(client) -> Tuple[dict, dict]:
-    """
-    Build lookup dicts for agent relations in a single batch.
-    Per GAP-UI-048: Agent relations data.
-    Per P11.3: Optimized to avoid N*M queries.
-
-    Returns:
-        Tuple of (sessions_by_agent, tasks_by_agent) dicts
-    """
-    sessions_by_agent = {}
-    tasks_by_agent = {}
-
-    if not client:
-        return sessions_by_agent, tasks_by_agent
-
-    try:
-        # Fetch all sessions ONCE
-        sessions = client.get_all_sessions()
-        if sessions:
-            for s in sessions:
-                agent_id = getattr(s, 'agent_id', None)
-                if agent_id:
-                    if agent_id not in sessions_by_agent:
-                        sessions_by_agent[agent_id] = []
-                    sessions_by_agent[agent_id].append(s.id)
-
-        # Fetch all tasks ONCE
-        tasks = client.get_all_tasks()
-        if tasks:
-            for t in tasks:
-                agent_id = getattr(t, 'agent_id', None)
-                if agent_id and getattr(t, 'status', '') in ("pending", "in_progress"):
-                    if agent_id not in tasks_by_agent:
-                        tasks_by_agent[agent_id] = []
-                    tasks_by_agent[agent_id].append(t.id)
-
-    except Exception as e:
-        logger.warning(f"Failed to build agent relations lookup: {e}")
-
-    return sessions_by_agent, tasks_by_agent
-
-
-def _get_agent_relations_from_lookup(
-    agent_id: str,
-    sessions_by_agent: dict,
-    tasks_by_agent: dict
-) -> Tuple[List[str], List[str]]:
-    """
-    Get agent's relations from pre-built lookup dicts.
-    Per GAP-UI-048: Agent relations data.
-
-    Returns:
-        Tuple of (recent_sessions[:5], active_tasks[:5])
-    """
-    recent_sessions = sessions_by_agent.get(agent_id, [])[:5]
-    active_tasks = tasks_by_agent.get(agent_id, [])[:5]
-    return recent_sessions, active_tasks
-
-
-# =============================================================================
-# AGENTS CRUD
-# =============================================================================
 
 @router.get("/agents", response_model=List[AgentResponse])
 async def list_agents(
@@ -122,7 +52,7 @@ async def list_agents(
                 metrics = _load_agent_metrics()
 
                 # Build relations lookup ONCE for all agents (optimization)
-                sessions_by_agent, tasks_by_agent = _build_agent_relations_lookup(client)
+                sessions_by_agent, tasks_by_agent = build_agent_relations_lookup(client)
 
                 result = []
                 for agent in typedb_agents:
@@ -132,7 +62,7 @@ async def list_agents(
                     base_trust = _AGENT_BASE_CONFIG.get(agent.id, {}).get("base_trust", agent.trust_score or 0.8)
 
                     # Get relations from pre-built lookup (GAP-UI-048)
-                    recent_sessions, active_tasks = _get_agent_relations_from_lookup(
+                    recent_sessions, active_tasks = get_agent_relations_from_lookup(
                         agent.id, sessions_by_agent, tasks_by_agent
                     )
 
@@ -198,8 +128,8 @@ async def get_agent(agent_id: str):
                 base_trust = _AGENT_BASE_CONFIG.get(agent_id, {}).get("base_trust", agent.trust_score or 0.8)
 
                 # Get relations using batch lookup (2 queries total, not N*M)
-                sessions_by_agent, tasks_by_agent = _build_agent_relations_lookup(client)
-                recent_sessions, active_tasks = _get_agent_relations_from_lookup(
+                sessions_by_agent, tasks_by_agent = build_agent_relations_lookup(client)
+                recent_sessions, active_tasks = get_agent_relations_from_lookup(
                     agent_id, sessions_by_agent, tasks_by_agent
                 )
 
@@ -273,8 +203,8 @@ async def record_agent_task(agent_id: str):
             agent = client.get_agent(agent_id)
             if agent:
                 # Get relations using batch lookup
-                sessions_by_agent, tasks_by_agent = _build_agent_relations_lookup(client)
-                recent_sessions, active_tasks = _get_agent_relations_from_lookup(
+                sessions_by_agent, tasks_by_agent = build_agent_relations_lookup(client)
+                recent_sessions, active_tasks = get_agent_relations_from_lookup(
                     agent_id, sessions_by_agent, tasks_by_agent
                 )
                 # Get capabilities from config (GAP-AGENT-004)

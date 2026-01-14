@@ -1,6 +1,6 @@
 # R&D Backlog - Sim.ai PoC
 
-**Last Updated:** 2026-01-03
+**Last Updated:** 2026-01-14
 **Status:** Active Development
 **Pattern:** Table-of-Contents → Individual Documents
 
@@ -604,7 +604,7 @@ graph TB
 |----------|-------|----------|------|
 | ORCH-001-007 | Agent Orchestration | **CRITICAL** | [RD-AGENT-ORCHESTRATION.md](rd/RD-AGENT-ORCHESTRATION.md) |
 | KAN-001-005 | Kanren Context Engineering | **HIGH** | [RD-KANREN-CONTEXT.md](rd/RD-KANREN-CONTEXT.md) |
-| FH-001-008 | Frankel Hash | HIGH | [RD-FRANKEL-HASH.md](rd/RD-FRANKEL-HASH.md) |
+| FH-001-008 | Frankel Hash | ✅ TESTS (16) | [RD-FRANKEL-HASH.md](rd/RD-FRANKEL-HASH.md) |
 | **MDAG-001-005** | **Merkle-DAG Content-Addressable Storage** | **HIGH** | (inline below) |
 | TEST-001-006 | Testing Strategy | **CRITICAL** | [RD-TESTING-STRATEGY.md](rd/RD-TESTING-STRATEGY.md) |
 | TOOL-001-009 | MCP Tooling & Architecture | **HIGH** | (inline below) |
@@ -1290,7 +1290,28 @@ graph LR
 
 ### MULTI-007: Observability & Conflict Management
 
+**Status:** ✅ MOSTLY COMPLETE | **Priority:** HIGH | **Updated:** 2026-01-14
+
+> **Visibility Complete**: Session logs→tasks, rules per task, token tracking. Only merge conflict detection remains.
+
 **Goal:** Implement monitoring and safety mechanisms for multi-agent workflows.
+
+**UI Assessment (2026-01-14):**
+
+| Feature | Status | Location |
+|---------|--------|----------|
+| Agent list (8 agents) | ✅ DONE | /agents view |
+| Trust leaderboard | ✅ DONE | /trust view |
+| Real-time event feed | ✅ DONE | /monitor view |
+| Active alerts + acknowledge | ✅ DONE | /monitor view |
+| Governance stats | ✅ DONE | /trust view |
+| Auto-refresh | ✅ DONE | /monitor view |
+| Agent stuck detection | ✅ DONE | agent_status.py + API endpoints (2026-01-14) |
+| File lock monitoring | ✅ DONE | .agent-locks/ with acquire/release API |
+| Token usage tracking | ✅ DONE | session_visibility.py + ANTHROPIC_API_KEY (2026-01-14) |
+| Session-task mapping | ✅ DONE | session_visibility.py - session logs mapped to tasks |
+| Rules applied per task | ✅ DONE | session_visibility.py - rules visibility |
+| Merge conflict detection | ❌ TODO | Needs git status polling |
 
 **Observability Requirements:**
 
@@ -1323,17 +1344,47 @@ graph TB
     end
 ```
 
-**Implementation:**
-- `healthcheck.py` extension for multi-agent monitoring
-- MCP tool: `agent_resolve_conflict(type: str, details: dict)`
-- Rollback triggers: any agent failure, test suite regression
-- Emergency stop: `HALT` command broadcasts to all agents
+**Implementation (2026-01-14):**
+- ✅ `.claude/hooks/checkers/agent_status.py` - Heartbeat, stuck detection, file locks
+- ✅ `.claude/hooks/checkers/session_visibility.py` - Session-task mapping, rules visibility, token tracking
+- ✅ `governance/routes/agents.py` - API endpoints for observability + visibility
+- ✅ `.claude/agents/AGENT_STATUS.json` - Agent heartbeat storage
+- ✅ `.claude/agents/.agent-locks/` - File lock directory
+- ✅ `.claude/agents/SESSION_VISIBILITY.json` - Session-task-rule tracking
+- ❌ MCP tool: `agent_resolve_conflict(type: str, details: dict)` - TODO
+- ❌ Rollback triggers: any agent failure, test suite regression - TODO
+- ❌ Emergency stop: `HALT` command broadcasts to all agents - Existing (manual)
+
+**API Endpoints Added:**
+
+*Agent Observability:*
+- `GET /api/agents/status/summary` - Full observability summary
+- `GET /api/agents/status/stuck` - Stuck agents (>5 min)
+- `GET /api/agents/status/locks` - Stale locks (>2 min)
+- `POST /api/agents/{agent_id}/heartbeat` - Register heartbeat
+- `POST /api/agents/locks/acquire` - Acquire file lock
+- `POST /api/agents/locks/release` - Release file lock
+
+*Session Visibility:*
+- `GET /api/sessions/visibility` - Full visibility report (session→tasks→rules)
+- `GET /api/sessions/visibility/tokens` - Token usage report
+- `GET /api/tasks/{task_id}/rules` - Rules applied to specific task
+- `POST /api/sessions/visibility/start` - Start new session tracking
+- `POST /api/tasks/{task_id}/start` - Start task within session
+- `POST /api/tasks/{task_id}/rule` - Record rule application
+- `POST /api/tasks/{task_id}/tool-call` - Record tool call with tokens
+- `POST /api/tasks/{task_id}/complete` - Mark task complete
 
 **Success Criteria:**
-- [ ] Real-time agent status dashboard
+- [x] Real-time agent status dashboard ✅ DONE
+- [x] Agent stuck detection ✅ DONE (>5 min threshold)
+- [x] File lock monitoring ✅ DONE (.agent-locks/)
+- [x] Session-task visibility ✅ DONE (session logs mapped to tasks)
+- [x] Rules applied visibility ✅ DONE (rules tracked per task)
+- [x] Token usage tracking ✅ DONE (ANTHROPIC_API_KEY integration)
 - [ ] Zero undetected conflicts
 - [ ] Automatic rollback on failure
-- [ ] Token budget enforcement per agent
+- [ ] Token budget enforcement per agent (alerts when >80%)
 
 ---
 
@@ -1440,26 +1491,60 @@ See: [STRATEGY-CYCLE-DIRECTIVES.md](../STRATEGY-CYCLE-DIRECTIVES.md) (to be extr
 > **Priority:** After GAP-010 (CI/CD Pipeline)
 > **Pattern:** Exploratory research with evidence collection
 
-| ID | Task | Priority | Status | Dependencies | Assessment (2026-01-13) |
+| ID | Task | Priority | Status | Dependencies | Assessment (2026-01-14) |
 |----|------|----------|--------|--------------|--------------------------|
-| RD-DOC-SERVICE | Document Service for file retrieval & linking | HIGH | PARTIAL | GAP-UI-039 | Implemented: File type detection (40+ types), pagination (offset/limit). Remaining: TypeDB document linking. |
-| RD-DEBUG-AUDIT | Debugability - audit trails for tests/agents/MCPs | HIGH | PARTIAL | - | session_tool_call + session_thought exist. Missing: cross-agent correlation, rule linkage. Extend existing MCP tools. |
+| RD-DOC-SERVICE | Document Service for file retrieval & linking | HIGH | ✅ TESTS (19) | GAP-UI-039 | **TDD Complete:** 19 tests covering rule scanning, ID extraction, TypeDB linking. Implemented: File type detection (40+ types), pagination (offset/limit), semantic-to-legacy conversion. |
+| RD-DEBUG-AUDIT | Debugability - audit trails for tests/agents/MCPs | HIGH | ✅ TESTS (15) | - | **TDD Complete:** 15 tests covering correlation_id, applied_rules, MCP structure, commit tracking. Implemented: session_tool_call, session_thought, cross-agent tracing. |
 | RD-AGENTIC-READY | Assess readiness for agentic workspaces | MEDIUM | ASSESSED | RD-WORKSPACE | **Ready:** 5 workspaces, handoff protocol, skill composition. **Missing:** Phase 5 optimization loop, runtime metrics. |
 | RD-SESSION-TRACE | Track thoughts, tool calls with holographic detailisation | HIGH | IMPLEMENTED | SESSION-EVID-01-v1 | sessions_core.py:206-299 has session_tool_call + session_thought. Needs multi-tier abstraction layer. |
 | RD-META-RULES | Metarules for rule management (deprecation, versioning) | MEDIUM | DESIGN | META-TAXON-01-v1 | Propose: RULE-LIFECYCLE-01-v1 for deprecation workflow, RULE-VERSION-01-v1 for lineage tracking. |
 | RD-TOON | Evaluate TOON notation for context compression | LOW | RESEARCH | EPIC-005 | Spec found: https://github.com/toon-format/toon - 40% token reduction vs JSON. YAML-like indent + CSV tabular. |
 | RD-MINIKANREN | Evaluate miniKanren for constraint solving | HIGH | RESEARCH | RD-KANREN-CONTEXT | EXCLUDED per user request. |
 | RD-HASKELL-READY | Assess migration readiness to Haskell | LOW | FUTURE | RD-HASKELL-MCP | EXCLUDED per user request. |
+| **RD-REPORTER-AGENT** | **Dedicated agent for session reporting (Zen koans, GitHub issues)** | **MEDIUM** | **TODO** | RD-AGENTIC-READY | Implement after agentic platform validated. Hook + /report skill interim. |
 
 ### RD-DOC-SERVICE: Document Service Architecture
 
-**Status:** PARTIAL | **Priority:** HIGH | **Updated:** 2026-01-13
+**Status:** ✅ TESTS PASSING (19) | **Priority:** HIGH | **Updated:** 2026-01-14
 
-**Implementation Progress (2026-01-13):**
+**Test Coverage (2026-01-14):**
+| Test File | Tests | Coverage |
+|-----------|-------|----------|
+| `tests/test_document_service.py` | 19 | Rule scanning, ID extraction, TypeDB linking |
+
+**Implementation Progress (2026-01-14):**
 - ✅ File type detection via extension mapping (40+ types)
 - ✅ Pagination with offset/limit parameters
 - ✅ Syntax hints for code highlighting (Python, Haskell, TypeQL, etc.)
-- ❓ TypeDB document linking (future)
+- ✅ Rule ID extraction (legacy and semantic formats)
+- ✅ Semantic-to-legacy ID conversion for TypeDB compatibility
+- ⚠️ TypeDB document linking: Code fixed but MCP caching blocks deployment
+
+**TypeDB Document Linking Attempt (2026-01-14):**
+
+Code fixes applied to `governance/rule_linker_db.py`:
+1. DateTime format: `isoformat()` → `strftime('%Y-%m-%dT%H:%M:%S')` (TypeDB rejects microseconds)
+2. Method call: `execute_write_query()` → `_execute_write()` (correct base.py method)
+3. String escaping: Added `\` and `"` escaping for title/path fields
+4. Error capture: Changed returns from `bool` to `tuple[bool, str]` for debugging
+
+**BLOCKER: MCP Server Containerization**
+- MCP servers run in podman containers with read-only volume mounts
+- Python caches imported modules at startup
+- Code changes require container rebuild to take effect
+- Process kill doesn't help - Claude Code restarts with cached modules
+
+**Scan Results (pre-fix):**
+- 63 rule documents scanned
+- 3 documents already in TypeDB (skipped)
+- 10 relations already exist (skipped)
+- 60 document inserts failed (datetime format error)
+- 200+ relation creates failed (rule entities don't exist for all semantic IDs)
+
+**Resolution Options:**
+1. Rebuild governance-tasks container image (recommended)
+2. Implement hot-reload mechanism for MCP modules
+3. Wait for next major release that includes rebuilt images
 
 **Changes Made:**
 ```
@@ -1468,6 +1553,12 @@ governance/mcp_tools/evidence/documents.py:
 - Added offset parameter to governance_get_document
 - Added pagination metadata (has_more, next_offset)
 - Added file_type field with syntax hints
+
+governance/rule_linker_db.py:
+- Fixed datetime format for TypeDB compatibility
+- Fixed method call to use _execute_write
+- Added string escaping for special characters
+- Added detailed error message capture
 ```
 
 **Problem (Solved):**
@@ -1479,28 +1570,48 @@ governance/mcp_tools/evidence/documents.py:
 1. ✅ Should document service be MCP or internal module? → MCP wrapper over internal module
 2. ✅ What lazy loading strategy for files >1000 lines? → Pagination with offset/limit
 3. ✅ How to detect file type? → Extension mapping (FILE_TYPE_MAP)
-4. ❓ Integration with TypeDB document linking? → Future enhancement
+4. ⚠️ Integration with TypeDB document linking? → Code ready, needs container rebuild
 
 ### RD-DEBUG-AUDIT: Audit Trail Debugability
 
-**Status:** PARTIAL | **Priority:** HIGH | **Updated:** 2026-01-13
+**Status:** ✅ TESTS PASSING (15) | **Priority:** HIGH | **Updated:** 2026-01-14
 
-**Implementation Progress (2026-01-13):**
-- `session_tool_call` MCP tool EXISTS - captures tool name, args, result, duration
-- `session_thought` MCP tool EXISTS - captures reasoning with confidence scores
-- **Missing:** Cross-agent correlation ID, rule linkage per tool call, trace visualization
+**Test Coverage (2026-01-14):**
+| Test File | Tests | Coverage |
+|-----------|-------|----------|
+| `tests/test_audit_trail.py` | 15 | correlation_id, applied_rules, MCP structure, commit tracking |
 
-**Problem:**
-- Need to trace: tests → agents → MCPs end-to-end
-- Current session evidence captures high-level, not execution trace
-- MCP tool calls lack argument/result logging
-- Agent decisions not linkable to specific rule applications
+**Implementation Progress (2026-01-14):**
+- ✅ `session_tool_call` MCP tool - captures tool name, args, result, duration
+- ✅ `session_thought` MCP tool - captures reasoning with confidence scores
+- ✅ `correlation_id` parameter added - enables cross-agent request tracing
+- ✅ `applied_rules` parameter added - links tool calls to governance rules
+- ✅ Commit info tracking per task (files changed, hash, message)
+- ❓ **Missing:** Trace visualization UI (depends on MULTI-007)
 
-**Research Questions:**
-1. What granularity of tracing is needed?
-2. How to correlate cross-agent traces?
-3. Storage format for tool call traces?
-4. Integration with existing session_tool_call MCP?
+**Changes Made (2026-01-14):**
+```
+governance/session_collector/capture.py:
+- Added correlation_id param to capture_tool_call
+- Added applied_rules param (list of rule IDs)
+- Metadata now includes both fields
+
+governance/mcp_tools/sessions_core.py:
+- Added correlation_id param to session_tool_call MCP
+- Added applied_rules param (comma-separated string)
+- Response includes correlation tracking
+```
+
+**Problem (Solved):**
+- ✅ Need to trace: tests → agents → MCPs end-to-end → Use correlation_id
+- ✅ MCP tool calls lack argument/result logging → Already captured
+- ✅ Agent decisions not linkable to rules → Use applied_rules parameter
+
+**Research Questions (Answered):**
+1. ✅ What granularity of tracing? → Per-tool-call with correlation_id
+2. ✅ How to correlate cross-agent traces? → Propagate correlation_id
+3. ✅ Storage format for tool call traces? → JSON in session events
+4. ✅ Integration with existing MCP? → New optional parameters added
 
 ### RD-SESSION-TRACE: Holographic Detailisation
 
@@ -1622,6 +1733,69 @@ tags: [developer, ai, python]
 2. What Haskell gains would justify migration?
 3. What Python patterns translate well to Haskell?
 4. Estimated effort for core MCP port?
+
+### RD-REPORTER-AGENT: Dedicated Session Reporting Agent
+
+**Status:** TODO | **Priority:** MEDIUM | **Added:** 2026-01-14
+**Dependencies:** RD-AGENTIC-READY (agentic platform must be validated first)
+
+**Problem Statement:**
+- Session reporting rules (RULE-046 Zen Koans, RULE-049 GitHub Issues) exist but are not consistently enforced
+- Context compaction causes loss of "session habits" - rules exist but no enforcement trigger
+- Currently requires manual memory to produce reports at session end
+
+**Interim Solution (Implemented 2026-01-14):**
+- Created `session_reporter.py` hook - detects session-end signals in UserPromptSubmit
+- Created `/report` skill - templates and guidance for session closure
+- Hook reminds about RULE-046 and RULE-049 when end signals detected
+
+**Future Agent Architecture:**
+
+```mermaid
+graph TB
+    subgraph "Reporter Agent (Future)"
+        RA[Reporter Agent] --> ZEN[Generate Zen Koan<br/>RULE-046]
+        RA --> GH[Create GitHub Issue<br/>RULE-049]
+        RA --> SUM[Session Summary<br/>SESSION-EVID-01]
+
+        ZEN --> CTX[Session Context<br/>Activities, Mood]
+        GH --> TPLT[Issue Templates<br/>STATUS, CERT]
+        SUM --> MET[Metrics<br/>Tasks, Gaps, Decisions]
+
+        RA -->|MCP| GOV[governance-sessions]
+        RA -->|API| GITHUB[GitHub API]
+    end
+```
+
+**Agent Responsibilities:**
+1. **Session End Detection**: Monitor for explicit/implicit session closure
+2. **Context Analysis**: Gather session activities, accomplishments, mood
+3. **Koan Selection**: Match wisdom to session context per RULE-046 matrix
+4. **Issue Generation**: Create appropriate STATUS/CERT issue per RULE-049
+5. **Evidence Collection**: Attach test results, screenshots, payloads
+
+**Implementation Tasks:**
+
+| ID | Task | Status | Evidence |
+|----|------|--------|----------|
+| RD-REPORTER-001 | Design agent workflow per AGENT-WORKSPACES.md | TODO | Architecture doc |
+| RD-REPORTER-002 | Define MCP tools for session analysis | TODO | Tool specs |
+| RD-REPORTER-003 | Implement koan selection algorithm | TODO | Code + tests |
+| RD-REPORTER-004 | Integrate with GitHub API for issue creation | TODO | API client |
+| RD-REPORTER-005 | Create agent handoff protocol from main session | TODO | Handoff spec |
+
+**Success Criteria:**
+- [ ] Reporter agent automatically invoked at session end
+- [ ] Contextually relevant Zen koan generated per session activities
+- [ ] GitHub issue created with correct template (STATUS vs CERT)
+- [ ] Evidence attached to CERT issues automatically
+- [ ] Zero manual intervention required for reporting
+
+**Related:**
+- RULE-046 (REPORT-HUMOR-01-v1): Session Wisdom & Humor
+- RULE-049 (REPORT-ISSUE-01-v1): GitHub Issue Protocol
+- RD-AGENTIC-READY: Agentic platform validation (prerequisite)
+- MULTI-001-007: Local Multi-Agent Setup R&D
 
 ---
 

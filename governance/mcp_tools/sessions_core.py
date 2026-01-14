@@ -209,12 +209,15 @@ def register_session_core_tools(mcp) -> None:
         result_summary: Optional[str] = None,
         duration_ms: int = 0,
         success: bool = True,
-        topic: Optional[str] = None
+        topic: Optional[str] = None,
+        correlation_id: Optional[str] = None,
+        applied_rules: Optional[str] = None
     ) -> str:
         """
         Record a tool call in the current session.
 
         Per Task 2.3: Track tool calls with arguments for session evidence.
+        Per RD-DEBUG-AUDIT: Cross-agent correlation and rule linkage.
         Enables debugging and replay of agent actions.
 
         Args:
@@ -224,6 +227,8 @@ def register_session_core_tools(mcp) -> None:
             duration_ms: Execution time in milliseconds
             success: Whether the tool call succeeded
             topic: Session topic (uses last session if not provided)
+            correlation_id: Cross-agent trace ID for request correlation
+            applied_rules: Comma-separated rule IDs applied during this call
 
         Returns:
             JSON object with tool call confirmation
@@ -244,12 +249,17 @@ def register_session_core_tools(mcp) -> None:
         except json.JSONDecodeError:
             args_dict = {"raw": arguments}
 
+        # Parse applied_rules from comma-separated string
+        rules_list = [r.strip() for r in applied_rules.split(",")] if applied_rules else []
+
         collector.capture_tool_call(
             tool_name=tool_name,
             arguments=args_dict,
             result=result_summary,
             duration_ms=duration_ms,
-            success=success
+            success=success,
+            correlation_id=correlation_id,
+            applied_rules=rules_list
         )
 
         return json.dumps({
@@ -257,6 +267,8 @@ def register_session_core_tools(mcp) -> None:
             "session_id": collector.session_id,
             "duration_ms": duration_ms,
             "success": success,
+            "correlation_id": correlation_id,
+            "applied_rules": rules_list,
             "message": f"Tool call {tool_name} recorded"
         }, indent=2)
 

@@ -83,12 +83,14 @@ async def search_evidence(
     docs_dir = os.path.join(os.path.dirname(__file__), "..", "..", "docs")
 
     # Try vector/semantic search first
+    # Per GAP-EMBED-001: Use env-configured embedding generator
     semantic_results = []
     try:
-        from governance.vector_store import VectorStore, MockEmbeddings
+        from governance.vector_store import VectorStore
+        from governance.embedding_config import create_embedding_generator
 
         store = VectorStore()
-        generator = MockEmbeddings(dimension=384)
+        generator = create_embedding_generator()
 
         if store.connect():
             query_embedding = generator.generate(query)

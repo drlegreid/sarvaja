@@ -25,9 +25,10 @@ class TaskReadQueries:
         Get all tasks from TypeDB with optional filters.
 
         Per GAP-ARCH-001: Tasks now stored in TypeDB, not in-memory.
+        Per GAP-UI-046: Status/resolution lifecycle.
 
         Args:
-            status: Optional filter by status (TODO, IN_PROGRESS, DONE, BLOCKED)
+            status: Optional filter by status (OPEN, IN_PROGRESS, CLOSED per GAP-UI-046)
             phase: Optional filter by phase (P1, P10, etc.)
             agent_id: Optional filter by assigned agent
 
@@ -109,6 +110,15 @@ class TaskReadQueries:
         if body_results:
             task.body = body_results[0].get("body")
 
+        # Get optional task-resolution attribute (GAP-UI-046)
+        resolution_query = f"""
+            match $t isa task, has task-id "{task_id}", has task-resolution $res;
+            get $res;
+        """
+        resolution_results = self._execute_query(resolution_query)
+        if resolution_results:
+            task.resolution = resolution_results[0].get("res")
+
         # Get optional gap-reference attribute
         gap_query = f"""
             match $t isa task, has task-id "{task_id}", has gap-reference $gap;
@@ -186,6 +196,55 @@ class TaskReadQueries:
         sessions_results = self._execute_query(sessions_query)
         if sessions_results:
             task.linked_sessions = [r.get("sid") for r in sessions_results]
+
+        # Get linked commits via task-commit relationship (GAP-TASK-LINK-002)
+        commits_query = f"""
+            match
+                $t isa task, has task-id "{task_id}";
+                (implementing-commit: $c, implemented-task: $t) isa task-commit;
+                $c has commit-sha $sha;
+            get $sha;
+        """
+        commits_results = self._execute_query(commits_query)
+        if commits_results:
+            task.linked_commits = [r.get("sha") for r in commits_results]
+
+        # Get task detail sections (GAP-TASK-LINK-004, TASK-TECH-01-v1)
+        # Business (Why)
+        business_query = f"""
+            match $t isa task, has task-id "{task_id}", has task-business $biz;
+            get $biz;
+        """
+        business_results = self._execute_query(business_query)
+        if business_results:
+            task.business = business_results[0].get("biz")
+
+        # Design (What)
+        design_query = f"""
+            match $t isa task, has task-id "{task_id}", has task-design $des;
+            get $des;
+        """
+        design_results = self._execute_query(design_query)
+        if design_results:
+            task.design = design_results[0].get("des")
+
+        # Architecture (How)
+        arch_query = f"""
+            match $t isa task, has task-id "{task_id}", has task-architecture $arch;
+            get $arch;
+        """
+        arch_results = self._execute_query(arch_query)
+        if arch_results:
+            task.architecture = arch_results[0].get("arch")
+
+        # Test (Verification)
+        test_query = f"""
+            match $t isa task, has task-id "{task_id}", has task-test $test;
+            get $test;
+        """
+        test_results = self._execute_query(test_query)
+        if test_results:
+            task.test_section = test_results[0].get("test")
 
         return task
 

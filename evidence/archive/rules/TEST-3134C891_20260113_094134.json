@@ -1,0 +1,17 @@
+{
+  "rule": {
+    "id": "TEST-3134C891",
+    "name": "To Delete TEST-3134C891",
+    "category": "operational",
+    "priority": "LOW",
+    "status": "DRAFT",
+    "directive": "This rule will be deleted",
+    "rule_type": null,
+    "created_date": null
+  },
+  "archived_at": "2026-01-13T09:41:34.378536",
+  "reason": "deleted",
+  "archived_from_db": "sim-ai-governance",
+  "dependencies": [],
+  "dependents": []
+}

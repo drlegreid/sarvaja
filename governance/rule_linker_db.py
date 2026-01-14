@@ -36,26 +36,39 @@ def _get_document(client, document_id: str) -> Optional[Dict]:
         return None
 
 
-def _insert_document(client, doc: RuleDocument) -> bool:
-    """Insert document entity into TypeDB."""
-    last_mod = doc.last_modified.isoformat() if doc.last_modified else datetime.now().isoformat()
+def _insert_document(client, doc: RuleDocument) -> tuple[bool, str]:
+    """Insert document entity into TypeDB.
+
+    Returns:
+        Tuple of (success, error_message). error_message is empty on success.
+    """
+    # TypeDB datetime format: YYYY-MM-DDTHH:MM:SS (no microseconds)
+    if doc.last_modified:
+        last_mod = doc.last_modified.strftime('%Y-%m-%dT%H:%M:%S')
+    else:
+        last_mod = datetime.now().strftime('%Y-%m-%dT%H:%M:%S')
+
+    # Escape special characters in string fields
+    title_escaped = doc.title.replace('\\', '\\\\').replace('"', '\\"')
+    path_escaped = doc.path.replace('\\', '\\\\').replace('"', '\\"')
 
     query = f"""
     insert
       $d isa document,
         has document-id "{doc.document_id}",
-        has document-title "{doc.title}",
-        has document-path "{doc.path}",
+        has document-title "{title_escaped}",
+        has document-path "{path_escaped}",
         has document-type "{doc.document_type}",
         has document-storage "{doc.storage}",
         has last-modified {last_mod};
     """
     try:
-        client.execute_write_query(query)
-        return True
+        client._execute_write(query)
+        return True, ""
     except Exception as e:
-        logger.error(f"Insert document failed: {e}")
-        return False
+        error_msg = f"{type(e).__name__}: {e}"
+        logger.error(f"Insert document failed ({doc.document_id}): {error_msg}")
+        return False, error_msg
 
 
 def _check_document_rule_relation(client, document_id: str, rule_id: str) -> bool:
@@ -74,8 +87,12 @@ def _check_document_rule_relation(client, document_id: str, rule_id: str) -> boo
         return False
 
 
-def _create_document_rule_relation(client, document_id: str, rule_id: str) -> bool:
-    """Create document-references-rule relation in TypeDB."""
+def _create_document_rule_relation(client, document_id: str, rule_id: str) -> tuple[bool, str]:
+    """Create document-references-rule relation in TypeDB.
+
+    Returns:
+        Tuple of (success, error_message). error_message is empty on success.
+    """
     query = f"""
     match
       $d isa document, has document-id "{document_id}";
@@ -84,11 +101,12 @@ def _create_document_rule_relation(client, document_id: str, rule_id: str) -> bo
       (referencing-document: $d, referenced-rule: $r) isa document-references-rule;
     """
     try:
-        client.execute_write_query(query)
-        return True
+        client._execute_write(query)
+        return True, ""
     except Exception as e:
-        logger.error(f"Create relation failed: {e}")
-        return False
+        error_msg = f"{type(e).__name__}: {e}"
+        logger.error(f"Create relation failed ({document_id} -> {rule_id}): {error_msg}")
+        return False, error_msg
 
 
 def link_rules_to_documents() -> Dict[str, Any]:
@@ -129,20 +147,22 @@ def link_rules_to_documents() -> Dict[str, Any]:
                 stats["documents_skipped"] += 1
             else:
                 # Insert new document
-                if _insert_document(client, doc):
+                success, error_msg = _insert_document(client, doc)
+                if success:
                     stats["documents_inserted"] += 1
                 else:
-                    stats["errors"].append(f"Failed to insert document: {doc.document_id}")
+                    stats["errors"].append(f"Insert document {doc.document_id}: {error_msg}")
 
             # Create rule relations
             for rule_id in doc.rule_ids or []:
                 if _check_document_rule_relation(client, doc.document_id, rule_id):
                     stats["relations_skipped"] += 1
                 else:
-                    if _create_document_rule_relation(client, doc.document_id, rule_id):
+                    success, error_msg = _create_document_rule_relation(client, doc.document_id, rule_id)
+                    if success:
                         stats["relations_created"] += 1
                     else:
-                        stats["errors"].append(f"Failed to create relation: {doc.document_id} -> {rule_id}")
+                        stats["errors"].append(f"Relation {doc.document_id} -> {rule_id}: {error_msg}")
 
         logger.info(f"Rule-document linking complete: {stats}")
         return stats

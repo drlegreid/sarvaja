@@ -155,3 +155,153 @@ def register_task_linking_tools(mcp) -> None:
             }, indent=2)
         finally:
             client.close()
+
+    @mcp.tool()
+    def governance_task_link_commit(task_id: str, commit_sha: str, commit_message: str = None) -> str:
+        """
+        Link a task to a git commit (task-commit relation).
+
+        Per GAP-TASK-LINK-002: Task-to-commit traceability.
+        Enables code-to-task audit trail.
+
+        Args:
+            task_id: Task ID (e.g., "P10.1", "GAP-TASK-LINK-002")
+            commit_sha: Git commit SHA (short 7-char or full 40-char)
+            commit_message: Optional commit message for reference
+
+        Returns:
+            JSON object with link status
+        """
+        client = get_typedb_client()
+        try:
+            if not client.connect():
+                return json.dumps({"error": "Failed to connect to TypeDB"})
+
+            success = client.link_task_to_commit(task_id, commit_sha, commit_message)
+
+            if success:
+                return json.dumps({
+                    "task_id": task_id,
+                    "commit_sha": commit_sha,
+                    "relation": "task-commit",
+                    "message": f"Successfully linked task {task_id} to commit {commit_sha}"
+                }, indent=2)
+            else:
+                return json.dumps({
+                    "error": f"Failed to link task {task_id} to commit {commit_sha}"
+                })
+        finally:
+            client.close()
+
+    @mcp.tool()
+    def governance_task_get_commits(task_id: str) -> str:
+        """
+        Get all git commits linked to a task.
+
+        Per GAP-TASK-LINK-002: Task-to-commit traceability.
+
+        Args:
+            task_id: Task ID (e.g., "P10.1")
+
+        Returns:
+            JSON object with list of commit SHAs
+        """
+        client = get_typedb_client()
+        try:
+            if not client.connect():
+                return json.dumps({"error": "Failed to connect to TypeDB"})
+
+            commits = client.get_task_commits(task_id)
+
+            return json.dumps({
+                "task_id": task_id,
+                "commits": commits,
+                "count": len(commits)
+            }, indent=2)
+        finally:
+            client.close()
+
+    @mcp.tool()
+    def governance_task_update_details(
+        task_id: str,
+        business: str = None,
+        design: str = None,
+        architecture: str = None,
+        test_section: str = None
+    ) -> str:
+        """
+        Update task detail sections (business, design, architecture, test).
+
+        Per GAP-TASK-LINK-004: Task detail sections.
+        Per TASK-TECH-01-v1: Technology Solution Documentation.
+
+        Args:
+            task_id: Task ID (e.g., "P10.1", "GAP-TASK-LINK-004")
+            business: Business section - Why (User problem, business value)
+            design: Design section - What (Functional requirements)
+            architecture: Architecture section - How (Technical approach)
+            test_section: Test section - Verification (Test plan, evidence)
+
+        Returns:
+            JSON object with update status
+        """
+        client = get_typedb_client()
+        try:
+            if not client.connect():
+                return json.dumps({"error": "Failed to connect to TypeDB"})
+
+            success = client.update_task_details(
+                task_id=task_id,
+                business=business,
+                design=design,
+                architecture=architecture,
+                test_section=test_section
+            )
+
+            if success:
+                return json.dumps({
+                    "task_id": task_id,
+                    "updated_sections": [
+                        s for s in ["business", "design", "architecture", "test_section"]
+                        if locals().get(s) is not None
+                    ],
+                    "message": f"Successfully updated details for task {task_id}"
+                }, indent=2)
+            else:
+                return json.dumps({
+                    "error": f"Failed to update details for task {task_id}"
+                })
+        finally:
+            client.close()
+
+    @mcp.tool()
+    def governance_task_get_details(task_id: str) -> str:
+        """
+        Get all detail sections for a task.
+
+        Per GAP-TASK-LINK-004: Task detail sections.
+
+        Args:
+            task_id: Task ID (e.g., "P10.1")
+
+        Returns:
+            JSON object with business, design, architecture, test_section
+        """
+        client = get_typedb_client()
+        try:
+            if not client.connect():
+                return json.dumps({"error": "Failed to connect to TypeDB"})
+
+            details = client.get_task_details(task_id)
+
+            if details is None:
+                return json.dumps({
+                    "error": f"Task {task_id} not found"
+                })
+
+            return json.dumps({
+                "task_id": task_id,
+                **details
+            }, indent=2)
+        finally:
+            client.close()

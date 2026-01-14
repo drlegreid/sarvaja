@@ -1,117 +1,28 @@
 """
-Context Preloader - P12.6
+Context Preloader Core - P12.6
+
+Per GAP-FILE-022: Refactored from monolithic context_preloader.py
+Per DOC-SIZE-01-v1: Files under 400 lines
 
 Auto-loads DECISION-* files and strategic context at session start.
-Per GAP-CTX-002: Context Auto-Loading.
 
 Created: 2026-01-03
-Per: PHASE-12, GAP-CTX-002, RULE-024
+Refactored: 2026-01-14
 """
 
-import os
 import re
 import logging
 from pathlib import Path
-from typing import Dict, Any, List, Optional
-from dataclasses import dataclass, field
+from typing import List, Optional
 from datetime import datetime
+
+from .models import Decision, TechnologyChoice, ContextSummary
+
 
 logger = logging.getLogger(__name__)
 
 # Project root for finding evidence files
-PROJECT_ROOT = Path(__file__).parent.parent
-
-
-@dataclass
-class Decision:
-    """Parsed strategic decision."""
-    id: str
-    name: str
-    status: str
-    date: str
-    summary: str
-    rationale: str = ""
-    source_file: str = ""
-
-
-@dataclass
-class TechnologyChoice:
-    """Technology decision from CLAUDE.md."""
-    area: str
-    choice: str
-    not_using: str
-    rationale: str
-
-
-@dataclass
-class ContextSummary:
-    """Summary of preloaded context."""
-    decisions: List[Decision] = field(default_factory=list)
-    technology_choices: List[TechnologyChoice] = field(default_factory=list)
-    active_phase: Optional[str] = None
-    open_gaps_count: int = 0
-    loaded_at: str = field(default_factory=lambda: datetime.now().isoformat())
-
-    def to_agent_prompt(self) -> str:
-        """
-        Convert to agent-friendly context prompt.
-
-        This is injected into agent context at session start.
-        """
-        lines = [
-            "## Strategic Context (Auto-Loaded)",
-            "",
-        ]
-
-        # Technology decisions (most important)
-        if self.technology_choices:
-            lines.append("### Technology Decisions")
-            lines.append("| Area | Use | NOT Using |")
-            lines.append("|------|-----|-----------|")
-            for tc in self.technology_choices[:6]:
-                lines.append(f"| {tc.area} | {tc.choice} | {tc.not_using} |")
-            lines.append("")
-
-        # Strategic decisions
-        if self.decisions:
-            lines.append("### Active Decisions")
-            for d in self.decisions:
-                if d.status.upper() in ("APPROVED", "IMPLEMENTED", "ACTIVE"):
-                    lines.append(f"- **{d.id}**: {d.name} ({d.status})")
-            lines.append("")
-
-        # Current phase
-        if self.active_phase:
-            lines.append(f"### Current Phase: {self.active_phase}")
-            lines.append("")
-
-        lines.append(f"*Context loaded at {self.loaded_at}*")
-        return "\n".join(lines)
-
-    def to_dict(self) -> Dict[str, Any]:
-        """Convert to dictionary."""
-        return {
-            "decisions": [
-                {
-                    "id": d.id,
-                    "name": d.name,
-                    "status": d.status,
-                    "summary": d.summary,
-                }
-                for d in self.decisions
-            ],
-            "technology_choices": [
-                {
-                    "area": tc.area,
-                    "choice": tc.choice,
-                    "not_using": tc.not_using,
-                }
-                for tc in self.technology_choices
-            ],
-            "active_phase": self.active_phase,
-            "open_gaps_count": self.open_gaps_count,
-            "loaded_at": self.loaded_at,
-        }
+PROJECT_ROOT = Path(__file__).parent.parent.parent
 
 
 class ContextPreloader:
@@ -133,8 +44,7 @@ class ContextPreloader:
         self.claude_md_path = self.project_root / "CLAUDE.md"
         self._cached_context: Optional[ContextSummary] = None
         self._cache_time: Optional[datetime] = None
-        # Cache for 5 minutes
-        self._cache_ttl_seconds = 300
+        self._cache_ttl_seconds = 300  # 5 minutes
 
     def load_context(self, force_refresh: bool = False) -> ContextSummary:
         """
@@ -157,17 +67,9 @@ class ContextPreloader:
         logger.info("Loading strategic context...")
 
         context = ContextSummary()
-
-        # Load decisions from evidence files
         context.decisions = self._load_decisions()
-
-        # Load technology choices from CLAUDE.md
         context.technology_choices = self._load_technology_choices()
-
-        # Detect active phase
         context.active_phase = self._detect_active_phase()
-
-        # Count open gaps
         context.open_gaps_count = self._count_open_gaps()
 
         # Cache result
@@ -192,11 +94,9 @@ class ContextPreloader:
 
         # Find DECISION-*.md files
         decision_files = list(self.evidence_dir.glob("DECISION-*.md"))
-
-        # Also find SESSION-DECISIONS-*.md files
         session_decision_files = list(self.evidence_dir.glob("SESSION-DECISIONS-*.md"))
 
-        # Parse standalone decision files first
+        # Parse standalone decision files
         for file_path in decision_files:
             decision = self._parse_decision_file(file_path)
             if decision:
@@ -222,10 +122,7 @@ class ContextPreloader:
 
             # Extract ID from filename or content
             id_match = re.search(r"DECISION-(\d+)", file_path.name)
-            if id_match:
-                decision_id = f"DECISION-{id_match.group(1)}"
-            else:
-                decision_id = file_path.stem
+            decision_id = f"DECISION-{id_match.group(1)}" if id_match else file_path.stem
 
             # Extract title
             title_match = re.search(r"^#\s+(.+)", content, re.MULTILINE)
@@ -239,7 +136,7 @@ class ContextPreloader:
             date_match = re.search(r"\*\*Date\*\*:\s*([\d-]+)", content)
             date = date_match.group(1) if date_match else ""
 
-            # Extract summary (first paragraph after ## Summary)
+            # Extract summary
             summary_match = re.search(
                 r"##\s*Summary\s*\n+(.+?)(?=\n##|\n\*\*|\Z)",
                 content,
@@ -289,7 +186,11 @@ class ContextPreloader:
                 date = date_match.group(1) if date_match else ""
 
                 # Extract decision text
-                decision_match = re.search(r"\*\*Decision\*\*:\s*(.+?)(?=\n\*\*|\n##|\Z)", section, re.DOTALL)
+                decision_match = re.search(
+                    r"\*\*Decision\*\*:\s*(.+?)(?=\n\*\*|\n##|\Z)",
+                    section,
+                    re.DOTALL
+                )
                 summary = decision_match.group(1).strip()[:150] if decision_match else ""
 
                 decisions.append(Decision(
@@ -315,10 +216,6 @@ class ContextPreloader:
 
         try:
             content = self.claude_md_path.read_text(encoding="utf-8")
-
-            # Find Technology Decisions table
-            # Pattern: | Decision | Choice | NOT Using | Rationale |
-            table_pattern = r"\|\s*\*\*?(.+?)\*\*?\s*\|\s*(.+?)\s*\|\s*(.+?)\s*\|\s*(.+?)\s*\|"
 
             # Find the Technology Decisions section
             tech_section = re.search(
@@ -364,9 +261,7 @@ class ContextPreloader:
             try:
                 content = phase_file.read_text(encoding="utf-8")
 
-                # Check if IN PROGRESS
                 if "IN PROGRESS" in content:
-                    # Extract phase number
                     match = re.search(r"PHASE-(\d+)", phase_file.name)
                     if match:
                         return f"Phase {match.group(1)}"
@@ -384,10 +279,7 @@ class ContextPreloader:
 
         try:
             content = gap_index.read_text(encoding="utf-8")
-
-            # Count OPEN entries
-            open_count = len(re.findall(r"\|\s*OPEN\s*\|", content))
-            return open_count
+            return len(re.findall(r"\|\s*OPEN\s*\|", content))
         except Exception:
             return 0
 
@@ -426,3 +318,11 @@ def get_agent_context_prompt() -> str:
     """
     context = preload_session_context()
     return context.to_agent_prompt()
+
+
+__all__ = [
+    "ContextPreloader",
+    "get_context_preloader",
+    "preload_session_context",
+    "get_agent_context_prompt",
+]

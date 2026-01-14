@@ -18,6 +18,7 @@ from governance.quality.models import (
     RuleIssue,
     RuleHealthReport,
 )
+from governance.quality.impact import calculate_rule_impact
 
 # Import TypeDB client
 try:
@@ -302,67 +303,21 @@ class RuleQualityAnalyzer:
         """
         Analyze impact if a rule is modified or deprecated.
 
+        Delegates to governance.quality.impact.calculate_rule_impact.
+
         Returns:
-            Dictionary with:
-            - affected_rules: Rules that depend on this rule
-            - affected_decisions: Decisions that reference this rule
-            - total_impact_score: 0-100 score
-            - recommendation: Suggested approach
+            Dictionary with impact analysis (see calculate_rule_impact).
         """
         self._load_dependencies()
-
-        # Get direct and transitive dependents
-        direct_dependents = self._dependents_cache.get(rule_id, set())
-
-        # Get transitive dependents (rules that depend on dependents)
-        all_dependents = set(direct_dependents)
-        to_process = list(direct_dependents)
-
-        while to_process:
-            current = to_process.pop()
-            for dep in self._dependents_cache.get(current, set()):
-                if dep not in all_dependents:
-                    all_dependents.add(dep)
-                    to_process.append(dep)
-
-        # Calculate impact score
         rules = self._load_rules()
         rule = rules.get(rule_id, {})
 
-        impact_score = 0
-
-        # Base impact from priority
-        priority_scores = {"CRITICAL": 40, "HIGH": 30, "MEDIUM": 20, "LOW": 10}
-        impact_score += priority_scores.get(rule.get("priority", "MEDIUM"), 20)
-
-        # Impact from dependents
-        impact_score += min(len(all_dependents) * 10, 40)
-
-        # Impact from category
-        critical_categories = {"governance", "strategic", "architecture"}
-        if rule.get("category") in critical_categories:
-            impact_score += 20
-
-        impact_score = min(impact_score, 100)
-
-        # Recommendation based on score
-        if impact_score >= 70:
-            recommendation = "HIGH RISK: Requires thorough review and stakeholder approval before any changes"
-        elif impact_score >= 40:
-            recommendation = "MEDIUM RISK: Plan changes carefully, update all dependent rules"
-        else:
-            recommendation = "LOW RISK: Can proceed with standard change process"
-
-        return {
-            "rule_id": rule_id,
-            "rule_name": rule.get("name", "Unknown"),
-            "direct_dependents": list(direct_dependents),
-            "all_affected_rules": list(all_dependents),
-            "impact_score": impact_score,
-            "priority": rule.get("priority"),
-            "category": rule.get("category"),
-            "recommendation": recommendation
-        }
+        return calculate_rule_impact(
+            rule_id=rule_id,
+            rule=rule,
+            dependents_cache=self._dependents_cache,
+            all_rules=rules
+        )
 
     def analyze(self) -> RuleHealthReport:
         """
