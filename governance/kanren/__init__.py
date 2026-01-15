@@ -53,6 +53,14 @@ from .loader import (
     validate_rule_compliance,
 )
 
+# Benchmarks (KAN-005)
+from .benchmark import (
+    BenchmarkResult,
+    run_all_benchmarks,
+    compare_kanren_vs_direct,
+    print_benchmark_report,
+)
+
 # Demo
 from .demo import demo_kanren_constraints
 
@@ -90,6 +98,11 @@ __all__ = [
     "query_rules_by_priority",
     "query_foundational_rules",
     "validate_rule_compliance",
+    # Benchmarks (KAN-005)
+    "BenchmarkResult",
+    "run_all_benchmarks",
+    "compare_kanren_vs_direct",
+    "print_benchmark_report",
     # Demo
     "demo_kanren_constraints",
 ]

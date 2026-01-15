@@ -699,3 +699,87 @@ class TestTypeDBKanrenLoader:
         assert len(gov_rules) == 2
         assert len(test_rules) == 1
         assert all(r.category == "governance" for r in gov_rules)
+
+
+# =============================================================================
+# KAN-005: Performance Benchmark Tests
+# =============================================================================
+
+class TestKanrenBenchmarks:
+    """Tests for KAN-005: Performance benchmarks."""
+
+    def test_benchmark_imports(self):
+        """Benchmark module can be imported."""
+        from governance.kanren import (
+            BenchmarkResult,
+            run_all_benchmarks,
+            compare_kanren_vs_direct,
+        )
+        assert BenchmarkResult is not None
+        assert run_all_benchmarks is not None
+
+    def test_benchmark_result_dataclass(self):
+        """BenchmarkResult has correct fields."""
+        from governance.kanren import BenchmarkResult
+
+        result = BenchmarkResult(
+            name="test_bench",
+            iterations=100,
+            total_ms=10.0,
+            avg_ms=0.1,
+            min_ms=0.05,
+            max_ms=0.2,
+            target_ms=1.0,
+            passed=True
+        )
+
+        assert result.name == "test_bench"
+        assert result.avg_ms == 0.1
+        assert result.passed is True
+        assert "PASS" in result.summary()
+
+    def test_run_all_benchmarks_returns_results(self):
+        """run_all_benchmarks returns list of results."""
+        from governance.kanren import run_all_benchmarks
+
+        results = run_all_benchmarks()
+
+        assert isinstance(results, list)
+        assert len(results) >= 7  # At least 7 Kanren benchmarks
+
+    def test_all_benchmarks_pass(self):
+        """All benchmarks should pass their targets."""
+        from governance.kanren import run_all_benchmarks
+
+        results = run_all_benchmarks()
+
+        failed = [r for r in results if not r.passed]
+        assert len(failed) == 0, f"Failed benchmarks: {[r.name for r in failed]}"
+
+    def test_kanren_under_100ms_target(self):
+        """Total Kanren validation time is under 100ms."""
+        from governance.kanren import compare_kanren_vs_direct
+
+        comparison = compare_kanren_vs_direct()
+        total_ms = comparison["summary"]["total_kanren_avg_ms"]
+
+        assert total_ms < 100.0, f"Kanren total time {total_ms}ms exceeds 100ms target"
+
+    def test_compare_returns_overhead(self):
+        """compare_kanren_vs_direct returns overhead metrics."""
+        from governance.kanren import compare_kanren_vs_direct
+
+        comparison = compare_kanren_vs_direct()
+
+        assert "trust_level" in comparison
+        assert "kanren_ms" in comparison["trust_level"]
+        assert "direct_ms" in comparison["trust_level"]
+        assert "overhead_pct" in comparison["trust_level"]
+
+    def test_benchmark_summary_pass(self):
+        """Benchmark summary should show all passed."""
+        from governance.kanren import compare_kanren_vs_direct
+
+        comparison = compare_kanren_vs_direct()
+
+        assert comparison["summary"]["all_kanren_passed"] is True
