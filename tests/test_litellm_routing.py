@@ -74,7 +74,7 @@ class TestLiteLLMRouting:
         )
         
         if response.status_code in [500, 503]:
-            pytest.skip("Ollama model not loaded - run: docker exec sim-ai-ollama-1 ollama pull gemma3:4b")
+            pytest.skip("Ollama model not loaded - run: podman exec platform_ollama_1 ollama pull gemma3:4b")
         
         assert response.status_code == 200, f"Ollama failed: {response.text}"
 

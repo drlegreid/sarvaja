@@ -5,10 +5,12 @@ Per RULE-012: Single Responsibility - only task CRUD operations.
 Per RULE-019: UI/UX Standards - consistent handler patterns.
 """
 
+import os
 import httpx
 from typing import Any
 
-API_BASE_URL = "http://localhost:8082"
+# Per GAP-UI-EXP-012: Use env var for container compatibility
+API_BASE_URL = os.environ.get("GOVERNANCE_API_URL", "http://localhost:8082")
 
 
 def register_task_handlers(ctrl: Any, state: Any) -> None:

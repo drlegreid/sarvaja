@@ -13,7 +13,7 @@ def build_session_metadata_chips() -> None:
     """Build session metadata chips."""
     with v3.VChipGroup(classes="mb-4"):
         v3.VChip(
-            v_text="selected_session.date || 'No date'",
+            v_text="selected_session.start_time || selected_session.date || 'No date'",
             prepend_icon="mdi-calendar",
             color="primary",
             __properties=["data-testid"],
@@ -44,7 +44,7 @@ def build_session_info_card() -> None:
                 )
                 v3.VListItem(
                     title="Date",
-                    subtitle=("selected_session.date || 'N/A'",),
+                    subtitle=("selected_session.start_time || selected_session.date || 'N/A'",),
                     prepend_icon="mdi-calendar",
                 )
                 # File Path - Clickable to view content (GAP-DATA-003)

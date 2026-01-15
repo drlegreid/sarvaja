@@ -182,6 +182,7 @@ services:
       - ./governance:/app/governance:ro
       - ./docs:/app/docs:ro
       - ./evidence:/app/evidence:rw
+      - ./.claude:/app/.claude:ro  # GAP-UI-EXP-011: Mount hooks/checkers for workflow compliance
     depends_on:
       - typedb
       - chromadb

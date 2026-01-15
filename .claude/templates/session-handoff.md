@@ -35,7 +35,7 @@
 ## Resume Instructions
 
 1. Run `/health` to verify MCP chain
-2. Run `/remember sim-ai {{DATE}}` to restore context
+2. Run `/remember sarvaja {{DATE}}` to restore context
 3. Continue with: {{NEXT_TASK}}
 
 ---

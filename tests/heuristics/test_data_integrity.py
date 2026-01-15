@@ -51,7 +51,8 @@ class TestRulesDataIntegrity:
         try:
             response = client.get("/api/rules")
             if response.status_code == 200:
-                rules = response.json().get("rules", [])
+                data = response.json()
+                rules = data.get("rules", data) if isinstance(data, dict) else data
                 for rule in rules[:10]:  # Check first 10
                     assert "rule_id" in rule or "id" in rule
                     assert "name" in rule or rule.get("rule_id")
@@ -66,7 +67,8 @@ class TestRulesDataIntegrity:
         try:
             response = client.get("/api/rules")
             if response.status_code == 200:
-                rules = response.json().get("rules", [])
+                data = response.json()
+                rules = data.get("rules", data) if isinstance(data, dict) else data
                 for rule in rules[:10]:
                     directive = rule.get("directive", "")
                     if directive:  # Only check if present
@@ -83,7 +85,8 @@ class TestRulesDataIntegrity:
         try:
             response = client.get("/api/rules")
             if response.status_code == 200:
-                rules = response.json().get("rules", [])
+                data = response.json()
+                rules = data.get("rules", data) if isinstance(data, dict) else data
                 for rule in rules[:10]:
                     status = rule.get("status", "ACTIVE")
                     assert status in valid_statuses, f"Invalid status: {status}"
@@ -175,7 +178,11 @@ class TestAgentsDataIntegrity:
     @structure("Agent types are valid", api=True, entity="Agent")
     def test_agent_type_valid(self, client):
         """Agent types must be known values."""
-        valid_types = {"claude-code", "docker-agent", "sync-agent", "research", "coding", "curator"}
+        # All agent types from TypeDB agents entity
+        valid_types = {
+            "claude-code", "docker-agent", "sync-agent", "orchestrator",
+            "researcher", "research", "coder", "coding", "curator", "assistant"
+        }
         try:
             response = client.get("/api/agents")
             if response.status_code == 200:
@@ -235,7 +242,8 @@ class TestCrossEntityIntegrity:
             rules_response = client.get("/api/rules")
             if rules_response.status_code != 200:
                 pytest.skip("Rules API not available")
-            rules = rules_response.json().get("rules", [])
+            data = rules_response.json()
+            rules = data.get("rules", data) if isinstance(data, dict) else data
             rule_ids = {r.get("rule_id", r.get("id")) for r in rules}
 
             # This validates that the system maintains referential integrity
@@ -347,5 +355,122 @@ class TestErrorHandling:
                 except Exception:
                     # Plain text error is also acceptable
                     pass
+        except httpx.ConnectError:
+            pytest.skip("API not available")
+
+
+# =============================================================================
+# MCP vs REST API PARITY: Cross-Source Validation
+# Per user request: Catch discrepancies like trust score mismatch (GAP-UI-EXP-008)
+# =============================================================================
+
+class TestMCPRestAPIParity:
+    """
+    MCP vs REST API parity tests.
+
+    These tests verify that MCP tools and REST API return consistent data.
+    Catches issues like GAP-UI-EXP-008 where MCP returned 0.8 for all agents
+    while REST API returned different calculated values.
+
+    Per user feedback: "bottom up testing did not catch these issues"
+    """
+
+    @data("Agent counts match between MCP and REST", api=True, entity="Agent")
+    def test_agent_count_parity(self, client):
+        """MCP and REST should return same number of agents."""
+        try:
+            # REST API
+            response = client.get("/api/agents")
+            if response.status_code != 200:
+                pytest.skip("REST API not available")
+            rest_data = response.json()
+            rest_agents = rest_data.get("agents", rest_data) if isinstance(rest_data, dict) else rest_data
+            rest_count = len(rest_agents) if isinstance(rest_agents, list) else 0
+
+            # MCP (via governance module)
+            try:
+                from governance.mcp_tools.agents import list_agents
+                mcp_result = list_agents()
+                mcp_agents = mcp_result.get("agents", []) if isinstance(mcp_result, dict) else []
+                mcp_count = len(mcp_agents)
+
+                assert rest_count == mcp_count, f"Agent count mismatch: REST={rest_count}, MCP={mcp_count}"
+            except ImportError:
+                pytest.skip("MCP module not available")
+        except httpx.ConnectError:
+            pytest.skip("API not available")
+
+    @data("Rule counts match between MCP and REST", api=True, entity="Rule")
+    def test_rule_count_parity(self, client):
+        """MCP and REST should return same number of rules."""
+        try:
+            # REST API
+            response = client.get("/api/rules")
+            if response.status_code != 200:
+                pytest.skip("REST API not available")
+            rest_data = response.json()
+            rest_rules = rest_data.get("rules", []) if isinstance(rest_data, dict) else rest_data
+            rest_count = len(rest_rules) if isinstance(rest_rules, list) else 0
+
+            # MCP (via governance-core MCP tools)
+            try:
+                from governance.mcp_tools.rules import query_rules
+                mcp_result = query_rules()
+                mcp_rules = mcp_result.get("rules", []) if isinstance(mcp_result, dict) else []
+                mcp_count = len(mcp_rules)
+
+                assert rest_count == mcp_count, f"Rule count mismatch: REST={rest_count}, MCP={mcp_count}"
+            except ImportError:
+                pytest.skip("MCP module not available")
+        except httpx.ConnectError:
+            pytest.skip("API not available")
+
+    @data("Session counts match between MCP and REST", api=True, entity="Session")
+    def test_session_count_parity(self, client):
+        """MCP and REST should return similar session counts."""
+        try:
+            # REST API
+            response = client.get("/api/sessions")
+            if response.status_code != 200:
+                pytest.skip("REST API not available")
+            rest_data = response.json()
+            rest_sessions = rest_data.get("sessions", rest_data) if isinstance(rest_data, dict) else rest_data
+            rest_count = len(rest_sessions) if isinstance(rest_sessions, list) else 0
+
+            # MCP (via governance-sessions MCP tools)
+            try:
+                from governance.mcp_tools.sessions import list_sessions
+                mcp_result = list_sessions(limit=100)
+                mcp_sessions = mcp_result.get("sessions", []) if isinstance(mcp_result, dict) else []
+                mcp_count = len(mcp_sessions)
+
+                # Allow small difference due to caching/timing
+                diff = abs(rest_count - mcp_count)
+                assert diff <= 2, f"Session count mismatch: REST={rest_count}, MCP={mcp_count}"
+            except ImportError:
+                pytest.skip("MCP module not available")
+        except httpx.ConnectError:
+            pytest.skip("API not available")
+
+    @reliability("REST API returns data before UI assertions", integration=True, entity="API")
+    def test_api_returns_data(self, client):
+        """
+        Verify API returns actual data, not empty results.
+
+        Per RULE-025/GOV-PROP-03-v1: Tests passing with empty data are invalid.
+        This test ensures we don't falsely pass tests when API returns no data.
+        """
+        endpoints_to_check = [
+            ("/api/rules", "rules"),
+            ("/api/agents", "agents"),
+        ]
+        try:
+            for endpoint, key in endpoints_to_check:
+                response = client.get(endpoint)
+                if response.status_code == 200:
+                    data = response.json()
+                    items = data.get(key, data) if isinstance(data, dict) else data
+                    count = len(items) if isinstance(items, list) else 0
+                    assert count > 0, f"{endpoint} returned empty data - tests passing on empty data are invalid"
         except httpx.ConnectError:
             pytest.skip("API not available")

@@ -101,7 +101,7 @@ def format_detailed(
         lines.append("    1. Read CLAUDE.md → Document map")
         lines.append("    2. Read docs/DEVOPS.md → Infrastructure (CRITICAL)")
         lines.append("    3. Read .mcp.json → MCP servers")
-        lines.append("    4. Query claude-mem → mcp__claude-mem__chroma_query_documents(['sim-ai 2026-01'])")
+        lines.append("    4. Query claude-mem → mcp__claude-mem__chroma_query_documents(['sarvaja 2026-01'])")
 
     # Zombie Process Detection
     if zombies:
@@ -156,9 +156,13 @@ def format_summary(
     reason: str = "",
     recovery_actions: List[str] = None,
     zombies: Dict = None,
+    amnesia: Dict = None,
     core_services: List[str] = None
 ) -> str:
-    """Format summary output (for unchanged state or retry ceiling)."""
+    """Format summary output (for unchanged state or retry ceiling).
+
+    Per GAP-AMNESIA-OUTPUT-001: Now includes AMNESIA warnings in summary mode.
+    """
     core_services = core_services or ["podman", "typedb", "chromadb"]
     required_ok = all(services.get(s, {}).get("ok", False) for s in core_services)
 
@@ -175,16 +179,22 @@ def format_summary(
         if zombie_parts:
             zombie_suffix = f" | {', '.join(zombie_parts)}"
 
+    # GAP-AMNESIA-OUTPUT-001: Add AMNESIA warning to summary output
+    amnesia_suffix = ""
+    if amnesia and amnesia.get("detected"):
+        confidence = int(amnesia.get("confidence", 0) * 100)
+        amnesia_suffix = f" | AMNESIA RISK {confidence}%"
+
     if required_ok:
-        return f"[HEALTH OK] Hash: {master_hash} {reason}. MCP chain ready.{zombie_suffix}"
+        return f"[HEALTH OK] Hash: {master_hash} {reason}. MCP chain ready.{zombie_suffix}{amnesia_suffix}"
     else:
         failed = [s for s in core_services if not services.get(s, {}).get("ok", False)]
         if recovery_actions:
             recovery_str = " | " + "; ".join(recovery_actions)
-            return f"[HEALTH RECOVERING] Hash: {master_hash} {reason}. Down: {', '.join(failed)}{recovery_str}{zombie_suffix}"
+            return f"[HEALTH RECOVERING] Hash: {master_hash} {reason}. Down: {', '.join(failed)}{recovery_str}{zombie_suffix}{amnesia_suffix}"
         else:
             hint = " | Recovery: podman compose --profile cpu up -d" if failed else ""
-            return f"[HEALTH WARN] Hash: {master_hash} {reason}. Down: {', '.join(failed)}{hint}{zombie_suffix}"
+            return f"[HEALTH WARN] Hash: {master_hash} {reason}. Down: {', '.join(failed)}{hint}{zombie_suffix}{amnesia_suffix}"
 
 
 def format_cached(prev_state: Dict, core_services: List[str] = None) -> str:

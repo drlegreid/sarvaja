@@ -35,12 +35,14 @@ def register_session_intent_tools(mcp) -> None:
         source: str,
         planned_tasks: Optional[str] = None,
         previous_session_id: Optional[str] = None,
+        initial_prompt: Optional[str] = None,
         topic: Optional[str] = None
     ) -> str:
         """
         Capture session intent at start.
 
         Per RD-INTENT: Record what the session intends to accomplish.
+        Per SESSION-PROMPT-01-v1: Initial prompt must be captured verbatim.
         Call this at session start to enable reconciliation tracking.
 
         Args:
@@ -48,6 +50,7 @@ def register_session_intent_tools(mcp) -> None:
             source: Where the goal came from ("TODO.md", "User request", "Handoff from SESSION-XXX")
             planned_tasks: Comma-separated task IDs planned for this session (e.g., "P12.1,P12.2")
             previous_session_id: Link to previous session for continuity tracking
+            initial_prompt: Verbatim copy of user's first message that started the session
             topic: Session topic (uses last session if not provided)
 
         Returns:
@@ -72,7 +75,8 @@ def register_session_intent_tools(mcp) -> None:
             goal=goal,
             source=source,
             planned_tasks=task_list,
-            previous_session_id=previous_session_id
+            previous_session_id=previous_session_id,
+            initial_prompt=initial_prompt
         )
 
         return json.dumps({
@@ -81,6 +85,7 @@ def register_session_intent_tools(mcp) -> None:
             "source": source,
             "planned_tasks": task_list,
             "previous_session_id": previous_session_id,
+            "initial_prompt": initial_prompt[:200] + "..." if initial_prompt and len(initial_prompt) > 200 else initial_prompt,
             "captured_at": intent.captured_at,
             "message": f"Intent captured for {collector.session_id}"
         }, indent=2)

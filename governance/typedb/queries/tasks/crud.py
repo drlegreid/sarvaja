@@ -72,10 +72,12 @@ class TaskCRUDOperations:
                         f'has task-id "{task_id}"',
                         f'has task-name "{name_escaped}"',
                         f'has task-status "{status}"',
-                        f'has task-resolution "{resolution}"',  # GAP-UI-046
                         f'has phase "{phase}"',
                         f'has task-created-at {timestamp_str}'
                     ]
+                    # GAP-UI-046: task-resolution (may not exist in older schemas)
+                    if resolution:
+                        insert_parts.append(f'has task-resolution "{resolution}"')
                     if body_escaped:
                         insert_parts.append(f'has task-body "{body_escaped}"')
                     if gap_id:

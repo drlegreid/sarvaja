@@ -33,6 +33,7 @@ from .trust import register_trust_controllers
 from .monitor import register_monitor_controllers
 from .backlog import register_backlog_controllers
 from .chat import register_chat_controllers
+from ..handlers import register_trace_bar_handlers
 
 __all__ = [
     'register_rules_controllers',
@@ -74,6 +75,9 @@ def register_all_controllers(state, ctrl, api_base_url: str) -> dict:
     register_trust_controllers(state, ctrl, api_base_url)
     register_monitor_controllers(state, ctrl, api_base_url)
     register_chat_controllers(state, ctrl, api_base_url)
+
+    # Trace bar handlers (GAP-UI-048)
+    register_trace_bar_handlers(ctrl, state)
 
     # Data loaders return loader functions for view change handler
     loaders = register_data_loader_controllers(state, ctrl, api_base_url)

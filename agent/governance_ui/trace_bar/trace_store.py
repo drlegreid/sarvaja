@@ -107,10 +107,11 @@ def get_initial_trace_state() -> Dict[str, Any]:
         "trace_bar_visible": True,
         "trace_bar_expanded": False,
 
-        # Trace events
+        # Trace events (flat state for Vue reactivity)
         "trace_events": [],
         "trace_events_count": 0,
         "trace_error_count": 0,
+        "trace_api_count": 0,
 
         # Filter
         "trace_filter": None,  # 'api_call', 'ui_action', 'error', or None

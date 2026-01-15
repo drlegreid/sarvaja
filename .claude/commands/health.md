@@ -8,13 +8,13 @@ allowed-tools: mcp__governance__governance_health, mcp__claude-mem__chroma_query
 Run comprehensive health check including:
 
 1. **MCP Dependency Chain**: Call `governance_health` to verify TypeDB + ChromaDB
-2. **Memory Continuity**: Query claude-mem for recent sim-ai sessions
+2. **Memory Continuity**: Query claude-mem for recent sarvaja sessions
 3. **Frankel Hash**: Read `.claude/hooks/.healthcheck_state.json` for service hash
 
 ## AMNESIA Detection Indicators
 
 Check for memory loss by querying: `mcp__claude-mem__chroma_query_documents` with:
-- Query: `["sim-ai session {today's date}"]`
+- Query: `["sarvaja session {today's date}"]`
 - If 0 results for today → AMNESIA LIKELY
 - If results exist but no context about current task → PARTIAL AMNESIA
 
@@ -33,5 +33,5 @@ Last Session: [date/time]
 ## Recovery Actions (if unhealthy)
 
 1. If services down: `.\deploy.ps1 -Action up -Profile cpu`
-2. If AMNESIA: Run `/remember sim-ai` to restore context
+2. If AMNESIA: Run `/remember sarvaja` to restore context
 3. If hash changed: Services restarted, context may need refresh

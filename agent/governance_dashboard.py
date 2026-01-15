@@ -141,6 +141,8 @@ from agent.governance_ui import (
     format_alert_item,
     # Agent Task Backlog state (TODO-6)
     TASK_STATUS_COLORS,
+    TASK_STATUSES,  # GAP-UI-EXP-004
+    TASK_PHASES,  # GAP-UI-EXP-004
     with_available_tasks,
     with_claimed_tasks,
     with_selected_task,
@@ -165,6 +167,7 @@ from agent.governance_ui.views import (
     build_impact_view,
     build_infra_view,  # GAP-INFRA-004: Infrastructure health dashboard
     build_workflow_view,  # RD-WORKFLOW Phase 4: Workflow compliance dashboard
+    build_trace_bar,  # GAP-UI-048: Bottom trace bar
     build_all_dialogs,  # GAP-UI-038: Shared dialogs
 )
 
@@ -258,6 +261,8 @@ class GovernanceDashboard:
             load_monitor_data = loaders['load_monitor_data']
             load_backlog_data = loaders['load_backlog_data']
             load_executive_report_data = loaders['load_executive_report_data']
+            load_infra_status = loaders['load_infra_status']
+            load_workflow_status = loaders['load_workflow_status']
 
             # Initialize additional state for forms and filters
             self._state.show_rule_detail = False
@@ -272,6 +277,9 @@ class GovernanceDashboard:
             # GAP-UI-027 fix: Filter options as state for proper VSelect binding
             self._state.status_options = RULE_STATUSES  # ['ACTIVE', 'DRAFT', 'DEPRECATED']
             self._state.category_options = RULE_CATEGORIES  # ['governance', 'technical', 'operational']
+            # GAP-UI-EXP-004: Task filter options
+            self._state.task_status_options = TASK_STATUSES  # ['TODO', 'IN_PROGRESS', 'DONE', 'BLOCKED']
+            self._state.task_phase_options = TASK_PHASES  # ['P10', 'P11', 'P12', 'R&D', ...]
 
             # Form field states - Rules
             self._state.form_rule_id = ""
@@ -353,8 +361,18 @@ class GovernanceDashboard:
                 elif active_view == 'executive':
                     # Auto-load executive report on view change (GAP-UI-044)
                     load_executive_report_data()
+                elif active_view == 'infra':
+                    # Auto-load infrastructure status (GAP-UI-EXP-006 fix)
+                    load_infra_status()
+                elif active_view == 'workflow':
+                    # Auto-load workflow compliance status (GAP-UI-EXP-011 fix)
+                    load_workflow_status()
 
-            with VAppLayout(self._server, full_height=True) as layout:
+            with VAppLayout(
+                self._server,
+                full_height=True,
+                theme=("dark_mode ? 'dark' : 'light'",)
+            ) as layout:
                 # Inject mermaid.js for diagram rendering (RULE-039)
                 from agent.governance_ui.components.mermaid import inject_mermaid_script
                 inject_mermaid_script()
@@ -366,7 +384,7 @@ class GovernanceDashboard:
                     __properties=["data-testid"],
                     **{"data-testid": "app-bar"}
                 ):
-                    v3.VAppBarTitle("Sim.ai Governance Dashboard")
+                    v3.VAppBarTitle("Sarvaja Governance Dashboard")
                     v3.VSpacer()
                     v3.VChip(
                         "{{ rules.length }} Rules | {{ decisions.length }} Decisions",
@@ -381,6 +399,16 @@ class GovernanceDashboard:
                         title="Refresh data from API",
                         __properties=["data-testid"],
                         **{"data-testid": "refresh-btn"}
+                    )
+                    # Dark mode toggle (GAP-UI-DARK-THEME)
+                    v3.VSwitch(
+                        v_model="dark_mode",
+                        prepend_icon="mdi-theme-light-dark",
+                        hide_details=True,
+                        density="compact",
+                        color="white",
+                        __properties=["data-testid"],
+                        **{"data-testid": "dark-mode-toggle"}
                     )
 
                 # Navigation drawer with data-testid
@@ -488,6 +516,12 @@ class GovernanceDashboard:
 
                 # FILE VIEWER DIALOG: Now provided by build_all_dialogs() from views/dialogs.py
                 # Per GAP-UI-038: Fullscreen modal for document viewing
+
+                # =================================================================
+                # TRACE BAR - GAP-UI-048
+                # Bottom bar with technical traces for developer visibility
+                # =================================================================
+                build_trace_bar()
 
             # Initialize additional state for dialogs
             self._state.has_error = False

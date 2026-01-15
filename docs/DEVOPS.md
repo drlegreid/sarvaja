@@ -1,4 +1,4 @@
-# DevOps Reference - Sim.ai
+# DevOps Reference - Sarvaja
 
 > **Parent:** [CLAUDE.md](../CLAUDE.md) | **Rule:** RULE-031, RULE-035, RULE-037
 > **Last Updated:** 2026-01-12
@@ -24,12 +24,12 @@ Podman is configured to use `podman-compose` (Python package) instead of `docker
 ```bash
 # Configuration file: ~/.config/containers/containers.conf
 [engine]
-compose_providers = ["/home/oderid/.venv/sim-ai/bin/podman-compose"]
+compose_providers = ["/home/oderid/.venv/sarvaja/bin/podman-compose"]
 ```
 
 If `podman compose` shows "docker-compose" warning, install podman-compose:
 ```bash
-source ~/.venv/sim-ai/bin/activate
+source ~/.venv/sarvaja/bin/activate
 pip install podman-compose
 ```
 
@@ -137,7 +137,7 @@ MCP servers run in containers due to TypeDB driver Python version requirements.
 
 ```bash
 # Build MCP container (Python 3.12)
-podman build -f Dockerfile.mcp -t sim-ai-mcp:latest .
+podman build -f Dockerfile.mcp -t sarvaja-mcp:latest .
 
 # MCP servers use scripts/mcp-runner.sh with container mode
 MCP_MODE=container  # Default, uses containerized Python 3.12
@@ -169,10 +169,10 @@ podman compose --profile cpu up -d
 podman compose --profile cpu ps
 
 # View container logs
-podman logs sim-ai-typedb-1 --tail 50
+podman logs sarvaja-typedb-1 --tail 50
 
 # Restart specific container
-podman restart sim-ai-typedb-1
+podman restart sarvaja-typedb-1
 
 # Stop all
 podman compose --profile cpu down
@@ -226,7 +226,7 @@ podman compose --profile cpu up -d
 podman compose exec ollama ollama pull llama3.2:3b
 
 # Seed TypeDB (after fresh install or data corruption)
-source ~/.venv/sim-ai/bin/activate
+source ~/.venv/sarvaja/bin/activate
 PYTHONPATH=. python governance/seed_data.py
 
 # Verify MCP health
@@ -245,7 +245,7 @@ Code quality enforcement via pre-commit hooks.
 ### Setup (One-time)
 
 ```bash
-source ~/.venv/sim-ai/bin/activate
+source ~/.venv/sarvaja/bin/activate
 pip install pre-commit
 pre-commit install
 ```
@@ -281,7 +281,7 @@ Browser tests require dashboard running on port 8081.
 flatpak install flathub org.mozilla.firefox
 
 # Or via Playwright
-source ~/.venv/sim-ai/bin/activate
+source ~/.venv/sarvaja/bin/activate
 playwright install firefox
 
 # Run E2E tests

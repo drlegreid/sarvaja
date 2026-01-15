@@ -7,13 +7,16 @@ Per RULE-004: Exploratory Test Automation & Executable Specification.
 Step definitions for dashboard.feature scenarios.
 """
 
+from pathlib import Path
+
 import pytest
 from pytest_bdd import scenarios, given, when, then, parsers
 from playwright.sync_api import Page, expect
 
 
-# Load all scenarios from the feature file
-scenarios("../features/dashboard.feature")
+# Load all scenarios from the feature file using absolute path
+FEATURES_DIR = Path(__file__).parent.parent / "features"
+scenarios(str(FEATURES_DIR / "dashboard.feature"))
 
 
 DASHBOARD_URL = "http://localhost:8081"

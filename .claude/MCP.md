@@ -25,10 +25,10 @@ These MCPs are **essential for project operation**. Session health depends on th
 | Server | Purpose | Source | Dependency |
 |--------|---------|--------|------------|
 | `claude-mem` | Memory via ChromaDB | Global | ChromaDB :8001 |
-| `governance-core` | Rules, decisions, health | Project | TypeDB :1729 |
-| `governance-agents` | Agents, trust, proposals | Project | TypeDB :1729 |
-| `governance-sessions` | Sessions, DSM, evidence | Project | TypeDB :1729 |
-| `governance-tasks` | Tasks, workspace, gaps | Project | TypeDB :1729 |
+| `gov-core` | Rules, decisions, health | Project | TypeDB :1729 |
+| `gov-agents` | Agents, trust, proposals | Project | TypeDB :1729 |
+| `gov-sessions` | Sessions, DSM, evidence | Project | TypeDB :1729 |
+| `gov-tasks` | Tasks, workspace, gaps | Project | TypeDB :1729 |
 | `sequential-thinking` | Reasoning chains for complex tasks | Global | None |
 | `desktop-commander` | Desktop interaction, exploratory testing | Global | None |
 | `playwright` | Browser automation | Global | Node.js (nvm) |
@@ -37,7 +37,7 @@ These MCPs are **essential for project operation**. Session health depends on th
 | `git` | Git operations (via Bash on Linux) | Bash | None |
 
 > **xubuntu Note**: Node.js installed via nvm (v20.19.6). Playwright MCP now available.
-> Python `playwright` library also available as fallback in ~/.venv/sim-ai.
+> Python `playwright` library also available as fallback in ~/.venv/sarvaja.
 
 **Health Check**: `governance_health` validates CORE dependencies at session start.
 
@@ -155,6 +155,7 @@ Backups are stored in `.claude/backups/mcp/`:
 | 2026-01-09 | xubuntu migration | Removed PowerShell MCP |
 | 2026-01-10 | Containerized MCP servers | TypeDB driver Python 3.12 |
 | 2026-01-10 | Node.js via nvm, Playwright MCP enabled | Browser automation restored |
+| 2026-01-14 | Renamed governance-* → gov-* | Shorter tool names |
 
 ## Related Documentation
 

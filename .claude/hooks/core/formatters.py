@@ -136,7 +136,7 @@ class HealthFormatter:
             lines.append("")
             lines.append(f"⚠️ AMNESIA RISK: {int(amnesia['confidence']*100)}% confidence")
             lines.append(f"  Indicators: {', '.join(amnesia['indicators'])}")
-            lines.append("  Action: Run /remember sim-ai to restore context")
+            lines.append("  Action: Run /remember sarvaja to restore context")
 
         # Recovery actions
         if recovery_actions:

@@ -22,7 +22,7 @@ def build_task_execution_button() -> None:
             variant="outlined",
             size="small",
             color="primary",
-            click="$trigger('load_task_execution', [chat_task_id])",
+            click="trigger('load_task_execution', [chat_task_id])",
             __properties=["data-testid"],
             **{"data-testid": "view-execution-btn"}
         )

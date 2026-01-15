@@ -44,6 +44,45 @@ def build_tasks_list_view() -> None:
             **{"data-testid": "tasks-loading"}
         )
 
+        # Filters toolbar (GAP-UI-EXP-004: search/filter/pagination)
+        with v3.VToolbar(density="compact", flat=True):
+            v3.VTextField(
+                v_model="tasks_search_query",
+                label="Search tasks...",
+                prepend_icon="mdi-magnify",
+                variant="outlined",
+                density="compact",
+                hide_details=True,
+                style="max-width: 300px",
+                __properties=["data-testid"],
+                **{"data-testid": "tasks-search"}
+            )
+            v3.VSpacer()
+            v3.VSelect(
+                v_model="tasks_status_filter",
+                items=("task_status_options",),
+                label="Status",
+                variant="outlined",
+                density="compact",
+                hide_details=True,
+                clearable=True,
+                style="max-width: 150px",
+                __properties=["data-testid"],
+                **{"data-testid": "tasks-filter-status"}
+            )
+            v3.VSelect(
+                v_model="tasks_phase_filter",
+                items=("task_phase_options",),
+                label="Phase",
+                variant="outlined",
+                density="compact",
+                hide_details=True,
+                clearable=True,
+                style="max-width: 150px; margin-left: 8px",
+                __properties=["data-testid"],
+                **{"data-testid": "tasks-filter-phase"}
+            )
+
         # Tasks list content (GAP-UI-036: scrollable)
         with v3.VCardText(style="max-height: 500px; overflow-y: auto;"):
             html.Div("{{ tasks.length }} tasks loaded", classes="mb-2 text-grey")
@@ -54,6 +93,16 @@ def build_tasks_list_view() -> None:
             ):
                 with v3.VListItem(
                     v_for="task in tasks",
+                    v_show=(
+                        "(!tasks_search_query || "
+                        "((task.task_id || task.id) && (task.task_id || task.id).toLowerCase()"
+                        ".includes(tasks_search_query.toLowerCase())) || "
+                        "((task.description || task.title || task.name) && "
+                        "(task.description || task.title || task.name).toLowerCase()"
+                        ".includes(tasks_search_query.toLowerCase()))) && "
+                        "(!tasks_status_filter || task.status === tasks_status_filter) && "
+                        "(!tasks_phase_filter || task.phase === tasks_phase_filter)"
+                    ),
                     **{":key": "task.task_id || task.id"},
                     click="selected_task = task; show_task_detail = true",
                     __properties=["data-testid"],

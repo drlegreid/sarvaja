@@ -12,11 +12,12 @@ Usage:
 from .rule_handlers import register_rule_handlers
 from .task_handlers import register_task_handlers
 from .session_handlers import register_session_handlers
-from .common_handlers import register_common_handlers
+from .common_handlers import register_common_handlers, register_trace_bar_handlers
 
 __all__ = [
     "register_rule_handlers",
     "register_task_handlers",
     "register_session_handlers",
     "register_common_handlers",
+    "register_trace_bar_handlers",
 ]

@@ -134,6 +134,16 @@ else:
         "claude_mem.mcp_server",
     ]
 
+# GAP-HEALTH-AGGRESSIVE-001: Health mode configuration
+# Modes: quiet (minimal), normal (default), aggressive (surgery sessions)
+HEALTH_MODE = os.environ.get("SARVAJA_HEALTH_MODE", "normal").lower()
+HEALTH_MODE_THRESHOLDS = {
+    "quiet": 0.70,      # Only alert on very high confidence
+    "normal": 0.50,     # Default threshold
+    "aggressive": 0.25  # Alert on any indicators
+}
+AMNESIA_THRESHOLD = HEALTH_MODE_THRESHOLDS.get(HEALTH_MODE, 0.50)
+
 
 def force_exit():
     """Force exit after timeout - Windows safety."""
@@ -362,16 +372,22 @@ def check_amnesia_indicators(prev_state: Dict, current_services: Dict = None) ->
     Check for AMNESIA indicators by analyzing state patterns.
     Delegates to AmnesiaDetector when available (RULE-032).
 
+    Per GAP-HEALTH-AGGRESSIVE-001: Threshold adjustable via SARVAJA_HEALTH_MODE.
+
     Returns dict with: detected (bool), confidence (0-1), indicators (list)
     """
     # Use AmnesiaDetector when available (RULE-032: Shared modules)
     if AMNESIA_DETECTOR_AVAILABLE and AmnesiaDetector:
         try:
             detector = AmnesiaDetector()
+            # Override threshold based on health mode
+            detector.DETECTION_THRESHOLD = AMNESIA_THRESHOLD
             result = detector.check(prev_state, current_services)
+            confidence = result.extra.get("confidence", 0)
+            # GAP-HEALTH-AGGRESSIVE-001: Use configurable threshold
             return {
-                "detected": result.extra.get("detected", False),
-                "confidence": result.extra.get("confidence", 0),
+                "detected": confidence >= AMNESIA_THRESHOLD,
+                "confidence": confidence,
                 "indicators": result.extra.get("indicators", [])
             }
         except Exception:
@@ -381,8 +397,9 @@ def check_amnesia_indicators(prev_state: Dict, current_services: Dict = None) ->
     if SHARED_HEALTH_AVAILABLE:
         try:
             result = shared_amnesia_check(prev_state, current_services)
+            # GAP-HEALTH-AGGRESSIVE-001: Use configurable threshold
             return {
-                "detected": result.detected,
+                "detected": result.confidence >= AMNESIA_THRESHOLD,
                 "confidence": result.confidence,
                 "indicators": result.indicators
             }
@@ -396,7 +413,8 @@ def check_amnesia_indicators(prev_state: Dict, current_services: Dict = None) ->
     if not prev_hash:
         indicators.append("NO_PREVIOUS_STATE")
         confidence += 0.3
-    return {"detected": confidence >= 0.5, "confidence": min(1.0, confidence), "indicators": indicators}
+    # GAP-HEALTH-AGGRESSIVE-001: Use configurable threshold
+    return {"detected": confidence >= AMNESIA_THRESHOLD, "confidence": min(1.0, confidence), "indicators": indicators}
 
 
 def output_json(context: str) -> None:
@@ -495,7 +513,10 @@ def main():
                 pass  # Non-critical, don't block healthcheck
 
         # Format output based on state (retry ceiling affects verbosity only, not checking)
-        if hash_changed or check_count == 1:
+        # GAP-HEALTH-AGGRESSIVE-001: Always use detailed output in aggressive mode
+        use_detailed = hash_changed or check_count == 1 or HEALTH_MODE == "aggressive"
+
+        if use_detailed:
             context = format_detailed(
                 services, master_hash, recovery_actions, amnesia, component_hashes,
                 entropy, zombies, intent, intent_amnesia, workflow,
@@ -503,10 +524,12 @@ def main():
             )
         elif retry_ceiling_reached:
             # Brief output when unchanged for >30s (but we still checked current state!)
-            context = format_summary(services, master_hash, "(stable)", recovery_actions, zombies, core_services=CORE_SERVICES)
+            # GAP-AMNESIA-OUTPUT-001: Pass amnesia to show warnings in summary mode
+            context = format_summary(services, master_hash, "(stable)", recovery_actions, zombies, amnesia, core_services=CORE_SERVICES)
         else:
             unchanged_duration = time.time() - new_unchanged_since
-            context = format_summary(services, master_hash, f"(unchanged {int(unchanged_duration)}s)", recovery_actions, zombies, core_services=CORE_SERVICES)
+            # GAP-AMNESIA-OUTPUT-001: Pass amnesia to show warnings in summary mode
+            context = format_summary(services, master_hash, f"(unchanged {int(unchanged_duration)}s)", recovery_actions, zombies, amnesia, core_services=CORE_SERVICES)
 
         output_json(context)
 

@@ -79,16 +79,19 @@ STATUS/CERT issues should reference the original prompt.
 
 ## Automation
 
-### MCP Tool Enhancement
+### MCP Tool Enhancement (IMPLEMENTED 2026-01-14)
 
 ```python
-# session_capture_intent now includes prompt field
+# session_capture_intent now includes initial_prompt parameter
 session_capture_intent(
     goal="...",
     source="...",
-    initial_prompt="User's verbatim first message"
+    initial_prompt="User's verbatim first message"  # Per SESSION-PROMPT-01-v1
 )
 ```
+
+**Implementation:** `governance/mcp_tools/sessions_intent.py`
+**Model:** `governance/session_collector/models.py:SessionIntent.initial_prompt`
 
 ### Evidence Template
 

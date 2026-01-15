@@ -5,7 +5,7 @@
 
 set -e
 
-TYPEDB_CMD="podman exec sim-ai_typedb_1 /opt/typedb-all-linux-x86_64/typedb console"
+TYPEDB_CMD="podman exec platform_typedb_1 /opt/typedb-all-linux-x86_64/typedb console"
 DB="sim-ai-governance"
 
 echo "=========================================="

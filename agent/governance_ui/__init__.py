@@ -155,6 +155,8 @@ from .state import (
     format_journey_pattern,
     # Agent Task Backlog (TODO-6)
     TASK_STATUS_COLORS,
+    TASK_STATUSES,  # GAP-UI-EXP-004
+    TASK_PHASES,  # GAP-UI-EXP-004
     with_available_tasks,
     with_claimed_tasks,
     with_selected_task,

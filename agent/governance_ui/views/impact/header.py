@@ -48,7 +48,6 @@ def build_rule_selector() -> None:
                 variant="outlined",
                 density="compact",
                 clearable=True,
-                change="analyze_rule_impact($event)",
                 __properties=["data-testid"],
                 **{"data-testid": "impact-rule-select"}
             )

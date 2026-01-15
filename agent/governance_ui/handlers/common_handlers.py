@@ -5,6 +5,7 @@ Per RULE-012: Single Responsibility - shared/cross-cutting operations.
 Per RULE-019: UI/UX Standards - consistent handler patterns.
 """
 
+import os
 import httpx
 from typing import Any
 from ..data_access import (
@@ -14,8 +15,10 @@ from ..data_access import (
     generate_mermaid_graph,
     build_trust_leaderboard,
 )
+from ..trace_bar import clear_traces
 
-API_BASE_URL = "http://localhost:8082"
+# Per GAP-UI-EXP-012: Use env var for container compatibility
+API_BASE_URL = os.environ.get("GOVERNANCE_API_URL", "http://localhost:8082")
 
 
 def register_common_handlers(ctrl: Any, state: Any) -> None:
@@ -285,3 +288,12 @@ def _send_to_agent(state: Any, message: str) -> None:
         }
 
     state.chat_messages = state.chat_messages + [bot_msg]
+
+
+def register_trace_bar_handlers(ctrl: Any, state: Any) -> None:
+    """Register trace bar handlers (GAP-UI-048)."""
+
+    @ctrl.trigger("clear_traces")
+    def handle_clear_traces() -> None:
+        """Clear all trace events."""
+        clear_traces(state)

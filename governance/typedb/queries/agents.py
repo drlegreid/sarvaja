@@ -27,8 +27,9 @@ class AgentQueries:
             match $a isa agent,
                 has agent-id $id,
                 has agent-name $name,
-                has agent-type $type;
-            get $id, $name, $type;
+                has agent-type $type,
+                has trust-score $trust;
+            get $id, $name, $type, $trust;
         """
         results = self._execute_query(query)
         agents = []
@@ -37,7 +38,8 @@ class AgentQueries:
             agent = Agent(
                 id=agent_id,
                 name=r.get("name"),
-                agent_type=r.get("type")
+                agent_type=r.get("type"),
+                trust_score=r.get("trust", 0.8)
             )
             agents.append(agent)
         return agents
@@ -48,8 +50,9 @@ class AgentQueries:
             match $a isa agent,
                 has agent-id "{agent_id}",
                 has agent-name $name,
-                has agent-type $type;
-            get $name, $type;
+                has agent-type $type,
+                has trust-score $trust;
+            get $name, $type, $trust;
         """
         results = self._execute_query(query)
         if results:
@@ -57,7 +60,8 @@ class AgentQueries:
             return Agent(
                 id=agent_id,
                 name=r.get("name"),
-                agent_type=r.get("type")
+                agent_type=r.get("type"),
+                trust_score=r.get("trust", 0.8)
             )
         return None
 
@@ -87,7 +91,7 @@ class AgentQueries:
         # Delete and re-insert with updated trust score
         delete_query = f"""
             match $a isa agent, has agent-id "{agent_id}";
-            delete $a isa agent;
+            delete $a;
         """
         insert_query = f"""
             insert $a isa agent,

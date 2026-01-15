@@ -90,6 +90,15 @@ class SessionRenderMixin:
             ])
             if self.intent.previous_session_id:
                 lines.append(f"**Previous Session:** {self.intent.previous_session_id}")
+            # Per SESSION-PROMPT-01-v1: Include initial prompt for context recovery
+            if hasattr(self.intent, 'initial_prompt') and self.intent.initial_prompt:
+                lines.extend([
+                    "",
+                    "### Initial Prompt",
+                    "",
+                    f"> {self.intent.initial_prompt}",
+                    "",
+                ])
             if self.intent.planned_tasks:
                 lines.extend([
                     "",
@@ -175,6 +184,48 @@ class SessionRenderMixin:
                 lines.append(f"| {t.id} | {t.name} | {t.status} | {t.priority} |")
             lines.append("")
 
+        # Thoughts section (Per AMNESIA recovery - key reasoning chains)
+        thought_events = [e for e in self.events if e.event_type == "thought"]
+        if thought_events:
+            lines.extend([
+                "## Key Thoughts",
+                "",
+                "*Per RECOVER-AMNES-01-v1: Captured for context recovery*",
+                "",
+            ])
+            for event in thought_events:
+                thought_type = event.metadata.get("thought_type", "reasoning")
+                confidence = event.metadata.get("confidence")
+                lines.append(f"### {thought_type.title()}")
+                lines.append("")
+                lines.append(f"> {event.content}")
+                lines.append("")
+                if confidence:
+                    lines.append(f"*Confidence: {confidence:.1%}*")
+                related_tools = event.metadata.get("related_tools", [])
+                if related_tools:
+                    lines.append(f"*Related tools: {', '.join(related_tools)}*")
+                lines.append("")
+            lines.extend(["---", ""])
+
+        # Tool calls section (Per AMNESIA recovery - action trail)
+        tool_events = [e for e in self.events if e.event_type == "tool_call"]
+        if tool_events:
+            lines.extend([
+                "## Tool Calls",
+                "",
+                "*Per RECOVER-AMNES-01-v1: Action trail for context recovery*",
+                "",
+                "| Tool | Success | Duration |",
+                "|------|---------|----------|",
+            ])
+            for event in tool_events:
+                tool_name = event.metadata.get("tool_name", event.content[:30])
+                success = "✅" if event.metadata.get("success", True) else "❌"
+                duration = event.metadata.get("duration_ms", 0)
+                lines.append(f"| {tool_name} | {success} | {duration}ms |")
+            lines.extend(["", "---", ""])
+
         # Events timeline
         lines.extend([
             "## Event Timeline",
@@ -188,7 +239,9 @@ class SessionRenderMixin:
                 "task": "📋",
                 "error": "❌",
                 "intent": "🎯",
-                "outcome": "✅"
+                "outcome": "✅",
+                "thought": "💭",
+                "tool_call": "🔧"
             }.get(event.event_type, "📌")
             lines.append(f"- {icon} **{event.event_type.upper()}** ({event.timestamp}): {event.content[:100]}...")
 

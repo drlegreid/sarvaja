@@ -181,7 +181,7 @@ def build_trust_history_card() -> None:
                 icon="mdi-refresh",
                 variant="text",
                 size="small",
-                click="$trigger('load_trust_history', [selected_agent.agent_id])",
+                click="trigger('load_trust_history', [selected_agent.agent_id])",
                 __properties=["data-testid"],
                 **{"data-testid": "trust-history-refresh"}
             )

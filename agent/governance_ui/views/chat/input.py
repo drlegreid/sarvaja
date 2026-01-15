@@ -25,13 +25,13 @@ def build_chat_input() -> None:
                 __properties=["data-testid", "@keyup.enter"],
                 **{
                     "data-testid": "chat-input",
-                    "@keyup.enter": "$trigger('send_chat_message')"
+                    "@keyup.enter": "trigger('send_chat_message')"
                 }
             )
             v3.VBtn(
                 icon="mdi-send",
                 color="primary",
-                click="$trigger('send_chat_message')",
+                click="trigger('send_chat_message')",
                 disabled=("!chat_input || chat_loading",),
                 __properties=["data-testid"],
                 **{"data-testid": "chat-send-btn"}
@@ -47,7 +47,7 @@ def build_quick_commands() -> None:
                 "/help",
                 size="small",
                 variant="outlined",
-                click="chat_input = '/help'; $trigger('send_chat_message')",
+                click="chat_input = '/help'; trigger('send_chat_message')",
                 __properties=["data-testid"],
                 **{"data-testid": "chat-cmd-help"}
             )
@@ -55,7 +55,7 @@ def build_quick_commands() -> None:
                 "/status",
                 size="small",
                 variant="outlined",
-                click="chat_input = '/status'; $trigger('send_chat_message')",
+                click="chat_input = '/status'; trigger('send_chat_message')",
                 __properties=["data-testid"],
                 **{"data-testid": "chat-cmd-status"}
             )
@@ -63,7 +63,7 @@ def build_quick_commands() -> None:
                 "/tasks",
                 size="small",
                 variant="outlined",
-                click="chat_input = '/tasks'; $trigger('send_chat_message')",
+                click="chat_input = '/tasks'; trigger('send_chat_message')",
                 __properties=["data-testid"],
                 **{"data-testid": "chat-cmd-tasks"}
             )
@@ -71,7 +71,7 @@ def build_quick_commands() -> None:
                 "/rules",
                 size="small",
                 variant="outlined",
-                click="chat_input = '/rules'; $trigger('send_chat_message')",
+                click="chat_input = '/rules'; trigger('send_chat_message')",
                 __properties=["data-testid"],
                 **{"data-testid": "chat-cmd-rules"}
             )
@@ -79,7 +79,7 @@ def build_quick_commands() -> None:
                 "/agents",
                 size="small",
                 variant="outlined",
-                click="chat_input = '/agents'; $trigger('send_chat_message')",
+                click="chat_input = '/agents'; trigger('send_chat_message')",
                 __properties=["data-testid"],
                 **{"data-testid": "chat-cmd-agents"}
             )

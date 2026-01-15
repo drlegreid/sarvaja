@@ -35,6 +35,20 @@ def build_sessions_list_view() -> None:
                 **{"data-testid": "sessions-add-btn"}
             )
 
+        # Search field
+        with v3.VCardText(classes="pb-0"):
+            v3.VTextField(
+                v_model="sessions_search_query",
+                label="Search sessions...",
+                prepend_inner_icon="mdi-magnify",
+                variant="outlined",
+                density="compact",
+                hide_details=True,
+                clearable=True,
+                __properties=["data-testid"],
+                **{"data-testid": "sessions-search"}
+            )
+
         # Loading indicator (GAP-UI-005)
         v3.VProgressLinear(
             v_if="is_loading",
@@ -47,12 +61,12 @@ def build_sessions_list_view() -> None:
         # Sessions list content (GAP-UI-036: scrollable)
         with v3.VCardText(style="max-height: 500px; overflow-y: auto;"):
             html.Div(
-                "{{ sessions.length }} sessions loaded",
+                "{{ sessions.filter(s => !sessions_search_query || (s.session_id || s.id || '').toLowerCase().includes(sessions_search_query.toLowerCase())).length }} sessions loaded",
                 classes="mb-2 text-grey"
             )
             with v3.VTimeline(density="compact"):
                 with v3.VTimelineItem(
-                    v_for="session in sessions",
+                    v_for="session in sessions.filter(s => !sessions_search_query || (s.session_id || s.id || '').toLowerCase().includes(sessions_search_query.toLowerCase()))",
                     key=("session.session_id || session.id",),
                     dot_color="primary",
                     size="small",
@@ -67,4 +81,4 @@ def build_sessions_list_view() -> None:
                             "{{ session.session_id || session.id }}",
                             density="compact"
                         )
-                        v3.VCardSubtitle("{{ session.date || 'No date' }}")
+                        v3.VCardSubtitle("{{ session.start_time || session.date || 'No date' }}")

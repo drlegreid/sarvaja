@@ -65,11 +65,13 @@ class SessionIntent:
     Session intent captured at start.
 
     Per RD-INTENT: Tracks what a session intends to accomplish.
+    Per SESSION-PROMPT-01-v1: Initial prompt must be captured verbatim.
     """
     goal: str  # Primary goal for the session
     source: str  # Where the goal came from: "TODO.md", "User request", "Handoff from SESSION-XXX"
     planned_tasks: list = field(default_factory=list)  # List of task IDs planned
     previous_session_id: Optional[str] = None  # Link to previous session for continuity
+    initial_prompt: Optional[str] = None  # Per SESSION-PROMPT-01-v1: Verbatim user's first message
     captured_at: str = field(default_factory=lambda: datetime.now().isoformat())
 
 

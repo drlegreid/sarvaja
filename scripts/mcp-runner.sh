@@ -12,7 +12,7 @@
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_DIR="$(dirname "$SCRIPT_DIR")"
 MCP_MODE="${MCP_MODE:-container}"
-MCP_IMAGE="${MCP_IMAGE:-sim-ai-mcp:latest}"
+MCP_IMAGE="${MCP_IMAGE:-sarvaja-mcp:latest}"
 
 # Container mode (Enterprise DevOps - sandboxed Python 3.12)
 if [ "$MCP_MODE" = "container" ]; then
@@ -40,8 +40,8 @@ if [ "$MCP_MODE" = "container" ]; then
 fi
 
 # Venv mode (Legacy - requires Python 3.12 on host)
-if [ -f "$HOME/.venv/sim-ai/bin/activate" ]; then
-    source "$HOME/.venv/sim-ai/bin/activate"
+if [ -f "$HOME/.venv/sarvaja/bin/activate" ]; then
+    source "$HOME/.venv/sarvaja/bin/activate"
 fi
 
 export PYTHONPATH="$PROJECT_DIR:$PYTHONPATH"

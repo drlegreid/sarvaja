@@ -1,4 +1,4 @@
-# TODO Index - Sim.ai PoC
+# TODO Index - Sarvaja
 
 **Updated:** 2026-01-14 | **Backlog System:** [GAP-INDEX.md](docs/gaps/GAP-INDEX.md)
 
@@ -29,11 +29,13 @@
 
 | Metric | Count |
 |--------|-------|
-| Total Gaps | 218 |
-| RESOLVED | 200 |
-| OPEN | 0 |
-| DEFERRED | 16 |
+| Total Gaps | 226 |
+| RESOLVED | 209 |
+| OPEN | 1 |
+| DEFERRED | 14 |
+| NOT_IMPLEMENTED | 2 |
 | Rules | 52 (all synced to TypeDB) |
+| Tests | 1,784 collected |
 
 ---
 

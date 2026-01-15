@@ -610,6 +610,7 @@ graph TB
 | TOOL-001-009 | MCP Tooling & Architecture | **HIGH** | (inline below) |
 | DOC-001-005 | Document Management MCP | HIGH | (inline below) |
 | **MULTI-001-007** | **Local Multi-Agent Setup for Claude Code** | **HIGH** | (inline below) |
+| LACMUS-001 | Agent Benchmark Microproject | LOW | [RD-LACMUS.md](rd/RD-LACMUS.md) |
 
 ### Deferred R&D
 

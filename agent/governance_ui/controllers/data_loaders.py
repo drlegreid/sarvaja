@@ -5,13 +5,20 @@ Controller functions for loading/refreshing data.
 
 Per RULE-012: DSP Semantic Code Structure
 Per GAP-FILE-005: Extracted from governance_dashboard.py
+Per GAP-UI-048: Trace bar event capture
 
 Created: 2024-12-28
+Updated: 2026-01-14 (trace event integration)
 """
 
+import time
 import httpx
 from typing import Any, Callable
 
+from agent.governance_ui.trace_bar.transforms import (
+    add_api_trace,
+    add_error_trace,
+)
 from agent.governance_ui import (
     get_rules,
     get_proposals,
@@ -47,12 +54,16 @@ def register_data_loader_controllers(
         """Load agent trust data from REST API."""
         try:
             with httpx.Client(timeout=10.0) as client:
+                start = time.time()
                 response = client.get(f"{api_base_url}/api/agents")
+                duration_ms = int((time.time() - start) * 1000)
+                add_api_trace(state, "/api/agents", "GET", response.status_code, duration_ms)
                 if response.status_code == 200:
                     state.agents = response.json()
                 else:
                     state.agents = []
         except Exception as e:
+            add_error_trace(state, f"Load agents failed: {str(e)}", "/api/agents")
             print(f"Error loading agents: {e}")
             state.agents = []
 
@@ -138,6 +149,19 @@ def register_data_loader_controllers(
         finally:
             state.executive_loading = False
 
+    def _traced_get(client: httpx.Client, endpoint: str) -> tuple:
+        """Make a traced GET request. Returns (response, duration_ms)."""
+        start = time.time()
+        try:
+            response = client.get(f"{api_base_url}{endpoint}")
+            duration_ms = int((time.time() - start) * 1000)
+            add_api_trace(state, endpoint, "GET", response.status_code, duration_ms)
+            return response, duration_ms
+        except Exception as e:
+            duration_ms = int((time.time() - start) * 1000)
+            add_error_trace(state, f"GET {endpoint} failed: {str(e)}", endpoint)
+            raise
+
     @ctrl.trigger("refresh_data")
     def refresh_data():
         """Refresh all data from REST API."""
@@ -145,37 +169,37 @@ def register_data_loader_controllers(
             state.is_loading = True
             with httpx.Client(timeout=10.0) as client:
                 try:
-                    rules_response = client.get(f"{api_base_url}/api/rules")
-                    if rules_response.status_code == 200:
-                        state.rules = rules_response.json()
+                    response, _ = _traced_get(client, "/api/rules")
+                    if response.status_code == 200:
+                        state.rules = response.json()
                 except Exception:
                     pass
 
                 try:
-                    decisions_response = client.get(f"{api_base_url}/api/decisions")
-                    if decisions_response.status_code == 200:
-                        state.decisions = decisions_response.json()
+                    response, _ = _traced_get(client, "/api/decisions")
+                    if response.status_code == 200:
+                        state.decisions = response.json()
                 except Exception:
                     pass
 
                 try:
-                    tasks_response = client.get(f"{api_base_url}/api/tasks")
-                    if tasks_response.status_code == 200:
-                        state.tasks = tasks_response.json()
+                    response, _ = _traced_get(client, "/api/tasks")
+                    if response.status_code == 200:
+                        state.tasks = response.json()
                 except Exception:
                     pass
 
                 try:
-                    sessions_response = client.get(f"{api_base_url}/api/sessions")
-                    if sessions_response.status_code == 200:
-                        state.sessions = sessions_response.json()
+                    response, _ = _traced_get(client, "/api/sessions")
+                    if response.status_code == 200:
+                        state.sessions = response.json()
                 except Exception:
                     pass
 
                 try:
-                    agents_response = client.get(f"{api_base_url}/api/agents")
-                    if agents_response.status_code == 200:
-                        state.agents = agents_response.json()
+                    response, _ = _traced_get(client, "/api/agents")
+                    if response.status_code == 200:
+                        state.agents = response.json()
                 except Exception:
                     pass
 
@@ -208,22 +232,29 @@ def register_data_loader_controllers(
     def load_infra_status():
         """Load infrastructure health status. Per GAP-INFRA-004."""
         import json
+        import os
         import socket
         import subprocess
         from pathlib import Path
         from datetime import datetime
 
-        def check_port(host: str, port: int) -> bool:
+        # Detect if running in container (GAP-UI-EXP-006 fix)
+        in_container = os.path.exists("/.dockerenv") or os.path.exists("/run/.containerenv")
+
+        def check_port(hostname: str, port: int) -> bool:
             try:
                 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                sock.settimeout(1)
-                result = sock.connect_ex((host, port))
+                sock.settimeout(2)
+                result = sock.connect_ex((hostname, port))
                 sock.close()
                 return result == 0
             except Exception:
                 return False
 
         def check_podman() -> bool:
+            if in_container:
+                # In container, if we're running, podman must be OK
+                return True
             try:
                 result = subprocess.run(
                     ["podman", "info"],
@@ -233,15 +264,30 @@ def register_data_loader_controllers(
             except Exception:
                 return False
 
-        # Check services
-        podman_ok = check_podman()
-        services = {
-            "podman": {"status": "OK" if podman_ok else "DOWN", "ok": podman_ok},
-            "typedb": {"status": "OK" if check_port("localhost", 1729) else "DOWN", "ok": check_port("localhost", 1729), "port": 1729},
-            "chromadb": {"status": "OK" if check_port("localhost", 8001) else "DOWN", "ok": check_port("localhost", 8001), "port": 8001},
-            "litellm": {"status": "OK" if check_port("localhost", 4000) else "OFF", "ok": check_port("localhost", 4000), "port": 4000},
-            "ollama": {"status": "OK" if check_port("localhost", 11434) else "OFF", "ok": check_port("localhost", 11434), "port": 11434},
+        # Service config: (container_host, container_port, host_port)
+        # In container: use compose service names + internal ports
+        # On host: use localhost + mapped ports
+        service_config = {
+            "typedb": ("typedb", 1729, 1729),
+            "chromadb": ("chromadb", 8000, 8001),  # internal 8000, mapped to 8001
+            "litellm": ("litellm", 4000, 4000),
+            "ollama": ("ollama", 11434, 11434),
         }
+
+        # Check services using appropriate hostname/port
+        podman_ok = check_podman()
+        services = {"podman": {"status": "OK" if podman_ok else "DOWN", "ok": podman_ok}}
+
+        for name, (container_host, container_port, host_port) in service_config.items():
+            if in_container:
+                ok = check_port(container_host, container_port)
+            else:
+                ok = check_port("localhost", host_port)
+
+            # TypeDB/ChromaDB are required, LiteLLM/Ollama are optional
+            required = name in ("typedb", "chromadb")
+            status = "OK" if ok else ("DOWN" if required else "OFF")
+            services[name] = {"status": status, "ok": ok, "port": host_port}
         state.infra_services = services
 
         # Load stats from healthcheck state

@@ -93,7 +93,7 @@ class AmnesiaDetector:
         if detected:
             return HookResult.warning(
                 f"AMNESIA RISK: {int(confidence * 100)}% confidence",
-                resolution_path="/remember sim-ai to restore context",
+                resolution_path="/remember sarvaja to restore context",
                 detected=True,
                 confidence=confidence,
                 indicators=indicators
@@ -159,7 +159,7 @@ class AmnesiaDetector:
             suggestions.append("Run /health to initialize state tracking")
 
         if any("LONG_GAP" in i for i in indicators):
-            suggestions.append("Run /remember sim-ai to restore project context")
+            suggestions.append("Run /remember sarvaja to restore project context")
 
         if any("SERVICE_RECOVERED" in i for i in indicators):
             suggestions.append("Verify MCP connections are stable")

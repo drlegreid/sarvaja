@@ -1,8 +1,11 @@
-# Sim.ai PoC Project Rules
+# Sarvaja Project Rules
+
+> **Sarvaja** (Sanskrit: सर्वज) = "All-Knowing" / Omniscient
+> Per DECISION-008: Project renamed from sim.ai (2026-01-14)
 
 ## Quick Context
-- **Project**: Multi-agent platform with TypeDB Governance, LiteLLM, ChromaDB
-- **Version**: 1.2.0 | **Updated**: 2026-01-13
+- **Project**: Multi-agent governance platform with TypeDB, LiteLLM, ChromaDB
+- **Version**: 1.3.0 | **Updated**: 2026-01-14
 - **Repo**: https://github.com/drlegreid/platform-gai
 
 ## Document Map

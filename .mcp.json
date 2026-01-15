@@ -26,7 +26,7 @@
       },
       "_docs": "https://playbooks.com/mcp/dkmaker/mcp-rest-api"
     },
-    "governance-core": {
+    "gov-core": {
       "type": "stdio",
       "command": "bash",
       "args": ["scripts/mcp-runner.sh", "governance.mcp_server_core"],
@@ -36,9 +36,10 @@
         "TYPEDB_PORT": "1729",
         "CHROMADB_HOST": "localhost",
         "CHROMADB_PORT": "8001"
-      }
+      },
+      "_comment": "Per GAP-MCP-NAMING-001: governance → gov"
     },
-    "governance-agents": {
+    "gov-agents": {
       "type": "stdio",
       "command": "bash",
       "args": ["scripts/mcp-runner.sh", "governance.mcp_server_agents"],
@@ -46,9 +47,10 @@
       "env": {
         "TYPEDB_HOST": "localhost",
         "TYPEDB_PORT": "1729"
-      }
+      },
+      "_comment": "Per GAP-MCP-NAMING-001: governance → gov"
     },
-    "governance-sessions": {
+    "gov-sessions": {
       "type": "stdio",
       "command": "bash",
       "args": ["scripts/mcp-runner.sh", "governance.mcp_server_sessions"],
@@ -58,9 +60,10 @@
         "TYPEDB_PORT": "1729",
         "CHROMADB_HOST": "localhost",
         "CHROMADB_PORT": "8001"
-      }
+      },
+      "_comment": "Per GAP-MCP-NAMING-001: governance → gov"
     },
-    "governance-tasks": {
+    "gov-tasks": {
       "type": "stdio",
       "command": "bash",
       "args": ["scripts/mcp-runner.sh", "governance.mcp_server_tasks"],
@@ -68,7 +71,8 @@
       "env": {
         "TYPEDB_HOST": "localhost",
         "TYPEDB_PORT": "1729"
-      }
+      },
+      "_comment": "Per GAP-MCP-NAMING-001: governance → gov"
     }
   }
 }

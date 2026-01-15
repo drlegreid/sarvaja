@@ -1,7 +1,7 @@
-# Gap Index - Sim.ai PoC
+# Gap Index - Sarvaja
 
-**Last Updated:** 2026-01-14
-**Total Gaps:** 218 | Status: 200 RESOLVED, 16 DEFERRED, 0 OPEN, 2 NOT_IMPLEMENTED
+**Last Updated:** 2026-01-15
+**Total Gaps:** 227 | Status: 209 RESOLVED, 14 DEFERRED, 2 OPEN, 2 NOT_IMPLEMENTED
 **Format Migration:** GAP-WORKFLOW-003 - Replaced strikethrough with Status column
 
 > **Evidence Files:** Detailed analysis moved to [evidence/](evidence/) per GAP-META-001
@@ -18,6 +18,15 @@
 | GAP-UI-EXP-001 | RESOLVED | Decisions view shows "No date" for all decisions | MEDIUM | data_integrity | FIXED: TypeDB query + compat layer now return decision_date |
 | GAP-UI-EXP-002 | DEFERRED | Sessions lack descriptions | LOW | data_integrity | Requires markdown parsing to extract description from evidence files |
 | GAP-UI-EXP-003 | DEFERRED | Task list shows only DONE tasks at top | LOW | ux | UX enhancement - add filtering/sorting controls |
+| GAP-UI-EXP-004 | RESOLVED | Tasks view missing search/filter/pagination | HIGH | ux | FIXED: Added search textbox + Status/Phase dropdowns with v_show filtering |
+| GAP-UI-EXP-005 | RESOLVED | Sessions view shows "No date" - UI bug | HIGH | data_integrity | FIXED: UI now checks both start_time (REST API) and date (MCP) fields |
+| GAP-UI-EXP-006 | RESOLVED | Infrastructure health check shows incorrect status | CRITICAL | observability | [GAP-UI-EXP-006-INFRA-HEALTH.md](evidence/GAP-UI-EXP-006-INFRA-HEALTH.md) |
+| GAP-UI-EXP-007 | RESOLVED | Chat send button throws JS error, messages don't send | CRITICAL | functionality | FIXED: Changed $trigger() to trigger() in chat/input.py and execution.py |
+| GAP-UI-EXP-008 | RESOLVED | Agents trust scores - architecture clarified | MEDIUM | data_integrity | [GAP-UI-EXP-008-AGENTS-TRUST-MISMATCH.md](evidence/GAP-UI-EXP-008-AGENTS-TRUST-MISMATCH.md) |
+| GAP-UI-EXP-009 | RESOLVED | TypeDB schema mismatch - graceful handling | HIGH | data_integrity | [GAP-UI-EXP-009-TYPEDB-TASK-RESOLUTION.md](evidence/GAP-UI-EXP-009-TYPEDB-TASK-RESOLUTION.md) |
+| GAP-UI-EXP-010 | RESOLVED | Decisions count mismatch - UI shows 4, API returns 7 | MEDIUM | data_integrity | FIXED: API and UI now both return 4 decisions - data synchronized |
+| GAP-UI-EXP-011 | RESOLVED | Workflow checker file missing - ERROR state | HIGH | functionality | [GAP-UI-EXP-011-WORKFLOW-CHECKER-MISSING.md](evidence/GAP-UI-EXP-011-WORKFLOW-CHECKER-MISSING.md) |
+| GAP-UI-EXP-012 | RESOLVED | Agents not loading in UI views (0 agents shown) | HIGH | data_loading | FIXED: Handlers updated to use GOVERNANCE_API_URL env var |
 
 ---
 
@@ -31,7 +40,7 @@
 | GAP-FILE-028 | RESOLVED | routes/agents.py 537→230 lines (package) | MEDIUM | architecture | FIXED 2026-01-14: Split to package with crud.py (230), observability.py (130), visibility.py (129), helpers.py (72). |
 | GAP-UI-046 | RESOLVED | Task status/resolution per Agile DoR/DoD | MEDIUM | ux | FIXED 2026-01-14: Schema+entities+lifecycle module+TDD tests. Rule TASK-LIFE-01-v1 created. 24 unit tests pass. |
 | GAP-UI-047 | RESOLVED | Reactive loaders with trace status | MEDIUM | ux | FIXED 2026-01-14: LoaderState + APITrace dataclasses, transforms module, initial state integration. 33 TDD tests pass. Rule UI-LOADER-01-v1 created. |
-| GAP-UI-048 | RESOLVED | Bottom bar with technical traces | LOW | ux | FIXED 2026-01-14: TraceEvent + TraceStore dataclasses, transforms module, initial state integration. 35 TDD tests pass. Rule UI-TRACE-01-v1 created. |
+| GAP-UI-048 | RESOLVED | Bottom bar with technical traces | LOW | ux | FIXED 2026-01-14: VFooter trace bar UI component created. Visual verification per TEST-UI-VERIFY-01-v1. Screenshot: .playwright-mcp/GAP-UI-048-trace-bar.png |
 | GAP-RULE-001 | RESOLVED | Task rule covering tech solutions | MEDIUM | governance | FIXED 2026-01-14: Created TASK-TECH-01-v1.md - Technology Solution Documentation rule. |
 | GAP-TASK-LINK-001 | RESOLVED | Tasks linked to session documents | MEDIUM | data_integrity | FIXED 2026-01-14: link_task_to_session, governance_task_link_session MCP tool, 14 TDD tests pass. |
 | GAP-TASK-LINK-002 | RESOLVED | Tasks linked to github commits | MEDIUM | data_integrity | FIXED 2026-01-14: Schema (git-commit entity, task-commit relation), linking methods, MCP tools, 14 TDD tests pass. |
@@ -99,6 +108,8 @@
 | GAP-REFACTOR-001 | RESOLVED | healthcheck.py exceeds 300 line limit (now 522 lines, was 1002) | HIGH | architecture | RULE-032 | FIXED 2026-01-13: 50% reduction achieved. Modular architecture: 8 checker modules in hooks/checkers/, ContainerRecovery class. Further reduction → RD-REFACTOR-001. |
 | GAP-PYTHON-001 | RESOLVED | Agent uses `python` instead of `python3` | MEDIUM | devops | RULE-035 | FIXED 2026-01-13: Updated recover.py, SHELL-GUIDE.md. Added python3 pitfall warning. |
 | GAP-PODMAN-DESKTOP-001 | DEFERRED | Podman Desktop shows "CREATED" for running containers | LOW | tooling | RULE-021 | Bug in 1.24.x. Needs desktop automation MCP (playwright/xdotool) for validation. Workaround: `scripts/fix-podman-desktop.sh` |
+| GAP-AMNESIA-OUTPUT-001 | RESOLVED | AMNESIA detection output suppressed in summary mode | HIGH | observability | RECOVER-AMNES-01-v1 | FIXED 2026-01-15: Added amnesia param to format_summary(), now shows AMNESIA RISK in summary output. [GAP-AMNESIA-OUTPUT-001.md](evidence/GAP-AMNESIA-OUTPUT-001.md) |
+| GAP-HEALTH-AGGRESSIVE-001 | RESOLVED | AMNESIA detection too quiet - needs ENV-based aggressive mode | HIGH | observability | RECOVER-AMNES-01-v1 | FIXED 2026-01-15: Added SARVAJA_HEALTH_MODE ENV (quiet/normal/aggressive), configurable thresholds. [GAP-HEALTH-AGGRESSIVE-001.md](evidence/GAP-HEALTH-AGGRESSIVE-001.md) |
 
 ---
 

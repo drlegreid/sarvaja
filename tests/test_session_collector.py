@@ -203,6 +203,72 @@ class TestSessionLogGeneration:
             assert "DECISION-001" in content
             assert "Test Decision" in content
 
+    def test_generate_session_log_contains_thoughts_section(self):
+        """Generated log contains Key Thoughts section (AMNESIA recovery)."""
+        from governance.session_collector import SessionCollector
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            collector = SessionCollector("TEST", evidence_dir=tmpdir)
+            collector.capture_thought(
+                thought="This is a key reasoning step",
+                thought_type="hypothesis",
+                confidence=0.85
+            )
+
+            log_path = collector.generate_session_log(Path(tmpdir))
+
+            with open(log_path, encoding="utf-8") as f:
+                content = f.read()
+
+            assert "## Key Thoughts" in content
+            assert "Hypothesis" in content
+            assert "key reasoning step" in content
+            assert "Confidence: 85" in content  # 85% formatted
+
+    def test_generate_session_log_contains_tool_calls_section(self):
+        """Generated log contains Tool Calls section (AMNESIA recovery)."""
+        from governance.session_collector import SessionCollector
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            collector = SessionCollector("TEST", evidence_dir=tmpdir)
+            collector.capture_tool_call(
+                tool_name="governance_get_rule",
+                arguments={"rule_id": "RULE-001"},
+                result="Rule returned successfully",
+                duration_ms=150,
+                success=True
+            )
+
+            log_path = collector.generate_session_log(Path(tmpdir))
+
+            with open(log_path, encoding="utf-8") as f:
+                content = f.read()
+
+            assert "## Tool Calls" in content
+            assert "governance_get_rule" in content
+            assert "150ms" in content
+
+    def test_generate_session_log_contains_initial_prompt(self):
+        """Generated log contains initial prompt per SESSION-PROMPT-01-v1."""
+        from governance.session_collector import SessionCollector
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            collector = SessionCollector("TEST", evidence_dir=tmpdir)
+            collector.capture_intent(
+                goal="Fix the bug",
+                source="User request",
+                initial_prompt="Please fix the login bug that crashes on mobile"
+            )
+
+            log_path = collector.generate_session_log(Path(tmpdir))
+
+            with open(log_path, encoding="utf-8") as f:
+                content = f.read()
+
+            assert "## Session Intent" in content
+            assert "### Initial Prompt" in content
+            assert "login bug that crashes on mobile" in content
+
 
 class TestSessionSerialization:
     """Tests for session serialization."""

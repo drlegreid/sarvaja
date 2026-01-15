@@ -255,18 +255,21 @@ class SessionCaptureMixin:
         goal: str,
         source: str,
         planned_tasks: Optional[List[str]] = None,
-        previous_session_id: Optional[str] = None
+        previous_session_id: Optional[str] = None,
+        initial_prompt: Optional[str] = None
     ) -> SessionIntent:
         """
         Capture session intent at start.
 
         Per RD-INTENT: Record what the session intends to accomplish.
+        Per SESSION-PROMPT-01-v1: Initial prompt must be captured verbatim.
 
         Args:
             goal: Primary goal for the session
             source: Where the goal came from ("TODO.md", "User request", "Handoff from SESSION-XXX")
             planned_tasks: List of task IDs planned for this session
             previous_session_id: Link to previous session for continuity tracking
+            initial_prompt: Verbatim first user message (per SESSION-PROMPT-01-v1)
 
         Returns:
             Created SessionIntent object
@@ -275,7 +278,8 @@ class SessionCaptureMixin:
             goal=goal,
             source=source,
             planned_tasks=planned_tasks or [],
-            previous_session_id=previous_session_id
+            previous_session_id=previous_session_id,
+            initial_prompt=initial_prompt
         )
         self.intent = intent
 
@@ -287,7 +291,8 @@ class SessionCaptureMixin:
             metadata={
                 "source": source,
                 "planned_tasks": planned_tasks or [],
-                "previous_session_id": previous_session_id
+                "previous_session_id": previous_session_id,
+                "initial_prompt": initial_prompt
             }
         ))
 

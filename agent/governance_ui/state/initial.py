@@ -29,6 +29,9 @@ def get_initial_state() -> Dict[str, Any]:
         Dict with all initial state values
     """
     return {
+        # Theme
+        'dark_mode': False,
+
         # Navigation
         'active_view': 'rules',
 
@@ -141,6 +144,17 @@ def get_initial_state() -> Dict[str, Any]:
         'backlog_agent_id': '',
         'backlog_auto_refresh': False,
         'backlog_refresh_interval': 5,  # seconds
+
+        # Sessions filter state
+        'sessions_search_query': '',
+
+        # Tasks filter state (GAP-UI-EXP-004)
+        'tasks_search_query': '',
+        'tasks_status_filter': None,
+        'tasks_phase_filter': None,
+        # Filter dropdown options (must match items= in tasks/list.py)
+        'task_status_options': ['TODO', 'IN_PROGRESS', 'DONE', 'BLOCKED'],
+        'task_phase_options': ['P10', 'P11', 'P12', 'R&D', 'FH', 'KAN', 'ORCH', 'DOCVIEW'],
 
         # Executive Reports (GAP-UI-044)
         'executive_report': None,

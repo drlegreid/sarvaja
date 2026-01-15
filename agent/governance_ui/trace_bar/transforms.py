@@ -148,20 +148,27 @@ def _add_trace_event(state: Any, event: TraceEvent) -> None:
 
     error_count = sum(1 for e in events if is_error_event(e))
 
-    # Update state
-    setattr(state, 'trace_events', events)
-    setattr(state, 'trace_events_count', len(events))
-    setattr(state, 'trace_error_count', error_count)
-    setattr(state, 'trace_last_event', event.format_display())
-
-    # Update summary
+    # Build summary
     summary = {
         "total": len(events),
         "errors": error_count,
         "api_calls": sum(1 for e in events if e.get('event_type') == 'api_call'),
         "ui_actions": sum(1 for e in events if e.get('event_type') == 'ui_action'),
     }
-    setattr(state, 'trace_summary', summary)
+
+    # Calculate counts
+    api_count = sum(1 for e in events if e.get('event_type') == 'api_call')
+
+    # Direct attribute assignment triggers Vue reactivity (unlike state.update())
+    try:
+        state.trace_events = events
+        state.trace_events_count = len(events)
+        state.trace_error_count = error_count
+        state.trace_api_count = api_count
+        state.trace_last_event = event.format_display()
+        state.trace_summary = summary
+    except Exception as e:
+        print(f"[TRACE] ERROR updating state: {e}")
 
 
 def clear_traces(state: Any) -> None:

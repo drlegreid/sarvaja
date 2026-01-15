@@ -1,9 +1,9 @@
 {
   "current_session": {
-    "session_id": "TEST-FH-INTEGRATION",
-    "started_at": "2026-01-14T13:23:23.771038",
+    "session_id": "TEST-COMMIT-SESSION",
+    "started_at": "2026-01-15T13:12:54.687180",
     "tasks_worked": [
-      "FH-TASK"
+      "COMMIT-TASK"
     ],
     "rules_applied": [],
     "tool_calls": 0,
@@ -14,7 +14,7 @@
       "task_id": "TASK-001",
       "task_name": "Test Task",
       "session_id": "TEST-AUDIT-SESSION",
-      "started_at": "2026-01-14T13:22:53.946332",
+      "started_at": "2026-01-15T13:12:54.655237",
       "rules_applied": [
         "RULE-001",
         "RULE-021"
@@ -22,31 +22,20 @@
       "tool_calls": [],
       "status": "in_progress",
       "completed_at": null,
-      "tokens_used": 0,
-      "commits": [
-        {
-          "commit_hash": "abc123",
-          "files_changed": [
-            "src/main.py",
-            "tests/test_main.py"
-          ],
-          "commit_message": "Fix bug in main",
-          "recorded_at": "2026-01-14T13:23:23.769380"
-        }
-      ]
+      "tokens_used": 0
     },
     "TASK-002": {
       "task_id": "TASK-002",
       "task_name": "Tool Call Test",
       "session_id": "TEST-AUDIT-SESSION-2",
-      "started_at": "2026-01-14T13:22:53.948620",
+      "started_at": "2026-01-15T13:12:54.670206",
       "rules_applied": [
         "RULE-021"
       ],
       "tool_calls": [
         {
           "tool_name": "governance_health",
-          "timestamp": "2026-01-14T13:22:53.949315",
+          "timestamp": "2026-01-15T13:12:54.672573",
           "duration_ms": 50,
           "rules_applied": [
             "RULE-021"
@@ -62,7 +51,7 @@
       "task_id": "COMMIT-TASK",
       "task_name": "Commit Test",
       "session_id": "TEST-COMMIT-SESSION",
-      "started_at": "2026-01-14T13:22:53.954536",
+      "started_at": "2026-01-15T13:12:54.688540",
       "rules_applied": [],
       "tool_calls": [],
       "status": "in_progress",
@@ -76,12 +65,300 @@
             "tests/test_main.py"
           ],
           "commit_message": "Fix authentication bug",
-          "recorded_at": "2026-01-14T13:22:53.954902"
+          "recorded_at": "2026-01-15T13:12:54.689811"
         }
       ]
     }
   },
   "completed_tasks": [
+    {
+      "task_id": "E2E-TASK",
+      "task_name": "End to End Test",
+      "session_id": "TEST-E2E-AUDIT",
+      "started_at": "2026-01-15T13:12:54.677085",
+      "rules_applied": [
+        "RULE-001",
+        "RULE-004"
+      ],
+      "tool_calls": [
+        {
+          "tool_name": "Read",
+          "timestamp": "2026-01-15T13:12:54.680612",
+          "duration_ms": 10,
+          "rules_applied": [
+            "RULE-001"
+          ],
+          "tokens": 50
+        }
+      ],
+      "status": "completed",
+      "completed_at": "2026-01-15T13:12:54.681812",
+      "tokens_used": 50
+    },
+    {
+      "task_id": "E2E-TASK",
+      "task_name": "End to End Test",
+      "session_id": "TEST-E2E-AUDIT",
+      "started_at": "2026-01-15T13:12:08.769026",
+      "rules_applied": [
+        "RULE-001",
+        "RULE-004"
+      ],
+      "tool_calls": [
+        {
+          "tool_name": "Read",
+          "timestamp": "2026-01-15T13:12:08.772483",
+          "duration_ms": 10,
+          "rules_applied": [
+            "RULE-001"
+          ],
+          "tokens": 50
+        }
+      ],
+      "status": "completed",
+      "completed_at": "2026-01-15T13:12:08.773618",
+      "tokens_used": 50
+    },
+    {
+      "task_id": "E2E-TASK",
+      "task_name": "End to End Test",
+      "session_id": "TEST-E2E-AUDIT",
+      "started_at": "2026-01-15T13:11:22.267150",
+      "rules_applied": [
+        "RULE-001",
+        "RULE-004"
+      ],
+      "tool_calls": [
+        {
+          "tool_name": "Read",
+          "timestamp": "2026-01-15T13:11:22.270548",
+          "duration_ms": 10,
+          "rules_applied": [
+            "RULE-001"
+          ],
+          "tokens": 50
+        }
+      ],
+      "status": "completed",
+      "completed_at": "2026-01-15T13:11:22.271724",
+      "tokens_used": 50
+    },
+    {
+      "task_id": "E2E-TASK",
+      "task_name": "End to End Test",
+      "session_id": "TEST-E2E-AUDIT",
+      "started_at": "2026-01-15T13:10:36.918809",
+      "rules_applied": [
+        "RULE-001",
+        "RULE-004"
+      ],
+      "tool_calls": [
+        {
+          "tool_name": "Read",
+          "timestamp": "2026-01-15T13:10:36.922334",
+          "duration_ms": 10,
+          "rules_applied": [
+            "RULE-001"
+          ],
+          "tokens": 50
+        }
+      ],
+      "status": "completed",
+      "completed_at": "2026-01-15T13:10:36.923488",
+      "tokens_used": 50
+    },
+    {
+      "task_id": "E2E-TASK",
+      "task_name": "End to End Test",
+      "session_id": "TEST-E2E-AUDIT",
+      "started_at": "2026-01-15T13:09:50.337853",
+      "rules_applied": [
+        "RULE-001",
+        "RULE-004"
+      ],
+      "tool_calls": [
+        {
+          "tool_name": "Read",
+          "timestamp": "2026-01-15T13:09:50.341255",
+          "duration_ms": 10,
+          "rules_applied": [
+            "RULE-001"
+          ],
+          "tokens": 50
+        }
+      ],
+      "status": "completed",
+      "completed_at": "2026-01-15T13:09:50.342435",
+      "tokens_used": 50
+    },
+    {
+      "task_id": "E2E-TASK",
+      "task_name": "End to End Test",
+      "session_id": "TEST-E2E-AUDIT",
+      "started_at": "2026-01-14T19:14:42.956851",
+      "rules_applied": [
+        "RULE-001",
+        "RULE-004"
+      ],
+      "tool_calls": [
+        {
+          "tool_name": "Read",
+          "timestamp": "2026-01-14T19:14:42.958293",
+          "duration_ms": 10,
+          "rules_applied": [
+            "RULE-001"
+          ],
+          "tokens": 50
+        }
+      ],
+      "status": "completed",
+      "completed_at": "2026-01-14T19:14:42.958766",
+      "tokens_used": 50
+    },
+    {
+      "task_id": "E2E-TASK",
+      "task_name": "End to End Test",
+      "session_id": "TEST-E2E-AUDIT",
+      "started_at": "2026-01-14T19:14:01.744593",
+      "rules_applied": [
+        "RULE-001",
+        "RULE-004"
+      ],
+      "tool_calls": [
+        {
+          "tool_name": "Read",
+          "timestamp": "2026-01-14T19:14:01.746027",
+          "duration_ms": 10,
+          "rules_applied": [
+            "RULE-001"
+          ],
+          "tokens": 50
+        }
+      ],
+      "status": "completed",
+      "completed_at": "2026-01-14T19:14:01.746512",
+      "tokens_used": 50
+    },
+    {
+      "task_id": "E2E-TASK",
+      "task_name": "End to End Test",
+      "session_id": "TEST-E2E-AUDIT",
+      "started_at": "2026-01-14T19:13:21.047824",
+      "rules_applied": [
+        "RULE-001",
+        "RULE-004"
+      ],
+      "tool_calls": [
+        {
+          "tool_name": "Read",
+          "timestamp": "2026-01-14T19:13:21.049264",
+          "duration_ms": 10,
+          "rules_applied": [
+            "RULE-001"
+          ],
+          "tokens": 50
+        }
+      ],
+      "status": "completed",
+      "completed_at": "2026-01-14T19:13:21.049735",
+      "tokens_used": 50
+    },
+    {
+      "task_id": "E2E-TASK",
+      "task_name": "End to End Test",
+      "session_id": "TEST-E2E-AUDIT",
+      "started_at": "2026-01-14T19:12:39.143666",
+      "rules_applied": [
+        "RULE-001",
+        "RULE-004"
+      ],
+      "tool_calls": [
+        {
+          "tool_name": "Read",
+          "timestamp": "2026-01-14T19:12:39.144946",
+          "duration_ms": 10,
+          "rules_applied": [
+            "RULE-001"
+          ],
+          "tokens": 50
+        }
+      ],
+      "status": "completed",
+      "completed_at": "2026-01-14T19:12:39.145376",
+      "tokens_used": 50
+    },
+    {
+      "task_id": "E2E-TASK",
+      "task_name": "End to End Test",
+      "session_id": "TEST-E2E-AUDIT",
+      "started_at": "2026-01-14T19:11:59.296172",
+      "rules_applied": [
+        "RULE-001",
+        "RULE-004"
+      ],
+      "tool_calls": [
+        {
+          "tool_name": "Read",
+          "timestamp": "2026-01-14T19:11:59.297557",
+          "duration_ms": 10,
+          "rules_applied": [
+            "RULE-001"
+          ],
+          "tokens": 50
+        }
+      ],
+      "status": "completed",
+      "completed_at": "2026-01-14T19:11:59.297986",
+      "tokens_used": 50
+    },
+    {
+      "task_id": "E2E-TASK",
+      "task_name": "End to End Test",
+      "session_id": "TEST-E2E-AUDIT",
+      "started_at": "2026-01-14T19:11:19.013894",
+      "rules_applied": [
+        "RULE-001",
+        "RULE-004"
+      ],
+      "tool_calls": [
+        {
+          "tool_name": "Read",
+          "timestamp": "2026-01-14T19:11:19.015182",
+          "duration_ms": 10,
+          "rules_applied": [
+            "RULE-001"
+          ],
+          "tokens": 50
+        }
+      ],
+      "status": "completed",
+      "completed_at": "2026-01-14T19:11:19.015609",
+      "tokens_used": 50
+    },
+    {
+      "task_id": "E2E-TASK",
+      "task_name": "End to End Test",
+      "session_id": "TEST-E2E-AUDIT",
+      "started_at": "2026-01-14T19:10:38.569544",
+      "rules_applied": [
+        "RULE-001",
+        "RULE-004"
+      ],
+      "tool_calls": [
+        {
+          "tool_name": "Read",
+          "timestamp": "2026-01-14T19:10:38.570908",
+          "duration_ms": 10,
+          "rules_applied": [
+            "RULE-001"
+          ],
+          "tokens": 50
+        }
+      ],
+      "status": "completed",
+      "completed_at": "2026-01-14T19:10:38.571443",
+      "tokens_used": 50
+    },
     {
       "task_id": "FH-TASK",
       "task_name": "Frankel Hash Test",
@@ -354,12 +631,12 @@
     }
   ],
   "token_usage": {
-    "total": 1550,
+    "total": 3350,
     "by_session": {
       "SESSION-2026-01-14-VISIBILITY-TEST": 500,
-      "TEST-AUDIT-SESSION-2": 700,
-      "TEST-E2E-AUDIT": 350
+      "TEST-AUDIT-SESSION-2": 1900,
+      "TEST-E2E-AUDIT": 950
     }
   },
-  "last_updated": "2026-01-14T13:23:23.779074"
+  "last_updated": "2026-01-15T13:12:54.689855"
 }

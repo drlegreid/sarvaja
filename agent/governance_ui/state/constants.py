@@ -130,6 +130,10 @@ RULE_CATEGORIES: List[str] = ['governance', 'technical', 'operational']
 RULE_PRIORITIES: List[str] = ['CRITICAL', 'HIGH', 'MEDIUM', 'LOW']
 RULE_STATUSES: List[str] = ['ACTIVE', 'DRAFT', 'DEPRECATED']
 
+# Task filter options (GAP-UI-EXP-004)
+TASK_STATUSES: List[str] = ['TODO', 'IN_PROGRESS', 'DONE', 'BLOCKED']
+TASK_PHASES: List[str] = ['P10', 'P11', 'P12', 'R&D', 'FH', 'KAN', 'ORCH', 'DOCVIEW']
+
 
 # =============================================================================
 # JOURNEY (P9.7)

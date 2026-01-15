@@ -20,6 +20,14 @@ class TaskReadQueries:
     Uses mixin pattern for TypeDBClient composition.
     """
 
+    def _safe_query(self, query: str) -> list:
+        """Execute query with graceful handling of missing types (GAP-UI-EXP-009)."""
+        try:
+            return self._execute_query(query)
+        except Exception:
+            # Type may not exist in older TypeDB schemas
+            return []
+
     def get_all_tasks(self, status: str = None, phase: str = None, agent_id: str = None) -> List[Task]:
         """
         Get all tasks from TypeDB with optional filters.
@@ -101,148 +109,131 @@ class TaskReadQueries:
             phase=r.get("phase")
         )
 
+        # All optional queries use _safe_query to handle missing types (GAP-UI-EXP-009)
+
         # Get optional body attribute
-        body_query = f"""
+        body_results = self._safe_query(f'''
             match $t isa task, has task-id "{task_id}", has task-body $body;
             get $body;
-        """
-        body_results = self._execute_query(body_query)
+        ''')
         if body_results:
             task.body = body_results[0].get("body")
 
         # Get optional task-resolution attribute (GAP-UI-046)
-        resolution_query = f"""
+        resolution_results = self._safe_query(f'''
             match $t isa task, has task-id "{task_id}", has task-resolution $res;
             get $res;
-        """
-        resolution_results = self._execute_query(resolution_query)
+        ''')
         if resolution_results:
             task.resolution = resolution_results[0].get("res")
 
         # Get optional gap-reference attribute
-        gap_query = f"""
+        gap_results = self._safe_query(f'''
             match $t isa task, has task-id "{task_id}", has gap-reference $gap;
             get $gap;
-        """
-        gap_results = self._execute_query(gap_query)
+        ''')
         if gap_results:
             task.gap_id = gap_results[0].get("gap")
 
         # Get optional agent-id attribute (E2E tests requirement)
-        agent_query = f"""
+        agent_results = self._safe_query(f'''
             match $t isa task, has task-id "{task_id}", has agent-id $agent;
             get $agent;
-        """
-        agent_results = self._execute_query(agent_query)
+        ''')
         if agent_results:
             task.agent_id = agent_results[0].get("agent")
 
         # Get optional task-evidence attribute (E2E tests requirement)
-        evidence_query = f"""
+        evidence_results = self._safe_query(f'''
             match $t isa task, has task-id "{task_id}", has task-evidence $ev;
             get $ev;
-        """
-        evidence_results = self._execute_query(evidence_query)
+        ''')
         if evidence_results:
             task.evidence = evidence_results[0].get("ev")
 
         # Get optional task-completed-at attribute (E2E tests requirement)
-        completed_query = f"""
+        completed_results = self._safe_query(f'''
             match $t isa task, has task-id "{task_id}", has task-completed-at $comp;
             get $comp;
-        """
-        completed_results = self._execute_query(completed_query)
+        ''')
         if completed_results:
             task.completed_at = completed_results[0].get("comp")
 
-        # Get optional task-created-at attribute (GAP-UI-035: datetime columns)
-        created_query = f"""
+        # Get optional task-created-at attribute (GAP-UI-035)
+        created_results = self._safe_query(f'''
             match $t isa task, has task-id "{task_id}", has task-created-at $created;
             get $created;
-        """
-        created_results = self._execute_query(created_query)
+        ''')
         if created_results:
             task.created_at = created_results[0].get("created")
 
-        # Get optional task-claimed-at attribute (GAP-UI-035: datetime columns)
-        claimed_query = f"""
+        # Get optional task-claimed-at attribute (GAP-UI-035)
+        claimed_results = self._safe_query(f'''
             match $t isa task, has task-id "{task_id}", has task-claimed-at $claimed;
             get $claimed;
-        """
-        claimed_results = self._execute_query(claimed_query)
+        ''')
         if claimed_results:
             task.claimed_at = claimed_results[0].get("claimed")
 
         # Get linked rules via implements-rule relationship
-        rules_query = f"""
+        rules_results = self._safe_query(f'''
             match
                 $t isa task, has task-id "{task_id}";
                 (implementing-task: $t, implemented-rule: $r) isa implements-rule;
                 $r has rule-id $rid;
             get $rid;
-        """
-        rules_results = self._execute_query(rules_query)
+        ''')
         if rules_results:
             task.linked_rules = [r.get("rid") for r in rules_results]
 
         # Get linked sessions via completed-in relationship
-        sessions_query = f"""
+        sessions_results = self._safe_query(f'''
             match
                 $t isa task, has task-id "{task_id}";
                 (completed-task: $t, hosting-session: $s) isa completed-in;
                 $s has session-id $sid;
             get $sid;
-        """
-        sessions_results = self._execute_query(sessions_query)
+        ''')
         if sessions_results:
             task.linked_sessions = [r.get("sid") for r in sessions_results]
 
         # Get linked commits via task-commit relationship (GAP-TASK-LINK-002)
-        commits_query = f"""
+        commits_results = self._safe_query(f'''
             match
                 $t isa task, has task-id "{task_id}";
                 (implementing-commit: $c, implemented-task: $t) isa task-commit;
                 $c has commit-sha $sha;
             get $sha;
-        """
-        commits_results = self._execute_query(commits_query)
+        ''')
         if commits_results:
             task.linked_commits = [r.get("sha") for r in commits_results]
 
         # Get task detail sections (GAP-TASK-LINK-004, TASK-TECH-01-v1)
-        # Business (Why)
-        business_query = f"""
+        business_results = self._safe_query(f'''
             match $t isa task, has task-id "{task_id}", has task-business $biz;
             get $biz;
-        """
-        business_results = self._execute_query(business_query)
+        ''')
         if business_results:
             task.business = business_results[0].get("biz")
 
-        # Design (What)
-        design_query = f"""
+        design_results = self._safe_query(f'''
             match $t isa task, has task-id "{task_id}", has task-design $des;
             get $des;
-        """
-        design_results = self._execute_query(design_query)
+        ''')
         if design_results:
             task.design = design_results[0].get("des")
 
-        # Architecture (How)
-        arch_query = f"""
+        arch_results = self._safe_query(f'''
             match $t isa task, has task-id "{task_id}", has task-architecture $arch;
             get $arch;
-        """
-        arch_results = self._execute_query(arch_query)
+        ''')
         if arch_results:
             task.architecture = arch_results[0].get("arch")
 
-        # Test (Verification)
-        test_query = f"""
+        test_results = self._safe_query(f'''
             match $t isa task, has task-id "{task_id}", has task-test $test;
             get $test;
-        """
-        test_results = self._execute_query(test_query)
+        ''')
         if test_results:
             task.test_section = test_results[0].get("test")
 

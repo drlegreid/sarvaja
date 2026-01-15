@@ -28,19 +28,17 @@ def register_impact_controllers(state: Any, ctrl: Any, api_base_url: str) -> Non
         api_base_url: Base URL for API calls (unused but kept for consistency)
     """
 
-    @ctrl.set("analyze_rule_impact")
-    def analyze_rule_impact(rule_id):
-        """Analyze impact for selected rule (P9.4)."""
-        if not rule_id:
-            state.impact_selected_rule = None
+    @state.change("impact_selected_rule")
+    def on_impact_rule_change(impact_selected_rule, **kwargs):
+        """React to rule selection changes (P9.4)."""
+        if not impact_selected_rule:
             state.impact_analysis = None
             state.dependency_graph = None
             state.mermaid_diagram = ''
             return
 
-        state.impact_selected_rule = rule_id
         # Calculate impact using pure functions
-        impact = calculate_rule_impact(rule_id, state.rules)
+        impact = calculate_rule_impact(impact_selected_rule, state.rules)
         state.impact_analysis = impact
 
         # Build dependency graph for selected rule
