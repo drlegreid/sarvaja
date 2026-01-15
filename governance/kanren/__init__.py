@@ -1,0 +1,73 @@
+"""
+Kanren Constraint Engine for Governance Rules (KAN-002).
+
+Maps TypeDB governance rules to Kanren relations for declarative
+context engineering and constraint validation.
+
+Per RULE-011: Multi-Agent Governance
+Per RULE-028: Change Validation Protocol
+Per DOC-SIZE-01-v1: Modular file structure (<300 lines each)
+
+Package Structure:
+- models.py: Domain dataclasses (AgentContext, TaskContext, RuleContext)
+- trust.py: Trust level constraints (RULE-011)
+- tasks.py: Task validation constraints (RULE-014, RULE-028)
+- rag.py: RAG chunk validation (RULE-007)
+- conflicts.py: Rule conflict detection
+- filter.py: KanrenRAGFilter class (KAN-003)
+- assembly.py: Context assembly functions
+- demo.py: Demonstration script
+"""
+
+# Domain models
+from .models import AgentContext, TaskContext, RuleContext
+
+# Trust constraints (RULE-011)
+from .trust import trust_level, requires_supervisor, can_execute_priority
+
+# Task constraints (RULE-014, RULE-028)
+from .tasks import task_requires_evidence, valid_task_assignment, validate_agent_for_task
+
+# RAG validation (RULE-007)
+from .rag import ALLOWED_SOURCES, TRUSTED_TYPES, valid_rag_chunk, filter_rag_chunks
+
+# Rule conflicts
+from .conflicts import conflicting_priorities, find_rule_conflicts
+
+# Context assembly
+from .assembly import assemble_context
+
+# RAG Filter (KAN-003)
+from .filter import KanrenRAGFilter
+
+# Demo
+from .demo import demo_kanren_constraints
+
+__all__ = [
+    # Models
+    "AgentContext",
+    "TaskContext",
+    "RuleContext",
+    # Trust
+    "trust_level",
+    "requires_supervisor",
+    "can_execute_priority",
+    # Tasks
+    "task_requires_evidence",
+    "valid_task_assignment",
+    "validate_agent_for_task",
+    # RAG
+    "ALLOWED_SOURCES",
+    "TRUSTED_TYPES",
+    "valid_rag_chunk",
+    "filter_rag_chunks",
+    # Conflicts
+    "conflicting_priorities",
+    "find_rule_conflicts",
+    # Assembly
+    "assemble_context",
+    # Filter
+    "KanrenRAGFilter",
+    # Demo
+    "demo_kanren_constraints",
+]
