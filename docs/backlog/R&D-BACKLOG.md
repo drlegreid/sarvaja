@@ -23,6 +23,7 @@ This is the **root document** for R&D backlog. Each section links to detailed in
 | **Haskell MCP** | [rd/RD-HASKELL-MCP.md](rd/RD-HASKELL-MCP.md) | ON HOLD | FUTURE |
 | **Frankel Hash** | [rd/RD-FRANKEL-HASH.md](rd/RD-FRANKEL-HASH.md) | PARTIAL | HIGH |
 | **Testing Strategy** | [rd/RD-TESTING-STRATEGY.md](rd/RD-TESTING-STRATEGY.md) | IN_PROGRESS | CRITICAL |
+| **Agent Testing** | [rd/RD-AGENT-TESTING.md](rd/RD-AGENT-TESTING.md) | IN_PROGRESS | **CRITICAL** |
 | **Document Viewer** | [rd/RD-DOCUMENT-VIEWER.md](rd/RD-DOCUMENT-VIEWER.md) | TODO | HIGH |
 | **Enterprise Architecture EPIC** | (inline below) | 📋 TODO | **CRITICAL** |
 
