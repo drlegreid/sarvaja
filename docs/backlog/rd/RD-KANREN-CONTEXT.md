@@ -114,9 +114,9 @@ def valid_context(context, rules):
 | ID | Task | Status | Priority | Notes |
 |----|------|--------|----------|-------|
 | KAN-001 | Spike: Kanren Python library evaluation | ✅ DONE | **HIGH** | Installed kanren 0.3.0, validated context engineering use cases |
-| KAN-002 | Design: Context constraint DSL | ✅ DONE | HIGH | governance/kanren_constraints.py - 39 tests passing |
+| KAN-002 | Design: Context constraint DSL | ✅ DONE | HIGH | governance/kanren/ package - modularized per DOC-SIZE-01-v1 |
 | KAN-003 | PoC: RAG filter with Kanren validation | ✅ DONE | HIGH | KanrenRAGFilter class - 45 tests passing |
-| KAN-004 | Integration: TypeDB → Kanren constraint loader | 📋 TODO | MEDIUM | Load rules from TypeDB as Kanren facts |
+| KAN-004 | Integration: TypeDB → Kanren constraint loader | ✅ DONE | MEDIUM | TypeDBKanrenBridge + 10 tests passing |
 | KAN-005 | Benchmark: Performance vs direct Python validation | 📋 TODO | MEDIUM | Measure overhead for constraint checking |
 
 ---
@@ -390,7 +390,92 @@ context = rag_filter.search_for_task(
 
 ### Next Steps
 
-1. **KAN-004:** Load TypeDB rules as Kanren facts dynamically
-2. **KAN-005:** Performance benchmarks (<100ms target)
+1. **KAN-005:** Performance benchmarks (<100ms target)
+
+---
+
+## Implementation Results: KAN-004 (2026-01-15)
+
+### File Created
+
+**`governance/kanren/loader.py`** - TypeDB → Kanren constraint loader.
+
+### Components Implemented
+
+| Component | Description |
+|-----------|-------------|
+| `RuleConstraint` | Dataclass for TypeDB rule representation |
+| `TypeDBKanrenBridge` | Bridge managing load/validate lifecycle |
+| `load_rules_from_typedb()` | Parse MCP JSON → RuleConstraint list |
+| `populate_kanren_facts()` | Create Kanren relations from rules |
+| `query_critical_rules()` | Query CRITICAL priority rules |
+| `query_rules_by_priority()` | Query rules by priority level |
+| `query_foundational_rules()` | Query FOUNDATIONAL type rules |
+| `validate_rule_compliance()` | Full compliance validation |
+
+### Kanren Relations Created
+
+```python
+# Priority relations
+rule_priority = Relation("rule_priority")      # (rule_id, priority)
+critical_rule = Relation("critical_rule")       # (rule_id,)
+
+# Type relations
+rule_type_rel = Relation("rule_type")          # (rule_id, type)
+foundational_rule = Relation("foundational_rule")
+operational_rule = Relation("operational_rule")
+technical_rule = Relation("technical_rule")
+
+# Category relations
+governance_rule = Relation("governance_rule")
+testing_rule = Relation("testing_rule")
+autonomy_rule = Relation("autonomy_rule")
+```
+
+### Test Coverage
+
+```
+tests/test_kanren_constraints.py: 55 tests, 100% pass
+- TestTypeDBKanrenLoader: 10 tests
+  - test_loader_imports
+  - test_rule_constraint_from_dict
+  - test_load_rules_from_json
+  - test_load_rules_empty_input
+  - test_populate_kanren_facts
+  - test_typedb_kanren_bridge_lifecycle
+  - test_validate_rule_compliance_expert
+  - test_validate_rule_compliance_low_trust
+  - test_validate_rule_missing_evidence
+  - test_get_rules_by_category
+```
+
+### Usage Example
+
+```python
+from governance.kanren import TypeDBKanrenBridge
+
+# Initialize bridge
+bridge = TypeDBKanrenBridge()
+
+# Load rules from MCP result
+mcp_result = await governance_query_rules(status="ACTIVE")
+counts = bridge.load_from_mcp(mcp_result)
+print(f"Loaded {counts['critical']} CRITICAL rules")
+
+# Validate compliance
+result = bridge.validate_rule(
+    "RULE-011",
+    has_evidence=True,
+    agent_trust=0.85
+)
+if result["compliant"]:
+    print("Agent can execute rule")
+else:
+    print(f"Violations: {result['violations']}")
+```
+
+### Next Steps
+
+1. **KAN-005:** Performance benchmarks (<100ms target)
 
 ---

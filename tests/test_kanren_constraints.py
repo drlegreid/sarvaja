@@ -511,3 +511,191 @@ class TestKanrenRAGFilter:
 
         # Low score chunks should be filtered out (verified=False fails Kanren)
         assert len(results) == 0
+
+
+# =============================================================================
+# KAN-004: TypeDB -> Kanren Loader Tests
+# =============================================================================
+
+class TestTypeDBKanrenLoader:
+    """Tests for KAN-004: TypeDB -> Kanren constraint loader."""
+
+    def test_loader_imports(self):
+        """Loader module can be imported."""
+        from governance.kanren import (
+            RuleConstraint,
+            TypeDBKanrenBridge,
+            load_rules_from_typedb,
+            populate_kanren_facts,
+            query_critical_rules,
+        )
+        assert RuleConstraint is not None
+        assert TypeDBKanrenBridge is not None
+        assert load_rules_from_typedb is not None
+
+    def test_rule_constraint_from_dict(self):
+        """RuleConstraint creates from TypeDB query result."""
+        from governance.kanren import RuleConstraint
+
+        data = {
+            "id": "RULE-011",
+            "semantic_id": "GOV-BICAM-01-v1",
+            "name": "Multi-Agent Governance Protocol",
+            "category": "governance",
+            "priority": "CRITICAL",
+            "directive": "Bicameral model",
+            "rule_type": "FOUNDATIONAL",
+        }
+
+        constraint = RuleConstraint.from_dict(data)
+
+        assert constraint.rule_id == "RULE-011"
+        assert constraint.semantic_id == "GOV-BICAM-01-v1"
+        assert constraint.priority == "CRITICAL"
+        assert constraint.rule_type == "FOUNDATIONAL"
+
+    def test_load_rules_from_json(self):
+        """load_rules_from_typedb parses JSON correctly."""
+        from governance.kanren import load_rules_from_typedb
+
+        json_result = '''[
+            {"id": "RULE-001", "priority": "CRITICAL", "category": "governance", "rule_type": "FOUNDATIONAL"},
+            {"id": "RULE-002", "priority": "HIGH", "category": "testing", "rule_type": "OPERATIONAL"}
+        ]'''
+
+        rules = load_rules_from_typedb(json_result)
+
+        assert len(rules) == 2
+        assert rules[0].rule_id == "RULE-001"
+        assert rules[0].priority == "CRITICAL"
+        assert rules[1].rule_id == "RULE-002"
+        assert rules[1].priority == "HIGH"
+
+    def test_load_rules_empty_input(self):
+        """load_rules_from_typedb handles empty input."""
+        from governance.kanren import load_rules_from_typedb
+
+        assert load_rules_from_typedb(None) == []
+        assert load_rules_from_typedb("") == []
+        assert load_rules_from_typedb("invalid json") == []
+
+    def test_populate_kanren_facts(self):
+        """populate_kanren_facts creates Kanren relations."""
+        from governance.kanren import load_rules_from_typedb, populate_kanren_facts
+
+        json_result = '''[
+            {"id": "TEST-RULE-001", "priority": "CRITICAL", "category": "governance", "rule_type": "FOUNDATIONAL"},
+            {"id": "TEST-RULE-002", "priority": "HIGH", "category": "testing", "rule_type": "OPERATIONAL"},
+            {"id": "TEST-RULE-003", "priority": "CRITICAL", "category": "autonomy", "rule_type": "TECHNICAL"}
+        ]'''
+
+        rules = load_rules_from_typedb(json_result)
+        counts = populate_kanren_facts(rules)
+
+        assert counts["priority"] == 3
+        assert counts["critical"] == 2  # Two CRITICAL rules
+        assert counts["rule_type"] == 3
+        assert counts["category"] == 3
+
+    def test_typedb_kanren_bridge_lifecycle(self):
+        """TypeDBKanrenBridge manages load/validate lifecycle."""
+        from governance.kanren import TypeDBKanrenBridge
+
+        bridge = TypeDBKanrenBridge()
+
+        # Initially not loaded
+        assert bridge.is_loaded() is False
+
+        # Validation fails when not loaded
+        result = bridge.validate_rule("RULE-001")
+        assert result["compliant"] is False
+        assert "Rules not loaded" in result["violations"][0]
+
+        # Load rules
+        json_result = '''[
+            {"id": "RULE-001", "priority": "HIGH", "category": "governance", "rule_type": "FOUNDATIONAL"}
+        ]'''
+        counts = bridge.load_from_mcp(json_result)
+
+        assert bridge.is_loaded() is True
+        assert counts["priority"] == 1
+        assert len(bridge.get_rules()) == 1
+
+    def test_validate_rule_compliance_expert(self):
+        """Expert agent can comply with any rule."""
+        from governance.kanren import TypeDBKanrenBridge
+
+        bridge = TypeDBKanrenBridge()
+        json_result = '''[
+            {"id": "RULE-CRITICAL", "priority": "CRITICAL", "rule_type": "FOUNDATIONAL"}
+        ]'''
+        bridge.load_from_mcp(json_result)
+
+        # Expert with evidence can comply with CRITICAL rule
+        result = bridge.validate_rule(
+            "RULE-CRITICAL",
+            has_evidence=True,
+            agent_trust=0.95
+        )
+
+        assert result["compliant"] is True
+        assert result["trust_level"] == "expert"
+
+    def test_validate_rule_compliance_low_trust(self):
+        """Low trust agent cannot comply with CRITICAL rules."""
+        from governance.kanren import TypeDBKanrenBridge
+
+        bridge = TypeDBKanrenBridge()
+        json_result = '''[
+            {"id": "RULE-CRITICAL", "priority": "CRITICAL", "rule_type": "FOUNDATIONAL"}
+        ]'''
+        bridge.load_from_mcp(json_result)
+
+        # Restricted agent cannot comply with CRITICAL rule
+        result = bridge.validate_rule(
+            "RULE-CRITICAL",
+            has_evidence=True,
+            agent_trust=0.3
+        )
+
+        assert result["compliant"] is False
+        assert "Trust level 'restricted' cannot execute CRITICAL priority" in result["violations"]
+
+    def test_validate_rule_missing_evidence(self):
+        """Missing evidence causes compliance failure for CRITICAL rules."""
+        from governance.kanren import TypeDBKanrenBridge
+
+        bridge = TypeDBKanrenBridge()
+        json_result = '''[
+            {"id": "RULE-CRITICAL", "priority": "CRITICAL", "rule_type": "FOUNDATIONAL"}
+        ]'''
+        bridge.load_from_mcp(json_result)
+
+        # Expert without evidence fails for CRITICAL rule
+        result = bridge.validate_rule(
+            "RULE-CRITICAL",
+            has_evidence=False,
+            agent_trust=0.95
+        )
+
+        assert result["compliant"] is False
+        assert any("requires evidence" in v for v in result["violations"])
+
+    def test_get_rules_by_category(self):
+        """Bridge filters rules by category."""
+        from governance.kanren import TypeDBKanrenBridge
+
+        bridge = TypeDBKanrenBridge()
+        json_result = '''[
+            {"id": "RULE-001", "priority": "CRITICAL", "category": "governance"},
+            {"id": "RULE-002", "priority": "HIGH", "category": "testing"},
+            {"id": "RULE-003", "priority": "HIGH", "category": "governance"}
+        ]'''
+        bridge.load_from_mcp(json_result)
+
+        gov_rules = bridge.get_rules_by_category("governance")
+        test_rules = bridge.get_rules_by_category("testing")
+
+        assert len(gov_rules) == 2
+        assert len(test_rules) == 1
+        assert all(r.category == "governance" for r in gov_rules)

@@ -16,6 +16,7 @@ Package Structure:
 - conflicts.py: Rule conflict detection
 - filter.py: KanrenRAGFilter class (KAN-003)
 - assembly.py: Context assembly functions
+- loader.py: TypeDB -> Kanren loader (KAN-004)
 - demo.py: Demonstration script
 """
 
@@ -39,6 +40,18 @@ from .assembly import assemble_context
 
 # RAG Filter (KAN-003)
 from .filter import KanrenRAGFilter
+
+# TypeDB Loader (KAN-004)
+from .loader import (
+    RuleConstraint,
+    TypeDBKanrenBridge,
+    load_rules_from_typedb,
+    populate_kanren_facts,
+    query_critical_rules,
+    query_rules_by_priority,
+    query_foundational_rules,
+    validate_rule_compliance,
+)
 
 # Demo
 from .demo import demo_kanren_constraints
@@ -68,6 +81,15 @@ __all__ = [
     "assemble_context",
     # Filter
     "KanrenRAGFilter",
+    # Loader (KAN-004)
+    "RuleConstraint",
+    "TypeDBKanrenBridge",
+    "load_rules_from_typedb",
+    "populate_kanren_facts",
+    "query_critical_rules",
+    "query_rules_by_priority",
+    "query_foundational_rules",
+    "validate_rule_compliance",
     # Demo
     "demo_kanren_constraints",
 ]
