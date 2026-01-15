@@ -378,3 +378,136 @@ class TestValidateAgentForTask:
         """Quick validation for restricted + CRITICAL."""
         result = validate_agent_for_task("AGENT-002", 0.35, "CRITICAL")
         assert result["valid"] is False
+
+
+# =============================================================================
+# KAN-003: RAG Filter Integration Tests
+# =============================================================================
+
+class TestKanrenRAGFilter:
+    """Tests for KanrenRAGFilter class (KAN-003)."""
+
+    def test_filter_import(self):
+        """KanrenRAGFilter can be imported."""
+        from governance.kanren_constraints import KanrenRAGFilter
+        assert KanrenRAGFilter is not None
+
+    def test_filter_instantiation(self):
+        """KanrenRAGFilter can be instantiated."""
+        from governance.kanren_constraints import KanrenRAGFilter
+        rag_filter = KanrenRAGFilter()
+        assert rag_filter is not None
+        assert rag_filter._store is None  # Lazy load
+
+    def test_filter_with_mock_store(self):
+        """KanrenRAGFilter works with injected mock store."""
+        from unittest.mock import MagicMock
+        from governance.kanren_constraints import KanrenRAGFilter
+
+        # Create mock store
+        mock_store = MagicMock()
+        mock_result = MagicMock()
+        mock_result.vector_id = "vec-001"
+        mock_result.content = "Test content"
+        mock_result.source_type = "rule"
+        mock_result.score = 0.85
+        mock_result.source = "RULE-001"
+        mock_store.search.return_value = [mock_result]
+
+        # Create filter with mock
+        rag_filter = KanrenRAGFilter(vector_store=mock_store)
+
+        # Test search_validated
+        results = rag_filter.search_validated(
+            query_embedding=[0.1, 0.2, 0.3],
+            top_k=5
+        )
+
+        # Verify mock was called
+        mock_store.search.assert_called_once()
+
+        # Results should be filtered through Kanren
+        # High score rule from typedb should pass
+        assert len(results) == 1
+        assert results[0]["source"] == "typedb"
+        assert results[0]["type"] == "rule"
+
+    def test_results_to_chunks_conversion(self):
+        """_results_to_chunks correctly converts SimilarityResult format."""
+        from unittest.mock import MagicMock
+        from governance.kanren_constraints import KanrenRAGFilter
+
+        mock_store = MagicMock()
+        rag_filter = KanrenRAGFilter(vector_store=mock_store)
+
+        # Create mock results
+        mock_results = []
+        for source_type, expected_source in [("rule", "typedb"), ("decision", "typedb"), ("session", "chromadb")]:
+            r = MagicMock()
+            r.vector_id = f"vec-{source_type}"
+            r.content = f"Content for {source_type}"
+            r.source_type = source_type
+            r.score = 0.8
+            r.source = f"SOURCE-{source_type.upper()}"
+            mock_results.append(r)
+
+        chunks = rag_filter._results_to_chunks(mock_results)
+
+        assert len(chunks) == 3
+        assert chunks[0]["source"] == "typedb"
+        assert chunks[1]["source"] == "typedb"
+        assert chunks[2]["source"] == "chromadb"
+
+    def test_search_for_task_validation(self):
+        """search_for_task validates agent-task assignment."""
+        from unittest.mock import MagicMock
+        from governance.kanren_constraints import KanrenRAGFilter, AgentContext, TaskContext
+
+        # Create mock store
+        mock_store = MagicMock()
+        mock_vec = MagicMock()
+        mock_vec.id = "vec-001"
+        mock_vec.content = "governance rule content"
+        mock_vec.source_type = "rule"
+        mock_vec.source = "RULE-001"
+        mock_store.get_all_vectors.return_value = [mock_vec]
+
+        rag_filter = KanrenRAGFilter(vector_store=mock_store)
+
+        agent = AgentContext("AGENT-001", "Expert", 0.95, "claude-code")
+        task = TaskContext("TASK-001", "CRITICAL", True)
+
+        result = rag_filter.search_for_task(
+            query_text="governance",
+            task_context=task,
+            agent_context=agent
+        )
+
+        assert result["assignment_valid"] is True
+        assert result["agent"]["trust_level"] == "expert"
+        assert result["task"]["requires_evidence"] is True
+        assert "constraints_applied" in result
+
+    def test_low_score_chunk_filtered(self):
+        """Chunks with low similarity score (< 0.5) are marked unverified and filtered."""
+        from unittest.mock import MagicMock
+        from governance.kanren_constraints import KanrenRAGFilter
+
+        mock_store = MagicMock()
+        mock_result = MagicMock()
+        mock_result.vector_id = "vec-low"
+        mock_result.content = "Low score content"
+        mock_result.source_type = "rule"
+        mock_result.score = 0.3  # Below threshold
+        mock_result.source = "RULE-LOW"
+        mock_store.search.return_value = [mock_result]
+
+        rag_filter = KanrenRAGFilter(vector_store=mock_store)
+
+        results = rag_filter.search_validated(
+            query_embedding=[0.1, 0.2, 0.3],
+            top_k=5
+        )
+
+        # Low score chunks should be filtered out (verified=False fails Kanren)
+        assert len(results) == 0
