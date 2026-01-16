@@ -32,6 +32,26 @@ Last Session: [date/time]
 
 ## Recovery Actions (if unhealthy)
 
-1. If services down: `.\deploy.ps1 -Action up -Profile cpu`
+1. If services down: `podman compose --profile cpu --profile dashboard-dev up -d`
 2. If AMNESIA: Run `/remember sarvaja` to restore context
 3. If hash changed: Services restarted, context may need refresh
+
+## E2E Thin-Slice Health Test
+
+For comprehensive verification, run the E2E platform health test:
+```bash
+python -m tests.e2e.test_platform_health_e2e
+```
+
+Or via pytest:
+```bash
+pytest tests/e2e/test_platform_health_e2e.py -v
+```
+
+This test verifies:
+- TypeDB connectivity (port + optional driver)
+- ChromaDB connectivity (heartbeat)
+- Kanren constraint engine (trust, RAG filter, task assignment)
+- Kanren benchmarks (performance <1ms)
+- Dashboard HTTP response
+- API endpoints (optional)
