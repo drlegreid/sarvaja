@@ -209,6 +209,8 @@ async def update_task(task_id: str, update: TaskUpdate):
         _tasks_store[task_id]["linked_sessions"] = update.linked_sessions
     if update.gap_id is not None:
         _tasks_store[task_id]["gap_id"] = update.gap_id
+    if update.evidence is not None:
+        _tasks_store[task_id]["evidence"] = update.evidence  # Per EPIC-DR-008
 
     return TaskResponse(**_tasks_store[task_id])
 

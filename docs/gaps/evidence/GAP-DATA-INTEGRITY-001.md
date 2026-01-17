@@ -128,15 +128,15 @@ Verification:
 
 ---
 
-## Data Quality Audit (2026-01-17)
+## Data Quality Audit (2026-01-17) - Updated
 
 ### Current TypeDB State (Full Dataset)
 
-**Tasks (76 total):**
+**Tasks (82 total):**
 | Field | Populated | Quality | Notes |
 |-------|-----------|---------|-------|
-| `agent_id` | 0% | **CRITICAL** | Workflow claim not used historically |
-| `evidence` | 3% | **CRITICAL** | Only 2 tasks have evidence |
+| `agent_id` | **100%** | ✅ **FIXED** | EPIC-DR-007: Backfilled 76 tasks (2026-01-17) |
+| `evidence` | 3% | **CRITICAL** | Only 2 tasks have evidence → EPIC-DR-008 |
 | `linked_sessions` | 86% | Good | 65/76 have completed-in relations |
 
 **Sessions (22 total):**
@@ -148,16 +148,18 @@ Verification:
 
 ### Progress Since Original Audit
 
-| Metric | 2026-01-16 | 2026-01-17 | Change |
-|--------|------------|------------|--------|
-| Session→Task relations | 0% | **18%** | +18% |
-| Session evidence_files | 0% | **77%** | +77% |
-| LIST query accuracy | Wrong | **Fixed** | GAP-BATCH-QUERY-001 resolved |
+| Metric | 2026-01-16 | 2026-01-17 AM | 2026-01-17 PM | Change |
+|--------|------------|---------------|---------------|--------|
+| Task agent_id | 0% | 0% | **100%** | +100% ✅ |
+| Task evidence | 0% | 3% | 3% | Pending |
+| Session→Task relations | 0% | 18% | 18% | +18% |
+| Session evidence_files | 0% | 77% | 77% | +77% |
+| LIST query accuracy | Wrong | Fixed | Fixed | ✅ |
 
 ### Remaining Work
 
-1. **EPIC-DR-007:** agent_id backfill for historical tasks (0% → target 100%)
-2. **EPIC-DR-008:** evidence field population (3% → target 50%)
+1. ~~**EPIC-DR-007:** agent_id backfill~~ ✅ DONE (2026-01-17)
+2. **EPIC-DR-008:** evidence field population (3% → target 50%) - [GAP-EPIC-DR-008.md](GAP-EPIC-DR-008.md)
 3. **Phase 3:** UI navigation for relationships
 
 ---

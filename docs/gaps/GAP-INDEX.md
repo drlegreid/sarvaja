@@ -41,7 +41,7 @@
 | Entity | Field | Populated | Quality | Notes |
 |--------|-------|-----------|---------|-------|
 | Task | agent_id | **100%** | **FIXED** | EPIC-DR-007: Backfilled 76 tasks (2026-01-17) |
-| Task | evidence | 3% | **CRITICAL** | EPIC-DR-008: Only 2 tasks have evidence |
+| Task | evidence | 3% | **CRITICAL** | [EPIC-DR-008](evidence/GAP-EPIC-DR-008.md): Only 2 tasks have evidence |
 | Task | linked_sessions | 86% | **GOOD** | 65/76 via completed-in relations |
 | Session | evidence_files | 77% | **GOOD** | 17/22 have has-evidence relations |
 | Session | tasks_completed | 18% | **IMPROVED** | 4 sessions have completed tasks |

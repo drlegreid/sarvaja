@@ -78,6 +78,7 @@ class TaskUpdate(BaseModel):
     linked_rules: Optional[List[str]] = None
     linked_sessions: Optional[List[str]] = None
     gap_id: Optional[str] = None
+    evidence: Optional[str] = None  # Per EPIC-DR-008
 
 
 class TaskResponse(BaseModel):

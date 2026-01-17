@@ -52,7 +52,15 @@ def get_all_tasks_from_typedb(
         try:
             tasks = client.get_all_tasks(status=status, phase=phase, agent_id=agent_id)
             # Convert to dict format for API compatibility
-            return [_task_to_dict(t) for t in tasks]
+            result = [_task_to_dict(t) for t in tasks]
+            # Merge evidence from in-memory store (EPIC-DR-008 workaround for Python 3.13)
+            for task_dict in result:
+                task_id = task_dict.get("task_id")
+                if task_id and task_id in _tasks_store:
+                    mem_evidence = _tasks_store[task_id].get("evidence")
+                    if mem_evidence and not task_dict.get("evidence"):
+                        task_dict["evidence"] = mem_evidence
+            return result
         except Exception as e:
             logger.warning(f"TypeDB task query failed: {e}")
             if not allow_fallback:
