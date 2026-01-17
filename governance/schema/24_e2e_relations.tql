@@ -1,0 +1,25 @@
+# E2E Exploration Relations
+# TypeDB relations for LLM-driven E2E testing (RULE-020)
+# Part of: EPIC-DR-012 Schema Modularization
+# Created: 2026-01-17
+
+define
+
+# =============================================================================
+# E2E EXPLORATION RELATIONS (RULE-020)
+# =============================================================================
+
+# Session contains steps
+session-step sub relation,
+    relates session,
+    relates step;
+
+# Session generates test cases
+generates sub relation,
+    relates generating-session,
+    relates generated-test;
+
+# Test case failed (for analysis)
+test-failed sub relation,
+    relates generated-test,
+    relates failure;

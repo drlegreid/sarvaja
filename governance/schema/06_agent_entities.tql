@@ -1,0 +1,43 @@
+# Multi-Agent Governance Entities
+# TypeDB schema for agent trust and proposals (RULE-011)
+# Part of: EPIC-DR-012 Schema Modularization
+# Created: 2026-01-17
+
+define
+
+# =============================================================================
+# AGENT ENTITY
+# =============================================================================
+
+# Agent entity for trust tracking
+agent sub entity,
+    owns agent-id,
+    owns agent-name,
+    owns agent-type,        # "claude-code", "docker-agent", "sync-agent"
+    owns agent-capabilities, # Per GAP-AGENT-004: comma-separated capability list
+    owns trust-score,       # 0.0 to 1.0
+    owns compliance-rate,   # Historical compliance percentage
+    owns accuracy-rate,     # Decision accuracy
+    owns tenure-days,       # Days active
+    plays proposes:proposer,
+    plays vote:voter,
+    plays dispute:disputer,
+    plays agent-action:acting-agent;
+
+# =============================================================================
+# PROPOSAL ENTITY
+# =============================================================================
+
+# Proposal for rule changes
+proposal sub entity,
+    owns proposal-id,
+    owns proposal-type,     # "create", "modify", "deprecate"
+    owns proposal-status,   # "pending", "approved", "rejected", "disputed"
+    owns evidence,
+    owns hypothesis,
+    owns proposal-created-at,
+    plays proposes:proposed-change,
+    plays vote:vote-target,
+    plays dispute:disputed-proposal,
+    plays proposal-affects:proposing,
+    plays requires-escalation:escalated-proposal;

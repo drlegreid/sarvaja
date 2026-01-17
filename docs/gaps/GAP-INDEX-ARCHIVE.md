@@ -1,134 +1,26 @@
-# Gap Index - Sarvaja (Active Gaps)
+# Gap Index Archive - Sarvaja
 
-**Last Updated:** 2026-01-16
-**Active Gaps:** 29 | Status: 12 OPEN, 1 BLOCKED, 1 PARTIAL, 15 DEFERRED
-**Archived:** 209 RESOLVED gaps → [GAP-INDEX-ARCHIVE.md](GAP-INDEX-ARCHIVE.md)
+**Purpose:** Archive of RESOLVED gaps from [GAP-INDEX.md](GAP-INDEX.md)
+**Created:** 2026-01-16
+**Total Archived:** 209 RESOLVED gaps
 
-> **Evidence Files:** Detailed analysis in [evidence/](evidence/) per GAP-META-001
-> **Archive Rule:** Per DOC-GAP-ARCHIVE-01-v1 - RESOLVED gaps move to archive
-
----
-
-## Infrastructure Gaps (2026-01-16) - CRITICAL
-
-> **Source:** Platform audit
-> **Evidence:** [SESSION-2026-01-16-PLATFORM-AUDIT](../SESSION-2026-01-16-PLATFORM-AUDIT.md)
-
-| ID | Status | Gap | Priority | Category | Evidence |
-|----|--------|-----|----------|----------|----------|
-| GAP-TYPEDB-DRIVER-001 | BLOCKED | TypeDB driver incompatibility - no version supports Python 3.13 + TypeDB Server 2.x | **CRITICAL** | infrastructure | [evidence/GAP-TYPEDB-DRIVER-001.md](evidence/GAP-TYPEDB-DRIVER-001.md) |
-| GAP-TYPEDB-UPGRADE-001 | OPEN | TypeDB Server 2.29.1 → 3.x upgrade required for Python 3.13 driver | HIGH | infrastructure | Blocked by schema migration planning |
-
-**Decision:** Accept MCP-only TypeDB access. Server upgrade deferred - requires migration planning.
-
----
-
-## Platform Audit Gaps (2026-01-16) - CRITICAL
-
-> **Source:** Exploratory testing with MCP REST & Playwright
-> **Evidence:** [SESSION-2026-01-16-PLATFORM-AUDIT](../SESSION-2026-01-16-PLATFORM-AUDIT.md)
-
-| ID | Status | Gap | Priority | Category | Evidence |
-|----|--------|-----|----------|----------|----------|
-| GAP-DATA-INTEGRITY-001 | OPEN | Dashboard shows counts but no traceability (Session→Task→Evidence→Rules) | **CRITICAL** | data_integrity | [evidence/GAP-DATA-INTEGRITY-001.md](evidence/GAP-DATA-INTEGRITY-001.md) |
-| GAP-API-PERF-001 | OPEN | API response times 7-9 seconds for simple queries (target <500ms) | HIGH | performance | [evidence/GAP-API-PERF-001.md](evidence/GAP-API-PERF-001.md) |
-| GAP-UI-PAGING-001 | OPEN | UI loads all data at once, no pagination or loading indicators | HIGH | ux | [evidence/GAP-UI-PAGING-001.md](evidence/GAP-UI-PAGING-001.md) |
-
-### Data Quality Evidence
-
-| Entity | Field | Populated | Quality |
-|--------|-------|-----------|---------|
-| Task | agent_id | 0% | **CRITICAL** |
-| Task | evidence | 0% | **CRITICAL** |
-| Task | linked_rules | 50% | Poor |
-| Session | evidence_files | 0% | **CRITICAL** |
-| Session | tasks_completed | 0% | **CRITICAL** |
-
-**Verdict:** Platform is NOT production-ready. Data integrity and UX gaps block usability.
-
----
-
-## Governance Gaps (2026-01-16)
-
-> **Source:** Platform audit - Rule compliance analysis
-> **Evidence:** [SESSION-2026-01-16-PLATFORM-AUDIT](../SESSION-2026-01-16-PLATFORM-AUDIT.md)
-
-| ID | Status | Gap | Priority | Category | Evidence |
-|----|--------|-----|----------|----------|----------|
-| GAP-GOVERNANCE-AUDIT-001 | DEFERRED | Full governance rule compliance audit (Option A) | HIGH | governance | [evidence/GAP-GOVERNANCE-AUDIT-001.md](evidence/GAP-GOVERNANCE-AUDIT-001.md) |
-
-**Decision:** Deferred in favor of Option B (Targeted Stop). Revisit after Phase 12 or if governance debt becomes unmanageable.
+> **Active Gaps:** See [GAP-INDEX.md](GAP-INDEX.md) for OPEN, BLOCKED, PARTIAL, and DEFERRED gaps.
 
 ---
 
 ## MCP Integration Gaps (2026-01-16)
 
-> **Source:** Platform audit - MCP usage analysis
-> **Evidence:** [SESSION-2026-01-16-PLATFORM-AUDIT](../SESSION-2026-01-16-PLATFORM-AUDIT.md)
-
 | ID | Status | Gap | Priority | Category | Evidence |
 |----|--------|-----|----------|----------|----------|
-| GAP-MCP-001 | OPEN | gov-sessions MCP underutilized - DSM/evidence tools not used | HIGH | integration | MCP tools not exposed to Claude Code |
-| GAP-MCP-002 | OPEN | gov-tasks MCP underutilized - task/gap management not automated | HIGH | integration | MCP tools not exposed to Claude Code |
-| GAP-MCP-003 | PARTIAL | rest-api MCP underutilized - API testing not systematic | MEDIUM | testing | [tests/integration/test_mcp_rest_sessions.py](../../tests/integration/test_mcp_rest_sessions.py) |
-| GAP-DATA-001 | OPEN | Evaluate TOON vs JSON for MCP output format | LOW | optimization | RD-TOON: 40% token reduction potential |
 | GAP-API-001 | RESOLVED | POST /api/tasks returns 201 but doesn't persist to TypeDB | HIGH | data_integrity | FIXED 2026-01-16: Schema migration added task-resolution attribute. 9 tests pass. |
-| GAP-VALIDATE-001 | OPEN | Need integration validation task for all component fixes | HIGH | testing | Ensure fixes are validated before claiming done |
-| GAP-MCP-PAGING-001 | OPEN | MCP tools need paging/truncation for large outputs (791K+ chars) | MEDIUM | tooling | [evidence/GAP-MCP-PAGING-001.md](evidence/GAP-MCP-PAGING-001.md) |
-
-### Subtasks for GAP-MCP-001 (gov-sessions)
-
-| Subtask | Status | Description | Test |
-|---------|--------|-------------|------|
-| MCP-001-A | TODO | Integrate session_start at Claude Code session begin | test_session_start_integration |
-| MCP-001-B | TODO | Integrate session_end at /report command | test_session_end_integration |
-| MCP-001-C | TODO | Use dsm_start/dsm_advance for DSM tracking | test_dsm_lifecycle |
-| MCP-001-D | TODO | Use governance_evidence_search for context recovery | test_evidence_search_recovery |
-
-### Subtasks for GAP-MCP-002 (gov-tasks)
-
-| Subtask | Status | Description | Test |
-|---------|--------|-------------|------|
-| MCP-002-A | TODO | Sync TodoWrite with TypeDB task creation | test_todo_typedb_sync |
-| MCP-002-B | TODO | Auto-mark tasks DONE when completed | test_task_completion_sync |
-| MCP-002-C | TODO | Link tasks to git commits automatically | test_task_commit_link |
-| MCP-002-D | TODO | Query backlog gaps via MCP | test_backlog_query |
-
-### Subtasks for GAP-MCP-003 (rest-api)
-
-| Subtask | Status | Description | Test |
-|---------|--------|-------------|------|
-| MCP-003-A | TODO | Create API health test using rest-api MCP | test_api_health_mcp |
-| MCP-003-B | TODO | Create CRUD tests for /api/rules endpoint | test_rules_crud_mcp |
-| MCP-003-C | TODO | Create CRUD tests for /api/tasks endpoint | test_tasks_crud_mcp |
-| MCP-003-D | TODO | Create session evidence tests | test_sessions_api_mcp |
-
-### Subtasks for GAP-DATA-001 (TOON)
-
-| Subtask | Status | Description | Test |
-|---------|--------|-------------|------|
-| DATA-001-A | TODO | Research Python TOON parser availability | N/A - research |
-| DATA-001-B | TODO | Benchmark JSON vs TOON token counts | test_toon_token_comparison |
-| DATA-001-C | TODO | Prototype MCP output formatter | test_toon_mcp_formatter |
-| DATA-001-D | TODO | LLM readability test (can Claude parse TOON natively?) | test_toon_llm_native |
-
-**TOON Reference:** https://github.com/toon-format/toon
-- 40% token reduction vs JSON
-- YAML-like indent + CSV tabular hybrid
-- Designed for LLM context efficiency
 
 ---
 
 ## UI Exploratory Testing Gaps (2026-01-14)
 
-> **Source:** LLM-driven exploratory testing via Playwright MCP
-> **Evidence:** Session exploratory testing with real UI interaction
-
 | ID | Status | Gap | Priority | Category | Evidence |
 |----|--------|-----|----------|----------|----------|
 | GAP-UI-EXP-001 | RESOLVED | Decisions view shows "No date" for all decisions | MEDIUM | data_integrity | FIXED: TypeDB query + compat layer now return decision_date |
-| GAP-UI-EXP-002 | DEFERRED | Sessions lack descriptions | LOW | data_integrity | Requires markdown parsing to extract description from evidence files |
-| GAP-UI-EXP-003 | DEFERRED | Task list shows only DONE tasks at top | LOW | ux | UX enhancement - add filtering/sorting controls |
 | GAP-UI-EXP-004 | RESOLVED | Tasks view missing search/filter/pagination | HIGH | ux | FIXED: Added search textbox + Status/Phase dropdowns with v_show filtering |
 | GAP-UI-EXP-005 | RESOLVED | Sessions view shows "No date" - UI bug | HIGH | data_integrity | FIXED: UI now checks both start_time (REST API) and date (MCP) fields |
 | GAP-UI-EXP-006 | RESOLVED | Infrastructure health check shows incorrect status | CRITICAL | observability | [GAP-UI-EXP-006-INFRA-HEALTH.md](evidence/GAP-UI-EXP-006-INFRA-HEALTH.md) |
@@ -143,12 +35,9 @@
 
 ## Architecture & UX Gaps (2026-01-14)
 
-> **Source:** Entropy alerts, user feedback, Agile best practices
-> **Status:** ALL RESOLVED (2026-01-14)
-
 | ID | Status | Gap | Priority | Category | Evidence |
 |----|--------|-----|----------|----------|----------|
-| GAP-FILE-028 | RESOLVED | routes/agents.py 537→230 lines (package) | MEDIUM | architecture | FIXED 2026-01-14: Split to package with crud.py (230), observability.py (130), visibility.py (129), helpers.py (72). |
+| GAP-FILE-028 | RESOLVED | routes/agents.py 537->230 lines (package) | MEDIUM | architecture | FIXED 2026-01-14: Split to package with crud.py (230), observability.py (130), visibility.py (129), helpers.py (72). |
 | GAP-UI-046 | RESOLVED | Task status/resolution per Agile DoR/DoD | MEDIUM | ux | FIXED 2026-01-14: Schema+entities+lifecycle module+TDD tests. Rule TASK-LIFE-01-v1 created. 24 unit tests pass. |
 | GAP-UI-047 | RESOLVED | Reactive loaders with trace status | MEDIUM | ux | FIXED 2026-01-14: LoaderState + APITrace dataclasses, transforms module, initial state integration. 33 TDD tests pass. Rule UI-LOADER-01-v1 created. |
 | GAP-UI-048 | RESOLVED | Bottom bar with technical traces | LOW | ux | FIXED 2026-01-14: VFooter trace bar UI component created. Visual verification per TEST-UI-VERIFY-01-v1. Screenshot: .playwright-mcp/GAP-UI-048-trace-bar.png |
@@ -162,32 +51,31 @@
 
 ## DSP-100 Hygiene Gaps (2026-01-03)
 
-> **Source:** DSM cycle DSP-100-HYGIENE
 > **Evidence:** [GAP-FILE-RESOLUTIONS.md](evidence/GAP-FILE-RESOLUTIONS.md)
 
 | ID | Status | Gap | Priority | Category | Evidence |
 |----|--------|-----|----------|----------|----------|
-| GAP-FILE-002 | RESOLVED | RULES-OPERATIONAL.md 1900→74 lines | CRITICAL | architecture | Split to 4 files |
-| GAP-FILE-003 | RESOLVED | RULES-GOVERNANCE.md 633→53 lines | HIGH | architecture | Split to 2 files |
-| GAP-FILE-004 | RESOLVED | RULES-TECHNICAL.md 457→59 lines | HIGH | architecture | Split to 3 files |
+| GAP-FILE-002 | RESOLVED | RULES-OPERATIONAL.md 1900->74 lines | CRITICAL | architecture | Split to 4 files |
+| GAP-FILE-003 | RESOLVED | RULES-GOVERNANCE.md 633->53 lines | HIGH | architecture | Split to 2 files |
+| GAP-FILE-004 | RESOLVED | RULES-TECHNICAL.md 457->59 lines | HIGH | architecture | Split to 3 files |
 | GAP-DSM-001 | RESOLVED | dsm_checkpoint expects JSON string | MEDIUM | mcp | Fixed: accepts str or dict |
 | GAP-DSM-002 | RESOLVED | dsm_checkpoint API should accept dict | HIGH | mcp | Union[str, Dict] type |
 | GAP-MCP-005 | RESOLVED | Monolith governance MCP deprecated | HIGH | architecture | 4-server split validated |
-| GAP-FILE-013 | RESOLVED | typedb/queries/rules.py 699→42 lines | MEDIUM | architecture | Modularized to 5 modules |
-| GAP-FILE-014 | RESOLVED | sync_agent.py 687→77 lines | MEDIUM | architecture | Modularized to 6 modules |
-| GAP-FILE-015 | RESOLVED | typedb/queries/tasks.py 652→35 lines | MEDIUM | architecture | Modularized to 3 modules |
-| GAP-FILE-016 | RESOLVED | typedb/queries/sessions.py 606→35 lines | MEDIUM | architecture | Modularized to 3 modules |
-| GAP-FILE-017 | RESOLVED | session_collector.py 591→49 lines | MEDIUM | architecture | Modularized to 7 modules |
-| GAP-FILE-018 | RESOLVED | stores.py 503→99 lines | MEDIUM | architecture | Modularized to 6 modules |
-| GAP-FILE-019 | RESOLVED | vector_store.py 531→106 lines | MEDIUM | architecture | Modularized to 5 modules |
-| GAP-FILE-020 | RESOLVED | routes/tasks.py 475→27 lines | LOW | architecture | Modularized to 3 modules |
-| GAP-FILE-021 | RESOLVED | embedding_pipeline.py 476→323 lines | LOW | architecture | FIXED 2026-01-14: Split to package with chunking.py (78 lines), pipeline.py (323 lines). 59 tests pass. |
-| GAP-FILE-022 | RESOLVED | context_preloader.py 428→328 lines | LOW | architecture | FIXED 2026-01-14: Split to package with models.py (110 lines), preloader.py (328 lines). 19 tests pass. |
-| GAP-FILE-023 | RESOLVED | routes/chat.py 421→262 lines | LOW | architecture | FIXED 2026-01-14: Split to package with commands.py (165 lines), endpoints.py (262 lines). 12 tests pass. |
-| GAP-FILE-024 | RESOLVED | dsm/tracker.py 416→387 lines | LOW | architecture | FIXED 2026-01-14: Extracted memory.py (64 lines). 12 tests pass. |
-| GAP-FILE-025 | RESOLVED | quality/analyzer.py 410→365 lines | LOW | architecture | Extracted impact.py. Per DOC-SIZE-01-v1. |
-| GAP-FILE-026 | RESOLVED | workspace_scanner.py 409→320 lines | LOW | architecture | FIXED 2026-01-14: Extracted task_parsers.py (108 lines). 15 tests pass. |
-| GAP-FILE-027 | RESOLVED | typedb/queries/tasks/crud.py 368→267 lines | LOW | architecture | FIXED 2026-01-14: Extracted status.py (142 lines). Imports verified. |
+| GAP-FILE-013 | RESOLVED | typedb/queries/rules.py 699->42 lines | MEDIUM | architecture | Modularized to 5 modules |
+| GAP-FILE-014 | RESOLVED | sync_agent.py 687->77 lines | MEDIUM | architecture | Modularized to 6 modules |
+| GAP-FILE-015 | RESOLVED | typedb/queries/tasks.py 652->35 lines | MEDIUM | architecture | Modularized to 3 modules |
+| GAP-FILE-016 | RESOLVED | typedb/queries/sessions.py 606->35 lines | MEDIUM | architecture | Modularized to 3 modules |
+| GAP-FILE-017 | RESOLVED | session_collector.py 591->49 lines | MEDIUM | architecture | Modularized to 7 modules |
+| GAP-FILE-018 | RESOLVED | stores.py 503->99 lines | MEDIUM | architecture | Modularized to 6 modules |
+| GAP-FILE-019 | RESOLVED | vector_store.py 531->106 lines | MEDIUM | architecture | Modularized to 5 modules |
+| GAP-FILE-020 | RESOLVED | routes/tasks.py 475->27 lines | LOW | architecture | Modularized to 3 modules |
+| GAP-FILE-021 | RESOLVED | embedding_pipeline.py 476->323 lines | LOW | architecture | FIXED 2026-01-14: Split to package with chunking.py (78 lines), pipeline.py (323 lines). 59 tests pass. |
+| GAP-FILE-022 | RESOLVED | context_preloader.py 428->328 lines | LOW | architecture | FIXED 2026-01-14: Split to package with models.py (110 lines), preloader.py (328 lines). 19 tests pass. |
+| GAP-FILE-023 | RESOLVED | routes/chat.py 421->262 lines | LOW | architecture | FIXED 2026-01-14: Split to package with commands.py (165 lines), endpoints.py (262 lines). 12 tests pass. |
+| GAP-FILE-024 | RESOLVED | dsm/tracker.py 416->387 lines | LOW | architecture | FIXED 2026-01-14: Extracted memory.py (64 lines). 12 tests pass. |
+| GAP-FILE-025 | RESOLVED | quality/analyzer.py 410->365 lines | LOW | architecture | Extracted impact.py. Per DOC-SIZE-01-v1. |
+| GAP-FILE-026 | RESOLVED | workspace_scanner.py 409->320 lines | LOW | architecture | FIXED 2026-01-14: Extracted task_parsers.py (108 lines). 15 tests pass. |
+| GAP-FILE-027 | RESOLVED | typedb/queries/tasks/crud.py 368->267 lines | LOW | architecture | FIXED 2026-01-14: Extracted status.py (142 lines). Imports verified. |
 
 ---
 
@@ -206,7 +94,6 @@
 
 ## CRITICAL Safety Gaps (2026-01-12)
 
-> **Source:** Root Cause Analysis from AMNESIA incidents (2026-01-11)
 > **Evidence:** [SESSION-2026-01-11-AMNESIA-ROOT-CAUSE.md](../../evidence/SESSION-2026-01-11-AMNESIA-ROOT-CAUSE.md)
 
 | ID | Status | Gap | Priority | Category | Rule | Evidence |
@@ -216,9 +103,8 @@
 | GAP-PERSIST-001 | RESOLVED | Containers lost on reboot - restart policy not sufficient | CRITICAL | infra | RULE-021 | FIXED 2026-01-12: Healthcheck hook auto-recovers via `ContainerRecovery.start_containers()`. Audit: `~/.claude/recovery_logs/`. E2E tested post-reboot. |
 | GAP-PERSIST-002 | RESOLVED | ChromaDB data lost on reboot (0 documents) | CRITICAL | data | RULE-021 | FIXED: Mount was /chroma/chroma but persist_path=/data. Changed to /data |
 | GAP-CODE-001 | RESOLVED | healthcheck.py has duplicate recovery logic (line 509) | HIGH | architecture | RULE-032 | FIXED: Uses ContainerRecovery class (runtime-agnostic, 2026-01-12) |
-| GAP-REFACTOR-001 | RESOLVED | healthcheck.py exceeds 300 line limit (now 522 lines, was 1002) | HIGH | architecture | RULE-032 | FIXED 2026-01-13: 50% reduction achieved. Modular architecture: 8 checker modules in hooks/checkers/, ContainerRecovery class. Further reduction → RD-REFACTOR-001. |
+| GAP-REFACTOR-001 | RESOLVED | healthcheck.py exceeds 300 line limit (now 522 lines, was 1002) | HIGH | architecture | RULE-032 | FIXED 2026-01-13: 50% reduction achieved. Modular architecture: 8 checker modules in hooks/checkers/, ContainerRecovery class. Further reduction -> RD-REFACTOR-001. |
 | GAP-PYTHON-001 | RESOLVED | Agent uses `python` instead of `python3` | MEDIUM | devops | RULE-035 | FIXED 2026-01-13: Updated recover.py, SHELL-GUIDE.md. Added python3 pitfall warning. |
-| GAP-PODMAN-DESKTOP-001 | DEFERRED | Podman Desktop shows "CREATED" for running containers | LOW | tooling | RULE-021 | Bug in 1.24.x. Needs desktop automation MCP (playwright/xdotool) for validation. Workaround: `scripts/fix-podman-desktop.sh` |
 | GAP-AMNESIA-OUTPUT-001 | RESOLVED | AMNESIA detection output suppressed in summary mode | HIGH | observability | RECOVER-AMNES-01-v1 | FIXED 2026-01-15: Added amnesia param to format_summary(), now shows AMNESIA RISK in summary output. [GAP-AMNESIA-OUTPUT-001.md](evidence/GAP-AMNESIA-OUTPUT-001.md) |
 | GAP-HEALTH-AGGRESSIVE-001 | RESOLVED | AMNESIA detection too quiet - needs ENV-based aggressive mode | HIGH | observability | RECOVER-AMNES-01-v1 | FIXED 2026-01-15: Added SARVAJA_HEALTH_MODE ENV (quiet/normal/aggressive), configurable thresholds. [GAP-HEALTH-AGGRESSIVE-001.md](evidence/GAP-HEALTH-AGGRESSIVE-001.md) |
 
@@ -253,13 +139,11 @@
 | GAP-UI-036 | RESOLVED | No scrolling/paging | MEDIUM | ux | API pagination: sessions/tasks/rules/agents |
 | GAP-UI-037 | RESOLVED | Entity content previews | HIGH | ux | Styled cards added |
 | GAP-UI-038 | RESOLVED | Fullscreen document viewer | HIGH | functionality | views/dialogs.py |
-| GAP-UI-039 | DEFERRED | No document format support | LOW | functionality | SCOPE: MD, logs, XML, JSON, YAML, code (py, hs, js, java, ps1, sh). Large files use lazy loading. → RD-DOCVIEW |
 | GAP-UI-040 | RESOLVED | Agent config/instructions display | HIGH | functionality | agents_view.py |
 | GAP-UI-041 | RESOLVED | Agent-session/task relation links | HIGH | functionality | agents_view.py |
 | GAP-UI-042 | RESOLVED | Trust score history | HIGH | functionality | Trust history card |
 | GAP-UI-043 | RESOLVED | Agent metrics display | MEDIUM | functionality | agents_view.py |
 | GAP-UI-044 | RESOLVED | Executive Reporting view | HIGH | functionality | executive_view.py |
-| GAP-UI-045 | DEFERRED | Cross-workspace metrics aggregation | MEDIUM | functionality | Blocked by RD-WORKSPACE Phase 5 (Optimization Loop). Requires agent runtime metrics. |
 | GAP-UI-046 | RESOLVED | Executive Report per-session | HIGH | functionality | Session selector |
 | GAP-UI-047 | RESOLVED | Rules tab: No directive shown | HIGH | ui | Directive excerpt added |
 | GAP-UI-048 | RESOLVED | No entity relationships in UI | HIGH | ui | Backend populates |
@@ -275,18 +159,14 @@
 
 | ID | Status | Gap | Priority | Category | Rule | Evidence |
 |----|--------|-----|----------|----------|------|----------|
-| GAP-004 | NOT_IMPLEMENTED | Grok/xAI API Key | Medium | configuration | CLOSED: Not to be implemented. Using other LLM providers. |
 | GAP-005 | RESOLVED | Agent Task Backlog UI | Medium | functionality | RULE-002 | Auto-polling implemented 2026-01-11 |
 | GAP-006 | RESOLVED | Sync Agent Implementation | Medium | functionality | RULE-003 | GovernanceSync in agent/sync_agent/ |
-| GAP-007 | DEFERRED | ChromaDB v2 Test Update | Low | testing | Tests use raw HTTP API needing v2 UUID endpoints. App uses client lib. 8 tests skipped. Tech debt. |
 | GAP-008 | RESOLVED | Agent UI Image | Low | configuration | RULE-009 | Disabled |
 | GAP-009 | RESOLVED | Pre-commit Hooks | Medium | tooling | RULE-001 | FIXED 2026-01-13: Added setup docs to DEVOPS.md. Config complete in .pre-commit-config.yaml |
 | GAP-010 | RESOLVED | CI/CD Pipeline | Low | tooling | FIXED: .github/workflows/ci.yml + e2e-certification.yml. Unit, integration, E2E, Phase7 jobs. |
-| GAP-014 | DEFERRED | IntelliJ Windsurf MCP not loading | Medium | tooling | RULE-005 | Environment-specific |
 | GAP-015 | RESOLVED | Consolidated STRATEGY.md | Medium | docs | RULE-001 | docs/STRATEGY.md |
 | GAP-019 | RESOLVED | MCP usage documentation | Medium | docs | RULE-007 | MCP-USAGE.md |
 | GAP-020 | RESOLVED | Cross-project knowledge queries | HIGH | workflow | RULE-007 | MCP-USAGE.md |
-| GAP-021 | NOT_IMPLEMENTED | OctoCode for external research | LOW | workflow | CLOSED: Not to be implemented. Using WebSearch MCP instead. |
 | GAP-MCP-006 | RESOLVED | REST MCP server integration | Medium | tooling | RULE-036 | Added to .mcp.json |
 | GAP-MCP-007 | RESOLVED | Podman MCP server integration | Medium | tooling | RULE-036 | Added to .mcp.json |
 | GAP-MCP-008 | RESOLVED | MCP semantic ID support for workspace_link_rules_to_documents | HIGH | mcp | META-TAXON-01-v1 | FIXED: rule_linker.py dual pattern + subdirs + normalize_rule_id() |
@@ -300,9 +180,7 @@
 | GAP-INFRA-002 | RESOLVED | Dev vs Prod workflow undocumented | HIGH | documentation | RULE-030 | DEPLOYMENT.md |
 | GAP-INFRA-003 | RESOLVED | deploy.ps1 missing dev profile | MEDIUM | tooling | RULE-028 | Added 'dev' |
 | GAP-INFRA-004 | RESOLVED | No Docker health dashboard | HIGH | observability | RULE-021 | infra_view.py + nav fixed |
-| GAP-INFRA-005 | DEFERRED | Ollama container not started | LOW | infra | RULE-021 | INDEFINITE: Local LLM optional. LiteLLM routes to cloud APIs. |
 | GAP-TRAME-001 | RESOLVED | nav-infra not rendered despite code | HIGH | framework | RULE-037 | Fixed: duplicate NAVIGATION_ITEMS in constants.py |
-| GAP-INFRA-006 | DEFERRED | Ollama container high memory | LOW | infrastructure | RULE-021 | INDEFINITE: Depends on GAP-INFRA-005. |
 | GAP-MCP-004 | RESOLVED | Rule fallback to markdown | HIGH | architecture | RULE-021 | rule_fallback.py |
 | GAP-TEST-001 | RESOLVED | E2E tests lack BDD paradigm | MEDIUM | testing | RULE-023 | FIXED 2026-01-14: pytest-bdd + Gherkin features + step definitions. TEST-BDD-01-v1 rule created. 9 BDD scenarios. |
 | GAP-HEALTH-001 | RESOLVED | Healthcheck file size exceeds RULE-032 | MEDIUM | architecture | RULE-032 | FIXED 2026-01-13: 522 lines (was 1002). Modular checkers integrated: services, entropy, amnesia, zombies, destructive, intent, workflow. See GAP-REFACTOR-001. |
@@ -316,11 +194,11 @@
 | GAP-RULE-002 | RESOLVED | Rules lack anti-patterns | HIGH | governance | RULE-013 | [GAP-TAXONOMY.md](evidence/GAP-TAXONOMY.md) |
 | GAP-SYNC-001 | RESOLVED | governance_sync_status returns typedb_count=0 | MEDIUM | data | RULE-021 | Fixed: added client.connect() |
 | GAP-SERIAL-001 | RESOLVED | governance_list_all_tasks datetime serialization | MEDIUM | data | RULE-023 | Fixed: added default=str to json.dumps |
-| GAP-LINK-001 | RESOLVED | Task→Session linkage 99.5% (199/200) | MEDIUM | data | RULE-001 | enrich_linkage.py + link API |
-| GAP-LINK-002 | RESOLVED | Task→Rule linkage 60.0% (120/200) | HIGH | data | RULE-011 | enrich_linkage.py + link API |
-| GAP-LINK-003 | RESOLVED | Session→Evidence linkage 94.4% (17/18) | HIGH | data | RULE-001 | enrich_linkage.py |
-| GAP-LINK-004 | RESOLVED | Task→Agent linkage 17.5% (35/200) | HIGH | data | RULE-011 | Above 10% threshold |
-| GAP-LINK-005 | RESOLVED | Session→Agent linkage 66.7% (12/18) | MEDIUM | data | RULE-011 | Above 10% threshold |
+| GAP-LINK-001 | RESOLVED | Task->Session linkage 99.5% (199/200) | MEDIUM | data | RULE-001 | enrich_linkage.py + link API |
+| GAP-LINK-002 | RESOLVED | Task->Rule linkage 60.0% (120/200) | HIGH | data | RULE-011 | enrich_linkage.py + link API |
+| GAP-LINK-003 | RESOLVED | Session->Evidence linkage 94.4% (17/18) | HIGH | data | RULE-001 | enrich_linkage.py |
+| GAP-LINK-004 | RESOLVED | Task->Agent linkage 17.5% (35/200) | HIGH | data | RULE-011 | Above 10% threshold |
+| GAP-LINK-005 | RESOLVED | Session->Agent linkage 66.7% (12/18) | MEDIUM | data | RULE-011 | Above 10% threshold |
 | GAP-SEARCH-001 | RESOLVED | Evidence search fallback to keyword | MEDIUM | search | RULE-007 | SESSION-2026-01-10-DATA-INTEGRITY |
 
 ---
@@ -371,7 +249,6 @@
 
 ## Mock/Stub Configuration Gaps (2026-01-14)
 
-> **Source:** Audit of stubs/mocks in production code
 > **Evidence:** Session 2026-01-14 - TDD test coverage analysis
 
 | ID | Status | Gap | Priority | Category | Rule | Evidence |
@@ -413,14 +290,11 @@
 | ID | Status | Gap | Priority | Category | Entity | Evidence |
 |----|--------|-----|----------|----------|--------|----------|
 | GAP-TASK-001 | RESOLVED | linked_sessions 10% coverage | MEDIUM | data | Task | 74/74 tasks have linked_sessions (100%) |
-| GAP-TASK-002 | DEFERRED | agent_id always null | LOW | data | Code fixed (set on claim). Existing 200 tasks need backfill migration. Non-critical. |
-| GAP-TASK-003 | DEFERRED | completed_at not populated | LOW | data | Code fixed (set on DONE). Existing tasks need backfill migration. Non-critical. |
 | GAP-AGENT-001 | RESOLVED | trust_score hardcoded | HIGH | data | Agent | Dynamic calc |
 | GAP-AGENT-002 | RESOLVED | tasks_executed always 0 | HIGH | data | Agent | Persistent |
 | GAP-AGENT-003 | RESOLVED | last_active not populated | MEDIUM | data | Agent | Updated on task |
 | GAP-AGENT-004 | RESOLVED | capabilities field missing | MEDIUM | schema | Agent | Added to model, schema, routes, stores |
 | GAP-EVIDENCE-001 | RESOLVED | session_id not populated | HIGH | data | Evidence | 8/9 linked |
-| GAP-EVIDENCE-002 | DEFERRED | Only reads .md files | LOW | functionality | Blocked by RD-DOC-SERVICE. Needs multi-format support (JSON, YAML, logs, images). |
 | GAP-DECISION-001 | RESOLVED | linked_rules not in API | MEDIUM | api | Decision | Added to model + routes via get_decision_impacts |
 
 ---
@@ -459,8 +333,7 @@
 |----|--------|-----|----------|----------|----------|
 | GAP-DOC-001 | RESOLVED | No Document MCP for rules | CRITICAL | functionality | governance_get_rule_document |
 | GAP-DOC-002 | RESOLVED | No Document MCP for evidence | CRITICAL | functionality | governance_get_document |
-| GAP-DOC-003 | RESOLVED | No TypeDB→Document sync | HIGH | architecture | workspace_link_rules_to_documents |
-| GAP-DOC-004 | DEFERRED | No Document version tracking | MEDIUM | architecture | Blocked by RD-DOC-SERVICE. Requires TypeDB schema + version history logic. |
+| GAP-DOC-003 | RESOLVED | No TypeDB->Document sync | HIGH | architecture | workspace_link_rules_to_documents |
 
 ---
 
@@ -474,7 +347,7 @@
 | GAP-CTX-004 | RESOLVED | CLAUDE.md needs SRP/OCP optimization | MEDIUM | documentation | Rules count, index updated |
 | GAP-CTX-005 | RESOLVED | Diagrams lack MCP integration details | MEDIUM | documentation | MCP layer added to diagram |
 | GAP-CTX-006 | RESOLVED | Rules 033-036 missing from TypeDB | HIGH | sync | 4 rules synced, RULE-032 fixed |
-| GAP-CTX-007 | RESOLVED | CLAUDE.md 495→93 lines SRP split | HIGH | documentation | Split to DEVOPS.md, SHELL-GUIDE.md |
+| GAP-CTX-007 | RESOLVED | CLAUDE.md 495->93 lines SRP split | HIGH | documentation | Split to DEVOPS.md, SHELL-GUIDE.md |
 
 ---
 
@@ -516,33 +389,5 @@
 
 ---
 
-## Infrastructure Gaps
-
-| ID | Status | Gap | Priority | Category | Evidence |
-|----|--------|-----|----------|----------|----------|
-| GAP-LOG-001 | DEFERRED | Unclear Trame dashboard logs | LOW | observability | Tech debt: Configure Trame logging levels. Low priority. |
-
----
-
-## Gap Categories Summary
-
-| Category | Count | Priority |
-|----------|-------|----------|
-| data/integrity | 2 | CRITICAL |
-| architecture | 5 | CRITICAL |
-| process | 1 | CRITICAL |
-| UI (P10) | 12 | HIGH |
-| functionality | 4 | CRITICAL/HIGH |
-| security | 1 | HIGH |
-| workflow | 2 | HIGH |
-| testing | 6 | MEDIUM/LOW |
-| docs | 3 | Medium |
-| organization | 1 | Medium |
-| configuration | 2 | Medium |
-| tooling | 4 | Medium/Low |
-| performance | 1 | Low |
-
----
-
-*Gap tracking per RULE-013: Rules Applicability Convention*
-*Evidence architecture per GAP-META-001: Index→Evidence split*
+*Archive created 2026-01-16 from GAP-INDEX.md*
+*For active gaps (OPEN, BLOCKED, PARTIAL, DEFERRED), see [GAP-INDEX.md](GAP-INDEX.md)*

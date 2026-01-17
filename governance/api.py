@@ -38,6 +38,7 @@ from governance.routes import (
     evidence_router, files_router, agents_router,
     reports_router, chat_router
 )
+from governance.routes.tests import tests_router
 from governance.routes.chat import _process_chat_command  # Backward-compat re-export
 from governance.stores import (
     _tasks_store, _sessions_store, _agents_store,
@@ -144,6 +145,7 @@ app.include_router(files_router, prefix="/api")
 app.include_router(agents_router, prefix="/api")
 app.include_router(reports_router, prefix="/api")
 app.include_router(chat_router, prefix="/api")
+app.include_router(tests_router, prefix="/api")  # WORKFLOW-SHELL-01-v1: Self-assessment
 
 
 # =============================================================================

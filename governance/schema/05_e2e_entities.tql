@@ -1,0 +1,67 @@
+# E2E Exploration Entities
+# TypeDB schema for LLM-driven E2E testing (RULE-020)
+# Part of: EPIC-DR-012 Schema Modularization
+# Created: 2026-01-17
+
+define
+
+# =============================================================================
+# EXPLORATION SESSION ENTITY
+# =============================================================================
+
+# Exploration session for LLM-driven E2E testing
+exploration-session sub entity,
+    owns session-id,
+    owns session-name,
+    owns session-url,
+    owns started-at,
+    owns completed-at,
+    owns heuristics-applied,
+    plays session-step:session,
+    plays generates:generating-session;
+
+# =============================================================================
+# EXPLORATION STEP ENTITY
+# =============================================================================
+
+# Exploration step within a session
+exploration-step sub entity,
+    owns step-id,
+    owns action-type,
+    owns target-selector,
+    owns step-value,
+    owns step-description,
+    owns step-success,
+    owns step-error,
+    plays session-step:step;
+
+# =============================================================================
+# TEST CASE ENTITY
+# =============================================================================
+
+# Generated test case from exploration
+test-case sub entity,
+    owns test-id,
+    owns test-name,
+    owns generated-from,
+    owns robot-code,
+    owns test-tags,
+    plays generates:generated-test,
+    plays test-failed:generated-test;
+
+# =============================================================================
+# TEST FAILURE ENTITY
+# =============================================================================
+
+# Test failure for LLM analysis
+test-failure sub entity,
+    owns failure-id,
+    owns failure-test-name,
+    owns failure-step,
+    owns failure-error,
+    owns failure-screenshot,
+    owns analysis-classification,
+    owns analysis-root-cause,
+    owns analysis-fix,
+    owns analysis-confidence,
+    plays test-failed:failure;

@@ -4,6 +4,7 @@ Loads governance schema and initial data into TypeDB.
 Created: 2024-12-24 (DECISION-003)
 Updated: 2024-12-24 - Uses typedb-driver 2.29.x API for TypeDB Core 2.29.1 (RULE-009)
 Updated: 2024-12-24 - Added RULE-011 multi-agent governance entities
+Updated: 2026-01-17 - Added modular schema support (EPIC-DR-012)
 """
 import os
 from pathlib import Path
@@ -18,10 +19,12 @@ except ImportError:
 TYPEDB_HOST = os.getenv("TYPEDB_HOST", "localhost")
 TYPEDB_PORT = int(os.getenv("TYPEDB_PORT", "1729"))
 DATABASE_NAME = "sim-ai-governance"
+USE_MODULAR_SCHEMA = os.getenv("USE_MODULAR_SCHEMA", "false").lower() == "true"
 
 # Paths
 SCRIPT_DIR = Path(__file__).parent
-SCHEMA_FILE = SCRIPT_DIR / "schema.tql"
+SCHEMA_FILE = SCRIPT_DIR / "schema.tql"  # Legacy monolithic schema
+SCHEMA_DIR = SCRIPT_DIR / "schema"       # Modular schema directory (EPIC-DR-012)
 DATA_FILE = SCRIPT_DIR / "data.tql"
 
 
@@ -45,8 +48,54 @@ def create_database(driver):
     driver.databases.create(DATABASE_NAME)
 
 
+def load_schema_modular(driver):
+    """
+    Load schema from modular files in schema/ directory.
+
+    Per EPIC-DR-012: Schema split into domain modules for maintainability.
+    Files are loaded in sorted order (01_*, 10_*, 20_*, 30_*) to ensure
+    proper dependency ordering (attributes before entities, etc.).
+    """
+    if not SCHEMA_DIR.exists():
+        raise FileNotFoundError(f"Schema directory not found: {SCHEMA_DIR}")
+
+    # Get all .tql files sorted by name (numeric prefix ensures order)
+    schema_files = sorted(SCHEMA_DIR.glob("*.tql"))
+    if not schema_files:
+        raise FileNotFoundError(f"No .tql files found in {SCHEMA_DIR}")
+
+    print(f"Loading modular schema from {SCHEMA_DIR}/")
+    print(f"  Found {len(schema_files)} module files")
+
+    # Concatenate all schema files (remove duplicate 'define' keywords)
+    combined_schema = "define\n\n"
+    for schema_file in schema_files:
+        print(f"  Loading: {schema_file.name}")
+        with open(schema_file, "r") as f:
+            content = f.read()
+            # Strip 'define' keyword from module files (we add one at the top)
+            content = content.replace("define\n", "").replace("define", "")
+            combined_schema += f"# === {schema_file.name} ===\n"
+            combined_schema += content + "\n"
+
+    with driver.session(DATABASE_NAME, SessionType.SCHEMA) as session:
+        with session.transaction(TransactionType.WRITE) as tx:
+            tx.query.define(combined_schema)
+            tx.commit()
+
+    print(f"Schema loaded successfully ({len(schema_files)} modules).")
+
+
 def load_schema(driver):
-    """Load schema from schema.tql."""
+    """
+    Load schema from schema.tql or modular files.
+
+    Uses USE_MODULAR_SCHEMA env var to select mode (default: monolithic).
+    """
+    if USE_MODULAR_SCHEMA:
+        return load_schema_modular(driver)
+
+    # Legacy monolithic loading
     print(f"Loading schema from {SCHEMA_FILE}...")
 
     with open(SCHEMA_FILE, "r") as f:

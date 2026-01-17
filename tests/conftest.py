@@ -33,6 +33,76 @@ TYPEDB_HOST = os.getenv("TYPEDB_HOST", "localhost")
 TYPEDB_PORT = int(os.getenv("TYPEDB_PORT", "1729"))
 LITELLM_API_KEY = os.getenv("LITELLM_MASTER_KEY", "sk-litellm-dev-key")
 
+# EPIC-DR-009: API endpoint and test data prefixes
+DASHBOARD_API_URL = os.getenv("DASHBOARD_API_URL", "http://localhost:8082")
+API_MAX_LIMIT = 200  # API enforces max 200 items per request
+TEST_DATA_PREFIXES = [
+    "TEST-", "AGENT-TEST-", "UI-TEST-", "VERIFY-TEST-",
+    "LINK-TEST-", "TASK-TEST-", "SESSION-TEST-", "E2E-TEST-",
+]
+
+
+def _is_test_entity(entity_id: str) -> bool:
+    """Check if entity ID matches test data pattern."""
+    return any(entity_id.startswith(prefix) for prefix in TEST_DATA_PREFIXES)
+
+
+def _cleanup_test_tasks(client: httpx.Client) -> dict:
+    """Remove all test-prefixed tasks. Returns cleanup statistics."""
+    stats = {"checked": 0, "deleted": 0, "failed": 0, "errors": []}
+    try:
+        response = client.get(f"{DASHBOARD_API_URL}/api/tasks", params={"limit": API_MAX_LIMIT})
+        if response.status_code != 200:
+            stats["errors"].append(f"Failed to fetch tasks: {response.status_code}")
+            return stats
+        data = response.json()
+        tasks = data.get("items", data) if isinstance(data, dict) else data
+        for task in tasks:
+            task_id = task.get("task_id") or task.get("id", "")
+            if _is_test_entity(task_id):
+                stats["checked"] += 1
+                try:
+                    del_response = client.delete(f"{DASHBOARD_API_URL}/api/tasks/{task_id}")
+                    if del_response.status_code in (200, 204):
+                        stats["deleted"] += 1
+                    else:
+                        stats["failed"] += 1
+                except Exception as e:
+                    stats["failed"] += 1
+                    stats["errors"].append(f"Delete {task_id}: {str(e)}")
+    except Exception as e:
+        stats["errors"].append(f"Cleanup failed: {str(e)}")
+    return stats
+
+
+def _cleanup_test_sessions(client: httpx.Client) -> dict:
+    """Remove all test-prefixed sessions. Returns cleanup statistics."""
+    stats = {"checked": 0, "deleted": 0, "failed": 0, "errors": []}
+    try:
+        response = client.get(f"{DASHBOARD_API_URL}/api/sessions", params={"limit": API_MAX_LIMIT})
+        if response.status_code != 200:
+            stats["errors"].append(f"Failed to fetch sessions: {response.status_code}")
+            return stats
+        sessions = response.json()
+        if isinstance(sessions, dict):
+            sessions = sessions.get("items", [])
+        for session in sessions:
+            session_id = session.get("session_id") or session.get("id", "")
+            if _is_test_entity(session_id):
+                stats["checked"] += 1
+                try:
+                    del_response = client.delete(f"{DASHBOARD_API_URL}/api/sessions/{session_id}")
+                    if del_response.status_code in (200, 204):
+                        stats["deleted"] += 1
+                    else:
+                        stats["failed"] += 1
+                except Exception as e:
+                    stats["failed"] += 1
+                    stats["errors"].append(f"Delete {session_id}: {str(e)}")
+    except Exception as e:
+        stats["errors"].append(f"Cleanup failed: {str(e)}")
+    return stats
+
 
 # =============================================================================
 # GAP-TEST-002: Test Reporting Mode Classes
@@ -120,6 +190,14 @@ class CertificationReporter:
 def pytest_addoption(parser):
     """GAP-TEST-002: Add test reporting mode options."""
     group = parser.getgroup("reporting", "Test Reporting Modes (GAP-TEST-002)")
+
+    # EPIC-DR-009: Test data cleanup option
+    parser.addoption(
+        "--cleanup-test-data",
+        action="store_true",
+        default=False,
+        help="Clean up test data (TEST-*, AGENT-TEST-*, etc.) before running tests"
+    )
     group.addoption(
         "--report-minimal",
         action="store_true",
@@ -174,6 +252,18 @@ def pytest_configure(config):
         # Certification mode: register evidence collector
         config.pluginmanager.register(CertificationReporter(config), "cert_reporter")
 
+    # EPIC-DR-009: Run cleanup if requested
+    try:
+        do_cleanup = config.getoption("--cleanup-test-data", default=False)
+        if do_cleanup:
+            print("[CLEANUP] Running pre-test data cleanup...")
+            with httpx.Client(timeout=30.0) as client:
+                task_stats = _cleanup_test_tasks(client)
+                session_stats = _cleanup_test_sessions(client)
+                print(f"[CLEANUP] Removed {task_stats['deleted']} tasks, {session_stats['deleted']} sessions")
+    except (ValueError, AttributeError):
+        pass
+
 
 # =============================================================================
 # Fixtures
@@ -215,3 +305,137 @@ def opik_client(http_client: httpx.Client):
 def typedb_config():
     """TypeDB connection config."""
     return {"host": TYPEDB_HOST, "port": TYPEDB_PORT}
+
+
+# =============================================================================
+# EPIC-DR-009: Test Data Cleanup Fixtures
+# =============================================================================
+
+@pytest.fixture(scope="session")
+def cleanup_test_data():
+    """
+    Session-scoped fixture that cleans up test data after all tests.
+
+    Per EPIC-DR-009: Removes TEST-*, AGENT-TEST-*, etc. prefixed entities.
+
+    Usage:
+        def test_something(cleanup_test_data):
+            # Test runs, cleanup happens automatically at session end
+            pass
+    """
+    # Yield to run tests first
+    yield
+
+    # Cleanup after all tests complete
+    with httpx.Client(timeout=30.0) as client:
+        print("\n[CLEANUP] Starting test data cleanup...")
+
+        task_stats = _cleanup_test_tasks(client)
+        print(f"[CLEANUP] Tasks: {task_stats['deleted']} deleted, {task_stats['failed']} failed")
+
+        session_stats = _cleanup_test_sessions(client)
+        print(f"[CLEANUP] Sessions: {session_stats['deleted']} deleted, {session_stats['failed']} failed")
+
+        if task_stats["errors"] or session_stats["errors"]:
+            print("[CLEANUP] Errors:")
+            for err in task_stats["errors"][:5]:
+                print(f"  - {err}")
+            for err in session_stats["errors"][:5]:
+                print(f"  - {err}")
+
+
+@pytest.fixture
+def test_task_factory(http_client: httpx.Client):
+    """
+    Factory fixture for creating test tasks with automatic cleanup.
+
+    Per EPIC-DR-009: Creates tasks with TEST- prefix for easy identification.
+
+    Usage:
+        def test_something(test_task_factory):
+            task = test_task_factory(description="My test task")
+            # task has task_id like "TEST-abc123"
+            # Cleanup happens automatically
+    """
+    created_task_ids = []
+
+    def create_task(
+        description: str = "Test task",
+        phase: str = "TEST",
+        status: str = "TODO",
+        **kwargs
+    ) -> dict:
+        """Create a test task with TEST- prefix."""
+        import uuid
+        task_id = f"TEST-{uuid.uuid4().hex[:8].upper()}"
+
+        task_data = {
+            "task_id": task_id,
+            "description": description,
+            "phase": phase,
+            "status": status,
+            **kwargs
+        }
+
+        response = http_client.post(f"{DASHBOARD_API_URL}/api/tasks", json=task_data)
+        if response.status_code == 201:
+            created_task_ids.append(task_id)
+            return response.json()
+        else:
+            raise RuntimeError(f"Failed to create task: {response.status_code} - {response.text}")
+
+    yield create_task
+
+    # Cleanup created tasks
+    for task_id in created_task_ids:
+        try:
+            http_client.delete(f"{DASHBOARD_API_URL}/api/tasks/{task_id}")
+        except Exception:
+            pass  # Best effort cleanup
+
+
+@pytest.fixture
+def test_session_factory(http_client: httpx.Client):
+    """
+    Factory fixture for creating test sessions with automatic cleanup.
+
+    Per EPIC-DR-009: Creates sessions with SESSION-TEST- prefix.
+
+    Usage:
+        def test_something(test_session_factory):
+            session = test_session_factory(description="My test session")
+            # Cleanup happens automatically
+    """
+    created_session_ids = []
+
+    def create_session(
+        description: str = "Test session",
+        status: str = "ACTIVE",
+        **kwargs
+    ) -> dict:
+        """Create a test session with SESSION-TEST- prefix."""
+        import uuid
+        session_id = f"SESSION-TEST-{uuid.uuid4().hex[:8].upper()}"
+
+        session_data = {
+            "session_id": session_id,
+            "description": description,
+            "status": status,
+            **kwargs
+        }
+
+        response = http_client.post(f"{DASHBOARD_API_URL}/api/sessions", json=session_data)
+        if response.status_code == 201:
+            created_session_ids.append(session_id)
+            return response.json()
+        else:
+            raise RuntimeError(f"Failed to create session: {response.status_code} - {response.text}")
+
+    yield create_session
+
+    # Cleanup created sessions
+    for session_id in created_session_ids:
+        try:
+            http_client.delete(f"{DASHBOARD_API_URL}/api/sessions/{session_id}")
+        except Exception:
+            pass  # Best effort cleanup

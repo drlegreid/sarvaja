@@ -1,0 +1,20 @@
+# Vector Embedding Attributes
+# TypeDB attributes for vector storage (P7.1 - TypeDB 2.x Bridge)
+# Part of: EPIC-DR-012 Schema Modularization
+# Created: 2026-01-17
+
+define
+
+# =============================================================================
+# VECTOR EMBEDDING ATTRIBUTES (P7.1)
+# =============================================================================
+
+vector-id sub attribute, value string;           # Unique vector ID (uuid)
+vector-content sub attribute, value string;      # Original text content
+vector-embedding sub attribute, value string;    # JSON-encoded float[] (e.g., "[0.1, 0.2, ...]")
+vector-model sub attribute, value string;        # Embedding model (e.g., "text-embedding-3-small")
+vector-dimension sub attribute, value long;      # Embedding dimensions (e.g., 1536, 768)
+vector-source sub attribute, value string;       # Source ID (rule-id, decision-id, etc.)
+vector-source-type sub attribute, value string;  # Source type (rule, decision, session)
+vector-created-at sub attribute, value datetime;
+similarity-score sub attribute, value double;    # Cosine similarity 0.0-1.0

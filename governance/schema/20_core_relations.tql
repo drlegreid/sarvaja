@@ -1,0 +1,39 @@
+# Core Governance Relations
+# TypeDB relations for rules, decisions, tasks, and gaps
+# Part of: EPIC-DR-012 Schema Modularization
+# Created: 2026-01-17
+
+define
+
+# =============================================================================
+# RULE RELATIONS
+# =============================================================================
+
+# Rule A depends on Rule B
+rule-dependency sub relation,
+    relates dependent,
+    relates dependency;
+
+# Decision affects Rule
+decision-affects sub relation,
+    relates affecting-decision,
+    relates affected-rule;
+
+# Decision supersedes another Decision
+decision-supersedes sub relation,
+    relates superseding,
+    relates superseded;
+
+# Task is blocked by Rule
+task-blocked sub relation,
+    relates blocked-task,
+    relates blocking-rule;
+
+# Gap requires Rule to be resolved
+gap-requires sub relation,
+    relates requiring-gap,
+    relates required-rule;
+
+# Rules that conflict with each other
+rule-conflict sub relation,
+    relates conflicting-rule;

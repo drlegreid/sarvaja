@@ -26,6 +26,70 @@ This is the **root document** for R&D backlog. Each section links to detailed in
 | **Agent Testing** | [rd/RD-AGENT-TESTING.md](rd/RD-AGENT-TESTING.md) | IN_PROGRESS | **CRITICAL** |
 | **Document Viewer** | [rd/RD-DOCUMENT-VIEWER.md](rd/RD-DOCUMENT-VIEWER.md) | TODO | HIGH |
 | **Enterprise Architecture EPIC** | (inline below) | 📋 TODO | **CRITICAL** |
+| **Dashboard Production Readiness** | (inline below) | 📋 TODO | **CRITICAL** |
+
+---
+
+## EPIC: Dashboard Production Readiness (2026-01-16)
+
+> **Goal:** Transform dashboard from "toy" to production-usable with data integrity, performance, and UX
+> **Priority:** CRITICAL | **Status:** 📋 TODO
+> **Trigger:** Platform audit discovered 0% data traceability and 7-9 second response times
+> **Evidence:** [SESSION-2026-01-16-PLATFORM-AUDIT.md](../../docs/SESSION-2026-01-16-PLATFORM-AUDIT.md)
+
+### Production Readiness Criteria
+
+| Criterion | Current | Target | Priority |
+|-----------|---------|--------|----------|
+| **Data Traceability** | 0% session→task linking | 100% bidirectional | **CRITICAL** |
+| **API Response Time** | 7-9 seconds | <500ms | **CRITICAL** |
+| **UI Loading Indicators** | None | Skeleton + spinner | **HIGH** |
+| **Pagination** | None (dump all) | 20/page + infinite scroll | **HIGH** |
+| **Test Data Cleanup** | Polluted (TEST-*) | Auto-cleanup fixtures | MEDIUM |
+| **Agent Attribution** | 0% agent_id | 100% on task actions | **HIGH** |
+| **Evidence Linkage** | 0% evidence field | 100% for completed tasks | **HIGH** |
+
+### EPIC Tasks
+
+| ID | Task | Status | Priority | Evidence |
+|----|------|--------|----------|----------|
+| EPIC-DR-001 | Profile TypeDB query performance | ✅ VALIDATED | **CRITICAL** | N+1 fixed → 37x faster (7.5s→0.2s) |
+| EPIC-DR-002 | Implement TypeDB indexing | ⏸️ DEFERRED | MEDIUM | Performance targets met (0.2s < 0.5s target) |
+| EPIC-DR-012 | Split TypeDB schema into modules | ✅ DONE | MEDIUM | 19 modules in governance/schema/ (2026-01-17) |
+| EPIC-DR-003 | Add API pagination metadata | ✅ DONE | HIGH | PaginatedTaskResponse model (2026-01-17) |
+| EPIC-DR-004 | Implement UI skeleton loaders | ✅ DONE | HIGH | Tasks, Agents, Sessions views |
+| EPIC-DR-005 | Add UI pagination controls | ✅ DONE | HIGH | Prev/Next + page size selector (2026-01-17) |
+| EPIC-DR-006 | Fix session→task linking on creation | ✅ DONE | **CRITICAL** | Backend + UI complete (2026-01-17) |
+| EPIC-DR-007 | Fix agent_id population on task claim | ✅ DONE | HIGH | Claim endpoint works (2026-01-17) |
+| EPIC-DR-008 | Fix evidence field on task completion | ✅ DONE | HIGH | Verification levels + evidence display (2026-01-17) |
+| EPIC-DR-009 | Add test data cleanup fixtures | ✅ DONE | MEDIUM | --cleanup-test-data flag + factory fixtures (2026-01-17) |
+| EPIC-DR-010 | Create production readiness checklist | ✅ DONE | HIGH | [PRODUCTION-READINESS-CHECKLIST.md](PRODUCTION-READINESS-CHECKLIST.md) |
+| EPIC-DR-011 | Display linked_sessions in task UI | ✅ DONE | HIGH | GAP-UI-LINKED-SESSIONS-001 resolved (2026-01-17) |
+
+### Gaps Discovered (2026-01-16)
+
+| Gap ID | Description | Priority |
+|--------|-------------|----------|
+| GAP-DATA-INTEGRITY-001 | Dashboard shows counts but no traceability | ⚠️ PARTIAL (traceability working) |
+| GAP-API-PERF-001 | API response times 7-9 seconds | ✅ RESOLVED |
+| GAP-UI-PAGING-001 | No pagination or loading indicators | HIGH |
+| GAP-UI-LINKED-SESSIONS-001 | Task UI missing linked_sessions display | ✅ RESOLVED (2026-01-17) |
+
+### Success Criteria
+
+- [ ] API response times <500ms for all list endpoints
+- [ ] Skeleton loaders visible during all API calls
+- [ ] Pagination controls on Tasks, Sessions views (20 items/page)
+- [ ] 100% session→task linking for new tasks
+- [ ] 100% agent_id for claimed tasks
+- [ ] 100% evidence linkage for completed tasks
+- [ ] Zero TEST-* entries in production data
+
+### Related
+
+- GAP-DATA-INTEGRITY-001, GAP-API-PERF-001, GAP-UI-PAGING-001
+- EPIC-003 (Microservice Migration) - depends on performance baseline
+- RULE-025 (Test Data Integrity) - validation requirements
 
 ---
 
@@ -1504,6 +1568,7 @@ See: [STRATEGY-CYCLE-DIRECTIVES.md](../STRATEGY-CYCLE-DIRECTIVES.md) (to be extr
 | RD-MINIKANREN | Evaluate miniKanren for constraint solving | HIGH | RESEARCH | RD-KANREN-CONTEXT | EXCLUDED per user request. |
 | RD-HASKELL-READY | Assess migration readiness to Haskell | LOW | FUTURE | RD-HASKELL-MCP | EXCLUDED per user request. |
 | **RD-REPORTER-AGENT** | **Dedicated agent for session reporting (Zen koans, GitHub issues)** | **MEDIUM** | **TODO** | RD-AGENTIC-READY | Implement after agentic platform validated. Hook + /report skill interim. |
+| **RD-COMPACT-HOOK** | **Investigate forced compaction via hook** | **LOW** | **RESEARCH** | - | PreCompact hook exists but cannot trigger. Monitor GitHub #14160. |
 
 ### RD-DOC-SERVICE: Document Service Architecture
 

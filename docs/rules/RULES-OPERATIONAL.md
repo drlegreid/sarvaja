@@ -58,6 +58,8 @@ Rules governing testing, stability, maintenance, and task execution.
 | **DOC-PARTIAL-01-v1** | PARTIAL Task Handling | HIGH |
 | **DOC-LINK-01-v1** | Relative Document Linking | CRITICAL |
 | **CONTAINER-SHELL-01-v1** | Shell Command Environment Selection | HIGH |
+| **CONTAINER-TYPEDB-01-v1** | TypeDB Container Query Patterns | HIGH |
+| **PKG-LATEST-01-v1** | Latest Stable Package Versions | HIGH |
 | **TEST-FIX-01-v1** | Fix Validation Protocol | CRITICAL |
 | **SAFETY-DESTR-01-v1** | Destructive Command Prevention | CRITICAL |
 

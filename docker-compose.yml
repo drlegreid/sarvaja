@@ -183,6 +183,7 @@ services:
       - ./docs:/app/docs:ro
       - ./evidence:/app/evidence:rw
       - ./.claude:/app/.claude:ro  # GAP-UI-EXP-011: Mount hooks/checkers for workflow compliance
+      - ./tests:/app/tests:ro      # WORKFLOW-SHELL-01-v1: Enable pytest in container
     depends_on:
       - typedb
       - chromadb

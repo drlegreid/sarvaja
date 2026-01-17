@@ -1,0 +1,24 @@
+# Document Cross-Referencing Entities
+# TypeDB schema for document tracking (RULE-013)
+# Part of: EPIC-DR-012 Schema Modularization
+# Created: 2026-01-17
+
+define
+
+# =============================================================================
+# DOCUMENT ENTITY (RULE-013)
+# =============================================================================
+
+# Document entity for cross-referencing
+document sub entity,
+    owns document-id,
+    owns document-title,
+    owns document-path,         # Local path: docs/RULES.md
+    owns document-url,          # Remote: webdav://... or github://...
+    owns document-type,         # markdown, yaml, json, code
+    owns document-storage,      # local, webdav, github
+    owns last-modified,
+    owns content-hash,
+    plays document-references-rule:referencing-document,
+    plays document-references-decision:referencing-document,
+    plays document-references-gap:referencing-document;

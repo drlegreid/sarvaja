@@ -1,0 +1,40 @@
+# Entity Linkage Relations
+# TypeDB relations for session-task-evidence links (P11.3 - GAP-DATA-002)
+# Part of: EPIC-DR-012 Schema Modularization
+# Created: 2026-01-17
+
+define
+
+# =============================================================================
+# ENTITY LINKAGE RELATIONS (P11.3 - GAP-DATA-002)
+# =============================================================================
+
+# Task implements a rule (shows which rule a task is implementing)
+implements-rule sub relation,
+    relates implementing-task,
+    relates implemented-rule;
+
+# Task completed in a session (tracks when/where work was done)
+completed-in sub relation,
+    relates completed-task,
+    relates hosting-session;
+
+# Session has evidence files (links sessions to their artifacts)
+has-evidence sub relation,
+    relates evidence-session,
+    relates session-evidence;
+
+# Session applied a rule (rules used/followed during session)
+session-applied-rule sub relation,
+    relates applying-session,
+    relates applied-rule;
+
+# Session made a decision (decisions made during session)
+session-decision sub relation,
+    relates deciding-session,
+    relates session-made-decision;
+
+# Evidence supports a task (evidence proving task completion)
+evidence-supports sub relation,
+    relates supporting-evidence,
+    relates supported-task;
