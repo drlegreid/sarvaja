@@ -1560,7 +1560,7 @@ See: [STRATEGY-CYCLE-DIRECTIVES.md](../STRATEGY-CYCLE-DIRECTIVES.md) (to be extr
 | ID | Task | Priority | Status | Dependencies | Assessment (2026-01-14) |
 |----|------|----------|--------|--------------|--------------------------|
 | RD-DOC-SERVICE | Document Service for file retrieval & linking | HIGH | ✅ TESTS (19) | GAP-UI-039 | **TDD Complete:** 19 tests covering rule scanning, ID extraction, TypeDB linking. Implemented: File type detection (40+ types), pagination (offset/limit), semantic-to-legacy conversion. |
-| RD-DEBUG-AUDIT | Debugability - audit trails for tests/agents/MCPs | HIGH | ✅ TESTS (15) | - | **TDD Complete:** 15 tests covering correlation_id, applied_rules, MCP structure, commit tracking. Implemented: session_tool_call, session_thought, cross-agent tracing. |
+| RD-DEBUG-AUDIT | Debugability - audit trails for tests/agents/MCPs | HIGH | ✅ DONE | - | **Complete (2026-01-17):** 15 tests, dashboard view, 4 MCP tools (governance_query_audit, governance_audit_summary, governance_entity_audit_trail, governance_trace_correlation). |
 | RD-AGENTIC-READY | Assess readiness for agentic workspaces | MEDIUM | ASSESSED | RD-WORKSPACE | **Ready:** 5 workspaces, handoff protocol, skill composition. **Missing:** Phase 5 optimization loop, runtime metrics. |
 | RD-SESSION-TRACE | Track thoughts, tool calls with holographic detailisation | HIGH | IMPLEMENTED | SESSION-EVID-01-v1 | sessions_core.py:206-299 has session_tool_call + session_thought. Needs multi-tier abstraction layer. |
 | RD-META-RULES | Metarules for rule management (deprecation, versioning) | MEDIUM | DESIGN | META-TAXON-01-v1 | Propose: RULE-LIFECYCLE-01-v1 for deprecation workflow, RULE-VERSION-01-v1 for lineage tracking. |

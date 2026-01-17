@@ -101,7 +101,7 @@
 | RD-WORKFLOW | Agentic Workflow Integrity | DONE | All 4 phases complete |
 | RD-WORKSPACE | Multi-Agent Workspace Split | PHASE 4 | Phase 4 complete (2026-01-11) |
 | RD-DOC-SERVICE | Document Service Architecture | PARTIAL | Code ready, MCP caching blocks (2026-01-14) |
-| RD-DEBUG-AUDIT | Audit Trail Debugability | PARTIAL | correlation_id + applied_rules added (2026-01-14) |
+| RD-DEBUG-AUDIT | Audit Trail Debugability | ✅ DONE | Dashboard + MCP tools (2026-01-17) |
 | MULTI-007 | Observability Infrastructure | MOSTLY DONE | Visibility complete: session→tasks→rules, tokens. Only merge conflict TODO |
 
 ### RD-INTENT: Session Intent Reconciliation (DONE)

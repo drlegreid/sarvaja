@@ -1,7 +1,7 @@
 # Gap Index - Sarvaja (Active Gaps)
 
 **Last Updated:** 2026-01-17
-**Active Gaps:** 32 | Status: 12 OPEN, 1 BLOCKED, 1 IN_PROGRESS, 3 PARTIAL, 15 DEFERRED
+**Active Gaps:** 31 | Status: 11 OPEN, 1 BLOCKED, 1 IN_PROGRESS, 3 PARTIAL, 15 DEFERRED
 **Archived:** 209 RESOLVED gaps → [GAP-INDEX-ARCHIVE.md](GAP-INDEX-ARCHIVE.md)
 
 > **Evidence Files:** Detailed analysis in [evidence/](evidence/) per GAP-META-001
@@ -170,7 +170,7 @@
 
 | ID | Status | Gap | Priority | Category | Evidence |
 |----|--------|-----|----------|----------|----------|
-| GAP-FILE-029 | OPEN | governance/routes/tasks/workflow.py 414 lines (>300 limit) | MEDIUM | architecture | Per DOC-SIZE-01-v1, entropy alert detected |
+| GAP-FILE-029 | RESOLVED | governance/routes/tasks/workflow.py 414→296 lines | MEDIUM | architecture | FIXED 2026-01-17: Extracted helpers.py. Per DOC-SIZE-01-v1. |
 | GAP-FILE-002 | RESOLVED | RULES-OPERATIONAL.md 1900→74 lines | CRITICAL | architecture | Split to 4 files |
 | GAP-FILE-003 | RESOLVED | RULES-GOVERNANCE.md 633→53 lines | HIGH | architecture | Split to 2 files |
 | GAP-FILE-004 | RESOLVED | RULES-TECHNICAL.md 457→59 lines | HIGH | architecture | Split to 3 files |
