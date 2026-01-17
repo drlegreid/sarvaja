@@ -34,20 +34,20 @@
 | GAP-BATCH-QUERY-001 | RESOLVED | Session LIST returns wrong tasks_completed count vs GET | HIGH | data_integrity | [evidence/GAP-BATCH-QUERY-001.md](evidence/GAP-BATCH-QUERY-001.md) |
 | GAP-E2E-KANREN-001 | RESOLVED | E2E platform health test fails - kanren not in requirements.txt | HIGH | testing | FIXED: Added kanren>=0.2.3 to requirements.txt |
 | GAP-API-PERF-001 | OPEN | API response times 7-9 seconds for simple queries (target <500ms) | HIGH | performance | [evidence/GAP-API-PERF-001.md](evidence/GAP-API-PERF-001.md) |
-| GAP-UI-PAGING-001 | OPEN | UI loads all data at once, no pagination or loading indicators | HIGH | ux | [evidence/GAP-UI-PAGING-001.md](evidence/GAP-UI-PAGING-001.md) |
+| GAP-UI-PAGING-001 | RESOLVED | UI pagination & loading states complete (EPIC-DR-003/005) | HIGH | ux | [evidence/GAP-UI-PAGING-001.md](evidence/GAP-UI-PAGING-001.md) |
 
 ### Data Quality Evidence (Updated 2026-01-17)
 
 | Entity | Field | Populated | Quality | Notes |
 |--------|-------|-----------|---------|-------|
-| Task | agent_id | 0% | **CRITICAL** | EPIC-DR-007: Backfill needed |
+| Task | agent_id | **100%** | **FIXED** | EPIC-DR-007: Backfilled 76 tasks (2026-01-17) |
 | Task | evidence | 3% | **CRITICAL** | EPIC-DR-008: Only 2 tasks have evidence |
 | Task | linked_sessions | 86% | **GOOD** | 65/76 via completed-in relations |
 | Session | evidence_files | 77% | **GOOD** | 17/22 have has-evidence relations |
 | Session | tasks_completed | 18% | **IMPROVED** | 4 sessions have completed tasks |
 | Session | linked_rules_applied | 23% | Fair | 5/22 sessions |
 
-**Verdict:** Data integrity significantly improved. Session→Task and Session→Evidence working. Remaining: task agent_id/evidence backfill.
+**Verdict:** Data integrity significantly improved. agent_id backfilled to 100%. Remaining: task evidence field (3%).
 
 ---
 
