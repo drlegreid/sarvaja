@@ -69,6 +69,15 @@ from .helpers import (
     generate_chat_session_id,
 )
 
+# Audit Trail (RD-DEBUG-AUDIT)
+from .audit import (
+    AuditEntry,
+    generate_correlation_id,
+    record_audit,
+    query_audit_trail,
+    get_audit_summary,
+)
+
 __all__ = [
     # TypeDB Config
     "USE_TYPEDB",
@@ -105,4 +114,10 @@ __all__ = [
     "session_to_response",
     "extract_session_id",
     "generate_chat_session_id",
+    # Audit Trail (RD-DEBUG-AUDIT)
+    "AuditEntry",
+    "generate_correlation_id",
+    "record_audit",
+    "query_audit_trail",
+    "get_audit_summary",
 ]

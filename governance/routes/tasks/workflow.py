@@ -19,7 +19,8 @@ from governance.stores import (
     _tasks_store, _agents_store, _AGENT_BASE_CONFIG,
     _load_agent_metrics, _save_agent_metrics,
     _calculate_trust_score, _update_agent_metrics_on_claim,
-    task_to_response
+    task_to_response,
+    record_audit, generate_correlation_id  # RD-DEBUG-AUDIT
 )
 from governance.task_lifecycle import (
     TaskResolution,
@@ -231,6 +232,23 @@ async def complete_task(
                         logger.warning(f"Failed to link task {task_id} to session {session_id}: {link_err}")
 
                 logger.info(f"Task {task_id} completed with resolution={resolution.value}, verification={verification_level}")
+
+                # RD-DEBUG-AUDIT: Record task completion in audit trail
+                record_audit(
+                    action_type="COMPLETE",
+                    entity_type="task",
+                    entity_id=task_id,
+                    actor_id=task_obj.agent_id or "unknown",
+                    old_value=task_obj.status,
+                    new_value="DONE",
+                    applied_rules=["WORKFLOW-SEQ-01-v1"],
+                    metadata={
+                        "resolution": resolution.value,
+                        "verification_level": verification_level,
+                        "session_id": session_id
+                    }
+                )
+
                 return task_to_response(updated)
         except HTTPException:
             raise
@@ -246,11 +264,28 @@ async def complete_task(
     if task.get("status") == "DONE":
         raise HTTPException(status_code=409, detail=f"Task {task_id} already completed")
 
+    old_status = task.get("status", "TODO")
     task["status"] = "DONE"
     task["completed_at"] = datetime.now().isoformat()
     task["resolution"] = resolution.value
     if enriched_evidence:
         task["evidence"] = enriched_evidence
+
+    # RD-DEBUG-AUDIT: Record task completion in audit trail
+    record_audit(
+        action_type="COMPLETE",
+        entity_type="task",
+        entity_id=task_id,
+        actor_id=task.get("agent_id", "unknown"),
+        old_value=old_status,
+        new_value="DONE",
+        applied_rules=["WORKFLOW-SEQ-01-v1"],
+        metadata={
+            "resolution": resolution.value,
+            "verification_level": verification_level,
+            "session_id": session_id
+        }
+    )
 
     return TaskResponse(**task)
 

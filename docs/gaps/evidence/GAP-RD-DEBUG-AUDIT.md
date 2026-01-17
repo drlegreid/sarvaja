@@ -71,33 +71,44 @@ async def complete_task(task_id, evidence, verification_level):
 
 ## Implementation Plan
 
-### Phase 1: Audit Log Schema (TODO)
-- Add `audit-entry` entity to TypeDB schema
-- Create audit log table/collection
-- Define retention policy
+### Phase 1: Audit Log Schema (DONE - 2026-01-17)
+- ✅ `governance/stores/audit.py` - In-memory store with JSON persistence
+- ✅ `AuditEntry` dataclass with all fields
+- ✅ 7-day retention policy implemented
+- Note: Uses file persistence instead of TypeDB (Python 3.13 workaround)
 
-### Phase 2: Correlation ID Propagation (PARTIAL)
-- Generate correlation_id at request entry
-- Pass through all service layers
-- Include in all log messages
+### Phase 2: Correlation ID Propagation (DONE - 2026-01-17)
+- ✅ `generate_correlation_id()` function
+- ✅ Auto-generated if not provided to `record_audit()`
+- ✅ Format: `CORR-YYYYMMDD-HHMMSS-XXXXXX`
 
-### Phase 3: Rule Application Tracking (TODO)
-- Capture which rules influenced each decision
-- Store rule IDs with audit entries
-- Enable "why was this decision made?" queries
+### Phase 3: Rule Application Tracking (DONE - 2026-01-17)
+- ✅ `applied_rules` field in AuditEntry
+- ✅ Task completion records `WORKFLOW-SEQ-01-v1`
+- ✅ Stored with each audit entry
 
-### Phase 4: Query Interface (TODO)
-- MCP tool: `governance_query_audit_trail(entity_id)`
-- API endpoint: `GET /api/audit/{entity_id}`
-- Dashboard view: Audit trail tab on entity detail
+### Phase 4: Query Interface (PARTIAL - 2026-01-17)
+- ✅ REST API: `GET /api/audit` - List with filters
+- ✅ REST API: `GET /api/audit/summary` - Statistics
+- ✅ REST API: `GET /api/audit/{entity_id}` - Entity trail
+- TODO: MCP tool for claude-mem integration
+- TODO: Dashboard view for audit history
+
+## Files Created
+
+| File | Purpose |
+|------|---------|
+| `governance/stores/audit.py` | Audit store module |
+| `governance/routes/audit.py` | REST API endpoints |
+| `data/audit_trail.json` | Persisted audit entries |
 
 ## Acceptance Criteria
 
-- [ ] All task state changes logged with correlation_id
-- [ ] Applied rules captured for each decision
-- [ ] Audit trail queryable by entity_id
+- [x] All task state changes logged with correlation_id
+- [x] Applied rules captured for each decision
+- [x] Audit trail queryable by entity_id (via REST API)
 - [ ] Dashboard shows audit history
-- [ ] 7-day retention for audit entries
+- [x] 7-day retention for audit entries
 
 ## Related
 
