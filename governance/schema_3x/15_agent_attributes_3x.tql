@@ -1,0 +1,90 @@
+# Multi-Agent Governance Attributes
+# TypeDB attributes for agent trust and proposals (RULE-011)
+# Part of: EPIC-DR-012 Schema Modularization
+# Created: 2026-01-17
+
+define
+
+# =============================================================================
+# AGENT ATTRIBUTES (RULE-011)
+# =============================================================================
+
+attribute agent-id value string;
+
+attribute agent-name value string;
+
+attribute agent-type value string;
+
+attribute agent-capabilities value string;
+
+attribute trust-score value double;
+
+attribute compliance-rate value double;
+
+attribute accuracy-rate value double;
+
+attribute tenure-days value long;
+
+
+# =============================================================================
+# PROPOSAL ATTRIBUTES (RULE-011)
+# =============================================================================
+
+attribute proposal-id value string;
+
+attribute proposal-type value string;
+
+attribute proposal-status value string;
+
+attribute evidence value string;
+
+attribute hypothesis value string;
+
+attribute proposal-created-at value datetime;
+
+
+# =============================================================================
+# VOTE ATTRIBUTES (RULE-011)
+# =============================================================================
+
+attribute vote-value value string;
+
+attribute vote-reason value string;
+
+attribute vote-timestamp value datetime;
+
+attribute vote-weight value double;
+
+
+# =============================================================================
+# DISPUTE ATTRIBUTES (RULE-011)
+# =============================================================================
+
+attribute dispute-id value string;
+
+attribute dispute-reason value string;
+
+attribute semantic-analysis value string;
+
+attribute resolution-method value string;
+
+attribute escalation-trigger value string;
+
+
+# =============================================================================
+# AGENT ACTION ATTRIBUTES (RULE-011)
+# =============================================================================
+
+attribute action-type value string;
+
+attribute action-timestamp value datetime;
+
+attribute action-outcome value string;
+
+
+# =============================================================================
+# TYPED REFERENCE ATTRIBUTES (P10.7 - Option B)
+# =============================================================================
+
+attribute has-authority value boolean;
+

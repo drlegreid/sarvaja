@@ -46,29 +46,31 @@ Plan for upgrading TypeDB Server from 2.29.1 to 3.7.x to resolve Python 3.13 dri
 
 ### Phase 2: Schema Migration
 
-**Status:** TODO
+**Status:** ✅ DONE (2026-01-17)
 
-Steps:
-1. Export 2.x database:
-   ```bash
-   podman exec platform_typedb_1 typedb server export \
-     --database=sim-ai-governance \
-     --output=/data/export-2x/
-   ```
+**Key Finding:** TypeDB 3.x schemas are NOT backward compatible with 2.x.
 
-2. Update schema for 3.x:
-   - Add cardinality annotations (@card)
-   - Remove rules (replaced by functions)
-   - Fix attributes-owning-attributes issues
+**Breaking Changes Identified:**
+| 2.x Syntax | 3.x Syntax | Count |
+|------------|------------|-------|
+| `name sub entity,` | `entity name,` | 15 |
+| `name sub relation,` | `relation name,` | 33 |
+| `name sub attribute, value TYPE;` | `attribute name value TYPE;` | 116 |
+| `rule X: when {...} then {...};` | `fun X() -> {...} {...}` | 5 |
 
-3. Schema changes required:
-   ```typeql
-   # 2.x (current)
-   rule owns rule-name;
+**Files Created:**
+- `scripts/schema_2x_to_3x.py` - Automated converter
+- `governance/schema_3x/*.tql` - 19 converted schema files
 
-   # 3.x (required)
-   rule owns rule-name @card(0..1);  # Explicit single
-   ```
+**Automated Conversion Stats:**
+- 920 lines converted
+- 164 definitions updated to kind-first syntax
+- 5 inference rules marked for manual conversion to functions
+
+**Manual Work Required:**
+1. Review cardinality annotations (@card) on owns/plays
+2. Convert inference rules to functions (5 rules)
+3. Test schema against TypeDB 3.x server
 
 ### Phase 3: Server Upgrade
 

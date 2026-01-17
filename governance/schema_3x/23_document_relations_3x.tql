@@ -1,0 +1,34 @@
+# Document Cross-Referencing Relations
+# TypeDB relations for document tracking (RULE-013)
+# Part of: EPIC-DR-012 Schema Modularization
+# Created: 2026-01-17
+
+define
+
+# =============================================================================
+# DOCUMENT CROSS-REFERENCING RELATIONS (RULE-013)
+# =============================================================================
+
+# Gap references a governing rule (for meta-referencing per RULE-013)
+relation gap-rule-reference,
+
+    relates referencing-gap,
+    relates governing-rule;
+
+# Document references a rule
+relation document-references-rule,
+
+    relates referencing-document,
+    relates referenced-rule;
+
+# Document references a decision
+relation document-references-decision,
+
+    relates referencing-document,
+    relates referenced-decision;
+
+# Document references a gap
+relation document-references-gap,
+
+    relates referencing-document,
+    relates referenced-gap;

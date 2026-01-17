@@ -1,0 +1,105 @@
+# Inference Rules
+# TypeDB inference rules for governance automation
+# Part of: EPIC-DR-012 Schema Modularization
+# Created: 2026-01-17
+
+define
+
+# =============================================================================
+# CORE INFERENCE RULES
+# =============================================================================
+
+# Transitive rule dependency: if A depends on B and B depends on C, then A depends on C
+# TODO: Convert to function
+# fun transitive-dependency() -> { ... } {
+#     Original rule:
+rule transitive-dependency: when {
+        (dependent: $a, dependency: $b) isa rule-dependency;
+        (dependent: $b, dependency: $c) isa rule-dependency;
+    } then {
+        (dependent: $a, dependency: $c) isa rule-dependency;
+    };
+
+# Blocked task inference: DISABLED - TypeDB cannot modify existing attributes
+# TODO: Redesign to use a separate "is-blocked" relation instead
+# rule infer-blocked-task:
+#     when {
+#         $task isa task, has task-status "TODO";
+#         $rule isa rule-entity, has status $s;
+#         not { $s = "ACTIVE"; };
+#         (blocked-task: $task, blocking-rule: $rule) isa task-blocked;
+#     } then {
+#         $task has task-status "BLOCKED";
+#     };
+
+# Cascade superseded: if decision A supersedes B, and B affects rule R, A now affects R
+# TODO: Convert to function
+# fun cascade-supersede() -> { ... } {
+#     Original rule:
+rule cascade-supersede: when {
+        (superseding: $a, superseded: $b) isa decision-supersedes;
+        (affecting-decision: $b, affected-rule: $r) isa decision-affects;
+    } then {
+        (affecting-decision: $a, affected-rule: $r) isa decision-affects;
+    };
+
+# Priority conflict: if two active rules in same category have different priorities
+# TODO: Convert to function
+# fun priority-conflict() -> { ... } {
+#     Original rule:
+rule priority-conflict: when {
+        $r1 isa rule-entity, has category $c, has priority $p1, has status "ACTIVE";
+        $r2 isa rule-entity, has category $c, has priority $p2, has status "ACTIVE";
+        not { $r1 is $r2; };
+        not { $p1 = $p2; };
+    } then {
+        (conflicting-rule: $r1, conflicting-rule: $r2) isa rule-conflict;
+    };
+
+# =============================================================================
+# MULTI-AGENT GOVERNANCE INFERENCE RULES (RULE-011)
+# =============================================================================
+
+# Trust score decay: Low compliance reduces trust
+# NOTE: Trust score computation done externally, this is query-based
+# Formula: Trust = (Compliance x 0.4) + (Accuracy x 0.3) + (Consistency x 0.2) + (Tenure x 0.1)
+
+# Escalation required: Disputed proposals needing human review
+# TODO: Convert to function
+# fun escalation-required() -> { ... } {
+#     Original rule:
+rule escalation-required: when {
+        $d (disputed-proposal: $p, disputer: $a) isa dispute, has resolution-method "escalate";
+        $p isa proposal;
+    } then {
+        (escalated-proposal: $p, escalation-reason: $d) isa requires-escalation;
+    };
+
+# Proposal cascade: When a proposal affects a rule, it affects dependent rules too
+# TODO: Convert to function
+# fun proposal-cascade() -> { ... } {
+#     Original rule:
+rule proposal-cascade: when {
+        (proposing: $p, affected-rule: $r1) isa proposal-affects;
+        (dependent: $r2, dependency: $r1) isa rule-dependency;
+    } then {
+        (proposing: $p, affected-rule: $r2) isa proposal-affects;
+    };
+
+# Low trust vote weight: Agents with low trust get reduced vote weight
+# NOTE: Vote weight is computed externally based on trust-score
+# Low trust agents (< 0.5) have vote-weight = trust-score
+# High trust agents (>= 0.5) have vote-weight = 1.0
+
+# =============================================================================
+# DOCUMENT CROSS-REFERENCING INFERENCE RULES (RULE-013)
+# =============================================================================
+
+# NOTE: Orphan detection queries (not inference rules):
+# 1. Find gaps without rule references:
+#    match $g isa gap, has gap-id $id; not { (referencing-gap: $g) isa gap-rule-reference; }; get $id;
+# 2. Find rules not referenced by any document:
+#    match $r isa rule-entity, has rule-id $id; not { (referenced-rule: $r) isa document-references-rule; }; get $id;
+# 3. Find documents referencing deprecated rules:
+#    match $d isa document, has document-id $did; $r isa rule-entity, has rule-id $rid, has status "DEPRECATED";
+#    (referencing-document: $d, referenced-rule: $r) isa document-references-rule; get $did, $rid;

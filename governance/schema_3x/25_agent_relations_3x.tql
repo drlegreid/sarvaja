@@ -1,0 +1,59 @@
+# Multi-Agent Governance Relations
+# TypeDB relations for agent trust and proposals (RULE-011)
+# Part of: EPIC-DR-012 Schema Modularization
+# Created: 2026-01-17
+
+define
+
+# =============================================================================
+# MULTI-AGENT GOVERNANCE RELATIONS (RULE-011)
+# =============================================================================
+
+# Proposes relation (agent proposes a change)
+relation proposes,
+
+    relates proposer,
+    relates proposed-change;
+
+# Vote on a proposal
+relation vote,
+
+    relates voter,
+    relates vote-target,
+    owns vote-value,
+    owns vote-reason,
+    owns vote-timestamp,
+    owns vote-weight;
+
+# Dispute a proposal
+relation dispute,
+
+    relates disputer,
+    relates disputed-proposal,
+    owns dispute-id,
+    owns dispute-reason,
+    owns semantic-analysis,
+    owns resolution-method,
+    owns escalation-trigger,
+    plays requires-escalation:escalation-reason;
+
+# Proposal affects a rule
+relation proposal-affects,
+
+    relates proposing,
+    relates affected-rule;
+
+# Agent action tracking (for trust scoring)
+relation agent-action,
+
+    relates acting-agent,
+    relates action-target,
+    owns action-type,
+    owns action-timestamp,
+    owns action-outcome;
+
+# Escalation indicator (inferred when human review required)
+relation requires-escalation,
+
+    relates escalated-proposal,
+    relates escalation-reason;

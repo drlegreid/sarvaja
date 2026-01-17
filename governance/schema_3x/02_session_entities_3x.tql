@@ -1,0 +1,51 @@
+# Session and Evidence Entities
+# TypeDB schema for work sessions and evidence files
+# Part of: EPIC-DR-012 Schema Modularization
+# Created: 2026-01-17
+
+define
+
+# =============================================================================
+# WORK SESSION ENTITY (P11.3 - Entity Linkage)
+# =============================================================================
+
+# Work session entity for tracking development sessions
+entity work-session,
+
+    owns session-id,
+    owns session-name,
+    owns session-description,
+    owns session-file-path,
+    owns agent-id,                               # Agent that created the session (E2E tests)
+    owns started-at,
+    owns completed-at,
+    plays completed-in:hosting-session,
+    plays has-evidence:evidence-session,
+    plays session-applied-rule:applying-session,
+    plays session-decision:deciding-session;
+
+# =============================================================================
+# EVIDENCE FILE ENTITY
+# =============================================================================
+
+# Evidence file entity for session artifacts
+entity evidence-file,
+
+    owns evidence-id,
+    owns evidence-source,
+    owns evidence-type,
+    owns evidence-content-preview,
+    owns evidence-created-at,
+    plays has-evidence:session-evidence,
+    plays evidence-supports:supporting-evidence;
+
+# =============================================================================
+# GIT COMMIT ENTITY (GAP-TASK-LINK-002)
+# =============================================================================
+
+# Git commit entity for task implementation tracking
+entity git-commit,
+
+    owns commit-sha,
+    owns commit-message,
+    plays task-commit:implementing-commit;

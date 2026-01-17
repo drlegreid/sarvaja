@@ -1,0 +1,29 @@
+# Vector Embedding Attributes
+# TypeDB attributes for vector storage (P7.1 - TypeDB 2.x Bridge)
+# Part of: EPIC-DR-012 Schema Modularization
+# Created: 2026-01-17
+
+define
+
+# =============================================================================
+# VECTOR EMBEDDING ATTRIBUTES (P7.1)
+# =============================================================================
+
+attribute vector-id value string;
+
+attribute vector-content value string;
+
+attribute vector-embedding value string;
+
+attribute vector-model value string;
+
+attribute vector-dimension value long;
+
+attribute vector-source value string;
+
+attribute vector-source-type value string;
+
+attribute vector-created-at value datetime;
+
+attribute similarity-score value double;
+

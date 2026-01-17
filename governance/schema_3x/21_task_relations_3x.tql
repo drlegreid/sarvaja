@@ -1,0 +1,51 @@
+# Task Relationship Relations
+# TypeDB relations for task hierarchies and dependencies (GAP-TASK-LINK-003)
+# Part of: EPIC-DR-012 Schema Modularization
+# Created: 2026-01-17
+
+define
+
+# =============================================================================
+# TASK RELATIONSHIP RELATIONS (GAP-TASK-LINK-003)
+# =============================================================================
+
+# Task parent-child hierarchy (task decomposition)
+relation task-hierarchy,
+
+    relates parent-task,
+    relates child-task;
+
+# Task blocks another task (sequencing dependency)
+relation task-blocks-task,
+
+    relates blocking-task,
+    relates blocked-dep-task;
+
+# Task is related to another task (soft association)
+relation task-related,
+
+    relates related-task-a,
+    relates related-task-b;
+
+# Task implemented by git commit (GAP-TASK-LINK-002)
+relation task-commit,
+
+    relates implementing-commit,
+    relates implemented-task;
+
+# =============================================================================
+# TYPED REFERENCE RELATIONS (P10.7 - Option B)
+# =============================================================================
+
+# Task references a gap (replaces gap-reference attribute)
+relation references-gap,
+
+    relates referencing-task,
+    relates referenced-gap;
+
+# Decision is outcome of a task with authority
+relation task-outcome,
+
+    relates outcome-decision,
+    relates source-task,
+    owns has-authority;

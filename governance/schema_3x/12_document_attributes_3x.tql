@@ -1,0 +1,27 @@
+# Document Cross-Referencing Attributes
+# TypeDB attributes for document tracking (RULE-013)
+# Part of: EPIC-DR-012 Schema Modularization
+# Created: 2026-01-17
+
+define
+
+# =============================================================================
+# DOCUMENT ATTRIBUTES (RULE-013)
+# =============================================================================
+
+attribute document-id value string;
+
+attribute document-title value string;
+
+attribute document-path value string;
+
+attribute document-url value string;
+
+attribute document-type value string;
+
+attribute document-storage value string;
+
+attribute last-modified value datetime;
+
+attribute content-hash value string;
+
