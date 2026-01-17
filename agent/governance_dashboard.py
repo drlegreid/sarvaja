@@ -167,6 +167,7 @@ from agent.governance_ui.views import (
     build_impact_view,
     build_infra_view,  # GAP-INFRA-004: Infrastructure health dashboard
     build_workflow_view,  # RD-WORKFLOW Phase 4: Workflow compliance dashboard
+    build_tests_view,  # WORKFLOW-SHELL-01-v1: Self-assessment test runner
     build_trace_bar,  # GAP-UI-048: Bottom trace bar
     build_all_dialogs,  # GAP-UI-038: Shared dialogs
 )
@@ -263,6 +264,7 @@ class GovernanceDashboard:
             load_executive_report_data = loaders['load_executive_report_data']
             load_infra_status = loaders['load_infra_status']
             load_workflow_status = loaders['load_workflow_status']
+            load_tests_data = loaders['load_tests_data']
 
             # Initialize additional state for forms and filters
             self._state.show_rule_detail = False
@@ -337,6 +339,12 @@ class GovernanceDashboard:
             self._state.task_execution_loading = False
             self._state.show_task_execution = False
 
+            # Test Runner state (WORKFLOW-SHELL-01-v1)
+            self._state.tests_loading = False
+            self._state.tests_running = False
+            self._state.tests_current_run = None
+            self._state.tests_recent_runs = []
+
             # =================================================================
             # STATE CHANGE HANDLER - Auto-load data on view change (P11.1 fix)
             # Fixes GAP-UI-035: UI views don't auto-load data on open
@@ -367,6 +375,9 @@ class GovernanceDashboard:
                 elif active_view == 'workflow':
                     # Auto-load workflow compliance status (GAP-UI-EXP-011 fix)
                     load_workflow_status()
+                elif active_view == 'tests':
+                    # Auto-load test results (WORKFLOW-SHELL-01-v1)
+                    load_tests_data()
 
             with VAppLayout(
                 self._server,
@@ -451,6 +462,7 @@ class GovernanceDashboard:
                         build_impact_view()
                         build_infra_view()
                         build_workflow_view()
+                        build_tests_view()
 
                     # =============================================================
                     # SHARED DIALOGS (GAP-UI-038)

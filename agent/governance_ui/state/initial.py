@@ -156,6 +156,18 @@ def get_initial_state() -> Dict[str, Any]:
         'task_status_options': ['TODO', 'IN_PROGRESS', 'DONE', 'BLOCKED'],
         'task_phase_options': ['P10', 'P11', 'P12', 'R&D', 'FH', 'KAN', 'ORCH', 'DOCVIEW'],
 
+        # Tasks pagination state (EPIC-DR-005)
+        'tasks_page': 1,
+        'tasks_per_page': 20,
+        'tasks_per_page_options': [10, 20, 50, 100],
+        'tasks_pagination': {
+            'total': 0,
+            'offset': 0,
+            'limit': 20,
+            'has_more': False,
+            'returned': 0,
+        },
+
         # Executive Reports (GAP-UI-044)
         'executive_report': None,
         'executive_loading': False,

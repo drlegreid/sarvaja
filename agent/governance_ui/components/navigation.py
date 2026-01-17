@@ -23,6 +23,7 @@ NAVIGATION_ITEMS = [
     {"icon": "mdi-monitor-dashboard", "title": "Monitor", "value": "monitor"},
     {"icon": "mdi-check-decagram", "title": "Workflow", "value": "workflow"},
     {"icon": "mdi-server", "title": "Infrastructure", "value": "infra"},
+    {"icon": "mdi-test-tube", "title": "Tests", "value": "tests"},  # WORKFLOW-SHELL-01-v1
     {"icon": "mdi-magnify", "title": "Search", "value": "search"},
 ]
 
