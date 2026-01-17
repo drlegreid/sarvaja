@@ -87,12 +87,12 @@ async def complete_task(task_id, evidence, verification_level):
 - ✅ Task completion records `WORKFLOW-SEQ-01-v1`
 - ✅ Stored with each audit entry
 
-### Phase 4: Query Interface (PARTIAL - 2026-01-17)
+### Phase 4: Query Interface (MOSTLY DONE - 2026-01-17)
 - ✅ REST API: `GET /api/audit` - List with filters
 - ✅ REST API: `GET /api/audit/summary` - Statistics
 - ✅ REST API: `GET /api/audit/{entity_id}` - Entity trail
+- ✅ Dashboard view: `governance_ui/views/audit_view.py` - Trame UI for audit history
 - TODO: MCP tool for claude-mem integration
-- TODO: Dashboard view for audit history
 
 ## Files Created
 
@@ -101,13 +101,14 @@ async def complete_task(task_id, evidence, verification_level):
 | `governance/stores/audit.py` | Audit store module |
 | `governance/routes/audit.py` | REST API endpoints |
 | `data/audit_trail.json` | Persisted audit entries |
+| `agent/governance_ui/views/audit_view.py` | Dashboard view |
 
 ## Acceptance Criteria
 
 - [x] All task state changes logged with correlation_id
 - [x] Applied rules captured for each decision
 - [x] Audit trail queryable by entity_id (via REST API)
-- [ ] Dashboard shows audit history
+- [x] Dashboard shows audit history
 - [x] 7-day retention for audit entries
 
 ## Related

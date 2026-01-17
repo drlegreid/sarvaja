@@ -167,6 +167,7 @@ from agent.governance_ui.views import (
     build_impact_view,
     build_infra_view,  # GAP-INFRA-004: Infrastructure health dashboard
     build_workflow_view,  # RD-WORKFLOW Phase 4: Workflow compliance dashboard
+    build_audit_view,  # RD-DEBUG-AUDIT Phase 4: Audit trail dashboard
     build_tests_view,  # WORKFLOW-SHELL-01-v1: Self-assessment test runner
     build_trace_bar,  # GAP-UI-048: Bottom trace bar
     build_all_dialogs,  # GAP-UI-038: Shared dialogs
@@ -462,6 +463,7 @@ class GovernanceDashboard:
                         build_impact_view()
                         build_infra_view()
                         build_workflow_view()
+                        build_audit_view()
                         build_tests_view()
 
                     # =============================================================

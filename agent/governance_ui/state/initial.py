@@ -206,6 +206,17 @@ def get_initial_state() -> Dict[str, Any]:
         'workflow_recommendations': [],
         'workflow_loading': False,
 
+        # Audit Trail (RD-DEBUG-AUDIT Phase 4)
+        'audit_summary': {'total_entries': 0, 'by_action_type': {}, 'by_entity_type': {}, 'by_actor': {}, 'retention_days': 7},
+        'audit_entries': [],
+        'audit_loading': False,
+        'audit_filter_entity_type': None,
+        'audit_filter_action_type': None,
+        'audit_filter_entity_id': '',
+        'audit_filter_correlation_id': '',
+        'audit_entity_types': ['task', 'session', 'rule', 'agent'],
+        'audit_action_types': ['CREATE', 'UPDATE', 'CLAIM', 'COMPLETE', 'DELETE'],
+
         # Test Runner (WORKFLOW-SHELL-01-v1)
         'tests_loading': False,
         'tests_running': False,

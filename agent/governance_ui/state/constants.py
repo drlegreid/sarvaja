@@ -68,6 +68,7 @@ NAVIGATION_ITEMS: List[Dict[str, str]] = [
     {'title': 'Impact', 'icon': 'mdi-graph', 'value': 'impact'},
     {'title': 'Trust', 'icon': 'mdi-shield-check', 'value': 'trust'},
     {'title': 'Workflow', 'icon': 'mdi-sitemap', 'value': 'workflow'},  # RD-WORKFLOW Phase 4
+    {'title': 'Audit', 'icon': 'mdi-history', 'value': 'audit'},  # RD-DEBUG-AUDIT Phase 4
     {'title': 'Monitor', 'icon': 'mdi-pulse', 'value': 'monitor'},
     {'title': 'Infrastructure', 'icon': 'mdi-server', 'value': 'infra'},  # GAP-INFRA-004
     {'title': 'Tests', 'icon': 'mdi-test-tube', 'value': 'tests'},  # WORKFLOW-SHELL-01-v1

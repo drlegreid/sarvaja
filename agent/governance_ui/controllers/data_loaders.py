@@ -448,6 +448,57 @@ def register_data_loader_controllers(
         state.workflow_loading = True
         load_workflow_status()
 
+    # =========================================================================
+    # AUDIT TRAIL DATA LOADER (RD-DEBUG-AUDIT Phase 4)
+    # =========================================================================
+
+    def load_audit_trail():
+        """Load audit trail data from API. Per RD-DEBUG-AUDIT Phase 4."""
+        import os
+        import httpx
+
+        api_url = os.getenv('GOVERNANCE_API_URL', 'http://localhost:8082')
+
+        try:
+            # Get audit summary
+            summary_response = httpx.get(f"{api_url}/api/audit/summary", timeout=10.0)
+            if summary_response.status_code == 200:
+                state.audit_summary = summary_response.json()
+
+            # Build query params from filters
+            params = {'limit': 50}
+            if state.audit_filter_entity_type:
+                params['entity_type'] = state.audit_filter_entity_type
+            if state.audit_filter_action_type:
+                params['action_type'] = state.audit_filter_action_type
+            if state.audit_filter_entity_id:
+                params['entity_id'] = state.audit_filter_entity_id
+            if state.audit_filter_correlation_id:
+                params['correlation_id'] = state.audit_filter_correlation_id
+
+            # Get audit entries
+            entries_response = httpx.get(f"{api_url}/api/audit", params=params, timeout=10.0)
+            if entries_response.status_code == 200:
+                entries = entries_response.json()
+                # Format applied_rules for display
+                for entry in entries:
+                    if isinstance(entry.get('applied_rules'), list):
+                        entry['applied_rules'] = ', '.join(entry['applied_rules'])
+                state.audit_entries = entries
+
+        except Exception as e:
+            print(f"Error loading audit trail: {e}")
+            state.audit_summary = {'total_entries': 0, 'by_action_type': {}, 'by_entity_type': {}, 'by_actor': {}, 'retention_days': 7, 'error': str(e)}
+            state.audit_entries = []
+
+        state.audit_loading = False
+
+    @ctrl.trigger("load_audit_trail")
+    def trigger_load_audit_trail():
+        """Trigger for loading audit trail."""
+        state.audit_loading = True
+        load_audit_trail()
+
     # Return loaders for internal use
     return {
         'load_trust_data': load_trust_data,
@@ -456,4 +507,5 @@ def register_data_loader_controllers(
         'load_executive_report_data': load_executive_report_data,
         'load_infra_status': load_infra_status,
         'load_workflow_status': load_workflow_status,
+        'load_audit_trail': load_audit_trail,
     }
