@@ -47,6 +47,19 @@ Data persistence: `/home/oderid/Documents/Docker/` (bind mounts)
 
 > Per DECISION-003 (TypeDB-First) | Per ARCH-MCP-02-v1 (MCP Split)
 
+## Shell Commands (CRITICAL)
+
+**NEVER use bare `python` - always use `python3`** - Per WORKFLOW-SHELL-01-v1
+
+| Wrong | Correct |
+|-------|---------|
+| `python script.py` | `python3 script.py` |
+| `python -m pytest` | `python3 -m pytest` |
+
+**Wrapper scripts available:**
+- `scripts/python.sh` - Run Python in container
+- `scripts/pytest.sh` - Run pytest in container
+
 ## Rules Atlas (41 Rules) - Semantic IDs
 
 | Domain | Rules | File |
