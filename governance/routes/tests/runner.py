@@ -143,16 +143,19 @@ def _execute_tests(run_id: str, cmd: list):
         output = result.stdout + result.stderr
         tests = _parse_pytest_output(output)
 
-        passed = sum(1 for t in tests if t["outcome"] == "passed")
-        failed = sum(1 for t in tests if t["outcome"] == "failed")
-        skipped = sum(1 for t in tests if t["outcome"] == "skipped")
+        # Parse summary line for accurate counts (works with -q mode)
+        summary = _parse_pytest_summary(output)
+        passed = summary["passed"]
+        failed = summary["failed"]
+        skipped = summary["skipped"]
+        total = passed + failed + skipped
 
         _test_results[run_id] = {
             "status": "completed" if result.returncode == 0 else "failed",
             "timestamp": start_time.isoformat(),
             "duration_seconds": duration,
             "exit_code": result.returncode,
-            "total": len(tests),
+            "total": total,
             "passed": passed,
             "failed": failed,
             "skipped": skipped,
@@ -173,9 +176,35 @@ def _execute_tests(run_id: str, cmd: list):
         }
 
 
+def _parse_pytest_summary(output: str) -> dict:
+    """
+    Parse pytest summary line to extract counts.
+
+    Handles formats like:
+    - "3 failed, 96 passed, 5 deselected in 2.49s"
+    - "96 passed in 2.49s"
+    - "3 failed, 96 passed, 5 skipped in 2.49s"
+    """
+    import re
+    counts = {"passed": 0, "failed": 0, "skipped": 0, "deselected": 0}
+
+    # Find summary line (usually last few lines)
+    for line in reversed(output.split("\n")):
+        # Match patterns like "3 failed" or "96 passed"
+        if " passed" in line or " failed" in line:
+            for key in counts.keys():
+                match = re.search(rf"(\d+)\s+{key}", line)
+                if match:
+                    counts[key] = int(match.group(1))
+            break
+    return counts
+
+
 def _parse_pytest_output(output: str) -> list:
     """Parse pytest output to extract test results."""
     tests = []
+
+    # Try verbose format first (for -v mode)
     for line in output.split("\n"):
         line = line.strip()
         if " PASSED" in line or " FAILED" in line or " SKIPPED" in line:
@@ -189,4 +218,13 @@ def _parse_pytest_output(output: str) -> list:
                 else:
                     outcome = "skipped"
                 tests.append({"nodeid": nodeid, "outcome": outcome, "duration": 0.0})
+
+    # If no tests found (quiet mode), parse FAILURES section for failed test names
+    if not tests:
+        import re
+        # Find failed test names from FAILURES section
+        failure_pattern = re.compile(r"_+\s+([\w.:\[\]]+)\s+_+")
+        for match in failure_pattern.finditer(output):
+            tests.append({"nodeid": match.group(1), "outcome": "failed", "duration": 0.0})
+
     return tests

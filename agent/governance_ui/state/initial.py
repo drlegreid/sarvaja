@@ -206,6 +206,12 @@ def get_initial_state() -> Dict[str, Any]:
         'workflow_recommendations': [],
         'workflow_loading': False,
 
+        # Test Runner (WORKFLOW-SHELL-01-v1)
+        'tests_loading': False,
+        'tests_running': False,
+        'tests_current_run': None,
+        'tests_recent_runs': [],
+
         # Reactive Loader States (GAP-UI-047)
         # Per-component loading with trace status
         **get_initial_loader_states(),
