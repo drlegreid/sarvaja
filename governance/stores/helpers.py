@@ -18,13 +18,18 @@ from governance.client import Task as TypeDBTask, Session as TypeDBSession
 # =============================================================================
 
 def task_to_response(task: TypeDBTask):
-    """Convert TypeDB Task to dict for TaskResponse."""
+    """Convert TypeDB Task to dict for TaskResponse.
+
+    Per GAP-UI-046: Includes resolution field for task outcome tracking.
+    Per WORKFLOW-SEQ-01-v1: Evidence may include [Verification: L1/L2/L3] prefix.
+    """
     from governance.models import TaskResponse
     return TaskResponse(
         task_id=task.id,
         description=task.name or task.description or "",
         phase=task.phase,
         status=task.status,
+        resolution=task.resolution,  # NONE, DEFERRED, IMPLEMENTED, VALIDATED, CERTIFIED
         agent_id=task.agent_id,
         created_at=task.created_at.isoformat() if task.created_at else None,
         claimed_at=task.claimed_at.isoformat() if task.claimed_at else None,

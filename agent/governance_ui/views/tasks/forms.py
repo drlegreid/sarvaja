@@ -147,3 +147,17 @@ def build_task_linked_items() -> None:
                     classes="mr-1",
                     prepend_icon="mdi-calendar-clock"
                 )
+            # Evidence with verification info (GAP-UI-LINKED-SESSIONS-001)
+            with html.Div(
+                v_if="selected_task.evidence",
+                classes="mt-3"
+            ):
+                html.Span("Evidence: ", classes="font-weight-bold")
+                html.Pre(
+                    "{{ selected_task.evidence }}",
+                    style="white-space: pre-wrap; font-family: monospace; "
+                          "font-size: 0.8rem; background: #e8f5e9; "
+                          "padding: 8px; border-radius: 4px; margin-top: 4px;",
+                    __properties=["data-testid"],
+                    **{"data-testid": "task-evidence-text"}
+                )

@@ -81,11 +81,16 @@ class TaskUpdate(BaseModel):
 
 
 class TaskResponse(BaseModel):
-    """Response model for a task."""
+    """Response model for a task.
+
+    Per GAP-UI-046: Task lifecycle (Status) + outcome (Resolution).
+    Per WORKFLOW-SEQ-01-v1: Evidence with verification level tracking.
+    """
     task_id: str
     description: str
     phase: str
-    status: str
+    status: str  # OPEN, IN_PROGRESS, CLOSED (or legacy: TODO, IN_PROGRESS, DONE)
+    resolution: Optional[str] = None  # NONE, DEFERRED, IMPLEMENTED, VALIDATED, CERTIFIED
     agent_id: Optional[str] = None
     created_at: Optional[str] = None
     claimed_at: Optional[str] = None
@@ -94,7 +99,7 @@ class TaskResponse(BaseModel):
     linked_rules: Optional[List[str]] = None
     linked_sessions: Optional[List[str]] = None
     gap_id: Optional[str] = None
-    evidence: Optional[str] = None
+    evidence: Optional[str] = None  # May include [Verification: L1/L2/L3] prefix
 
 
 class TaskExecutionEvent(BaseModel):
@@ -320,6 +325,43 @@ class ChatSessionResponse(BaseModel):
     messages: List[ChatMessageResponse]
     active_task_id: Optional[str] = None
     selected_agent_id: Optional[str] = None
+
+
+# =============================================================================
+# PAGINATION (EPIC-DR-003)
+# =============================================================================
+
+class PaginationMeta(BaseModel):
+    """Pagination metadata for list endpoints.
+
+    Per EPIC-DR-003: API pagination metadata.
+    """
+    total: int
+    offset: int
+    limit: int
+    has_more: bool
+    returned: int
+
+
+class PaginatedTaskResponse(BaseModel):
+    """Paginated task list response.
+
+    Per EPIC-DR-003: Pagination metadata for task lists.
+    """
+    items: List[TaskResponse]
+    pagination: PaginationMeta
+
+
+class PaginatedSessionResponse(BaseModel):
+    """Paginated session list response."""
+    items: List[SessionResponse]
+    pagination: PaginationMeta
+
+
+class PaginatedAgentResponse(BaseModel):
+    """Paginated agent list response."""
+    items: List[AgentResponse]
+    pagination: PaginationMeta
 
 
 # =============================================================================

@@ -16,6 +16,18 @@ All agent sessions MUST produce evidence logs including:
 3. **Session Metadata** - IDs, models, tools, tokens
 4. **Export** - `./docs/SESSION-{date}-{topic}.md`
 
+### Interim Requirement (Until GAP-DATA-INTEGRITY-001 Resolved)
+
+**CRITICAL:** Until governance dashboard provides full session→task traceability (currently 0%):
+- Session evidence MUST be maintained in markdown files (`docs/SESSION-*.md`)
+- Do NOT rely solely on TypeDB/API storage for session traceability
+- Markdown files serve as source-of-truth until dashboard is production-ready
+
+> **Lift Condition:** This interim requirement is lifted when:
+> - GAP-DATA-INTEGRITY-001 shows 100% session→task linking
+> - Dashboard successfully displays session evidence with navigation
+> - EPIC-DASHBOARD-READY tasks EPIC-DR-006 through EPIC-DR-008 are complete
+
 ---
 
 ## Schema

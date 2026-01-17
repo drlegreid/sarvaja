@@ -12,6 +12,8 @@ Created: 2024-12-28
 import httpx
 from typing import Any
 
+from agent.governance_ui.utils import extract_items_from_response
+
 
 def register_tasks_controllers(state: Any, ctrl: Any, api_base_url: str) -> None:
     """
@@ -52,7 +54,7 @@ def register_tasks_controllers(state: Any, ctrl: Any, api_base_url: str) -> None
                     state.status_message = f"Task {task_id} deleted successfully"
                     tasks_response = client.get(f"{api_base_url}/api/tasks")
                     if tasks_response.status_code == 200:
-                        state.tasks = tasks_response.json()
+                        state.tasks = extract_items_from_response(tasks_response.json())
                     state.show_task_detail = False
                     state.selected_task = None
                 else:
@@ -103,7 +105,7 @@ def register_tasks_controllers(state: Any, ctrl: Any, api_base_url: str) -> None
                     # Refresh tasks list
                     tasks_response = client.get(f"{api_base_url}/api/tasks")
                     if tasks_response.status_code == 200:
-                        state.tasks = tasks_response.json()
+                        state.tasks = extract_items_from_response(tasks_response.json())
                     # Update selected task
                     updated_task = response.json()
                     state.selected_task = updated_task
@@ -137,7 +139,7 @@ def register_tasks_controllers(state: Any, ctrl: Any, api_base_url: str) -> None
                     # Reload tasks
                     tasks_response = client.get(f"{api_base_url}/api/tasks")
                     if tasks_response.status_code == 200:
-                        state.tasks = tasks_response.json()
+                        state.tasks = extract_items_from_response(tasks_response.json())
                 else:
                     state.has_error = True
                     state.error_message = f"Failed to create task: {response.status_code}"
@@ -149,3 +151,79 @@ def register_tasks_controllers(state: Any, ctrl: Any, api_base_url: str) -> None
             state.has_error = True
             state.status_message = f"Task creation failed: {str(e)}"
             state.show_task_form = False
+
+    def load_tasks_page():
+        """
+        Load tasks with pagination (EPIC-DR-005).
+
+        Fetches tasks from API with offset/limit based on current page.
+        """
+        try:
+            state.is_loading = True
+            offset = (state.tasks_page - 1) * state.tasks_per_page
+            with httpx.Client(timeout=10.0) as client:
+                response = client.get(
+                    f"{api_base_url}/api/tasks",
+                    params={"offset": offset, "limit": state.tasks_per_page}
+                )
+                if response.status_code == 200:
+                    data = response.json()
+                    # Handle paginated response
+                    if isinstance(data, dict) and "items" in data:
+                        state.tasks = data["items"]
+                        state.tasks_pagination = data.get("pagination", {
+                            "total": 0,
+                            "offset": offset,
+                            "limit": state.tasks_per_page,
+                            "has_more": False,
+                            "returned": len(data["items"]),
+                        })
+                    else:
+                        # Backward compatibility: direct array
+                        state.tasks = data
+                        state.tasks_pagination = {
+                            "total": len(data),
+                            "offset": 0,
+                            "limit": len(data),
+                            "has_more": False,
+                            "returned": len(data),
+                        }
+                    state.status_message = f"Loaded {len(state.tasks)} tasks"
+            state.is_loading = False
+        except Exception as e:
+            state.is_loading = False
+            state.has_error = True
+            state.error_message = f"Failed to load tasks: {str(e)}"
+
+    @ctrl.trigger("tasks_prev_page")
+    def tasks_prev_page():
+        """Go to previous page of tasks (EPIC-DR-005)."""
+        if state.tasks_page > 1:
+            state.tasks_page -= 1
+            load_tasks_page()
+
+    @ctrl.trigger("tasks_next_page")
+    def tasks_next_page():
+        """Go to next page of tasks (EPIC-DR-005)."""
+        if state.tasks_pagination.get("has_more", False):
+            state.tasks_page += 1
+            load_tasks_page()
+
+    @ctrl.trigger("tasks_change_page_size")
+    def tasks_change_page_size():
+        """Change items per page and reload (EPIC-DR-005)."""
+        # Reset to page 1 when changing page size
+        state.tasks_page = 1
+        load_tasks_page()
+
+    @ctrl.trigger("tasks_go_to_page")
+    def tasks_go_to_page(page: int):
+        """Go to specific page (EPIC-DR-005)."""
+        total_pages = max(
+            1,
+            (state.tasks_pagination.get("total", 0) + state.tasks_per_page - 1)
+            // state.tasks_per_page
+        )
+        if 1 <= page <= total_pages:
+            state.tasks_page = page
+            load_tasks_page()

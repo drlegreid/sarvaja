@@ -56,7 +56,7 @@ def build_test_category_card(
                     variant="tonal",
                     color="primary",
                     size="small",
-                    click=f"trigger('run_tests', {{category: '{category_id}'}})",
+                    click=f"trigger('run_tests', '{category_id}')",
                     loading=("tests_running",),
                     __properties=["data-testid"],
                     **{"data-testid": f"tests-run-{category_id}"}
@@ -186,7 +186,7 @@ def build_recent_runs_panel() -> None:
                         with v3.VListItem(
                             v_for="run in tests_recent_runs",
                             key="run.run_id",
-                            click="trigger('view_test_run', {run_id: run.run_id})"
+                            click="trigger('view_test_run', run.run_id)"
                         ):
                             with html.Template(v_slot_prepend=True):
                                 v3.VIcon(

@@ -108,7 +108,9 @@ def register_data_loader_controllers(
                         params={"agent_id": state.backlog_agent_id}
                     )
                     if response.status_code == 200:
-                        all_tasks = response.json()
+                        data = response.json()
+                        # Handle paginated response (EPIC-DR-003)
+                        all_tasks = data["items"] if isinstance(data, dict) and "items" in data else data
                         state.claimed_tasks = [
                             t for t in all_tasks
                             if t.get("agent_id") == state.backlog_agent_id
@@ -185,7 +187,14 @@ def register_data_loader_controllers(
                 try:
                     response, _ = _traced_get(client, "/api/tasks")
                     if response.status_code == 200:
-                        state.tasks = response.json()
+                        data = response.json()
+                        # Handle paginated response (EPIC-DR-003)
+                        if isinstance(data, dict) and "items" in data:
+                            state.tasks = data["items"]
+                            state.tasks_pagination = data.get("pagination", {})
+                        else:
+                            # Backward compatibility: direct array
+                            state.tasks = data
                 except Exception:
                     pass
 

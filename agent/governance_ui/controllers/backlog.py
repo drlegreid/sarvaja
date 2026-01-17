@@ -15,6 +15,8 @@ import asyncio
 import httpx
 from typing import Any, Callable, Optional
 
+from agent.governance_ui.utils import extract_items_from_response
+
 # Module-level task reference for cancellation
 _polling_task: Optional[asyncio.Task] = None
 
@@ -75,7 +77,7 @@ def register_backlog_controllers(
                     # Also refresh the main tasks list
                     tasks_response = client.get(f"{api_base_url}/api/tasks")
                     if tasks_response.status_code == 200:
-                        state.tasks = tasks_response.json()
+                        state.tasks = extract_items_from_response(tasks_response.json())
                 else:
                     state.has_error = True
                     state.error_message = f"Failed to complete task: {response.text}"

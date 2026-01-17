@@ -44,8 +44,29 @@ def build_tasks_list_view() -> None:
             **{"data-testid": "tasks-loading"}
         )
 
+        # Skeleton loaders (GAP-UI-PAGING-001: Loading states)
+        with v3.VCardText(v_if="is_loading", style="max-height: 500px;"):
+            with v3.VList(density="compact"):
+                # Show 5 skeleton items while loading
+                with v3.VListItem(v_for="n in 5", **{":key": "'skeleton-' + n"}):
+                    with html.Template(v_slot_prepend=True):
+                        v3.VSkeletonLoader(type="avatar", width=24, height=24)
+                    with v3.VListItemTitle():
+                        v3.VSkeletonLoader(type="text", width="60%")
+                    with v3.VListItemSubtitle():
+                        with html.Div(classes="d-flex align-center mt-1"):
+                            v3.VSkeletonLoader(
+                                type="chip", width=60, height=20, classes="mr-1"
+                            )
+                            v3.VSkeletonLoader(
+                                type="chip", width=70, height=20, classes="mr-1"
+                            )
+                            v3.VSkeletonLoader(type="chip", width=80, height=20)
+                    with html.Template(v_slot_append=True):
+                        v3.VSkeletonLoader(type="chip", width=60, height=24)
+
         # Filters toolbar (GAP-UI-EXP-004: search/filter/pagination)
-        with v3.VToolbar(density="compact", flat=True):
+        with v3.VToolbar(v_if="!is_loading", density="compact", flat=True):
             v3.VTextField(
                 v_model="tasks_search_query",
                 label="Search tasks...",
@@ -84,7 +105,7 @@ def build_tasks_list_view() -> None:
             )
 
         # Tasks list content (GAP-UI-036: scrollable)
-        with v3.VCardText(style="max-height: 500px; overflow-y: auto;"):
+        with v3.VCardText(v_if="!is_loading", style="max-height: 500px; overflow-y: auto;"):
             html.Div("{{ tasks.length }} tasks loaded", classes="mb-2 text-grey")
             with v3.VList(
                 density="compact",
@@ -146,6 +167,26 @@ def build_tasks_list_view() -> None:
                                 variant="tonal",
                                 classes="mr-1"
                             )
+                            # Resolution badge (GAP-UI-LINKED-SESSIONS-001)
+                            v3.VChip(
+                                v_if="task.resolution && task.resolution !== 'NONE'",
+                                v_text="task.resolution",
+                                size="x-small",
+                                v_bind_color=(
+                                    "task.resolution === 'CERTIFIED' ? 'success' : "
+                                    "task.resolution === 'VALIDATED' ? 'info' : "
+                                    "task.resolution === 'IMPLEMENTED' ? 'warning' : "
+                                    "'grey'"
+                                ),
+                                variant="flat",
+                                prepend_icon=(
+                                    "task.resolution === 'CERTIFIED' ? 'mdi-check-decagram' : "
+                                    "task.resolution === 'VALIDATED' ? 'mdi-test-tube' : "
+                                    "task.resolution === 'IMPLEMENTED' ? 'mdi-code-tags' : "
+                                    "'mdi-help-circle'"
+                                ),
+                                classes="mr-1"
+                            )
                             v3.VChip(
                                 v_if="task.agent_id",
                                 v_text="task.agent_id",
@@ -202,3 +243,58 @@ def build_tasks_list_view() -> None:
                             ),
                             size="small",
                         )
+
+        # Pagination controls (EPIC-DR-005)
+        with v3.VCardActions(
+            v_if="!is_loading && tasks_pagination.total > 0",
+            classes="d-flex justify-space-between align-center px-4 py-2",
+            __properties=["data-testid"],
+            **{"data-testid": "tasks-pagination"}
+        ):
+            # Items per page selector
+            with html.Div(classes="d-flex align-center"):
+                html.Span("Items per page:", classes="text-body-2 mr-2")
+                v3.VSelect(
+                    v_model="tasks_per_page",
+                    items=("tasks_per_page_options",),
+                    variant="outlined",
+                    density="compact",
+                    hide_details=True,
+                    style="max-width: 80px",
+                    change="trigger('tasks_change_page_size')",
+                    __properties=["data-testid"],
+                    **{"data-testid": "tasks-per-page"}
+                )
+
+            # Page info
+            html.Div(
+                (
+                    "'Page ' + tasks_page + ' of ' + "
+                    "Math.ceil(tasks_pagination.total / tasks_per_page) + "
+                    "' (' + tasks_pagination.total + ' total)'"
+                ),
+                classes="text-body-2 text-grey",
+                __properties=["data-testid"],
+                **{"data-testid": "tasks-page-info"}
+            )
+
+            # Navigation buttons
+            with html.Div(classes="d-flex align-center"):
+                v3.VBtn(
+                    icon="mdi-chevron-left",
+                    variant="text",
+                    size="small",
+                    disabled=("tasks_page <= 1",),
+                    click="trigger('tasks_prev_page')",
+                    __properties=["data-testid"],
+                    **{"data-testid": "tasks-prev-btn"}
+                )
+                v3.VBtn(
+                    icon="mdi-chevron-right",
+                    variant="text",
+                    size="small",
+                    disabled=("!tasks_pagination.has_more",),
+                    click="trigger('tasks_next_page')",
+                    __properties=["data-testid"],
+                    **{"data-testid": "tasks-next-btn"}
+                )

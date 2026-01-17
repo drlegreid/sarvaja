@@ -16,6 +16,7 @@ from ..data_access import (
     build_trust_leaderboard,
 )
 from ..trace_bar import clear_traces
+from ..utils import extract_items_from_response
 
 # Per GAP-UI-EXP-012: Use env var for container compatibility
 API_BASE_URL = os.environ.get("GOVERNANCE_API_URL", "http://localhost:8082")
@@ -50,7 +51,7 @@ def register_common_handlers(ctrl: Any, state: Any) -> None:
                 try:
                     tasks_response = client.get(f"{API_BASE_URL}/api/tasks")
                     if tasks_response.status_code == 200:
-                        state.tasks = tasks_response.json()
+                        state.tasks = extract_items_from_response(tasks_response.json())
                 except Exception:
                     pass
 

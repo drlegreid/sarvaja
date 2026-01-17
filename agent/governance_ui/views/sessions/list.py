@@ -58,8 +58,24 @@ def build_sessions_list_view() -> None:
             **{"data-testid": "sessions-loading"}
         )
 
+        # Skeleton loaders (GAP-UI-PAGING-001: Loading states)
+        with v3.VCardText(v_if="is_loading", style="max-height: 500px;"):
+            with v3.VTimeline(density="compact"):
+                # Show 4 skeleton timeline items while loading
+                with v3.VTimelineItem(
+                    v_for="n in 4",
+                    **{":key": "'skeleton-' + n"},
+                    dot_color="grey",
+                    size="small"
+                ):
+                    with v3.VCard(density="compact"):
+                        with v3.VCardTitle():
+                            v3.VSkeletonLoader(type="text", width="50%")
+                        with v3.VCardSubtitle():
+                            v3.VSkeletonLoader(type="text", width="30%")
+
         # Sessions list content (GAP-UI-036: scrollable)
-        with v3.VCardText(style="max-height: 500px; overflow-y: auto;"):
+        with v3.VCardText(v_if="!is_loading", style="max-height: 500px; overflow-y: auto;"):
             html.Div(
                 "{{ sessions.filter(s => !sessions_search_query || (s.session_id || s.id || '').toLowerCase().includes(sessions_search_query.toLowerCase())).length }} sessions loaded",
                 classes="mb-2 text-grey"

@@ -151,6 +151,28 @@ def build_task_detail_view() -> None:
                     __properties=["data-testid"],
                     **{"data-testid": "task-detail-status"}
                 )
+                # Resolution badge (GAP-UI-LINKED-SESSIONS-001)
+                v3.VChip(
+                    v_if=(
+                        "selected_task.resolution && "
+                        "selected_task.resolution !== 'NONE'"
+                    ),
+                    v_text="selected_task.resolution",
+                    v_bind_color=(
+                        "selected_task.resolution === 'CERTIFIED' ? 'success' : "
+                        "selected_task.resolution === 'VALIDATED' ? 'info' : "
+                        "selected_task.resolution === 'IMPLEMENTED' ? 'warning' : "
+                        "'grey'"
+                    ),
+                    prepend_icon=(
+                        "selected_task.resolution === 'CERTIFIED' ? "
+                        "'mdi-check-decagram' : "
+                        "selected_task.resolution === 'VALIDATED' ? 'mdi-test-tube' : "
+                        "'mdi-code-tags'"
+                    ),
+                    __properties=["data-testid"],
+                    **{"data-testid": "task-detail-resolution"}
+                )
                 v3.VChip(
                     v_text="'Phase: ' + selected_task.phase",
                     color="primary",

@@ -39,8 +39,22 @@ def build_agents_list_view() -> None:
             **{"data-testid": "agents-loading"}
         )
 
+        # Skeleton loaders (GAP-UI-PAGING-001: Loading states)
+        with v3.VCardText(v_if="is_loading", style="max-height: 500px;"):
+            with v3.VList(density="compact"):
+                # Show 5 skeleton items while loading
+                with v3.VListItem(v_for="n in 5", **{":key": "'skeleton-' + n"}):
+                    with html.Template(v_slot_prepend=True):
+                        v3.VSkeletonLoader(type="avatar", width=40, height=40)
+                    with v3.VListItemTitle():
+                        v3.VSkeletonLoader(type="text", width="40%")
+                    with v3.VListItemSubtitle():
+                        v3.VSkeletonLoader(type="text", width="70%")
+                    with html.Template(v_slot_append=True):
+                        v3.VSkeletonLoader(type="chip", width=60, height=24)
+
         # Agents list content (GAP-UI-036: scrollable)
-        with v3.VCardText(style="max-height: 500px; overflow-y: auto;"):
+        with v3.VCardText(v_if="!is_loading", style="max-height: 500px; overflow-y: auto;"):
             html.Div(
                 "{{ agents.length }} agents registered",
                 classes="mb-2 text-grey"

@@ -9,6 +9,8 @@ import os
 import httpx
 from typing import Any
 
+from agent.governance_ui.utils import extract_items_from_response
+
 # Per GAP-UI-EXP-012: Use env var for container compatibility
 API_BASE_URL = os.environ.get("GOVERNANCE_API_URL", "http://localhost:8082")
 
@@ -45,7 +47,7 @@ def register_task_handlers(ctrl: Any, state: Any) -> None:
                     state.status_message = f"Task {task_id} deleted successfully"
                     tasks_response = client.get(f"{API_BASE_URL}/api/tasks")
                     if tasks_response.status_code == 200:
-                        state.tasks = tasks_response.json()
+                        state.tasks = extract_items_from_response(tasks_response.json())
                     state.show_task_detail = False
                     state.selected_task = None
                 else:
@@ -95,7 +97,7 @@ def register_task_handlers(ctrl: Any, state: Any) -> None:
                     state.status_message = f"Task {task_id} updated successfully"
                     tasks_response = client.get(f"{API_BASE_URL}/api/tasks")
                     if tasks_response.status_code == 200:
-                        state.tasks = tasks_response.json()
+                        state.tasks = extract_items_from_response(tasks_response.json())
                     updated_task = response.json()
                     state.selected_task = updated_task
                     state.edit_task_mode = False
@@ -125,7 +127,7 @@ def register_task_handlers(ctrl: Any, state: Any) -> None:
                     state.status_message = f"Task created successfully"
                     tasks_response = client.get(f"{API_BASE_URL}/api/tasks")
                     if tasks_response.status_code == 200:
-                        state.tasks = tasks_response.json()
+                        state.tasks = extract_items_from_response(tasks_response.json())
                     state.show_task_form = False
                 else:
                     state.has_error = True

@@ -12,7 +12,13 @@ from typing import List, Optional
 from datetime import datetime
 import logging
 
-from governance.models import TaskCreate, TaskUpdate, TaskResponse
+from governance.models import (
+    TaskCreate,
+    TaskUpdate,
+    TaskResponse,
+    PaginatedTaskResponse,
+    PaginationMeta,
+)
 from governance.stores import (
     get_typedb_client,
     get_all_tasks_from_typedb,
@@ -25,7 +31,7 @@ logger = logging.getLogger(__name__)
 router = APIRouter()
 
 
-@router.get("/tasks", response_model=List[TaskResponse])
+@router.get("/tasks", response_model=PaginatedTaskResponse)
 async def list_tasks(
     offset: int = Query(0, ge=0, description="Skip first N results"),
     limit: int = Query(50, ge=1, le=200, description="Max results (1-200)"),
@@ -40,6 +46,7 @@ async def list_tasks(
 
     Per GAP-STUB-001/002: TypeDB is source of truth with fallback for resilience.
     Per GAP-UI-036: Pagination support.
+    Per EPIC-DR-003: Returns pagination metadata.
     """
     try:
         # Use TypeDB wrapper (handles fallback internally)
@@ -50,6 +57,9 @@ async def list_tasks(
             allow_fallback=True  # Keep fallback during migration
         )
 
+        # Get total count before pagination
+        total = len(tasks)
+
         # Apply sorting
         valid_sort_fields = ["task_id", "status", "phase", "name"]
         sort_field = sort_by if sort_by in valid_sort_fields else "task_id"
@@ -57,9 +67,23 @@ async def list_tasks(
         tasks.sort(key=lambda t: t.get(sort_field) or "", reverse=reverse)
 
         # Apply pagination
-        tasks = tasks[offset:offset + limit]
+        paginated_tasks = tasks[offset:offset + limit]
+        returned = len(paginated_tasks)
+        has_more = (offset + returned) < total
 
-        return [TaskResponse(**t) for t in tasks]
+        # Build pagination metadata
+        pagination = PaginationMeta(
+            total=total,
+            offset=offset,
+            limit=limit,
+            has_more=has_more,
+            returned=returned
+        )
+
+        return PaginatedTaskResponse(
+            items=[TaskResponse(**t) for t in paginated_tasks],
+            pagination=pagination
+        )
     except TypeDBUnavailable as e:
         logger.error(f"TypeDB unavailable: {e}")
         raise HTTPException(status_code=503, detail="Database service unavailable")
