@@ -1,7 +1,7 @@
 # Gap Index - Sarvaja (Active Gaps)
 
-**Last Updated:** 2026-01-16
-**Active Gaps:** 29 | Status: 12 OPEN, 1 BLOCKED, 1 PARTIAL, 15 DEFERRED
+**Last Updated:** 2026-01-17
+**Active Gaps:** 31 | Status: 12 OPEN, 1 BLOCKED, 3 PARTIAL, 15 DEFERRED
 **Archived:** 209 RESOLVED gaps → [GAP-INDEX-ARCHIVE.md](GAP-INDEX-ARCHIVE.md)
 
 > **Evidence Files:** Detailed analysis in [evidence/](evidence/) per GAP-META-001
@@ -30,21 +30,24 @@
 
 | ID | Status | Gap | Priority | Category | Evidence |
 |----|--------|-----|----------|----------|----------|
-| GAP-DATA-INTEGRITY-001 | OPEN | Dashboard shows counts but no traceability (Session→Task→Evidence→Rules) | **CRITICAL** | data_integrity | [evidence/GAP-DATA-INTEGRITY-001.md](evidence/GAP-DATA-INTEGRITY-001.md) |
+| GAP-DATA-INTEGRITY-001 | PARTIAL | Dashboard shows counts but no traceability (Session→Task→Evidence→Rules) | **CRITICAL** | data_integrity | [evidence/GAP-DATA-INTEGRITY-001.md](evidence/GAP-DATA-INTEGRITY-001.md) |
+| GAP-BATCH-QUERY-001 | RESOLVED | Session LIST returns wrong tasks_completed count vs GET | HIGH | data_integrity | [evidence/GAP-BATCH-QUERY-001.md](evidence/GAP-BATCH-QUERY-001.md) |
+| GAP-E2E-KANREN-001 | RESOLVED | E2E platform health test fails - kanren not in requirements.txt | HIGH | testing | FIXED: Added kanren>=0.2.3 to requirements.txt |
 | GAP-API-PERF-001 | OPEN | API response times 7-9 seconds for simple queries (target <500ms) | HIGH | performance | [evidence/GAP-API-PERF-001.md](evidence/GAP-API-PERF-001.md) |
 | GAP-UI-PAGING-001 | OPEN | UI loads all data at once, no pagination or loading indicators | HIGH | ux | [evidence/GAP-UI-PAGING-001.md](evidence/GAP-UI-PAGING-001.md) |
 
-### Data Quality Evidence
+### Data Quality Evidence (Updated 2026-01-17)
 
-| Entity | Field | Populated | Quality |
-|--------|-------|-----------|---------|
-| Task | agent_id | 0% | **CRITICAL** |
-| Task | evidence | 0% | **CRITICAL** |
-| Task | linked_rules | 50% | Poor |
-| Session | evidence_files | 0% | **CRITICAL** |
-| Session | tasks_completed | 0% | **CRITICAL** |
+| Entity | Field | Populated | Quality | Notes |
+|--------|-------|-----------|---------|-------|
+| Task | agent_id | 0% | **CRITICAL** | EPIC-DR-007 pending |
+| Task | evidence | 0% | **CRITICAL** | EPIC-DR-008 pending |
+| Task | linked_rules | 50% | Poor | |
+| Task | linked_sessions | 100% | **FIXED** | 65 tasks synced (2026-01-17) |
+| Session | evidence_files | 0% | **CRITICAL** | |
+| Session | tasks_completed | 100% | **FIXED** | LIST/GET counts now match (GAP-BATCH-QUERY-001 resolved) |
 
-**Verdict:** Platform is NOT production-ready. Data integrity and UX gaps block usability.
+**Verdict:** Data integrity improved. Session→Task relations synced. Batch query bug FIXED (2026-01-17).
 
 ---
 
@@ -55,9 +58,9 @@
 
 | ID | Status | Gap | Priority | Category | Evidence |
 |----|--------|-----|----------|----------|----------|
-| GAP-GOVERNANCE-AUDIT-001 | DEFERRED | Full governance rule compliance audit (Option A) | HIGH | governance | [evidence/GAP-GOVERNANCE-AUDIT-001.md](evidence/GAP-GOVERNANCE-AUDIT-001.md) |
+| GAP-GOVERNANCE-AUDIT-001 | RESOLVED | Full governance rule compliance audit (Option A) | HIGH | governance | [evidence/GAP-GOVERNANCE-AUDIT-001.md](evidence/GAP-GOVERNANCE-AUDIT-001.md) |
 
-**Decision:** Deferred in favor of Option B (Targeted Stop). Revisit after Phase 12 or if governance debt becomes unmanageable.
+**Resolution:** 2026-01-17 - Rules synchronized. TypeDB: 58 rules. RULES-DIRECTIVES.md: 55 rules indexed. See [RULES-AUDIT-2026-01-17.md](../evidence/RULES-AUDIT-2026-01-17.md)
 
 ---
 

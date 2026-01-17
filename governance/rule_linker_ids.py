@@ -77,6 +77,19 @@ SEMANTIC_TO_LEGACY = {
     "REPORT-ISSUE-01-v1": "RULE-049",
     "SESSION-PROMPT-01-v1": "RULE-050",
     "MCP-RESTART-AUTO-01-v1": "RULE-051",
+    "TEST-UI-VERIFY-01-v1": "RULE-052",
+    "WORKFLOW-SHELL-01-v1": "RULE-053",
+    "CONTAINER-MGMT-01-v1": "RULE-054",
+    # Rules created with semantic ID only (no legacy mapping)
+    "CONTAINER-TYPEDB-01-v1": "CONTAINER-TYPEDB-01-v1",
+    "PKG-LATEST-01-v1": "PKG-LATEST-01-v1",
+    "DOC-GAP-ARCHIVE-01-v1": "DOC-GAP-ARCHIVE-01-v1",
+    "TASK-TECH-01-v1": "TASK-TECH-01-v1",
+    "TASK-LIFE-01-v1": "TASK-LIFE-01-v1",
+    "UI-LOADER-01-v1": "UI-LOADER-01-v1",
+    "UI-TRACE-01-v1": "UI-TRACE-01-v1",
+    "TEST-BDD-01-v1": "TEST-BDD-01-v1",
+    "GAP-DOC-01-v1": "GAP-DOC-01-v1",
 }
 
 # Reverse mapping

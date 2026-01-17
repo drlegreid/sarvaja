@@ -1,6 +1,6 @@
 # Sim.ai Rules Directives - Index
 
-**Status:** Active | **Updated:** 2026-01-13 | **Rules:** 41 (38 ACTIVE, 3 DRAFT/DISABLED)
+**Status:** Active | **Updated:** 2026-01-17 | **Rules:** 55 (52 ACTIVE, 3 DRAFT/DISABLED)
 
 > **Taxonomy:** [META-TAXON-01-v1](rules/leaf/META-TAXON-01-v1.md) | **Migration:** [RULE-MIGRATION.md](rules/RULE-MIGRATION.md)
 
@@ -60,7 +60,27 @@
 | DOC-SIZE-01-v1 | RULE-032 | File Size & OOP Standards | HIGH | ACTIVE |
 | DOC-PARTIAL-01-v1 | RULE-033 | PARTIAL Task Handling | HIGH | ACTIVE |
 | DOC-LINK-01-v1 | RULE-034 | Relative Document Linking | CRITICAL | ACTIVE |
-| META-TAXON-01-v1 | (new) | Rule Taxonomy & Management | HIGH | ACTIVE |
+| META-TAXON-01-v1 | RULE-043 | Rule Taxonomy & Management | HIGH | ACTIVE |
+| TEST-EXEC-01-v1 | RULE-044 | Session Summary Reporting | HIGH | ACTIVE |
+| INTENT-CHECK-01-v1 | RULE-045 | Intent Verification Before Completion | HIGH | ACTIVE |
+| REPORT-HUMOR-01-v1 | RULE-046 | Session Wisdom and Humor | LOW | ACTIVE |
+| GOV-MODE-01-v1 | RULE-047 | Governance Mode Configuration | HIGH | ACTIVE |
+| FEEDBACK-LOGIC-01-v1 | RULE-048 | Evidence-Based Feedback | HIGH | ACTIVE |
+| REPORT-ISSUE-01-v1 | RULE-049 | GitHub Certification Issue Protocol | HIGH | ACTIVE |
+| SESSION-PROMPT-01-v1 | RULE-050 | Initial Prompt Capture | HIGH | ACTIVE |
+| MCP-RESTART-AUTO-01-v1 | RULE-051 | Autonomous MCP Server Restart | HIGH | ACTIVE |
+| TEST-UI-VERIFY-01-v1 | RULE-052 | UI Feature Visual Verification | HIGH | ACTIVE |
+| WORKFLOW-SHELL-01-v1 | RULE-053 | Shell Wrapper Pattern | HIGH | ACTIVE |
+| CONTAINER-MGMT-01-v1 | RULE-054 | Container Management Best Practices | HIGH | ACTIVE |
+| CONTAINER-TYPEDB-01-v1 | (new) | TypeDB Container Query Patterns | HIGH | ACTIVE |
+| PKG-LATEST-01-v1 | (new) | Latest Stable Package Versions | HIGH | ACTIVE |
+| DOC-GAP-ARCHIVE-01-v1 | (new) | Gap Index Archive Structure | MEDIUM | ACTIVE |
+| TASK-TECH-01-v1 | (new) | Technology Solution Documentation | MEDIUM | ACTIVE |
+| TASK-LIFE-01-v1 | (new) | Task Lifecycle Management | HIGH | ACTIVE |
+| UI-LOADER-01-v1 | (new) | UI Loader State Pattern | HIGH | ACTIVE |
+| UI-TRACE-01-v1 | (new) | UI Trace Bar Display | MEDIUM | ACTIVE |
+| TEST-BDD-01-v1 | (new) | BDD Testing with Gherkin | HIGH | ACTIVE |
+| GAP-DOC-01-v1 | (new) | Gap Documentation Standard | HIGH | ACTIVE |
 
 ---
 
@@ -68,18 +88,24 @@
 
 | Domain | Description | Count | Rules |
 |--------|-------------|-------|-------|
-| **SESSION** | Session management | 2 | EVID-01, DSM-01 |
-| **REPORT** | Reporting & decisions | 2 | DEC-01, DEC-02 |
-| **GOV** | Governance & trust | 8 | TRUST-01/02, BICAM-01, PROP-01/02/03, RULE-01/02/03 |
+| **SESSION** | Session management | 3 | EVID-01, DSM-01, PROMPT-01 |
+| **REPORT** | Reporting & decisions | 4 | DEC-01, DEC-02, HUMOR-01, ISSUE-01, SUMM-01 |
+| **GOV** | Governance & trust | 9 | TRUST-01/02, BICAM-01, PROP-01/02/03, RULE-01/02/03, MODE-01 |
 | **ARCH** | Architecture | 5 | BEST-01, MCP-01/02, INFRA-01/02 |
-| **UI** | User interface | 1 | TRAME-01 |
-| **WORKFLOW** | Workflow & autonomy | 4 | AUTO-01/02, RD-01, SEQ-01 |
+| **UI** | User interface | 3 | TRAME-01, LOADER-01, TRACE-01 |
+| **WORKFLOW** | Workflow & autonomy | 5 | AUTO-01/02, RD-01, SEQ-01, SHELL-01 |
 | **RECOVER** | Recovery & resilience | 3 | MEM-01, AMNES-01, CRASH-01 |
-| **TEST** | Testing & validation | 4 | GUARD-01, COMP-01/02, FIX-01 |
+| **TEST** | Testing & validation | 7 | GUARD-01, COMP-01/02, FIX-01, EXEC-01, UI-VERIFY-01, BDD-01 |
 | **SAFETY** | Safety & prevention | 3 | HEALTH-01, INTEG-01, DESTR-01 |
-| **CONTAINER** | Container operations | 4 | DEV-01/02, RESTART-01, SHELL-01 |
-| **DOC** | Documentation | 3 | SIZE-01, PARTIAL-01, LINK-01 |
+| **CONTAINER** | Container operations | 5 | DEV-01/02, RESTART-01, SHELL-01, TYPEDB-01, MGMT-01 |
+| **DOC** | Documentation | 4 | SIZE-01, PARTIAL-01, LINK-01, GAP-ARCHIVE-01 |
 | **META** | Meta-rules | 1 | TAXON-01 |
+| **TASK** | Task management | 2 | TECH-01, LIFE-01 |
+| **INTENT** | Intent verification | 1 | CHECK-01 |
+| **FEEDBACK** | Feedback rules | 1 | LOGIC-01 |
+| **PKG** | Package management | 1 | LATEST-01 |
+| **GAP** | Gap documentation | 1 | DOC-01 |
+| **MCP** | MCP operations | 1 | RESTART-AUTO-01 |
 
 ---
 

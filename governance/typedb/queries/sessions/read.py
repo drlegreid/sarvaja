@@ -21,14 +21,155 @@ class SessionReadQueries:
     """
 
     def get_all_sessions(self) -> List[Session]:
-        """Get all work sessions from TypeDB."""
+        """Get all work sessions from TypeDB.
+
+        Per EPIC-DR-001: Optimized from N+1 (10 queries × N sessions) to ~11 batch queries.
+        Previous: 100 sessions = 1000 queries (1.6s). Now: 100 sessions = 11 queries (~200ms target).
+        """
         query = """
             match $s isa work-session,
                 has session-id $id;
             get $id;
         """
         results = self._execute_query(query)
-        return [self._build_session_from_id(r.get("id")) for r in results if r.get("id")]
+
+        # Build session map for batch attribute assignment
+        sessions = []
+        session_map = {}
+        for r in results:
+            session_id = r.get("id")
+            if session_id:
+                session = Session(id=session_id)
+                sessions.append(session)
+                session_map[session_id] = session
+
+        if not sessions:
+            return []
+
+        # Batch fetch all attributes (~6 queries instead of 6 × N)
+        self._batch_fetch_session_attributes(session_map)
+
+        # Batch fetch relationships (~4 queries instead of 4 × N)
+        self._batch_fetch_session_relationships(session_map)
+
+        return sessions
+
+    def _batch_fetch_session_attributes(self, session_map: dict) -> None:
+        """Batch fetch all optional attributes for sessions (EPIC-DR-001 optimization)."""
+        # Define attribute queries: (query, result_key, session_attr)
+        attr_queries = [
+            ("match $s isa work-session, has session-id $id, has session-name $v; get $id, $v;", "v", "name"),
+            ("match $s isa work-session, has session-id $id, has session-description $v; get $id, $v;", "v", "description"),
+            ("match $s isa work-session, has session-id $id, has session-file-path $v; get $id, $v;", "v", "file_path"),
+            ("match $s isa work-session, has session-id $id, has started-at $v; get $id, $v;", "v", "started_at"),
+            ("match $s isa work-session, has session-id $id, has agent-id $v; get $id, $v;", "v", "agent_id"),
+        ]
+
+        for query, result_key, session_attr in attr_queries:
+            try:
+                results = self._execute_query(query)
+                for r in results:
+                    session_id = r.get("id")
+                    if session_id in session_map:
+                        setattr(session_map[session_id], session_attr, r.get(result_key))
+            except Exception:
+                pass
+
+        # Completed-at needs special handling for status
+        try:
+            completed_results = self._execute_query(
+                "match $s isa work-session, has session-id $id, has completed-at $v; get $id, $v;"
+            )
+            completed_ids = set()
+            for r in completed_results:
+                session_id = r.get("id")
+                if session_id in session_map:
+                    session_map[session_id].completed_at = r.get("v")
+                    session_map[session_id].status = "COMPLETED"
+                    completed_ids.add(session_id)
+            # Set ACTIVE status for sessions without completed_at
+            for sid, session in session_map.items():
+                if sid not in completed_ids:
+                    session.status = "ACTIVE"
+        except Exception:
+            for session in session_map.values():
+                session.status = "ACTIVE"
+
+    def _batch_fetch_session_relationships(self, session_map: dict) -> None:
+        """Batch fetch relationships for all sessions (EPIC-DR-001 optimization)."""
+        # Batch fetch linked rules
+        try:
+            rules_results = self._execute_query("""
+                match
+                    $s isa work-session, has session-id $sid;
+                    (applying-session: $s, applied-rule: $r) isa session-applied-rule;
+                    $r has rule-id $rid;
+                get $sid, $rid;
+            """)
+            for r in rules_results:
+                sid = r.get("sid")
+                if sid in session_map:
+                    if not session_map[sid].linked_rules_applied:
+                        session_map[sid].linked_rules_applied = []
+                    session_map[sid].linked_rules_applied.append(r.get("rid"))
+        except Exception:
+            pass
+
+        # Batch fetch linked decisions
+        try:
+            decisions_results = self._execute_query("""
+                match
+                    $s isa work-session, has session-id $sid;
+                    (deciding-session: $s, session-made-decision: $d) isa session-decision;
+                    $d has decision-id $did;
+                get $sid, $did;
+            """)
+            for r in decisions_results:
+                sid = r.get("sid")
+                if sid in session_map:
+                    if not session_map[sid].linked_decisions:
+                        session_map[sid].linked_decisions = []
+                    session_map[sid].linked_decisions.append(r.get("did"))
+        except Exception:
+            pass
+
+        # Batch fetch evidence files
+        try:
+            evidence_results = self._execute_query("""
+                match
+                    $s isa work-session, has session-id $sid;
+                    (evidence-session: $s, session-evidence: $e) isa has-evidence;
+                    $e has evidence-source $src;
+                get $sid, $src;
+            """)
+            for r in evidence_results:
+                sid = r.get("sid")
+                if sid in session_map:
+                    if not session_map[sid].evidence_files:
+                        session_map[sid].evidence_files = []
+                    session_map[sid].evidence_files.append(r.get("src"))
+        except Exception:
+            pass
+
+        # Batch count completed tasks per session
+        # NOTE: Must include $t in get clause to prevent TypeDB 2.x deduplication
+        # Per GAP-BATCH-QUERY-001: Without $t, TypeDB returns only distinct $sid values
+        try:
+            tasks_results = self._execute_query("""
+                match
+                    $s isa work-session, has session-id $sid;
+                    (completed-task: $t, hosting-session: $s) isa completed-in;
+                get $sid, $t;
+            """)
+            task_counts = {}
+            for r in tasks_results:
+                sid = r.get("sid")
+                task_counts[sid] = task_counts.get(sid, 0) + 1
+            for sid, count in task_counts.items():
+                if sid in session_map:
+                    session_map[sid].tasks_completed = count
+        except Exception:
+            pass
 
     def _build_session_from_id(self, session_id: str) -> Optional[Session]:
         """Build a full Session object from TypeDB by ID."""
