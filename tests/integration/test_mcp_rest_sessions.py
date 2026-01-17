@@ -23,7 +23,13 @@ API_BASE = "http://localhost:8082"
 def api_get(endpoint: str) -> Dict[str, Any]:
     """GET request to API."""
     response = requests.get(f"{API_BASE}{endpoint}", timeout=10)
-    return {"status": response.status_code, "data": response.json() if response.ok else None}
+    if not response.ok:
+        return {"status": response.status_code, "data": None}
+    data = response.json()
+    # Handle paginated responses (EPIC-DR-003)
+    if isinstance(data, dict) and "items" in data:
+        return {"status": response.status_code, "data": data["items"], "pagination": data.get("pagination")}
+    return {"status": response.status_code, "data": data}
 
 
 def api_post(endpoint: str, data: Dict[str, Any]) -> Dict[str, Any]:
