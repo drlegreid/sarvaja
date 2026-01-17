@@ -18,6 +18,8 @@ Tools:
 - governance_create_handoff, governance_get_pending_handoffs
 - governance_complete_handoff, governance_get_handoff
 - governance_route_task_to_agent
+- governance_query_audit, governance_audit_summary, governance_entity_audit_trail
+- governance_trace_correlation
 
 Usage:
     python -m governance.mcp_server_tasks
@@ -45,11 +47,13 @@ from governance.mcp_tools.tasks import register_task_tools
 from governance.mcp_tools.workspace import register_workspace_tools
 from governance.mcp_tools.gaps import register_gap_tools
 from governance.mcp_tools.handoff import register_handoff_tools
+from governance.mcp_tools.audit import register_audit_tools
 
 register_task_tools(mcp)
 register_workspace_tools(mcp)
 register_gap_tools(mcp)
 register_handoff_tools(mcp)
+register_audit_tools(mcp)
 
 
 # =============================================================================
