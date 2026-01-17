@@ -1,0 +1,249 @@
+# GAP-TYPEDB-UPGRADE-001: TypeDB 3.x Server Upgrade Plan
+
+**Priority:** HIGH | **Category:** infrastructure | **Status:** PLANNED
+**Created:** 2026-01-17 | **Depends On:** GAP-TYPEDB-DRIVER-001 (BLOCKED)
+
+---
+
+## Summary
+
+Plan for upgrading TypeDB Server from 2.29.1 to 3.7.x to resolve Python 3.13 driver incompatibility.
+
+## Current State
+
+| Component | Version | Status |
+|-----------|---------|--------|
+| TypeDB Server | 2.29.1 | Running |
+| typedb-driver | 2.29.2 | Installed (container) |
+| Python | 3.13 | Host system |
+| Python | 3.12 | Container |
+
+**Problem:** Python 3.13 cannot use typedb-driver 2.x (compiled for 3.8-3.11).
+
+## Target State
+
+| Component | Version | Status |
+|-----------|---------|--------|
+| TypeDB Server | 3.7.3 | Target |
+| typedb-driver | 3.7.x | To install |
+| Python | 3.13 | Compatible |
+
+## Migration Plan
+
+### Phase 1: Preparation (TDD Tests)
+
+**Status:** ✅ DONE (2026-01-17)
+
+- [x] Create unit tests for 3.x driver API
+- [x] Create component tests for 3.x connection
+- [x] Create TypeDB3BaseClient wrapper
+- [x] Document API changes
+
+**Files Created:**
+- `tests/unit/test_typedb3_driver.py` - Unit tests
+- `tests/component/test_typedb3_connection.py` - Component tests
+- `governance/typedb/base3.py` - 3.x client wrapper
+
+### Phase 2: Schema Migration
+
+**Status:** TODO
+
+Steps:
+1. Export 2.x database:
+   ```bash
+   podman exec platform_typedb_1 typedb server export \
+     --database=sim-ai-governance \
+     --output=/data/export-2x/
+   ```
+
+2. Update schema for 3.x:
+   - Add cardinality annotations (@card)
+   - Remove rules (replaced by functions)
+   - Fix attributes-owning-attributes issues
+
+3. Schema changes required:
+   ```typeql
+   # 2.x (current)
+   rule owns rule-name;
+
+   # 3.x (required)
+   rule owns rule-name @card(0..1);  # Explicit single
+   ```
+
+### Phase 3: Server Upgrade
+
+**Status:** TODO
+
+1. Update docker-compose.yml:
+   ```yaml
+   typedb:
+     image: docker.io/vaticle/typedb:3.7.3  # Was: latest (2.29.1)
+   ```
+
+2. Clear data volume (new format):
+   ```bash
+   rm -rf /home/oderid/Documents/Docker/typedb_data/*
+   ```
+
+3. Start new container:
+   ```bash
+   podman compose --profile cpu up -d typedb
+   ```
+
+4. Import migrated schema and data:
+   ```bash
+   podman exec platform_typedb_1 typedb server import \
+     --database=sim-ai-governance \
+     --input=/data/export-3x/
+   ```
+
+### Phase 4: Driver Upgrade
+
+**Status:** TODO
+
+1. Update requirements.txt:
+   ```
+   # Old
+   typedb-driver>=2.29.0,<3.0.0
+
+   # New
+   typedb-driver>=3.7.0,<4.0.0
+   ```
+
+2. Update Dockerfile:
+   ```dockerfile
+   RUN pip install typedb-driver>=3.7.0
+   ```
+
+3. Rebuild container:
+   ```bash
+   scripts/rebuild.sh
+   ```
+
+### Phase 5: Code Migration
+
+**Status:** TODO
+
+1. Update connection code:
+   ```python
+   # Old 2.x
+   from typedb.driver import TypeDB
+   driver = TypeDB.core_driver(address)
+
+   # New 3.x
+   from typedb.driver import TypeDB, Credentials, DriverOptions
+   creds = Credentials('', '')
+   opts = DriverOptions(is_tls_enabled=False)
+   driver = TypeDB.driver(address, creds, opts)
+   ```
+
+2. Update query execution:
+   ```python
+   # Old 2.x
+   tx.query.match(query)
+   tx.query.insert(query)
+   tx.query.define(schema)
+
+   # New 3.x (unified)
+   tx.query("match query")
+   tx.query("insert query")
+   tx.query("define schema")
+   ```
+
+3. Migrate rules to functions (if using inference):
+   ```typeql
+   # Old 2.x rule
+   rule dep-transitive:
+   when {
+     (dependent: $a, dependency: $b) isa depends-on;
+     (dependent: $b, dependency: $c) isa depends-on;
+   } then {
+     (dependent: $a, dependency: $c) isa transitive-dependency;
+   };
+
+   # New 3.x function
+   fun transitive_deps($a: rule) -> { rule } {
+     match
+       (dependent: $a, dependency: $b) isa depends-on;
+       (dependent: $b, dependency: $c) isa depends-on;
+     return { $c };
+   }
+   ```
+
+### Phase 6: Verification
+
+**Status:** TODO
+
+1. Run unit tests:
+   ```bash
+   scripts/pytest.sh tests/unit/test_typedb3_driver.py -v
+   ```
+
+2. Run component tests:
+   ```bash
+   TYPEDB_VERSION=3 scripts/pytest.sh tests/component/test_typedb3_connection.py -v
+   ```
+
+3. Run E2E tests:
+   ```bash
+   scripts/pytest.sh tests/e2e/ -v
+   ```
+
+4. Verify data integrity:
+   - All 50 rules migrated
+   - All 82 tasks migrated
+   - All 22 sessions migrated
+   - All relationships preserved
+
+## Rollback Plan
+
+If migration fails:
+
+1. Stop new container:
+   ```bash
+   podman compose stop typedb
+   ```
+
+2. Restore 2.x image:
+   ```yaml
+   image: docker.io/vaticle/typedb:2.29.1
+   ```
+
+3. Restore data volume backup
+
+4. Restart:
+   ```bash
+   podman compose --profile cpu up -d typedb
+   ```
+
+## Risk Assessment
+
+| Risk | Mitigation |
+|------|------------|
+| Schema incompatibility | Test schema conversion first |
+| Data loss | Backup before migration |
+| Inference behavior | Document expected rule outputs |
+| Performance regression | Run benchmarks before/after |
+
+## Timeline
+
+| Phase | Effort | Dependencies |
+|-------|--------|--------------|
+| Phase 1: TDD Tests | DONE | None |
+| Phase 2: Schema | 2-4 hours | None |
+| Phase 3: Server | 1 hour | Phase 2 |
+| Phase 4: Driver | 30 min | Phase 3 |
+| Phase 5: Code | 4-8 hours | Phase 4 |
+| Phase 6: Verify | 2 hours | Phase 5 |
+
+**Total Estimate:** 1-2 days
+
+## Sources
+
+- [TypeDB 2.x to 3.x: Migration Process](https://typedb.com/docs/reference/typedb-2-vs-3/process/)
+- [TypeDB 2.x to 3.x: What's Changed](https://typedb.com/docs/reference/typedb-2-vs-3/diff/)
+- [TypeDB 3.0 Schema Migration](https://typedb.com/fundamentals/schema-and-data-migration-3-0/)
+
+---
+
+*Per GAP-DOC-01-v1: Evidence file for gap documentation*
