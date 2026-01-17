@@ -40,14 +40,14 @@
 
 | Entity | Field | Populated | Quality | Notes |
 |--------|-------|-----------|---------|-------|
-| Task | agent_id | 0% | **CRITICAL** | EPIC-DR-007 pending |
-| Task | evidence | 0% | **CRITICAL** | EPIC-DR-008 pending |
-| Task | linked_rules | 50% | Poor | |
-| Task | linked_sessions | 100% | **FIXED** | 65 tasks synced (2026-01-17) |
-| Session | evidence_files | 0% | **CRITICAL** | |
-| Session | tasks_completed | 100% | **FIXED** | LIST/GET counts now match (GAP-BATCH-QUERY-001 resolved) |
+| Task | agent_id | 0% | **CRITICAL** | EPIC-DR-007: Backfill needed |
+| Task | evidence | 3% | **CRITICAL** | EPIC-DR-008: Only 2 tasks have evidence |
+| Task | linked_sessions | 86% | **GOOD** | 65/76 via completed-in relations |
+| Session | evidence_files | 77% | **GOOD** | 17/22 have has-evidence relations |
+| Session | tasks_completed | 18% | **IMPROVED** | 4 sessions have completed tasks |
+| Session | linked_rules_applied | 23% | Fair | 5/22 sessions |
 
-**Verdict:** Data integrity improved. Session→Task relations synced. Batch query bug FIXED (2026-01-17).
+**Verdict:** Data integrity significantly improved. Session→Task and Session→Evidence working. Remaining: task agent_id/evidence backfill.
 
 ---
 
