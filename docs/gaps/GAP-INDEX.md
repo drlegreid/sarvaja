@@ -1,7 +1,7 @@
 # Gap Index - Sarvaja (Active Gaps)
 
 **Last Updated:** 2026-01-17
-**Active Gaps:** 31 | Status: 11 OPEN, 1 BLOCKED, 1 IN_PROGRESS, 3 PARTIAL, 15 DEFERRED
+**Active Gaps:** 30 | Status: 10 OPEN, 1 BLOCKED, 1 IN_PROGRESS, 3 PARTIAL, 15 DEFERRED
 **Archived:** 209 RESOLVED gaps → [GAP-INDEX-ARCHIVE.md](GAP-INDEX-ARCHIVE.md)
 
 > **Evidence Files:** Detailed analysis in [evidence/](evidence/) per GAP-META-001
@@ -33,7 +33,7 @@
 | GAP-DATA-INTEGRITY-001 | PARTIAL | Dashboard shows counts but no traceability (Session→Task→Evidence→Rules) | **CRITICAL** | data_integrity | [evidence/GAP-DATA-INTEGRITY-001.md](evidence/GAP-DATA-INTEGRITY-001.md) |
 | GAP-BATCH-QUERY-001 | RESOLVED | Session LIST returns wrong tasks_completed count vs GET | HIGH | data_integrity | [evidence/GAP-BATCH-QUERY-001.md](evidence/GAP-BATCH-QUERY-001.md) |
 | GAP-E2E-KANREN-001 | RESOLVED | E2E platform health test fails - kanren not in requirements.txt | HIGH | testing | FIXED: Added kanren>=0.2.3 to requirements.txt |
-| GAP-API-PERF-001 | OPEN | API response times 7-9 seconds for simple queries (target <500ms) | HIGH | performance | [evidence/GAP-API-PERF-001.md](evidence/GAP-API-PERF-001.md) |
+| GAP-API-PERF-001 | RESOLVED | API response times 7-9 seconds → <500ms achieved | HIGH | performance | [evidence/GAP-API-PERF-001.md](evidence/GAP-API-PERF-001.md) VALIDATED 2026-01-16 |
 | GAP-UI-PAGING-001 | RESOLVED | UI pagination & loading states complete (EPIC-DR-003/005) | HIGH | ux | [evidence/GAP-UI-PAGING-001.md](evidence/GAP-UI-PAGING-001.md) |
 
 ### Data Quality Evidence (Updated 2026-01-17)
