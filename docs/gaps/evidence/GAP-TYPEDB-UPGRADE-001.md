@@ -1,6 +1,6 @@
 # GAP-TYPEDB-UPGRADE-001: TypeDB 3.x Server Upgrade Plan
 
-**Priority:** HIGH | **Category:** infrastructure | **Status:** PLANNED
+**Priority:** HIGH | **Category:** infrastructure | **Status:** IN_PROGRESS (Phase 2 Done, Phase 3 Ready)
 **Created:** 2026-01-17 | **Depends On:** GAP-TYPEDB-DRIVER-001 (BLOCKED)
 
 ---
@@ -74,30 +74,46 @@ Plan for upgrading TypeDB Server from 2.29.1 to 3.7.x to resolve Python 3.13 dri
 
 ### Phase 3: Server Upgrade
 
-**Status:** TODO
+**Status:** ⚠️ READY (Requires Manual Confirmation - Destructive)
 
-1. Update docker-compose.yml:
-   ```yaml
-   typedb:
-     image: docker.io/vaticle/typedb:3.7.3  # Was: latest (2.29.1)
-   ```
+**Prerequisites verified:**
+- [x] Schema converted (governance/schema_3x/)
+- [x] Data file exists (governance/data.tql - 658 lines, 61 rules)
+- [x] Schema loader script ready (scripts/load-schema.sh)
+- [x] MCP servers can reload after restart
 
-2. Clear data volume (new format):
-   ```bash
-   rm -rf /home/oderid/Documents/Docker/typedb_data/*
-   ```
+**⚠️ WARNING:** This phase clears the TypeDB data volume. All existing data will be lost.
 
-3. Start new container:
-   ```bash
-   podman compose --profile cpu up -d typedb
-   ```
+**Execution procedure:**
+```bash
+# Step 1: Stop all services
+podman compose --profile cpu stop
 
-4. Import migrated schema and data:
-   ```bash
-   podman exec platform_typedb_1 typedb server import \
-     --database=sim-ai-governance \
-     --input=/data/export-3x/
-   ```
+# Step 2: Backup current data volume (safety)
+cp -r /home/oderid/Documents/Docker/typedb_data /home/oderid/Documents/Docker/typedb_data_backup_2x
+
+# Step 3: Clear data volume (DESTRUCTIVE)
+rm -rf /home/oderid/Documents/Docker/typedb_data/*
+
+# Step 4: Update docker-compose.yml (see below)
+
+# Step 5: Start TypeDB 3.x
+podman compose --profile cpu up -d typedb
+
+# Step 6: Verify TypeDB 3.x running
+podman exec platform_typedb_1 typedb server --version
+
+# Step 7: Reload schema with 3.x loader (after Phase 5)
+scripts/load-schema.sh --modular
+```
+
+**docker-compose.yml change:**
+```yaml
+typedb:
+  image: docker.io/typedb/typedb:3.0.8  # Was: vaticle/typedb:latest (2.29.1)
+```
+
+**Note:** TypeDB 3.x uses `typedb/typedb` image, not `vaticle/typedb`.
 
 ### Phase 4: Driver Upgrade
 
@@ -229,16 +245,17 @@ If migration fails:
 
 ## Timeline
 
-| Phase | Effort | Dependencies |
-|-------|--------|--------------|
-| Phase 1: TDD Tests | DONE | None |
-| Phase 2: Schema | 2-4 hours | None |
-| Phase 3: Server | 1 hour | Phase 2 |
-| Phase 4: Driver | 30 min | Phase 3 |
-| Phase 5: Code | 4-8 hours | Phase 4 |
-| Phase 6: Verify | 2 hours | Phase 5 |
+| Phase | Effort | Dependencies | Status |
+|-------|--------|--------------|--------|
+| Phase 1: TDD Tests | 1 hour | None | ✅ DONE |
+| Phase 2: Schema | 2 hours | None | ✅ DONE |
+| Phase 3: Server | 1 hour | Phase 2, Confirmation | ⚠️ READY |
+| Phase 4: Driver | 30 min | Phase 3 | TODO |
+| Phase 5: Code | 4-8 hours | Phase 4 | TODO |
+| Phase 6: Verify | 2 hours | Phase 5 | TODO |
 
-**Total Estimate:** 1-2 days
+**Progress:** 2/6 phases complete, 1 phase ready for execution
+**Remaining Estimate:** 6-12 hours
 
 ## Sources
 
