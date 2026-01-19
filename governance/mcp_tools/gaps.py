@@ -49,12 +49,12 @@ def register_gap_tools(mcp) -> None:
                 "gaps": [g.to_dict() for g in gaps],
                 "todo_format": [g.to_todo_format() for g in gaps],
             }
-            return json.dumps(result, indent=2)
+            return format_mcp_result(result)
 
         except FileNotFoundError as e:
-            return json.dumps({"error": str(e)})
+            return format_mcp_result({"error": str(e)})
         except Exception as e:
-            return json.dumps({"error": f"Failed to parse gaps: {str(e)}"})
+            return format_mcp_result({"error": f"Failed to parse gaps: {str(e)}"})
 
     @mcp.tool()
     def gaps_summary() -> str:
@@ -66,9 +66,9 @@ def register_gap_tools(mcp) -> None:
         """
         try:
             summary = get_gap_summary()
-            return json.dumps(summary, indent=2)
+            return format_mcp_result(summary)
         except Exception as e:
-            return json.dumps({"error": f"Failed to get summary: {str(e)}"})
+            return format_mcp_result({"error": f"Failed to get summary: {str(e)}"})
 
     @mcp.tool()
     def gaps_critical() -> str:
@@ -81,12 +81,12 @@ def register_gap_tools(mcp) -> None:
         try:
             parser = GapParser()
             critical = parser.get_by_priority("CRITICAL")
-            return json.dumps({
+            return format_mcp_result({
                 "count": len(critical),
                 "gaps": [g.to_dict() for g in critical],
             }, indent=2)
         except Exception as e:
-            return json.dumps({"error": f"Failed to get critical gaps: {str(e)}"})
+            return format_mcp_result({"error": f"Failed to get critical gaps: {str(e)}"})
 
     @mcp.tool()
     def backlog_unified(limit: int = 30, include_tasks: bool = True) -> str:
@@ -103,7 +103,7 @@ def register_gap_tools(mcp) -> None:
         Returns:
             JSON object with unified backlog as WorkItems
         """
-        from governance.mcp_tools.common import get_typedb_client
+        from governance.mcp_tools.common import get_typedb_client, format_mcp_result
 
         work_items: List[WorkItem] = []
 
@@ -151,4 +151,4 @@ def register_gap_tools(mcp) -> None:
             "items": [item.to_dict() for item in sorted_items],
             "todo_format": [item.to_todo_format() for item in sorted_items],
         }
-        return json.dumps(result, indent=2)
+        return format_mcp_result(result)

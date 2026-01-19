@@ -4,7 +4,7 @@ import json
 from typing import Optional
 from dataclasses import asdict
 
-from governance.mcp_tools.common import get_typedb_client
+from governance.mcp_tools.common import get_typedb_client, format_mcp_result
 from governance.mcp_tools.rule_fallback import (
     get_all_markdown_rules,
     get_markdown_rule_by_id,
@@ -49,7 +49,7 @@ def register_rule_query_tools(mcp) -> None:
                     rules = [r for r in rules if r.priority == priority]
                 if status and status != "ACTIVE":
                     rules = [r for r in rules if r.status == status]
-                return json.dumps([asdict(r) for r in rules], default=str, indent=2)
+                return format_mcp_result([asdict(r) for r in rules])
         except Exception:
             use_fallback = True
         finally:
@@ -58,18 +58,18 @@ def register_rule_query_tools(mcp) -> None:
         if use_fallback:
             md_rules = get_all_markdown_rules()
             if not md_rules:
-                return json.dumps({
+                return format_mcp_result({
                     "error": "TypeDB unavailable and no markdown rules found",
                     "hint": "Ensure docs/rules/*.md files exist"
                 })
 
             filtered = filter_markdown_rules(md_rules, category, status, priority)
             result = [markdown_rule_to_dict(r) for r in filtered]
-            return json.dumps({
+            return format_mcp_result({
                 "rules": result,
                 "source": "markdown_fallback",
                 "warning": "TypeDB unavailable - using markdown fallback (read-only)"
-            }, indent=2)
+            })
 
     @mcp.tool()
     def rules_query_by_tags(tags: Optional[str] = None, agent_role: Optional[str] = None,
@@ -88,7 +88,7 @@ def register_rule_query_tools(mcp) -> None:
 
         try:
             if not client.connect():
-                return json.dumps({"error": "Failed to connect to TypeDB"})
+                return format_mcp_result({"error": "Failed to connect to TypeDB"})
             rules = client.get_active_rules()
             results = []
             requested_tags = {t.strip().lower() for t in tags.split(",")} if tags else set()
@@ -109,7 +109,7 @@ def register_rule_query_tools(mcp) -> None:
                 rule_dict['applicable_roles'] = list(rule_roles) if rule_roles else []
                 results.append(rule_dict)
 
-            return json.dumps({
+            return format_mcp_result({
                 "rules": results,
                 "count": len(results),
                 "filter": {
@@ -117,10 +117,10 @@ def register_rule_query_tools(mcp) -> None:
                     "agent_role": agent_role,
                     "priority": priority
                 }
-            }, default=str, indent=2)
+            })
 
         except Exception as e:
-            return json.dumps({"error": str(e)})
+            return format_mcp_result({"error": str(e)})
 
         finally:
             client.close()
@@ -146,7 +146,7 @@ def register_rule_query_tools(mcp) -> None:
 
         try:
             if not client.connect():
-                return json.dumps({"error": "Failed to connect to TypeDB"})
+                return format_mcp_result({"error": "Failed to connect to TypeDB"})
             rules = client.get_active_rules()
             rules_list = [asdict(r) for r in rules]
             workspace_path = get_workspace_path(agent_role)
@@ -156,10 +156,10 @@ def register_rule_query_tools(mcp) -> None:
                 workspace_path=workspace_path
             )
 
-            return json.dumps(wisdom.to_dict(), default=str, indent=2)
+            return format_mcp_result(wisdom.to_dict())
 
         except Exception as e:
-            return json.dumps({"error": str(e)})
+            return format_mcp_result({"error": str(e)})
 
         finally:
             client.close()
@@ -185,7 +185,7 @@ def register_rule_query_tools(mcp) -> None:
             else:
                 rule = client.get_rule_by_id(rule_id)
                 if rule:
-                    return json.dumps(asdict(rule), default=str, indent=2)
+                    return format_mcp_result(asdict(rule))
                 else:
                     use_fallback = True
         except Exception:
@@ -198,9 +198,9 @@ def register_rule_query_tools(mcp) -> None:
             if md_rule:
                 result = markdown_rule_to_dict(md_rule)
                 result["warning"] = "TypeDB unavailable - using markdown fallback (read-only)"
-                return json.dumps(result, indent=2)
+                return format_mcp_result(result)
             else:
-                return json.dumps({"error": f"Rule {rule_id} not found in TypeDB or markdown"})
+                return format_mcp_result({"error": f"Rule {rule_id} not found in TypeDB or markdown"})
 
     @mcp.tool()
     def rule_get_deps(rule_id: str) -> str:
@@ -218,10 +218,10 @@ def register_rule_query_tools(mcp) -> None:
 
         try:
             if not client.connect():
-                return json.dumps({"error": "Failed to connect to TypeDB"})
+                return format_mcp_result({"error": "Failed to connect to TypeDB"})
 
             deps = client.get_rule_dependencies(rule_id)
-            return json.dumps(deps, indent=2)
+            return format_mcp_result(deps)
 
         finally:
             client.close()
@@ -240,10 +240,10 @@ def register_rule_query_tools(mcp) -> None:
 
         try:
             if not client.connect():
-                return json.dumps({"error": "Failed to connect to TypeDB"})
+                return format_mcp_result({"error": "Failed to connect to TypeDB"})
 
             conflicts = client.find_conflicts()
-            return json.dumps(conflicts, indent=2)
+            return format_mcp_result(conflicts)
 
         finally:
             client.close()

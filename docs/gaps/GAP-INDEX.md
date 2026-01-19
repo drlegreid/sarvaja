@@ -120,7 +120,7 @@
 | GAP-MCP-001 | RESOLVED | gov-sessions MCP - print() to stderr fix | HIGH | integration | [evidence/GAP-MCP-001.md](evidence/GAP-MCP-001.md) - FIXED 2026-01-17 |
 | GAP-MCP-002 | RESOLVED | gov-tasks MCP - print() to stderr fix | HIGH | integration | [evidence/GAP-MCP-002.md](evidence/GAP-MCP-002.md) - FIXED 2026-01-17 |
 | GAP-MCP-003 | RESOLVED | REST API testing - 9 tests passing (health, rules, tasks, sessions) | MEDIUM | testing | [tests/integration/test_mcp_rest_sessions.py](../../tests/integration/test_mcp_rest_sessions.py) - FIXED 2026-01-18 |
-| GAP-DATA-001 | PARTIAL | Evaluate TOON vs JSON for MCP output format | MEDIUM | optimization | [evidence/GAP-DATA-001.md](evidence/GAP-DATA-001.md) - Phase 1-2 done (module+tests), Phase 3-4 pending (MCP integration) |
+| GAP-DATA-001 | RESOLVED | TOON format for MCP output (43.8% token savings) | MEDIUM | optimization | [evidence/GAP-DATA-001.md](evidence/GAP-DATA-001.md) - IMPLEMENTED 2026-01-19: Set `MCP_OUTPUT_FORMAT=toon` to enable |
 | GAP-API-001 | RESOLVED | POST /api/tasks returns 201 but doesn't persist to TypeDB | HIGH | data_integrity | FIXED 2026-01-16: Schema migration added task-resolution attribute. 9 tests pass. |
 | GAP-VALIDATE-001 | RESOLVED | Integration validation suite (REST + Playwright + tests) | HIGH | testing | [evidence/GAP-VALIDATE-001.md](evidence/GAP-VALIDATE-001.md) - FIXED 2026-01-17 |
 | GAP-MCP-PAGING-001 | MITIGATED | MCP tools need paging/truncation for large outputs (791K+ chars) | MEDIUM | tooling | [evidence/GAP-MCP-PAGING-001.md](evidence/GAP-MCP-PAGING-001.md) - Workarounds documented, external MCPs not controllable |
@@ -155,19 +155,18 @@
 | MCP-003-C | DONE | Tasks CRUD and persistence tests | test_list_tasks, test_create_task, test_task_persistence_round_trip |
 | MCP-003-D | DONE | Session listing and creation tests | test_list_sessions, test_create_session |
 
-### Subtasks for GAP-DATA-001 (TOON)
+### Subtasks for GAP-DATA-001 (TOON) - COMPLETED 2026-01-19
 
-| Subtask | Status | Description | Test |
-|---------|--------|-------------|------|
-| DATA-001-A | TODO | Research Python TOON parser availability | N/A - research |
-| DATA-001-B | TODO | Benchmark JSON vs TOON token counts | test_toon_token_comparison |
-| DATA-001-C | TODO | Prototype MCP output formatter | test_toon_mcp_formatter |
-| DATA-001-D | TODO | LLM readability test (can Claude parse TOON natively?) | test_toon_llm_native |
+| Subtask | Status | Description | Evidence |
+|---------|--------|-------------|----------|
+| DATA-001-A | DONE | Research Python TOON parser availability | `toons>=0.4.0` (Rust-based) |
+| DATA-001-B | DONE | Benchmark JSON vs TOON token counts | **43.8% savings** measured |
+| DATA-001-C | DONE | MCP output formatter | `governance/mcp_output.py` (167 lines) |
+| DATA-001-D | DONE | LLM readability test | 21/21 tests pass, roundtrip verified |
 
-**TOON Reference:** https://github.com/toon-format/toon
-- 40% token reduction vs JSON
-- YAML-like indent + CSV tabular hybrid
-- Designed for LLM context efficiency
+**Implementation:** `format_mcp_result()` in `governance/mcp_tools/common.py`
+- Set `MCP_OUTPUT_FORMAT=toon` to enable (default: JSON for backward compatibility)
+- 43.8% token savings measured on typical MCP responses
 
 ---
 

@@ -58,10 +58,10 @@ def register_audit_tools(mcp) -> None:
                 "count": len(entries),
                 "entries": entries
             }
-            return json.dumps(result, indent=2, default=str)
+            return format_mcp_result(result)
 
         except Exception as e:
-            return json.dumps({"error": f"Failed to query audit trail: {str(e)}"})
+            return format_mcp_result({"error": f"Failed to query audit trail: {str(e)}"})
 
     @mcp.tool()
     def audit_summary() -> str:
@@ -78,9 +78,9 @@ def register_audit_tools(mcp) -> None:
 
         try:
             summary = get_audit_summary()
-            return json.dumps(summary, indent=2)
+            return format_mcp_result(summary)
         except Exception as e:
-            return json.dumps({"error": f"Failed to get audit summary: {str(e)}"})
+            return format_mcp_result({"error": f"Failed to get audit summary: {str(e)}"})
 
     @mcp.tool()
     def audit_entity_trail(entity_id: str) -> str:
@@ -102,7 +102,7 @@ def register_audit_tools(mcp) -> None:
             entries = query_audit_trail(entity_id=entity_id, limit=100)
 
             if not entries:
-                return json.dumps({
+                return format_mcp_result({
                     "entity_id": entity_id,
                     "count": 0,
                     "message": "No audit entries found for this entity",
@@ -128,10 +128,10 @@ def register_audit_tools(mcp) -> None:
                 },
                 "entries": entries
             }
-            return json.dumps(result, indent=2, default=str)
+            return format_mcp_result(result)
 
         except Exception as e:
-            return json.dumps({"error": f"Failed to get entity audit trail: {str(e)}"})
+            return format_mcp_result({"error": f"Failed to get entity audit trail: {str(e)}"})
 
     @mcp.tool()
     def audit_trace(correlation_id: str) -> str:
@@ -153,7 +153,7 @@ def register_audit_tools(mcp) -> None:
             entries = query_audit_trail(correlation_id=correlation_id, limit=100)
 
             if not entries:
-                return json.dumps({
+                return format_mcp_result({
                     "correlation_id": correlation_id,
                     "count": 0,
                     "message": "No operations found with this correlation ID",
@@ -174,7 +174,7 @@ def register_audit_tools(mcp) -> None:
                 "affected_entities": by_entity,
                 "entries": entries
             }
-            return json.dumps(result, indent=2, default=str)
+            return format_mcp_result(result)
 
         except Exception as e:
-            return json.dumps({"error": f"Failed to trace correlation: {str(e)}"})
+            return format_mcp_result({"error": f"Failed to trace correlation: {str(e)}"})

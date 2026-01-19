@@ -3,7 +3,7 @@ import json
 from typing import Optional
 from dataclasses import asdict
 
-from governance.mcp_tools.common import get_typedb_client
+from governance.mcp_tools.common import get_typedb_client, format_mcp_result
 
 
 def register_task_crud_tools(mcp) -> None:
@@ -29,7 +29,7 @@ def register_task_crud_tools(mcp) -> None:
         client = get_typedb_client()
         try:
             if not client.connect():
-                return json.dumps({"error": "Failed to connect to TypeDB"})
+                return format_mcp_result({"error": "Failed to connect to TypeDB"})
 
             # Map description -> body, include priority in body (per TypeDB schema)
             body = f"[Priority: {priority}] {description}" if description else f"[Priority: {priority}]"
@@ -42,7 +42,7 @@ def register_task_crud_tools(mcp) -> None:
             )
 
             if success:
-                return json.dumps({
+                return format_mcp_result({
                     "task_id": task_id,
                     "name": name,
                     "status": status,
@@ -51,7 +51,7 @@ def register_task_crud_tools(mcp) -> None:
                     "message": f"Task {task_id} created successfully"
                 }, indent=2)
             else:
-                return json.dumps({"error": f"Failed to create task {task_id}"})
+                return format_mcp_result({"error": f"Failed to create task {task_id}"})
         finally:
             client.close()
 
@@ -69,13 +69,13 @@ def register_task_crud_tools(mcp) -> None:
         client = get_typedb_client()
         try:
             if not client.connect():
-                return json.dumps({"error": "Failed to connect to TypeDB"})
+                return format_mcp_result({"error": "Failed to connect to TypeDB"})
 
             task = client.get_task(task_id)
             if task:
-                return json.dumps(asdict(task), indent=2, default=str)
+                return format_mcp_result(asdict(task), indent=2, default=str)
             else:
-                return json.dumps({"error": f"Task {task_id} not found"})
+                return format_mcp_result({"error": f"Task {task_id} not found"})
         finally:
             client.close()
 
@@ -95,12 +95,12 @@ def register_task_crud_tools(mcp) -> None:
             JSON with updated task details or error
         """
         if not any([status, name, phase]):
-            return json.dumps({"error": "No update fields provided"})
+            return format_mcp_result({"error": "No update fields provided"})
 
         client = get_typedb_client()
         try:
             if not client.connect():
-                return json.dumps({"error": "Failed to connect to TypeDB"})
+                return format_mcp_result({"error": "Failed to connect to TypeDB"})
 
             success = client.update_task(
                 task_id=task_id,
@@ -115,13 +115,13 @@ def register_task_crud_tools(mcp) -> None:
                 if task:
                     result = asdict(task)
                     result["message"] = f"Task {task_id} updated successfully"
-                    return json.dumps(result, indent=2, default=str)
-                return json.dumps({
+                    return format_mcp_result(result)
+                return format_mcp_result({
                     "task_id": task_id,
                     "message": f"Task {task_id} updated successfully"
                 }, indent=2)
             else:
-                return json.dumps({"error": f"Failed to update task {task_id}"})
+                return format_mcp_result({"error": f"Failed to update task {task_id}"})
         finally:
             client.close()
 
@@ -139,18 +139,18 @@ def register_task_crud_tools(mcp) -> None:
         client = get_typedb_client()
         try:
             if not client.connect():
-                return json.dumps({"error": "Failed to connect to TypeDB"})
+                return format_mcp_result({"error": "Failed to connect to TypeDB"})
 
             success = client.delete_task(task_id)
 
             if success:
-                return json.dumps({
+                return format_mcp_result({
                     "task_id": task_id,
                     "deleted": True,
                     "message": f"Task {task_id} deleted successfully"
                 }, indent=2)
             else:
-                return json.dumps({"error": f"Failed to delete task {task_id}"})
+                return format_mcp_result({"error": f"Failed to delete task {task_id}"})
         finally:
             client.close()
 
@@ -165,10 +165,10 @@ def register_task_crud_tools(mcp) -> None:
         client = get_typedb_client()
         try:
             if not client.connect():
-                return json.dumps({"error": "Failed to connect to TypeDB"})
+                return format_mcp_result({"error": "Failed to connect to TypeDB"})
 
             tasks = client.get_all_tasks()
-            return json.dumps({
+            return format_mcp_result({
                 "tasks": [asdict(t) for t in tasks],
                 "count": len(tasks),
                 "source": "typedb"
@@ -192,21 +192,21 @@ def register_task_crud_tools(mcp) -> None:
             JSON with verification result and task status update
         """
         if not verification_method:
-            return json.dumps({
+            return format_mcp_result({
                 "error": "verification_method required",
                 "rule": "TEST-FIX-01-v1",
                 "hint": "Specify how you verified: pytest, curl, podman ps, etc."
             })
 
         if not evidence:
-            return json.dumps({
+            return format_mcp_result({
                 "error": "evidence required",
                 "rule": "TEST-FIX-01-v1",
                 "hint": "Include evidence: test output, log excerpt, or screenshot path"
             })
 
         if not test_passed:
-            return json.dumps({
+            return format_mcp_result({
                 "error": "Cannot mark completed - verification failed",
                 "task_id": task_id,
                 "verification_method": verification_method,
@@ -219,7 +219,7 @@ def register_task_crud_tools(mcp) -> None:
         client = get_typedb_client()
         try:
             if not client.connect():
-                return json.dumps({"error": "Failed to connect to TypeDB"})
+                return format_mcp_result({"error": "Failed to connect to TypeDB"})
 
             success = client.update_task(
                 task_id=task_id,
@@ -227,7 +227,7 @@ def register_task_crud_tools(mcp) -> None:
             )
 
             if success:
-                return json.dumps({
+                return format_mcp_result({
                     "task_id": task_id,
                     "status": "completed",
                     "verified": True,
@@ -238,7 +238,7 @@ def register_task_crud_tools(mcp) -> None:
                 }, indent=2)
             else:
                 # Task might not exist in TypeDB, but verification is recorded
-                return json.dumps({
+                return format_mcp_result({
                     "task_id": task_id,
                     "verified": True,
                     "verification_method": verification_method,

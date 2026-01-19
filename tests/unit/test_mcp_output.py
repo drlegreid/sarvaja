@@ -192,3 +192,156 @@ class TestFallbackBehavior:
             # Should fallback to valid JSON
             parsed = json.loads(result)
             assert parsed == data
+
+
+@pytest.mark.unit
+class TestMCPToolHelper:
+    """Tests for MCP tool output helper - Phase 3 GAP-DATA-001.
+
+    Per TDD: Write tests first, then implement format_mcp_result().
+    """
+
+    def test_format_mcp_result_exists(self):
+        """Test format_mcp_result is importable from common."""
+        from governance.mcp_tools.common import format_mcp_result
+        assert callable(format_mcp_result)
+
+    def test_format_mcp_result_json_default(self):
+        """Test default output is JSON."""
+        from governance.mcp_tools.common import format_mcp_result
+
+        data = {"rule_id": "RULE-001", "status": "ACTIVE"}
+        result = format_mcp_result(data)
+
+        # Should be valid JSON
+        parsed = json.loads(result)
+        assert parsed == data
+
+    def test_format_mcp_result_handles_datetime(self):
+        """Test datetime serialization."""
+        from governance.mcp_tools.common import format_mcp_result
+        from datetime import datetime
+
+        data = {"created": datetime(2026, 1, 19, 12, 0, 0)}
+        result = format_mcp_result(data)
+
+        # Should not raise
+        assert "2026" in result
+
+    def test_format_mcp_result_respects_env(self):
+        """Test MCP_OUTPUT_FORMAT env var is respected."""
+        from governance.mcp_tools.common import format_mcp_result
+
+        data = {"test": "data"}
+
+        # With JSON env (default)
+        with patch.dict(os.environ, {"MCP_OUTPUT_FORMAT": "json"}):
+            result = format_mcp_result(data)
+            parsed = json.loads(result)
+            assert parsed == data
+
+    def test_format_mcp_result_toon_env(self):
+        """Test TOON output when env is set."""
+        try:
+            import toons
+        except ImportError:
+            pytest.skip("toons not installed")
+
+        from governance.mcp_tools.common import format_mcp_result
+
+        data = {"rules": 50, "tasks": 85}
+
+        with patch.dict(os.environ, {"MCP_OUTPUT_FORMAT": "toon"}):
+            result = format_mcp_result(data)
+            # TOON is typically shorter
+            json_result = json.dumps(data, indent=2)
+            assert len(result) <= len(json_result)
+
+    def test_format_mcp_result_with_list(self):
+        """Test list output."""
+        from governance.mcp_tools.common import format_mcp_result
+
+        data = [{"id": "GAP-001"}, {"id": "GAP-002"}]
+        result = format_mcp_result(data)
+
+        parsed = json.loads(result)
+        assert len(parsed) == 2
+        assert parsed[0]["id"] == "GAP-001"
+
+
+@pytest.mark.integration
+class TestMCPToolIntegration:
+    """Integration tests for MCP tool TOON output - Phase 4 GAP-DATA-001."""
+
+    @pytest.fixture
+    def skip_if_no_toons(self):
+        """Skip if toons not installed."""
+        try:
+            import toons
+            yield toons
+        except ImportError:
+            pytest.skip("toons not installed")
+
+    def test_mcp_tool_pattern_replacement(self, skip_if_no_toons):
+        """Test that format_mcp_result produces Claude-parseable output.
+
+        Per GAP-DATA-001 Phase 4: Validate Claude can parse TOON.
+        This test simulates the old vs new pattern.
+        """
+        from governance.mcp_tools.common import format_mcp_result
+
+        # Typical MCP tool result
+        data = {
+            "status": "success",
+            "tasks": [
+                {"task_id": "P12.1", "name": "Test task", "status": "DONE"},
+                {"task_id": "P12.2", "name": "Another task", "status": "TODO"}
+            ],
+            "count": 2
+        }
+
+        # Old pattern: json.dumps(data, indent=2, default=str)
+        old_result = json.dumps(data, indent=2, default=str)
+
+        # New pattern: format_mcp_result(data)
+        new_result = format_mcp_result(data)
+
+        # Both should be parseable (JSON mode)
+        with patch.dict(os.environ, {"MCP_OUTPUT_FORMAT": "json"}):
+            json_result = format_mcp_result(data)
+            assert json.loads(json_result) == data
+
+        # TOON mode should also work
+        with patch.dict(os.environ, {"MCP_OUTPUT_FORMAT": "toon"}):
+            toon_result = format_mcp_result(data)
+            # Parse back with toons
+            import toons
+            parsed = toons.loads(toon_result)
+            assert parsed == data
+
+    def test_token_savings_real_mcp_data(self, skip_if_no_toons):
+        """Test actual token savings on realistic MCP data."""
+        from governance.mcp_output import estimate_token_savings
+
+        # Simulate rules_query result (typical large payload)
+        data = {
+            "rules": [
+                {
+                    "rule_id": f"RULE-{i:03d}",
+                    "name": f"Governance Rule {i}",
+                    "category": "GOVERNANCE",
+                    "priority": "HIGH",
+                    "status": "ACTIVE",
+                    "directive": f"This is the directive text for rule {i}..."
+                }
+                for i in range(10)
+            ],
+            "count": 10,
+            "filter": {"status": "ACTIVE", "category": None}
+        }
+
+        savings = estimate_token_savings(data)
+
+        # Expect at least 20% savings on structured data
+        assert savings["toon_available"] is True
+        assert savings["savings_percent"] >= 20, f"Expected >=20% savings, got {savings['savings_percent']}%"

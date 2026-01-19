@@ -4,8 +4,37 @@ import warnings
 import logging
 from dataclasses import dataclass
 from functools import wraps
+from typing import Any
 
 logger = logging.getLogger(__name__)
+
+
+# ============================================================================
+# MCP Output Formatting (GAP-DATA-001 Phase 3)
+# ============================================================================
+
+def format_mcp_result(data: Any, indent: int = 2) -> str:
+    """Format MCP tool result for output.
+
+    Per GAP-DATA-001: Token-optimized output formatting.
+    Respects MCP_OUTPUT_FORMAT env var (json/toon).
+
+    Args:
+        data: Data to serialize (dict, list, or JSON-serializable)
+        indent: JSON indentation (default 2, ignored for TOON)
+
+    Returns:
+        Formatted string (JSON or TOON based on env)
+
+    Example:
+        # Replace this:
+        return json.dumps(result, indent=2, default=str)
+
+        # With this:
+        return format_mcp_result(result)
+    """
+    from governance.mcp_output import format_output, OutputFormat
+    return format_output(data, format=OutputFormat.AUTO, indent=indent)
 
 def warn_deprecated(old_name: str, new_name: str) -> None:
     """Log deprecation warning for old tool name. Per RD-MCP-TOOL-NAMING Phase 3."""
