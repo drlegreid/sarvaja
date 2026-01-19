@@ -345,3 +345,161 @@ class TestMCPToolIntegration:
         # Expect at least 20% savings on structured data
         assert savings["toon_available"] is True
         assert savings["savings_percent"] >= 20, f"Expected >=20% savings, got {savings['savings_percent']}%"
+
+
+@pytest.mark.integration
+class TestAllMCPToolsOutputFormat:
+    """Comprehensive tests that ALL MCP tools support both JSON and TOON formats.
+
+    Per GAP-DATA-001: TOON is implicit default, JSON via explicit MCP_OUTPUT_FORMAT=json.
+    """
+
+    @pytest.fixture
+    def all_mcp_tools(self):
+        """Register all MCP tools and return the mock MCP with tools."""
+        from governance.mcp_tools.rules_query import register_rule_query_tools
+        from governance.mcp_tools.rules_crud import register_rule_crud_tools
+        from governance.mcp_tools.rules_archive import register_rule_archive_tools
+        from governance.mcp_tools.decisions import register_decision_tools
+        from governance.mcp_tools.tasks_crud import register_task_crud_tools
+        from governance.mcp_tools.tasks_linking import register_task_linking_tools
+        from governance.mcp_tools.gaps import register_gap_tools
+        from governance.mcp_tools.workspace_tasks import register_workspace_task_tools
+        from governance.mcp_tools.workspace_rules import register_workspace_rule_tools
+        from governance.mcp_tools.workspace_sync import register_workspace_sync_tools
+        from governance.mcp_tools.handoff import register_handoff_tools
+        from governance.mcp_tools.audit import register_audit_tools
+        from governance.mcp_tools.agents import register_agent_tools
+        from governance.mcp_tools.trust import register_trust_tools
+        from governance.mcp_tools.proposals import register_proposal_tools
+        from governance.mcp_tools.sessions_core import register_session_core_tools
+        from governance.mcp_tools.sessions_intent import register_session_intent_tools
+        from governance.mcp_tools.sessions_linking import register_session_linking_tools
+        from governance.mcp_tools.dsm import register_dsm_tools
+
+        class MockMCP:
+            def __init__(self):
+                self.tools = {}
+            def tool(self):
+                def decorator(fn):
+                    self.tools[fn.__name__] = fn
+                    return fn
+                return decorator
+
+        mcp = MockMCP()
+        all_registers = [
+            register_rule_query_tools, register_rule_crud_tools, register_rule_archive_tools,
+            register_decision_tools, register_task_crud_tools, register_task_linking_tools,
+            register_gap_tools, register_workspace_task_tools, register_workspace_rule_tools,
+            register_workspace_sync_tools, register_handoff_tools, register_audit_tools,
+            register_agent_tools, register_trust_tools, register_proposal_tools,
+            register_session_core_tools, register_session_intent_tools,
+            register_session_linking_tools, register_dsm_tools
+        ]
+        for reg in all_registers:
+            reg(mcp)
+        return mcp
+
+    @pytest.fixture
+    def safe_test_tools(self):
+        """Return dict of tool names to safe test kwargs."""
+        return {
+            'rules_query': {}, 'rules_query_by_tags': {}, 'rules_list_archived': {},
+            'rules_find_conflicts': {}, 'tasks_list': {}, 'agents_list': {},
+            'agents_dashboard': {}, 'proposals_list': {}, 'proposals_escalated': {},
+            'session_list': {}, 'dsm_status': {}, 'backlog_get': {}, 'backlog_unified': {},
+            'gaps_summary': {}, 'gaps_critical': {}, 'governance_sync_status': {},
+            'workspace_sync_status': {}, 'workspace_list_sources': {},
+            'workspace_scan_tasks': {}, 'workspace_scan_rule_documents': {},
+            'audit_summary': {}, 'handoffs_pending': {}, 'health_check': {},
+            'governance_health': {}, 'rule_get': {'rule_id': 'RULE-001'},
+            'rule_get_deps': {'rule_id': 'RULE-001'}, 'task_get': {'task_id': 'P12.1'},
+            'agent_get': {'agent_id': 'AGENT-001'},
+            'agent_trust_score': {'agent_id': 'AGENT-001'},
+            'governance_get_trust_score': {'agent_id': 'AGENT-001'},
+            'decision_impacts': {'decision_id': 'DECISION-001'},
+            'governance_get_decision_impacts': {'decision_id': 'DECISION-001'},
+            'wisdom_get': {'agent_role': 'PLATFORM'}, 'audit_query': {},
+            'audit_entity_trail': {'entity_id': 'TASK-001'},
+            'audit_trace': {'correlation_id': 'CORR-TEST'},
+            'task_get_evidence': {'task_id': 'P12.1'},
+            'task_get_commits': {'task_id': 'P12.1'},
+            'task_get_details': {'task_id': 'P12.1'},
+            'workspace_get_document_for_rule': {'rule_id': 'RULE-001'},
+            'workspace_get_rules_for_document': {'document_id': 'RULES-GOVERNANCE'},
+            'agent_activity': {},
+            'session_get_tasks': {'session_id': 'SESSION-TEST'},
+        }
+
+    def test_all_tools_toon_format(self, all_mcp_tools, safe_test_tools):
+        """Test ALL MCP tools return TOON format when MCP_OUTPUT_FORMAT=toon."""
+        try:
+            import toons
+        except ImportError:
+            pytest.skip("toons not installed")
+
+        with patch.dict(os.environ, {"MCP_OUTPUT_FORMAT": "toon"}):
+            passed = []
+            failed = []
+
+            for tool_name, kwargs in safe_test_tools.items():
+                if tool_name not in all_mcp_tools.tools:
+                    continue
+                try:
+                    result = all_mcp_tools.tools[tool_name](**kwargs)
+                    # TOON format should NOT start with { (JSON object)
+                    is_json_object = result.strip().startswith('{')
+                    if is_json_object:
+                        failed.append(tool_name)
+                    else:
+                        passed.append(tool_name)
+                except Exception:
+                    # Tool execution errors are OK - we're testing format, not functionality
+                    pass
+
+            assert len(failed) == 0, f"Tools returning JSON instead of TOON: {failed}"
+            assert len(passed) >= 40, f"Expected at least 40 tools to pass, got {len(passed)}"
+
+    def test_all_tools_json_format(self, all_mcp_tools, safe_test_tools):
+        """Test ALL MCP tools return valid JSON when MCP_OUTPUT_FORMAT=json."""
+        with patch.dict(os.environ, {"MCP_OUTPUT_FORMAT": "json"}):
+            passed = []
+            failed = []
+
+            for tool_name, kwargs in safe_test_tools.items():
+                if tool_name not in all_mcp_tools.tools:
+                    continue
+                try:
+                    result = all_mcp_tools.tools[tool_name](**kwargs)
+                    # Should be valid JSON
+                    json.loads(result)
+                    passed.append(tool_name)
+                except json.JSONDecodeError:
+                    failed.append(tool_name)
+                except Exception:
+                    # Tool execution errors are OK
+                    pass
+
+            assert len(failed) == 0, f"Tools returning invalid JSON: {failed}"
+            assert len(passed) >= 40, f"Expected at least 40 tools to pass, got {len(passed)}"
+
+    def test_toon_is_implicit_default(self, all_mcp_tools):
+        """Test TOON is used when MCP_OUTPUT_FORMAT=toon (implicit via mcp-runner.sh)."""
+        try:
+            import toons
+        except ImportError:
+            pytest.skip("toons not installed")
+
+        # mcp-runner.sh sets MCP_OUTPUT_FORMAT=toon by default
+        with patch.dict(os.environ, {"MCP_OUTPUT_FORMAT": "toon"}):
+            result = all_mcp_tools.tools['rules_query']()
+            # Should be TOON format (starts with array notation or field names)
+            assert not result.strip().startswith('{'), "Default should be TOON, not JSON"
+
+    def test_json_via_explicit_env(self, all_mcp_tools):
+        """Test JSON is returned when explicitly requested via MCP_OUTPUT_FORMAT=json."""
+        with patch.dict(os.environ, {"MCP_OUTPUT_FORMAT": "json"}):
+            result = all_mcp_tools.tools['rules_query']()
+            # Should be valid JSON
+            parsed = json.loads(result)
+            assert isinstance(parsed, (dict, list)), "Should return JSON dict or list"
