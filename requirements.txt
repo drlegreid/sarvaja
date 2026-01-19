@@ -32,6 +32,9 @@ typedb-driver>=3.7.0,<4.0.0
 # Constraint Engine (E2E Tests, Trust Validation)
 kanren>=0.2.3
 
+# Token Optimization - Per GAP-DATA-001
+toons>=0.4.0  # TOON format: 30-60% token reduction vs JSON
+
 # Observability & Logging
 structlog>=25.0.0  # Per MCP-LOGGING-01-v1: Structured JSON logging
 # opik>=1.9.0  # Removed per DECISION-001

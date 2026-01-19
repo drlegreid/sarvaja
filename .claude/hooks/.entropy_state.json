@@ -1,11 +1,11 @@
 {
   "session_start": "2026-01-19T04:04:36.148330",
   "session_hash": "NEW",
-  "tool_count": 113,
-  "check_count": 113,
+  "tool_count": 145,
+  "check_count": 145,
   "last_save": null,
-  "warnings_shown": 2,
-  "last_warning_at": 100,
+  "warnings_shown": 4,
+  "last_warning_at": 140,
   "history": [
     {
       "timestamp": "2026-01-19T04:09:08.186299",
@@ -16,6 +16,16 @@
       "timestamp": "2026-01-19T14:39:24.285486",
       "event": "WARNING_HIGH",
       "tool_count": 100
+    },
+    {
+      "timestamp": "2026-01-19T14:44:40.547418",
+      "event": "WARNING_HIGH",
+      "tool_count": 120
+    },
+    {
+      "timestamp": "2026-01-19T14:47:29.701467",
+      "event": "WARNING_HIGH",
+      "tool_count": 140
     }
   ]
 }
