@@ -49,7 +49,7 @@ def register_task_crud_tools(mcp) -> None:
                     "phase": phase,
                     "priority": priority,
                     "message": f"Task {task_id} created successfully"
-                }, indent=2)
+                })
             else:
                 return format_mcp_result({"error": f"Failed to create task {task_id}"})
         finally:
@@ -73,7 +73,7 @@ def register_task_crud_tools(mcp) -> None:
 
             task = client.get_task(task_id)
             if task:
-                return format_mcp_result(asdict(task), indent=2, default=str)
+                return format_mcp_result(asdict(task))
             else:
                 return format_mcp_result({"error": f"Task {task_id} not found"})
         finally:
@@ -119,7 +119,7 @@ def register_task_crud_tools(mcp) -> None:
                 return format_mcp_result({
                     "task_id": task_id,
                     "message": f"Task {task_id} updated successfully"
-                }, indent=2)
+                })
             else:
                 return format_mcp_result({"error": f"Failed to update task {task_id}"})
         finally:
@@ -148,7 +148,7 @@ def register_task_crud_tools(mcp) -> None:
                     "task_id": task_id,
                     "deleted": True,
                     "message": f"Task {task_id} deleted successfully"
-                }, indent=2)
+                })
             else:
                 return format_mcp_result({"error": f"Failed to delete task {task_id}"})
         finally:
@@ -172,7 +172,7 @@ def register_task_crud_tools(mcp) -> None:
                 "tasks": [asdict(t) for t in tasks],
                 "count": len(tasks),
                 "source": "typedb"
-            }, indent=2, default=str)
+            })
         finally:
             client.close()
 
@@ -235,7 +235,7 @@ def register_task_crud_tools(mcp) -> None:
                     "evidence": evidence[:500] if len(evidence) > 500 else evidence,
                     "rule": "TEST-FIX-01-v1",
                     "message": f"Task {task_id} verified and marked completed"
-                }, indent=2)
+                })
             else:
                 # Task might not exist in TypeDB, but verification is recorded
                 return format_mcp_result({
@@ -245,6 +245,6 @@ def register_task_crud_tools(mcp) -> None:
                     "evidence": evidence[:500] if len(evidence) > 500 else evidence,
                     "note": "Task not in TypeDB but verification recorded",
                     "message": f"Verification complete for {task_id}"
-                }, indent=2)
+                })
         finally:
             client.close()

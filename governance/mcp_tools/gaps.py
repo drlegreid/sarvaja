@@ -84,7 +84,7 @@ def register_gap_tools(mcp) -> None:
             return format_mcp_result({
                 "count": len(critical),
                 "gaps": [g.to_dict() for g in critical],
-            }, indent=2)
+            })
         except Exception as e:
             return format_mcp_result({"error": f"Failed to get critical gaps: {str(e)}"})
 

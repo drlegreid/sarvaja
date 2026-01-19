@@ -28,7 +28,7 @@ def format_mcp_result(data: Any, indent: int = 2) -> str:
 
     Example:
         # Replace this:
-        return json.dumps(result, indent=2, default=str)
+        return json.dumps(result)
 
         # With this:
         return format_mcp_result(result)

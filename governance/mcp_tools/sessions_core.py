@@ -38,7 +38,7 @@ def register_session_core_tools(mcp) -> None:
             "session_type": session_type,
             "started_at": collector.start_time.isoformat(),
             "message": f"Session started: {collector.session_id}"
-        }, indent=2)
+        })
 
     @mcp.tool()
     def session_decision(decision_id: str, name: str, context: str, rationale: str,
@@ -62,7 +62,7 @@ def register_session_core_tools(mcp) -> None:
         )
 
         return format_mcp_result({"decision_id": decision_id, "session_id": collector.session_id, "name": name,
-                           "indexed_to_typedb": TYPEDB_AVAILABLE, "message": f"Decision {decision_id} recorded and indexed"}, indent=2)
+                           "indexed_to_typedb": TYPEDB_AVAILABLE, "message": f"Decision {decision_id} recorded and indexed"})
 
     @mcp.tool()
     def session_task(task_id: str, name: str, description: str, status: str = "pending",
@@ -92,7 +92,7 @@ def register_session_core_tools(mcp) -> None:
             "name": name,
             "status": status,
             "message": f"Task {task_id} recorded"
-        }, indent=2)
+        })
 
     @mcp.tool()
     def session_end(topic: str) -> str:
@@ -108,7 +108,7 @@ def register_session_core_tools(mcp) -> None:
                 "log_path": log_path,
                 "synced_to_chromadb": True,
                 "message": f"Session ended. Log: {log_path}"
-            }, indent=2)
+            })
         else:
             return format_mcp_result({
                 "error": f"Session for topic '{topic}' not found"
@@ -125,7 +125,7 @@ def register_session_core_tools(mcp) -> None:
         return format_mcp_result({
             "active_sessions": sessions,
             "count": len(sessions)
-        }, indent=2)
+        })
 
     @mcp.tool()
     def session_tool_call(tool_name: str, arguments: str = "{}", result_summary: Optional[str] = None,
@@ -162,7 +162,7 @@ def register_session_core_tools(mcp) -> None:
             "correlation_id": correlation_id,
             "applied_rules": rules_list,
             "message": f"Tool call {tool_name} recorded"
-        }, indent=2)
+        })
 
     @mcp.tool()
     def session_thought(thought: str, thought_type: str = "reasoning", related_tools: Optional[str] = None,
@@ -188,4 +188,4 @@ def register_session_core_tools(mcp) -> None:
             "session_id": collector.session_id,
             "related_tools": tools_list,
             "message": f"Thought ({thought_type}) recorded"
-        }, indent=2)
+        })

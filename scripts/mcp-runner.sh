@@ -32,4 +32,12 @@ else
 fi
 
 export PYTHONPATH="$PROJECT_DIR:$PYTHONPATH"
+
+# GAP-DATA-001: Enable TOON format for token savings (43.8%)
+# TODO: Remove after Claude Code properly passes .mcp.json env vars
+export MCP_OUTPUT_FORMAT="${MCP_OUTPUT_FORMAT:-toon}"
+
+# Debug: Log MCP_OUTPUT_FORMAT to stderr (visible in MCP logs)
+echo "[mcp-runner] MCP_OUTPUT_FORMAT=${MCP_OUTPUT_FORMAT}" >&2
+
 exec "$PYTHON" -m "$MODULE"

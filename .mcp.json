@@ -29,9 +29,10 @@
         "TYPEDB_HOST": "localhost",
         "TYPEDB_PORT": "1729",
         "CHROMADB_HOST": "localhost",
-        "CHROMADB_PORT": "8001"
+        "CHROMADB_PORT": "8001",
+        "MCP_OUTPUT_FORMAT": "toon"
       },
-      "_comment": "Per GAP-MCP-NAMING-001: governance → gov"
+      "_comment": "Per GAP-MCP-NAMING-001: governance → gov, TOON enabled per GAP-DATA-001"
     },
     "gov-agents": {
       "type": "stdio",
