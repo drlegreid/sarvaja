@@ -205,9 +205,15 @@ def get_initial_state() -> Dict[str, Any]:
         'task_execution_loading': False,
         'show_task_execution': False,
 
-        # Infrastructure Health (GAP-INFRA-004)
+        # Infrastructure Health (GAP-INFRA-004, UI-AUDIT-008)
         'infra_services': {},
-        'infra_stats': {},
+        'infra_stats': {
+            'frankel_hash': '--------',
+            'last_check': 'Never',
+            'memory_pct': 0,
+            'python_procs': 0,
+            'mcp_servers': {},
+        },
         'infra_loading': False,
         'infra_last_action': '',
 

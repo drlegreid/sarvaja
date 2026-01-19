@@ -325,7 +325,7 @@ def build_rule_detail_view() -> None:
                     )
                 with v3.VCardText():
                     # No tasks message
-                    html.Div(
+                    with html.Div(
                         v_if="!rule_implementing_tasks_loading && rule_implementing_tasks.length === 0",
                         classes="text-grey",
                         __properties=["data-testid"],

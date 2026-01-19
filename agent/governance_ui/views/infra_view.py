@@ -173,6 +173,46 @@ def build_system_stats() -> None:
                     )
 
 
+def build_mcp_status_panel() -> None:
+    """Build MCP server status panel. Per UI-AUDIT-011."""
+    with v3.VRow(classes="mt-4"):
+        with v3.VCol(cols=12):
+            with v3.VCard(
+                variant="outlined",
+                __properties=["data-testid"],
+                **{"data-testid": "infra-mcp-status"}
+            ):
+                v3.VCardTitle("MCP Server Status")
+                with v3.VCardText():
+                    with v3.VRow(dense=True):
+                        # Display MCP servers from healthcheck state
+                        with v3.VCol(
+                            v_for="(status, name) in (infra_stats.mcp_servers || {})",
+                            key="name",
+                            cols=6,
+                            md=3
+                        ):
+                            with v3.VChip(
+                                color=("status === 'OK' ? 'success' : 'warning'",),
+                                size="small",
+                                variant="flat",
+                                classes="ma-1"
+                            ):
+                                v3.VIcon(
+                                    icon=("status === 'OK' ? 'mdi-check-circle' : 'mdi-alert-circle'",),
+                                    size="small",
+                                    classes="mr-1"
+                                )
+                                html.Span("{{ name }}")
+                    # Empty state
+                    v3.VAlert(
+                        v_if="!infra_stats.mcp_servers || Object.keys(infra_stats.mcp_servers).length === 0",
+                        type="info",
+                        density="compact",
+                        text="MCP server status not available. Run healthcheck to update."
+                    )
+
+
 def build_recovery_panel() -> None:
     """Build recovery actions panel."""
     with v3.VRow(classes="mt-4"):
