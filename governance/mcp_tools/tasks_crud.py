@@ -248,3 +248,82 @@ def register_task_crud_tools(mcp) -> None:
                 })
         finally:
             client.close()
+
+    @mcp.tool()
+    def session_sync_todos(session_id: str, todos_json: str) -> str:
+        """
+        Sync Claude Code todos to TypeDB as session tasks.
+
+        Per MCP-002-A: Enable TodoWrite persistence to TypeDB.
+
+        Args:
+            session_id: Session identifier (e.g., "SESSION-2026-01-19-TOPIC")
+            todos_json: JSON array of todos: [{"content": "...", "status": "pending|in_progress|completed"}]
+
+        Returns:
+            JSON with sync summary (created, updated, skipped)
+
+        Example:
+            session_sync_todos("SESSION-2026-01-19-AUDIT", '[{"content":"Fix bug","status":"completed"}]')
+        """
+        import json as json_lib
+        from datetime import datetime
+
+        try:
+            todos = json_lib.loads(todos_json)
+        except json_lib.JSONDecodeError as e:
+            return format_mcp_result({"error": f"Invalid JSON: {e}"})
+
+        if not isinstance(todos, list):
+            return format_mcp_result({"error": "todos_json must be a JSON array"})
+
+        client = get_typedb_client()
+        try:
+            if not client.connect():
+                return format_mcp_result({"error": "Failed to connect to TypeDB"})
+
+            date_str = datetime.now().strftime("%Y%m%d")
+            created, updated, skipped = 0, 0, 0
+            synced_tasks = []
+
+            for i, todo in enumerate(todos, 1):
+                content = todo.get("content", "")
+                status = todo.get("status", "pending")
+                if not content:
+                    skipped += 1
+                    continue
+
+                # Generate task ID from session and index
+                task_id = f"TODO-{date_str}-{i:03d}"
+
+                # Check if exists
+                existing = client.get_task(task_id)
+                if existing:
+                    # Update status only
+                    if existing.status != status:
+                        client.update_task(task_id, status=status)
+                        updated += 1
+                        synced_tasks.append({"task_id": task_id, "action": "updated"})
+                    else:
+                        skipped += 1
+                else:
+                    # Create new task
+                    body = f"[Session: {session_id}] {content}"
+                    client.insert_task(
+                        task_id=task_id,
+                        name=content[:100],  # Truncate long names
+                        status=status,
+                        phase="SESSION",
+                        body=body
+                    )
+                    created += 1
+                    synced_tasks.append({"task_id": task_id, "action": "created"})
+
+            return format_mcp_result({
+                "session_id": session_id,
+                "summary": {"created": created, "updated": updated, "skipped": skipped},
+                "tasks": synced_tasks,
+                "message": f"Synced {created + updated} tasks to TypeDB"
+            })
+        finally:
+            client.close()

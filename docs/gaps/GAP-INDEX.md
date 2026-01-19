@@ -142,10 +142,10 @@
 
 | Subtask | Status | Description | Test |
 |---------|--------|-------------|------|
-| MCP-002-A | TODO | Sync TodoWrite with TypeDB task creation | test_todo_typedb_sync |
+| MCP-002-A | DONE | Sync TodoWrite with TypeDB task creation | session_sync_todos in tasks_crud.py:252 |
 | MCP-002-B | TODO | Auto-mark tasks DONE when completed | test_task_completion_sync |
-| MCP-002-C | TODO | Link tasks to git commits automatically | test_task_commit_link |
-| MCP-002-D | TODO | Query backlog gaps via MCP | test_backlog_query |
+| MCP-002-C | DONE | Link tasks to git commits automatically | task_link_commit in tasks_linking.py:102 |
+| MCP-002-D | DONE | Query backlog gaps via MCP | backlog_get in gaps.py:23 |
 
 ### Subtasks for GAP-MCP-003 (rest-api) - RESOLVED 2026-01-18
 

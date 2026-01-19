@@ -342,3 +342,39 @@ def register_rule_detail_handlers(ctrl: Any, state: Any) -> None:
         """Load implementing tasks when rule detail view is opened."""
         if show_rule_detail and state.selected_rule:
             load_rule_implementing_tasks()
+
+    # Also trigger when selected_rule changes (handles state sync timing)
+    @state.change("selected_rule")
+    def on_selected_rule_change(selected_rule, **kwargs) -> None:
+        """Load implementing tasks when a rule is selected."""
+        if state.show_rule_detail and selected_rule:
+            load_rule_implementing_tasks()
+
+    # =========================================================================
+    # AUDIT FILTER REACTIVE HANDLERS (UI-AUDIT-004)
+    # Per GAP-UI-AUDIT-2026-01-18: Make audit trail filterable by entity
+    # =========================================================================
+
+    @state.change("audit_filter_entity_type")
+    def on_audit_filter_entity_type_change(audit_filter_entity_type, **kwargs):
+        """Reload audit trail when entity type filter changes."""
+        if state.active_view == "audit":
+            ctrl.trigger("load_audit_trail")
+
+    @state.change("audit_filter_action_type")
+    def on_audit_filter_action_type_change(audit_filter_action_type, **kwargs):
+        """Reload audit trail when action type filter changes."""
+        if state.active_view == "audit":
+            ctrl.trigger("load_audit_trail")
+
+    @state.change("audit_filter_entity_id")
+    def on_audit_filter_entity_id_change(audit_filter_entity_id, **kwargs):
+        """Reload audit trail when entity ID filter changes."""
+        if state.active_view == "audit":
+            ctrl.trigger("load_audit_trail")
+
+    @state.change("audit_filter_correlation_id")
+    def on_audit_filter_correlation_id_change(audit_filter_correlation_id, **kwargs):
+        """Reload audit trail when correlation ID filter changes."""
+        if state.active_view == "audit":
+            ctrl.trigger("load_audit_trail")
