@@ -1,6 +1,5 @@
 """Task Handoff MCP Tools. Per AGENT-WORKSPACES.md Phase 4, RULE-011."""
 
-import json
 import re
 from typing import Optional
 from pathlib import Path
@@ -12,6 +11,7 @@ from governance.orchestrator.handoff import (
     get_pending_handoffs,
     HandoffStatus,
 )
+from governance.mcp_tools.common import format_mcp_result
 
 
 def register_handoff_tools(mcp) -> None:
@@ -49,15 +49,15 @@ def register_handoff_tools(mcp) -> None:
             )
 
             filepath = write_handoff_evidence(handoff)
-            return json.dumps({
+            return format_mcp_result({
                 "status": "created",
                 "handoff": handoff.to_dict(),
                 "evidence_file": str(filepath),
                 "message": f"Handoff created for {to_agent} agent"
-            }, default=str, indent=2)
+            })
 
         except Exception as e:
-            return json.dumps({"error": str(e)})
+            return format_mcp_result({"error": str(e)})
 
     @mcp.tool()
     def handoffs_pending(for_agent: Optional[str] = None) -> str:
@@ -65,14 +65,14 @@ def register_handoff_tools(mcp) -> None:
         try:
             handoffs = get_pending_handoffs(for_agent=for_agent)
 
-            return json.dumps({
+            return format_mcp_result({
                 "count": len(handoffs),
                 "handoffs": [h.to_dict() for h in handoffs],
                 "filter": {"for_agent": for_agent}
-            }, default=str, indent=2)
+            })
 
         except Exception as e:
-            return json.dumps({"error": str(e)})
+            return format_mcp_result({"error": str(e)})
 
     @mcp.tool()
     def handoff_complete(task_id: str, from_agent: str, to_agent: str,
@@ -84,25 +84,25 @@ def register_handoff_tools(mcp) -> None:
             filepath = evidence_dir / filename
 
             if not filepath.exists():
-                return json.dumps({"error": f"Handoff not found: {filename}"})
+                return format_mcp_result({"error": f"Handoff not found: {filename}"})
 
             handoff = read_handoff_evidence(filepath)
             if not handoff:
-                return json.dumps({"error": "Failed to parse handoff file"})
+                return format_mcp_result({"error": "Failed to parse handoff file"})
 
             handoff.status = HandoffStatus.COMPLETED.value
             if completion_notes:
                 handoff.evidence_gathered.append(f"Completion: {completion_notes}")
             write_handoff_evidence(handoff, evidence_dir)
 
-            return json.dumps({
+            return format_mcp_result({
                 "status": "completed",
                 "task_id": task_id,
                 "message": f"Handoff marked as completed by {to_agent} agent"
-            }, indent=2)
+            })
 
         except Exception as e:
-            return json.dumps({"error": str(e)})
+            return format_mcp_result({"error": str(e)})
 
     @mcp.tool()
     def handoff_get(task_id: str, from_agent: str, to_agent: str) -> str:
@@ -113,19 +113,19 @@ def register_handoff_tools(mcp) -> None:
             filepath = evidence_dir / filename
 
             if not filepath.exists():
-                return json.dumps({"error": f"Handoff not found: {filename}"})
+                return format_mcp_result({"error": f"Handoff not found: {filename}"})
 
             handoff = read_handoff_evidence(filepath)
             if not handoff:
-                return json.dumps({"error": "Failed to parse handoff file"})
+                return format_mcp_result({"error": "Failed to parse handoff file"})
 
-            return json.dumps({
+            return format_mcp_result({
                 "handoff": handoff.to_dict(),
                 "evidence_file": str(filepath)
-            }, default=str, indent=2)
+            })
 
         except Exception as e:
-            return json.dumps({"error": str(e)})
+            return format_mcp_result({"error": str(e)})
 
     @mcp.tool()
     def handoff_route(task_id: str) -> str:
@@ -133,28 +133,28 @@ def register_handoff_tools(mcp) -> None:
         try:
             task_upper = task_id.upper()
             if task_upper.startswith("RD-"):
-                return json.dumps({
+                return format_mcp_result({
                     "task_id": task_id,
                     "recommended_agent": "RESEARCH",
                     "reason": "R&D tasks require exploration and analysis"
-                }, indent=2)
+                })
 
             if task_upper.startswith("GAP-UI"):
-                return json.dumps({"task_id": task_id, "recommended_agent": "CODING",
-                                   "reason": "UI gaps typically require code implementation"}, indent=2)
+                return format_mcp_result({"task_id": task_id, "recommended_agent": "CODING",
+                                   "reason": "UI gaps typically require code implementation"})
             if task_upper.startswith("GAP-MCP"):
-                return json.dumps({"task_id": task_id, "recommended_agent": "CODING",
-                                   "reason": "MCP gaps require tool implementation"}, indent=2)
+                return format_mcp_result({"task_id": task_id, "recommended_agent": "CODING",
+                                   "reason": "MCP gaps require tool implementation"})
             if task_upper.startswith("GAP-DATA"):
-                return json.dumps({"task_id": task_id, "recommended_agent": "CURATOR",
-                                   "reason": "Data gaps require validation and governance"}, indent=2)
+                return format_mcp_result({"task_id": task_id, "recommended_agent": "CURATOR",
+                                   "reason": "Data gaps require validation and governance"})
             if task_upper.startswith("P"):
                 match = re.match(r"P(\d+)", task_upper)
                 if match and int(match.group(1)) >= 12:
-                    return json.dumps({"task_id": task_id, "recommended_agent": "CURATOR",
-                                       "reason": "Orchestration phase requires governance oversight"}, indent=2)
-            return json.dumps({"task_id": task_id, "recommended_agent": "RESEARCH",
-                               "reason": "Default: Start with research to gather context"}, indent=2)
+                    return format_mcp_result({"task_id": task_id, "recommended_agent": "CURATOR",
+                                       "reason": "Orchestration phase requires governance oversight"})
+            return format_mcp_result({"task_id": task_id, "recommended_agent": "RESEARCH",
+                               "reason": "Default: Start with research to gather context"})
 
         except Exception as e:
-            return json.dumps({"error": str(e)})
+            return format_mcp_result({"error": str(e)})

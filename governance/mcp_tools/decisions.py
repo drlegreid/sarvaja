@@ -12,7 +12,7 @@ import json
 import os
 from datetime import datetime
 
-from governance.mcp_tools.common import (
+from governance.mcp_tools.common import (, format_mcp_result
     get_typedb_client,
     TYPEDB_HOST,
     TYPEDB_PORT,
@@ -42,10 +42,10 @@ def register_decision_tools(mcp) -> None:
 
         try:
             if not client.connect():
-                return json.dumps({"error": "Failed to connect to TypeDB"})
+                return format_mcp_result({"error": "Failed to connect to TypeDB"})
 
             impacts = client.get_decision_impacts(decision_id)
-            return json.dumps(impacts, indent=2)
+            return format_mcp_result(impacts)
 
         finally:
             client.close()
@@ -135,7 +135,7 @@ def register_decision_tools(mcp) -> None:
         # Determine overall status
         if failed_services:
             # GAP-MCP-002: Return action_required for Claude Code
-            return json.dumps({
+            return format_mcp_result({
                 "status": "unhealthy",
                 "error": "DEPENDENCY_FAILURE",
                 "action_required": "START_SERVICES",
@@ -143,7 +143,7 @@ def register_decision_tools(mcp) -> None:
                 "recovery_hint": f"docker compose --profile dev up -d {' '.join(failed_services)}",
                 "details": service_status,
                 "timestamp": datetime.now().isoformat()
-            }, indent=2)
+            })
 
         # All healthy - get statistics
         stats = {}
@@ -181,7 +181,7 @@ def register_decision_tools(mcp) -> None:
             if entropy_alerts:
                 result["entropy_alerts"] = entropy_alerts
 
-        return json.dumps(result, indent=2)
+        return format_mcp_result(result)
 
     # =========================================================================
     # PHASE 1: Domain-Based Aliases (RD-MCP-TOOL-NAMING)

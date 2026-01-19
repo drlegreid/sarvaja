@@ -11,10 +11,9 @@ Created: 2026-01-03
 Refactored: 2026-01-19 - Removed deprecated functions, inlined aliases
 """
 
-import json
 from dataclasses import asdict
 
-from governance.mcp_tools.common import get_typedb_client
+from governance.mcp_tools.common import get_typedb_client, format_mcp_result
 
 
 def register_rule_archive_tools(mcp) -> None:
@@ -37,11 +36,11 @@ def register_rule_archive_tools(mcp) -> None:
 
         try:
             if not client.connect():
-                return json.dumps({"error": "Failed to connect to TypeDB"})
+                return format_mcp_result({"error": "Failed to connect to TypeDB"})
 
             archives = client.get_archived_rules()
 
-            return json.dumps({
+            return format_mcp_result({
                 "archives": [
                     {
                         "rule_id": a.get("rule", {}).get("id"),
@@ -54,7 +53,7 @@ def register_rule_archive_tools(mcp) -> None:
                     for a in archives
                 ],
                 "count": len(archives)
-            }, indent=2)
+            })
 
         finally:
             client.close()
@@ -75,14 +74,14 @@ def register_rule_archive_tools(mcp) -> None:
 
         try:
             if not client.connect():
-                return json.dumps({"error": "Failed to connect to TypeDB"})
+                return format_mcp_result({"error": "Failed to connect to TypeDB"})
 
             archive = client.get_archived_rule(rule_id)
 
             if archive:
-                return json.dumps(archive, indent=2, default=str)
+                return format_mcp_result(archive)
             else:
-                return json.dumps({"error": f"No archive found for rule {rule_id}"})
+                return format_mcp_result({"error": f"No archive found for rule {rule_id}"})
 
         finally:
             client.close()
@@ -104,21 +103,21 @@ def register_rule_archive_tools(mcp) -> None:
 
         try:
             if not client.connect():
-                return json.dumps({"error": "Failed to connect to TypeDB"})
+                return format_mcp_result({"error": "Failed to connect to TypeDB"})
 
             rule = client.restore_rule(rule_id)
 
             if rule:
-                return json.dumps({
+                return format_mcp_result({
                     "success": True,
                     "message": f"Rule {rule_id} restored from archive (status: DRAFT)",
                     "rule": asdict(rule)
-                }, default=str, indent=2)
+                })
             else:
-                return json.dumps({"error": f"No archive found for rule {rule_id}"})
+                return format_mcp_result({"error": f"No archive found for rule {rule_id}"})
 
         except ValueError as e:
-            return json.dumps({"error": str(e)})
+            return format_mcp_result({"error": str(e)})
 
         finally:
             client.close()

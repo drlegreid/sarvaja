@@ -1,10 +1,9 @@
 """Agents MCP Tools - Agent CRUD. Per RULE-011/012, DECISION-003."""
 
-import json
 from typing import Optional
 from dataclasses import asdict
 
-from governance.mcp_tools.common import get_typedb_client
+from governance.mcp_tools.common import get_typedb_client, format_mcp_result
 
 def register_agent_tools(mcp) -> None:
     """Register agent-related MCP tools."""
@@ -16,7 +15,7 @@ def register_agent_tools(mcp) -> None:
         client = get_typedb_client()
         try:
             if not client.connect():
-                return json.dumps({"error": "Failed to connect to TypeDB"})
+                return format_mcp_result({"error": "Failed to connect to TypeDB"})
 
             success = client.insert_agent(
                 agent_id=agent_id,
@@ -26,15 +25,15 @@ def register_agent_tools(mcp) -> None:
             )
 
             if success:
-                return json.dumps({
+                return format_mcp_result({
                     "agent_id": agent_id,
                     "name": name,
                     "agent_type": agent_type,
                     "trust_score": trust_score,
                     "message": f"Agent {agent_id} created successfully"
-                }, indent=2)
+                })
             else:
-                return json.dumps({"error": f"Failed to create agent {agent_id}"})
+                return format_mcp_result({"error": f"Failed to create agent {agent_id}"})
         finally:
             client.close()
 
@@ -44,13 +43,13 @@ def register_agent_tools(mcp) -> None:
         client = get_typedb_client()
         try:
             if not client.connect():
-                return json.dumps({"error": "Failed to connect to TypeDB"})
+                return format_mcp_result({"error": "Failed to connect to TypeDB"})
 
             agent = client.get_agent(agent_id)
             if agent:
-                return json.dumps(asdict(agent), indent=2, default=str)
+                return format_mcp_result(asdict(agent))
             else:
-                return json.dumps({"error": f"Agent {agent_id} not found"})
+                return format_mcp_result({"error": f"Agent {agent_id} not found"})
         finally:
             client.close()
 
@@ -60,14 +59,14 @@ def register_agent_tools(mcp) -> None:
         client = get_typedb_client()
         try:
             if not client.connect():
-                return json.dumps({"error": "Failed to connect to TypeDB"})
+                return format_mcp_result({"error": "Failed to connect to TypeDB"})
 
             agents = client.get_all_agents()
-            return json.dumps({
+            return format_mcp_result({
                 "agents": [asdict(a) for a in agents],
                 "count": len(agents),
                 "source": "typedb"
-            }, indent=2, default=str)
+            })
         finally:
             client.close()
 
@@ -75,12 +74,12 @@ def register_agent_tools(mcp) -> None:
     def agent_trust_update(agent_id: str, trust_score: float) -> str:
         """Update agent trust score."""
         if not 0.0 <= trust_score <= 1.0:
-            return json.dumps({"error": "Trust score must be between 0.0 and 1.0"})
+            return format_mcp_result({"error": "Trust score must be between 0.0 and 1.0"})
 
         client = get_typedb_client()
         try:
             if not client.connect():
-                return json.dumps({"error": "Failed to connect to TypeDB"})
+                return format_mcp_result({"error": "Failed to connect to TypeDB"})
 
             success = client.update_agent_trust(
                 agent_id=agent_id,
@@ -92,14 +91,14 @@ def register_agent_tools(mcp) -> None:
                 if agent:
                     result = asdict(agent)
                     result["message"] = f"Agent {agent_id} trust updated to {trust_score}"
-                    return json.dumps(result, indent=2, default=str)
-                return json.dumps({
+                    return format_mcp_result(result)
+                return format_mcp_result({
                     "agent_id": agent_id,
                     "trust_score": trust_score,
                     "message": f"Agent {agent_id} trust updated"
-                }, indent=2)
+                })
             else:
-                return json.dumps({"error": f"Failed to update agent {agent_id}"})
+                return format_mcp_result({"error": f"Failed to update agent {agent_id}"})
         finally:
             client.close()
 
@@ -111,7 +110,7 @@ def register_agent_tools(mcp) -> None:
         client = get_typedb_client()
         try:
             if not client.connect():
-                return json.dumps({"error": "Failed to connect to TypeDB"})
+                return format_mcp_result({"error": "Failed to connect to TypeDB"})
 
             agents = client.get_all_agents()
 
@@ -157,7 +156,7 @@ def register_agent_tools(mcp) -> None:
                 }
             }
 
-            return json.dumps(dashboard, indent=2, default=str)
+            return format_mcp_result(dashboard)
         finally:
             client.close()
 
@@ -167,7 +166,7 @@ def register_agent_tools(mcp) -> None:
         client = get_typedb_client()
         try:
             if not client.connect():
-                return json.dumps({"error": "Failed to connect to TypeDB"})
+                return format_mcp_result({"error": "Failed to connect to TypeDB"})
 
             # Get tasks linked to agents
             query = """
@@ -195,18 +194,18 @@ def register_agent_tools(mcp) -> None:
                     "agent_id": r.get("aid", {}).get("value", "")
                 })
 
-            return json.dumps({
+            return format_mcp_result({
                 "activities": activities,
                 "count": len(activities),
                 "filter": agent_id or "all"
-            }, indent=2)
+            })
         except Exception:
             # If relation doesn't exist, return empty
-            return json.dumps({
+            return format_mcp_result({
                 "activities": [],
                 "count": 0,
                 "filter": agent_id or "all",
                 "note": "No task-execution relations found in TypeDB"
-            }, indent=2)
+            })
         finally:
             client.close()

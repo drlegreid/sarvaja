@@ -1,4 +1,5 @@
 """
+from governance.mcp_tools.common import format_mcp_result
 DSM Tracker MCP Tools
 =====================
 Deep Sleep Protocol operations (RULE-012).
@@ -38,21 +39,21 @@ def register_dsm_tools(mcp) -> None:
             JSON object with cycle ID and current phase
         """
         if not DSM_TRACKER_AVAILABLE:
-            return json.dumps({"error": "DSMTracker not available"})
+            return format_mcp_result({"error": "DSMTracker not available"})
 
         tracker = get_tracker()
 
         try:
             cycle = tracker.start_cycle(batch_id)
-            return json.dumps({
+            return format_mcp_result({
                 "cycle_id": cycle.cycle_id,
                 "batch_id": cycle.batch_id,
                 "current_phase": cycle.current_phase,
                 "started_at": cycle.start_time,
                 "message": f"DSM cycle started: {cycle.cycle_id}"
-            }, indent=2)
+            })
         except ValueError as e:
-            return json.dumps({"error": str(e)})
+            return format_mcp_result({"error": str(e)})
 
     @mcp.tool()
     def dsm_advance() -> str:
@@ -65,19 +66,19 @@ def register_dsm_tools(mcp) -> None:
             JSON object with new phase and required MCPs
         """
         if not DSM_TRACKER_AVAILABLE:
-            return json.dumps({"error": "DSMTracker not available"})
+            return format_mcp_result({"error": "DSMTracker not available"})
 
         tracker = get_tracker()
 
         try:
             new_phase = tracker.advance_phase()
-            return json.dumps({
+            return format_mcp_result({
                 "new_phase": new_phase.value,
                 "required_mcps": new_phase.required_mcps,
                 "message": f"Advanced to phase: {new_phase.value}"
-            }, indent=2)
+            })
         except ValueError as e:
-            return json.dumps({"error": str(e)})
+            return format_mcp_result({"error": str(e)})
 
     @mcp.tool()
     def dsm_checkpoint(
@@ -97,7 +98,7 @@ def register_dsm_tools(mcp) -> None:
             JSON object with checkpoint details
         """
         if not DSM_TRACKER_AVAILABLE:
-            return json.dumps({"error": "DSMTracker not available"})
+            return format_mcp_result({"error": "DSMTracker not available"})
 
         tracker = get_tracker()
 
@@ -111,7 +112,7 @@ def register_dsm_tools(mcp) -> None:
                 try:
                     parsed_metrics = json.loads(metrics)
                 except json.JSONDecodeError:
-                    return json.dumps({"error": f"Invalid metrics JSON: {metrics}"})
+                    return format_mcp_result({"error": f"Invalid metrics JSON: {metrics}"})
 
         try:
             # Convert single evidence string to list (GAP-TDD-007 fix)
@@ -121,16 +122,16 @@ def register_dsm_tools(mcp) -> None:
                 metrics=parsed_metrics,
                 evidence=evidence_list
             )
-            return json.dumps({
+            return format_mcp_result({
                 "phase": checkpoint.phase,
                 "description": checkpoint.description,
                 "timestamp": checkpoint.timestamp,
                 "metrics": checkpoint.metrics,
                 "evidence": checkpoint.evidence,
                 "message": "Checkpoint recorded"
-            }, indent=2)
+            })
         except ValueError as e:
-            return json.dumps({"error": str(e)})
+            return format_mcp_result({"error": str(e)})
 
     @mcp.tool()
     def dsm_finding(
@@ -152,7 +153,7 @@ def register_dsm_tools(mcp) -> None:
             JSON object with finding ID and details
         """
         if not DSM_TRACKER_AVAILABLE:
-            return json.dumps({"error": "DSMTracker not available"})
+            return format_mcp_result({"error": "DSMTracker not available"})
 
         tracker = get_tracker()
 
@@ -168,16 +169,16 @@ def register_dsm_tools(mcp) -> None:
                 severity=severity,
                 related_rules=rules
             )
-            return json.dumps({
+            return format_mcp_result({
                 "finding_id": finding["id"],
                 "finding_type": finding_type,
                 "description": description,
                 "severity": severity,
                 "related_rules": rules or [],
                 "message": f"Finding recorded: {finding['id']}"
-            }, indent=2)
+            })
         except ValueError as e:
-            return json.dumps({"error": str(e)})
+            return format_mcp_result({"error": str(e)})
 
     @mcp.tool()
     def dsm_status() -> str:
@@ -188,12 +189,12 @@ def register_dsm_tools(mcp) -> None:
             JSON object with current phase, checkpoints, findings, and metrics
         """
         if not DSM_TRACKER_AVAILABLE:
-            return json.dumps({"error": "DSMTracker not available"})
+            return format_mcp_result({"error": "DSMTracker not available"})
 
         tracker = get_tracker()
         status = tracker.get_status()
 
-        return json.dumps(status, indent=2)
+        return format_mcp_result(status)
 
     @mcp.tool()
     def dsm_complete() -> str:
@@ -204,20 +205,20 @@ def register_dsm_tools(mcp) -> None:
             JSON object with evidence path and cycle summary
         """
         if not DSM_TRACKER_AVAILABLE:
-            return json.dumps({"error": "DSMTracker not available"})
+            return format_mcp_result({"error": "DSMTracker not available"})
 
         tracker = get_tracker()
 
         try:
             evidence_path = tracker.complete_cycle()
-            return json.dumps({
+            return format_mcp_result({
                 "status": "completed",
                 "evidence_path": evidence_path,
                 "completed_cycles": len(tracker.completed_cycles),
                 "message": f"Cycle completed. Evidence: {evidence_path}"
-            }, indent=2)
+            })
         except ValueError as e:
-            return json.dumps({"error": str(e)})
+            return format_mcp_result({"error": str(e)})
 
     @mcp.tool()
     def dsm_metrics(metrics_json: Union[str, Dict[str, Any]]) -> str:
@@ -231,7 +232,7 @@ def register_dsm_tools(mcp) -> None:
             JSON object with updated metrics
         """
         if not DSM_TRACKER_AVAILABLE:
-            return json.dumps({"error": "DSMTracker not available"})
+            return format_mcp_result({"error": "DSMTracker not available"})
 
         tracker = get_tracker()
 
@@ -242,13 +243,13 @@ def register_dsm_tools(mcp) -> None:
             try:
                 metrics = json.loads(metrics_json)
             except json.JSONDecodeError:
-                return json.dumps({"error": f"Invalid metrics JSON: {metrics_json}"})
+                return format_mcp_result({"error": f"Invalid metrics JSON: {metrics_json}"})
 
         try:
             tracker.update_metrics(metrics)
-            return json.dumps({
+            return format_mcp_result({
                 "metrics": tracker.current_cycle.metrics,
                 "message": "Metrics updated"
-            }, indent=2)
+            })
         except ValueError as e:
-            return json.dumps({"error": str(e)})
+            return format_mcp_result({"error": str(e)})

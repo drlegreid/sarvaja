@@ -1,4 +1,5 @@
 """
+from governance.mcp_tools.common import format_mcp_result
 Session Linking MCP Tools
 =========================
 Entity linking operations for sessions.
@@ -40,12 +41,12 @@ def register_session_linking_tools(mcp) -> None:
             JSON array of tasks linked to the session
         """
         if not TYPEDB_AVAILABLE:
-            return json.dumps({"error": "TypeDB not available"})
+            return format_mcp_result({"error": "TypeDB not available"})
 
         try:
             client = TypeDBClient()
             if not client.connect():
-                return json.dumps({"error": "Could not connect to TypeDB"})
+                return format_mcp_result({"error": "Could not connect to TypeDB"})
 
             # Query tasks linked to session via completed-in relation
             # TypeDB 3.x: 'select' replaces 'get'
@@ -67,14 +68,14 @@ def register_session_linking_tools(mcp) -> None:
                     "status": r.get("status")
                 })
 
-            return json.dumps({
+            return format_mcp_result({
                 "session_id": session_id,
                 "tasks": tasks,
                 "count": len(tasks)
-            }, indent=2)
+            })
 
         except Exception as e:
-            return json.dumps({"error": str(e)})
+            return format_mcp_result({"error": str(e)})
 
     @mcp.tool()
     def session_link_rule(session_id: str, rule_id: str) -> str:
@@ -92,30 +93,30 @@ def register_session_linking_tools(mcp) -> None:
             JSON object with link status
         """
         if not TYPEDB_AVAILABLE:
-            return json.dumps({"error": "TypeDB not available"})
+            return format_mcp_result({"error": "TypeDB not available"})
 
         try:
             client = TypeDBClient()
             if not client.connect():
-                return json.dumps({"error": "Could not connect to TypeDB"})
+                return format_mcp_result({"error": "Could not connect to TypeDB"})
 
             success = client.link_rule_to_session(session_id, rule_id)
             client.close()
 
             if success:
-                return json.dumps({
+                return format_mcp_result({
                     "session_id": session_id,
                     "rule_id": rule_id,
                     "relation": "session-applied-rule",
                     "message": f"Successfully linked rule {rule_id} to session {session_id}"
-                }, indent=2)
+                })
             else:
-                return json.dumps({
+                return format_mcp_result({
                     "error": f"Failed to link rule {rule_id} to session {session_id}"
                 })
 
         except Exception as e:
-            return json.dumps({"error": str(e)})
+            return format_mcp_result({"error": str(e)})
 
     @mcp.tool()
     def session_link_decision(session_id: str, decision_id: str) -> str:
@@ -133,30 +134,30 @@ def register_session_linking_tools(mcp) -> None:
             JSON object with link status
         """
         if not TYPEDB_AVAILABLE:
-            return json.dumps({"error": "TypeDB not available"})
+            return format_mcp_result({"error": "TypeDB not available"})
 
         try:
             client = TypeDBClient()
             if not client.connect():
-                return json.dumps({"error": "Could not connect to TypeDB"})
+                return format_mcp_result({"error": "Could not connect to TypeDB"})
 
             success = client.link_decision_to_session(session_id, decision_id)
             client.close()
 
             if success:
-                return json.dumps({
+                return format_mcp_result({
                     "session_id": session_id,
                     "decision_id": decision_id,
                     "relation": "session-decision",
                     "message": f"Successfully linked decision {decision_id} to session {session_id}"
-                }, indent=2)
+                })
             else:
-                return json.dumps({
+                return format_mcp_result({
                     "error": f"Failed to link decision {decision_id} to session {session_id}"
                 })
 
         except Exception as e:
-            return json.dumps({"error": str(e)})
+            return format_mcp_result({"error": str(e)})
 
     @mcp.tool()
     def session_link_evidence(session_id: str, evidence_path: str) -> str:
@@ -174,27 +175,27 @@ def register_session_linking_tools(mcp) -> None:
             JSON object with link status
         """
         if not TYPEDB_AVAILABLE:
-            return json.dumps({"error": "TypeDB not available"})
+            return format_mcp_result({"error": "TypeDB not available"})
 
         try:
             client = TypeDBClient()
             if not client.connect():
-                return json.dumps({"error": "Could not connect to TypeDB"})
+                return format_mcp_result({"error": "Could not connect to TypeDB"})
 
             success = client.link_evidence_to_session(session_id, evidence_path)
             client.close()
 
             if success:
-                return json.dumps({
+                return format_mcp_result({
                     "session_id": session_id,
                     "evidence_path": evidence_path,
                     "relation": "has-evidence",
                     "message": f"Successfully linked evidence {evidence_path} to session {session_id}"
-                }, indent=2)
+                })
             else:
-                return json.dumps({
+                return format_mcp_result({
                     "error": f"Failed to link evidence {evidence_path} to session {session_id}"
                 })
 
         except Exception as e:
-            return json.dumps({"error": str(e)})
+            return format_mcp_result({"error": str(e)})

@@ -2,7 +2,7 @@
 
 import json
 
-from governance.mcp_tools.common import get_typedb_client
+from governance.mcp_tools.common import get_typedb_client, format_mcp_result
 
 
 def register_task_linking_tools(mcp) -> None:
@@ -14,19 +14,19 @@ def register_task_linking_tools(mcp) -> None:
         client = get_typedb_client()
         try:
             if not client.connect():
-                return json.dumps({"error": "Failed to connect to TypeDB"})
+                return format_mcp_result({"error": "Failed to connect to TypeDB"})
 
             success = client.link_task_to_session(task_id, session_id)
 
             if success:
-                return json.dumps({
+                return format_mcp_result({
                     "task_id": task_id,
                     "session_id": session_id,
                     "relation": "completed-in",
                     "message": f"Successfully linked task {task_id} to session {session_id}"
-                }, indent=2)
+                })
             else:
-                return json.dumps({
+                return format_mcp_result({
                     "error": f"Failed to link task {task_id} to session {session_id}"
                 })
         finally:
@@ -38,19 +38,19 @@ def register_task_linking_tools(mcp) -> None:
         client = get_typedb_client()
         try:
             if not client.connect():
-                return json.dumps({"error": "Failed to connect to TypeDB"})
+                return format_mcp_result({"error": "Failed to connect to TypeDB"})
 
             success = client.link_task_to_rule(task_id, rule_id)
 
             if success:
-                return json.dumps({
+                return format_mcp_result({
                     "task_id": task_id,
                     "rule_id": rule_id,
                     "relation": "implements-rule",
                     "message": f"Successfully linked task {task_id} to rule {rule_id}"
-                }, indent=2)
+                })
             else:
-                return json.dumps({
+                return format_mcp_result({
                     "error": f"Failed to link task {task_id} to rule {rule_id}"
                 })
         finally:
@@ -62,19 +62,19 @@ def register_task_linking_tools(mcp) -> None:
         client = get_typedb_client()
         try:
             if not client.connect():
-                return json.dumps({"error": "Failed to connect to TypeDB"})
+                return format_mcp_result({"error": "Failed to connect to TypeDB"})
 
             success = client.link_evidence_to_task(task_id, evidence_path)
 
             if success:
-                return json.dumps({
+                return format_mcp_result({
                     "task_id": task_id,
                     "evidence_path": evidence_path,
                     "relation": "evidence-supports",
                     "message": f"Successfully linked evidence {evidence_path} to task {task_id}"
-                }, indent=2)
+                })
             else:
-                return json.dumps({
+                return format_mcp_result({
                     "error": f"Failed to link evidence {evidence_path} to task {task_id}"
                 })
         finally:
@@ -86,15 +86,15 @@ def register_task_linking_tools(mcp) -> None:
         client = get_typedb_client()
         try:
             if not client.connect():
-                return json.dumps({"error": "Failed to connect to TypeDB"})
+                return format_mcp_result({"error": "Failed to connect to TypeDB"})
 
             evidence_files = client.get_task_evidence(task_id)
 
-            return json.dumps({
+            return format_mcp_result({
                 "task_id": task_id,
                 "evidence_files": evidence_files,
                 "count": len(evidence_files)
-            }, indent=2)
+            })
         finally:
             client.close()
 
@@ -104,19 +104,19 @@ def register_task_linking_tools(mcp) -> None:
         client = get_typedb_client()
         try:
             if not client.connect():
-                return json.dumps({"error": "Failed to connect to TypeDB"})
+                return format_mcp_result({"error": "Failed to connect to TypeDB"})
 
             success = client.link_task_to_commit(task_id, commit_sha, commit_message)
 
             if success:
-                return json.dumps({
+                return format_mcp_result({
                     "task_id": task_id,
                     "commit_sha": commit_sha,
                     "relation": "task-commit",
                     "message": f"Successfully linked task {task_id} to commit {commit_sha}"
-                }, indent=2)
+                })
             else:
-                return json.dumps({
+                return format_mcp_result({
                     "error": f"Failed to link task {task_id} to commit {commit_sha}"
                 })
         finally:
@@ -128,15 +128,15 @@ def register_task_linking_tools(mcp) -> None:
         client = get_typedb_client()
         try:
             if not client.connect():
-                return json.dumps({"error": "Failed to connect to TypeDB"})
+                return format_mcp_result({"error": "Failed to connect to TypeDB"})
 
             commits = client.get_task_commits(task_id)
 
-            return json.dumps({
+            return format_mcp_result({
                 "task_id": task_id,
                 "commits": commits,
                 "count": len(commits)
-            }, indent=2)
+            })
         finally:
             client.close()
 
@@ -147,7 +147,7 @@ def register_task_linking_tools(mcp) -> None:
         client = get_typedb_client()
         try:
             if not client.connect():
-                return json.dumps({"error": "Failed to connect to TypeDB"})
+                return format_mcp_result({"error": "Failed to connect to TypeDB"})
 
             success = client.update_task_details(
                 task_id=task_id,
@@ -158,16 +158,16 @@ def register_task_linking_tools(mcp) -> None:
             )
 
             if success:
-                return json.dumps({
+                return format_mcp_result({
                     "task_id": task_id,
                     "updated_sections": [
                         s for s in ["business", "design", "architecture", "test_section"]
                         if locals().get(s) is not None
                     ],
                     "message": f"Successfully updated details for task {task_id}"
-                }, indent=2)
+                })
             else:
-                return json.dumps({
+                return format_mcp_result({
                     "error": f"Failed to update details for task {task_id}"
                 })
         finally:
@@ -179,18 +179,18 @@ def register_task_linking_tools(mcp) -> None:
         client = get_typedb_client()
         try:
             if not client.connect():
-                return json.dumps({"error": "Failed to connect to TypeDB"})
+                return format_mcp_result({"error": "Failed to connect to TypeDB"})
 
             details = client.get_task_details(task_id)
 
             if details is None:
-                return json.dumps({
+                return format_mcp_result({
                     "error": f"Task {task_id} not found"
                 })
 
-            return json.dumps({
+            return format_mcp_result({
                 "task_id": task_id,
                 **details
-            }, indent=2)
+            })
         finally:
             client.close()

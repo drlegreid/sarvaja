@@ -1,4 +1,5 @@
 """
+from governance.mcp_tools.common import format_mcp_result
 Session Intent MCP Tools
 ========================
 Session intent and outcome capture operations.
@@ -57,12 +58,12 @@ def register_session_intent_tools(mcp) -> None:
             JSON object with intent confirmation
         """
         if not SESSION_COLLECTOR_AVAILABLE:
-            return json.dumps({"error": "SessionCollector not available"})
+            return format_mcp_result({"error": "SessionCollector not available"})
 
         # Get or create session
         sessions = list_active_sessions()
         if not sessions and not topic:
-            return json.dumps({"error": "No active session. Call session_start first."})
+            return format_mcp_result({"error": "No active session. Call session_start first."})
 
         collector = get_or_create_session(topic or sessions[-1].split("-")[-1].lower())
 
@@ -79,7 +80,7 @@ def register_session_intent_tools(mcp) -> None:
             initial_prompt=initial_prompt
         )
 
-        return json.dumps({
+        return format_mcp_result({
             "session_id": collector.session_id,
             "goal": goal,
             "source": source,
@@ -88,7 +89,7 @@ def register_session_intent_tools(mcp) -> None:
             "initial_prompt": initial_prompt[:200] + "..." if initial_prompt and len(initial_prompt) > 200 else initial_prompt,
             "captured_at": intent.captured_at,
             "message": f"Intent captured for {collector.session_id}"
-        }, indent=2)
+        })
 
     @mcp.tool()
     def session_capture_outcome(
@@ -117,12 +118,12 @@ def register_session_intent_tools(mcp) -> None:
             JSON object with outcome confirmation
         """
         if not SESSION_COLLECTOR_AVAILABLE:
-            return json.dumps({"error": "SessionCollector not available"})
+            return format_mcp_result({"error": "SessionCollector not available"})
 
         # Get or create session
         sessions = list_active_sessions()
         if not sessions and not topic:
-            return json.dumps({"error": "No active session. Call session_start first."})
+            return format_mcp_result({"error": "No active session. Call session_start first."})
 
         collector = get_or_create_session(topic or sessions[-1].split("-")[-1].lower())
 
@@ -168,7 +169,7 @@ def register_session_intent_tools(mcp) -> None:
                 "planned_not_done": list(planned - achieved - deferred)
             }
 
-        return json.dumps({
+        return format_mcp_result({
             "session_id": collector.session_id,
             "status": status,
             "achieved_tasks": achieved_list,
@@ -178,4 +179,4 @@ def register_session_intent_tools(mcp) -> None:
             "captured_at": outcome.captured_at,
             "reconciliation": reconciliation,
             "message": f"Outcome captured for {collector.session_id}"
-        }, indent=2)
+        })

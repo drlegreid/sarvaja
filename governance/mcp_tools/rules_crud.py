@@ -1,9 +1,8 @@
 """Rule CRUD MCP Tools. Per RULE-012: DSP Semantic Code Structure."""
-import json
 from typing import Optional
 from dataclasses import asdict
 
-from governance.mcp_tools.common import get_typedb_client
+from governance.mcp_tools.common import get_typedb_client, format_mcp_result
 
 
 def register_rule_crud_tools(mcp) -> None:
@@ -31,7 +30,7 @@ def register_rule_crud_tools(mcp) -> None:
 
         try:
             if not client.connect():
-                return json.dumps({"error": "Failed to connect to TypeDB"})
+                return format_mcp_result({"error": "Failed to connect to TypeDB"})
 
             rule = client.create_rule(
                 rule_id=rule_id,
@@ -44,16 +43,16 @@ def register_rule_crud_tools(mcp) -> None:
             )
 
             if rule:
-                return json.dumps({
+                return format_mcp_result({
                     "success": True,
                     "message": f"Rule {rule_id} created successfully",
                     "rule": asdict(rule)
-                }, default=str, indent=2)
+                })
             else:
-                return json.dumps({"error": f"Failed to create rule {rule_id}"})
+                return format_mcp_result({"error": f"Failed to create rule {rule_id}"})
 
         except ValueError as e:
-            return json.dumps({"error": str(e)})
+            return format_mcp_result({"error": str(e)})
 
         finally:
             client.close()
@@ -83,7 +82,7 @@ def register_rule_crud_tools(mcp) -> None:
 
         try:
             if not client.connect():
-                return json.dumps({"error": "Failed to connect to TypeDB"})
+                return format_mcp_result({"error": "Failed to connect to TypeDB"})
 
             rule = client.update_rule(
                 rule_id=rule_id,
@@ -97,16 +96,16 @@ def register_rule_crud_tools(mcp) -> None:
             )
 
             if rule:
-                return json.dumps({
+                return format_mcp_result({
                     "success": True,
                     "message": f"Rule {rule_id} updated successfully",
                     "rule": asdict(rule)
-                }, default=str, indent=2)
+                })
             else:
-                return json.dumps({"error": f"Failed to update rule {rule_id}"})
+                return format_mcp_result({"error": f"Failed to update rule {rule_id}"})
 
         except ValueError as e:
-            return json.dumps({"error": str(e)})
+            return format_mcp_result({"error": str(e)})
 
         finally:
             client.close()
@@ -129,7 +128,7 @@ def register_rule_crud_tools(mcp) -> None:
 
         try:
             if not client.connect():
-                return json.dumps({"error": "Failed to connect to TypeDB"})
+                return format_mcp_result({"error": "Failed to connect to TypeDB"})
 
             rule = client.deprecate_rule(rule_id, reason=reason)
 
@@ -142,12 +141,12 @@ def register_rule_crud_tools(mcp) -> None:
                 }
                 if reason:
                     result["reason"] = reason
-                return json.dumps(result, indent=2)
+                return format_mcp_result(result)
             else:
-                return json.dumps({"error": f"Rule {rule_id} not found"})
+                return format_mcp_result({"error": f"Rule {rule_id} not found"})
 
         except ValueError as e:
-            return json.dumps({"error": str(e)})
+            return format_mcp_result({"error": str(e)})
 
         finally:
             client.close()
@@ -167,28 +166,28 @@ def register_rule_crud_tools(mcp) -> None:
             JSON with deletion status or error
         """
         if not confirm:
-            return json.dumps({
+            return format_mcp_result({
                 "error": "Deletion requires explicit confirmation. Set confirm=True to proceed.",
                 "warning": "This is a hard delete. Consider using rule_deprecate instead."
-            }, indent=2)
+            })
 
         client = get_typedb_client()
 
         try:
             if not client.connect():
-                return json.dumps({"error": "Failed to connect to TypeDB"})
+                return format_mcp_result({"error": "Failed to connect to TypeDB"})
 
             deleted = client.delete_rule(rule_id)
 
             if deleted:
-                return json.dumps({
+                return format_mcp_result({
                     "success": True,
                     "message": f"Rule {rule_id} permanently deleted (archived for recovery)",
                     "rule_id": rule_id,
                     "archived": True
-                }, indent=2)
+                })
             else:
-                return json.dumps({"error": f"Rule {rule_id} not found"})
+                return format_mcp_result({"error": f"Rule {rule_id} not found"})
 
         finally:
             client.close()

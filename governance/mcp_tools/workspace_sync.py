@@ -197,11 +197,11 @@ def register_workspace_sync_tools(mcp) -> None:
                 except Exception:
                     pass
 
-            return json.dumps(result, indent=2)
+            return format_mcp_result(result)
 
         except Exception as e:
             logger.error(f"governance_sync_status failed: {e}")
-            return json.dumps({"error": str(e)})
+            return format_mcp_result({"error": str(e)})
 
     @mcp.tool()
     def workspace_sync_status() -> str:
@@ -230,7 +230,7 @@ def register_workspace_sync_tools(mcp) -> None:
         try:
             from datetime import datetime
             from governance.utils.gap_parser import GapParser
-            from governance.mcp_tools.common import get_typedb_client
+            from governance.mcp_tools.common import get_typedb_client, format_mcp_result
 
             parser = GapParser()
             all_gaps = parser.parse()  # Returns both open and resolved gaps
@@ -248,7 +248,7 @@ def register_workspace_sync_tools(mcp) -> None:
             # Get existing tasks from TypeDB
             client = get_typedb_client()
             if not client.connect():
-                return json.dumps({"error": "Failed to connect to TypeDB"})
+                return format_mcp_result({"error": "Failed to connect to TypeDB"})
 
             try:
                 existing_tasks = {t.id: t for t in client.get_all_tasks()}
@@ -326,13 +326,13 @@ def register_workspace_sync_tools(mcp) -> None:
                     "errors": len(result["errors"]),
                 }
 
-                return json.dumps(result, indent=2)
+                return format_mcp_result(result)
 
             finally:
                 client.close()
 
         except Exception as e:
             logger.error(f"workspace_sync_gaps_to_typedb failed: {e}")
-            return json.dumps({"error": str(e)})
+            return format_mcp_result({"error": str(e)})
 
     logger.info("Registered workspace sync status tools (3 tools)")

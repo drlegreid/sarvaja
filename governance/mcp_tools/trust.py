@@ -7,13 +7,13 @@ Per RULE-012: DSP Semantic Code Structure
 Per FP + Digital Twin Paradigm: Trust entity module
 """
 
-import json
 from dataclasses import asdict
 
 from governance.mcp_tools.common import (
     TrustScore,
     calculate_vote_weight,
     get_typedb_client,
+    format_mcp_result,
 )
 
 
@@ -37,7 +37,7 @@ def register_trust_tools(mcp) -> None:
 
         try:
             if not client.connect():
-                return json.dumps({"error": "Failed to connect to TypeDB"})
+                return format_mcp_result({"error": "Failed to connect to TypeDB"})
 
             # Query agent data from TypeDB
             query = f'''
@@ -54,7 +54,7 @@ def register_trust_tools(mcp) -> None:
             results = client.execute_query(query)
 
             if not results:
-                return json.dumps({"error": f"Agent {agent_id} not found"})
+                return format_mcp_result({"error": f"Agent {agent_id} not found"})
 
             result = results[0]
             trust_score = result.get('trust', 0.0)
@@ -69,7 +69,7 @@ def register_trust_tools(mcp) -> None:
                 vote_weight=calculate_vote_weight(trust_score)
             )
 
-            return json.dumps(asdict(score), indent=2, default=str)
+            return format_mcp_result(asdict(score))
 
         finally:
             client.close()

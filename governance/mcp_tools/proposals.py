@@ -1,4 +1,5 @@
 """Proposal MCP Tools. Per RULE-011, RULE-012: Proposal, voting, dispute operations."""
+from governance.mcp_tools.common import format_mcp_result
 
 import json
 from datetime import datetime
@@ -31,13 +32,13 @@ def register_proposal_tools(mcp) -> None:
         """
         # Validate inputs
         if action not in ["create", "modify", "deprecate"]:
-            return json.dumps({"error": f"Invalid action: {action}"})
+            return format_mcp_result({"error": f"Invalid action: {action}"})
 
         if action in ["modify", "deprecate"] and not rule_id:
-            return json.dumps({"error": f"rule_id required for {action} action"})
+            return format_mcp_result({"error": f"rule_id required for {action} action"})
 
         if action in ["create", "modify"] and not directive:
-            return json.dumps({"error": f"directive required for {action} action"})
+            return format_mcp_result({"error": f"directive required for {action} action"})
 
         # Generate proposal ID
         proposal_id = f"PROPOSAL-{datetime.now().strftime('%Y%m%d%H%M%S')}"
@@ -55,7 +56,7 @@ def register_proposal_tools(mcp) -> None:
             "message": "Proposal created. Awaiting votes from agents."
         }
 
-        return json.dumps(proposal, indent=2)
+        return format_mcp_result(proposal)
 
     @mcp.tool()
     def proposal_vote(
@@ -79,7 +80,7 @@ def register_proposal_tools(mcp) -> None:
             JSON with vote confirmation and weighted score
         """
         if vote not in ["approve", "reject", "abstain"]:
-            return json.dumps({"error": f"Invalid vote: {vote}"})
+            return format_mcp_result({"error": f"Invalid vote: {vote}"})
 
         # Import here to avoid circular dependency
         from governance.mcp_tools.trust import governance_get_trust_score
@@ -89,7 +90,7 @@ def register_proposal_tools(mcp) -> None:
         trust_data = json.loads(trust_result)
 
         if "error" in trust_data:
-            return json.dumps({"error": f"Cannot get trust score: {trust_data['error']}"})
+            return format_mcp_result({"error": f"Cannot get trust score: {trust_data['error']}"})
 
         vote_weight = trust_data["vote_weight"]
 
@@ -103,7 +104,7 @@ def register_proposal_tools(mcp) -> None:
             "message": f"Vote recorded with weight {vote_weight:.2f}"
         }
 
-        return json.dumps(vote_record, indent=2)
+        return format_mcp_result(vote_record)
 
     @mcp.tool()
     def proposal_dispute(
@@ -127,7 +128,7 @@ def register_proposal_tools(mcp) -> None:
             JSON with dispute_id, status, and escalation info
         """
         if resolution_method not in ["consensus", "evidence", "authority", "escalate"]:
-            return json.dumps({"error": f"Invalid resolution method: {resolution_method}"})
+            return format_mcp_result({"error": f"Invalid resolution method: {resolution_method}"})
 
         dispute = {
             "dispute_id": f"DISPUTE-{datetime.now().strftime('%Y%m%d%H%M%S')}",
@@ -145,7 +146,7 @@ def register_proposal_tools(mcp) -> None:
         else:
             dispute["message"] = f"Dispute filed. Resolution method: {resolution_method}"
 
-        return json.dumps(dispute, indent=2)
+        return format_mcp_result(dispute)
 
     @mcp.tool()
     def proposals_list(status: Optional[str] = None) -> str:
@@ -184,17 +185,17 @@ def register_proposal_tools(mcp) -> None:
                         "status": r.get("pstatus")
                     })
             except Exception as e:
-                return json.dumps({
+                return format_mcp_result({
                     "proposals": [],
                     "count": 0,
                     "note": f"Query error: {str(e)}. No proposals in TypeDB yet."
-                }, indent=2)
+                })
 
-        return json.dumps({
+        return format_mcp_result({
             "proposals": proposals,
             "count": len(proposals),
             "note": "No proposals exist yet" if not proposals else None
-        }, indent=2)
+        })
 
     @mcp.tool()
     def proposals_escalated() -> str:
@@ -232,15 +233,15 @@ def register_proposal_tools(mcp) -> None:
                         "escalation_trigger": r.get("trigger")
                     })
             except Exception as e:
-                return json.dumps({
+                return format_mcp_result({
                     "escalated_proposals": [],
                     "count": 0,
                     "note": f"Query error: {str(e)}. No escalated proposals."
-                }, indent=2)
+                })
 
-        return json.dumps({
+        return format_mcp_result({
             "escalated_proposals": escalated,
             "count": len(escalated),
             "requires_human_review": len(escalated) > 0,
             "note": "No escalated proposals" if not escalated else "HUMAN OVERSIGHT REQUIRED"
-        }, indent=2)
+        })

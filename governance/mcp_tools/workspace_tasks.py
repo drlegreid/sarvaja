@@ -1,4 +1,5 @@
 """
+from governance.mcp_tools.common import format_mcp_result
 Workspace Task Scanning MCP Tools.
 
 Per P10.10: Workspace Task Capture.
@@ -57,14 +58,14 @@ def register_workspace_task_tools(mcp) -> None:
                         "status": t.status,
                     })
 
-            return json.dumps({
+            return format_mcp_result({
                 "total_tasks": len(tasks),
                 "sources": len(by_source),
                 "by_source": by_source,
-            }, indent=2)
+            })
         except Exception as e:
             logger.error(f"workspace_scan_tasks failed: {e}")
-            return json.dumps({"error": str(e)})
+            return format_mcp_result({"error": str(e)})
 
     @mcp.tool()
     def workspace_capture_tasks() -> str:
@@ -85,10 +86,10 @@ def register_workspace_task_tools(mcp) -> None:
             from governance.workspace_scanner import capture_workspace_tasks
 
             result = capture_workspace_tasks()
-            return json.dumps(result, indent=2)
+            return format_mcp_result(result)
         except Exception as e:
             logger.error(f"workspace_capture_tasks failed: {e}")
-            return json.dumps({"error": str(e)})
+            return format_mcp_result({"error": str(e)})
 
     @mcp.tool()
     def workspace_list_sources() -> str:
@@ -121,9 +122,9 @@ def register_workspace_task_tools(mcp) -> None:
                 if f.startswith("RD-") and f.endswith(".md"):
                     sources.append(f"docs/backlog/rd/{f}")
 
-        return json.dumps({
+        return format_mcp_result({
             "source_count": len(sources),
             "sources": sources,
-        }, indent=2)
+        })
 
     logger.info("Registered workspace task scanning tools (3 tools)")
