@@ -12,11 +12,12 @@ import json
 import os
 from datetime import datetime
 
-from governance.mcp_tools.common import (, format_mcp_result
+from governance.mcp_tools.common import (
     get_typedb_client,
     TYPEDB_HOST,
     TYPEDB_PORT,
     DATABASE_NAME,
+    format_mcp_result,
 )
 
 # ChromaDB configuration
