@@ -5,6 +5,7 @@ Rules, decisions, and health operations.
 
 Per RULE-012: DSP Semantic Code Structure
 Per 4-Server Split Architecture (2026-01-03)
+Per MCP-LOGGING-01-v1: Structured logging with metrics
 
 Tools:
 - governance_query_rules, governance_get_rule, governance_get_dependencies, governance_find_conflicts
@@ -17,20 +18,28 @@ Tools:
 Usage:
     python -m governance.mcp_server_core
 
-Or add to MCP config:
-    {
-        "governance-core": {
-            "command": "pythonw",
-            "args": ["-m", "governance.mcp_server_core"],
-            "env": {"TYPEDB_HOST": "localhost", "TYPEDB_PORT": "1729"}
-        }
-    }
+Environment:
+    MCP_LOG_LEVEL=DEBUG   # TRACE/DEBUG/INFO/WARNING/ERROR (default: ERROR)
+    MCP_LOG_FILE=path     # Log file path (default: logs/mcp.jsonl)
 """
+
+import time
 
 from mcp.server.fastmcp import FastMCP
 
-# Initialize MCP server
+# Initialize MCP server with startup timing
+_startup_start = time.perf_counter()
+
 mcp = FastMCP("governance-core")
+
+# =============================================================================
+# LOGGING SETUP
+# =============================================================================
+
+from governance.mcp_logging import get_logger, log_server_start, MCPMetrics
+
+logger = get_logger("gov-core")
+metrics = MCPMetrics("gov-core")
 
 # =============================================================================
 # REGISTER TOOLS
@@ -45,6 +54,7 @@ try:
     QUALITY_AVAILABLE = True
 except ImportError:
     QUALITY_AVAILABLE = False
+    logger.debug("quality_tools_unavailable", reason="import_error")
 
 register_rule_tools(mcp)
 register_decision_tools(mcp)
@@ -52,57 +62,7 @@ register_decision_tools(mcp)
 if QUALITY_AVAILABLE:
     register_quality_tools(mcp)
 
-# Register health tool
-@mcp.tool()
-def governance_health() -> str:
-    """
-    Check governance system health (GAP-MCP-002).
-
-    Checks both TypeDB and ChromaDB dependencies. Returns structured
-    response with action_required for Claude Code integration.
-
-    RULE-021 Compliance:
-    - Level 1: Pre-operation health check
-    - Level 2: Session start audit
-    - Level 3: Recovery protocol with action_required
-
-    Returns:
-        JSON object with health status. If unhealthy, includes:
-        - action_required: "START_SERVICES" (for Claude Code)
-        - services: list of failed service names
-        - recovery_hint: Docker command to fix
-
-    Example unhealthy response:
-        {
-            "status": "unhealthy",
-            "error": "DEPENDENCY_FAILURE",
-            "action_required": "START_SERVICES",
-            "services": ["typedb"],
-            "recovery_hint": "docker compose up -d typedb"
-        }
-    """
-    import json
-    from governance.health import check_all_services, are_core_services_healthy, get_failed_services
-
-    # Use shared health module for consistency (RULE-032)
-    services = check_all_services()
-    failed = get_failed_services(services)
-
-    if failed:
-        return json.dumps({
-            "status": "unhealthy",
-            "error": "DEPENDENCY_FAILURE",
-            "action_required": "START_SERVICES",
-            "services": failed,
-            "recovery_hint": "podman compose --profile cpu up -d " + " ".join(failed)
-        }, indent=2)
-
-    return json.dumps({
-        "status": "healthy",
-        "services": {
-            name: status.status for name, status in services.items()
-        }
-    }, indent=2)
+# Note: governance_health is registered via register_decision_tools()
 
 
 # =============================================================================
@@ -110,9 +70,20 @@ def governance_health() -> str:
 # =============================================================================
 
 if __name__ == "__main__":
+    import sys
     from governance.mcp_tools.common import TYPEDB_HOST, TYPEDB_PORT, DATABASE_NAME
 
-    print("Starting Governance Core MCP Server...")
-    print(f"TypeDB: {TYPEDB_HOST}:{TYPEDB_PORT}/{DATABASE_NAME}")
-    print("Tools: Rules, Decisions, Quality, Health")
+    # Calculate startup time
+    startup_ms = (time.perf_counter() - _startup_start) * 1000
+    tool_count = len(list(mcp._tool_manager._tools.keys()))
+
+    # Log startup with metrics
+    log_server_start(logger, "gov-core", tool_count, version="1.25.0")
+    metrics.record_startup(tool_count, startup_ms)
+
+    # Print to stderr for Claude Code (non-JSON)
+    print("Starting Governance Core MCP Server...", file=sys.stderr)
+    print(f"TypeDB: {TYPEDB_HOST}:{TYPEDB_PORT}/{DATABASE_NAME}", file=sys.stderr)
+    print(f"Tools: {tool_count} | Startup: {startup_ms:.0f}ms", file=sys.stderr)
+
     mcp.run()

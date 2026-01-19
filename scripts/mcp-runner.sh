@@ -1,48 +1,35 @@
 #!/bin/bash
-# MCP Runner Script - Enterprise DevOps Pattern
+# MCP Runner Script - Optimized for Claude Code
 # Usage: mcp-runner.sh <module-name>
 # Example: mcp-runner.sh governance.mcp_server_core
 #
-# Modes:
-#   MCP_MODE=container (default) - Run in Python 3.12 container
-#   MCP_MODE=venv               - Run in local venv (legacy)
-#
-# Per GAP-MCP-002: Sandboxed, version-controlled runtime
+# Per GAP-MCP-VALIDATE-001: Optimized startup for Claude Code race condition
+# Per WORKFLOW-SHELL-01-v1: Use python3, not python
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_DIR="$(dirname "$SCRIPT_DIR")"
-MCP_MODE="${MCP_MODE:-container}"
-MCP_IMAGE="${MCP_IMAGE:-sarvaja-mcp:latest}"
+MODULE="$1"
 
-# Container mode (Enterprise DevOps - sandboxed Python 3.12)
-if [ "$MCP_MODE" = "container" ]; then
-    # Check if image exists, build if not
-    if ! podman image exists "$MCP_IMAGE" 2>/dev/null; then
-        echo "Building MCP container image..." >&2
-        podman build -t "$MCP_IMAGE" -f "$PROJECT_DIR/Dockerfile.mcp" "$PROJECT_DIR" >&2
-    fi
-
-    # Run MCP server in container with stdio passthrough
-    # --network=host: Access TypeDB/ChromaDB on localhost ports
-    # -i: Interactive mode for MCP stdio protocol
-    exec podman run --rm -i \
-        --network=host \
-        -e TYPEDB_HOST="${TYPEDB_HOST:-localhost}" \
-        -e TYPEDB_PORT="${TYPEDB_PORT:-1729}" \
-        -e CHROMADB_HOST="${CHROMADB_HOST:-localhost}" \
-        -e CHROMADB_PORT="${CHROMADB_PORT:-8001}" \
-        -v "$PROJECT_DIR/governance:/app/governance:ro" \
-        -v "$PROJECT_DIR/claude_mem:/app/claude_mem:ro" \
-        -v "$PROJECT_DIR/docs:/app/docs:ro" \
-        -v "$PROJECT_DIR/evidence:/app/evidence:rw" \
-        "$MCP_IMAGE" \
-        python -m "$1"
+# Optional: Kill zombie PYTHON processes for THIS module
+# Set MCP_CLEANUP=1 to enable pre-start cleanup
+if [ "${MCP_CLEANUP:-0}" = "1" ]; then
+    for pid in $(pgrep -f "python.*$MODULE" 2>/dev/null); do
+        if ps -p "$pid" -o comm= 2>/dev/null | grep -q python; then
+            kill -9 "$pid" 2>/dev/null || true
+        fi
+    done
 fi
 
-# Venv mode (Legacy - requires Python 3.12 on host)
-if [ -f "$HOME/.venv/sarvaja/bin/activate" ]; then
-    source "$HOME/.venv/sarvaja/bin/activate"
+# Find Python - prefer project venv, fallback to sarvaja venv
+# Direct path avoids slow source activation (~50-100ms savings)
+if [ -x "$PROJECT_DIR/.venv/bin/python3" ]; then
+    PYTHON="$PROJECT_DIR/.venv/bin/python3"
+elif [ -x "$HOME/.venv/sarvaja/bin/python3" ]; then
+    PYTHON="$HOME/.venv/sarvaja/bin/python3"
+else
+    # Fallback to system python3
+    PYTHON="python3"
 fi
 
 export PYTHONPATH="$PROJECT_DIR:$PYTHONPATH"
-exec python -m "$1"
+exec "$PYTHON" -m "$MODULE"

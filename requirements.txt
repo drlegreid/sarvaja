@@ -26,12 +26,13 @@ trame>=3.0.0
 trame-vuetify>=2.0.0
 trame-client>=3.0.0
 
-# TypeDB Client (Phase 7) - Pin to 2.x for core_driver API compatibility
-typedb-driver>=2.29.0,<3.0.0
+# TypeDB Client - Upgraded to 3.x per GAP-TYPEDB-UPGRADE-001 (2026-01-17)
+typedb-driver>=3.7.0,<4.0.0
 
 # Constraint Engine (E2E Tests, Trust Validation)
 kanren>=0.2.3
 
-# Optional: Observability
+# Observability & Logging
+structlog>=25.0.0  # Per MCP-LOGGING-01-v1: Structured JSON logging
 # opik>=1.9.0  # Removed per DECISION-001
 # ace-framework[observability]>=0.1.0  # Optional

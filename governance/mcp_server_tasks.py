@@ -5,39 +5,27 @@ Tasks, gaps, and workspace operations.
 
 Per RULE-012: DSP Semantic Code Structure
 Per 4-Server Split Architecture (2026-01-03)
+Per MCP-LOGGING-01-v1: Structured logging with metrics
 
-Tools:
-- governance_create_task, governance_get_task, governance_update_task
-- governance_delete_task, governance_list_all_tasks
-- governance_task_link_session, governance_task_link_rule, governance_task_link_evidence
-- governance_task_get_evidence
-- workspace_scan_tasks, workspace_capture_tasks, workspace_list_sources
-- workspace_scan_rule_documents, workspace_link_rules_to_documents
-- governance_get_backlog, governance_gap_summary, governance_get_critical_gaps
-- governance_unified_backlog
-- governance_create_handoff, governance_get_pending_handoffs
-- governance_complete_handoff, governance_get_handoff
-- governance_route_task_to_agent
-- governance_query_audit, governance_audit_summary, governance_entity_audit_trail
-- governance_trace_correlation
-
-Usage:
-    python -m governance.mcp_server_tasks
-
-Or add to MCP config:
-    {
-        "governance-tasks": {
-            "command": "pythonw",
-            "args": ["-m", "governance.mcp_server_tasks"],
-            "env": {"TYPEDB_HOST": "localhost", "TYPEDB_PORT": "1729"}
-        }
-    }
+Environment:
+    MCP_LOG_LEVEL=DEBUG   # TRACE/DEBUG/INFO/WARNING/ERROR (default: ERROR)
 """
+
+import time
 
 from mcp.server.fastmcp import FastMCP
 
-# Initialize MCP server
+_startup_start = time.perf_counter()
 mcp = FastMCP("governance-tasks")
+
+# =============================================================================
+# LOGGING SETUP
+# =============================================================================
+
+from governance.mcp_logging import get_logger, log_server_start, MCPMetrics
+
+logger = get_logger("gov-tasks")
+metrics = MCPMetrics("gov-tasks")
 
 # =============================================================================
 # REGISTER TOOLS
@@ -61,9 +49,16 @@ register_audit_tools(mcp)
 # =============================================================================
 
 if __name__ == "__main__":
+    import sys
     from governance.mcp_tools.common import TYPEDB_HOST, TYPEDB_PORT, DATABASE_NAME
 
-    print("Starting Governance Tasks MCP Server...")
-    print(f"TypeDB: {TYPEDB_HOST}:{TYPEDB_PORT}/{DATABASE_NAME}")
-    print("Tools: Tasks, Workspace, Gaps")
+    startup_ms = (time.perf_counter() - _startup_start) * 1000
+    tool_count = len(list(mcp._tool_manager._tools.keys()))
+
+    log_server_start(logger, "gov-tasks", tool_count, version="1.25.0")
+    metrics.record_startup(tool_count, startup_ms)
+
+    print("Starting Governance Tasks MCP Server...", file=sys.stderr)
+    print(f"TypeDB: {TYPEDB_HOST}:{TYPEDB_PORT}/{DATABASE_NAME}", file=sys.stderr)
+    print(f"Tools: {tool_count} | Startup: {startup_ms:.0f}ms", file=sys.stderr)
     mcp.run()

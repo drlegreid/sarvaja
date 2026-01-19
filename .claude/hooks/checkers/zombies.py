@@ -17,6 +17,12 @@ DEFAULT_EXPECTED_SERVERS = [
     "claude_mem.mcp_server",
 ]
 
+# Patterns to search for MCP processes (broader to catch all)
+MCP_SEARCH_PATTERNS = [
+    "governance.mcp_server",
+    "claude_mem.mcp_server",
+]
+
 
 def cleanup_zombie_pids(zombie_pids: List[int], timeout: float = 2.0) -> int:
     """
@@ -85,21 +91,29 @@ def check_zombie_processes(
 
     try:
         # Get all python processes with their command lines (for MCP detection)
-        proc_result = subprocess.run(
-            ["pgrep", "-a", "-f", "governance.mcp_server"],
-            capture_output=True, text=True, timeout=subprocess_timeout
-        )
+        # Search for both governance and claude_mem patterns
+        all_lines = []
+        for pattern in MCP_SEARCH_PATTERNS:
+            proc_result = subprocess.run(
+                ["pgrep", "-a", "-f", pattern],
+                capture_output=True, text=True, timeout=subprocess_timeout
+            )
+            if proc_result.stdout.strip():
+                all_lines.extend(proc_result.stdout.strip().split("\n"))
 
         # Count MCP server instances
         mcp_counts = {server: [] for server in expected_servers}
-        for line in proc_result.stdout.strip().split("\n"):
+        for line in all_lines:
             if line:
                 parts = line.split(" ", 1)
                 if len(parts) >= 2:
                     pid, cmd = parts
                     for server in expected_servers:
                         if server in cmd:
-                            mcp_counts[server].append(int(pid))
+                            try:
+                                mcp_counts[server].append(int(pid))
+                            except ValueError:
+                                pass
 
         # Detect duplicates (more than 1 of same server)
         for server, pids in mcp_counts.items():

@@ -5,29 +5,27 @@ Agents, trust, and proposals operations.
 
 Per RULE-012: DSP Semantic Code Structure
 Per 4-Server Split Architecture (2026-01-03)
+Per MCP-LOGGING-01-v1: Structured logging with metrics
 
-Tools:
-- governance_get_trust_score, governance_list_agents
-- governance_create_agent, governance_get_agent, governance_update_agent_trust
-- governance_propose_rule, governance_vote, governance_dispute
-
-Usage:
-    python -m governance.mcp_server_agents
-
-Or add to MCP config:
-    {
-        "governance-agents": {
-            "command": "pythonw",
-            "args": ["-m", "governance.mcp_server_agents"],
-            "env": {"TYPEDB_HOST": "localhost", "TYPEDB_PORT": "1729"}
-        }
-    }
+Environment:
+    MCP_LOG_LEVEL=DEBUG   # TRACE/DEBUG/INFO/WARNING/ERROR (default: ERROR)
 """
+
+import time
 
 from mcp.server.fastmcp import FastMCP
 
-# Initialize MCP server
+_startup_start = time.perf_counter()
 mcp = FastMCP("governance-agents")
+
+# =============================================================================
+# LOGGING SETUP
+# =============================================================================
+
+from governance.mcp_logging import get_logger, log_server_start, MCPMetrics
+
+logger = get_logger("gov-agents")
+metrics = MCPMetrics("gov-agents")
 
 # =============================================================================
 # REGISTER TOOLS
@@ -47,9 +45,16 @@ register_proposal_tools(mcp)
 # =============================================================================
 
 if __name__ == "__main__":
+    import sys
     from governance.mcp_tools.common import TYPEDB_HOST, TYPEDB_PORT, DATABASE_NAME
 
-    print("Starting Governance Agents MCP Server...")
-    print(f"TypeDB: {TYPEDB_HOST}:{TYPEDB_PORT}/{DATABASE_NAME}")
-    print("Tools: Agents, Trust, Proposals")
+    startup_ms = (time.perf_counter() - _startup_start) * 1000
+    tool_count = len(list(mcp._tool_manager._tools.keys()))
+
+    log_server_start(logger, "gov-agents", tool_count, version="1.25.0")
+    metrics.record_startup(tool_count, startup_ms)
+
+    print("Starting Governance Agents MCP Server...", file=sys.stderr)
+    print(f"TypeDB: {TYPEDB_HOST}:{TYPEDB_PORT}/{DATABASE_NAME}", file=sys.stderr)
+    print(f"Tools: {tool_count} | Startup: {startup_ms:.0f}ms", file=sys.stderr)
     mcp.run()

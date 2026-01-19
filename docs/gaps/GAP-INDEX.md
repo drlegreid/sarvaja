@@ -1,11 +1,25 @@
 # Gap Index - Sarvaja (Active Gaps)
 
-**Last Updated:** 2026-01-17
-**Active Gaps:** 30 | Status: 10 OPEN, 1 BLOCKED, 1 IN_PROGRESS, 3 PARTIAL, 15 DEFERRED
-**Archived:** 209 RESOLVED gaps → [GAP-INDEX-ARCHIVE.md](GAP-INDEX-ARCHIVE.md)
+**Last Updated:** 2026-01-19
+**Active Gaps:** 23 | Status: 6 OPEN, 0 BLOCKED, 2 IN_PROGRESS, 1 PARTIAL, 14 DEFERRED
+**Archived:** 221+ RESOLVED gaps → [GAP-INDEX-ARCHIVE.md](GAP-INDEX-ARCHIVE.md)
 
 > **Evidence Files:** Detailed analysis in [evidence/](evidence/) per GAP-META-001
 > **Archive Rule:** Per DOC-GAP-ARCHIVE-01-v1 - RESOLVED gaps move to archive
+
+---
+
+## Context Efficiency Gaps (2026-01-19) - RESOLVED
+
+> **Source:** EPIC-STABILITY
+> **Evidence:** [GAP-CONTEXT-EFFICIENCY-001.md](evidence/GAP-CONTEXT-EFFICIENCY-001.md)
+
+| ID | Status | Gap | Priority | Category | Evidence |
+|----|--------|-----|----------|----------|----------|
+| GAP-CONTEXT-EFFICIENCY-001 | RESOLVED | 100% context burn on MCP troubleshooting - pre-flight validation + entropy monitoring | HIGH | stability | [evidence/GAP-CONTEXT-EFFICIENCY-001.md](evidence/GAP-CONTEXT-EFFICIENCY-001.md) |
+| GAP-ENTROPY-HOOK-001 | RESOLVED | PostToolUse hook missing - entropy counter never incremented | HIGH | infrastructure | [evidence/GAP-ENTROPY-HOOK-001.md](evidence/GAP-ENTROPY-HOOK-001.md) |
+
+**Resolution:** TACTIC-1 (pre-flight MCP validation), TACTIC-2 (pre-commit guard, unit tests), TACTIC-3 (entropy monitoring, CONTEXT-SAVE-01-v1 rule). GAP-ENTROPY-HOOK-001: Added PostToolUse hook + standalone CLI wrapper.
 
 ---
 
@@ -16,10 +30,11 @@
 
 | ID | Status | Gap | Priority | Category | Evidence |
 |----|--------|-----|----------|----------|----------|
-| GAP-TYPEDB-DRIVER-001 | BLOCKED | TypeDB driver incompatibility - no version supports Python 3.13 + TypeDB Server 2.x | **CRITICAL** | infrastructure | [evidence/GAP-TYPEDB-DRIVER-001.md](evidence/GAP-TYPEDB-DRIVER-001.md) |
-| GAP-TYPEDB-UPGRADE-001 | IN_PROGRESS | TypeDB Server 2.29.1 → 3.x upgrade required for Python 3.13 driver | HIGH | infrastructure | [evidence/GAP-TYPEDB-UPGRADE-001.md](evidence/GAP-TYPEDB-UPGRADE-001.md) - Phase 2/6 done |
+| GAP-TYPEDB-DRIVER-001 | RESOLVED | TypeDB driver incompatibility - resolved via 3.x upgrade | ~~CRITICAL~~ | infrastructure | [evidence/GAP-TYPEDB-DRIVER-001.md](evidence/GAP-TYPEDB-DRIVER-001.md) |
+| GAP-TYPEDB-UPGRADE-001 | RESOLVED | TypeDB Server 2.29.1 → 3.7.3 upgrade complete | ~~HIGH~~ | infrastructure | [evidence/GAP-TYPEDB-UPGRADE-001.md](evidence/GAP-TYPEDB-UPGRADE-001.md) |
+| GAP-TYPEDB-INFERENCE-001 | RESOLVED | Inference rules migrated to 3.x functions | HIGH | infrastructure | [evidence/GAP-TYPEDB-INFERENCE-001.md](evidence/GAP-TYPEDB-INFERENCE-001.md) |
 
-**Decision:** Accept MCP-only TypeDB access. Server upgrade deferred - requires migration planning.
+**Resolution:** TypeDB 3.x migration complete. 5 inference functions operational. Data sync complete: 60 Rules in TypeDB (API shows 50 ACTIVE).
 
 ---
 
@@ -30,24 +45,55 @@
 
 | ID | Status | Gap | Priority | Category | Evidence |
 |----|--------|-----|----------|----------|----------|
-| GAP-DATA-INTEGRITY-001 | PARTIAL | Dashboard shows counts but no traceability (Session→Task→Evidence→Rules) | **CRITICAL** | data_integrity | [evidence/GAP-DATA-INTEGRITY-001.md](evidence/GAP-DATA-INTEGRITY-001.md) |
+| GAP-DATA-INTEGRITY-001 | RESOLVED | Dashboard traceability complete - agent_id 100%, evidence 100%, UI navigation | ~~CRITICAL~~ | data_integrity | [evidence/GAP-DATA-INTEGRITY-001.md](evidence/GAP-DATA-INTEGRITY-001.md) |
 | GAP-BATCH-QUERY-001 | RESOLVED | Session LIST returns wrong tasks_completed count vs GET | HIGH | data_integrity | [evidence/GAP-BATCH-QUERY-001.md](evidence/GAP-BATCH-QUERY-001.md) |
 | GAP-E2E-KANREN-001 | RESOLVED | E2E platform health test fails - kanren not in requirements.txt | HIGH | testing | FIXED: Added kanren>=0.2.3 to requirements.txt |
 | GAP-API-PERF-001 | RESOLVED | API response times 7-9 seconds → <500ms achieved | HIGH | performance | [evidence/GAP-API-PERF-001.md](evidence/GAP-API-PERF-001.md) VALIDATED 2026-01-16 |
 | GAP-UI-PAGING-001 | RESOLVED | UI pagination & loading states complete (EPIC-DR-003/005) | HIGH | ux | [evidence/GAP-UI-PAGING-001.md](evidence/GAP-UI-PAGING-001.md) |
+
+### Rule Data Sync (Added 2026-01-17)
+
+| ID | Status | Gap | Priority | Category | Evidence |
+|----|--------|-----|----------|----------|----------|
+| GAP-RULE-SYNC-001 | RESOLVED | TypeDB rule sync complete: 60 semantic ID rules, legacy RULE-XXX removed | ~~HIGH~~ | data_integrity | [evidence/GAP-RULE-SYNC-001.md](evidence/GAP-RULE-SYNC-001.md) |
+| GAP-RULE-QUALITY-001 | RESOLVED | Rule quality: 0 CRITICAL, 0 HIGH issues, semantic ID format canonical | ~~HIGH~~ | data_integrity | [evidence/GAP-RULE-QUALITY-001.md](evidence/GAP-RULE-QUALITY-001.md) |
+
+### Technical Debt EPICs (Added 2026-01-17)
+
+| ID | Status | Gap | Priority | Category | Evidence |
+|----|--------|-----|----------|----------|----------|
+| EPIC-DRY-001 | RESOLVED | Shared constants module (APP_TITLE, URLs, ports, timeouts) | ~~HIGH~~ | architecture | [evidence/EPIC-DRY-001.md](evidence/EPIC-DRY-001.md) |
+
+**Resolution:** Created `shared/constants.py` as single source of truth. Updated 7 Python files to use constants.
+
+### Architecture Gaps (Added 2026-01-19)
+
+| ID | Status | Gap | Priority | Category | Evidence |
+|----|--------|-----|----------|----------|----------|
+| GAP-GAPS-TASKS-001 | RESOLVED | Merge gaps/tasks as unified work items in TypeDB | HIGH | architecture | [evidence/GAP-GAPS-TASKS-001.md](evidence/GAP-GAPS-TASKS-001.md) |
+| GAP-LOCAL-PYTHON-001 | RESOLVED | Local Python 3.13.7 - pip+venv installed, TypeDB driver working | MEDIUM | infrastructure | [evidence/GAP-LOCAL-PYTHON-001.md](evidence/GAP-LOCAL-PYTHON-001.md) |
+| GAP-TECH-STACK-001 | RESOLVED | Tech stack homogenization - venv setup, rule DEV-VENV-01-v1 | HIGH | architecture | [evidence/GAP-TECH-STACK-001.md](evidence/GAP-TECH-STACK-001.md) |
+
+**Description:** Gaps and tasks are currently separate entities (filesystem vs TypeDB). Merge them so gaps are stored as tasks with document_path links. GAP-INDEX.md becomes backup/sync target.
+
+**GAP-GAPS-TASKS-001 Progress:** ✓ COMPLETE (2026-01-19)
+- Phase 1: Schema attributes added ✓
+- Phase 2: workspace_sync_gaps_to_typedb tool created ✓
+- Phase 3: CRUD operations updated ✓
+- Phase 4: WorkItem.from_task() updated ✓
 
 ### Data Quality Evidence (Updated 2026-01-17)
 
 | Entity | Field | Populated | Quality | Notes |
 |--------|-------|-----------|---------|-------|
 | Task | agent_id | **100%** | **FIXED** | EPIC-DR-007: Backfilled 76 tasks (2026-01-17) |
-| Task | evidence | 3% | **CRITICAL** | [EPIC-DR-008](evidence/GAP-EPIC-DR-008.md): Only 2 tasks have evidence |
+| Task | evidence | **100%** | **FIXED** | [EPIC-DR-008](evidence/GAP-EPIC-DR-008.md): Backfilled 63 DONE tasks (2026-01-17) |
 | Task | linked_sessions | 86% | **GOOD** | 65/76 via completed-in relations |
 | Session | evidence_files | 77% | **GOOD** | 17/22 have has-evidence relations |
 | Session | tasks_completed | 18% | **IMPROVED** | 4 sessions have completed tasks |
 | Session | linked_rules_applied | 23% | Fair | 5/22 sessions |
 
-**Verdict:** Data integrity significantly improved. agent_id backfilled to 100%. Remaining: task evidence field (3%).
+**Verdict:** Data integrity **COMPLETE**. agent_id: 100%, evidence: 100% for DONE tasks. All EPIC-DR tasks resolved.
 
 ---
 
@@ -60,7 +106,7 @@
 |----|--------|-----|----------|----------|----------|
 | GAP-GOVERNANCE-AUDIT-001 | RESOLVED | Full governance rule compliance audit (Option A) | HIGH | governance | [evidence/GAP-GOVERNANCE-AUDIT-001.md](evidence/GAP-GOVERNANCE-AUDIT-001.md) |
 
-**Resolution:** 2026-01-17 - Rules synchronized. TypeDB: 58 rules. RULES-DIRECTIVES.md: 55 rules indexed. See [RULES-AUDIT-2026-01-17.md](../evidence/RULES-AUDIT-2026-01-17.md)
+**Resolution:** 2026-01-17 - Rules synchronized. TypeDB: 60 rules. API: 50 ACTIVE. Scripts: `scripts/sync_rules.sh`. See [GAP-DATA-SYNC-001.md](evidence/GAP-DATA-SYNC-001.md)
 
 ---
 
@@ -71,13 +117,16 @@
 
 | ID | Status | Gap | Priority | Category | Evidence |
 |----|--------|-----|----------|----------|----------|
-| GAP-MCP-001 | OPEN | gov-sessions MCP underutilized - DSM/evidence tools not used | HIGH | integration | MCP tools not exposed to Claude Code |
-| GAP-MCP-002 | OPEN | gov-tasks MCP underutilized - task/gap management not automated | HIGH | integration | MCP tools not exposed to Claude Code |
-| GAP-MCP-003 | PARTIAL | rest-api MCP underutilized - API testing not systematic | MEDIUM | testing | [tests/integration/test_mcp_rest_sessions.py](../../tests/integration/test_mcp_rest_sessions.py) |
+| GAP-MCP-001 | RESOLVED | gov-sessions MCP - print() to stderr fix | HIGH | integration | [evidence/GAP-MCP-001.md](evidence/GAP-MCP-001.md) - FIXED 2026-01-17 |
+| GAP-MCP-002 | RESOLVED | gov-tasks MCP - print() to stderr fix | HIGH | integration | [evidence/GAP-MCP-002.md](evidence/GAP-MCP-002.md) - FIXED 2026-01-17 |
+| GAP-MCP-003 | RESOLVED | REST API testing - 9 tests passing (health, rules, tasks, sessions) | MEDIUM | testing | [tests/integration/test_mcp_rest_sessions.py](../../tests/integration/test_mcp_rest_sessions.py) - FIXED 2026-01-18 |
 | GAP-DATA-001 | OPEN | Evaluate TOON vs JSON for MCP output format | LOW | optimization | RD-TOON: 40% token reduction potential |
 | GAP-API-001 | RESOLVED | POST /api/tasks returns 201 but doesn't persist to TypeDB | HIGH | data_integrity | FIXED 2026-01-16: Schema migration added task-resolution attribute. 9 tests pass. |
-| GAP-VALIDATE-001 | OPEN | Need integration validation task for all component fixes | HIGH | testing | Ensure fixes are validated before claiming done |
+| GAP-VALIDATE-001 | RESOLVED | Integration validation suite (REST + Playwright + tests) | HIGH | testing | [evidence/GAP-VALIDATE-001.md](evidence/GAP-VALIDATE-001.md) - FIXED 2026-01-17 |
 | GAP-MCP-PAGING-001 | OPEN | MCP tools need paging/truncation for large outputs (791K+ chars) | MEDIUM | tooling | [evidence/GAP-MCP-PAGING-001.md](evidence/GAP-MCP-PAGING-001.md) |
+| GAP-MCP-NAMING-001 | RESOLVED | MCP tool naming - 84→26 tools (69% reduction), deprecated functions removed | HIGH | architecture | [evidence/GAP-MCP-NAMING-001.md](evidence/GAP-MCP-NAMING-001.md) - FIXED 2026-01-19 |
+| GAP-MCP-DIRECTIVE-001 | RESOLVED | MCP operational directives - 3 rules created 2026-01-18 | MEDIUM | governance | [evidence/GAP-MCP-DIRECTIVE-001.md](evidence/GAP-MCP-DIRECTIVE-001.md) |
+| GAP-TYPEDB3-DELETE-001 | RESOLVED | TypeDB 3.x delete syntax: `has $var of $entity` | HIGH | infrastructure | Fixed 2026-01-17: 6 files patched |
 
 ### Subtasks for GAP-MCP-001 (gov-sessions)
 
@@ -97,14 +146,14 @@
 | MCP-002-C | TODO | Link tasks to git commits automatically | test_task_commit_link |
 | MCP-002-D | TODO | Query backlog gaps via MCP | test_backlog_query |
 
-### Subtasks for GAP-MCP-003 (rest-api)
+### Subtasks for GAP-MCP-003 (rest-api) - RESOLVED 2026-01-18
 
 | Subtask | Status | Description | Test |
 |---------|--------|-------------|------|
-| MCP-003-A | TODO | Create API health test using rest-api MCP | test_api_health_mcp |
-| MCP-003-B | TODO | Create CRUD tests for /api/rules endpoint | test_rules_crud_mcp |
-| MCP-003-C | TODO | Create CRUD tests for /api/tasks endpoint | test_tasks_crud_mcp |
-| MCP-003-D | TODO | Create session evidence tests | test_sessions_api_mcp |
+| MCP-003-A | DONE | API health test with TypeDB status | test_api_health_includes_typedb |
+| MCP-003-B | DONE | Rules listing and structure tests | test_list_rules, test_rules_have_structure |
+| MCP-003-C | DONE | Tasks CRUD and persistence tests | test_list_tasks, test_create_task, test_task_persistence_round_trip |
+| MCP-003-D | DONE | Session listing and creation tests | test_list_sessions, test_create_session |
 
 ### Subtasks for GAP-DATA-001 (TOON)
 
@@ -119,6 +168,63 @@
 - 40% token reduction vs JSON
 - YAML-like indent + CSV tabular hybrid
 - Designed for LLM context efficiency
+
+---
+
+## Exploratory Testing Gaps (2026-01-18)
+
+> **Source:** LLM-driven exploratory testing via rest-api + Playwright MCPs
+> **Evidence:** Heuristic-based testing: vertical/horizontal navigation, data integrity, UX elements
+
+| ID | Status | Gap | Priority | Category | Evidence |
+|----|--------|-----|----------|----------|----------|
+| GAP-EXPLOR-API-001 | RESOLVED | API endpoint gaps: GET task/rule by ID (405/404), PUT task (500), sessions no pagination | HIGH | api | [evidence/GAP-EXPLOR-API-001.md](evidence/GAP-EXPLOR-API-001.md) |
+| GAP-EXPLOR-UI-001 | RESOLVED | UI pagination/display: Backlog pagination, Sessions limit, Claim tooltips | ~~MEDIUM~~ | ux | [evidence/GAP-EXPLOR-UI-001.md](evidence/GAP-EXPLOR-UI-001.md) |
+
+### Subtasks for GAP-EXPLOR-API-001 (ALL DONE 2026-01-18)
+
+| Subtask | Status | Description | Test |
+|---------|--------|-------------|------|
+| EXPLOR-API-001-A | DONE | Implement GET /api/tasks/{id} route | test_get_task_by_id |
+| EXPLOR-API-001-B | DONE | Fix GET /api/rules/{id} routing | test_get_rule_by_id |
+| EXPLOR-API-001-C | DONE | Debug PUT /api/tasks/{id} 500 error | test_update_task |
+| EXPLOR-API-001-D | DONE | Add pagination to sessions endpoint | test_sessions_pagination |
+
+### Subtasks for GAP-EXPLOR-UI-001
+
+| Subtask | Status | Description | Test |
+|---------|--------|-------------|------|
+| EXPLOR-UI-001-A | DONE | Add pagination controls to Backlog | test_backlog_pagination_ui |
+| EXPLOR-UI-001-B | DONE | Fix Sessions view data limit (10→100) | test_sessions_all_visible |
+| EXPLOR-UI-001-C | DONE | Add tooltip to disabled Claim buttons | test_claim_button_feedback |
+
+---
+
+## Dashboard UX & Data Integrity Audit (2026-01-18) - CRITICAL
+
+> **Source:** User feedback - comprehensive UI review
+> **Evidence:** [GAP-UI-AUDIT-2026-01-18.md](evidence/GAP-UI-AUDIT-2026-01-18.md)
+
+| ID | Status | Gap | Priority | Category | Evidence |
+|----|--------|-----|----------|----------|----------|
+| GAP-UI-AUDIT-001 | PARTIAL | Dashboard traceability: task→session 86%, rules→tasks 0%, commit linkage 0% | HIGH | data_integrity | [evidence/GAP-UI-AUDIT-2026-01-18.md](evidence/GAP-UI-AUDIT-2026-01-18.md) |
+| GAP-UI-AUDIT-002 | DEFERRED | UI State Singleton - Trame default behavior, needs architectural decision | HIGH | architecture | [evidence/GAP-UI-AUDIT-002-TRAME-STATE.md](evidence/GAP-UI-AUDIT-002-TRAME-STATE.md) |
+| GAP-UI-AUDIT-003 | RESOLVED | Trace console missing request/response payloads | ~~HIGH~~ | ux | FIXED 2026-01-18: Accordion panels with req/res payloads |
+| GAP-UI-AUDIT-004 | IN_PROGRESS | Tab redundancy/purpose unclear (2 task tabs, Decisions, Impact) | HIGH | ux | Needs user clarification |
+| GAP-UI-SESSION-TASKS-001 | RESOLVED | Session detail not loading tasks (showed 0, API returned 7) | HIGH | ui | [evidence/GAP-UI-SESSION-TASKS-001.md](evidence/GAP-UI-SESSION-TASKS-001.md) |
+| GAP-UI-TASK-SESSION-001 | RESOLVED | Task detail not showing linked_sessions | HIGH | ui | [evidence/GAP-UI-TASK-SESSION-001.md](evidence/GAP-UI-TASK-SESSION-001.md) |
+| GAP-UI-ORPHAN-HANDLERS-001 | RESOLVED | Orphaned handler files not registered (systemic dead code) | HIGH | architecture | [evidence/GAP-UI-ORPHAN-HANDLERS-001.md](evidence/GAP-UI-ORPHAN-HANDLERS-001.md) |
+
+**Fixes Applied (2026-01-18):**
+1. Session tasks loading: Added `load_session_tasks()` to `controllers/sessions.py`
+2. Task navigation from session: Added `navigate_to_task()` to `controllers/tasks.py`
+3. Removed orphaned handlers: Deleted `handlers/{rule,task,session}_handlers.py`
+
+**Data Integrity Metrics (Updated 2026-01-18):**
+- Task→Session: **86%** (65/76 tasks linked) - IMPROVED via UI fix
+- Task→Evidence: 100% (FIXED EPIC-DR-008)
+- Task→Commit: **0.0%** (needs work)
+- Session→Evidence: 77% (17/22 sessions)
 
 ---
 
@@ -550,3 +656,5 @@
 
 *Gap tracking per RULE-013: Rules Applicability Convention*
 *Evidence architecture per GAP-META-001: Index→Evidence split*
+| GAP-MCP-VALIDATE-001 | MITIGATED | MCP server validation gap - need pre-restart checks | HIGH | testing | [evidence/GAP-MCP-VALIDATE-001.md](evidence/GAP-MCP-VALIDATE-001.md) |
+| GAP-MCP-DAEMON-001 | ON_HOLD | MCP daemon architecture - blocked by VSCode #9522 | MEDIUM | architecture | [evidence/GAP-MCP-DAEMON-001.md](evidence/GAP-MCP-DAEMON-001.md) |
