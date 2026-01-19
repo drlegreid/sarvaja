@@ -4,7 +4,7 @@
 **Created:** 2026-01-16 | **Updated:** 2026-01-19 | **Phase 1-4 Done:** 2026-01-19
 **Depends On:** None
 
-> **IMPLEMENTED:** Full TOON support in MCP tools. Set `MCP_OUTPUT_FORMAT=toon` to enable.
+> **IMPLEMENTED:** TOON is now DEFAULT for all MCP tools. Set `MCP_OUTPUT_FORMAT=json` to override.
 
 ---
 
@@ -161,45 +161,59 @@ result = format_output(data, format=OutputFormat.AUTO)
 
 **Phase 3: MCP Tool Integration**
 - [x] Added `format_mcp_result()` helper to `governance/mcp_tools/common.py`
-- [x] Updated MCP tools to use format wrapper:
+- [x] Updated governance MCP tools to use format wrapper:
   - `rules_query.py` (11 replacements)
   - `tasks_crud.py` (18 replacements)
   - `gaps.py` (9 replacements)
   - `sessions_core.py` (19 replacements)
   - `audit.py` (10 replacements)
-- [x] Default to JSON for backward compatibility
-- [x] TOON opt-in via `MCP_OUTPUT_FORMAT=toon` env var
+- [x] Changed default: TOON is now implicit default
+- [x] JSON override via `MCP_OUTPUT_FORMAT=json` env var
 
 **Phase 4: Validation**
-- [x] Unit tests pass: 21/21 tests
+- [x] Unit tests pass: 27/27 tests
 - [x] Integration tests pass: 2/2 tests
 - [x] TOON roundtrip verified: encode → decode → equality
 - [x] Measured token savings: **43.8%** for typical MCP response
 
+### Phase 5: claude-mem Migration (2026-01-19) - DONE
+
+**claude-mem MCP Server**
+- [x] Migrated `claude_mem/mcp_server.py` (18 json.dumps → format_output)
+- [x] Added import: `from governance.mcp_output import format_output`
+- [x] Removed unused `import json`
+- [x] All 7 tools now use TOON default: chroma_health, chroma_query_documents,
+  chroma_get_documents, chroma_add_documents, chroma_delete_documents,
+  chroma_save_session_context, chroma_recover_context
+- [x] Created test factories: `tests/factories/mcp_data.py`, `tests/factories/toon_output.py`
+- [x] Added tests: `tests/unit/test_claude_mem_toon.py` (14 tests)
+
 ### Usage
 
 ```bash
-# Enable TOON format (optional)
-export MCP_OUTPUT_FORMAT=toon
+# TOON format is DEFAULT - no env var needed
 
-# Or set in docker-compose.yml
-services:
-  mcp-server:
-    environment:
-      - MCP_OUTPUT_FORMAT=toon
+# Override to JSON (for debugging/integration)
+export MCP_OUTPUT_FORMAT=json
 ```
 
-### Files Modified (Phase 3-4)
+### Files Modified (Phase 3-5)
 
 | File | Changes |
 |------|---------|
+| `governance/mcp_output.py` | Changed default: TOON instead of JSON |
 | `governance/mcp_tools/common.py` | Added `format_mcp_result()` helper |
 | `governance/mcp_tools/rules_query.py` | Replaced json.dumps → format_mcp_result |
 | `governance/mcp_tools/tasks_crud.py` | Replaced json.dumps → format_mcp_result |
 | `governance/mcp_tools/gaps.py` | Replaced json.dumps → format_mcp_result |
 | `governance/mcp_tools/sessions_core.py` | Replaced json.dumps → format_mcp_result |
 | `governance/mcp_tools/audit.py` | Replaced json.dumps → format_mcp_result |
-| `tests/unit/test_mcp_output.py` | Added 8 integration tests |
+| `claude_mem/mcp_server.py` | Replaced json.dumps → format_output (18 calls) |
+| `tests/unit/test_mcp_output.py` | Updated for TOON default (27 tests) |
+| `tests/unit/test_claude_mem_toon.py` | New file (14 tests) |
+| `tests/factories/mcp_data.py` | New file (DRY test data) |
+| `tests/factories/toon_output.py` | New file (DRY TOON utilities) |
+| `docs/rules/leaf/MCP-FORMAT-01-v1.md` | New governance rule |
 
 ### Test Evidence
 

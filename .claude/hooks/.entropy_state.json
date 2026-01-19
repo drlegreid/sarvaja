@@ -1,10 +1,111 @@
 {
   "session_start": "2026-01-19T15:53:28.317687",
   "session_hash": "NEW",
-  "tool_count": 13,
-  "check_count": 13,
+  "tool_count": 433,
+  "check_count": 433,
   "last_save": null,
-  "warnings_shown": 0,
-  "last_warning_at": 0,
-  "history": []
+  "warnings_shown": 34,
+  "last_warning_at": 430,
+  "history": [
+    {
+      "timestamp": "2026-01-19T16:35:25.021911",
+      "event": "WARNING_CRITICAL",
+      "tool_count": 240
+    },
+    {
+      "timestamp": "2026-01-19T16:36:17.754509",
+      "event": "WARNING_CRITICAL",
+      "tool_count": 250
+    },
+    {
+      "timestamp": "2026-01-19T16:37:30.131189",
+      "event": "WARNING_CRITICAL",
+      "tool_count": 260
+    },
+    {
+      "timestamp": "2026-01-19T16:38:54.952594",
+      "event": "WARNING_CRITICAL",
+      "tool_count": 270
+    },
+    {
+      "timestamp": "2026-01-19T16:40:37.563057",
+      "event": "WARNING_CRITICAL",
+      "tool_count": 280
+    },
+    {
+      "timestamp": "2026-01-19T16:43:26.889156",
+      "event": "WARNING_CRITICAL",
+      "tool_count": 290
+    },
+    {
+      "timestamp": "2026-01-19T18:00:09.218560",
+      "event": "WARNING_CRITICAL",
+      "tool_count": 300
+    },
+    {
+      "timestamp": "2026-01-19T18:06:42.111293",
+      "event": "WARNING_CRITICAL",
+      "tool_count": 310
+    },
+    {
+      "timestamp": "2026-01-19T18:54:53.530475",
+      "event": "WARNING_CRITICAL",
+      "tool_count": 320
+    },
+    {
+      "timestamp": "2026-01-19T18:56:25.674716",
+      "event": "WARNING_CRITICAL",
+      "tool_count": 330
+    },
+    {
+      "timestamp": "2026-01-19T18:57:30.030922",
+      "event": "WARNING_CRITICAL",
+      "tool_count": 340
+    },
+    {
+      "timestamp": "2026-01-19T18:59:52.474952",
+      "event": "WARNING_CRITICAL",
+      "tool_count": 350
+    },
+    {
+      "timestamp": "2026-01-19T19:01:05.873340",
+      "event": "WARNING_CRITICAL",
+      "tool_count": 360
+    },
+    {
+      "timestamp": "2026-01-19T19:02:37.263916",
+      "event": "WARNING_CRITICAL",
+      "tool_count": 370
+    },
+    {
+      "timestamp": "2026-01-19T19:03:48.193723",
+      "event": "WARNING_CRITICAL",
+      "tool_count": 380
+    },
+    {
+      "timestamp": "2026-01-19T19:05:26.937867",
+      "event": "WARNING_CRITICAL",
+      "tool_count": 390
+    },
+    {
+      "timestamp": "2026-01-19T19:29:17.296281",
+      "event": "WARNING_CRITICAL",
+      "tool_count": 400
+    },
+    {
+      "timestamp": "2026-01-19T19:31:17.705515",
+      "event": "WARNING_CRITICAL",
+      "tool_count": 410
+    },
+    {
+      "timestamp": "2026-01-19T19:32:39.998317",
+      "event": "WARNING_CRITICAL",
+      "tool_count": 420
+    },
+    {
+      "timestamp": "2026-01-19T20:24:24.181037",
+      "event": "WARNING_CRITICAL",
+      "tool_count": 430
+    }
+  ]
 }

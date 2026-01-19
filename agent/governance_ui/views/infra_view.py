@@ -289,5 +289,8 @@ def build_infra_view() -> None:
             # System stats
             build_system_stats()
 
+            # MCP server status (UI-AUDIT-011)
+            build_mcp_status_panel()
+
             # Recovery actions
             build_recovery_panel()

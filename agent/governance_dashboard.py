@@ -268,6 +268,7 @@ class GovernanceDashboard:
             load_infra_status = loaders['load_infra_status']
             load_workflow_status = loaders['load_workflow_status']
             load_tests_data = loaders['load_tests_data']
+            load_sessions_list = loaders['load_sessions_list']
 
             # Initialize additional state for forms and filters
             self._state.show_rule_detail = False
@@ -370,6 +371,8 @@ class GovernanceDashboard:
                     # Load available tasks for agent backlog (TODO-6)
                     load_backlog_data()
                 elif active_view == 'executive':
+                    # Auto-load sessions list for dropdown (UI-AUDIT-007 fix)
+                    load_sessions_list()
                     # Auto-load executive report on view change (GAP-UI-044)
                     load_executive_report_data()
                 elif active_view == 'infra':

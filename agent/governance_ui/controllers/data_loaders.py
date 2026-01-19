@@ -330,13 +330,26 @@ def register_data_loader_controllers(
 
         # Load stats from healthcheck state
         state_file = Path(__file__).parent.parent.parent.parent / ".claude/hooks/.healthcheck_state.json"
-        stats = {"memory_pct": 0, "python_procs": 0, "frankel_hash": "--------", "last_check": "Never"}
+        stats = {
+            "memory_pct": 0,
+            "python_procs": 0,
+            "frankel_hash": "--------",
+            "last_check": "Never",
+            "mcp_servers": {}  # Per UI-AUDIT-011
+        }
         try:
             if state_file.exists():
                 with open(state_file) as f:
                     hc_state = json.load(f)
                 stats["frankel_hash"] = hc_state.get("master_hash", "--------")
                 stats["last_check"] = hc_state.get("last_check", "Never")[:19]
+                # Extract MCP server status from components (UI-AUDIT-011)
+                components = hc_state.get("components", {})
+                # MCP servers tracked by healthcheck
+                mcp_names = ["claude-mem", "gov-core", "gov-agents", "gov-sessions", "gov-tasks"]
+                for name in mcp_names:
+                    if name in components:
+                        stats["mcp_servers"][name] = components[name]
         except Exception:
             pass
 
@@ -528,6 +541,30 @@ def register_data_loader_controllers(
         state.audit_loading = True
         load_audit_trail()
 
+    # =========================================================================
+    # SESSIONS LIST LOADER (UI-AUDIT-007: Executive dropdown fix)
+    # =========================================================================
+
+    def load_sessions_list():
+        """Load sessions list for dropdowns. Per UI-AUDIT-007."""
+        try:
+            with httpx.Client(timeout=10.0) as client:
+                response = client.get(f"{api_base_url}/api/sessions?limit=100")
+                if response.status_code == 200:
+                    data = response.json()
+                    # Handle paginated response (items) or raw list
+                    state.sessions = data.get("items", data) if isinstance(data, dict) else data
+        except Exception as e:
+            print(f"Error loading sessions: {e}")
+            # Don't overwrite if we have data
+            if not state.sessions:
+                state.sessions = []
+
+    @ctrl.trigger("load_sessions_list")
+    def trigger_load_sessions_list():
+        """Trigger for loading sessions list."""
+        load_sessions_list()
+
     # Return loaders for internal use
     return {
         'load_trust_data': load_trust_data,
@@ -537,4 +574,5 @@ def register_data_loader_controllers(
         'load_infra_status': load_infra_status,
         'load_workflow_status': load_workflow_status,
         'load_audit_trail': load_audit_trail,
+        'load_sessions_list': load_sessions_list,
     }

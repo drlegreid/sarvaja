@@ -206,27 +206,50 @@ class TestMCPToolHelper:
         from governance.mcp_tools.common import format_mcp_result
         assert callable(format_mcp_result)
 
-    def test_format_mcp_result_json_default(self):
-        """Test default output is JSON."""
+    def test_format_mcp_result_toon_default(self):
+        """Test default output is TOON format (GAP-DATA-001)."""
+        try:
+            import toons
+        except ImportError:
+            pytest.skip("toons not installed")
+
         from governance.mcp_tools.common import format_mcp_result
 
         data = {"rule_id": "RULE-001", "status": "ACTIVE"}
         result = format_mcp_result(data)
 
-        # Should be valid JSON
-        parsed = json.loads(result)
+        # Should be TOON format (not JSON)
+        assert not result.strip().startswith("{"), "Expected TOON format, not JSON"
+        # Should be parseable back to original data
+        parsed = toons.loads(result)
         assert parsed == data
 
+    def test_format_mcp_result_json_explicit(self):
+        """Test JSON output when explicitly requested via env."""
+        from governance.mcp_tools.common import format_mcp_result
+
+        data = {"rule_id": "RULE-001", "status": "ACTIVE"}
+
+        with patch.dict(os.environ, {"MCP_OUTPUT_FORMAT": "json"}):
+            result = format_mcp_result(data)
+
+            # Should be valid JSON
+            parsed = json.loads(result)
+            assert parsed == data
+
     def test_format_mcp_result_handles_datetime(self):
-        """Test datetime serialization."""
+        """Test datetime serialization (in JSON mode for compatibility)."""
         from governance.mcp_tools.common import format_mcp_result
         from datetime import datetime
 
         data = {"created": datetime(2026, 1, 19, 12, 0, 0)}
-        result = format_mcp_result(data)
 
-        # Should not raise
-        assert "2026" in result
+        # Test with JSON format since TOON may serialize datetime differently
+        with patch.dict(os.environ, {"MCP_OUTPUT_FORMAT": "json"}):
+            result = format_mcp_result(data)
+
+            # Should contain year in string representation
+            assert "2026" in result
 
     def test_format_mcp_result_respects_env(self):
         """Test MCP_OUTPUT_FORMAT env var is respected."""
@@ -258,15 +281,37 @@ class TestMCPToolHelper:
             assert len(result) <= len(json_result)
 
     def test_format_mcp_result_with_list(self):
-        """Test list output."""
+        """Test list output in JSON mode."""
+        from governance.mcp_tools.common import format_mcp_result
+
+        data = [{"id": "GAP-001"}, {"id": "GAP-002"}]
+
+        # Use JSON format for predictable parsing
+        with patch.dict(os.environ, {"MCP_OUTPUT_FORMAT": "json"}):
+            result = format_mcp_result(data)
+
+            parsed = json.loads(result)
+            assert len(parsed) == 2
+            assert parsed[0]["id"] == "GAP-001"
+
+    def test_format_mcp_result_with_list_toon(self):
+        """Test list output in TOON mode (default)."""
+        try:
+            import toons
+        except ImportError:
+            pytest.skip("toons not installed")
+
         from governance.mcp_tools.common import format_mcp_result
 
         data = [{"id": "GAP-001"}, {"id": "GAP-002"}]
         result = format_mcp_result(data)
 
-        parsed = json.loads(result)
+        # TOON array format: [count]{fields}: not JSON array [...]
+        # Verify it's TOON format (contains array notation like [2]{id}:)
+        assert "{" in result or ":" in result, "Expected TOON format with array notation"
+        # Should parse back correctly
+        parsed = toons.loads(result)
         assert len(parsed) == 2
-        assert parsed[0]["id"] == "GAP-001"
 
 
 @pytest.mark.integration

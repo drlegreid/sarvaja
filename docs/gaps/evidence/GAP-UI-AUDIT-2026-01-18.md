@@ -300,7 +300,7 @@ Per TASK-LIFE-01-v1 semantics:
 | UI-AUDIT-005 | Decide: Merge vs clarify Task tabs | OPEN | NONE |
 | UI-AUDIT-006 | Assess Strategic Decisions tab value | OPEN | NONE |
 | UI-AUDIT-007 | Fix Executive Report dropdown | OPEN | NONE |
-| UI-AUDIT-008 | Add health hash to Infrastructure view | OPEN | NONE |
+| UI-AUDIT-008 | Add health hash to Infrastructure view | CLOSED | IMPLEMENTED - infra_view.py displays frankel_hash from healthcheck state |
 
 ### P3 - MEDIUM (Functional Gaps)
 

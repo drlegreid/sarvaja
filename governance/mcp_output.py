@@ -19,7 +19,9 @@ Usage:
     result = format_output(data, format=OutputFormat.AUTO)
 
 Environment Variables:
-    MCP_OUTPUT_FORMAT: "json" (default) or "toon"
+    MCP_OUTPUT_FORMAT: "toon" (default) or "json" (explicit override)
+
+Per GAP-DATA-001: TOON is implicit default, JSON via MCP_OUTPUT_FORMAT=json.
 """
 
 import json
@@ -61,11 +63,15 @@ def _get_toons():
 
 
 def _get_default_format() -> OutputFormat:
-    """Get default format from environment."""
-    env_format = os.getenv("MCP_OUTPUT_FORMAT", "json").lower()
-    if env_format == "toon":
-        return OutputFormat.TOON
-    return OutputFormat.JSON
+    """Get default format from environment.
+
+    TOON is default for token efficiency (GAP-DATA-001).
+    Set MCP_OUTPUT_FORMAT=json to override.
+    """
+    env_format = os.getenv("MCP_OUTPUT_FORMAT", "toon").lower()
+    if env_format == "json":
+        return OutputFormat.JSON
+    return OutputFormat.TOON
 
 
 # Default array limit for context efficiency (GAP-CONTEXT-ROT-001)

@@ -325,13 +325,13 @@ def build_rule_detail_view() -> None:
                     )
                 with v3.VCardText():
                     # No tasks message
-                    with html.Div(
+                    html.Div(
+                        "No tasks implementing this rule",
                         v_if="!rule_implementing_tasks_loading && rule_implementing_tasks.length === 0",
                         classes="text-grey",
                         __properties=["data-testid"],
                         **{"data-testid": "rule-no-tasks"}
-                    ):
-                        html.Content("No tasks implementing this rule")
+                    )
 
                     # Task list
                     with v3.VList(

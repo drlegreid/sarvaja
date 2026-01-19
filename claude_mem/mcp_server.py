@@ -26,7 +26,6 @@ Or add to MCP config:
     }
 """
 
-import json
 import os
 from datetime import datetime
 from typing import List, Optional
@@ -35,6 +34,8 @@ from typing import List, Optional
 os.environ["ANONYMIZED_TELEMETRY"] = "false"
 
 from mcp.server.fastmcp import FastMCP
+
+from governance.mcp_output import format_output, OutputFormat
 
 # Initialize MCP server
 mcp = FastMCP("claude-mem")
@@ -96,11 +97,11 @@ def chroma_query_documents(
     """
     client = _get_client()
     if client is None:
-        return json.dumps({"error": "ChromaDB not available", "host": CHROMADB_HOST, "port": CHROMADB_PORT})
+        return format_output({"error": "ChromaDB not available", "host": CHROMADB_HOST, "port": CHROMADB_PORT})
 
     collection = _get_or_create_collection(client)
     if collection is None:
-        return json.dumps({"error": "Could not access collection"})
+        return format_output({"error": "Could not access collection"})
 
     try:
         # Build query kwargs
@@ -113,16 +114,16 @@ def chroma_query_documents(
 
         results = collection.query(**kwargs)
 
-        return json.dumps({
+        return format_output({
             "ids": results.get("ids", [[]]),
             "documents": results.get("documents", [[]]),
             "metadatas": results.get("metadatas", [[]]),
             "distances": results.get("distances", [[]]),
             "count": len(results.get("ids", [[]])[0]) if results.get("ids") else 0
-        }, indent=2, default=str)
+        })
 
     except Exception as e:
-        return json.dumps({"error": str(e)})
+        return format_output({"error": str(e)})
 
 
 @mcp.tool()
@@ -141,24 +142,24 @@ def chroma_get_documents(ids: List[str]) -> str:
     """
     client = _get_client()
     if client is None:
-        return json.dumps({"error": "ChromaDB not available"})
+        return format_output({"error": "ChromaDB not available"})
 
     collection = _get_or_create_collection(client)
     if collection is None:
-        return json.dumps({"error": "Could not access collection"})
+        return format_output({"error": "Could not access collection"})
 
     try:
         results = collection.get(ids=ids)
 
-        return json.dumps({
+        return format_output({
             "ids": results.get("ids", []),
             "documents": results.get("documents", []),
             "metadatas": results.get("metadatas", []),
             "count": len(results.get("ids", []))
-        }, indent=2, default=str)
+        })
 
     except Exception as e:
-        return json.dumps({"error": str(e)})
+        return format_output({"error": str(e)})
 
 
 @mcp.tool()
@@ -191,11 +192,11 @@ def chroma_add_documents(
     """
     client = _get_client()
     if client is None:
-        return json.dumps({"error": "ChromaDB not available"})
+        return format_output({"error": "ChromaDB not available"})
 
     collection = _get_or_create_collection(client)
     if collection is None:
-        return json.dumps({"error": "Could not access collection"})
+        return format_output({"error": "Could not access collection"})
 
     try:
         # Generate IDs if not provided
@@ -218,15 +219,15 @@ def chroma_add_documents(
             metadatas=metadatas
         )
 
-        return json.dumps({
+        return format_output({
             "success": True,
             "ids": ids,
             "count": len(ids),
             "project": project
-        }, indent=2)
+        })
 
     except Exception as e:
-        return json.dumps({"error": str(e)})
+        return format_output({"error": str(e)})
 
 
 @mcp.tool()
@@ -245,23 +246,23 @@ def chroma_delete_documents(ids: List[str]) -> str:
     """
     client = _get_client()
     if client is None:
-        return json.dumps({"error": "ChromaDB not available"})
+        return format_output({"error": "ChromaDB not available"})
 
     collection = _get_or_create_collection(client)
     if collection is None:
-        return json.dumps({"error": "Could not access collection"})
+        return format_output({"error": "Could not access collection"})
 
     try:
         collection.delete(ids=ids)
 
-        return json.dumps({
+        return format_output({
             "success": True,
             "deleted": ids,
             "count": len(ids)
-        }, indent=2)
+        })
 
     except Exception as e:
-        return json.dumps({"error": str(e)})
+        return format_output({"error": str(e)})
 
 
 @mcp.tool()
@@ -274,14 +275,14 @@ def chroma_health() -> str:
     """
     client = _get_client()
     if client is None:
-        return json.dumps({
+        return format_output({
             "status": "unhealthy",
             "error": "Cannot connect to ChromaDB",
             "host": CHROMADB_HOST,
             "port": CHROMADB_PORT,
             "action_required": "START_SERVICES",
             "recovery_hint": "podman compose --profile cpu up -d chromadb"
-        }, indent=2)
+        })
 
     try:
         # Check heartbeat
@@ -291,21 +292,21 @@ def chroma_health() -> str:
         collection = _get_or_create_collection(client)
         count = collection.count() if collection else 0
 
-        return json.dumps({
+        return format_output({
             "status": "healthy",
             "host": CHROMADB_HOST,
             "port": CHROMADB_PORT,
             "collection": COLLECTION_NAME,
             "document_count": count
-        }, indent=2)
+        })
 
     except Exception as e:
-        return json.dumps({
+        return format_output({
             "status": "unhealthy",
             "error": str(e),
             "host": CHROMADB_HOST,
             "port": CHROMADB_PORT
-        }, indent=2)
+        })
 
 
 @mcp.tool()
