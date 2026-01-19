@@ -1,5 +1,4 @@
 """
-from governance.mcp_tools.common import format_mcp_result
 DSM Tracker MCP Tools
 =====================
 Deep Sleep Protocol operations (RULE-012).
@@ -8,8 +7,9 @@ Per RULE-012: DSP Semantic Code Structure
 Per FP + Digital Twin Paradigm: DSM entity module
 """
 
-import json
 from typing import Optional, Union, Dict, Any
+
+from governance.mcp_tools.common import format_mcp_result
 
 # Import DSM tracker (with fallback)
 try:

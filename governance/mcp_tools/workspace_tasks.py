@@ -1,5 +1,4 @@
 """
-from governance.mcp_tools.common import format_mcp_result
 Workspace Task Scanning MCP Tools.
 
 Per P10.10: Workspace Task Capture.
@@ -13,9 +12,10 @@ Tools:
 Created: 2026-01-17 (extracted from workspace.py)
 """
 
-import json
 import logging
 import os
+
+from governance.mcp_tools.common import format_mcp_result
 
 logger = logging.getLogger(__name__)
 

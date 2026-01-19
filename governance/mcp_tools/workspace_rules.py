@@ -1,5 +1,4 @@
 """
-from governance.mcp_tools.common import format_mcp_result
 Workspace Rule-Document Linking MCP Tools.
 
 Per P10.8: TypeDB-Filesystem Rule Linking.
@@ -15,8 +14,9 @@ Tools:
 Created: 2026-01-17 (extracted from workspace.py)
 """
 
-import json
 import logging
+
+from governance.mcp_tools.common import format_mcp_result
 
 logger = logging.getLogger(__name__)
 

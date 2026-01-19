@@ -1,5 +1,4 @@
 """
-from governance.mcp_tools.common import format_mcp_result
 Session Linking MCP Tools
 =========================
 Entity linking operations for sessions.
@@ -13,7 +12,7 @@ Extracted from sessions.py per modularization plan.
 Created: 2026-01-03
 """
 
-import json
+from governance.mcp_tools.common import format_mcp_result
 
 # Check TypeDB availability
 try:

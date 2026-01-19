@@ -10,10 +10,10 @@ Prevents the anti-pattern of creating self-referential todo lists that
 ignore the actual project backlog.
 """
 
-import json
 from typing import List
 from governance.utils.gap_parser import GapParser, get_gap_summary
 from governance.utils.work_item import WorkItem, WorkItemType, sort_by_priority
+from governance.mcp_tools.common import format_mcp_result
 
 
 def register_gap_tools(mcp) -> None:

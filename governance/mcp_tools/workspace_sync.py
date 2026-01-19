@@ -12,9 +12,10 @@ Created: 2026-01-17 (extracted from workspace.py)
 Refactored: 2026-01-19 (removed deprecated functions, inlined aliases)
 """
 
-import json
 import logging
 import os
+
+from governance.mcp_tools.common import format_mcp_result
 
 logger = logging.getLogger(__name__)
 

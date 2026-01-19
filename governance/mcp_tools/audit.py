@@ -12,8 +12,9 @@ Provides tools for:
 - Getting audit statistics
 """
 
-import json
 from typing import Optional
+
+from governance.mcp_tools.common import format_mcp_result
 
 
 def register_audit_tools(mcp) -> None:
