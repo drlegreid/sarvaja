@@ -224,6 +224,38 @@ async def update_rule(rule_id: str, rule: RuleUpdate):
         raise HTTPException(status_code=500, detail=str(e))
 
 
+@router.get("/rules/{rule_id}/tasks")
+async def get_rule_tasks(rule_id: str):
+    """
+    Get tasks implementing a specific rule.
+
+    Per UI-AUDIT-003: Rule↔task traceability for dashboard.
+    Per GAP-UI-AUDIT-001: Rules view should show implementing tasks.
+    Per GAP-MCP-008: Accepts both legacy (RULE-XXX) and semantic IDs.
+    """
+    client = get_client()
+    if not client:
+        raise HTTPException(status_code=503, detail="TypeDB not connected")
+
+    try:
+        # Try direct lookup first
+        tasks = client.get_tasks_for_rule(rule_id)
+
+        # If no results, try legacy format conversion
+        if not tasks:
+            legacy_id = normalize_rule_id(rule_id)
+            if legacy_id != rule_id:
+                tasks = client.get_tasks_for_rule(legacy_id)
+
+        return {
+            "rule_id": rule_id,
+            "implementing_tasks": tasks,
+            "count": len(tasks)
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 @router.delete("/rules/{rule_id}", status_code=204)
 async def delete_rule(rule_id: str, archive: bool = Query(True, description="Archive before delete")):
     """Delete a rule (archives by default). Per GAP-MCP-008: Accepts semantic IDs."""

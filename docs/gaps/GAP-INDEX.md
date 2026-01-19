@@ -120,7 +120,7 @@
 | GAP-MCP-001 | RESOLVED | gov-sessions MCP - print() to stderr fix | HIGH | integration | [evidence/GAP-MCP-001.md](evidence/GAP-MCP-001.md) - FIXED 2026-01-17 |
 | GAP-MCP-002 | RESOLVED | gov-tasks MCP - print() to stderr fix | HIGH | integration | [evidence/GAP-MCP-002.md](evidence/GAP-MCP-002.md) - FIXED 2026-01-17 |
 | GAP-MCP-003 | RESOLVED | REST API testing - 9 tests passing (health, rules, tasks, sessions) | MEDIUM | testing | [tests/integration/test_mcp_rest_sessions.py](../../tests/integration/test_mcp_rest_sessions.py) - FIXED 2026-01-18 |
-| GAP-DATA-001 | IMPLEMENTED | Evaluate TOON vs JSON for MCP output format | MEDIUM | optimization | [evidence/GAP-DATA-001.md](evidence/GAP-DATA-001.md) - mcp_output.py created, 13 tests pass |
+| GAP-DATA-001 | PARTIAL | Evaluate TOON vs JSON for MCP output format | MEDIUM | optimization | [evidence/GAP-DATA-001.md](evidence/GAP-DATA-001.md) - Phase 1-2 done (module+tests), Phase 3-4 pending (MCP integration) |
 | GAP-API-001 | RESOLVED | POST /api/tasks returns 201 but doesn't persist to TypeDB | HIGH | data_integrity | FIXED 2026-01-16: Schema migration added task-resolution attribute. 9 tests pass. |
 | GAP-VALIDATE-001 | RESOLVED | Integration validation suite (REST + Playwright + tests) | HIGH | testing | [evidence/GAP-VALIDATE-001.md](evidence/GAP-VALIDATE-001.md) - FIXED 2026-01-17 |
 | GAP-MCP-PAGING-001 | MITIGATED | MCP tools need paging/truncation for large outputs (791K+ chars) | MEDIUM | tooling | [evidence/GAP-MCP-PAGING-001.md](evidence/GAP-MCP-PAGING-001.md) - Workarounds documented, external MCPs not controllable |

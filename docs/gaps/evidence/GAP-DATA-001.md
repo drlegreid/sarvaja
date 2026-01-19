@@ -1,8 +1,10 @@
 # GAP-DATA-001: TOON vs JSON for MCP Output Format
 
-**Priority:** MEDIUM | **Category:** optimization | **Status:** IMPLEMENTED
-**Created:** 2026-01-16 | **Updated:** 2026-01-19 | **Implemented:** 2026-01-19
+**Priority:** MEDIUM | **Category:** optimization | **Status:** PARTIAL
+**Created:** 2026-01-16 | **Updated:** 2026-01-19 | **Phase 1-2 Done:** 2026-01-19
 **Depends On:** None
+
+> **PARTIAL Status:** Module implemented (Phase 1-2). MCP integration (Phase 3-4) pending.
 
 ---
 
@@ -155,11 +157,19 @@ result = format_output(data, format=OutputFormat.AUTO)
 | Array of 10 | ~500 chars | ~350 chars | ~30% |
 | Nested structure | varies | varies | 20-40% |
 
-### Next Steps (Phase 3-4)
+### Next Steps (Phase 3-4) - PENDING
 
-- [ ] Integrate into MCP common module
-- [ ] Add `MCP_OUTPUT_FORMAT` env var support in containers
-- [ ] Validate Claude correctly parses TOON output
+**Phase 3: MCP Tool Integration (2 hours)**
+- [ ] Update `governance/mcp_tools/common.py` to use `format_output()`
+- [ ] Update all MCP tool return statements to use format wrapper
+- [ ] Add `MCP_OUTPUT_FORMAT` env var to container configs
+- [ ] Default to JSON for backward compatibility, TOON opt-in
+
+**Phase 4: Validation (1 hour)**
+- [ ] Validate Claude Code correctly parses TOON responses
+- [ ] Compare token counts in real session: JSON vs TOON
+- [ ] Run E2E test with TOON format enabled
+- [ ] Document any Claude parsing edge cases
 
 ---
 

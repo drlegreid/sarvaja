@@ -300,6 +300,75 @@ def build_rule_detail_view() -> None:
                         prepend_icon="mdi-link"
                     )
 
+            # Implementing tasks (UI-AUDIT-003)
+            with v3.VCard(
+                variant="outlined",
+                classes="mt-4",
+                __properties=["data-testid"],
+                **{"data-testid": "rule-implementing-tasks"}
+            ):
+                with v3.VCardTitle(classes="d-flex align-center", density="compact"):
+                    html.Span("Implementing Tasks")
+                    v3.VSpacer()
+                    v3.VProgressCircular(
+                        v_if="rule_implementing_tasks_loading",
+                        indeterminate=True,
+                        size=20,
+                        width=2
+                    )
+                    v3.VChip(
+                        v_if="!rule_implementing_tasks_loading",
+                        v_text="rule_implementing_tasks.length",
+                        size="x-small",
+                        color="primary",
+                        classes="ml-2"
+                    )
+                with v3.VCardText():
+                    # No tasks message
+                    html.Div(
+                        v_if="!rule_implementing_tasks_loading && rule_implementing_tasks.length === 0",
+                        classes="text-grey",
+                        __properties=["data-testid"],
+                        **{"data-testid": "rule-no-tasks"}
+                    ):
+                        html.Content("No tasks implementing this rule")
+
+                    # Task list
+                    with v3.VList(
+                        v_if="rule_implementing_tasks.length > 0",
+                        density="compact"
+                    ):
+                        with v3.VListItem(
+                            v_for="task in rule_implementing_tasks",
+                            **{":key": "task.task_id"},
+                            __properties=["data-testid"],
+                            **{"data-testid": "implementing-task-item"}
+                        ):
+                            with html.Template(v_slot_prepend=True):
+                                v3.VIcon("mdi-checkbox-marked-circle-outline", color="success", size="small")
+                            with v3.VListItemTitle():
+                                html.Span("{{ task.task_id }}: {{ task.name }}")
+                            with v3.VListItemSubtitle():
+                                v3.VChip(
+                                    v_text="task.status",
+                                    size="x-small",
+                                    v_bind_color=(
+                                        "task.status === 'DONE' ? 'success' : "
+                                        "task.status === 'IN_PROGRESS' ? 'warning' : 'grey'"
+                                    ),
+                                    variant="tonal",
+                                    classes="mr-1"
+                                )
+                                v3.VChip(
+                                    v_text="task.priority",
+                                    size="x-small",
+                                    v_bind_color=(
+                                        "task.priority === 'CRITICAL' ? 'error' : "
+                                        "task.priority === 'HIGH' ? 'warning' : 'grey'"
+                                    ),
+                                    variant="tonal"
+                                )
+
 
 def build_rule_form_view() -> None:
     """Build the rule create/edit form view."""

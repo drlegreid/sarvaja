@@ -79,6 +79,10 @@ def get_initial_state() -> Dict[str, Any]:
         'show_rule_form': False,
         'rule_form_mode': 'create',
 
+        # Rule implementing tasks (UI-AUDIT-003)
+        'rule_implementing_tasks': [],
+        'rule_implementing_tasks_loading': False,
+
         # Filter state
         'rules_status_filter': None,
         'rules_category_filter': None,

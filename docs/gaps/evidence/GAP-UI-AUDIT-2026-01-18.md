@@ -289,7 +289,7 @@ Per TASK-LIFE-01-v1 semantics:
 |----|------|--------|------------|
 | UI-AUDIT-001 | Backfill task↔session linkages in TypeDB (data doesn't exist) | OPEN | NONE |
 | UI-AUDIT-002 | Expose task↔commit linkage in API response | CLOSED | IMPLEMENTED |
-| UI-AUDIT-003 | Add rule↔task linkage to Rules view | OPEN | NONE |
+| UI-AUDIT-003 | Add rule↔task linkage to Rules view | CLOSED | IMPLEMENTED (2026-01-19) |
 | UI-AUDIT-004 | Make audit trail filterable by entity | OPEN | NONE |
 | UI-AUDIT-005 | Trace console: Show request/response payloads | CLOSED | IMPLEMENTED |
 
@@ -379,6 +379,39 @@ LINKAGE RATES:
 | Backfill task→session | P1 | Run `scripts/backfill_task_session_from_evidence.py --apply` | ✅ DONE |
 | Link commits to tasks | P2 | Use `governance_task_link_commit()` MCP tool | PENDING |
 | Monitor test suite | Ongoing | Run tests weekly to track improvement | ✅ 6/6 passing |
+| Rule→task linkage in UI | P1 | UI-AUDIT-003 implementation | ✅ DONE (2026-01-19) |
+
+### UI-AUDIT-003 Implementation Details (2026-01-19)
+
+**Problem:** Rules view showed no traceability to implementing tasks.
+
+**Solution:**
+1. **TypeDB Query:** Added `get_tasks_for_rule()` method to `governance/typedb/queries/rules/read.py`
+2. **API Endpoint:** Added `GET /api/rules/{rule_id}/tasks` to `governance/routes/rules/crud.py`
+3. **UI State:** Added `rule_implementing_tasks` and `rule_implementing_tasks_loading` to initial state
+4. **Handler:** Added `register_rule_detail_handlers()` to auto-load tasks when rule detail opens
+5. **View:** Added "Implementing Tasks" card to rule detail view in `agent/governance_ui/views/rules_view.py`
+
+**Validation:**
+```
+# TypeDB query test
+Tasks for RULE-007: 2 found
+  - P2.4: Governance MCP Server (DONE)
+  - P4.1: MCP to Agno Wrapper (DONE)
+Tasks for RULE-011: 1 found
+
+# API endpoint test
+Result: {'rule_id': 'RULE-007', 'implementing_tasks': [...], 'count': 2}
+```
+
+**Files Modified:**
+- `governance/typedb/queries/rules/read.py` - Added `get_tasks_for_rule()`
+- `governance/routes/rules/crud.py` - Added `/rules/{rule_id}/tasks` endpoint
+- `agent/governance_ui/state/initial.py` - Added state variables
+- `agent/governance_ui/handlers/common_handlers.py` - Added detail handlers
+- `agent/governance_ui/handlers/__init__.py` - Export handler
+- `agent/governance_ui/controllers/__init__.py` - Register handler
+- `agent/governance_ui/views/rules_view.py` - Added implementing tasks card
 
 ### 2026-01-19 EPIC-STABILITY Backfill Results
 

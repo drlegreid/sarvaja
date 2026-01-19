@@ -213,3 +213,50 @@ class RuleReadQueries:
             )
             for r in results
         ]
+
+    def get_tasks_for_rule(self, rule_id: str) -> List[dict]:
+        """
+        Get tasks implementing a specific rule.
+
+        Per UI-AUDIT-003: Rule↔task traceability for dashboard.
+        Per GAP-UI-AUDIT-001: Rules view should show implementing tasks.
+
+        Args:
+            rule_id: Rule ID (e.g., "RULE-001" or "SESSION-EVID-01-v1")
+
+        Returns:
+            List of task dicts with id, name, status, priority
+        """
+        query = f"""
+            match
+                $r isa rule-entity, has rule-id "{rule_id}";
+                (implementing-task: $t, implemented-rule: $r) isa implements-rule;
+                $t has task-id $tid,
+                   has task-name $tname,
+                   has task-status $tstat;
+        """
+        results = self._execute_query(query)
+
+        tasks = []
+        for r in results:
+            task_id = r.get("tid")
+            # Get optional priority
+            priority = "MEDIUM"
+            try:
+                pq = f'''
+                    match $t isa task, has task-id "{task_id}", has priority $p;
+                '''
+                pr = self._execute_query(pq)
+                if pr:
+                    priority = pr[0].get("p", "MEDIUM")
+            except Exception:
+                pass
+
+            tasks.append({
+                "task_id": task_id,
+                "name": r.get("tname"),
+                "status": r.get("tstat"),
+                "priority": priority
+            })
+
+        return tasks
