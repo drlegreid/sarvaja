@@ -226,10 +226,13 @@ def pytest_addoption(parser):
 
 def pytest_configure(config):
     """Register custom markers and configure reporting mode."""
-    # Register markers
-    config.addinivalue_line("markers", "integration: Integration tests requiring running services")
-    config.addinivalue_line("markers", "unit: Unit tests that don't require services")
+    # Register markers (matching pytest.ini)
+    config.addinivalue_line("markers", "unit: Unit tests (no external deps, container-safe)")
+    config.addinivalue_line("markers", "integration: Integration tests (needs TypeDB/ChromaDB)")
+    config.addinivalue_line("markers", "e2e: End-to-end tests (needs services + may need browser)")
+    config.addinivalue_line("markers", "browser: Browser tests (needs pytest-playwright, run locally)")
     config.addinivalue_line("markers", "slow: Slow tests (model inference)")
+    config.addinivalue_line("markers", "api: API tests (needs REST server on :8082)")
     config.addinivalue_line("markers", "heuristic(name): Exploratory test heuristic (SFDIPOT.*, CRUCSS.*)")
 
     # Determine report mode
@@ -263,6 +266,38 @@ def pytest_configure(config):
                 print(f"[CLEANUP] Removed {task_stats['deleted']} tasks, {session_stats['deleted']} sessions")
     except (ValueError, AttributeError):
         pass
+
+
+# =============================================================================
+# Auto-mark tests based on path (GAP-TEST-PROFILES)
+# =============================================================================
+
+def pytest_collection_modifyitems(config, items):
+    """Auto-mark tests based on their file path.
+
+    Path patterns:
+    - tests/e2e/* -> e2e marker
+    - tests/integration/* -> integration marker
+    - tests/unit/* -> unit marker
+    - *_e2e.py -> e2e marker
+    - Files importing pytest_playwright -> browser marker
+    """
+    for item in items:
+        # Get relative path
+        rel_path = str(item.fspath)
+
+        # Auto-mark based on directory
+        if "/e2e/" in rel_path or "_e2e.py" in rel_path:
+            item.add_marker(pytest.mark.e2e)
+            # Check if it's a browser test (has playwright imports)
+            if hasattr(item, 'module'):
+                module_source = getattr(item.module, '__file__', '')
+                if 'playwright' in str(module_source).lower():
+                    item.add_marker(pytest.mark.browser)
+        elif "/integration/" in rel_path:
+            item.add_marker(pytest.mark.integration)
+        elif "/unit/" in rel_path:
+            item.add_marker(pytest.mark.unit)
 
 
 # =============================================================================

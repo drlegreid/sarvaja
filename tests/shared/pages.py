@@ -13,9 +13,10 @@ Page objects provide:
 from typing import Optional, List
 from playwright.sync_api import Page, expect
 
+from shared.constants import APP_TITLE, DASHBOARD_URL, API_BASE_URL
 
-DASHBOARD_URL = "http://localhost:8081"
-API_URL = "http://localhost:8082"
+# Re-export for backward compatibility
+API_URL = API_BASE_URL
 
 
 class BasePage:
@@ -61,7 +62,7 @@ class DashboardPage(BasePage):
     def navigate_home(self):
         """Navigate to dashboard home."""
         self.navigate()
-        self.wait_for_text("Sim.ai Governance Dashboard")
+        self.wait_for_text(APP_TITLE)
 
     def click_nav(self, tab: str):
         """Click a navigation tab."""

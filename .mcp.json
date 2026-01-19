@@ -11,12 +11,6 @@
       },
       "_comment": "Fallback memory for AMNESIA recovery per RULE-024"
     },
-    "podman": {
-      "type": "stdio",
-      "command": "/home/oderid/.config/nvm/versions/node/v20.19.6/bin/npx",
-      "args": ["-y", "podman-mcp-server@latest"],
-      "env": {}
-    },
     "rest-api": {
       "type": "stdio",
       "command": "/home/oderid/.config/nvm/versions/node/v20.19.6/bin/npx",
@@ -73,6 +67,22 @@
         "TYPEDB_PORT": "1729"
       },
       "_comment": "Per GAP-MCP-NAMING-001: governance → gov"
+    },
+    "playwright": {
+      "type": "stdio",
+      "command": "/home/oderid/.config/nvm/versions/node/v20.19.6/bin/npx",
+      "args": [
+        "-y",
+        "@playwright/mcp@latest",
+        "--browser",
+        "firefox",
+        "--executable-path",
+        "/home/oderid/.cache/ms-playwright/firefox-1497/firefox/firefox"
+      ],
+      "env": {
+        "PLAYWRIGHT_BROWSERS_PATH": "/home/oderid/.cache/ms-playwright"
+      },
+      "_comment": "E2E UI testing automation"
     }
   }
 }

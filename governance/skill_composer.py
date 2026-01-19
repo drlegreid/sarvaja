@@ -1,24 +1,8 @@
-"""
-Skill Composition Engine (RD-WORKSPACE Phase 3).
-
-Per AGENT-WORKSPACES.md: Composable skills and wisdom for agent workspaces.
-Per RULE-011: Multi-Agent Governance Protocol.
-
-This module helps agent workspaces:
-1. Load rules relevant to their role and skills
-2. Filter wisdom (rules) by tags
-3. Compose skill sets for task delegation
-"""
-
+"""Skill Composition Engine (RD-WORKSPACE Phase 3). Per AGENT-WORKSPACES.md, RULE-011."""
 import json
 from dataclasses import dataclass, field, asdict
 from pathlib import Path
 from typing import List, Dict, Any, Optional, Set
-
-
-# =============================================================================
-# DATA MODELS
-# =============================================================================
 
 @dataclass
 class Skill:
@@ -85,7 +69,6 @@ class Skill:
             evidence_output="\n".join(evidence_lines).strip()
         )
 
-
 @dataclass
 class AgentWisdom:
     """Wisdom (filtered rules) for an agent workspace."""
@@ -105,12 +88,6 @@ class AgentWisdom:
             "skills": [asdict(s) for s in self.skills]
         }
 
-
-# =============================================================================
-# ROLE-TAG MAPPING
-# =============================================================================
-
-# Default tags for each agent role (from AGENT-WORKSPACES.md)
 ROLE_TAG_MAP: Dict[str, List[str]] = {
     "RESEARCH": ["research", "analysis", "exploration", "documentation"],
     "CODING": ["coding", "testing", "architecture", "implementation"],
@@ -126,21 +103,8 @@ ROLE_PRIORITY_FILTER: Dict[str, List[str]] = {
     "SYNC": ["CRITICAL", "HIGH"],
 }
 
-
-# =============================================================================
-# SKILL COMPOSITION
-# =============================================================================
-
 def load_workspace_skills(workspace_path: Path) -> List[Skill]:
-    """
-    Load all skill definitions from a workspace's skills/ directory.
-
-    Args:
-        workspace_path: Path to workspace (e.g., workspaces/research)
-
-    Returns:
-        List of Skill objects
-    """
+    """Load all skill definitions from a workspace's skills/ directory."""
     skills_dir = workspace_path / "skills"
     if not skills_dir.exists():
         return []
@@ -153,21 +117,8 @@ def load_workspace_skills(workspace_path: Path) -> List[Skill]:
 
     return skills
 
-
-def filter_rules_by_tags(
-    rules: List[Dict[str, Any]],
-    tags: Set[str]
-) -> List[Dict[str, Any]]:
-    """
-    Filter rules that have any matching tags.
-
-    Args:
-        rules: List of rule dicts
-        tags: Set of tags to match
-
-    Returns:
-        Filtered list of rules
-    """
+def filter_rules_by_tags(rules: List[Dict[str, Any]], tags: Set[str]) -> List[Dict[str, Any]]:
+    """Filter rules that have any matching tags."""
     result = []
     for rule in rules:
         rule_tags_str = rule.get("tags", "") or ""
@@ -181,21 +132,8 @@ def filter_rules_by_tags(
 
     return result
 
-
-def filter_rules_by_role(
-    rules: List[Dict[str, Any]],
-    agent_role: str
-) -> List[Dict[str, Any]]:
-    """
-    Filter rules applicable to an agent role.
-
-    Args:
-        rules: List of rule dicts
-        agent_role: Agent role (RESEARCH, CODING, CURATOR, SYNC)
-
-    Returns:
-        Filtered list of rules
-    """
+def filter_rules_by_role(rules: List[Dict[str, Any]], agent_role: str) -> List[Dict[str, Any]]:
+    """Filter rules applicable to an agent role."""
     result = []
     role_upper = agent_role.upper()
 
@@ -211,97 +149,26 @@ def filter_rules_by_role(
 
     return result
 
-
-def compose_agent_wisdom(
-    agent_role: str,
-    all_rules: List[Dict[str, Any]],
-    workspace_path: Optional[Path] = None
-) -> AgentWisdom:
-    """
-    Compose wisdom (rules + skills) for an agent workspace.
-
-    Args:
-        agent_role: Agent role (RESEARCH, CODING, CURATOR, SYNC)
-        all_rules: All available rules from TypeDB
-        workspace_path: Optional path to workspace for skills
-
-    Returns:
-        AgentWisdom with filtered rules and loaded skills
-    """
+def compose_agent_wisdom(agent_role: str, all_rules: List[Dict[str, Any]],
+                         workspace_path: Optional[Path] = None) -> AgentWisdom:
+    """Compose wisdom (rules + skills) for an agent workspace."""
     role_upper = agent_role.upper()
-
-    # Get default tags for role
     default_tags = set(ROLE_TAG_MAP.get(role_upper, []))
-
-    # Get priority filter for role
     priority_filter = ROLE_PRIORITY_FILTER.get(role_upper, ["CRITICAL", "HIGH"])
-
-    # Filter rules by tags
     tagged_rules = filter_rules_by_tags(all_rules, default_tags)
-
-    # Filter by role
     role_rules = filter_rules_by_role(tagged_rules, role_upper)
+    filtered_rules = [r for r in role_rules if r.get("priority", "MEDIUM") in priority_filter]
+    skills = load_workspace_skills(workspace_path) if workspace_path and workspace_path.exists() else []
+    return AgentWisdom(agent_role=role_upper, rules=filtered_rules, skills=skills,
+                       rule_filter={"tags": list(default_tags), "priorities": priority_filter, "role": role_upper})
 
-    # Filter by priority
-    filtered_rules = [
-        r for r in role_rules
-        if r.get("priority", "MEDIUM") in priority_filter
-    ]
-
-    # Load skills from workspace
-    skills = []
-    if workspace_path and workspace_path.exists():
-        skills = load_workspace_skills(workspace_path)
-
-    return AgentWisdom(
-        agent_role=role_upper,
-        rules=filtered_rules,
-        skills=skills,
-        rule_filter={
-            "tags": list(default_tags),
-            "priorities": priority_filter,
-            "role": role_upper
-        }
-    )
-
-
-def get_agent_wisdom_json(
-    agent_role: str,
-    all_rules: List[Dict[str, Any]],
-    workspace_path: Optional[Path] = None
-) -> str:
-    """
-    Get agent wisdom as JSON string.
-
-    Args:
-        agent_role: Agent role
-        all_rules: All available rules
-        workspace_path: Optional workspace path
-
-    Returns:
-        JSON string with wisdom data
-    """
-    wisdom = compose_agent_wisdom(agent_role, all_rules, workspace_path)
-    return json.dumps(wisdom.to_dict(), indent=2)
-
-
-# =============================================================================
-# WORKSPACE HELPER
-# =============================================================================
+def get_agent_wisdom_json(agent_role: str, all_rules: List[Dict[str, Any]],
+                          workspace_path: Optional[Path] = None) -> str:
+    """Get agent wisdom as JSON string."""
+    return json.dumps(compose_agent_wisdom(agent_role, all_rules, workspace_path).to_dict(), indent=2)
 
 def get_workspace_path(agent_role: str, project_root: Path = None) -> Path:
-    """
-    Get the workspace path for an agent role.
-
-    Args:
-        agent_role: Agent role (RESEARCH, CODING, CURATOR, SYNC)
-        project_root: Optional project root path
-
-    Returns:
-        Path to workspace directory
-    """
+    """Get the workspace path for an agent role."""
     if project_root is None:
         project_root = Path(__file__).parent.parent
-
-    role_lower = agent_role.lower()
-    return project_root / "workspaces" / role_lower
+    return project_root / "workspaces" / agent_role.lower()

@@ -183,6 +183,22 @@ def register_decision_tools(mcp) -> None:
 
         return json.dumps(result, indent=2)
 
+    # =========================================================================
+    # PHASE 1: Domain-Based Aliases (RD-MCP-TOOL-NAMING)
+    # =========================================================================
+
+    def decision_impacts(decision_id: str) -> str:
+        """Get decision impacts. Alias for governance_get_decision_impacts."""
+        return governance_get_decision_impacts(decision_id)
+
+    def health_check() -> str:
+        """Check governance health. Alias for governance_health."""
+        return governance_health()
+
+    # Register domain-based aliases
+    mcp.tool()(decision_impacts)
+    mcp.tool()(health_check)
+
 
 def _detect_document_entropy() -> list:
     """

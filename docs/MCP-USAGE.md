@@ -11,21 +11,21 @@ Per GAP-019: When to use each MCP
 
 | Need | MCP Tool | When |
 |------|----------|------|
-| Query rules | `governance_query_rules` | Check rule status, category, priority |
-| Create/update rules | `governance_create_rule`, `governance_update_rule` | CRUD operations |
-| Trust scores | `governance_get_trust_score` | Check agent reliability |
-| Submit proposals | `governance_submit_proposal` | Request governance changes |
-| Vote on proposals | `governance_vote_on_proposal` | Multi-agent consensus |
-| View sessions | `governance_list_sessions` | Evidence trail lookup |
-| Search evidence | `governance_search_evidence` | Find decision context |
-| Task management | `governance_list_tasks` | Backlog operations |
-| Agent operations | `governance_list_agents` | Agent registry |
+| Query rules | `rules_query` | Check rule status, category, priority |
+| Create/update rules | `rule_create`, `rule_update` | CRUD operations |
+| Trust scores | `agent_trust_score` | Check agent reliability |
+| Submit proposals | `proposal_create` | Request governance changes |
+| Vote on proposals | `proposal_vote` | Multi-agent consensus |
+| View sessions | `sessions_list` | Evidence trail lookup |
+| Search evidence | `evidence_search` | Find decision context |
+| Task management | `tasks_list` | Backlog operations |
+| Agent operations | `agents_list` | Agent registry |
 
 ---
 
 ## 1. Rules Tools
 
-### governance_query_rules
+### rules_query
 Query governance rules from TypeDB.
 
 **When to use:**
@@ -36,13 +36,13 @@ Query governance rules from TypeDB.
 
 ```python
 # Example: Find active governance rules
-result = governance_query_rules(category="governance", status="ACTIVE")
+result = rules_query(category="governance", status="ACTIVE")
 
 # Example: Find critical rules
-result = governance_query_rules(priority="CRITICAL")
+result = rules_query(priority="CRITICAL")
 ```
 
-### governance_get_rule
+### rule_get
 Get detailed information about a specific rule.
 
 **When to use:**
@@ -52,10 +52,10 @@ Get detailed information about a specific rule.
 
 ```python
 # Example: Get rule details
-result = governance_get_rule(rule_id="RULE-001")
+result = rule_get(rule_id="RULE-001")
 ```
 
-### governance_create_rule / governance_update_rule
+### rule_create / rule_update
 CRUD operations for rules.
 
 **When to use:**
@@ -69,7 +69,7 @@ CRUD operations for rules.
 
 ## 2. Trust Tools
 
-### governance_get_trust_score
+### agent_trust_score
 Check agent trust score.
 
 **When to use:**
@@ -79,11 +79,11 @@ Check agent trust score.
 
 ```python
 # Example: Check agent trust
-result = governance_get_trust_score(agent_id="claude-001")
+result = agent_trust_score(agent_id="claude-001")
 # Returns: {"trust_score": 0.85, "level": "HIGH", ...}
 ```
 
-### governance_update_trust
+### agent_trust_update
 Adjust agent trust based on behavior.
 
 **When to use:**
@@ -97,7 +97,7 @@ Adjust agent trust based on behavior.
 
 ## 3. Proposal Tools
 
-### governance_submit_proposal
+### proposal_create
 Submit governance change proposal.
 
 **When to use:**
@@ -107,7 +107,7 @@ Submit governance change proposal.
 
 ```python
 # Example: Submit rule change
-result = governance_submit_proposal(
+result = proposal_create(
     proposal_type="rule_change",
     rule_id="RULE-005",
     description="Add exception for testing environments",
@@ -115,7 +115,7 @@ result = governance_submit_proposal(
 )
 ```
 
-### governance_vote_on_proposal
+### proposal_vote
 Vote on pending proposal.
 
 **When to use:**
@@ -125,7 +125,7 @@ Vote on pending proposal.
 
 **Per RULE-011:** Vote weight = trust_score * domain_expertise
 
-### governance_get_escalated_proposals
+### proposals_escalated
 Get proposals requiring human review.
 
 **When to use:**
@@ -137,7 +137,7 @@ Get proposals requiring human review.
 
 ## 4. Session & Evidence Tools
 
-### governance_list_sessions
+### sessions_list
 List session evidence files.
 
 **When to use:**
@@ -147,10 +147,10 @@ List session evidence files.
 
 ```python
 # Example: Find recent sessions
-result = governance_list_sessions(limit=10)
+result = sessions_list(limit=10)
 ```
 
-### governance_search_evidence
+### evidence_search
 Search across all evidence.
 
 **When to use:**
@@ -160,10 +160,10 @@ Search across all evidence.
 
 ```python
 # Example: Search for authentication decisions
-result = governance_search_evidence(query="authentication flow")
+result = evidence_search(query="authentication flow")
 ```
 
-### governance_get_session
+### session_get
 Get full session content.
 
 **When to use:**
@@ -175,7 +175,7 @@ Get full session content.
 
 ## 5. Task Tools
 
-### governance_list_tasks
+### tasks_list
 List platform tasks.
 
 **When to use:**
@@ -183,7 +183,7 @@ List platform tasks.
 - Find available work
 - Check task status
 
-### governance_create_task / governance_update_task
+### task_create / task_update
 Task CRUD operations.
 
 **When to use:**
@@ -201,7 +201,7 @@ For programmatic task operations, use REST API:
 
 ## 6. Agent Tools
 
-### governance_list_agents
+### agents_list
 List registered agents.
 
 **When to use:**
@@ -209,7 +209,7 @@ List registered agents.
 - Check agent status
 - Agent registry audit
 
-### governance_register_agent
+### agent_create
 Register new agent.
 
 **When to use:**
@@ -243,12 +243,12 @@ Log DSP discovery.
 
 | Scenario | Tool to Use |
 |----------|-------------|
-| "Is this allowed?" | `governance_query_rules` |
-| "What did we decide before?" | `governance_search_evidence` |
-| "Should I trust this agent?" | `governance_get_trust_score` |
-| "I want to change a rule" | `governance_submit_proposal` |
-| "What work is available?" | `governance_list_tasks` or REST `/api/tasks/available` |
-| "Record my findings" | `dsm_log_finding` |
+| "Is this allowed?" | `rules_query` |
+| "What did we decide before?" | `evidence_search` |
+| "Should I trust this agent?" | `agent_trust_score` |
+| "I want to change a rule" | `proposal_create` |
+| "What work is available?" | `tasks_list` or REST `/api/tasks/available` |
+| "Record my findings" | `dsm_finding` |
 
 ---
 
@@ -257,7 +257,7 @@ Log DSP discovery.
 ### Pattern 1: Rule-Aware Task Execution
 ```python
 # 1. Check applicable rules
-rules = governance_query_rules(category="technical")
+rules = rules_query(category="technical")
 
 # 2. Execute task respecting rules
 task = claim_task(task_id)
@@ -270,7 +270,7 @@ complete_task(task_id, evidence=f"Applied rules: {rules}")
 ### Pattern 2: Consensus-Based Decision
 ```python
 # 1. Submit proposal
-proposal = governance_submit_proposal(...)
+proposal = proposal_create(...)
 
 # 2. Collect votes
 votes = collect_agent_votes(proposal_id)
@@ -285,9 +285,9 @@ else:
 ### Pattern 3: Trust-Weighted Task Assignment
 ```python
 # 1. Get agent trust scores
-agents = governance_list_agents()
+agents = agents_list()
 for agent in agents:
-    trust = governance_get_trust_score(agent.id)
+    trust = agent_trust_score(agent.id)
     agent.trust = trust["trust_score"]
 
 # 2. Assign to highest trust agent

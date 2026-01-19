@@ -145,7 +145,7 @@ def analyze_dependencies_typed(config: DependencyConfig) -> DependencyResult:
                         $r1 isa rule-entity, has rule-id $id1;
                         $r2 isa rule-entity, has rule-id "{config.rule_id}";
                         (dependent: $r1, dependency: $r2) isa rule-dependency;
-                    get $id1;
+                    select $id1;
                 '''
                 results = client.execute_query(query)
                 dependents = [r.get('id1') for r in results if r.get('id1')]

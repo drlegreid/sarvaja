@@ -54,7 +54,7 @@ ${CONFIRM_DIALOG}        [data-testid="confirm-dialog"]
 # =============================================================================
 
 Open Governance Dashboard
-    [Documentation]    Open the Sim.ai Governance Dashboard
+    [Documentation]    Open the Sarvaja Governance Dashboard
     New Browser    chromium    headless=${HEADLESS}
     New Context    viewport={'width': 1280, 'height': 720}
     New Page    ${GOVERNANCE_URL}

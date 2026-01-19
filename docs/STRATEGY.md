@@ -62,9 +62,9 @@
 
 ### Session Start Protocol
 ```
-1. governance_health()           → Verify services
-2. governance_get_backlog(10)    → Load prioritized gaps
-3. Load to Claude Code todo      → Track progress
+1. health_check()           → Verify services
+2. backlog_get(10)          → Load prioritized gaps
+3. Load to Claude Code todo → Track progress
 ```
 
 ### Deep Sleep Protocol (DSP) - RULE-012
@@ -80,8 +80,8 @@ Use DSP for backlog hygiene at:
 ### Context Recovery (RULE-024)
 ```
 1. Read CLAUDE.md               → Rules reference
-2. governance_health()          → Verify services
-3. governance_query_rules()     → Load critical rules
+2. health_check()               → Verify services
+3. rules_query()                → Load critical rules
 4. Read TODO.md                 → Current tasks
 5. Read gaps/GAP-INDEX.md       → Open gaps
 ```
@@ -135,7 +135,7 @@ Claude Code Host                    Podman Stack (5 containers)
 | MEDIUM | ~35 | UI polish, tooling |
 | LOW | ~6 | Minor items |
 
-> Use `governance_get_backlog()` for current list
+> Use `backlog_get()` for current list
 
 ---
 

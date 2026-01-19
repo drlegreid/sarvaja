@@ -84,15 +84,24 @@ class DataRouter(
             return True
 
         try:
-            from typedb.driver import TypeDB, SessionType, TransactionType
+            from typedb.driver import TypeDB, Credentials, DriverOptions, TransactionType
+            import os
 
             address = f"{self.typedb_host}:{self.typedb_port}"
-            with TypeDB.core_driver(address) as client:
-                with client.session(self.database, SessionType.DATA) as session:
-                    with session.transaction(TransactionType.WRITE) as tx:
-                        tx.query.insert(typeql)
-                        tx.commit()
-            return True
+            # TypeDB 3.x API
+            username = os.getenv("TYPEDB_USERNAME", "admin")
+            password = os.getenv("TYPEDB_PASSWORD", "password")
+            credentials = Credentials(username, password)
+            options = DriverOptions(is_tls_enabled=False)
+
+            driver = TypeDB.driver(address, credentials, options)
+            try:
+                with driver.transaction(self.database, TransactionType.WRITE) as tx:
+                    tx.query(typeql).resolve()
+                    tx.commit()
+                return True
+            finally:
+                driver.close()
 
         except ImportError:
             print("TypeDB driver not installed")

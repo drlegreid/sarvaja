@@ -45,6 +45,28 @@ Agents MUST NEVER execute destructive commands without explicit user confirmatio
 
 ---
 
+## Warranty Mechanisms (Heuristics)
+
+**Before database migrations, volume clears, or schema changes:**
+
+| Step | Command/Action | Verification |
+|------|---------------|--------------|
+| 1. Export data | `python3 scripts/typedb_export.py --execute` | Verify file created |
+| 2. Verify export | Check JSON contains all entities | `jq '.rules | length'` |
+| 3. Hash backup | Content hash in output | Record for rollback |
+| 4. Rollback plan | Document in GAP evidence file | Before proceeding |
+
+**Warranty Checklist:**
+- [ ] Export script executed successfully
+- [ ] JSON export contains expected entity counts
+- [ ] TypeQL files generated (2.x and 3.x)
+- [ ] Rollback plan documented in evidence file
+- [ ] User explicitly confirmed proceed
+
+**Export Location:** `data/exports/typedb_export_YYYYMMDD_HHMMSS.*`
+
+---
+
 ## GAP Trigger
 
 Per GAP-DESTRUCT-001: Executing destructive commands without verification creates CRITICAL gap.
@@ -69,8 +91,9 @@ The hook automatically:
 
 - [x] Destructive commands require confirmation (PreToolUse hook)
 - [x] Audit trail for destructive attempts (.destructive_log/)
-- [ ] State checked before action
-- [ ] Backups created when needed
+- [x] State checked before action
+- [x] Backups created when needed (scripts/typedb_export.py)
+- [x] Warranty mechanisms documented (2026-01-17)
 
 ---
 

@@ -17,7 +17,7 @@ class TaskLinkingOperations:
 
     Handles task-to-rule, task-to-session, and task-to-evidence relationships.
 
-    Requires a client with _execute_query and _client attributes.
+    Requires a client with _execute_query, _driver, and database attributes.
     Uses mixin pattern for TypeDBClient composition.
     """
 
@@ -35,39 +35,38 @@ class TaskLinkingOperations:
         Returns:
             True if link created successfully, False otherwise
         """
-        from typedb.driver import SessionType, TransactionType
+        from typedb.driver import TransactionType
 
         try:
-            with self._client.session(self.database, SessionType.DATA) as session:
-                with session.transaction(TransactionType.WRITE) as tx:
-                    # First ensure evidence-file entity exists
-                    evidence_id = evidence_source.replace("/", "-").replace(".", "-").replace("\\", "-")
-                    now = datetime.now()
-                    timestamp_str = now.strftime('%Y-%m-%dT%H:%M:%S')
+            with self._driver.transaction(self.database, TransactionType.WRITE) as tx:
+                # First ensure evidence-file entity exists
+                evidence_id = evidence_source.replace("/", "-").replace(".", "-").replace("\\", "-")
+                now = datetime.now()
+                timestamp_str = now.strftime('%Y-%m-%dT%H:%M:%S')
 
-                    # Insert evidence if not exists
-                    insert_evidence = f"""
-                        insert $e isa evidence-file,
-                            has evidence-id "{evidence_id}",
-                            has evidence-source "{evidence_source}",
-                            has evidence-type "markdown",
-                            has evidence-created-at {timestamp_str};
-                    """
-                    try:
-                        tx.query.insert(insert_evidence)
-                    except Exception:
-                        pass  # Might already exist
+                # Insert evidence if not exists
+                insert_evidence = f"""
+                    insert $e isa evidence-file,
+                        has evidence-id "{evidence_id}",
+                        has evidence-source "{evidence_source}",
+                        has evidence-type "markdown",
+                        has evidence-created-at {timestamp_str};
+                """
+                try:
+                    tx.query(insert_evidence).resolve()
+                except Exception:
+                    pass  # Might already exist
 
-                    # Create the evidence-supports relation
-                    link_query = f"""
-                        match
-                            $t isa task, has task-id "{task_id}";
-                            $e isa evidence-file, has evidence-source "{evidence_source}";
-                        insert
-                            (supporting-evidence: $e, supported-task: $t) isa evidence-supports;
-                    """
-                    tx.query.insert(link_query)
-                    tx.commit()
+                # Create the evidence-supports relation
+                link_query = f"""
+                    match
+                        $t isa task, has task-id "{task_id}";
+                        $e isa evidence-file, has evidence-source "{evidence_source}";
+                    insert
+                        (supporting-evidence: $e, supported-task: $t) isa evidence-supports;
+                """
+                tx.query(link_query).resolve()
+                tx.commit()
 
             return True
         except Exception as e:
@@ -88,21 +87,20 @@ class TaskLinkingOperations:
         Returns:
             True if link created successfully, False otherwise
         """
-        from typedb.driver import SessionType, TransactionType
+        from typedb.driver import TransactionType
 
         try:
-            with self._client.session(self.database, SessionType.DATA) as session:
-                with session.transaction(TransactionType.WRITE) as tx:
-                    # Create the completed-in relation
-                    link_query = f"""
-                        match
-                            $t isa task, has task-id "{task_id}";
-                            $s isa work-session, has session-id "{session_id}";
-                        insert
-                            (completed-task: $t, hosting-session: $s) isa completed-in;
-                    """
-                    tx.query.insert(link_query)
-                    tx.commit()
+            with self._driver.transaction(self.database, TransactionType.WRITE) as tx:
+                # Create the completed-in relation
+                link_query = f"""
+                    match
+                        $t isa task, has task-id "{task_id}";
+                        $s isa work-session, has session-id "{session_id}";
+                    insert
+                        (completed-task: $t, hosting-session: $s) isa completed-in;
+                """
+                tx.query(link_query).resolve()
+                tx.commit()
 
             return True
         except Exception as e:
@@ -123,21 +121,20 @@ class TaskLinkingOperations:
         Returns:
             True if link created successfully, False otherwise
         """
-        from typedb.driver import SessionType, TransactionType
+        from typedb.driver import TransactionType
 
         try:
-            with self._client.session(self.database, SessionType.DATA) as session:
-                with session.transaction(TransactionType.WRITE) as tx:
-                    # Create the implements-rule relation
-                    link_query = f"""
-                        match
-                            $t isa task, has task-id "{task_id}";
-                            $r isa rule-entity, has rule-id "{rule_id}";
-                        insert
-                            (implementing-task: $t, implemented-rule: $r) isa implements-rule;
-                    """
-                    tx.query.insert(link_query)
-                    tx.commit()
+            with self._driver.transaction(self.database, TransactionType.WRITE) as tx:
+                # Create the implements-rule relation
+                link_query = f"""
+                    match
+                        $t isa task, has task-id "{task_id}";
+                        $r isa rule-entity, has rule-id "{rule_id}";
+                    insert
+                        (implementing-task: $t, implemented-rule: $r) isa implements-rule;
+                """
+                tx.query(link_query).resolve()
+                tx.commit()
 
             return True
         except Exception as e:
@@ -159,7 +156,7 @@ class TaskLinkingOperations:
                 $t isa task, has task-id "{task_id}";
                 (supporting-evidence: $e, supported-task: $t) isa evidence-supports;
                 $e has evidence-source $src;
-            get $src;
+            select $src;
         """
         results = self._execute_query(query)
         return [r.get("src") for r in results if r.get("src")]
@@ -178,36 +175,35 @@ class TaskLinkingOperations:
         Returns:
             True if link created successfully, False otherwise
         """
-        from typedb.driver import SessionType, TransactionType
+        from typedb.driver import TransactionType
 
         try:
-            with self._client.session(self.database, SessionType.DATA) as session:
-                with session.transaction(TransactionType.WRITE) as tx:
-                    # Insert git-commit entity
-                    msg_escaped = commit_message.replace('"', '\\"') if commit_message else ""
-                    commit_parts = [f'has commit-sha "{commit_sha}"']
-                    if commit_message:
-                        commit_parts.append(f'has commit-message "{msg_escaped}"')
+            with self._driver.transaction(self.database, TransactionType.WRITE) as tx:
+                # Insert git-commit entity
+                msg_escaped = commit_message.replace('"', '\\"') if commit_message else ""
+                commit_parts = [f'has commit-sha "{commit_sha}"']
+                if commit_message:
+                    commit_parts.append(f'has commit-message "{msg_escaped}"')
 
-                    insert_commit = f"""
-                        insert $c isa git-commit,
-                            {", ".join(commit_parts)};
-                    """
-                    try:
-                        tx.query.insert(insert_commit)
-                    except Exception:
-                        pass  # Commit might already exist
+                insert_commit = f"""
+                    insert $c isa git-commit,
+                        {", ".join(commit_parts)};
+                """
+                try:
+                    tx.query(insert_commit).resolve()
+                except Exception:
+                    pass  # Commit might already exist
 
-                    # Create the task-commit relation
-                    link_query = f"""
-                        match
-                            $t isa task, has task-id "{task_id}";
-                            $c isa git-commit, has commit-sha "{commit_sha}";
-                        insert
-                            (implementing-commit: $c, implemented-task: $t) isa task-commit;
-                    """
-                    tx.query.insert(link_query)
-                    tx.commit()
+                # Create the task-commit relation
+                link_query = f"""
+                    match
+                        $t isa task, has task-id "{task_id}";
+                        $c isa git-commit, has commit-sha "{commit_sha}";
+                    insert
+                        (implementing-commit: $c, implemented-task: $t) isa task-commit;
+                """
+                tx.query(link_query).resolve()
+                tx.commit()
 
             return True
         except Exception as e:
@@ -231,7 +227,7 @@ class TaskLinkingOperations:
                 $t isa task, has task-id "{task_id}";
                 (implementing-commit: $c, implemented-task: $t) isa task-commit;
                 $c has commit-sha $sha;
-            get $sha;
+            select $sha;
         """
         results = self._execute_query(query)
         return [r.get("sha") for r in results if r.get("sha")]

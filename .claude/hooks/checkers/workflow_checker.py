@@ -171,7 +171,7 @@ def validate_session_start(project_root: Path = None) -> List[ValidationResult]:
 
     Checks:
     - CLAUDE.md was read (context recovery)
-    - governance_health() was called
+    - health_check() was called
     - Previous session handoffs addressed
 
     Returns:

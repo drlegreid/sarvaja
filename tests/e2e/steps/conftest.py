@@ -8,10 +8,13 @@ Provides shared fixtures for all BDD step definitions.
 """
 
 import pytest
+
+# Skip if pytest-playwright not available (container environment)
+pytest.importorskip("pytest_playwright", reason="pytest-playwright required - run locally")
+
 from playwright.sync_api import Page, Browser, BrowserContext
 
-
-DASHBOARD_URL = "http://localhost:8081"
+from shared.constants import APP_TITLE, DASHBOARD_URL
 
 
 @pytest.fixture(scope="session")
@@ -35,5 +38,5 @@ def page_with_dashboard(page: Page, dashboard_url: str):
     """Page fixture with dashboard loaded."""
     page.goto(dashboard_url)
     page.wait_for_load_state("networkidle")
-    page.wait_for_selector("text=Sim.ai Governance Dashboard", timeout=10000)
+    page.wait_for_selector(f"text={APP_TITLE}", timeout=10000)
     return page

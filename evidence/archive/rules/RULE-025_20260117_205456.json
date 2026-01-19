@@ -1,0 +1,18 @@
+{
+  "rule": {
+    "id": "RULE-025",
+    "name": "Test Data Integrity Requirements",
+    "category": "testing",
+    "priority": "HIGH",
+    "status": "DRAFT",
+    "directive": "All tests MUST include API data validation assertions. A test that passes with empty data is not valid.",
+    "rule_type": "OPERATIONAL",
+    "semantic_id": "GOV-PROP-03-v1",
+    "created_date": null
+  },
+  "archived_at": "2026-01-17T20:54:56.762511",
+  "reason": "deleted",
+  "archived_from_db": "sim-ai-governance",
+  "dependencies": [],
+  "dependents": []
+}

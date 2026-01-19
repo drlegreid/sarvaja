@@ -22,10 +22,12 @@ from .execution import router as execution_router
 from .verification import router as verification_router
 
 # Combined router for backward compatibility
+# NOTE: Order matters! Static routes (workflow) must come before dynamic routes (crud)
+# to prevent /{task_id} from matching /available, /execution-log, etc.
 router = APIRouter(tags=["Tasks"])
-router.include_router(crud_router)
-router.include_router(workflow_router)
-router.include_router(execution_router)
-router.include_router(verification_router)
+router.include_router(workflow_router)  # /available, /claim, /complete first
+router.include_router(execution_router)  # /execution-log
+router.include_router(verification_router)  # /{task_id}/verification
+router.include_router(crud_router)  # /{task_id} dynamic routes last
 
 __all__ = ['router', 'crud_router', 'workflow_router', 'execution_router', 'verification_router']

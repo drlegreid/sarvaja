@@ -1,21 +1,7 @@
-"""
-Governance API Pydantic Models.
-
-Per RULE-012: DSP Semantic Code Structure - extracted from api.py.
-Per GAP-FILE-002: API modularization.
-Per GAP-MCP-008: Semantic rule ID support.
-
-Created: 2024-12-28
-Updated: 2026-01-13 - Added semantic_id field
-"""
+"""Governance API Pydantic Models. Per RULE-012, GAP-FILE-002, GAP-MCP-008."""
 
 from pydantic import BaseModel, Field
 from typing import List, Optional, Dict, Any
-
-
-# =============================================================================
-# RULE MODELS
-# =============================================================================
 
 class RuleCreate(BaseModel):
     """Request model for creating a rule."""
@@ -29,7 +15,6 @@ class RuleCreate(BaseModel):
     tags: Optional[str] = Field(default=None, description="Comma-separated skill tags")
     applicable_roles: Optional[str] = Field(default=None, description="Comma-separated agent roles")
 
-
 class RuleUpdate(BaseModel):
     """Request model for updating a rule."""
     name: Optional[str] = None
@@ -37,7 +22,6 @@ class RuleUpdate(BaseModel):
     priority: Optional[str] = None
     directive: Optional[str] = None
     status: Optional[str] = None
-
 
 class RuleResponse(BaseModel):
     """Response model for a rule. Per GAP-MCP-008: includes semantic_id."""
@@ -49,11 +33,6 @@ class RuleResponse(BaseModel):
     status: str
     directive: str
     created_date: Optional[str] = None
-
-
-# =============================================================================
-# TASK MODELS
-# =============================================================================
 
 class TaskCreate(BaseModel):
     """Request model for creating a task."""
@@ -67,7 +46,6 @@ class TaskCreate(BaseModel):
     linked_sessions: Optional[List[str]] = None
     gap_id: Optional[str] = None
 
-
 class TaskUpdate(BaseModel):
     """Request model for updating a task (GAP-UI-107)."""
     description: Optional[str] = None
@@ -80,13 +58,8 @@ class TaskUpdate(BaseModel):
     gap_id: Optional[str] = None
     evidence: Optional[str] = None  # Per EPIC-DR-008
 
-
 class TaskResponse(BaseModel):
-    """Response model for a task.
-
-    Per GAP-UI-046: Task lifecycle (Status) + outcome (Resolution).
-    Per WORKFLOW-SEQ-01-v1: Evidence with verification level tracking.
-    """
+    """Response model for a task. Per GAP-UI-046, WORKFLOW-SEQ-01-v1."""
     task_id: str
     description: str
     phase: str
@@ -99,9 +72,9 @@ class TaskResponse(BaseModel):
     body: Optional[str] = None
     linked_rules: Optional[List[str]] = None
     linked_sessions: Optional[List[str]] = None
+    linked_commits: Optional[List[str]] = None  # Per GAP-TASK-LINK-002: Git commit linkage
     gap_id: Optional[str] = None
     evidence: Optional[str] = None  # May include [Verification: L1/L2/L3] prefix
-
 
 class TaskExecutionEvent(BaseModel):
     """Task execution event for execution log (ORCH-007)."""
@@ -113,7 +86,6 @@ class TaskExecutionEvent(BaseModel):
     message: str = ""
     details: Optional[Dict[str, Any]] = None
 
-
 class TaskExecutionResponse(BaseModel):
     """Response model for task execution history (ORCH-007)."""
     task_id: str
@@ -123,10 +95,7 @@ class TaskExecutionResponse(BaseModel):
     started_at: Optional[str] = None
     completed_at: Optional[str] = None
 
-
-# =============================================================================
 # DECISION MODELS (GAP-UI-033)
-# =============================================================================
 
 class DecisionCreate(BaseModel):
     """Request model for creating a decision."""
@@ -136,14 +105,12 @@ class DecisionCreate(BaseModel):
     rationale: str = Field(..., description="Reasoning for the decision")
     status: str = Field(default="PENDING", description="Status: PENDING, APPROVED, REJECTED")
 
-
 class DecisionUpdate(BaseModel):
     """Request model for updating a decision."""
     name: Optional[str] = None
     context: Optional[str] = None
     rationale: Optional[str] = None
     status: Optional[str] = None
-
 
 class DecisionResponse(BaseModel):
     """Response model for a decision."""
@@ -155,11 +122,6 @@ class DecisionResponse(BaseModel):
     decision_date: Optional[str] = None
     # Per GAP-DECISION-001: Rules affected by this decision
     linked_rules: List[str] = []
-
-
-# =============================================================================
-# SESSION MODELS
-# =============================================================================
 
 class SessionResponse(BaseModel):
     """Response model for a session."""
@@ -175,19 +137,16 @@ class SessionResponse(BaseModel):
     linked_rules_applied: Optional[List[str]] = None
     linked_decisions: Optional[List[str]] = None
 
-
 class SessionCreate(BaseModel):
     """Request model for creating a session."""
     session_id: Optional[str] = None  # Auto-generate if not provided
     description: str
     agent_id: Optional[str] = None
 
-
 class SessionEnd(BaseModel):
     """Request model for ending a session."""
     tasks_completed: Optional[int] = None
     evidence_files: Optional[List[str]] = None
-
 
 class SessionUpdate(BaseModel):
     """Request model for updating a session. Per GAP-UI-034."""
@@ -195,11 +154,6 @@ class SessionUpdate(BaseModel):
     status: Optional[str] = None
     tasks_completed: Optional[int] = None
     agent_id: Optional[str] = None
-
-
-# =============================================================================
-# EVIDENCE MODELS
-# =============================================================================
 
 class EvidenceResponse(BaseModel):
     """Response model for evidence."""
@@ -209,14 +163,12 @@ class EvidenceResponse(BaseModel):
     created_at: str
     session_id: Optional[str] = None
 
-
 class EvidenceSearchResult(BaseModel):
     """Single search result for evidence search (GAP-UI-009)."""
     source: str
     source_type: str
     score: float
     content: str
-
 
 class EvidenceSearchResponse(BaseModel):
     """Response model for evidence search (GAP-UI-009)."""
@@ -225,7 +177,6 @@ class EvidenceSearchResponse(BaseModel):
     count: int
     search_method: str
 
-
 class FileContentResponse(BaseModel):
     """Response model for file content (GAP-DATA-003)."""
     path: str
@@ -233,11 +184,6 @@ class FileContentResponse(BaseModel):
     size: int
     modified_at: str
     exists: bool = True
-
-
-# =============================================================================
-# AGENT MODELS
-# =============================================================================
 
 class AgentResponse(BaseModel):
     """Response model for an agent."""
@@ -254,15 +200,9 @@ class AgentResponse(BaseModel):
     recent_sessions: List[str] = []
     active_tasks: List[str] = []
 
-
 class AgentTaskAssign(BaseModel):
     """Request model for assigning a task to an agent."""
     task_id: str
-
-
-# =============================================================================
-# REPORT MODELS
-# =============================================================================
 
 class ExecutiveReportSection(BaseModel):
     """Single section of executive report."""
@@ -270,7 +210,6 @@ class ExecutiveReportSection(BaseModel):
     content: str
     metrics: Optional[Dict[str, Any]] = None
     status: Optional[str] = None  # success, warning, error, info
-
 
 class ExecutiveSummarySession(BaseModel):
     """Session summary for executive report."""
@@ -281,13 +220,8 @@ class ExecutiveSummarySession(BaseModel):
     rules_applied: List[str]
     key_outcomes: List[str]
 
-
 class ExecutiveReportResponse(BaseModel):
-    """
-    Executive report response per RULE-029.
-
-    7 sections: Highlights, Compliance, Risk, Alignment, Resources, Recommendations, Objectives
-    """
+    """Executive report per RULE-029. 7 sections: Highlights, Compliance, Risk, Alignment, Resources, Recommendations, Objectives."""
     report_id: str
     generated_at: str
     session_id: Optional[str] = None
@@ -296,17 +230,11 @@ class ExecutiveReportResponse(BaseModel):
     overall_status: str  # healthy, warning, critical
     metrics_summary: Dict[str, Any]
 
-
-# =============================================================================
-# CHAT MODELS
-# =============================================================================
-
 class ChatMessageRequest(BaseModel):
     """Chat message request."""
     content: str
     agent_id: Optional[str] = None  # None = auto-select by orchestrator
     session_id: Optional[str] = None
-
 
 class ChatMessageResponse(BaseModel):
     """Chat message response."""
@@ -319,7 +247,6 @@ class ChatMessageResponse(BaseModel):
     task_id: Optional[str] = None
     status: str = "complete"
 
-
 class ChatSessionResponse(BaseModel):
     """Chat session response."""
     session_id: str
@@ -327,47 +254,32 @@ class ChatSessionResponse(BaseModel):
     active_task_id: Optional[str] = None
     selected_agent_id: Optional[str] = None
 
-
-# =============================================================================
 # PAGINATION (EPIC-DR-003)
-# =============================================================================
 
 class PaginationMeta(BaseModel):
-    """Pagination metadata for list endpoints.
-
-    Per EPIC-DR-003: API pagination metadata.
-    """
+    """Pagination metadata for list endpoints. Per EPIC-DR-003."""
     total: int
     offset: int
     limit: int
     has_more: bool
     returned: int
 
-
 class PaginatedTaskResponse(BaseModel):
-    """Paginated task list response.
-
-    Per EPIC-DR-003: Pagination metadata for task lists.
-    """
+    """Paginated task list response. Per EPIC-DR-003."""
     items: List[TaskResponse]
     pagination: PaginationMeta
-
 
 class PaginatedSessionResponse(BaseModel):
     """Paginated session list response."""
     items: List[SessionResponse]
     pagination: PaginationMeta
 
-
 class PaginatedAgentResponse(BaseModel):
     """Paginated agent list response."""
     items: List[AgentResponse]
     pagination: PaginationMeta
 
-
-# =============================================================================
 # API STATUS
-# =============================================================================
 
 class APIStatus(BaseModel):
     """API status response."""

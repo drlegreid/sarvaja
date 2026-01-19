@@ -42,10 +42,8 @@ class RuleQueries(
     - _execute_query(query, infer=False)
     - _execute_rule_query(query)
     - _execute_write(query)
-    - _client (TypeDB client)
     - _driver (TypeDB driver)
-    - _database (database name)
-    - database (property for database name)
+    - database (database name)
 
     Uses mixin pattern for TypeDBClient composition.
     """

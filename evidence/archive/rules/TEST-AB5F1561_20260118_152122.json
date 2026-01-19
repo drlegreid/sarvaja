@@ -1,0 +1,18 @@
+{
+  "rule": {
+    "id": "TEST-AB5F1561",
+    "name": "Updated Name TEST-AB5F1561",
+    "category": "governance",
+    "priority": "MEDIUM",
+    "status": "ACTIVE",
+    "directive": "Original directive",
+    "rule_type": null,
+    "semantic_id": null,
+    "created_date": null
+  },
+  "archived_at": "2026-01-18T15:21:22.758485",
+  "reason": "deleted",
+  "archived_from_db": "sim-ai-governance",
+  "dependencies": [],
+  "dependents": []
+}

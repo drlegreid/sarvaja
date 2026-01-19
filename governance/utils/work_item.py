@@ -152,6 +152,8 @@ class WorkItem:
         """
         Create WorkItem from a Task object.
 
+        Per GAP-GAPS-TASKS-001: Use item_type attribute when available.
+
         Args:
             task: Task object from entities.py or session_collector.py
             source: Where the task came from
@@ -159,9 +161,25 @@ class WorkItem:
         Returns:
             WorkItem with task data
         """
-        # Determine if this is R&D item based on ID pattern
         task_id = getattr(task, "id", "") or getattr(task, "task_id", "")
-        item_type = WorkItemType.RD if task_id.startswith("RD-") else WorkItemType.TASK
+
+        # GAP-GAPS-TASKS-001: Use item_type attribute if available
+        task_item_type = getattr(task, "item_type", None)
+        if task_item_type == "gap":
+            item_type = WorkItemType.GAP
+        elif task_item_type == "rd":
+            item_type = WorkItemType.RD
+        elif task_id.startswith("RD-"):
+            # Fallback: infer from ID pattern
+            item_type = WorkItemType.RD
+        elif task_id.startswith("GAP-"):
+            # Fallback: infer from ID pattern
+            item_type = WorkItemType.GAP
+        else:
+            item_type = WorkItemType.TASK
+
+        # GAP-GAPS-TASKS-001: Include document_path in metadata
+        document_path = getattr(task, "document_path", None)
 
         return cls(
             id=task_id,
@@ -175,6 +193,7 @@ class WorkItem:
             metadata={
                 "agent_id": getattr(task, "agent_id", None),
                 "gap_id": getattr(task, "gap_id", None),
+                "document_path": document_path,
             }
         )
 

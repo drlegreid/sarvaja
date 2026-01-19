@@ -1,15 +1,4 @@
-"""
-Rule Query MCP Tools
-====================
-Query operations for governance rules.
-
-Per RULE-012: DSP Semantic Code Structure
-Per RULE-032: File size <300 lines
-Per GAP-MCP-004: Fallback to markdown when TypeDB unavailable
-
-Extracted from rules.py per modularization plan.
-Created: 2026-01-03
-"""
+"""Rule Query MCP Tools. Per RULE-012, GAP-MCP-004. Created: 2026-01-03."""
 
 import json
 from typing import Optional
@@ -28,18 +17,14 @@ def register_rule_query_tools(mcp) -> None:
     """Register rule query MCP tools."""
 
     @mcp.tool()
-    def governance_query_rules(
-        category: Optional[str] = None,
-        status: Optional[str] = None,
-        priority: Optional[str] = None
-    ) -> str:
-        """
-        Query rules from the governance database.
+    def rules_query(category: Optional[str] = None, status: Optional[str] = None,
+                    priority: Optional[str] = None) -> str:
+        """Query rules from TypeDB with optional filters.
 
         Args:
-            category: Filter by category (governance, architecture, testing, etc.)
-            status: Filter by status (ACTIVE, DRAFT, DEPRECATED)
-            priority: Filter by priority (CRITICAL, HIGH, MEDIUM, LOW)
+            category: Filter by rule category
+            status: Filter by status (e.g., ACTIVE)
+            priority: Filter by priority level
 
         Returns:
             JSON array of matching rules
@@ -64,16 +49,12 @@ def register_rule_query_tools(mcp) -> None:
                     rules = [r for r in rules if r.priority == priority]
                 if status and status != "ACTIVE":
                     rules = [r for r in rules if r.status == status]
-
                 return json.dumps([asdict(r) for r in rules], default=str, indent=2)
-
         except Exception:
             use_fallback = True
-
         finally:
             client.close()
 
-        # Fallback to markdown files (GAP-MCP-004)
         if use_fallback:
             md_rules = get_all_markdown_rules()
             if not md_rules:
@@ -91,62 +72,39 @@ def register_rule_query_tools(mcp) -> None:
             }, indent=2)
 
     @mcp.tool()
-    def governance_query_rules_by_tags(
-        tags: Optional[str] = None,
-        agent_role: Optional[str] = None,
-        priority: Optional[str] = None
-    ) -> str:
-        """
-        Query rules by skill tags and agent role (RD-WORKSPACE Phase 3).
+    def rules_query_by_tags(tags: Optional[str] = None, agent_role: Optional[str] = None,
+                            priority: Optional[str] = None) -> str:
+        """Query rules by tags, agent role, or priority.
 
         Args:
-            tags: Comma-separated skill tags to match (e.g., "research,analysis")
-            agent_role: Agent role to filter by (RESEARCH, CODING, CURATOR, SYNC)
-            priority: Filter by priority (CRITICAL, HIGH, MEDIUM, LOW)
+            tags: Comma-separated tags to filter by
+            agent_role: Filter by applicable agent role
+            priority: Filter by priority level
 
         Returns:
-            JSON array of matching rules with tags and applicable roles
+            JSON object with matching rules and filter info
         """
         client = get_typedb_client()
 
         try:
             if not client.connect():
                 return json.dumps({"error": "Failed to connect to TypeDB"})
-
-            # Get all active rules
             rules = client.get_active_rules()
             results = []
-
-            # Parse requested tags
-            requested_tags = set()
-            if tags:
-                requested_tags = {t.strip().lower() for t in tags.split(",")}
+            requested_tags = {t.strip().lower() for t in tags.split(",")} if tags else set()
 
             for rule in rules:
                 rule_dict = asdict(rule)
-
-                # Get tags and roles from rule (may be None)
                 rule_tags_str = getattr(rule, 'tags', '') or ''
                 rule_roles_str = getattr(rule, 'applicable_roles', '') or ''
-
                 rule_tags = {t.strip().lower() for t in rule_tags_str.split(",") if t.strip()}
                 rule_roles = {r.strip().upper() for r in rule_roles_str.split(",") if r.strip()}
-
-                # Filter by tags (if any match)
                 if requested_tags and not requested_tags.intersection(rule_tags):
                     continue
-
-                # Filter by agent role
-                if agent_role and agent_role.upper() not in rule_roles:
-                    # If no roles defined, include rule for all agents
-                    if rule_roles:
-                        continue
-
-                # Filter by priority
+                if agent_role and agent_role.upper() not in rule_roles and rule_roles:
+                    continue
                 if priority and rule.priority != priority:
                     continue
-
-                # Add parsed tags and roles to result
                 rule_dict['tags'] = list(rule_tags) if rule_tags else []
                 rule_dict['applicable_roles'] = list(rule_roles) if rule_roles else []
                 results.append(rule_dict)
@@ -168,22 +126,17 @@ def register_rule_query_tools(mcp) -> None:
             client.close()
 
     @mcp.tool()
-    def governance_get_agent_wisdom(agent_role: str) -> str:
-        """
-        Get wisdom (filtered rules + skills) for an agent role (RD-WORKSPACE Phase 3).
+    def wisdom_get(agent_role: str) -> str:
+        """Get compiled wisdom for an agent role.
 
-        Composes rules and skills relevant to the specified agent role based on:
-        - Role-specific tags (research, coding, governance, sync)
-        - Priority filters (CRITICAL, HIGH for most roles)
-        - Loaded skills from workspace directory
+        Composes relevant rules and workspace context for the specified agent.
 
         Args:
-            agent_role: Agent role (RESEARCH, CODING, CURATOR, SYNC)
+            agent_role: Agent role identifier (e.g., PLATFORM, QUALITY)
 
         Returns:
-            JSON with rules_count, skills_count, filtered rules, and skills
+            JSON object with agent wisdom including applicable rules
         """
-        from pathlib import Path
         from governance.skill_composer import (
             compose_agent_wisdom,
             get_workspace_path
@@ -194,15 +147,9 @@ def register_rule_query_tools(mcp) -> None:
         try:
             if not client.connect():
                 return json.dumps({"error": "Failed to connect to TypeDB"})
-
-            # Get all active rules
             rules = client.get_active_rules()
             rules_list = [asdict(r) for r in rules]
-
-            # Get workspace path
             workspace_path = get_workspace_path(agent_role)
-
-            # Compose wisdom
             wisdom = compose_agent_wisdom(
                 agent_role=agent_role,
                 all_rules=rules_list,
@@ -218,15 +165,16 @@ def register_rule_query_tools(mcp) -> None:
             client.close()
 
     @mcp.tool()
-    def governance_get_rule(rule_id: str) -> str:
-        """
-        Get a specific rule by ID.
+    def rule_get(rule_id: str) -> str:
+        """Get a specific rule by ID.
+
+        Fetches from TypeDB with markdown fallback if unavailable.
 
         Args:
-            rule_id: The rule ID (e.g., "RULE-001")
+            rule_id: Rule identifier (e.g., RULE-001, SESSION-EVID-01-v1)
 
         Returns:
-            JSON object with rule details or error
+            JSON object with rule details
         """
         client = get_typedb_client()
         use_fallback = False
@@ -239,16 +187,12 @@ def register_rule_query_tools(mcp) -> None:
                 if rule:
                     return json.dumps(asdict(rule), default=str, indent=2)
                 else:
-                    # Rule not in TypeDB, try markdown
                     use_fallback = True
-
         except Exception:
             use_fallback = True
-
         finally:
             client.close()
 
-        # Fallback to markdown files (GAP-MCP-004)
         if use_fallback:
             md_rule = get_markdown_rule_by_id(rule_id)
             if md_rule:
@@ -259,15 +203,16 @@ def register_rule_query_tools(mcp) -> None:
                 return json.dumps({"error": f"Rule {rule_id} not found in TypeDB or markdown"})
 
     @mcp.tool()
-    def governance_get_dependencies(rule_id: str) -> str:
-        """
-        Get all dependencies for a rule (uses TypeDB inference for transitive deps).
+    def rule_get_deps(rule_id: str) -> str:
+        """Get dependencies for a rule.
+
+        Returns rules that depend on or are depended upon by the specified rule.
 
         Args:
-            rule_id: The rule ID to get dependencies for
+            rule_id: Rule identifier
 
         Returns:
-            JSON array of dependency rule IDs
+            JSON object with dependency information
         """
         client = get_typedb_client()
 
@@ -282,12 +227,14 @@ def register_rule_query_tools(mcp) -> None:
             client.close()
 
     @mcp.tool()
-    def governance_find_conflicts() -> str:
-        """
-        Find conflicting rules using TypeDB inference.
+    def rules_find_conflicts() -> str:
+        """Find conflicting rules in the governance system.
+
+        Analyzes rules for potential conflicts based on overlapping scope
+        or contradictory directives.
 
         Returns:
-            JSON array of conflict pairs with explanations
+            JSON array of detected rule conflicts
         """
         client = get_typedb_client()
 

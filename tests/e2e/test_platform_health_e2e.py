@@ -40,15 +40,17 @@ from governance.kanren.benchmark import BenchmarkResult, bench_trust_level
 
 
 # =============================================================================
-# Configuration
+# Configuration (environment-aware for container compatibility)
 # =============================================================================
 
-TYPEDB_HOST = "localhost"
-TYPEDB_PORT = 1729
-CHROMADB_HOST = "localhost"
-CHROMADB_PORT = 8001
-DASHBOARD_URL = "http://localhost:8081"
-API_URL = "http://localhost:8082"
+import os
+
+TYPEDB_HOST = os.getenv("TYPEDB_HOST", "localhost")
+TYPEDB_PORT = int(os.getenv("TYPEDB_PORT", "1729"))
+CHROMADB_HOST = os.getenv("CHROMADB_HOST", "localhost")
+CHROMADB_PORT = int(os.getenv("CHROMADB_PORT", "8001"))
+DASHBOARD_URL = os.getenv("DASHBOARD_URL", "http://localhost:8081")
+API_URL = os.getenv("API_URL", "http://localhost:8082")
 
 
 # =============================================================================
@@ -77,11 +79,17 @@ def check_typedb_health() -> Dict[str, Any]:
             "error": f"Network check failed: {e}",
         }
 
-    # Port is open, try driver (may fail due to library issues)
+    # Port is open, try driver (TypeDB 3.x API)
     try:
-        from typedb.driver import TypeDB, SessionType
+        from typedb.driver import TypeDB, Credentials, DriverOptions
 
-        driver = TypeDB.core_driver(f"{TYPEDB_HOST}:{TYPEDB_PORT}")
+        address = f"{TYPEDB_HOST}:{TYPEDB_PORT}"
+        username = os.getenv("TYPEDB_USERNAME", "admin")
+        password = os.getenv("TYPEDB_PASSWORD", "password")
+        credentials = Credentials(username, password)
+        options = DriverOptions(is_tls_enabled=False)
+
+        driver = TypeDB.driver(address, credentials, options)
         databases = driver.databases.all()
 
         # Check for governance database
@@ -310,6 +318,26 @@ class TestPlatformHealthE2E:
         result = check_api_health()
         if not result.get("optional"):
             assert result["healthy"], f"API unhealthy: {result.get('error')}"
+
+    def test_mcp_core_services(self):
+        """MCP CORE services can start (per MCP-HEALTH-01-v1)."""
+        import subprocess
+
+        # CORE MCPs per MCP-HEALTH-01-v1 - must all work
+        core_mcps = [
+            "governance.mcp_server_core",
+            "governance.mcp_server_agents",
+            "governance.mcp_server_sessions",
+            "governance.mcp_server_tasks",
+        ]
+
+        for mcp in core_mcps:
+            result = subprocess.run(
+                ["timeout", "3", "bash", "scripts/mcp-runner.sh", mcp],
+                capture_output=True, text=True, cwd="."
+            )
+            assert "Starting" in result.stderr or result.returncode == 124, \
+                f"CORE MCP {mcp} failed to start: {result.stderr}"
 
 
 # =============================================================================

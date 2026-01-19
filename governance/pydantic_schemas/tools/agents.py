@@ -51,7 +51,7 @@ def calculate_trust_score_typed(request: TrustScoreRequest) -> TrustScoreResult:
                     $a has compliance-rate $compliance;
                     $a has accuracy-rate $accuracy;
                     $a has tenure-days $tenure;
-                get $name, $trust, $compliance, $accuracy, $tenure;
+                select $name, $trust, $compliance, $accuracy, $tenure;
             '''
 
             results = client.execute_query(query)

@@ -10,7 +10,7 @@ set -e
 BACKUP_PATH="${1:-/media/backup}"
 
 echo "============================================"
-echo "  SIM.AI Migration Restore Script (Ubuntu)"
+echo "  Sarvaja Migration Restore Script (Ubuntu)"
 echo "  Backup Source: $BACKUP_PATH"
 echo "============================================"
 
@@ -50,10 +50,10 @@ fi
 # Create Docker volumes
 echo ""
 echo "[4/6] Creating Docker volumes..."
-docker volume create sim-ai_typedb_data 2>/dev/null || true
-docker volume create sim-ai_chromadb_data 2>/dev/null || true
-docker volume create sim-ai_ollama_data 2>/dev/null || true
-docker volume create claude-memory 2>/dev/null || true
+podman volume create sim-ai_typedb_data 2>/dev/null || true
+podman volume create sim-ai_chromadb_data 2>/dev/null || true
+podman volume create sim-ai_ollama_data 2>/dev/null || true
+podman volume create claude-memory 2>/dev/null || true
 echo "  Docker volumes created"
 
 # Restore Docker volume data
@@ -66,7 +66,7 @@ restore_volume() {
 
     if [ -d "$BACKUP_PATH/Docker/$backup_dir" ]; then
         echo "  Restoring $vol_name..."
-        docker run --rm \
+        podman run --rm \
             -v "$vol_name:/data" \
             -v "$BACKUP_PATH/Docker/$backup_dir:/backup:ro" \
             alpine sh -c "cp -r /backup/* /data/ 2>/dev/null || true"
@@ -84,7 +84,7 @@ restore_volume "claude-memory" "claude_memory"
 # Set up Python environment
 echo ""
 echo "[6/6] Setting up Python environment..."
-cd ~/Documents/Vibe/sim-ai/sim-ai
+cd ~/Documents/Vibe/sarvaja/platform
 
 if command -v python3.12 &> /dev/null; then
     python3.12 -m venv .venv
@@ -104,8 +104,8 @@ echo "============================================"
 echo ""
 echo "Next Steps:"
 echo "  1. Start Docker services:"
-echo "     cd ~/Documents/Vibe/sim-ai/sim-ai"
-echo "     docker compose --profile dev up -d"
+echo "     cd ~/Documents/Vibe/sarvaja/platform"
+echo "     podman compose --profile dev up -d"
 echo ""
 echo "  2. Verify recovery:"
 echo "     source .venv/bin/activate"
@@ -115,5 +115,5 @@ echo "  3. Set environment variables in ~/.bashrc:"
 echo "     export ANTHROPIC_API_KEY='sk-ant-...'"
 echo "     export LITELLM_MASTER_KEY='sk-litellm-master-key'"
 echo ""
-echo "Full recovery guide: ~/Documents/Vibe/sim-ai/sim-ai/docs/RECOVERY.md"
+echo "Full recovery guide: ~/Documents/Vibe/sarvaja/platform/docs/RECOVERY.md"
 echo ""

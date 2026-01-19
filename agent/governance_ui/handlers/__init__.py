@@ -1,23 +1,16 @@
 """
 Governance UI Handlers Module.
 
-Modular handler factories for UI actions per RULE-012 (DSP Hygiene).
-Each entity has its own handler module following Single Responsibility Principle.
+Per GAP-UI-ORPHAN-HANDLERS-001: Most handlers moved to controllers/.
+Only trace_bar_handlers remains here as it's used by controllers/__init__.py.
 
 Usage:
-    from governance_ui.handlers import register_rule_handlers
-    register_rule_handlers(ctrl, state)
+    from governance_ui.handlers import register_trace_bar_handlers
+    register_trace_bar_handlers(ctrl, state)
 """
 
-from .rule_handlers import register_rule_handlers
-from .task_handlers import register_task_handlers
-from .session_handlers import register_session_handlers
-from .common_handlers import register_common_handlers, register_trace_bar_handlers
+from .common_handlers import register_trace_bar_handlers
 
 __all__ = [
-    "register_rule_handlers",
-    "register_task_handlers",
-    "register_session_handlers",
-    "register_common_handlers",
     "register_trace_bar_handlers",
 ]

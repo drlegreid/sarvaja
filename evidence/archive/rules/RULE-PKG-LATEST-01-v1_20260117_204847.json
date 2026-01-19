@@ -1,0 +1,18 @@
+{
+  "rule": {
+    "id": "RULE-PKG-LATEST-01-v1",
+    "name": "Latest Stable Package Versions",
+    "category": "devops",
+    "priority": "HIGH",
+    "status": "ACTIVE",
+    "directive": "Projects MUST use latest stable versions of all dependencies. Version pinning is permitted ONLY when documented compatibility issues exist. Quarterly dependency audits are REQUIRED.",
+    "rule_type": "OPERATIONAL",
+    "semantic_id": "PKG-LATEST-01-v1",
+    "created_date": null
+  },
+  "archived_at": "2026-01-17T20:48:47.937470",
+  "reason": "deleted",
+  "archived_from_db": "sim-ai-governance",
+  "dependencies": [],
+  "dependents": []
+}

@@ -1,0 +1,18 @@
+{
+  "rule": {
+    "id": "RULE-013",
+    "name": "Rules Applicability Convention",
+    "category": "governance",
+    "priority": "HIGH",
+    "status": "ACTIVE",
+    "directive": "All code comments, gaps, and TODOs MUST reference applicable rules: ``` {TYPE}({RULE-ID}): {Description} ```",
+    "rule_type": "META",
+    "semantic_id": "GOV-PROP-01-v1",
+    "created_date": null
+  },
+  "archived_at": "2026-01-17T20:54:43.986624",
+  "reason": "deleted",
+  "archived_from_db": "sim-ai-governance",
+  "dependencies": [],
+  "dependents": []
+}

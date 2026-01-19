@@ -1,11 +1,4 @@
-"""
-Rule Quality Analyzer
-Created: 2024-12-24
-Modularized: 2026-01-02 (RULE-032)
-
-Main analyzer class for rule quality checks.
-Per: RULE-010 (Evidence-Based Wisdom), RULE-013 (Rules Applicability)
-"""
+"""Rule Quality Analyzer. Per RULE-010, RULE-013. Created: 2024-12-24."""
 
 import os
 from dataclasses import asdict
@@ -27,39 +20,15 @@ try:
 except ImportError:
     TYPEDB_AVAILABLE = False
 
-
 class RuleQualityAnalyzer:
-    """
-    Analyzes rule quality and detects issues.
+    """Analyzes rule quality: orphans, shallow rules, over-connected, under-documented, circular deps."""
 
-    Usage:
-        analyzer = RuleQualityAnalyzer()
-        report = analyzer.analyze()
-
-        # Check specific issues
-        orphans = analyzer.find_orphaned_rules()
-        shallow = analyzer.find_shallow_rules()
-    """
-
-    # Thresholds for issue detection
     MAX_DEPENDENCIES = 5  # Over-connected if more than this
     MIN_DEPENDENTS = 0    # Orphaned if less than this (for non-foundational rules)
     FOUNDATIONAL_RULES = {"RULE-001", "RULE-002"}  # Allowed to have no dependents
 
-    def __init__(
-        self,
-        host: str = None,
-        port: int = None,
-        database: str = None
-    ):
-        """
-        Initialize analyzer with TypeDB connection.
-
-        Args:
-            host: TypeDB host (default: from env or localhost)
-            port: TypeDB port (default: from env or 1729)
-            database: TypeDB database (default: from env or sim-ai-governance)
-        """
+    def __init__(self, host: str = None, port: int = None, database: str = None):
+        """Initialize analyzer with TypeDB connection."""
         self.host = host or os.getenv("TYPEDB_HOST", "localhost")
         self.port = port or int(os.getenv("TYPEDB_PORT", "1729"))
         self.database = database or os.getenv("TYPEDB_DATABASE", "sim-ai-governance")
@@ -120,11 +89,7 @@ class RuleQualityAnalyzer:
                 self._dependents_cache[dep].add(rule_id)
 
     def find_orphaned_rules(self) -> List[RuleIssue]:
-        """
-        Find rules with no dependents (nothing depends on them).
-
-        Excludes foundational rules which are allowed to have no dependents.
-        """
+        """Find rules with no dependents. Excludes foundational rules."""
         issues = []
         self._load_dependencies()
         rules = self._load_rules()
@@ -154,11 +119,7 @@ class RuleQualityAnalyzer:
         return issues
 
     def find_shallow_rules(self) -> List[RuleIssue]:
-        """
-        Find rules missing important attributes.
-
-        Required: rule-id, rule-name, directive, category, priority, status
-        """
+        """Find rules missing required attributes: id, name, directive, category, priority, status."""
         issues = []
         rules = self._load_rules()
         required_attrs = {"id", "name", "directive", "category", "priority", "status"}
@@ -184,14 +145,7 @@ class RuleQualityAnalyzer:
         return issues
 
     def find_over_connected_rules(self) -> List[RuleIssue]:
-        """
-        Find rules with too many dependencies.
-
-        May indicate:
-        - Rule is too broad
-        - Need to split into smaller rules
-        - Design smell
-        """
+        """Find rules with too many dependencies (may indicate rule is too broad)."""
         issues = []
         self._load_dependencies()
         rules = self._load_rules()
@@ -214,11 +168,7 @@ class RuleQualityAnalyzer:
         return issues
 
     def find_under_documented_rules(self) -> List[RuleIssue]:
-        """
-        Find rules not referenced by any document.
-
-        Uses TypeDB query for document-references-rule relation.
-        """
+        """Find rules not referenced by any document (via TypeDB document-references-rule)."""
         issues = []
         client = self._get_client()
         if not client:
@@ -229,7 +179,7 @@ class RuleQualityAnalyzer:
             match
                 $r isa rule-entity, has rule-id $id, has status "ACTIVE";
                 not { (referenced-rule: $r) isa document-references-rule; };
-            get $id;
+            select $id;
         """
 
         try:
@@ -253,11 +203,7 @@ class RuleQualityAnalyzer:
         return issues
 
     def find_circular_dependencies(self) -> List[RuleIssue]:
-        """
-        Find circular dependency chains.
-
-        A→B→C→A is a circular dependency.
-        """
+        """Find circular dependency chains (A→B→C→A)."""
         issues = []
         self._load_dependencies()
 
@@ -300,14 +246,7 @@ class RuleQualityAnalyzer:
         return issues
 
     def get_rule_impact(self, rule_id: str) -> Dict[str, Any]:
-        """
-        Analyze impact if a rule is modified or deprecated.
-
-        Delegates to governance.quality.impact.calculate_rule_impact.
-
-        Returns:
-            Dictionary with impact analysis (see calculate_rule_impact).
-        """
+        """Analyze impact if rule is modified/deprecated. Delegates to calculate_rule_impact."""
         self._load_dependencies()
         rules = self._load_rules()
         rule = rules.get(rule_id, {})
@@ -320,12 +259,7 @@ class RuleQualityAnalyzer:
         )
 
     def analyze(self) -> RuleHealthReport:
-        """
-        Run full rule quality analysis.
-
-        Returns:
-            RuleHealthReport with all detected issues
-        """
+        """Run full rule quality analysis. Returns RuleHealthReport."""
         rules = self._load_rules()
         all_issues: List[RuleIssue] = []
 

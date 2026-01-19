@@ -1,10 +1,4 @@
-"""
-DSM Tracker - Core Tracking Logic
-Created: 2024-12-24
-Modularized: 2026-01-02 (RULE-032)
-
-Implements RULE-012 (Deep Sleep Protocol) cycle tracking.
-"""
+"""DSM Tracker - RULE-012 Deep Sleep Protocol cycle tracking. Created: 2024-12-24"""
 import json
 from datetime import datetime, date
 from typing import List, Dict, Any, Optional
@@ -19,35 +13,10 @@ from governance.dsm.memory import get_session_memory_payload as _get_memory_payl
 
 
 class DSMTracker:
-    """
-    Tracks Deep Sleep Mode cycles.
+    """Tracks Deep Sleep Mode cycles through DSP phases."""
 
-    Usage:
-        tracker = DSMTracker()
-        tracker.start_cycle("1001-1100")
-
-        tracker.advance_phase()  # AUDIT
-        tracker.add_finding("gap", "Missing test coverage for X")
-        tracker.checkpoint("Audited 5 modules")
-
-        tracker.advance_phase()  # HYPOTHESIZE
-        # ... continue through phases
-
-        evidence = tracker.complete_cycle()
-    """
-
-    def __init__(
-        self,
-        evidence_dir: str = None,
-        state_file: str = None
-    ):
-        """
-        Initialize DSM Tracker.
-
-        Args:
-            evidence_dir: Directory for evidence files (default: ./evidence)
-            state_file: Path to state file for persistence (default: .dsm_state.json)
-        """
+    def __init__(self, evidence_dir: str = None, state_file: str = None):
+        """Initialize DSM Tracker with optional evidence_dir and state_file."""
         self.evidence_dir = Path(evidence_dir or "./evidence")
         self.state_file = Path(state_file or ".dsm_state.json")
 
@@ -93,15 +62,7 @@ class DSMTracker:
             json.dump(state, f, indent=2)
 
     def start_cycle(self, batch_id: str = None) -> DSMCycle:
-        """
-        Start a new DSM cycle.
-
-        Args:
-            batch_id: Optional batch identifier (e.g., "1001-1100")
-
-        Returns:
-            The new DSMCycle
-        """
+        """Start a new DSM cycle with optional batch_id."""
         if self.current_cycle and self.current_cycle.current_phase != "complete":
             raise ValueError("A cycle is already in progress. Complete or abort it first.")
 
@@ -124,22 +85,7 @@ class DSMTracker:
         return DSPPhase(self.current_cycle.current_phase)
 
     def advance_phase(self, force: bool = False) -> DSPPhase:
-        """
-        Advance to next phase.
-
-        Per TASK 3.2: Validates that actual work was done before advancing.
-        Each phase MUST produce evidence (checkpoints or findings).
-
-        Args:
-            force: Skip validation (for testing only, logs warning)
-
-        Returns:
-            The new phase
-
-        Raises:
-            ValueError: If no cycle in progress, cycle is complete, or
-                       validation fails (no evidence for current phase)
-        """
+        """Advance to next phase. Validates evidence unless force=True."""
         if not self.current_cycle:
             raise ValueError("No cycle in progress. Start one with start_cycle()")
 
@@ -168,15 +114,7 @@ class DSMTracker:
         return next_phase
 
     def go_to_phase(self, phase: DSPPhase) -> DSPPhase:
-        """
-        Jump to a specific phase (for non-linear workflows).
-
-        Args:
-            phase: Target phase
-
-        Returns:
-            The new phase
-        """
+        """Jump to a specific phase (for non-linear workflows)."""
         if not self.current_cycle:
             raise ValueError("No cycle in progress. Start one with start_cycle()")
 
@@ -191,23 +129,9 @@ class DSMTracker:
         self._save_state()
         return phase
 
-    def checkpoint(
-        self,
-        description: str,
-        metrics: Dict[str, Any] = None,
-        evidence: List[str] = None
-    ) -> PhaseCheckpoint:
-        """
-        Create a checkpoint in the current phase.
-
-        Args:
-            description: Description of checkpoint
-            metrics: Optional metrics
-            evidence: Optional list of evidence references
-
-        Returns:
-            The created checkpoint
-        """
+    def checkpoint(self, description: str, metrics: Dict[str, Any] = None,
+                   evidence: List[str] = None) -> PhaseCheckpoint:
+        """Create a checkpoint in the current phase."""
         if not self.current_cycle:
             raise ValueError("No cycle in progress")
 
@@ -223,24 +147,9 @@ class DSMTracker:
         self._save_state()
         return cp
 
-    def add_finding(
-        self,
-        finding_type: str,
-        description: str,
-        severity: str = "MEDIUM",
-        related_rules: List[str] = None
-    ) -> Dict[str, Any]:
-        """
-        Add a finding during the current phase.
-
-        Args:
-            finding_type: Type of finding (gap, orphan, conflict, improvement)
-            description: Finding description
-            severity: Severity level (LOW, MEDIUM, HIGH, CRITICAL)
-            related_rules: List of related rule IDs
-
-        Returns:
-            The created finding
+    def add_finding(self, finding_type: str, description: str, severity: str = "MEDIUM",
+                    related_rules: List[str] = None) -> Dict[str, Any]:
+        """Add a finding (gap/orphan/conflict/improvement) during current phase.
         """
         if not self.current_cycle:
             raise ValueError("No cycle in progress")

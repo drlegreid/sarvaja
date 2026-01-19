@@ -55,11 +55,12 @@ def register_common_handlers(ctrl: Any, state: Any) -> None:
                 except Exception:
                     pass
 
-                # Load sessions
+                # Load sessions (per GAP-EXPLOR-API-001: now returns paginated response)
                 try:
-                    sessions_response = client.get(f"{API_BASE_URL}/api/sessions")
+                    sessions_response = client.get(f"{API_BASE_URL}/api/sessions?limit=100")
                     if sessions_response.status_code == 200:
-                        state.sessions = sessions_response.json()
+                        data = sessions_response.json()
+                        state.sessions = data.get("items", data) if isinstance(data, dict) else data
                 except Exception:
                     pass
 

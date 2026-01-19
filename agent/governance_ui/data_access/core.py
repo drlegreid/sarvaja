@@ -124,7 +124,7 @@ def get_decisions() -> List[Dict[str, Any]]:
     return result.get('decisions', []) if isinstance(result, dict) else []
 
 
-def get_sessions(limit: int = 10) -> List[Dict[str, Any]]:
+def get_sessions(limit: int = 100) -> List[Dict[str, Any]]:
     """
     Get recent sessions.
 

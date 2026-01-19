@@ -1,0 +1,48 @@
+# Vector Embedding Entities
+# TypeDB schema for vector storage (P7.1 - TypeDB 2.x Bridge)
+# Part of: EPIC-DR-012 Schema Modularization
+# Created: 2026-01-17
+#
+# NOTE: TypeDB 3.x will have native vector support (double[]).
+# This is a bridge pattern for TypeDB 2.x that stores embeddings as JSON strings.
+# Similarity computation is done externally in Python (numpy/sklearn).
+# See DECISION-003: TypeDB-First Strategy for migration plan.
+
+define
+
+# =============================================================================
+# VECTOR DOCUMENT ENTITY
+# =============================================================================
+
+# Vector document entity - stores text with embedding
+entity vector-document,
+
+    owns vector-id,
+    owns vector-content,
+    owns vector-embedding,       # JSON-encoded float array
+    owns vector-model,           # Embedding model name (e.g., "text-embedding-3-small")
+    owns vector-dimension,       # Embedding dimensions (e.g., 1536)
+    owns vector-source,          # Source identifier (rule-id, decision-id, session-id)
+    owns vector-source-type,     # Source type (rule, decision, session, document)
+    owns vector-created-at,
+    plays vector-similarity:source-vector,
+    plays vector-similarity:similar-vector,
+    plays entity-vector:entity-embedding;
+
+# =============================================================================
+# VECTOR RELATIONS
+# =============================================================================
+
+# Similarity relation (precomputed top-k neighbors)
+# This allows TypeDB to store and query precomputed similarities
+relation vector-similarity,
+
+    relates source-vector,
+    relates similar-vector,
+    owns similarity-score;       # Cosine similarity 0.0-1.0
+
+# Link vector to source entity (rule, decision, etc.)
+relation entity-vector,
+
+    relates embedded-entity,
+    relates entity-embedding;

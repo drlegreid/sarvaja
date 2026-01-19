@@ -26,12 +26,13 @@
   },
   "enableAllProjectMcpServers": true,
   "enabledMcpjsonServers": [
-    "podman",
+    "claude-mem",
     "rest-api",
-    "governance-core",
-    "governance-agents",
-    "governance-sessions",
-    "governance-tasks"
+    "gov-core",
+    "gov-agents",
+    "gov-sessions",
+    "gov-tasks",
+    "playwright"
   ],
   "hooks": {
     "SessionStart": [
@@ -41,6 +42,11 @@
             "type": "command",
             "command": "python3 \"$CLAUDE_PROJECT_DIR/.claude/hooks/healthcheck.py\"",
             "timeout": 10
+          },
+          {
+            "type": "command",
+            "command": "python3 \"$CLAUDE_PROJECT_DIR/.claude/hooks/checkers/mcp_connection.py\" --quick",
+            "timeout": 3
           }
         ]
       }
@@ -69,6 +75,17 @@
             "type": "command",
             "command": "python3 \"$CLAUDE_PROJECT_DIR/.claude/hooks/pre_bash_check.py\"",
             "timeout": 2
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"$CLAUDE_PROJECT_DIR/.claude/hooks/entropy_cli.py\" --increment -q",
+            "timeout": 1
           }
         ]
       }

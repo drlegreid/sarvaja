@@ -1,6 +1,6 @@
 # GAP-EPIC-DR-008: Task Evidence Field Population
 
-**Priority:** HIGH | **Category:** data-integrity | **Status:** OPEN
+**Priority:** HIGH | **Category:** data-integrity | **Status:** RESOLVED
 **Discovered:** 2026-01-17 | **Session:** SESSION-2026-01-17-PLATFORM-GAPS
 **Parent:** [GAP-DATA-INTEGRITY-001.md](GAP-DATA-INTEGRITY-001.md)
 
@@ -134,10 +134,27 @@ python scripts/backfill_task_evidence.py
 
 ## Acceptance Criteria
 
-- [ ] Task evidence population >= 50%
-- [ ] Backfill script created and tested
-- [ ] Evidence includes session/commit references where available
-- [ ] GAP-DATA-INTEGRITY-001 updated with new stats
+- [x] Task evidence population >= 50% (**100% achieved** - 65/65 DONE tasks)
+- [x] Backfill script created and tested (`scripts/backfill_task_evidence.py`)
+- [x] Evidence includes session/commit references where available
+- [x] GAP-DATA-INTEGRITY-001 updated with new stats
+
+---
+
+## Resolution (2026-01-17)
+
+**Executed:** `python3 scripts/backfill_task_evidence.py --live`
+
+**Results:**
+```
+Total tasks: 141
+DONE tasks: 65
+DONE without evidence: 63 → 0
+Updated: 63
+Errors: 0
+```
+
+**Coverage:** 3% → **100%** for completed tasks
 
 ## Related Files
 

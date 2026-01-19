@@ -1,0 +1,18 @@
+{
+  "rule": {
+    "id": "RULE-002",
+    "name": "Architectural & Design Best Practices",
+    "category": "architecture",
+    "priority": "HIGH",
+    "status": "ACTIVE",
+    "directive": "All code and system design MUST follow: 1. **Separation of Concerns** - Single responsibility, clear layer boundaries 2. **Configuration Over Code** - Environment variables, YAML configs 3. **Observability by Default** - Health endpoints, structured logging 4. **Graceful Degradation** - Fallback models, retries, timeouts 5. **Idempotency** - Retriable operations, upsert patterns 6. **Documentation** - README per component, API contracts",
+    "rule_type": "OPERATIONAL",
+    "semantic_id": "ARCH-BEST-01-v1",
+    "created_date": null
+  },
+  "archived_at": "2026-01-17T20:54:33.773642",
+  "reason": "deleted",
+  "archived_from_db": "sim-ai-governance",
+  "dependencies": [],
+  "dependents": []
+}

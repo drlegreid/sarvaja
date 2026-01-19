@@ -17,7 +17,7 @@ class SessionCRUDOperations:
     """
     Session CRUD operations for TypeDB.
 
-    Requires a client with _execute_query, _client, database, and get_session attributes.
+    Requires a client with _execute_query, _driver, database, and get_session attributes.
     Uses mixin pattern for TypeDBClient composition.
     """
 
@@ -36,7 +36,7 @@ class SessionCRUDOperations:
 
         Note: Checks for existing session first to prevent duplicates.
         """
-        from typedb.driver import SessionType, TransactionType
+        from typedb.driver import TransactionType
 
         # Check if session already exists
         existing = self.get_session(session_id)
@@ -46,8 +46,7 @@ class SessionCRUDOperations:
             return None
 
         try:
-            with self._client.session(self.database, SessionType.DATA) as session:
-                with session.transaction(TransactionType.WRITE) as tx:
+            with self._driver.transaction(self.database, TransactionType.WRITE) as tx:
                     # Build insert parts
                     insert_parts = [f'has session-id "{session_id}"']
 
@@ -70,7 +69,7 @@ class SessionCRUDOperations:
                         insert $s isa work-session,
                             {", ".join(insert_parts)};
                     """
-                    tx.query.insert(insert_query)
+                    tx.query(insert_query).resolve()
                     tx.commit()
 
             return self.get_session(session_id)
@@ -80,11 +79,10 @@ class SessionCRUDOperations:
 
     def end_session(self, session_id: str) -> Optional[Session]:
         """End a session by setting completed-at timestamp."""
-        from typedb.driver import SessionType, TransactionType
+        from typedb.driver import TransactionType
 
         try:
-            with self._client.session(self.database, SessionType.DATA) as session:
-                with session.transaction(TransactionType.WRITE) as tx:
+            with self._driver.transaction(self.database, TransactionType.WRITE) as tx:
                     # TypeDB datetime format: YYYY-MM-DDTHH:MM:SS (no microseconds, no trailing T)
                     now = datetime.now()
                     timestamp_str = now.strftime('%Y-%m-%dT%H:%M:%S')
@@ -94,7 +92,7 @@ class SessionCRUDOperations:
                         insert
                             $s has completed-at {timestamp_str};
                     """
-                    tx.query.insert(insert_query)
+                    tx.query(insert_query).resolve()
                     tx.commit()
 
             return self.get_session(session_id)
@@ -117,7 +115,7 @@ class SessionCRUDOperations:
 
         Uses delete-then-insert pattern for each optional attribute.
         """
-        from typedb.driver import SessionType, TransactionType
+        from typedb.driver import TransactionType
 
         # Check session exists first
         existing = self.get_session(session_id)
@@ -125,20 +123,19 @@ class SessionCRUDOperations:
             return None
 
         try:
-            with self._client.session(self.database, SessionType.DATA) as session:
-                with session.transaction(TransactionType.WRITE) as tx:
+            with self._driver.transaction(self.database, TransactionType.WRITE) as tx:
                     # Update description
                     if description is not None:
-                        # Delete old description
+                        # Delete old description (TypeDB 3.x: has $var of $entity)
                         delete_query = f"""
                             match
                                 $s isa work-session, has session-id "{session_id}",
                                     has session-description $desc;
                             delete
-                                $s has $desc;
+                                has $desc of $s;
                         """
                         try:
-                            tx.query.delete(delete_query)
+                            tx.query(delete_query).resolve()
                         except Exception:
                             pass  # May not have existing description
 
@@ -150,20 +147,20 @@ class SessionCRUDOperations:
                             insert
                                 $s has session-description "{desc_escaped}";
                         """
-                        tx.query.insert(insert_query)
+                        tx.query(insert_query).resolve()
 
                     # Update agent_id
                     if agent_id is not None:
-                        # Delete old agent_id
+                        # Delete old agent_id (TypeDB 3.x: has $var of $entity)
                         delete_query = f"""
                             match
                                 $s isa work-session, has session-id "{session_id}",
                                     has agent-id $aid;
                             delete
-                                $s has $aid;
+                                has $aid of $s;
                         """
                         try:
-                            tx.query.delete(delete_query)
+                            tx.query(delete_query).resolve()
                         except Exception:
                             pass
 
@@ -174,7 +171,7 @@ class SessionCRUDOperations:
                             insert
                                 $s has agent-id "{agent_id}";
                         """
-                        tx.query.insert(insert_query)
+                        tx.query(insert_query).resolve()
 
                     # Update status (complete session if COMPLETED)
                     if status == "COMPLETED":
@@ -187,7 +184,7 @@ class SessionCRUDOperations:
                                 $s has completed-at {timestamp_str};
                         """
                         try:
-                            tx.query.insert(insert_query)
+                            tx.query(insert_query).resolve()
                         except Exception:
                             pass  # May already have completed-at
 
@@ -207,7 +204,7 @@ class SessionCRUDOperations:
         Returns:
             True if deleted successfully, False otherwise
         """
-        from typedb.driver import SessionType, TransactionType
+        from typedb.driver import TransactionType
 
         # Check session exists first
         existing = self.get_session(session_id)
@@ -215,8 +212,7 @@ class SessionCRUDOperations:
             return False
 
         try:
-            with self._client.session(self.database, SessionType.DATA) as session:
-                with session.transaction(TransactionType.WRITE) as tx:
+            with self._driver.transaction(self.database, TransactionType.WRITE) as tx:
                     # Delete all relations first (has-evidence, session-applied-rule, etc.)
                     # Delete has-evidence relations
                     del_evidence = f"""
@@ -227,7 +223,7 @@ class SessionCRUDOperations:
                             $r isa has-evidence;
                     """
                     try:
-                        tx.query.delete(del_evidence)
+                        tx.query(del_evidence).resolve()
                     except Exception:
                         pass
 
@@ -240,7 +236,7 @@ class SessionCRUDOperations:
                             $r isa session-applied-rule;
                     """
                     try:
-                        tx.query.delete(del_rules)
+                        tx.query(del_rules).resolve()
                     except Exception:
                         pass
 
@@ -253,7 +249,7 @@ class SessionCRUDOperations:
                             $r isa session-decision;
                     """
                     try:
-                        tx.query.delete(del_decisions)
+                        tx.query(del_decisions).resolve()
                     except Exception:
                         pass
 
@@ -264,7 +260,7 @@ class SessionCRUDOperations:
                         delete
                             $s isa work-session;
                     """
-                    tx.query.delete(delete_query)
+                    tx.query(delete_query).resolve()
                     tx.commit()
 
             return True

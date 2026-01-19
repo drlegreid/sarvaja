@@ -1,0 +1,46 @@
+{
+  "_comment": "Backup of optional MCP servers - can be restored to .mcp.json or ~/.claude.json when needed",
+  "_created": "2026-01-19",
+
+  "project_level_mcps": {
+    "_comment": "Add to .mcp.json mcpServers section",
+
+    "podman": {
+      "type": "stdio",
+      "command": "/home/oderid/.config/nvm/versions/node/v20.19.6/bin/npx",
+      "args": ["-y", "podman-mcp-server@latest"],
+      "env": {},
+      "_docs": "https://github.com/manusa/podman-mcp-server",
+      "_tools": ["listContainers", "buildImage", "runContainer"]
+    },
+
+    "ubuntu-desktop-control": {
+      "type": "stdio",
+      "command": "/home/oderid/.venv/sarvaja/bin/ubuntu-desktop-control",
+      "args": [],
+      "env": {
+        "DISPLAY": ":0"
+      },
+      "_docs": "https://github.com/charettep/ubuntu-desktop-control-mcp",
+      "_requires": "sudo apt-get install -y python3-pyatspi xdotool",
+      "_tools": ["screenshot", "click", "type", "element detection via AT-SPI"],
+      "_status": "DISABLED - backup only"
+    },
+
+    "playwright": {
+      "type": "stdio",
+      "command": "/home/oderid/.config/nvm/versions/node/v20.19.6/bin/npx",
+      "args": ["-y", "@playwright/mcp@latest", "--browser", "firefox", "--executable-path", "/home/oderid/.cache/ms-playwright/firefox-1497/firefox/firefox"],
+      "env": {
+        "PLAYWRIGHT_BROWSERS_PATH": "/home/oderid/.cache/ms-playwright"
+      },
+      "_docs": "https://github.com/anthropics/anthropic-cookbook/tree/main/misc/model_context_protocol",
+      "_tools": ["navigate", "screenshot", "click", "fill", "evaluate"],
+      "_status": "ACTIVE in .mcp.json"
+    }
+  },
+
+  "global_level_mcps": {
+    "_comment": "Add to ~/.claude.json mcpServers section (cross-project tools)"
+  }
+}

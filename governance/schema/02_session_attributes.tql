@@ -1,0 +1,30 @@
+# Session and Evidence Attributes
+# TypeDB attributes for work sessions and evidence (P11.3)
+# Part of: EPIC-DR-012 Schema Modularization
+# Created: 2026-01-17
+
+define
+
+# =============================================================================
+# WORK SESSION ATTRIBUTES (P11.3)
+# =============================================================================
+
+attribute session-description value string;
+
+attribute session-file-path value string;
+
+
+# =============================================================================
+# EVIDENCE FILE ATTRIBUTES (P11.3)
+# =============================================================================
+
+attribute evidence-id value string;
+
+attribute evidence-source value string;
+
+attribute evidence-type value string;
+
+attribute evidence-content-preview value string;
+
+attribute evidence-created-at value datetime;
+

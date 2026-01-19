@@ -53,7 +53,7 @@ def build_backlog_header() -> None:
 
 
 def build_available_tasks_column() -> None:
-    """Build the available tasks column."""
+    """Build the available tasks column with pagination."""
     with v3.VCol(cols=6):
         with v3.VCard(variant="outlined"):
             with v3.VCardTitle(classes="text-subtitle-1 bg-info"):
@@ -65,7 +65,7 @@ def build_available_tasks_column() -> None:
                     size="small",
                     color="info",
                 )
-            with v3.VCardText(style="max-height: 500px; overflow-y: auto"):
+            with v3.VCardText(style="max-height: 400px; overflow-y: auto"):
                 html.Div(
                     "No available tasks",
                     v_if="available_tasks.length === 0",
@@ -75,8 +75,13 @@ def build_available_tasks_column() -> None:
                     density="compact",
                     v_if="available_tasks.length > 0"
                 ):
+                    # Per GAP-EXPLOR-UI-001: Client-side pagination
                     with v3.VListItem(
-                        v_for="task in available_tasks",
+                        v_for=(
+                            "task in available_tasks.slice("
+                            "(backlog_page - 1) * backlog_per_page, "
+                            "backlog_page * backlog_per_page)"
+                        ),
                         **{":key": "task.task_id"},
                         __properties=["data-testid"],
                         **{"data-testid": "backlog-available-task"}
@@ -93,6 +98,7 @@ def build_available_tasks_column() -> None:
                         with v3.VListItemSubtitle():
                             html.Span("Phase: {{ task.phase }}")
                         with html.Template(v_slot_append=True):
+                            # Per GAP-EXPLOR-UI-001: Add tooltip when button is disabled
                             v3.VBtn(
                                 "Claim",
                                 color="primary",
@@ -100,9 +106,64 @@ def build_available_tasks_column() -> None:
                                 variant="tonal",
                                 disabled=("!backlog_agent_id",),
                                 click="trigger('claim_backlog_task', task.task_id)",
+                                title=("backlog_agent_id ? '' : 'Enter Agent ID above to claim tasks'",),
                                 __properties=["data-testid"],
                                 **{"data-testid": "backlog-claim-btn"}
                             )
+            # Pagination controls (GAP-EXPLOR-UI-001)
+            with v3.VCardActions(
+                v_if="available_tasks.length > backlog_per_page",
+                classes="d-flex justify-space-between align-center px-2 py-1",
+                __properties=["data-testid"],
+                **{"data-testid": "backlog-pagination"}
+            ):
+                # Items per page selector
+                with html.Div(classes="d-flex align-center"):
+                    html.Span("Per page:", classes="text-caption mr-1")
+                    v3.VSelect(
+                        v_model="backlog_per_page",
+                        items=("backlog_per_page_options",),
+                        variant="outlined",
+                        density="compact",
+                        hide_details=True,
+                        style="max-width: 70px",
+                        change="backlog_page = 1",
+                        __properties=["data-testid"],
+                        **{"data-testid": "backlog-per-page"}
+                    )
+                # Page info - use v_text for reactive content
+                html.Div(
+                    v_text=(
+                        "'Page ' + backlog_page + ' / ' + "
+                        "Math.ceil(available_tasks.length / backlog_per_page)"
+                    ),
+                    classes="text-caption text-grey",
+                    __properties=["data-testid"],
+                    **{"data-testid": "backlog-page-info"}
+                )
+                # Navigation buttons
+                with html.Div(classes="d-flex align-center"):
+                    v3.VBtn(
+                        icon="mdi-chevron-left",
+                        variant="text",
+                        size="x-small",
+                        disabled=("backlog_page <= 1",),
+                        click="backlog_page = backlog_page - 1",
+                        __properties=["data-testid"],
+                        **{"data-testid": "backlog-prev-btn"}
+                    )
+                    v3.VBtn(
+                        icon="mdi-chevron-right",
+                        variant="text",
+                        size="x-small",
+                        disabled=(
+                            "!available_tasks.length || "
+                            "backlog_page >= Math.ceil(available_tasks.length / backlog_per_page)",
+                        ),
+                        click="backlog_page = backlog_page + 1",
+                        __properties=["data-testid"],
+                        **{"data-testid": "backlog-next-btn"}
+                    )
 
 
 def build_claimed_tasks_column() -> None:

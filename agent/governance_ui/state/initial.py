@@ -70,6 +70,10 @@ def get_initial_state() -> Dict[str, Any]:
         'evidence_attach_path': '',
         'evidence_attach_loading': False,
 
+        # Session Tasks (GAP-DATA-INTEGRITY-001 Phase 3)
+        'session_tasks': [],
+        'session_tasks_loading': False,
+
         # View state
         'show_rule_detail': False,
         'show_rule_form': False,
@@ -144,6 +148,10 @@ def get_initial_state() -> Dict[str, Any]:
         'backlog_agent_id': '',
         'backlog_auto_refresh': False,
         'backlog_refresh_interval': 5,  # seconds
+        # Backlog pagination (GAP-EXPLOR-UI-001)
+        'backlog_page': 1,
+        'backlog_per_page': 10,
+        'backlog_per_page_options': [10, 25, 50],
 
         # Sessions filter state
         'sessions_search_query': '',

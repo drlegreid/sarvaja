@@ -8,6 +8,7 @@ Per RULE-032: File size <300 lines
 
 Extracted from rules_crud.py per RULE-032.
 Created: 2026-01-03
+Refactored: 2026-01-19 - Removed deprecated functions, inlined aliases
 """
 
 import json
@@ -20,12 +21,17 @@ def register_rule_archive_tools(mcp) -> None:
     """Register rule archive MCP tools."""
 
     @mcp.tool()
-    def governance_list_archived_rules() -> str:
+    def rules_list_archived() -> str:
         """
         List all archived rules available for restoration.
 
         Returns:
-            JSON array of archived rules with metadata
+            JSON array of archived rules with metadata including:
+            - rule_id: The rule identifier
+            - name: Rule name
+            - archived_at: Timestamp of archival
+            - reason: Reason for archival
+            - dependencies/dependents: Related rules
         """
         client = get_typedb_client()
 
@@ -54,7 +60,7 @@ def register_rule_archive_tools(mcp) -> None:
             client.close()
 
     @mcp.tool()
-    def governance_get_archived_rule(rule_id: str) -> str:
+    def rule_get_archived(rule_id: str) -> str:
         """
         Get a specific archived rule's full data.
 
@@ -62,7 +68,8 @@ def register_rule_archive_tools(mcp) -> None:
             rule_id: The archived rule ID to retrieve
 
         Returns:
-            JSON object with full archive record
+            JSON object with full archive record including rule data,
+            archive timestamp, reason, and relationship information
         """
         client = get_typedb_client()
 
@@ -81,7 +88,7 @@ def register_rule_archive_tools(mcp) -> None:
             client.close()
 
     @mcp.tool()
-    def governance_restore_rule(rule_id: str) -> str:
+    def rule_restore(rule_id: str) -> str:
         """
         Restore a rule from archive.
 
@@ -91,7 +98,7 @@ def register_rule_archive_tools(mcp) -> None:
             rule_id: The archived rule ID to restore
 
         Returns:
-            JSON object with restored rule or error
+            JSON object with restored rule data or error message
         """
         client = get_typedb_client()
 

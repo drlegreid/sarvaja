@@ -1,16 +1,4 @@
-"""
-Rule CRUD MCP Tools
-===================
-CRUD operations for governance rules.
-
-Per RULE-012: DSP Semantic Code Structure
-Per RULE-032: File size <300 lines
-
-Extracted from rules.py per modularization plan.
-Archive operations in rules_archive.py.
-Created: 2026-01-03
-"""
-
+"""Rule CRUD MCP Tools. Per RULE-012: DSP Semantic Code Structure."""
 import json
 from typing import Optional
 from dataclasses import asdict
@@ -22,29 +10,22 @@ def register_rule_crud_tools(mcp) -> None:
     """Register rule CRUD MCP tools."""
 
     @mcp.tool()
-    def governance_create_rule(
-        rule_id: str,
-        name: str,
-        category: str,
-        priority: str,
-        directive: str,
-        status: str = "DRAFT",
-        rule_type: Optional[str] = None
-    ) -> str:
+    def rule_create(rule_id: str, name: str, category: str, priority: str, directive: str,
+                    status: str = "DRAFT", rule_type: Optional[str] = None) -> str:
         """
-        Create a new governance rule.
+        Create a new governance rule in TypeDB.
 
         Args:
-            rule_id: Unique rule ID (e.g., "RULE-023")
+            rule_id: Unique rule identifier (e.g., "RULE-001" or "SESSION-EVID-01-v1")
             name: Human-readable rule name
-            category: Rule category (governance, technical, operational, architecture, testing)
+            category: Rule category (e.g., "GOVERNANCE", "TECHNICAL", "OPERATIONAL")
             priority: Priority level (CRITICAL, HIGH, MEDIUM, LOW)
             directive: The rule directive text
-            status: Initial status (ACTIVE, PROPOSED, DISABLED). Default: DRAFT
-            rule_type: Rule type (FOUNDATIONAL, OPERATIONAL, TECHNICAL, META, LEAF)
+            status: Rule status (default: DRAFT)
+            rule_type: Optional rule type classification
 
         Returns:
-            JSON object with created rule or error
+            JSON with created rule or error
         """
         client = get_typedb_client()
 
@@ -78,31 +59,25 @@ def register_rule_crud_tools(mcp) -> None:
             client.close()
 
     @mcp.tool()
-    def governance_update_rule(
-        rule_id: str,
-        name: Optional[str] = None,
-        category: Optional[str] = None,
-        priority: Optional[str] = None,
-        directive: Optional[str] = None,
-        status: Optional[str] = None,
-        rule_type: Optional[str] = None,
-        semantic_id: Optional[str] = None
-    ) -> str:
+    def rule_update(rule_id: str, name: Optional[str] = None, category: Optional[str] = None,
+                    priority: Optional[str] = None, directive: Optional[str] = None,
+                    status: Optional[str] = None, rule_type: Optional[str] = None,
+                    semantic_id: Optional[str] = None) -> str:
         """
-        Update an existing rule. Only provided fields will be updated.
+        Update an existing governance rule in TypeDB.
 
         Args:
-            rule_id: Rule ID to update (e.g., "RULE-001")
+            rule_id: Rule identifier to update
             name: New rule name (optional)
             category: New category (optional)
             priority: New priority (optional)
             directive: New directive text (optional)
-            status: New status (ACTIVE, PROPOSED, DISABLED)
-            rule_type: New rule type (FOUNDATIONAL, OPERATIONAL, TECHNICAL, META, LEAF)
-            semantic_id: New semantic ID (optional) - per META-TAXON-01-v1
+            status: New status (optional)
+            rule_type: New rule type (optional)
+            semantic_id: New semantic ID for migration (optional)
 
         Returns:
-            JSON object with updated rule or error
+            JSON with updated rule or error
         """
         client = get_typedb_client()
 
@@ -137,16 +112,18 @@ def register_rule_crud_tools(mcp) -> None:
             client.close()
 
     @mcp.tool()
-    def governance_deprecate_rule(rule_id: str, reason: Optional[str] = None) -> str:
+    def rule_deprecate(rule_id: str, reason: Optional[str] = None) -> str:
         """
-        Deprecate a rule (soft delete - sets status to DEPRECATED).
+        Deprecate a governance rule (soft delete).
+
+        Sets rule status to DEPRECATED. Preferred over hard delete.
 
         Args:
-            rule_id: Rule ID to deprecate (e.g., "RULE-001")
+            rule_id: Rule identifier to deprecate
             reason: Optional reason for deprecation
 
         Returns:
-            JSON object with deprecation status
+            JSON with deprecation status or error
         """
         client = get_typedb_client()
 
@@ -176,23 +153,23 @@ def register_rule_crud_tools(mcp) -> None:
             client.close()
 
     @mcp.tool()
-    def governance_delete_rule(rule_id: str, confirm: bool = False) -> str:
+    def rule_delete(rule_id: str, confirm: bool = False) -> str:
         """
-        Permanently delete a rule (hard delete).
+        Permanently delete a governance rule (hard delete with archive).
 
-        WARNING: This is irreversible. Prefer governance_deprecate_rule for audit trail.
+        Requires explicit confirmation. Consider using rule_deprecate instead.
 
         Args:
-            rule_id: Rule ID to delete
-            confirm: Must be True to confirm deletion
+            rule_id: Rule identifier to delete
+            confirm: Must be True to proceed with deletion
 
         Returns:
-            JSON object with deletion status
+            JSON with deletion status or error
         """
         if not confirm:
             return json.dumps({
                 "error": "Deletion requires explicit confirmation. Set confirm=True to proceed.",
-                "warning": "This is a hard delete. Consider using governance_deprecate_rule instead."
+                "warning": "This is a hard delete. Consider using rule_deprecate instead."
             }, indent=2)
 
         client = get_typedb_client()

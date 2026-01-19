@@ -11,7 +11,7 @@ Feature: Governance Dashboard Navigation
   @smoke
   Scenario: Dashboard loads successfully
     When I navigate to the dashboard
-    Then I should see "Sim.ai Governance Dashboard"
+    Then I should see "Sarvaja Governance Dashboard"
     And I should see the navigation menu
 
   @navigation

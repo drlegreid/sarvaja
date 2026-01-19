@@ -1,4 +1,4 @@
-# Strategy Rules - Sim.ai
+# Strategy Rules
 
 Rules governing technology selection, evidence accumulation, and cross-workspace patterns.
 

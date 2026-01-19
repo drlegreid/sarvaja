@@ -27,7 +27,7 @@ def _get_document(client, document_id: str) -> Optional[Dict]:
     query = f"""
     match
       $d isa document, has document-id "{document_id}";
-    get $d;
+    select $d;
     """
     try:
         results = client.execute_query(query)
@@ -193,7 +193,7 @@ def get_rules_for_document(document_id: str) -> List[str]:
           $d isa document, has document-id "{document_id}";
           $r isa rule-entity, has rule-id $rid;
           (referencing-document: $d, referenced-rule: $r) isa document-references-rule;
-        get $rid;
+        select $rid;
         """
 
         results = client.execute_query(query)
@@ -234,7 +234,7 @@ def get_document_for_rule(rule_id: str) -> Optional[str]:
           $r isa rule-entity, has rule-id "{legacy_id}";
           $d isa document, has document-path $path;
           (referencing-document: $d, referenced-rule: $r) isa document-references-rule;
-        get $path;
+        select $path;
         """
 
         results = client.execute_query(query)

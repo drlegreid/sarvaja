@@ -184,7 +184,7 @@ podman compose --profile cpu down
 
 | Service | Endpoint | Auth |
 |---------|----------|------|
-| TypeDB | `governance_health()` | MCP |
+| TypeDB | `health_check()` | MCP |
 | LiteLLM | `http://localhost:4000/health` | Bearer token |
 | ChromaDB | `http://localhost:8001/api/v2/heartbeat` | None |
 | Ollama | `http://localhost:11434/api/tags` | None |
@@ -230,7 +230,7 @@ source ~/.venv/sarvaja/bin/activate
 PYTHONPATH=. python governance/seed_data.py
 
 # Verify MCP health
-governance_health()  # Via Claude Code MCP
+health_check()  # Via Claude Code MCP
 
 # Push to GitHub (excludes credentials)
 git add -A && git commit -m "message" && git push origin master
@@ -269,6 +269,109 @@ pre-commit install
 pre-commit run --all-files  # Check all
 pre-commit run black        # Single hook
 ```
+
+---
+
+## Test Profiles (GAP-TEST-PROFILES)
+
+Tests are organized by dependency requirements using pytest markers.
+
+### Available Profiles
+
+| Marker | Environment | Dependencies | Command |
+|--------|-------------|--------------|---------|
+| `unit` | Container OR Host | None | `pytest -m unit` |
+| `integration` | Host | TypeDB, ChromaDB | `pytest -m integration` |
+| `e2e` | Host | All services | `pytest -m e2e` |
+| `browser` | Host + Display | pytest-playwright | `pytest -m browser --headed` |
+| `api` | Host | REST server :8082 | `pytest -m api` |
+
+### Auto-Marking
+
+Tests are automatically marked based on path:
+- `tests/unit/*` → `unit`
+- `tests/integration/*` → `integration`
+- `tests/e2e/*` → `e2e`
+- Files with `playwright` imports → `browser`
+
+### Running Tests
+
+```bash
+# Container-safe (no external deps)
+scripts/pytest.sh tests/ -m "unit"
+
+# Host-only (needs services)
+python3 -m pytest tests/ -m "integration"
+
+# Host-only with browser
+python3 -m pytest tests/ -m "browser" --headed
+
+# Exclude browser tests
+python3 -m pytest tests/ -m "not browser"
+
+# Run all E2E except browser
+python3 -m pytest tests/e2e/ -m "e2e and not browser"
+```
+
+### Why Container Tests Fail (Legacy)
+
+Old issue: `scripts/pytest.sh` runs in isolated container that can't reach host services.
+
+**Solutions:**
+1. **Containerized Tests (Recommended):** Use `test-runner` service with proper networking
+2. **Host Tests:** Run `python3 -m pytest` directly on host
+3. **Unit Only:** Use markers `scripts/pytest.sh -m unit`
+
+---
+
+## Containerized Testing (Option B)
+
+Full container networking for tests using `test-runner` service.
+
+### Quick Start
+
+```bash
+# Ensure services are running
+podman compose --profile dev up -d
+
+# Run all tests (except browser)
+./scripts/test-container.sh
+
+# Run specific test file
+./scripts/test-container.sh tests/integration/test_mcp_rest_sessions.py
+
+# Run with markers
+./scripts/test-container.sh -m "integration"
+
+# Rebuild image first
+./scripts/test-container.sh --build tests/
+```
+
+### Direct Podman Usage
+
+```bash
+# Run with custom command
+podman compose --profile test run --rm test-runner \
+    python3 -m pytest tests/integration -v -s
+
+# Interactive shell in test container
+podman compose --profile test run --rm test-runner bash
+```
+
+### Volume Mounts
+
+Test container mounts local dev assets:
+- `./tests:/app/tests:ro` - Test code
+- `./governance:/app/governance:ro` - MCP tools
+- `./shared:/app/shared:ro` - Shared constants
+- `./results:/app/results:rw` - Test results output
+
+### Environment Variables
+
+Container uses service names via env vars:
+- `TYPEDB_HOST=typedb` (not localhost)
+- `CHROMADB_HOST=chromadb`
+- `CHROMADB_PORT=8000` (internal port)
 
 ---
 

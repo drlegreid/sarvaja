@@ -53,7 +53,7 @@ When marking a gap RESOLVED:
 
 ### GAP-INDEX.md
 ```markdown
-# Gap Index - Sarvaja (Active Gaps)
+# Gap Index (Active Gaps)
 
 **Last Updated:** YYYY-MM-DD
 **Active Gaps:** N | Status: X OPEN, Y BLOCKED, Z PARTIAL, W DEFERRED
@@ -62,7 +62,7 @@ When marking a gap RESOLVED:
 
 ### GAP-INDEX-ARCHIVE.md
 ```markdown
-# Gap Index Archive - Sarvaja
+# Gap Index Archive
 
 **Archived:** YYYY-MM-DD
 **Total Resolved:** N gaps

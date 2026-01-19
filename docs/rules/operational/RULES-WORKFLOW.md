@@ -1,4 +1,4 @@
-# Workflow Rules - Sim.ai
+# Workflow Rules
 
 Rules governing task sequencing, autonomy, and context recovery.
 

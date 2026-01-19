@@ -1,17 +1,4 @@
-"""
-Task CRUD MCP Tools
-===================
-Task CRUD operations for TypeDB.
-
-Per RULE-012: DSP Semantic Code Structure
-Per RULE-032: File size <300 lines
-Per DECISION-003: TypeDB-First Strategy
-Per P10.4: MCP Tools for CRUD
-
-Extracted from tasks.py per modularization plan.
-Created: 2026-01-03
-"""
-
+"""Task CRUD MCP Tools. Per RULE-012/032, DECISION-003."""
 import json
 from typing import Optional
 from dataclasses import asdict
@@ -23,34 +10,28 @@ def register_task_crud_tools(mcp) -> None:
     """Register task CRUD MCP tools."""
 
     @mcp.tool()
-    def governance_create_task(
-        task_id: str,
-        name: str,
-        description: str = "",
-        status: str = "pending",
-        priority: str = "MEDIUM",
-        phase: str = "P10"
-    ) -> str:
+    def task_create(task_id: str, name: str, description: str = "", status: str = "pending",
+                    priority: str = "MEDIUM", phase: str = "P10") -> str:
         """
         Create a new task in TypeDB.
 
         Args:
-            task_id: Task ID (e.g., "P10.7", "RD-010")
-            name: Task name/title
-            description: Task description
-            status: Task status (pending, in_progress, completed, blocked)
-            priority: Task priority (LOW, MEDIUM, HIGH, CRITICAL)
-            phase: Phase identifier (e.g., "P10", "RD", "FH")
+            task_id: Unique task identifier (e.g., "P12.1", "RD-001")
+            name: Human-readable task name
+            description: Task description/details
+            status: Task status (pending, in_progress, completed)
+            priority: Priority level (LOW, MEDIUM, HIGH, CRITICAL)
+            phase: Phase identifier (e.g., "P10", "P11", "RD")
 
         Returns:
-            JSON object with created task confirmation
+            JSON with created task details or error
         """
         client = get_typedb_client()
         try:
             if not client.connect():
                 return json.dumps({"error": "Failed to connect to TypeDB"})
 
-            # Map description → body, include priority in body (per TypeDB schema)
+            # Map description -> body, include priority in body (per TypeDB schema)
             body = f"[Priority: {priority}] {description}" if description else f"[Priority: {priority}]"
             success = client.insert_task(
                 task_id=task_id,
@@ -75,15 +56,15 @@ def register_task_crud_tools(mcp) -> None:
             client.close()
 
     @mcp.tool()
-    def governance_get_task(task_id: str) -> str:
+    def task_get(task_id: str) -> str:
         """
-        Get a specific task by ID from TypeDB.
+        Get a task by ID from TypeDB.
 
         Args:
-            task_id: Task ID (e.g., "P10.1", "RD-001")
+            task_id: Task identifier to retrieve
 
         Returns:
-            JSON object with task details or error if not found
+            JSON with task details or error if not found
         """
         client = get_typedb_client()
         try:
@@ -99,23 +80,19 @@ def register_task_crud_tools(mcp) -> None:
             client.close()
 
     @mcp.tool()
-    def governance_update_task(
-        task_id: str,
-        status: Optional[str] = None,
-        name: Optional[str] = None,
-        phase: Optional[str] = None
-    ) -> str:
+    def task_update(task_id: str, status: Optional[str] = None, name: Optional[str] = None,
+                    phase: Optional[str] = None) -> str:
         """
         Update an existing task in TypeDB.
 
         Args:
-            task_id: Task ID to update
-            status: New status (pending, in_progress, completed, blocked)
-            name: New name/title
+            task_id: Task identifier to update
+            status: New status (pending, in_progress, completed)
+            name: New task name
             phase: New phase identifier
 
         Returns:
-            JSON object with updated task confirmation
+            JSON with updated task details or error
         """
         if not any([status, name, phase]):
             return json.dumps({"error": "No update fields provided"})
@@ -149,15 +126,15 @@ def register_task_crud_tools(mcp) -> None:
             client.close()
 
     @mcp.tool()
-    def governance_delete_task(task_id: str) -> str:
+    def task_delete(task_id: str) -> str:
         """
         Delete a task from TypeDB.
 
         Args:
-            task_id: Task ID to delete
+            task_id: Task identifier to delete
 
         Returns:
-            JSON object with deletion confirmation
+            JSON with deletion confirmation or error
         """
         client = get_typedb_client()
         try:
@@ -178,12 +155,12 @@ def register_task_crud_tools(mcp) -> None:
             client.close()
 
     @mcp.tool()
-    def governance_list_all_tasks() -> str:
+    def tasks_list() -> str:
         """
         List all tasks from TypeDB.
 
         Returns:
-            JSON array of all tasks with ID, name, status, phase
+            JSON with array of all tasks and count
         """
         client = get_typedb_client()
         try:
@@ -200,26 +177,19 @@ def register_task_crud_tools(mcp) -> None:
             client.close()
 
     @mcp.tool()
-    def governance_verify_completion(
-        task_id: str,
-        verification_method: str,
-        evidence: str,
-        test_passed: bool = True
-    ) -> str:
+    def task_verify(task_id: str, verification_method: str, evidence: str,
+                    test_passed: bool = True) -> str:
         """
-        Verify and mark a task as completed with required evidence.
-
-        Per TEST-FIX-01-v1: Fixes MUST include verification evidence.
-        Per GAP-VERIFY-001: Enforces verification before marking DONE.
+        Verify task completion with evidence. Per TEST-FIX-01-v1.
 
         Args:
-            task_id: Task/Gap ID to verify (e.g., "P10.1", "GAP-UI-001")
-            verification_method: How verification was done (e.g., "pytest", "curl", "podman ps")
-            evidence: Evidence of completion (test output, screenshot path, log excerpt)
-            test_passed: Whether the verification test passed (default True)
+            task_id: Task identifier to verify
+            verification_method: How verification was done (pytest, curl, podman ps, etc.)
+            evidence: Proof of completion (test output, log excerpt, screenshot path)
+            test_passed: Whether verification tests passed
 
         Returns:
-            JSON object with verification status and task update
+            JSON with verification result and task status update
         """
         if not verification_method:
             return json.dumps({

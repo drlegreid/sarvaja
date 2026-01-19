@@ -1,0 +1,18 @@
+{
+  "rule": {
+    "id": "RULE-005",
+    "name": "Memory & MCP Stability",
+    "category": "stability",
+    "priority": "HIGH",
+    "status": "ACTIVE",
+    "directive": "Monitor memory thresholds and respect MCP stability tiers to maintain system health.",
+    "rule_type": "OPERATIONAL",
+    "semantic_id": "RECOVER-MEM-01-v1",
+    "created_date": null
+  },
+  "archived_at": "2026-01-17T20:54:34.054359",
+  "reason": "deleted",
+  "archived_from_db": "sim-ai-governance",
+  "dependencies": [],
+  "dependents": []
+}

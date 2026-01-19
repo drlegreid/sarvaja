@@ -1,15 +1,4 @@
-"""
-Session Core MCP Tools
-======================
-Core session evidence collection operations.
-
-Per RULE-012: DSP Semantic Code Structure
-Per RULE-032: File size <300 lines
-
-Extracted from sessions.py per modularization plan.
-Created: 2026-01-03
-"""
-
+"""Session Core MCP Tools. Per RULE-012: DSP Semantic Code Structure."""
 import json
 from typing import Optional
 
@@ -32,22 +21,12 @@ try:
 except ImportError:
     TYPEDB_AVAILABLE = False
 
-
 def register_session_core_tools(mcp) -> None:
     """Register core session MCP tools."""
 
     @mcp.tool()
     def session_start(topic: str, session_type: str = "general") -> str:
-        """
-        Start a new session with evidence collection.
-
-        Args:
-            topic: Session topic (e.g., "STRATEGIC-VISION", "RD-HASKELL-MCP")
-            session_type: Type of session (general, strategic, research, debug)
-
-        Returns:
-            JSON object with session ID and status
-        """
+        """Start a new session with evidence collection."""
         if not SESSION_COLLECTOR_AVAILABLE:
             return json.dumps({"error": "SessionCollector not available"})
 
@@ -62,26 +41,9 @@ def register_session_core_tools(mcp) -> None:
         }, indent=2)
 
     @mcp.tool()
-    def session_decision(
-        decision_id: str,
-        name: str,
-        context: str,
-        rationale: str,
-        topic: Optional[str] = None
-    ) -> str:
-        """
-        Record a strategic decision in the current session.
-
-        Args:
-            decision_id: Decision ID (e.g., "DECISION-007")
-            name: Decision title
-            context: Context/problem statement
-            rationale: Reasoning for the decision
-            topic: Session topic (uses last session if not provided)
-
-        Returns:
-            JSON object with decision confirmation
-        """
+    def session_decision(decision_id: str, name: str, context: str, rationale: str,
+                         topic: Optional[str] = None) -> str:
+        """Record a strategic decision in the current session."""
         if not SESSION_COLLECTOR_AVAILABLE:
             return json.dumps({"error": "SessionCollector not available"})
 
@@ -99,37 +61,13 @@ def register_session_core_tools(mcp) -> None:
             rationale=rationale
         )
 
-        return json.dumps({
-            "decision_id": decision_id,
-            "session_id": collector.session_id,
-            "name": name,
-            "indexed_to_typedb": TYPEDB_AVAILABLE,
-            "message": f"Decision {decision_id} recorded and indexed"
-        }, indent=2)
+        return json.dumps({"decision_id": decision_id, "session_id": collector.session_id, "name": name,
+                           "indexed_to_typedb": TYPEDB_AVAILABLE, "message": f"Decision {decision_id} recorded and indexed"}, indent=2)
 
     @mcp.tool()
-    def session_task(
-        task_id: str,
-        name: str,
-        description: str,
-        status: str = "pending",
-        priority: str = "MEDIUM",
-        topic: Optional[str] = None
-    ) -> str:
-        """
-        Record a task in the current session.
-
-        Args:
-            task_id: Task ID (e.g., "P4.2", "RD-001")
-            name: Task name
-            description: Task description
-            status: Task status (pending, in_progress, completed, blocked)
-            priority: Task priority (LOW, MEDIUM, HIGH, CRITICAL)
-            topic: Session topic (uses last session if not provided)
-
-        Returns:
-            JSON object with task confirmation
-        """
+    def session_task(task_id: str, name: str, description: str, status: str = "pending",
+                     priority: str = "MEDIUM", topic: Optional[str] = None) -> str:
+        """Record a task in the current session."""
         if not SESSION_COLLECTOR_AVAILABLE:
             return json.dumps({"error": "SessionCollector not available"})
 
@@ -158,15 +96,7 @@ def register_session_core_tools(mcp) -> None:
 
     @mcp.tool()
     def session_end(topic: str) -> str:
-        """
-        End session and generate evidence artifacts.
-
-        Args:
-            topic: Session topic to end
-
-        Returns:
-            JSON object with log path and sync status
-        """
+        """End session and generate evidence artifacts."""
         if not SESSION_COLLECTOR_AVAILABLE:
             return json.dumps({"error": "SessionCollector not available"})
 
@@ -186,12 +116,7 @@ def register_session_core_tools(mcp) -> None:
 
     @mcp.tool()
     def session_list() -> str:
-        """
-        List all active sessions.
-
-        Returns:
-            JSON array of active session IDs
-        """
+        """List all active sessions."""
         if not SESSION_COLLECTOR_AVAILABLE:
             return json.dumps({"error": "SessionCollector not available"})
 
@@ -203,55 +128,22 @@ def register_session_core_tools(mcp) -> None:
         }, indent=2)
 
     @mcp.tool()
-    def session_tool_call(
-        tool_name: str,
-        arguments: str = "{}",
-        result_summary: Optional[str] = None,
-        duration_ms: int = 0,
-        success: bool = True,
-        topic: Optional[str] = None,
-        correlation_id: Optional[str] = None,
-        applied_rules: Optional[str] = None
-    ) -> str:
-        """
-        Record a tool call in the current session.
-
-        Per Task 2.3: Track tool calls with arguments for session evidence.
-        Per RD-DEBUG-AUDIT: Cross-agent correlation and rule linkage.
-        Enables debugging and replay of agent actions.
-
-        Args:
-            tool_name: MCP tool name (e.g., "governance_get_rule", "Bash")
-            arguments: Tool arguments as JSON string
-            result_summary: Summary of tool result (truncated for large results)
-            duration_ms: Execution time in milliseconds
-            success: Whether the tool call succeeded
-            topic: Session topic (uses last session if not provided)
-            correlation_id: Cross-agent trace ID for request correlation
-            applied_rules: Comma-separated rule IDs applied during this call
-
-        Returns:
-            JSON object with tool call confirmation
-        """
+    def session_tool_call(tool_name: str, arguments: str = "{}", result_summary: Optional[str] = None,
+                          duration_ms: int = 0, success: bool = True, topic: Optional[str] = None,
+                          correlation_id: Optional[str] = None, applied_rules: Optional[str] = None) -> str:
+        """Record a tool call in the current session. Per Task 2.3, RD-DEBUG-AUDIT."""
         if not SESSION_COLLECTOR_AVAILABLE:
             return json.dumps({"error": "SessionCollector not available"})
 
-        # Get or create session
         sessions = list_active_sessions()
         if not sessions and not topic:
             return json.dumps({"error": "No active session. Call session_start first."})
-
         collector = get_or_create_session(topic or sessions[-1].split("-")[-1].lower())
-
-        # Parse arguments JSON
         try:
             args_dict = json.loads(arguments) if arguments else {}
         except json.JSONDecodeError:
             args_dict = {"raw": arguments}
-
-        # Parse applied_rules from comma-separated string
         rules_list = [r.strip() for r in applied_rules.split(",")] if applied_rules else []
-
         collector.capture_tool_call(
             tool_name=tool_name,
             arguments=args_dict,
@@ -273,42 +165,17 @@ def register_session_core_tools(mcp) -> None:
         }, indent=2)
 
     @mcp.tool()
-    def session_thought(
-        thought: str,
-        thought_type: str = "reasoning",
-        related_tools: Optional[str] = None,
-        confidence: float = 0.0,
-        topic: Optional[str] = None
-    ) -> str:
-        """
-        Record a thought/reasoning step in the current session.
-
-        Per Task 2.3: Track thoughts with holographic detailisation.
-        Enables understanding of agent reasoning chains.
-
-        Args:
-            thought: The thought/reasoning text
-            thought_type: Type of thought (reasoning, planning, reflection, hypothesis)
-            related_tools: Comma-separated list of related tool names
-            confidence: Confidence score (0.0-1.0)
-            topic: Session topic (uses last session if not provided)
-
-        Returns:
-            JSON object with thought confirmation
-        """
+    def session_thought(thought: str, thought_type: str = "reasoning", related_tools: Optional[str] = None,
+                        confidence: float = 0.0, topic: Optional[str] = None) -> str:
+        """Record a thought/reasoning step in the current session. Per Task 2.3."""
         if not SESSION_COLLECTOR_AVAILABLE:
             return json.dumps({"error": "SessionCollector not available"})
 
-        # Get or create session
         sessions = list_active_sessions()
         if not sessions and not topic:
             return json.dumps({"error": "No active session. Call session_start first."})
-
         collector = get_or_create_session(topic or sessions[-1].split("-")[-1].lower())
-
-        # Parse related tools
         tools_list = [t.strip() for t in related_tools.split(",")] if related_tools else []
-
         collector.capture_thought(
             thought=thought,
             thought_type=thought_type,

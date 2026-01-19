@@ -1,7 +1,7 @@
 """
 Governance UI Package
 =====================
-Pure data and state modules for Sim.ai Governance Dashboard.
+Pure data and state modules for Sarvaja Governance Dashboard.
 
 Per RULE-012: DSP Semantic Code Structure
 Per FP + Digital Twin Paradigm

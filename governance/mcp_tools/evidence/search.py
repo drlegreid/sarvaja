@@ -5,9 +5,10 @@ Semantic and keyword search across evidence artifacts.
 
 Per RULE-012: DSP Semantic Code Structure
 Per GAP-FILE-008: Extracted from evidence.py
+Per MCP-NAMING-01-v1: Compact domain-based naming
 
 Tools:
-- governance_evidence_search: Semantic search across all evidence
+- evidence_search: Semantic search across all evidence
 
 Created: 2024-12-28
 """
@@ -24,13 +25,15 @@ def register_search_tools(mcp) -> None:
     """Register search-related MCP tools."""
 
     @mcp.tool()
-    def governance_evidence_search(
+    def evidence_search(
         query: str,
         top_k: int = 5,
         source_type: Optional[str] = None
     ) -> str:
         """
         Semantic search across all evidence artifacts.
+
+        Uses vector store for semantic search with keyword fallback.
 
         Args:
             query: Search query (e.g., "authentication security rules")

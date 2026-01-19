@@ -1,6 +1,6 @@
 # GAP-MCP-PAGING-001: MCP Tools Need Paging for Large Outputs
 
-**Priority:** MEDIUM | **Category:** tooling | **Status:** OPEN
+**Priority:** MEDIUM | **Category:** tooling | **Status:** MITIGATED
 **Discovered:** 2026-01-16 | **Session:** SESSION-2026-01-16-PLATFORM-AUDIT
 
 ---
@@ -60,6 +60,21 @@ MCP servers should implement:
 |--------|------|--------------|
 | podman | container_logs | YES |
 | rest-api | test_request | Has 10KB limit |
+
+---
+
+## Resolution (2026-01-19)
+
+**Status:** MITIGATED
+
+**Analysis:**
+- Our governance MCP tools already have pagination (tasks, sessions, audit, gaps, documents)
+- The main affected tool (`mcp__podman__container_logs`) is from external Podman MCP server - not in our control
+- Workarounds documented and functional: `podman logs <container> | head -50`
+
+**Why not RESOLVED:**
+- External MCP servers remain unbounded
+- Full fix would require upstream PR to MCP server vendors
 
 ---
 

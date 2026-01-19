@@ -16,7 +16,7 @@ class DecisionQueries:
     """
     Decision query and CRUD operations for TypeDB.
 
-    Requires a client with _execute_query, _execute_write, _driver, and _database attributes.
+    Requires a client with _execute_query, _execute_write, _driver, and database attributes.
     Uses mixin pattern for TypeDBClient composition.
     """
 
@@ -36,7 +36,6 @@ class DecisionQueries:
                 has context $ctx,
                 has rationale $rat,
                 has decision-status $stat;
-            get $id, $name, $ctx, $rat, $stat;
         """
         results = self._execute_query(query)
         decisions = []
@@ -49,7 +48,6 @@ class DecisionQueries:
                 match $d isa decision,
                     has decision-id "{decision_id}",
                     has decision-date $date;
-                get $date;
             """
             try:
                 date_results = self._execute_query(date_query)
@@ -83,7 +81,6 @@ class DecisionQueries:
                 (superseding: $a, superseded: $b) isa decision-supersedes;
                 $a has decision-id $aid;
                 $b has decision-id $bid;
-            get $aid, $bid;
         """
         results = self._execute_query(query)
         return [{"superseding": r.get("aid"), "superseded": r.get("bid")} for r in results]
@@ -161,7 +158,7 @@ class DecisionQueries:
         Returns:
             Updated Decision object or None if not found
         """
-        from typedb.driver import SessionType, TransactionType
+        from typedb.driver import TransactionType
 
         # Check if decision exists
         decisions = self.get_all_decisions()
@@ -191,26 +188,25 @@ class DecisionQueries:
         if not updates:
             return existing  # Nothing to update
 
-        # Execute updates
-        with self._driver.session(self._database, SessionType.DATA) as session:
-            for attr_name, new_value in updates:
-                with session.transaction(TransactionType.WRITE) as tx:
-                    # Delete old attribute
-                    delete_query = f'''
-                        match $d isa decision, has decision-id "{decision_id}", has {attr_name} $old;
-                        delete $d has $old;
-                    '''
-                    tx.query.delete(delete_query)
-                    tx.commit()
+        # Execute updates - TypeDB 3.x: driver.transaction() directly
+        for attr_name, new_value in updates:
+            # Delete old attribute (TypeDB 3.x: has $var of $entity)
+            with self._driver.transaction(self.database, TransactionType.WRITE) as tx:
+                delete_query = f'''
+                    match $d isa decision, has decision-id "{decision_id}", has {attr_name} $old;
+                    delete has $old of $d;
+                '''
+                tx.query(delete_query).resolve()
+                tx.commit()
 
-                with session.transaction(TransactionType.WRITE) as tx:
-                    # Insert new attribute
-                    insert_query = f'''
-                        match $d isa decision, has decision-id "{decision_id}";
-                        insert $d has {attr_name} "{new_value}";
-                    '''
-                    tx.query.insert(insert_query)
-                    tx.commit()
+            # Insert new attribute
+            with self._driver.transaction(self.database, TransactionType.WRITE) as tx:
+                insert_query = f'''
+                    match $d isa decision, has decision-id "{decision_id}";
+                    insert $d has {attr_name} "{new_value}";
+                '''
+                tx.query(insert_query).resolve()
+                tx.commit()
 
         # Return updated decision
         decisions = self.get_all_decisions()
@@ -238,7 +234,7 @@ class DecisionQueries:
 
         query = f'''
             match $d isa decision, has decision-id "{decision_id}";
-            delete $d isa decision;
+            delete $d;
         '''
 
         self._execute_write(query)

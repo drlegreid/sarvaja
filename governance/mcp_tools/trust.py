@@ -48,7 +48,7 @@ def register_trust_tools(mcp) -> None:
                     $a has compliance-rate $compliance;
                     $a has accuracy-rate $accuracy;
                     $a has tenure-days $tenure;
-                get $name, $trust, $compliance, $accuracy, $tenure;
+                select $name, $trust, $compliance, $accuracy, $tenure;
             '''
 
             results = client.execute_query(query)
@@ -74,43 +74,15 @@ def register_trust_tools(mcp) -> None:
         finally:
             client.close()
 
-    @mcp.tool()
-    def governance_list_agents() -> str:
-        """
-        List all registered agents with their trust scores.
+    # =========================================================================
+    # PHASE 1: Domain-Based Aliases (RD-MCP-TOOL-NAMING)
+    # =========================================================================
 
-        Returns:
-            JSON array of agents with trust information
-        """
-        client = get_typedb_client()
+    def agent_trust_score(agent_id: str) -> str:
+        """Get agent trust score. Alias for governance_get_trust_score."""
+        return governance_get_trust_score(agent_id)
 
-        try:
-            if not client.connect():
-                return json.dumps({"error": "Failed to connect to TypeDB"})
+    # Note: governance_list_agents is defined in agents.py (removed duplicate here)
 
-            query = '''
-                match
-                    $a isa agent;
-                    $a has agent-id $id;
-                    $a has agent-name $name;
-                    $a has agent-type $type;
-                    $a has trust-score $trust;
-                get $id, $name, $type, $trust;
-            '''
-
-            results = client.execute_query(query)
-
-            agents = []
-            for r in results:
-                agents.append({
-                    "agent_id": r.get('id'),
-                    "agent_name": r.get('name'),
-                    "agent_type": r.get('type'),
-                    "trust_score": r.get('trust'),
-                    "vote_weight": calculate_vote_weight(r.get('trust', 0.0))
-                })
-
-            return json.dumps(agents, indent=2)
-
-        finally:
-            client.close()
+    # Register domain-based aliases
+    mcp.tool()(agent_trust_score)

@@ -16,7 +16,7 @@ class RuleCRUDOperations:
     """
     Rule CRUD operations for TypeDB.
 
-    Requires a client with _execute_query, _execute_write, _client, and database attributes.
+    Requires a client with _execute_query, _execute_write, _driver, and database attributes.
     Uses mixin pattern for TypeDBClient composition.
     """
 
@@ -121,7 +121,7 @@ class RuleCRUDOperations:
         if not existing:
             raise ValueError(f"Rule {rule_id} not found")
 
-        from typedb.driver import SessionType, TransactionType
+        from typedb.driver import TransactionType
 
         # Build update queries for each changed attribute
         updates = []
@@ -150,40 +150,38 @@ class RuleCRUDOperations:
         if not updates and not new_attrs:
             return existing  # Nothing to update
 
-        # Execute updates in a single transaction
-        with self._client.session(self.database, SessionType.DATA) as session:
-            with session.transaction(TransactionType.WRITE) as tx:
-                for attr_type, old_val, new_val in updates:
-                    # Delete old attribute and insert new one
-                    delete_query = f'''
-                        match
-                            $r isa rule-entity, has rule-id "{rule_id}";
-                            $a isa {attr_type}; $a "{old_val}";
-                            $r has $a;
-                        delete
-                            $r has $a;
-                    '''
-                    tx.query.delete(delete_query)
+        # Execute updates - TypeDB 3.x: driver.transaction() directly
+        with self._driver.transaction(self.database, TransactionType.WRITE) as tx:
+            for attr_type, old_val, new_val in updates:
+                # Delete old attribute and insert new one (TypeDB 3.x: has $var of $entity)
+                delete_query = f'''
+                    match
+                        $r isa rule-entity, has rule-id "{rule_id}", has {attr_type} $a;
+                        $a == "{old_val}";
+                    delete
+                        has $a of $r;
+                '''
+                tx.query(delete_query).resolve()
 
-                    insert_query = f'''
-                        match
-                            $r isa rule-entity, has rule-id "{rule_id}";
-                        insert
-                            $r has {attr_type} "{new_val}";
-                    '''
-                    tx.query.insert(insert_query)
+                insert_query = f'''
+                    match
+                        $r isa rule-entity, has rule-id "{rule_id}";
+                    insert
+                        $r has {attr_type} "{new_val}";
+                '''
+                tx.query(insert_query).resolve()
 
-                # Insert new attributes (that didn't exist before)
-                for attr_type, new_val in new_attrs:
-                    insert_query = f'''
-                        match
-                            $r isa rule-entity, has rule-id "{rule_id}";
-                        insert
-                            $r has {attr_type} "{new_val}";
-                    '''
-                    tx.query.insert(insert_query)
+            # Insert new attributes (that didn't exist before)
+            for attr_type, new_val in new_attrs:
+                insert_query = f'''
+                    match
+                        $r isa rule-entity, has rule-id "{rule_id}";
+                    insert
+                        $r has {attr_type} "{new_val}";
+                '''
+                tx.query(insert_query).resolve()
 
-                tx.commit()
+            tx.commit()
 
         return self.get_rule_by_id(rule_id)
 
@@ -224,18 +222,19 @@ class RuleCRUDOperations:
                 # Log but don't fail deletion if archiving fails
                 print(f"Warning: Could not archive rule {rule_id}: {e}")
 
-        from typedb.driver import SessionType, TransactionType
+        from typedb.driver import TransactionType
 
-        with self._client.session(self.database, SessionType.DATA) as session:
-            with session.transaction(TransactionType.WRITE) as tx:
-                # Delete the rule entity and all its attributes
-                delete_query = f'''
-                    match
-                        $r isa rule-entity, has rule-id "{rule_id}";
-                    delete
-                        $r isa rule-entity;
-                '''
-                tx.query.delete(delete_query)
-                tx.commit()
+        # TypeDB 3.x: driver.transaction() directly
+        with self._driver.transaction(self.database, TransactionType.WRITE) as tx:
+            # Delete the rule entity and all its attributes
+            # TypeDB 3.x syntax: delete $r; (not delete $r isa rule-entity;)
+            delete_query = f'''
+                match
+                    $r isa rule-entity, has rule-id "{rule_id}";
+                delete
+                    $r;
+            '''
+            tx.query(delete_query).resolve()
+            tx.commit()
 
         return True

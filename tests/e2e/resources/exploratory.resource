@@ -1,5 +1,5 @@
 *** Settings ***
-Documentation    Exploratory Testing Heuristics for Sim.ai
+Documentation    Exploratory Testing Heuristics for Sarvaja
 ...              Uses Playwright-based Browser Library with heuristic patterns
 ...              Per RULE-019: UI/UX Design Standards
 Library          Browser    auto_closing_level=KEEP
@@ -25,7 +25,7 @@ ${EXPLORATION_DEPTH}     3
 # =============================================================================
 
 Open Task Console
-    [Documentation]    Open the Sim.ai Task Console UI
+    [Documentation]    Open the Sarvaja Task Console UI
     New Browser    chromium    headless=true
     New Context    viewport={'width': 1280, 'height': 720}
     New Page    ${UI_URL}

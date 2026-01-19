@@ -39,7 +39,7 @@ class Decision:
 
 @dataclass
 class Task:
-    """Task entity for P10 TypeDB migration. Per GAP-ARCH-001, GAP-UI-046."""
+    """Task entity for P10 TypeDB migration. Per GAP-ARCH-001, GAP-UI-046, GAP-GAPS-TASKS-001."""
     id: str
     name: str
     status: str  # GAP-UI-046: OPEN, IN_PROGRESS, CLOSED (lifecycle)
@@ -68,6 +68,9 @@ class Task:
     blocks: Optional[List[str]] = None
     blocked_by: Optional[List[str]] = None
     related_tasks: Optional[List[str]] = None
+    # GAP-GAPS-TASKS-001: Unified work item attributes
+    item_type: Optional[str] = None  # "gap", "task", or "rd"
+    document_path: Optional[str] = None  # Path to source document
 
 
 @dataclass

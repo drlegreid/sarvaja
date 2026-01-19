@@ -16,7 +16,7 @@ class TaskRelationshipOperations:
 
     Handles task-to-task relationships: parent/child, blocking, related.
 
-    Requires a client with _execute_query and _client attributes.
+    Requires a client with _execute_query and _driver attributes.
     Uses mixin pattern for TypeDBClient composition.
     """
 
@@ -33,20 +33,19 @@ class TaskRelationshipOperations:
         Returns:
             True if link created successfully, False otherwise
         """
-        from typedb.driver import SessionType, TransactionType
+        from typedb.driver import TransactionType
 
         try:
-            with self._client.session(self.database, SessionType.DATA) as session:
-                with session.transaction(TransactionType.WRITE) as tx:
-                    link_query = f"""
-                        match
-                            $child isa task, has task-id "{child_task_id}";
-                            $parent isa task, has task-id "{parent_task_id}";
-                        insert
-                            (parent-task: $parent, child-task: $child) isa task-hierarchy;
-                    """
-                    tx.query.insert(link_query)
-                    tx.commit()
+            with self._driver.transaction(self.database, TransactionType.WRITE) as tx:
+                link_query = f"""
+                    match
+                        $child isa task, has task-id "{child_task_id}";
+                        $parent isa task, has task-id "{parent_task_id}";
+                    insert
+                        (parent-task: $parent, child-task: $child) isa task-hierarchy;
+                """
+                tx.query(link_query).resolve()
+                tx.commit()
             return True
         except Exception as e:
             print(f"Failed to link parent {parent_task_id} to child {child_task_id}: {e}")
@@ -65,20 +64,19 @@ class TaskRelationshipOperations:
         Returns:
             True if link created successfully, False otherwise
         """
-        from typedb.driver import SessionType, TransactionType
+        from typedb.driver import TransactionType
 
         try:
-            with self._client.session(self.database, SessionType.DATA) as session:
-                with session.transaction(TransactionType.WRITE) as tx:
-                    link_query = f"""
-                        match
-                            $blocker isa task, has task-id "{blocking_task_id}";
-                            $blocked isa task, has task-id "{blocked_task_id}";
-                        insert
-                            (blocking-task: $blocker, blocked-dep-task: $blocked) isa task-blocks-task;
-                    """
-                    tx.query.insert(link_query)
-                    tx.commit()
+            with self._driver.transaction(self.database, TransactionType.WRITE) as tx:
+                link_query = f"""
+                    match
+                        $blocker isa task, has task-id "{blocking_task_id}";
+                        $blocked isa task, has task-id "{blocked_task_id}";
+                    insert
+                        (blocking-task: $blocker, blocked-dep-task: $blocked) isa task-blocks-task;
+                """
+                tx.query(link_query).resolve()
+                tx.commit()
             return True
         except Exception as e:
             print(f"Failed to link blocking task {blocking_task_id}: {e}")
@@ -97,20 +95,19 @@ class TaskRelationshipOperations:
         Returns:
             True if link created successfully, False otherwise
         """
-        from typedb.driver import SessionType, TransactionType
+        from typedb.driver import TransactionType
 
         try:
-            with self._client.session(self.database, SessionType.DATA) as session:
-                with session.transaction(TransactionType.WRITE) as tx:
-                    link_query = f"""
-                        match
-                            $a isa task, has task-id "{task_id_a}";
-                            $b isa task, has task-id "{task_id_b}";
-                        insert
-                            (related-task-a: $a, related-task-b: $b) isa task-related;
-                    """
-                    tx.query.insert(link_query)
-                    tx.commit()
+            with self._driver.transaction(self.database, TransactionType.WRITE) as tx:
+                link_query = f"""
+                    match
+                        $a isa task, has task-id "{task_id_a}";
+                        $b isa task, has task-id "{task_id_b}";
+                    insert
+                        (related-task-a: $a, related-task-b: $b) isa task-related;
+                """
+                tx.query(link_query).resolve()
+                tx.commit()
             return True
         except Exception as e:
             print(f"Failed to link related tasks {task_id_a} and {task_id_b}: {e}")
@@ -123,7 +120,7 @@ class TaskRelationshipOperations:
                 $parent isa task, has task-id "{task_id}";
                 (parent-task: $parent, child-task: $child) isa task-hierarchy;
                 $child has task-id $cid;
-            get $cid;
+            select $cid;
         """
         results = self._execute_query(query)
         return [r.get("cid") for r in results if r.get("cid")]
@@ -135,7 +132,7 @@ class TaskRelationshipOperations:
                 $child isa task, has task-id "{task_id}";
                 (parent-task: $parent, child-task: $child) isa task-hierarchy;
                 $parent has task-id $pid;
-            get $pid;
+            select $pid;
         """
         results = self._execute_query(query)
         return results[0].get("pid") if results else None
@@ -147,7 +144,7 @@ class TaskRelationshipOperations:
                 $blocked isa task, has task-id "{task_id}";
                 (blocking-task: $blocker, blocked-dep-task: $blocked) isa task-blocks-task;
                 $blocker has task-id $bid;
-            get $bid;
+            select $bid;
         """
         results = self._execute_query(query)
         return [r.get("bid") for r in results if r.get("bid")]
@@ -159,7 +156,7 @@ class TaskRelationshipOperations:
                 $blocker isa task, has task-id "{task_id}";
                 (blocking-task: $blocker, blocked-dep-task: $blocked) isa task-blocks-task;
                 $blocked has task-id $bid;
-            get $bid;
+            select $bid;
         """
         results = self._execute_query(query)
         return [r.get("bid") for r in results if r.get("bid")]
@@ -175,7 +172,7 @@ class TaskRelationshipOperations:
                     (related-task-a: $other, related-task-b: $t) isa task-related;
                 }};
                 $other has task-id $oid;
-            get $oid;
+            select $oid;
         """
         results = self._execute_query(query)
         return [r.get("oid") for r in results if r.get("oid")]

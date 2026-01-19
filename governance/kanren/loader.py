@@ -1,11 +1,4 @@
-"""
-TypeDB → Kanren Constraint Loader (KAN-004).
-
-Dynamically loads governance rules from TypeDB and converts them
-to Kanren facts for constraint validation.
-
-Per RD-KANREN-CONTEXT: Integration with TypeDB for dynamic constraints.
-"""
+"""TypeDB → Kanren Constraint Loader. Per KAN-004, RD-KANREN-CONTEXT."""
 
 import json
 from dataclasses import dataclass
@@ -14,17 +7,9 @@ from typing import Any, Dict, List, Optional, Tuple
 from kanren import run, var, eq, conde, Relation, facts
 
 
-# =============================================================================
-# Domain Models
-# =============================================================================
-
 @dataclass
 class RuleConstraint:
-    """
-    Constraint extracted from TypeDB rule.
-
-    Represents a rule's constraint logic for Kanren validation.
-    """
+    """Constraint extracted from TypeDB rule for Kanren validation."""
     rule_id: str
     semantic_id: str
     name: str
@@ -47,11 +32,7 @@ class RuleConstraint:
         )
 
 
-# =============================================================================
-# Kanren Relations (Dynamic Facts)
-# =============================================================================
-
-# Priority constraint relations
+# Kanren Relations
 rule_priority = Relation("rule_priority")
 category_priority = Relation("category_priority")
 critical_rule = Relation("critical_rule")
@@ -68,26 +49,8 @@ testing_rule = Relation("testing_rule")
 autonomy_rule = Relation("autonomy_rule")
 
 
-# =============================================================================
-# Loader Functions
-# =============================================================================
-
 def load_rules_from_typedb(mcp_result: Optional[str] = None) -> List[RuleConstraint]:
-    """
-    Load rules from TypeDB MCP result and convert to RuleConstraint objects.
-
-    Args:
-        mcp_result: JSON string from governance_query_rules MCP call.
-                   If None, returns empty list.
-
-    Returns:
-        List of RuleConstraint objects
-
-    Example:
-        # Using MCP result
-        result = await governance_query_rules(status="ACTIVE")
-        rules = load_rules_from_typedb(result)
-    """
+    """Load rules from TypeDB MCP result and convert to RuleConstraint objects."""
     if not mcp_result:
         return []
 
@@ -108,17 +71,6 @@ def populate_kanren_facts(rules: List[RuleConstraint]) -> Dict[str, int]:
     - rule_type(rule_id, type)
     - foundational_rule(rule_id), operational_rule(rule_id), etc.
     - category relations
-
-    Args:
-        rules: List of RuleConstraint objects
-
-    Returns:
-        Dict with counts of facts added by category
-
-    Example:
-        rules = load_rules_from_typedb(mcp_result)
-        counts = populate_kanren_facts(rules)
-        print(f"Added {counts['critical']} critical rules")
     """
     counts = {
         "priority": 0,
@@ -163,48 +115,18 @@ def populate_kanren_facts(rules: List[RuleConstraint]) -> Dict[str, int]:
     return counts
 
 
-# =============================================================================
-# Constraint Queries
-# =============================================================================
-
 def query_critical_rules() -> Tuple:
-    """
-    Query all CRITICAL priority rules using Kanren.
-
-    Returns:
-        Tuple of rule IDs with CRITICAL priority
-
-    Example:
-        critical_ids = query_critical_rules()
-        # ('RULE-015', 'RULE-024', ...)
-    """
+    """Query all CRITICAL priority rules."""
     x = var()
     return run(0, x, critical_rule(x))
 
-
 def query_rules_by_priority(priority: str) -> Tuple:
-    """
-    Query rules by priority using Kanren.
-
-    Args:
-        priority: Priority level (CRITICAL, HIGH, MEDIUM, LOW)
-
-    Returns:
-        Tuple of rule IDs with specified priority
-    """
+    """Query rules by priority (CRITICAL/HIGH/MEDIUM/LOW)."""
     x = var()
     return run(0, x, rule_priority(x, priority))
 
-
 def query_foundational_rules() -> Tuple:
-    """
-    Query all FOUNDATIONAL type rules.
-
-    Per RULE-011: Foundational rules are trust anchors.
-
-    Returns:
-        Tuple of foundational rule IDs
-    """
+    """Query all FOUNDATIONAL type rules."""
     x = var()
     return run(0, x, foundational_rule(x))
 
@@ -221,19 +143,8 @@ def query_governance_rules() -> Tuple:
 
 
 def rule_requires_evidence(rule_id: str) -> Tuple:
-    """
-    Check if a rule requires evidence based on priority.
-
-    Per RULE-028: CRITICAL and HIGH priority rules require evidence.
-
-    Args:
-        rule_id: The rule ID to check
-
-    Returns:
-        Tuple with True/False result
-    """
-    x = var()
-    priority_var = var()
+    """Check if rule requires evidence. Per RULE-028: CRITICAL/HIGH require evidence."""
+    x, priority_var = var(), var()
 
     return run(1, x, conde(
         # Rule is CRITICAL → requires evidence
@@ -249,31 +160,8 @@ def rule_requires_evidence(rule_id: str) -> Tuple:
     ))
 
 
-# =============================================================================
-# Validation Functions
-# =============================================================================
-
-def validate_rule_compliance(
-    rule_id: str,
-    has_evidence: bool,
-    agent_trust: float
-) -> Dict[str, Any]:
-    """
-    Validate if an agent can comply with a rule.
-
-    Combines:
-    - Rule priority requirements
-    - Evidence requirements
-    - Trust level validation
-
-    Args:
-        rule_id: Rule to validate compliance for
-        has_evidence: Whether evidence is available
-        agent_trust: Agent's trust score (0.0-1.0)
-
-    Returns:
-        Dict with compliance status and details
-    """
+def validate_rule_compliance(rule_id: str, has_evidence: bool, agent_trust: float) -> Dict[str, Any]:
+    """Validate if agent can comply with rule (priority, evidence, trust)."""
     from .trust import trust_level, can_execute_priority
 
     # Get rule priority from facts
@@ -318,10 +206,6 @@ def validate_rule_compliance(
         "violations": violations,
     }
 
-
-# =============================================================================
-# Integration Helper
-# =============================================================================
 
 class TypeDBKanrenBridge:
     """

@@ -1,17 +1,4 @@
-"""
-GitHub Sync for R&D Issues (FH-006)
-Created: 2024-12-25
-
-PURPOSE:
-Automate creation and synchronization of GitHub issues from R&D backlog.
-Parses R&D-BACKLOG.md and creates/updates GitHub issues via gh CLI.
-
-USAGE:
-    python -m governance.github_sync [--dry-run] [--sync-status]
-
-Per RULE-015: R&D Workflow Human Gate
-Per RULE-001: Session Evidence Logging
-"""
+"""GitHub Sync for R&D Issues (FH-006). Per RULE-015: R&D Workflow Human Gate."""
 import re
 import subprocess
 import json
@@ -19,7 +6,6 @@ from pathlib import Path
 from dataclasses import dataclass, field
 from typing import List, Dict, Optional, Tuple
 from datetime import datetime
-
 
 @dataclass
 class RDTask:
@@ -32,7 +18,6 @@ class RDTask:
     category: str  # RD, FH, P7, etc.
     github_issue: Optional[int] = None
 
-
 @dataclass
 class SyncResult:
     """Result of sync operation."""
@@ -41,14 +26,8 @@ class SyncResult:
     skipped: List[str] = field(default_factory=list)
     errors: List[str] = field(default_factory=list)
 
-
 class GitHubSync:
-    """
-    Sync R&D backlog with GitHub issues.
-
-    Uses gh CLI for GitHub operations.
-    """
-
+    """Sync R&D backlog with GitHub issues via gh CLI."""
     REPO = "drlegreid/platform-gai"
     BACKLOG_PATH = Path("docs/backlog/R&D-BACKLOG.md")
     LABEL_PREFIX = "r&d"
@@ -70,65 +49,31 @@ class GitHubSync:
         """Parse R&D backlog markdown file and linked sub-documents."""
         if not self.BACKLOG_PATH.exists():
             raise FileNotFoundError(f"Backlog not found: {self.BACKLOG_PATH}")
-
         content = self.BACKLOG_PATH.read_text(encoding="utf-8")
         tasks = []
-
-        # Find linked R&D documents (e.g., [phases/PHASE-10.md](phases/PHASE-10.md))
-        # Pattern: markdown links to .md files in subdirectories
         link_pattern = r'\[([^\]]+)\]\(([^)]+\.md)\)'
         linked_docs = []
         for match in re.finditer(link_pattern, content):
-            link_path = match.group(2)
-            # Resolve relative to BACKLOG_PATH parent
-            full_path = self.BACKLOG_PATH.parent / link_path
+            full_path = self.BACKLOG_PATH.parent / match.group(2)
             if full_path.exists():
                 linked_docs.append(full_path)
-
-        # Parse main backlog and all linked documents
         all_contents = [content]
         for doc_path in linked_docs:
             try:
                 all_contents.append(doc_path.read_text(encoding="utf-8"))
             except Exception:
                 continue
-
-        # Parse task tables from all content
-        # Format: | ID | Task | Status | Priority | Notes |
         table_pattern = r"\|\s*([\w-]+)\s*\|\s*([^|]+)\s*\|\s*([^|]+)\s*\|\s*([^|]+)\s*\|\s*([^|]*)\s*\|"
-
         for doc_content in all_contents:
             for match in re.finditer(table_pattern, doc_content):
                 id_str, title, status, priority, notes = match.groups()
-
-                # Skip header rows and separators
                 id_clean = id_str.strip()
-                if id_clean in ("ID", "Task", "Pillar", "Factor", "Phase", "Name"):
+                if id_clean in ("ID", "Task", "Pillar", "Factor", "Phase", "Name") or id_clean.startswith(("-", "*")):
                     continue
-                if id_clean.startswith("-") or id_clean.startswith("*"):
-                    continue
-                # Must match task ID format: RD-001, FH-001, P7.1, ORCH-001, KAN-001, TEST-001, etc.
                 if not re.match(r'^(RD|FH|ORCH|KAN|TEST|TOOL|DOC|P\d+)-\d{3}$', id_clean) and not re.match(r'^P\d+\.\d+$', id_clean):
                     continue
-
-                # Determine category from ID prefix
-                category = "RD"
-                if id_clean.startswith("FH-"):
-                    category = "FH"
-                elif id_clean.startswith("ORCH-"):
-                    category = "ORCH"
-                elif id_clean.startswith("KAN-"):
-                    category = "KAN"
-                elif id_clean.startswith("TEST-"):
-                    category = "TEST"
-                elif id_clean.startswith("TOOL-"):
-                    category = "TOOL"
-                elif id_clean.startswith("DOC-"):
-                    category = "DOC"
-                elif id_clean.startswith("P") and "." in id_clean:
-                    category = "PHASE"
-
-                # Normalize status
+                category_map = {"FH-": "FH", "ORCH-": "ORCH", "KAN-": "KAN", "TEST-": "TEST", "TOOL-": "TOOL", "DOC-": "DOC"}
+                category = next((v for k, v in category_map.items() if id_clean.startswith(k)), "PHASE" if "." in id_clean else "RD")
                 status_clean = status.strip()
                 for emoji_status, normalized in self.STATUS_MAP.items():
                     if emoji_status in status_clean:
@@ -136,15 +81,8 @@ class GitHubSync:
                         break
                 if status_clean not in ("TODO", "DONE", "BLOCKED", "IN_PROGRESS"):
                     status_clean = "TODO"
-
-                tasks.append(RDTask(
-                    id=id_clean,
-                    title=title.strip(),
-                    status=status_clean,
-                    priority=priority.strip(),
-                    notes=notes.strip(),
-                    category=category
-                ))
+                tasks.append(RDTask(id=id_clean, title=title.strip(), status=status_clean,
+                                    priority=priority.strip(), notes=notes.strip(), category=category))
 
         self.tasks = tasks
         return tasks
@@ -152,21 +90,13 @@ class GitHubSync:
     def get_existing_issues(self) -> Dict[str, int]:
         """Get existing GitHub issues with R&D labels."""
         try:
-            result = subprocess.run(
-                ["gh", "issue", "list", "--repo", self.repo,
-                 "--label", self.LABEL_PREFIX, "--json", "number,title", "--limit", "100"],
-                capture_output=True, text=True, check=True
-            )
+            result = subprocess.run(["gh", "issue", "list", "--repo", self.repo, "--label", self.LABEL_PREFIX,
+                                     "--json", "number,title", "--limit", "100"], capture_output=True, text=True, check=True)
             issues = json.loads(result.stdout)
-
-            # Map task ID to issue number
             id_to_issue = {}
             for issue in issues:
-                # Extract task ID from title (format: "[RD-001] Task title")
-                match = re.match(r"\[([\w-]+)\]", issue["title"])
-                if match:
+                if match := re.match(r"\[([\w-]+)\]", issue["title"]):
                     id_to_issue[match.group(1)] = issue["number"]
-
             return id_to_issue
         except subprocess.CalledProcessError as e:
             print(f"Warning: Could not fetch existing issues: {e}")
@@ -285,41 +215,26 @@ class GitHubSync:
 
     def print_summary(self, result: SyncResult):
         """Print sync summary."""
-        print("\n" + "=" * 50)
-        print("SYNC SUMMARY")
-        print("=" * 50)
+        print(f"\n{'='*50}\nSYNC SUMMARY\n{'='*50}")
         print(f"Created: {len(result.created)}")
-        for item in result.created:
-            print(f"  + {item}")
-
+        for item in result.created: print(f"  + {item}")
         print(f"Updated: {len(result.updated)}")
-        for item in result.updated:
-            print(f"  ~ {item}")
-
+        for item in result.updated: print(f"  ~ {item}")
         print(f"Skipped: {len(result.skipped)}")
-
         if result.errors:
             print(f"Errors: {len(result.errors)}")
-            for item in result.errors:
-                print(f"  ! {item}")
-
+            for item in result.errors: print(f"  ! {item}")
 
 def main():
     """CLI entry point."""
     import argparse
-
     parser = argparse.ArgumentParser(description="Sync R&D backlog to GitHub issues")
-    parser.add_argument("--dry-run", "-n", action="store_true",
-                        help="Show what would be done without making changes")
-    parser.add_argument("--repo", "-r", type=str,
-                        help="GitHub repository (default: drlegreid/platform-gai)")
-
+    parser.add_argument("--dry-run", "-n", action="store_true", help="Show what would be done without making changes")
+    parser.add_argument("--repo", "-r", type=str, help="GitHub repository (default: drlegreid/platform-gai)")
     args = parser.parse_args()
-
     sync = GitHubSync(repo=args.repo, dry_run=args.dry_run)
     result = sync.sync()
     sync.print_summary(result)
-
 
 if __name__ == "__main__":
     main()

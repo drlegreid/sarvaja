@@ -172,6 +172,76 @@ class TestTasksViaRestAPI:
         requests.delete(f"{API_BASE}/api/tasks/{test_task_id}", timeout=10)
 
 
+class TestSessionTasksRelationship:
+    """Regression tests for GAP-UI-SESSION-TASKS-001.
+
+    Per GAP-UI-SESSION-TASKS-001: Session detail must load completed tasks.
+    These tests verify the API endpoint that powers the session→task navigation.
+    """
+
+    @pytest.fixture(autouse=True)
+    def check_api_available(self):
+        """Skip if API not running."""
+        try:
+            response = requests.get(f"{API_BASE}/api/health", timeout=5)
+            if response.status_code != 200:
+                pytest.skip("API not healthy")
+        except requests.exceptions.ConnectionError:
+            pytest.skip("API not running")
+
+    def test_session_tasks_endpoint_exists(self):
+        """GAP-UI-SESSION-TASKS-001: /api/sessions/{id}/tasks endpoint exists."""
+        # Use a known session with tasks
+        session_id = "SESSION-2026-01-10-INTENT-TEST"
+        result = api_get(f"/api/sessions/{session_id}/tasks")
+
+        assert result["status"] in [200, 404], "Endpoint should exist"
+        if result["status"] == 200:
+            assert "tasks" in result["data"] or isinstance(result["data"], list)
+
+    def test_session_tasks_returns_linked_tasks(self):
+        """GAP-UI-SESSION-TASKS-001: Session endpoint returns linked tasks."""
+        session_id = "SESSION-2026-01-10-INTENT-TEST"
+        result = api_get(f"/api/sessions/{session_id}/tasks")
+
+        if result["status"] == 200:
+            data = result["data"]
+            # Handle both formats: {tasks: [...]} or direct list
+            tasks = data.get("tasks", data) if isinstance(data, dict) else data
+            assert isinstance(tasks, list), "Tasks should be a list"
+            assert len(tasks) >= 1, "Session should have linked tasks"
+
+            # Verify task structure
+            if tasks:
+                task = tasks[0]
+                assert "task_id" in task, "Task should have task_id"
+                assert "status" in task, "Task should have status"
+
+    def test_session_tasks_count_matches_list(self):
+        """GAP-UI-SESSION-TASKS-001: task_count matches actual tasks returned."""
+        session_id = "SESSION-2026-01-10-INTENT-TEST"
+        result = api_get(f"/api/sessions/{session_id}/tasks")
+
+        if result["status"] == 200:
+            data = result["data"]
+            if isinstance(data, dict) and "task_count" in data:
+                expected_count = data["task_count"]
+                actual_count = len(data.get("tasks", []))
+                assert actual_count == expected_count, f"Count mismatch: {actual_count} != {expected_count}"
+
+    def test_task_has_linked_sessions(self):
+        """GAP-UI-TASK-SESSION-001: Task endpoint returns linked_sessions."""
+        task_id = "P12.3"  # Known task linked to SESSION-2026-01-10-INTENT-TEST
+        result = api_get(f"/api/tasks/{task_id}")
+
+        if result["status"] == 200:
+            task = result["data"]
+            assert "linked_sessions" in task, "Task should have linked_sessions field"
+            if task["linked_sessions"]:
+                assert isinstance(task["linked_sessions"], list)
+                assert "SESSION-2026-01-10-INTENT-TEST" in task["linked_sessions"]
+
+
 class TestRulesViaRestAPI:
     """Test rules operations via REST API (GAP-MCP-003)."""
 

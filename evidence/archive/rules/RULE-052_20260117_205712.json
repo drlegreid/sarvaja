@@ -1,0 +1,18 @@
+{
+  "rule": {
+    "id": "RULE-052",
+    "name": "UI Feature Visual Verification",
+    "category": "testing",
+    "priority": "HIGH",
+    "status": "ACTIVE",
+    "directive": "UI features MUST be visually verified before marking RESOLVED. Data layer tests alone are INSUFFICIENT.",
+    "rule_type": "OPERATIONAL",
+    "semantic_id": "TEST-UI-VERIFY-01-v1",
+    "created_date": null
+  },
+  "archived_at": "2026-01-17T20:57:12.079088",
+  "reason": "deleted",
+  "archived_from_db": "sim-ai-governance",
+  "dependencies": [],
+  "dependents": []
+}

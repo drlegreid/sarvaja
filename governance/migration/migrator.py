@@ -1,10 +1,4 @@
-"""
-ChromaDB Migrator
-Created: 2024-12-25 (P7.4)
-Modularized: 2026-01-02 (RULE-032)
-
-Main migration logic for ChromaDB to TypeDB.
-"""
+"""ChromaDB Migrator (P7.4). Per RULE-032: Modularized migration logic."""
 from typing import Dict, Any, List
 from datetime import datetime
 from dataclasses import asdict
@@ -19,45 +13,12 @@ from governance.migration.transformer import DocumentTransformer
 PROJECT_ROOT = Path(__file__).parent.parent.parent
 EVIDENCE_DIR = PROJECT_ROOT / "evidence"
 
-
 class ChromaMigration:
-    """
-    Migrates ChromaDB data to TypeDB.
+    """Migrates ChromaDB data to TypeDB with dry run and batch support."""
 
-    Features:
-    - Scans ChromaDB collections
-    - Transforms documents to TypeDB format
-    - Uses DataRouter for TypeDB writes
-    - Tracks migration progress
-    - Supports dry run mode
-
-    Example:
-        migrator = ChromaMigration(dry_run=True)
-        scan = migrator.scan_chroma()
-        print(f"Found {scan['total_documents']} documents")
-        result = migrator.migrate_all()
-    """
-
-    def __init__(
-        self,
-        dry_run: bool = True,
-        chroma_host: str = "localhost",
-        chroma_port: int = 8001,
-        batch_size: int = 100,
-        embed: bool = True,
-        skip_connection: bool = False
-    ):
-        """
-        Initialize ChromaDB Migration tool.
-
-        Args:
-            dry_run: If True, don't write to TypeDB
-            chroma_host: ChromaDB host
-            chroma_port: ChromaDB port
-            batch_size: Documents per batch
-            embed: Generate embeddings during migration
-            skip_connection: Skip actual ChromaDB connection (for testing)
-        """
+    def __init__(self, dry_run: bool = True, chroma_host: str = "localhost", chroma_port: int = 8001,
+                 batch_size: int = 100, embed: bool = True, skip_connection: bool = False):
+        """Initialize ChromaDB Migration tool."""
         self.dry_run = dry_run
         self.chroma_host = chroma_host
         self.chroma_port = chroma_port
@@ -88,39 +49,15 @@ class ChromaMigration:
         return self._scanner.scan()
 
     def transform_document(self, chroma_doc: Dict[str, Any]) -> Dict[str, Any]:
-        """
-        Transform ChromaDB document to TypeDB format (delegates to transformer).
-
-        Args:
-            chroma_doc: ChromaDB document dict
-
-        Returns:
-            Transformed document for TypeDB
-        """
+        """Transform ChromaDB document to TypeDB format."""
         return self._transformer.transform(chroma_doc)
 
     def detect_type(self, doc_id: str) -> str:
-        """
-        Detect document type from ID pattern (delegates to transformer).
-
-        Args:
-            doc_id: Document ID
-
-        Returns:
-            Type string: 'rule', 'decision', 'session', or 'document'
-        """
+        """Detect document type from ID pattern (rule, decision, session, document)."""
         return self._transformer.detect_type(doc_id)
 
     def migrate_collection(self, collection_name: str) -> Dict[str, Any]:
-        """
-        Migrate a single ChromaDB collection to TypeDB.
-
-        Args:
-            collection_name: Name of collection to migrate
-
-        Returns:
-            Migration result dict
-        """
+        """Migrate a single ChromaDB collection to TypeDB."""
         migrated = 0
         failed = 0
         skipped = 0
@@ -244,12 +181,7 @@ class ChromaMigration:
             ))
 
     def migrate_all(self) -> Dict[str, Any]:
-        """
-        Migrate all ChromaDB collections to TypeDB.
-
-        Returns:
-            Full migration result dict
-        """
+        """Migrate all ChromaDB collections to TypeDB."""
         self._migration_state['phase'] = 'scanning'
         self._migration_state['started'] = datetime.now().isoformat()
 
@@ -288,12 +220,7 @@ class ChromaMigration:
         }
 
     def get_migration_status(self) -> Dict[str, Any]:
-        """
-        Get current migration status.
-
-        Returns:
-            Status dict with phase and collection states
-        """
+        """Get current migration status."""
         return {
             'phase': self._migration_state['phase'],
             'started': self._migration_state.get('started'),
@@ -302,21 +229,6 @@ class ChromaMigration:
             'dry_run': self.dry_run
         }
 
-
-def create_chroma_migration(
-    dry_run: bool = True,
-    batch_size: int = 100,
-    **kwargs
-) -> ChromaMigration:
-    """
-    Factory function to create ChromaDB migrator.
-
-    Args:
-        dry_run: Don't write to TypeDB
-        batch_size: Documents per batch
-        **kwargs: Additional options
-
-    Returns:
-        ChromaMigration instance
-    """
+def create_chroma_migration(dry_run: bool = True, batch_size: int = 100, **kwargs) -> ChromaMigration:
+    """Factory function to create ChromaDB migrator."""
     return ChromaMigration(dry_run=dry_run, batch_size=batch_size, **kwargs)

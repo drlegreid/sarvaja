@@ -1,7 +1,7 @@
 # TEST-UI-VERIFY-01-v1: UI Feature Visual Verification
 
 **Legacy ID:** RULE-052
-**Category:** testing
+**Category:** `testing`
 **Priority:** HIGH
 **Status:** ACTIVE
 **Type:** OPERATIONAL

@@ -1,5 +1,5 @@
 *** Settings ***
-Documentation    Common resources for Sim.ai E2E tests
+Documentation    Common resources for Sarvaja E2E tests
 ...              Provides API helpers, configuration, and shared keywords
 ...              Per RULE-023: Test Before Ship
 Library          Browser    auto_closing_level=KEEP

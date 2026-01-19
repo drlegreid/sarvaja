@@ -1,5 +1,5 @@
 *** Settings ***
-Documentation    E2E Tests for Sim.ai Task UI
+Documentation    E2E Tests for Sarvaja Task UI
 ...              Uses Robot Framework + Playwright with exploratory heuristics
 ...              Per Phase 7: E2E Testing Infrastructure
 ...              Per RULE-019: UI/UX Design Standards
@@ -230,7 +230,7 @@ Full Exploratory Audit
 *** Keywords ***
 Suite Initialization
     [Documentation]    Initialize test suite
-    Log    Starting E2E tests for Sim.ai Task UI
+    Log    Starting E2E tests for Sarvaja Task UI
     Log    Target: ${AGENT_URL}
     New Browser    chromium    headless=${HEADLESS}
     New Context    viewport={'width': 1280, 'height': 720}

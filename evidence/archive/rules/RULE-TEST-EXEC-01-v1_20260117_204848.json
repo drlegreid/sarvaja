@@ -1,0 +1,18 @@
+{
+  "rule": {
+    "id": "RULE-TEST-EXEC-01-v1",
+    "name": "Split Test Execution",
+    "category": "testing",
+    "priority": "HIGH",
+    "status": "ACTIVE",
+    "directive": "Test suites MUST be executed in split groups for faster feedback. Full test runs that exceed 60 seconds SHOULD be split into logical groups.",
+    "rule_type": "OPERATIONAL",
+    "semantic_id": "TEST-EXEC-01-v1",
+    "created_date": null
+  },
+  "archived_at": "2026-01-17T20:48:48.238525",
+  "reason": "deleted",
+  "archived_from_db": "sim-ai-governance",
+  "dependencies": [],
+  "dependents": []
+}

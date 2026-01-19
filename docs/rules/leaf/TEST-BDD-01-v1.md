@@ -1,7 +1,8 @@
 # TEST-BDD-01-v1: BDD E2E Testing Standard
 
-**Category:** TESTING
+**Category:** `testing`
 **Priority:** HIGH
+**Type:** OPERATIONAL
 **Status:** ACTIVE
 **Created:** 2026-01-14
 

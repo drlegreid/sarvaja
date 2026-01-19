@@ -1,0 +1,18 @@
+{
+  "rule": {
+    "id": "RULE-TASK-TECH-01-v1",
+    "name": "Technology Solution Documentation",
+    "category": "governance",
+    "priority": "MEDIUM",
+    "status": "ACTIVE",
+    "directive": "When implementing a task that involves technology choices, agent MUST document the technology selection with justification. All significant technical decisions require evidence trail.",
+    "rule_type": "OPERATIONAL",
+    "semantic_id": "TASK-TECH-01-v1",
+    "created_date": null
+  },
+  "archived_at": "2026-01-17T20:48:48.041615",
+  "reason": "deleted",
+  "archived_from_db": "sim-ai-governance",
+  "dependencies": [],
+  "dependents": []
+}

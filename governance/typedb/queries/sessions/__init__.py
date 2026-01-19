@@ -33,8 +33,8 @@ class SessionQueries(
 
     Requires a client with:
     - _execute_query(query)
-    - _client (TypeDB client)
-    - database (property for database name)
+    - _driver (TypeDB driver)
+    - database (database name)
 
     Uses mixin pattern for TypeDBClient composition.
     """

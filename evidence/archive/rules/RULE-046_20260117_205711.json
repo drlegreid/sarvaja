@@ -1,0 +1,18 @@
+{
+  "rule": {
+    "id": "RULE-046",
+    "name": "Session Wisdom & Humor",
+    "category": "governance",
+    "priority": "LOW",
+    "status": "ACTIVE",
+    "directive": "Session reports MAY include a contextually relevant joke or Zen koan based on session activities. This peppers up interaction while reinforcing learning through humor. **Format:** ```markdown",
+    "rule_type": "OPERATIONAL",
+    "semantic_id": "REPORT-HUMOR-01-v1",
+    "created_date": null
+  },
+  "archived_at": "2026-01-17T20:57:11.605811",
+  "reason": "deleted",
+  "archived_from_db": "sim-ai-governance",
+  "dependencies": [],
+  "dependents": []
+}

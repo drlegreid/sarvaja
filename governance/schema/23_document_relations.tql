@@ -10,21 +10,25 @@ define
 # =============================================================================
 
 # Gap references a governing rule (for meta-referencing per RULE-013)
-gap-rule-reference sub relation,
+relation gap-rule-reference,
+
     relates referencing-gap,
     relates governing-rule;
 
 # Document references a rule
-document-references-rule sub relation,
+relation document-references-rule,
+
     relates referencing-document,
     relates referenced-rule;
 
 # Document references a decision
-document-references-decision sub relation,
+relation document-references-decision,
+
     relates referencing-document,
     relates referenced-decision;
 
 # Document references a gap
-document-references-gap sub relation,
+relation document-references-gap,
+
     relates referencing-document,
     relates referenced-gap;

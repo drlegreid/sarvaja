@@ -1,11 +1,4 @@
-"""
-Proposal MCP Tools
-==================
-Proposal, voting, and dispute operations (RULE-011).
-
-Per RULE-012: DSP Semantic Code Structure
-Per FP + Digital Twin Paradigm: Proposal entity module
-"""
+"""Proposal MCP Tools. Per RULE-011, RULE-012: Proposal, voting, dispute operations."""
 
 import json
 from datetime import datetime
@@ -16,7 +9,7 @@ def register_proposal_tools(mcp) -> None:
     """Register proposal-related MCP tools."""
 
     @mcp.tool()
-    def governance_propose_rule(
+    def proposal_create(
         action: str,
         hypothesis: str,
         evidence: list[str],
@@ -24,17 +17,17 @@ def register_proposal_tools(mcp) -> None:
         directive: Optional[str] = None
     ) -> str:
         """
-        Propose a new rule or modification (RULE-011).
+        Create a governance proposal for rule changes (RULE-011).
 
         Args:
-            action: "create", "modify", or "deprecate"
-            hypothesis: Why this change is needed
-            evidence: List of evidence items supporting the proposal
-            rule_id: Required for modify/deprecate actions
-            directive: Required for create/modify actions
+            action: Proposal action - "create", "modify", or "deprecate"
+            hypothesis: Rationale for the proposed change
+            evidence: Supporting evidence as list of strings
+            rule_id: Rule ID (required for modify/deprecate actions)
+            directive: Rule directive text (required for create/modify actions)
 
         Returns:
-            JSON object with proposal ID and status
+            JSON with proposal_id, status, and confirmation message
         """
         # Validate inputs
         if action not in ["create", "modify", "deprecate"]:
@@ -65,23 +58,25 @@ def register_proposal_tools(mcp) -> None:
         return json.dumps(proposal, indent=2)
 
     @mcp.tool()
-    def governance_vote(
+    def proposal_vote(
         proposal_id: str,
         agent_id: str,
         vote: str,
         reason: Optional[str] = None
     ) -> str:
         """
-        Vote on a proposal (RULE-011).
+        Vote on a governance proposal (RULE-011).
+
+        Votes are weighted by agent trust score per RULE-011 bicameral model.
 
         Args:
-            proposal_id: The proposal to vote on
-            agent_id: The voting agent's ID
-            vote: "approve", "reject", or "abstain"
-            reason: Optional reason for the vote
+            proposal_id: ID of the proposal to vote on
+            agent_id: Voting agent's ID
+            vote: Vote value - "approve", "reject", or "abstain"
+            reason: Optional explanation for the vote
 
         Returns:
-            JSON object with vote confirmation and weighted score
+            JSON with vote confirmation and weighted score
         """
         if vote not in ["approve", "reject", "abstain"]:
             return json.dumps({"error": f"Invalid vote: {vote}"})
@@ -111,23 +106,25 @@ def register_proposal_tools(mcp) -> None:
         return json.dumps(vote_record, indent=2)
 
     @mcp.tool()
-    def governance_dispute(
+    def proposal_dispute(
         proposal_id: str,
         agent_id: str,
         reason: str,
         resolution_method: str = "evidence"
     ) -> str:
         """
-        Dispute a proposal (RULE-011).
+        File a dispute against a proposal (RULE-011).
+
+        Disputes can trigger escalation to human oversight per bicameral model.
 
         Args:
-            proposal_id: The proposal to dispute
-            agent_id: The disputing agent's ID
-            reason: Why the proposal is disputed
-            resolution_method: "consensus", "evidence", "authority", or "escalate"
+            proposal_id: ID of the proposal to dispute
+            agent_id: Disputing agent's ID
+            reason: Explanation for the dispute
+            resolution_method: How to resolve - "consensus", "evidence", "authority", or "escalate"
 
         Returns:
-            JSON object with dispute status
+            JSON with dispute_id, status, and escalation info
         """
         if resolution_method not in ["consensus", "evidence", "authority", "escalate"]:
             return json.dumps({"error": f"Invalid resolution method: {resolution_method}"})
@@ -151,19 +148,16 @@ def register_proposal_tools(mcp) -> None:
         return json.dumps(dispute, indent=2)
 
     @mcp.tool()
-    def governance_get_proposals(
-        status: Optional[str] = None
-    ) -> str:
+    def proposals_list(status: Optional[str] = None) -> str:
         """
-        List governance proposals (GAP-STUB-006).
+        List all governance proposals from TypeDB.
 
         Args:
-            status: Optional filter by status (pending, approved, rejected, disputed)
+            status: Optional filter by proposal status
 
         Returns:
-            JSON array of proposals
+            JSON with proposals array and count
         """
-        # Import TypeDB client
         from governance.stores import get_typedb_client
 
         client = get_typedb_client()
@@ -179,7 +173,7 @@ def register_proposal_tools(mcp) -> None:
                             has proposal-id $pid,
                             has proposal-type $ptype,
                             has proposal-status $pstatus{status_filter};
-                    get $pid, $ptype, $pstatus;
+                    select $pid, $ptype, $pstatus;
                 """
                 results = client._execute_query(query)
 
@@ -203,16 +197,15 @@ def register_proposal_tools(mcp) -> None:
         }, indent=2)
 
     @mcp.tool()
-    def governance_get_escalated_proposals() -> str:
+    def proposals_escalated() -> str:
         """
-        List proposals requiring human escalation (GAP-STUB-007).
+        List proposals requiring human escalation (RULE-011 bicameral oversight).
 
-        Per RULE-011: Bicameral model requires human oversight for escalated proposals.
+        Uses TypeDB inference to identify proposals meeting escalation criteria.
 
         Returns:
-            JSON array of escalated proposals with escalation triggers
+            JSON with escalated proposals, count, and review requirement flag
         """
-        # Import TypeDB client
         from governance.stores import get_typedb_client
 
         client = get_typedb_client()
@@ -228,7 +221,7 @@ def register_proposal_tools(mcp) -> None:
                             has proposal-id $pid,
                             has proposal-status $pstatus;
                         $d has escalation-trigger $trigger;
-                    get $pid, $pstatus, $trigger;
+                    select $pid, $pstatus, $trigger;
                 """
                 results = client._execute_query(query, infer=True)
 

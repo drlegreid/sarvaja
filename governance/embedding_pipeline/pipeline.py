@@ -1,18 +1,4 @@
-"""
-Embedding Pipeline Core (P7.2)
-
-Per GAP-FILE-021: Refactored from monolithic embedding_pipeline.py
-Per DOC-SIZE-01-v1: Files under 400 lines
-
-Pipeline for generating and storing embeddings for:
-- Rules (from TypeDB)
-- Decisions (from evidence dir)
-- Sessions (from evidence dir)
-
-Created: 2024-12-25
-Refactored: 2026-01-14
-"""
-
+"""Embedding Pipeline Core (P7.2). Per GAP-FILE-021, DOC-SIZE-01-v1."""
 import json
 from pathlib import Path
 from typing import List, Dict, Optional, Any
@@ -35,68 +21,22 @@ from governance.compat import (
 
 from .chunking import chunk_content, truncate_content
 
-
 # Project paths
 PROJECT_ROOT = Path(__file__).parent.parent.parent
 EVIDENCE_DIR = PROJECT_ROOT / "evidence"
 
-
 class EmbeddingPipeline:
-    """
-    Pipeline for generating and storing embeddings.
+    """Pipeline for generating and storing embeddings (rules, decisions, sessions)."""
 
-    Workflow:
-    1. Fetch artifacts (rules, decisions, sessions)
-    2. Generate embeddings using configured generator
-    3. Store in VectorStore (cache + optional TypeDB)
-
-    Example:
-        pipeline = EmbeddingPipeline()
-        result = pipeline.run_full_pipeline()
-        print(f"Embedded {result['total']} artifacts")
-    """
-
-    def __init__(
-        self,
-        embedding_generator: Optional[EmbeddingGenerator] = None,
-        vector_store: Optional[VectorStore] = None,
-        chunk_size: int = 2000
-    ):
-        """
-        Initialize embedding pipeline.
-
-        Per GAP-EMBED-001: Default generator uses environment config, not mock.
-
-        Args:
-            embedding_generator: Generator for embeddings (default: from env config)
-            vector_store: Store for embeddings (default: new VectorStore)
-            chunk_size: Max characters per chunk for long content
-        """
+    def __init__(self, embedding_generator: Optional[EmbeddingGenerator] = None,
+                 vector_store: Optional[VectorStore] = None, chunk_size: int = 2000):
+        """Initialize embedding pipeline. Per GAP-EMBED-001: Default uses environment config."""
         self.generator = embedding_generator or create_embedding_generator()
         self.store = vector_store or VectorStore()
         self.chunk_size = chunk_size
 
-    # =========================================================================
-    # RULE EMBEDDINGS
-    # =========================================================================
-
-    def embed_rule(
-        self,
-        rule_id: str,
-        rule_content: str,
-        directive: Optional[str] = None
-    ) -> VectorDocument:
-        """
-        Embed a single rule.
-
-        Args:
-            rule_id: Rule ID
-            rule_content: Rule name/description
-            directive: Optional directive text
-
-        Returns:
-            VectorDocument with embedding
-        """
+    def embed_rule(self, rule_id: str, rule_content: str, directive: Optional[str] = None) -> VectorDocument:
+        """Embed a single rule."""
         full_content = f"{rule_id}: {rule_content}"
         if directive:
             full_content += f" | Directive: {directive}"
@@ -135,10 +75,6 @@ class EmbeddingPipeline:
         self.store_embedding(doc)
         return doc
 
-    # =========================================================================
-    # DECISION EMBEDDINGS
-    # =========================================================================
-
     def embed_decision(self, decision_id: str, decision_content: str) -> VectorDocument:
         """Embed a single decision."""
         return create_vector_from_decision(decision_id, decision_content, self.generator)
@@ -169,20 +105,12 @@ class EmbeddingPipeline:
             print(f"Error embedding decisions: {e}")
             return []
 
-    # =========================================================================
-    # SESSION EMBEDDINGS
-    # =========================================================================
-
     def embed_session(self, session_id: str, session_content: str) -> VectorDocument:
         """Embed a single session (truncated to chunk_size)."""
         content = truncate_content(session_content, self.chunk_size)
         return create_vector_from_session(session_id, content, self.generator)
 
-    def embed_session_chunked(
-        self,
-        session_id: str,
-        session_content: str
-    ) -> List[VectorDocument]:
+    def embed_session_chunked(self, session_id: str, session_content: str) -> List[VectorDocument]:
         """Embed a session in chunks."""
         docs = []
         chunks = chunk_content(session_content, self.chunk_size)
@@ -222,10 +150,6 @@ class EmbeddingPipeline:
             print(f"Error embedding sessions: {e}")
             return []
 
-    # =========================================================================
-    # STORAGE
-    # =========================================================================
-
     def store_embedding(self, doc: VectorDocument) -> bool:
         """Store embedding in vector store."""
         self.store._cache[doc.id] = doc
@@ -239,10 +163,6 @@ class EmbeddingPipeline:
                 count += 1
         return count
 
-    # =========================================================================
-    # INCREMENTAL UPDATES
-    # =========================================================================
-
     def needs_update(self, source_id: str) -> bool:
         """Check if source needs embedding update."""
         for doc in self.store._cache.values():
@@ -253,10 +173,6 @@ class EmbeddingPipeline:
     def get_embedded_sources(self) -> List[str]:
         """Get list of already embedded sources."""
         return [doc.source for doc in self.store._cache.values()]
-
-    # =========================================================================
-    # FULL PIPELINE
-    # =========================================================================
 
     def run_full_pipeline(self, dry_run: bool = False) -> Dict[str, Any]:
         """Run complete embedding pipeline."""
@@ -291,33 +207,10 @@ class EmbeddingPipeline:
             'dry_run': dry_run
         }
 
-
-# =============================================================================
-# FACTORY FUNCTIONS
-# =============================================================================
-
-def create_embedding_pipeline(
-    use_mock: Optional[bool] = None,
-    dimension: int = 384,
-    ollama_host: str = "localhost",
-    ollama_port: int = 11434
-) -> EmbeddingPipeline:
-    """
-    Factory function to create embedding pipeline.
-
-    Per GAP-EMBED-001: Default uses environment config (production = real embeddings).
-
-    Args:
-        use_mock: Override USE_MOCK_EMBEDDINGS env var (None = use env config)
-        dimension: Embedding dimension for mock generator
-        ollama_host: Ollama host (only used if use_mock=False and provider=ollama)
-        ollama_port: Ollama port
-
-    Returns:
-        EmbeddingPipeline instance
-    """
+def create_embedding_pipeline(use_mock: Optional[bool] = None, dimension: int = 384,
+                              ollama_host: str = "localhost", ollama_port: int = 11434) -> EmbeddingPipeline:
+    """Factory function to create embedding pipeline. Per GAP-EMBED-001."""
     generator = create_embedding_generator(use_mock=use_mock, dimension=dimension)
     return EmbeddingPipeline(embedding_generator=generator)
-
 
 __all__ = ["EmbeddingPipeline", "create_embedding_pipeline"]

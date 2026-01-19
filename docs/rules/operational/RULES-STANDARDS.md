@@ -1,4 +1,4 @@
-# Standards Rules - Sim.ai
+# Standards Rules
 
 Rules governing development standards, DevOps, and documentation.
 

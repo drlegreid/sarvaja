@@ -10,10 +10,11 @@ Per P10.8 / GAP-DOC-001, GAP-DOC-002: Document viewing
 Extracted from documents.py per DOC-SIZE-01-v1.
 
 Tools:
-- governance_get_rule_document: Get full rule markdown document
-- governance_get_task_document: Get task details from workspace documents
+- doc_rule_get: Get full rule markdown document
+- doc_task_get: Get task details from workspace documents
 
 Created: 2026-01-13 (extracted from documents.py)
+Refactored: 2026-01-19 (removed deprecated functions per MCP-NAMING-01-v1)
 """
 
 import json
@@ -32,7 +33,7 @@ def register_entity_document_tools(mcp) -> None:
     """Register entity document viewing MCP tools."""
 
     @mcp.tool()
-    def governance_get_rule_document(rule_id: str) -> str:
+    def doc_rule_get(rule_id: str) -> str:
         """
         Get full rule markdown document for a rule ID.
 
@@ -120,7 +121,7 @@ def register_entity_document_tools(mcp) -> None:
         return json.dumps({"error": f"Rule {rule_id} not found in docs/rules/ or TypeDB"})
 
     @mcp.tool()
-    def governance_get_task_document(task_id: str) -> str:
+    def doc_task_get(task_id: str) -> str:
         """
         Get task details from workspace documents (TODO.md, R&D-BACKLOG.md).
 

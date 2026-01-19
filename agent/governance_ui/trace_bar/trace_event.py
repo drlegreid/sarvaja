@@ -39,6 +39,9 @@ class TraceEvent:
     method: str = "GET"
     status_code: Optional[int] = None
     duration_ms: int = 0
+    request_body: Optional[dict] = None  # Request payload
+    response_body: Optional[dict] = None  # Response payload (truncated if large)
+    request_headers: Optional[dict] = None  # Request headers
 
     # UI action fields
     action: Optional[str] = None  # click, input, navigate, etc.
@@ -60,6 +63,9 @@ class TraceEvent:
             "method": self.method,
             "status_code": self.status_code,
             "duration_ms": self.duration_ms,
+            "request_body": self.request_body,
+            "response_body": self.response_body,
+            "request_headers": self.request_headers,
             "action": self.action,
             "component": self.component,
             "target": self.target,
@@ -86,6 +92,9 @@ class TraceEvent:
             method=data.get("method", "GET"),
             status_code=data.get("status_code"),
             duration_ms=data.get("duration_ms", 0),
+            request_body=data.get("request_body"),
+            response_body=data.get("response_body"),
+            request_headers=data.get("request_headers"),
             action=data.get("action"),
             component=data.get("component"),
             target=data.get("target"),

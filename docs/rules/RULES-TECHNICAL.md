@@ -1,4 +1,4 @@
-# Technical Rules Index - Sim.ai
+# Technical Rules Index
 
 Rules governing architecture, technology selection, and tooling.
 

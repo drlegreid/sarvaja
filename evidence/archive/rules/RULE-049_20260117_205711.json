@@ -1,0 +1,18 @@
+{
+  "rule": {
+    "id": "RULE-049",
+    "name": "GitHub Issue Protocol (CERT & STATUS)",
+    "category": "governance",
+    "priority": "HIGH",
+    "status": "ACTIVE",
+    "directive": "GitHub issues follow two patterns based on scope: | Type | Purpose | Scope | Attachments | |------|---------|-------|-------------| | **CERT** | Strategic milestone certification | Comprehensive | Full evidence | | **STATUS** | Tactical workflow check (DEV/SLEEP) | Quick update | Minimal | **CERT validates STATUS:** Certification issues assess delivered items from STATUS reports as part of Definition of Done.",
+    "rule_type": "OPERATIONAL",
+    "semantic_id": "REPORT-ISSUE-01-v1",
+    "created_date": null
+  },
+  "archived_at": "2026-01-17T20:57:11.793142",
+  "reason": "deleted",
+  "archived_from_db": "sim-ai-governance",
+  "dependencies": [],
+  "dependents": []
+}

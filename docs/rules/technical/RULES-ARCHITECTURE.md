@@ -1,4 +1,4 @@
-# Architecture Rules - Sim.ai
+# Architecture Rules
 
 Rules governing system architecture, infrastructure, and MCP server patterns.
 

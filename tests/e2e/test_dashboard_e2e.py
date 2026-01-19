@@ -11,15 +11,20 @@ Evidence: .playwright-mcp/e2e-dashboard-rules.png, e2e-rule-detail.png
 Prerequisites:
 - Governance dashboard running on port 8081
 - TypeDB and ChromaDB containers running
-- pip install playwright pytest-playwright
+- pip install playwright pytest-playwright (local only, not in container)
 - playwright install chromium
+
+Run locally: pytest tests/e2e/test_dashboard_e2e.py -v --headed
 """
 
 import pytest
+
+# Skip entire module if pytest-playwright not available (container environment)
+pytest.importorskip("pytest_playwright", reason="pytest-playwright required - run locally")
+
 from playwright.sync_api import Page, expect
 
-
-DASHBOARD_URL = "http://localhost:8081"
+from shared.constants import APP_TITLE, DASHBOARD_URL
 
 
 class TestDashboardNavigation:
@@ -31,11 +36,11 @@ class TestDashboardNavigation:
         page.goto(DASHBOARD_URL)
         page.wait_for_load_state("networkidle")
         # Wait for app to initialize
-        page.wait_for_selector("text=Sim.ai Governance Dashboard", timeout=10000)
+        page.wait_for_selector(f"text={APP_TITLE}", timeout=10000)
 
     def test_dashboard_loads(self, page: Page):
         """Dashboard loads with header and navigation."""
-        expect(page.locator("text=Sim.ai Governance Dashboard")).to_be_visible()
+        expect(page.locator(f"text={APP_TITLE}")).to_be_visible()
         expect(page.locator("[data-testid='nav-rules']")).to_be_visible()
 
     def test_header_shows_stats(self, page: Page):
@@ -83,7 +88,7 @@ class TestRulesView:
         """Navigate to Rules view before each test."""
         page.goto(DASHBOARD_URL)
         page.wait_for_load_state("networkidle")
-        page.wait_for_selector("text=Sim.ai Governance Dashboard", timeout=10000)
+        page.wait_for_selector(f"text={APP_TITLE}", timeout=10000)
         page.click("[data-testid='nav-rules']")
         page.wait_for_selector("text=Governance Rules")
 
@@ -126,7 +131,7 @@ class TestTasksView:
         """Navigate to Tasks view before each test."""
         page.goto(DASHBOARD_URL)
         page.wait_for_load_state("networkidle")
-        page.wait_for_selector("text=Sim.ai Governance Dashboard", timeout=10000)
+        page.wait_for_selector(f"text={APP_TITLE}", timeout=10000)
         page.click("[data-testid='nav-tasks']")
         page.wait_for_selector("text=Platform Tasks")
 
@@ -153,7 +158,7 @@ class TestTrustView:
         """Navigate to Trust view before each test."""
         page.goto(DASHBOARD_URL)
         page.wait_for_load_state("networkidle")
-        page.wait_for_selector("text=Sim.ai Governance Dashboard", timeout=10000)
+        page.wait_for_selector(f"text={APP_TITLE}", timeout=10000)
         page.click("[data-testid='nav-trust']")
         page.wait_for_selector("text=Agent Trust Dashboard")
 
@@ -187,7 +192,7 @@ class TestPaginationUI:
         """Navigate to dashboard before each test."""
         page.goto(DASHBOARD_URL)
         page.wait_for_load_state("networkidle")
-        page.wait_for_selector("text=Sim.ai Governance Dashboard", timeout=10000)
+        page.wait_for_selector(f"text={APP_TITLE}", timeout=10000)
 
     def test_rules_view_has_pagination_controls(self, page: Page):
         """Test Rules view has pagination UI controls."""
@@ -231,7 +236,7 @@ class TestInfraView:
         """Navigate to Infrastructure view before each test."""
         page.goto(DASHBOARD_URL)
         page.wait_for_load_state("networkidle")
-        page.wait_for_selector("text=Sim.ai Governance Dashboard", timeout=10000)
+        page.wait_for_selector(f"text={APP_TITLE}", timeout=10000)
         page.click("[data-testid='nav-infra']")
 
     def test_infra_dashboard_loads(self, page: Page):

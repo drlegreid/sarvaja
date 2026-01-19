@@ -28,7 +28,7 @@ class RuleInferenceQueries:
                 $r1 isa rule-entity, has rule-id "{rule_id}";
                 (dependent: $r1, dependency: $r2) isa rule-dependency;
                 $r2 has rule-id $dep_id;
-            get $dep_id;
+            select $dep_id;
         """
         results = self._execute_query(query, infer=True)
         return [r.get("dep_id") for r in results]
@@ -40,7 +40,7 @@ class RuleInferenceQueries:
                 $r1 isa rule-entity, has rule-id $id;
                 $r2 isa rule-entity, has rule-id "{rule_id}";
                 (dependent: $r1, dependency: $r2) isa rule-dependency;
-            get $id;
+            select $id;
         """
         results = self._execute_query(query, infer=True)
         return [r.get("id") for r in results]
@@ -55,7 +55,7 @@ class RuleInferenceQueries:
                 (conflicting-rule: $r1, conflicting-rule: $r2) isa rule-conflict;
                 $r1 has rule-id $id1;
                 $r2 has rule-id $id2;
-            get $id1, $id2;
+            select $id1, $id2;
         """
         results = self._execute_query(query, infer=True)
         return [{"rule1": r.get("id1"), "rule2": r.get("id2")} for r in results]
@@ -70,7 +70,7 @@ class RuleInferenceQueries:
                 $d isa decision, has decision-id "{decision_id}";
                 (affecting-decision: $d, affected-rule: $r) isa decision-affects;
                 $r has rule-id $rid;
-            get $rid;
+            select $rid;
         """
         results = self._execute_query(query, infer=True)
         return [r.get("rid") for r in results]

@@ -1,4 +1,4 @@
-# Session & Reporting Rules - Sim.ai
+# Session & Reporting Rules
 
 Rules governing session evidence, decision logging, and reporting.
 

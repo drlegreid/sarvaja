@@ -17,7 +17,7 @@ class SessionLinkingOperations:
 
     Handles session-to-rule, session-to-decision, and session-to-evidence relationships.
 
-    Requires a client with _execute_query and _client attributes.
+    Requires a client with _execute_query and _driver attributes.
     Uses mixin pattern for TypeDBClient composition.
     """
 
@@ -39,39 +39,38 @@ class SessionLinkingOperations:
         Returns:
             True if link created successfully, False otherwise
         """
-        from typedb.driver import SessionType, TransactionType
+        from typedb.driver import TransactionType
 
         try:
-            with self._client.session(self.database, SessionType.DATA) as session:
-                with session.transaction(TransactionType.WRITE) as tx:
-                    # First, ensure the evidence-file entity exists
-                    evidence_id = evidence_source.replace("/", "-").replace(".", "-")
-                    now = datetime.now()
-                    timestamp_str = now.strftime('%Y-%m-%dT%H:%M:%S')
+            with self._driver.transaction(self.database, TransactionType.WRITE) as tx:
+                # First, ensure the evidence-file entity exists
+                evidence_id = evidence_source.replace("/", "-").replace(".", "-")
+                now = datetime.now()
+                timestamp_str = now.strftime('%Y-%m-%dT%H:%M:%S')
 
-                    # Insert evidence if not exists (TypeDB allows duplicates to be ignored)
-                    insert_evidence = f"""
-                        insert $e isa evidence-file,
-                            has evidence-id "{evidence_id}",
-                            has evidence-source "{evidence_source}",
-                            has evidence-type "markdown",
-                            has evidence-created-at {timestamp_str};
-                    """
-                    try:
-                        tx.query.insert(insert_evidence)
-                    except Exception:
-                        pass  # Might already exist
+                # Insert evidence if not exists (TypeDB allows duplicates to be ignored)
+                insert_evidence = f"""
+                    insert $e isa evidence-file,
+                        has evidence-id "{evidence_id}",
+                        has evidence-source "{evidence_source}",
+                        has evidence-type "markdown",
+                        has evidence-created-at {timestamp_str};
+                """
+                try:
+                    tx.query(insert_evidence).resolve()
+                except Exception:
+                    pass  # Might already exist
 
-                    # Create the has-evidence relation
-                    link_query = f"""
-                        match
-                            $s isa work-session, has session-id "{session_id}";
-                            $e isa evidence-file, has evidence-source "{evidence_source}";
-                        insert
-                            (evidence-session: $s, session-evidence: $e) isa has-evidence;
-                    """
-                    tx.query.insert(link_query)
-                    tx.commit()
+                # Create the has-evidence relation
+                link_query = f"""
+                    match
+                        $s isa work-session, has session-id "{session_id}";
+                        $e isa evidence-file, has evidence-source "{evidence_source}";
+                    insert
+                        (evidence-session: $s, session-evidence: $e) isa has-evidence;
+                """
+                tx.query(link_query).resolve()
+                tx.commit()
 
             return True
         except Exception as e:
@@ -93,7 +92,7 @@ class SessionLinkingOperations:
                 $s isa work-session, has session-id "{session_id}";
                 (evidence-session: $s, session-evidence: $e) isa has-evidence;
                 $e has evidence-source $src;
-            get $src;
+            select $src;
         """
         results = self._execute_query(query)
         return [r.get("src") for r in results if r.get("src")]
@@ -112,21 +111,20 @@ class SessionLinkingOperations:
         Returns:
             True if link created successfully, False otherwise
         """
-        from typedb.driver import SessionType, TransactionType
+        from typedb.driver import TransactionType
 
         try:
-            with self._client.session(self.database, SessionType.DATA) as session:
-                with session.transaction(TransactionType.WRITE) as tx:
-                    # Create the session-applied-rule relation
-                    link_query = f"""
-                        match
-                            $s isa work-session, has session-id "{session_id}";
-                            $r isa rule-entity, has rule-id "{rule_id}";
-                        insert
-                            (applying-session: $s, applied-rule: $r) isa session-applied-rule;
-                    """
-                    tx.query.insert(link_query)
-                    tx.commit()
+            with self._driver.transaction(self.database, TransactionType.WRITE) as tx:
+                # Create the session-applied-rule relation
+                link_query = f"""
+                    match
+                        $s isa work-session, has session-id "{session_id}";
+                        $r isa rule-entity, has rule-id "{rule_id}";
+                    insert
+                        (applying-session: $s, applied-rule: $r) isa session-applied-rule;
+                """
+                tx.query(link_query).resolve()
+                tx.commit()
 
             return True
         except Exception as e:
@@ -147,21 +145,20 @@ class SessionLinkingOperations:
         Returns:
             True if link created successfully, False otherwise
         """
-        from typedb.driver import SessionType, TransactionType
+        from typedb.driver import TransactionType
 
         try:
-            with self._client.session(self.database, SessionType.DATA) as session:
-                with session.transaction(TransactionType.WRITE) as tx:
-                    # Create the session-decision relation
-                    link_query = f"""
-                        match
-                            $s isa work-session, has session-id "{session_id}";
-                            $d isa decision, has decision-id "{decision_id}";
-                        insert
-                            (deciding-session: $s, session-made-decision: $d) isa session-decision;
-                    """
-                    tx.query.insert(link_query)
-                    tx.commit()
+            with self._driver.transaction(self.database, TransactionType.WRITE) as tx:
+                # Create the session-decision relation
+                link_query = f"""
+                    match
+                        $s isa work-session, has session-id "{session_id}";
+                        $d isa decision, has decision-id "{decision_id}";
+                    insert
+                        (deciding-session: $s, session-made-decision: $d) isa session-decision;
+                """
+                tx.query(link_query).resolve()
+                tx.commit()
 
             return True
         except Exception as e:
@@ -183,7 +180,7 @@ class SessionLinkingOperations:
                 $s isa work-session, has session-id "{session_id}";
                 (applying-session: $s, applied-rule: $r) isa session-applied-rule;
                 $r has rule-id $rid;
-            get $rid;
+            select $rid;
         """
         results = self._execute_query(query)
         return [r.get("rid") for r in results if r.get("rid")]
@@ -203,7 +200,7 @@ class SessionLinkingOperations:
                 $s isa work-session, has session-id "{session_id}";
                 (deciding-session: $s, session-made-decision: $d) isa session-decision;
                 $d has decision-id $did;
-            get $did;
+            select $did;
         """
         results = self._execute_query(query)
         return [r.get("did") for r in results if r.get("did")]

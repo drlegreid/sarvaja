@@ -38,7 +38,7 @@ Before automatic restart, verify:
 |-------|--------------|------|
 | 1. Syntax | No import/syntax errors | `python -m py_compile <file>` |
 | 2. Unit | Function logic correct | `pytest tests/unit/` |
-| 3. Integration | MCP tools work end-to-end | `governance_health()` after restart |
+| 3. Integration | MCP tools work end-to-end | `health_check()` after restart |
 
 ---
 
@@ -48,7 +48,7 @@ Before automatic restart, verify:
 1. PRE-CHECK: Verify all test layers pass
 2. NOTIFY: Log restart intent (session_thought or output)
 3. EXECUTE: Issue restart command
-4. VERIFY: Call governance_health() within 30s
+4. VERIFY: Call health_check() within 30s
 5. ROLLBACK: If health fails, alert user immediately
 ```
 

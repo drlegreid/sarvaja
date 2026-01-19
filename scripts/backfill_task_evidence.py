@@ -1,206 +1,134 @@
 #!/usr/bin/env python3
 """
-Backfill evidence for historical tasks (EPIC-DR-008).
+Backfill Task Evidence Script
+=============================
+Populates evidence field for DONE tasks that have body content.
 
-Per GAP-DATA-INTEGRITY-001: Task evidence is at 3% population.
-This script generates meaningful evidence for completed tasks
-that were done before evidence workflow was enforced.
-
-Evidence Generation Strategy:
-- DONE tasks with linked_sessions: "Completed in session {session_ids}"
-- DONE tasks with linked_rules: "Implements {rule_ids}"
-- DONE tasks with resolution: "Resolution: {resolution}"
-- Other DONE tasks: "[Historical] Marked complete during migration"
+Per GAP-EPIC-DR-008: Task evidence population (3%→50%)
 
 Usage:
-    python scripts/backfill_task_evidence.py [--dry-run] [--execute]
+    python3 scripts/backfill_task_evidence.py [--live]
 
 Created: 2026-01-17
-Per: GAP-EPIC-DR-008
 """
 
-import argparse
 import sys
-from pathlib import Path
+import argparse
+import json
+import urllib.request
+import urllib.error
 from datetime import datetime
 
-# Add project root to path
-sys.path.insert(0, str(Path(__file__).parent.parent))
-
-from governance.client import TypeDBClient
+API_BASE = "http://localhost:8082/api"
 
 
-def generate_evidence(task) -> str:
-    """
-    Generate meaningful evidence based on task metadata.
-
-    Args:
-        task: Task entity with id, status, linked_sessions, linked_rules, resolution
-
-    Returns:
-        Generated evidence string
-    """
-    parts = []
-
-    # Add resolution if present
-    if hasattr(task, 'resolution') and task.resolution and task.resolution != "NONE":
-        parts.append(f"Resolution: {task.resolution}")
-
-    # Add linked sessions
-    if hasattr(task, 'linked_sessions') and task.linked_sessions:
-        if isinstance(task.linked_sessions, list):
-            session_ids = ", ".join(task.linked_sessions[:3])  # Max 3 for brevity
-            if len(task.linked_sessions) > 3:
-                session_ids += f" (+{len(task.linked_sessions) - 3} more)"
-        else:
-            session_ids = str(task.linked_sessions)
-        parts.append(f"Sessions: {session_ids}")
-
-    # Add linked rules
-    if hasattr(task, 'linked_rules') and task.linked_rules:
-        if isinstance(task.linked_rules, list):
-            rule_ids = ", ".join(task.linked_rules[:3])  # Max 3 for brevity
-            if len(task.linked_rules) > 3:
-                rule_ids += f" (+{len(task.linked_rules) - 3} more)"
-        else:
-            rule_ids = str(task.linked_rules)
-        parts.append(f"Implements: {rule_ids}")
-
-    # Add completion date if available
-    if hasattr(task, 'completed_at') and task.completed_at:
-        parts.append(f"Completed: {task.completed_at}")
-
-    # Build evidence string
-    if parts:
-        evidence = " | ".join(parts)
-        return f"[Historical backfill] {evidence}"
-    else:
-        return f"[Historical] Marked complete during EPIC-DR-008 migration ({datetime.now().strftime('%Y-%m-%d')})"
+def get_all_tasks():
+    """Fetch all tasks via REST API."""
+    url = f"{API_BASE}/tasks?limit=200"
+    try:
+        with urllib.request.urlopen(url, timeout=30) as response:
+            data = json.loads(response.read().decode())
+            return data.get("items", [])
+    except urllib.error.URLError as e:
+        print(f"ERROR: Failed to fetch tasks: {e}", file=sys.stderr)
+        return []
 
 
-def backfill_task_evidence(dry_run: bool = True):
-    """
-    Backfill evidence for completed tasks that don't have evidence.
+def update_task_evidence(task_id: str, evidence: str, status: str = "DONE") -> bool:
+    """Update task evidence via REST API."""
+    url = f"{API_BASE}/tasks/{task_id}"
+    payload = json.dumps({"evidence": evidence, "status": status}).encode()
 
-    Args:
-        dry_run: If True, only report what would be done
-    """
-    client = TypeDBClient()
-    if not client.connect():
-        print("ERROR: Failed to connect to TypeDB")
-        return {"error": "Connection failed"}
+    req = urllib.request.Request(
+        url,
+        data=payload,
+        headers={"Content-Type": "application/json"},
+        method="PUT"
+    )
 
     try:
-        # Get all tasks
-        tasks = client.get_all_tasks()
+        with urllib.request.urlopen(req, timeout=30) as response:
+            return response.status == 200
+    except urllib.error.URLError as e:
+        print(f"  Error updating {task_id}: {e}", file=sys.stderr)
+        return False
 
-        # Filter: DONE tasks without evidence
-        completed_statuses = {"DONE", "completed", "CLOSED"}
-        tasks_without_evidence = [
-            t for t in tasks
-            if t.status in completed_statuses
-            and (not hasattr(t, 'evidence') or not t.evidence)
-        ]
 
-        # Also count tasks with evidence for stats
-        tasks_with_evidence = [
-            t for t in tasks
-            if hasattr(t, 'evidence') and t.evidence
-        ]
+def backfill_evidence(dry_run: bool = True):
+    """Backfill evidence for DONE tasks."""
+    # Get all tasks via REST API
+    all_tasks = get_all_tasks()
+    if not all_tasks:
+        print("ERROR: No tasks retrieved", file=sys.stderr)
+        return 1
 
-        total_completed = len([t for t in tasks if t.status in completed_statuses])
+    # Filter DONE tasks without evidence
+    done_without_evidence = [
+        t for t in all_tasks
+        if t.get("status") == "DONE" and not t.get("evidence")
+    ]
 
-        print(f"=== EPIC-DR-008: Task Evidence Backfill ===")
-        print()
-        print(f"Total tasks: {len(tasks)}")
-        print(f"Completed tasks: {total_completed}")
-        print(f"With evidence: {len(tasks_with_evidence)} ({100*len(tasks_with_evidence)//max(1, total_completed)}%)")
-        print(f"Without evidence: {len(tasks_without_evidence)}")
-        print(f"Dry run: {dry_run}")
-        print()
+    print(f"Total tasks: {len(all_tasks)}")
+    print(f"DONE tasks: {len([t for t in all_tasks if t.get('status') == 'DONE'])}")
+    print(f"DONE without evidence: {len(done_without_evidence)}")
+    print(f"Mode: {'DRY RUN' if dry_run else 'LIVE'}")
+    print("=" * 60)
 
-        if dry_run:
-            print("=== DRY RUN - No changes will be made ===")
-            print()
+    updated = 0
+    errors = 0
 
-        updated = 0
-        errors = 0
+    for task in done_without_evidence:
+        task_id = task.get("task_id")
+        body = task.get("body") or ""
+        name = task.get("description") or task.get("name", task_id)
 
-        for task in tasks_without_evidence:
-            evidence = generate_evidence(task)
+        # Generate evidence from body or name
+        if body and len(body) > 10:
+            evidence = f"Completed: {body[:200]}..."
+        else:
+            evidence = f"Completed: {name}"
 
-            if dry_run:
-                print(f"  Would update: {task.id}")
-                print(f"    Evidence: {evidence[:60]}...")
-            else:
-                try:
-                    # Use update_task_status to set evidence
-                    result = client.update_task_status(
-                        task.id,
-                        task.status,
-                        agent_id=task.agent_id,
-                        evidence=evidence
-                    )
-                    if result:
-                        print(f"  Updated: {task.id}")
-                        updated += 1
-                    else:
-                        print(f"  FAILED: {task.id} (update returned None)")
-                        errors += 1
-                except Exception as e:
-                    print(f"  ERROR: {task.id} - {e}")
-                    errors += 1
+        # Add linked sessions if available
+        linked_sessions = task.get("linked_sessions")
+        if linked_sessions:
+            sessions = ", ".join(linked_sessions)
+            evidence += f" | Sessions: {sessions}"
 
-        print()
-        print("=== Summary ===")
-        print(f"Tasks processed: {len(tasks_without_evidence)}")
+        # Add backfill marker
+        evidence += f" | Backfilled: {datetime.now().strftime('%Y-%m-%d')}"
+
+        print(f"\n{task_id}: {name[:40]}...")
+        print(f"  Evidence: {evidence[:80]}...")
+
         if not dry_run:
-            print(f"Successfully updated: {updated}")
-            print(f"Errors: {errors}")
-            new_with_evidence = len(tasks_with_evidence) + updated
-            new_percent = 100 * new_with_evidence // max(1, total_completed)
-            print(f"New evidence coverage: {new_with_evidence}/{total_completed} ({new_percent}%)")
+            if update_task_evidence(task_id, evidence):
+                print(f"  ✓ Updated")
+                updated += 1
+            else:
+                print(f"  ✗ Failed to update")
+                errors += 1
+        else:
+            print(f"  [dry-run] Would update")
+            updated += 1
 
-        return {
-            "total_tasks": len(tasks),
-            "total_completed": total_completed,
-            "tasks_with_evidence_before": len(tasks_with_evidence),
-            "tasks_without_evidence": len(tasks_without_evidence),
-            "updated": updated if not dry_run else 0,
-            "errors": errors if not dry_run else 0,
-            "dry_run": dry_run
-        }
+    print("\n" + "=" * 60)
+    print(f"Summary: {updated} {'would be ' if dry_run else ''}updated, {errors} errors")
 
-    finally:
-        client.close()
+    if dry_run and updated > 0:
+        print("\nRun with --live to apply changes")
 
-
-def main():
-    parser = argparse.ArgumentParser(
-        description="Backfill evidence for historical tasks (EPIC-DR-008)"
-    )
-    parser.add_argument(
-        "--dry-run",
-        action="store_true",
-        default=True,
-        help="Only show what would be done (default: True)"
-    )
-    parser.add_argument(
-        "--execute",
-        action="store_true",
-        help="Actually perform the backfill (disables dry-run)"
-    )
-
-    args = parser.parse_args()
-
-    # --execute disables dry-run
-    dry_run = not args.execute
-
-    result = backfill_task_evidence(dry_run=dry_run)
-
-    if result.get("error"):
-        sys.exit(1)
+    return 0 if errors == 0 else 1
 
 
 if __name__ == "__main__":
-    main()
+    parser = argparse.ArgumentParser(
+        description="Backfill evidence for DONE tasks"
+    )
+    parser.add_argument(
+        "--live",
+        action="store_true",
+        help="Apply changes (default is dry-run)"
+    )
+    args = parser.parse_args()
+
+    sys.exit(backfill_evidence(dry_run=not args.live))

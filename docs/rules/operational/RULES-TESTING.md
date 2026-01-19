@@ -1,4 +1,4 @@
-# Testing Rules - Sim.ai
+# Testing Rules
 
 Rules governing testing strategies, quality gates, and validation protocols.
 

@@ -102,7 +102,7 @@ def health_check_typed() -> HealthCheckResult:
             active_count = len([r for r in rules if r.status == "ACTIVE"])
 
             # Count agents
-            query = 'match $a isa agent; get $a; count;'
+            query = 'match $a isa agent; select $a; count;'
             try:
                 result = client.execute_query(query)
                 agents_count = int(result[0].get('count', 0)) if result else 0

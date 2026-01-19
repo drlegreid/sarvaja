@@ -1,12 +1,4 @@
-"""
-Kanren Performance Benchmarks (KAN-005).
-
-Measures overhead of Kanren constraint validation vs direct Python.
-Target: <100ms overhead for typical validation operations.
-
-Per RD-KANREN-CONTEXT: Performance benchmarks for real-time use.
-"""
-
+"""Kanren Performance Benchmarks (KAN-005). Per RD-KANREN-CONTEXT: <100ms target overhead."""
 import time
 from dataclasses import dataclass
 from typing import Any, Dict, List, Tuple
@@ -17,7 +9,6 @@ from .trust import trust_level, requires_supervisor, can_execute_priority
 from .tasks import task_requires_evidence, valid_task_assignment
 from .rag import filter_rag_chunks
 from .conflicts import find_rule_conflicts
-
 
 @dataclass
 class BenchmarkResult:
@@ -35,7 +26,6 @@ class BenchmarkResult:
         """Generate summary string."""
         status = "PASS" if self.passed else "FAIL"
         return f"{self.name}: {self.avg_ms:.3f}ms avg ({status}, target <{self.target_ms}ms)"
-
 
 def benchmark(iterations: int = 1000, target_ms: float = 100.0):
     """Decorator to benchmark a function."""
@@ -63,34 +53,25 @@ def benchmark(iterations: int = 1000, target_ms: float = 100.0):
         return wrapper
     return decorator
 
-
-# =============================================================================
-# Kanren Benchmark Functions
-# =============================================================================
-
 @benchmark(iterations=1000, target_ms=1.0)
 def bench_trust_level():
     """Benchmark trust_level calculation."""
     trust_level(0.85)
-
 
 @benchmark(iterations=1000, target_ms=1.0)
 def bench_requires_supervisor():
     """Benchmark requires_supervisor Kanren query."""
     requires_supervisor("trusted")
 
-
 @benchmark(iterations=1000, target_ms=1.0)
 def bench_can_execute_priority():
     """Benchmark can_execute_priority Kanren query."""
     can_execute_priority("trusted", "CRITICAL")
 
-
 @benchmark(iterations=1000, target_ms=1.0)
 def bench_task_requires_evidence():
     """Benchmark task_requires_evidence Kanren query."""
     task_requires_evidence("CRITICAL")
-
 
 @benchmark(iterations=500, target_ms=5.0)
 def bench_valid_task_assignment():
@@ -98,7 +79,6 @@ def bench_valid_task_assignment():
     agent = AgentContext("AGENT-001", "Test", 0.85, "claude-code")
     task = TaskContext("TASK-001", "CRITICAL", True)
     valid_task_assignment(agent, task)
-
 
 @benchmark(iterations=500, target_ms=5.0)
 def bench_filter_rag_chunks():
@@ -110,7 +90,6 @@ def bench_filter_rag_chunks():
     ] * 10  # 30 chunks
     filter_rag_chunks(chunks)
 
-
 @benchmark(iterations=200, target_ms=10.0)
 def bench_find_rule_conflicts():
     """Benchmark rule conflict detection."""
@@ -119,11 +98,6 @@ def bench_find_rule_conflicts():
         for i in range(10)
     ]
     find_rule_conflicts(rules)
-
-
-# =============================================================================
-# Direct Python Comparison Functions
-# =============================================================================
 
 def direct_trust_level(score: float) -> str:
     """Direct Python trust level (no Kanren)."""
@@ -136,11 +110,9 @@ def direct_trust_level(score: float) -> str:
     else:
         return "restricted"
 
-
 def direct_requires_supervisor(trust: str) -> bool:
     """Direct Python supervisor check (no Kanren)."""
     return trust in ("restricted", "supervised")
-
 
 def direct_can_execute(trust: str, priority: str) -> bool:
     """Direct Python execution check (no Kanren)."""
@@ -150,39 +122,29 @@ def direct_can_execute(trust: str, priority: str) -> bool:
         return trust != "restricted"
     return True
 
-
 def direct_task_requires_evidence(priority: str) -> bool:
     """Direct Python evidence check (no Kanren)."""
     return priority in ("CRITICAL", "HIGH")
-
 
 @benchmark(iterations=1000, target_ms=0.1)
 def bench_direct_trust_level():
     """Benchmark direct Python trust level."""
     direct_trust_level(0.85)
 
-
 @benchmark(iterations=1000, target_ms=0.1)
 def bench_direct_requires_supervisor():
     """Benchmark direct Python supervisor check."""
     direct_requires_supervisor("trusted")
-
 
 @benchmark(iterations=1000, target_ms=0.1)
 def bench_direct_can_execute():
     """Benchmark direct Python execution check."""
     direct_can_execute("trusted", "CRITICAL")
 
-
 @benchmark(iterations=1000, target_ms=0.1)
 def bench_direct_requires_evidence():
     """Benchmark direct Python evidence check."""
     direct_task_requires_evidence("CRITICAL")
-
-
-# =============================================================================
-# Benchmark Runner
-# =============================================================================
 
 def run_all_benchmarks() -> List[BenchmarkResult]:
     """Run all benchmarks and return results."""
@@ -208,7 +170,6 @@ def run_all_benchmarks() -> List[BenchmarkResult]:
         results.append(result)
 
     return results
-
 
 def compare_kanren_vs_direct() -> Dict[str, Any]:
     """
@@ -273,7 +234,6 @@ def compare_kanren_vs_direct() -> Dict[str, Any]:
         }
     }
 
-
 def print_benchmark_report():
     """Print formatted benchmark report."""
     print("=" * 60)
@@ -306,7 +266,6 @@ def print_benchmark_report():
     print("=" * 60)
 
     return all_passed
-
 
 if __name__ == "__main__":
     print_benchmark_report()

@@ -44,15 +44,23 @@ class VectorStore:
         self._cache: Dict[str, VectorDocument] = {}
 
     def connect(self) -> bool:
-        """Connect to TypeDB."""
+        """Connect to TypeDB 3.x."""
         try:
-            from typedb.driver import TypeDB
+            from typedb.driver import TypeDB, Credentials, DriverOptions
+            import os
+
             address = f"{self.host}:{self.port}"
-            self._client = TypeDB.core_driver(address)
+            # TypeDB 3.x API
+            username = os.getenv("TYPEDB_USERNAME", "admin")
+            password = os.getenv("TYPEDB_PASSWORD", "password")
+            credentials = Credentials(username, password)
+            options = DriverOptions(is_tls_enabled=False)
+
+            self._client = TypeDB.driver(address, credentials, options)
             self._connected = True
             return True
         except ImportError:
-            print("TypeDB driver not installed. Run: pip install typedb-driver==2.29.2")
+            print("TypeDB driver not installed. Run: pip install typedb-driver>=3.7.0")
             return False
         except Exception as e:
             print(f"Failed to connect to TypeDB: {e}")
@@ -65,17 +73,17 @@ class VectorStore:
             self._connected = False
 
     def insert(self, doc: VectorDocument) -> bool:
-        """Insert vector document into TypeDB."""
+        """Insert vector document into TypeDB 3.x."""
         if not self._connected:
             raise RuntimeError("Not connected to TypeDB")
 
-        from typedb.driver import SessionType, TransactionType
+        from typedb.driver import TransactionType
 
         try:
-            with self._client.session(self.database, SessionType.DATA) as session:
-                with session.transaction(TransactionType.WRITE) as tx:
-                    tx.query.insert(doc.to_typedb_insert())
-                    tx.commit()
+            # TypeDB 3.x: driver.transaction() directly, no session
+            with self._client.transaction(self.database, TransactionType.WRITE) as tx:
+                tx.query(doc.to_typedb_insert()).resolve()
+                tx.commit()
 
             # Cache for similarity search
             self._cache[doc.id] = doc
@@ -89,29 +97,30 @@ class VectorStore:
         if not self._connected:
             raise RuntimeError("Not connected to TypeDB")
 
-        from typedb.driver import SessionType, TransactionType
+        from typedb.driver import TransactionType
 
         success_count = 0
-        with self._client.session(self.database, SessionType.DATA) as session:
-            with session.transaction(TransactionType.WRITE) as tx:
-                for doc in docs:
-                    try:
-                        tx.query.insert(doc.to_typedb_insert())
-                        self._cache[doc.id] = doc
-                        success_count += 1
-                    except Exception as e:
-                        print(f"Failed to insert {doc.id}: {e}")
-                tx.commit()
+        # TypeDB 3.x: driver.transaction() directly
+        with self._client.transaction(self.database, TransactionType.WRITE) as tx:
+            for doc in docs:
+                try:
+                    tx.query(doc.to_typedb_insert()).resolve()
+                    self._cache[doc.id] = doc
+                    success_count += 1
+                except Exception as e:
+                    print(f"Failed to insert {doc.id}: {e}")
+            tx.commit()
 
         return success_count
 
     def get_all_vectors(self) -> List[VectorDocument]:
-        """Retrieve all vector documents from TypeDB."""
+        """Retrieve all vector documents from TypeDB 3.x."""
         if not self._connected:
             raise RuntimeError("Not connected to TypeDB")
 
-        from typedb.driver import SessionType, TransactionType
+        from typedb.driver import TransactionType
 
+        # TypeDB 3.x: match without get
         query = """
             match $v isa vector-document,
                 has vector-id $id,
@@ -121,30 +130,30 @@ class VectorStore:
                 has vector-dimension $dimension,
                 has vector-source $source,
                 has vector-source-type $source_type;
-            get $id, $content, $embedding, $model, $dimension, $source, $source_type;
         """
 
         results = []
-        with self._client.session(self.database, SessionType.DATA) as session:
-            with session.transaction(TransactionType.READ) as tx:
-                for result in tx.query.get(query):
-                    try:
-                        embedding_json = result.get("embedding").as_attribute().get_value()
-                        embedding = json.loads(embedding_json)
+        # TypeDB 3.x: driver.transaction() directly
+        with self._client.transaction(self.database, TransactionType.READ) as tx:
+            for result in tx.query(query).resolve():
+                try:
+                    # TypeDB 3.x: result.get(var) then .value for attribute value
+                    embedding_json = result.get("embedding").value
+                    embedding = json.loads(embedding_json)
 
-                        doc = VectorDocument(
-                            id=result.get("id").as_attribute().get_value(),
-                            content=result.get("content").as_attribute().get_value(),
-                            embedding=embedding,
-                            model=result.get("model").as_attribute().get_value(),
-                            dimension=result.get("dimension").as_attribute().get_value(),
-                            source=result.get("source").as_attribute().get_value(),
-                            source_type=result.get("source_type").as_attribute().get_value()
-                        )
-                        results.append(doc)
-                        self._cache[doc.id] = doc
-                    except Exception as e:
-                        print(f"Failed to parse vector: {e}")
+                    doc = VectorDocument(
+                        id=result.get("id").value,
+                        content=result.get("content").value,
+                        embedding=embedding,
+                        model=result.get("model").value,
+                        dimension=result.get("dimension").value,
+                        source=result.get("source").value,
+                        source_type=result.get("source_type").value
+                    )
+                    results.append(doc)
+                    self._cache[doc.id] = doc
+                except Exception as e:
+                    print(f"Failed to parse vector: {e}")
 
         return results
 
@@ -213,18 +222,19 @@ class VectorStore:
         if not self._connected:
             raise RuntimeError("Not connected to TypeDB")
 
-        from typedb.driver import SessionType, TransactionType
+        from typedb.driver import TransactionType
 
+        # TypeDB 3.x syntax: delete $v; (not delete $v isa type;)
         query = f"""
             match $v isa vector-document, has vector-source "{source_id}";
-            delete $v isa vector-document;
+            delete $v;
         """
 
         try:
-            with self._client.session(self.database, SessionType.DATA) as session:
-                with session.transaction(TransactionType.WRITE) as tx:
-                    tx.query.delete(query)
-                    tx.commit()
+            # TypeDB 3.x: driver.transaction() directly, no session
+            with self._client.transaction(self.database, TransactionType.WRITE) as tx:
+                tx.query(query).resolve()
+                tx.commit()
 
             # Remove from cache
             to_remove = [k for k, v in self._cache.items() if v.source == source_id]

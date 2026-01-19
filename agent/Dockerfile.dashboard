@@ -26,6 +26,8 @@ COPY docs /app/docs
 COPY evidence /app/evidence
 # WORKFLOW-SHELL-01-v1: Include tests for self-assessment
 COPY tests /app/tests
+# EPIC-DRY-001: Include shared constants module
+COPY shared /app/shared
 
 # Create entrypoint that runs both Dashboard + API
 RUN echo '#!/bin/sh\n\

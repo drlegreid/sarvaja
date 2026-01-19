@@ -1,0 +1,18 @@
+{
+  "rule": {
+    "id": "RULE-TEST-BDD-01-v1",
+    "name": "BDD E2E Testing Standard",
+    "category": "testing",
+    "priority": "HIGH",
+    "status": "ACTIVE",
+    "directive": "All E2E tests MUST use Behavior-Driven Development (BDD) paradigm with Gherkin feature files:",
+    "rule_type": "OPERATIONAL",
+    "semantic_id": "TEST-BDD-01-v1",
+    "created_date": null
+  },
+  "archived_at": "2026-01-17T20:48:48.338103",
+  "reason": "deleted",
+  "archived_from_db": "sim-ai-governance",
+  "dependencies": [],
+  "dependents": []
+}

@@ -1,12 +1,4 @@
-"""
-Workspace Launcher for Multi-Agent Orchestration.
-
-Per AGENT-WORKSPACES.md Phase 4: Delegation Protocol.
-Per RULE-011: Multi-Agent Governance Protocol.
-
-Provides utilities to launch Claude Code in specific agent workspaces
-with task context.
-"""
+"""Workspace Launcher for Multi-Agent Orchestration. Per AGENT-WORKSPACES.md, RULE-011."""
 
 import json
 import os
@@ -22,11 +14,6 @@ from governance.orchestrator.handoff import (
     read_handoff_evidence,
     AgentRole,
 )
-
-
-# =============================================================================
-# DATA MODELS
-# =============================================================================
 
 @dataclass
 class LaunchConfig:
@@ -44,7 +31,6 @@ class LaunchConfig:
         result["workspace_path"] = str(self.workspace_path)
         return result
 
-
 @dataclass
 class LaunchResult:
     """Result of launching an agent workspace."""
@@ -59,24 +45,17 @@ class LaunchResult:
         if not self.launched_at:
             self.launched_at = datetime.now().isoformat()
 
-
-# =============================================================================
-# WORKSPACE DISCOVERY
-# =============================================================================
-
 def get_workspaces_dir(project_root: Path = None) -> Path:
     """Get the workspaces directory."""
     if project_root is None:
         project_root = Path(__file__).parent.parent.parent
     return project_root / "workspaces"
 
-
 def get_workspace_path(agent_role: str, project_root: Path = None) -> Path:
     """Get the workspace path for an agent role."""
     workspaces_dir = get_workspaces_dir(project_root)
     role_lower = agent_role.lower()
     return workspaces_dir / role_lower
-
 
 def list_workspaces(project_root: Path = None) -> List[str]:
     """List all available workspaces."""
@@ -90,17 +69,8 @@ def list_workspaces(project_root: Path = None) -> List[str]:
         if d.is_dir() and (d / "CLAUDE.md").exists()
     ]
 
-
 def validate_workspace(agent_role: str, project_root: Path = None) -> bool:
-    """
-    Validate that a workspace is properly configured.
-
-    Checks:
-    - Directory exists
-    - CLAUDE.md exists
-    - .mcp.json exists
-    - skills/ directory exists
-    """
+    """Validate workspace has CLAUDE.md, .mcp.json, skills/ directory."""
     workspace = get_workspace_path(agent_role, project_root)
 
     if not workspace.exists():
@@ -114,27 +84,9 @@ def validate_workspace(agent_role: str, project_root: Path = None) -> bool:
 
     return True
 
-
-# =============================================================================
-# WORKSPACE LAUNCHER
-# =============================================================================
-
-def prepare_launch_environment(
-    agent_role: str,
-    task_id: Optional[str] = None,
-    task_context: Optional[Dict[str, Any]] = None
-) -> Dict[str, str]:
-    """
-    Prepare environment variables for workspace launch.
-
-    Args:
-        agent_role: Agent role
-        task_id: Optional task ID
-        task_context: Optional task context dict
-
-    Returns:
-        Dict of environment variables
-    """
+def prepare_launch_environment(agent_role: str, task_id: Optional[str] = None,
+                               task_context: Optional[Dict[str, Any]] = None) -> Dict[str, str]:
+    """Prepare environment variables for workspace launch."""
     env = os.environ.copy()
 
     # Agent identification
@@ -155,29 +107,10 @@ def prepare_launch_environment(
 
     return env
 
-
-def launch_workspace(
-    agent_role: str,
-    task_id: Optional[str] = None,
-    handoff: Optional[TaskHandoff] = None,
-    background: bool = False,
-    project_root: Path = None,
-    dry_run: bool = False
-) -> LaunchResult:
-    """
-    Launch Claude Code in an agent workspace.
-
-    Args:
-        agent_role: Agent role (RESEARCH, CODING, CURATOR, SYNC)
-        task_id: Optional task ID to work on
-        handoff: Optional TaskHandoff with context
-        background: Whether to run in background
-        project_root: Project root directory
-        dry_run: If True, don't actually launch
-
-    Returns:
-        LaunchResult with status
-    """
+def launch_workspace(agent_role: str, task_id: Optional[str] = None,
+                     handoff: Optional[TaskHandoff] = None, background: bool = False,
+                     project_root: Path = None, dry_run: bool = False) -> LaunchResult:
+    """Launch Claude Code in an agent workspace."""
     workspace = get_workspace_path(agent_role, project_root)
 
     # Validate workspace
@@ -258,43 +191,17 @@ def launch_workspace(
             error=str(e)
         )
 
-
 def launch_for_handoff(handoff: TaskHandoff, **kwargs) -> LaunchResult:
-    """
-    Launch workspace for a specific handoff.
-
-    Args:
-        handoff: TaskHandoff to process
-        **kwargs: Additional args for launch_workspace
-
-    Returns:
-        LaunchResult
-    """
+    """Launch workspace for a specific handoff."""
     return launch_workspace(
         agent_role=handoff.to_agent,
         handoff=handoff,
         **kwargs
     )
 
-
-def launch_all_pending(
-    for_agent: Optional[str] = None,
-    background: bool = True,
-    project_root: Path = None,
-    dry_run: bool = False
-) -> List[LaunchResult]:
-    """
-    Launch workspaces for all pending handoffs.
-
-    Args:
-        for_agent: Filter by target agent
-        background: Run in background (default True)
-        project_root: Project root directory
-        dry_run: If True, don't actually launch
-
-    Returns:
-        List of LaunchResults
-    """
+def launch_all_pending(for_agent: Optional[str] = None, background: bool = True,
+                       project_root: Path = None, dry_run: bool = False) -> List[LaunchResult]:
+    """Launch workspaces for all pending handoffs."""
     handoffs = get_pending_handoffs(for_agent=for_agent)
     results = []
 
@@ -309,25 +216,9 @@ def launch_all_pending(
 
     return results
 
-
-# =============================================================================
-# SCRIPT GENERATOR
-# =============================================================================
-
-def generate_launch_script(
-    agent_roles: Optional[List[str]] = None,
-    output_path: Path = None
-) -> str:
-    """
-    Generate a shell script to launch multiple agent workspaces.
-
-    Args:
-        agent_roles: List of roles to launch (default: all)
-        output_path: Optional path to write script
-
-    Returns:
-        Shell script content
-    """
+def generate_launch_script(agent_roles: Optional[List[str]] = None,
+                           output_path: Path = None) -> str:
+    """Generate shell script to launch multiple agent workspaces."""
     if agent_roles is None:
         agent_roles = ["RESEARCH", "CODING", "CURATOR", "SYNC"]
 

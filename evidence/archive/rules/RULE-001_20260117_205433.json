@@ -1,0 +1,18 @@
+{
+  "rule": {
+    "id": "RULE-001",
+    "name": "Session Evidence Logging",
+    "category": "governance",
+    "priority": "CRITICAL",
+    "status": "ACTIVE",
+    "directive": "All agent sessions MUST produce evidence logs including: 1. **Thought Chain** - Decisions, rationale, alternatives 2. **Artifact Tracking** - Files modified with timestamps 3. **Session Metadata** - IDs, models, tools, tokens 4. **Export** - `./docs/SESSION-{date}-{topic}.md`",
+    "rule_type": "FOUNDATIONAL",
+    "semantic_id": "SESSION-EVID-01-v1",
+    "created_date": null
+  },
+  "archived_at": "2026-01-17T20:54:33.679349",
+  "reason": "deleted",
+  "archived_from_db": "sim-ai-governance",
+  "dependencies": [],
+  "dependents": []
+}

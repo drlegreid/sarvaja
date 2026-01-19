@@ -57,9 +57,20 @@ def register_data_loader_controllers(
                 start = time.time()
                 response = client.get(f"{api_base_url}/api/agents")
                 duration_ms = int((time.time() - start) * 1000)
-                add_api_trace(state, "/api/agents", "GET", response.status_code, duration_ms)
+
+                # Capture response body for trace
+                response_body = None
+                try:
+                    response_body = response.json()
+                except Exception:
+                    pass
+
+                add_api_trace(
+                    state, "/api/agents", "GET", response.status_code, duration_ms,
+                    response_body=response_body
+                )
                 if response.status_code == 200:
-                    state.agents = response.json()
+                    state.agents = response_body or []
                 else:
                     state.agents = []
         except Exception as e:
@@ -157,7 +168,22 @@ def register_data_loader_controllers(
         try:
             response = client.get(f"{api_base_url}{endpoint}")
             duration_ms = int((time.time() - start) * 1000)
-            add_api_trace(state, endpoint, "GET", response.status_code, duration_ms)
+
+            # Capture response body for trace (handle non-JSON gracefully)
+            response_body = None
+            try:
+                response_body = response.json()
+            except Exception:
+                # Not JSON or parse error - store as text snippet
+                text = response.text[:500] if response.text else None
+                if text:
+                    response_body = {"_raw_text": text}
+
+            add_api_trace(
+                state, endpoint, "GET", response.status_code, duration_ms,
+                request_body=None,  # GET has no body
+                response_body=response_body
+            )
             return response, duration_ms
         except Exception as e:
             duration_ms = int((time.time() - start) * 1000)
@@ -199,9 +225,12 @@ def register_data_loader_controllers(
                     pass
 
                 try:
-                    response, _ = _traced_get(client, "/api/sessions")
+                    # Per GAP-EXPLOR-API-001: sessions now returns paginated response
+                    response, _ = _traced_get(client, "/api/sessions?limit=100")
                     if response.status_code == 200:
-                        state.sessions = response.json()
+                        data = response.json()
+                        # Handle paginated response (items) or raw list (backward compatibility)
+                        state.sessions = data.get("items", data) if isinstance(data, dict) else data
                 except Exception:
                     pass
 

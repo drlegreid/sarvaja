@@ -28,6 +28,8 @@ import sys
 import os
 from pathlib import Path
 from typing import List, Dict, Optional, Any
+
+from shared.constants import APP_TITLE
 import httpx
 
 # Add project root to path for imports
@@ -241,7 +243,7 @@ class GovernanceDashboard:
             # Load initial data (from package pure functions)
             self._state.rules = get_rules()
             self._state.decisions = get_decisions()
-            self._state.sessions = get_sessions(limit=10)
+            self._state.sessions = get_sessions(limit=100)
             self._state.tasks = get_tasks()
 
             # Agent Task Backlog state (TODO-6)
@@ -396,7 +398,7 @@ class GovernanceDashboard:
                     __properties=["data-testid"],
                     **{"data-testid": "app-bar"}
                 ):
-                    v3.VAppBarTitle("Sarvaja Governance Dashboard")
+                    v3.VAppBarTitle(APP_TITLE)
                     v3.VSpacer()
                     v3.VChip(
                         "{{ rules.length }} Rules | {{ decisions.length }} Decisions",
@@ -590,7 +592,7 @@ def main():
     import argparse
     import os
 
-    parser = argparse.ArgumentParser(description="Sim.ai Governance Dashboard")
+    parser = argparse.ArgumentParser(description=APP_TITLE)
     parser.add_argument("--port", type=int, default=8081, help="UI port")
     parser.add_argument("--server", action="store_true", help="Run in server mode (no browser)")
     args = parser.parse_args()

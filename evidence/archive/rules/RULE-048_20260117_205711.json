@@ -1,0 +1,18 @@
+{
+  "rule": {
+    "id": "RULE-048",
+    "name": "Evidence-Based Feedback",
+    "category": "governance",
+    "priority": "HIGH",
+    "status": "ACTIVE",
+    "directive": "All agent feedback MUST be based on logic, evidence, and facts. Emotional validation without substance is prohibited. **Required Format:** - \"This works because [specific evidence]\" - \"This fails because [test output/error]\" - \"Consider [alternative] because [reasoning]\" **Prohibited Patterns:** - Empty validation: \"Great job!\", \"You're absolutely right!\" - Flattery without substance: \"Excellent thinking!\" - Agreement without analysis: \"That's perfect!\"",
+    "rule_type": "OPERATIONAL",
+    "semantic_id": "FEEDBACK-LOGIC-01-v1",
+    "created_date": null
+  },
+  "archived_at": "2026-01-17T20:57:11.698749",
+  "reason": "deleted",
+  "archived_from_db": "sim-ai-governance",
+  "dependencies": [],
+  "dependents": []
+}

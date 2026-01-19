@@ -10,30 +10,36 @@ define
 # =============================================================================
 
 # Rule A depends on Rule B
-rule-dependency sub relation,
+relation rule-dependency,
+
     relates dependent,
     relates dependency;
 
 # Decision affects Rule
-decision-affects sub relation,
+relation decision-affects,
+
     relates affecting-decision,
     relates affected-rule;
 
 # Decision supersedes another Decision
-decision-supersedes sub relation,
+relation decision-supersedes,
+
     relates superseding,
     relates superseded;
 
 # Task is blocked by Rule
-task-blocked sub relation,
+relation task-blocked,
+
     relates blocked-task,
     relates blocking-rule;
 
 # Gap requires Rule to be resolved
-gap-requires sub relation,
+relation gap-requires,
+
     relates requiring-gap,
     relates required-rule;
 
 # Rules that conflict with each other
-rule-conflict sub relation,
+relation rule-conflict,
+
     relates conflicting-rule;

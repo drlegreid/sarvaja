@@ -23,6 +23,7 @@ class RuleReadQueries:
     def get_all_rules(self) -> List[Rule]:
         """Get all governance rules including optional attributes."""
         # First get core attributes (required)
+        # TypeDB 3.x: no 'get' clause, just 'match'
         query = """
             match $r isa rule-entity,
                 has rule-id $id,
@@ -31,7 +32,6 @@ class RuleReadQueries:
                 has priority $pri,
                 has status $stat,
                 has directive $dir;
-            get $id, $name, $cat, $pri, $stat, $dir;
         """
         results = self._execute_query(query)
 
@@ -46,8 +46,7 @@ class RuleReadQueries:
                 match $r isa rule-entity,
                     has rule-id "{rule_id}",
                     has rule-type $type;
-                get $type;
-            """
+                            """
             try:
                 type_results = self._execute_query(type_query)
                 if type_results:
@@ -61,8 +60,7 @@ class RuleReadQueries:
                 match $r isa rule-entity,
                     has rule-id "{rule_id}",
                     has semantic-id $sid;
-                get $sid;
-            """
+                            """
             try:
                 sid_results = self._execute_query(sid_query)
                 if sid_results:
@@ -93,7 +91,6 @@ class RuleReadQueries:
                 has priority $pri,
                 has status "ACTIVE",
                 has directive $dir;
-            get $id, $name, $cat, $pri, $dir;
         """
         results = self._execute_query(query)
 
@@ -107,8 +104,7 @@ class RuleReadQueries:
                 match $r isa rule-entity,
                     has rule-id "{rule_id}",
                     has rule-type $type;
-                get $type;
-            """
+                            """
             try:
                 type_results = self._execute_query(type_query)
                 if type_results:
@@ -122,8 +118,7 @@ class RuleReadQueries:
                 match $r isa rule-entity,
                     has rule-id "{rule_id}",
                     has semantic-id $sid;
-                get $sid;
-            """
+                            """
             try:
                 sid_results = self._execute_query(sid_query)
                 if sid_results:
@@ -155,7 +150,6 @@ class RuleReadQueries:
                 has priority $pri,
                 has status $stat,
                 has directive $dir;
-            get $name, $cat, $pri, $stat, $dir;
         """
         results = self._execute_query(query)
         if not results:
@@ -169,8 +163,7 @@ class RuleReadQueries:
             match $r isa rule-entity,
                 has rule-id "{rule_id}",
                 has rule-type $type;
-            get $type;
-        """
+                    """
         type_results = self._execute_query(type_query)
         if type_results:
             rule_type = type_results[0].get("type")
@@ -181,8 +174,7 @@ class RuleReadQueries:
             match $r isa rule-entity,
                 has rule-id "{rule_id}",
                 has semantic-id $sid;
-            get $sid;
-        """
+                    """
         sid_results = self._execute_query(sid_query)
         if sid_results:
             semantic_id = sid_results[0].get("sid")
@@ -208,7 +200,6 @@ class RuleReadQueries:
                 has priority $pri,
                 has status $stat,
                 has directive $dir;
-            get $id, $name, $pri, $stat, $dir;
         """
         results = self._execute_query(query)
         return [

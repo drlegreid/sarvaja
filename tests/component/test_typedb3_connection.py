@@ -73,17 +73,18 @@ class TestTypeDB3Queries:
 
     def test_simple_match_query(self, connected_client):
         """Test simple match query."""
-        # This should work on any database
+        # TypeDB 3.x: 'select' replaces 'get', 'rule-entity' is the entity name
         results = connected_client.execute_query(
-            "match $t isa rule; get $t; limit 1;"
+            "match $t isa rule-entity; select $t; limit 1;"
         )
         # May be empty but shouldn't raise
         assert isinstance(results, list)
 
     def test_query_returns_list(self, connected_client):
         """Query should always return a list."""
+        # TypeDB 3.x: 'select' replaces 'get'
         results = connected_client.execute_query(
-            "match $r isa rule, has rule-id $id; get $id; limit 5;"
+            "match $r isa rule-entity, has rule-id $id; select $id; limit 5;"
         )
         assert isinstance(results, list)
 
@@ -112,9 +113,9 @@ class TestTypeDB3Schema:
 
     def test_query_schema_types(self, connected_client):
         """Query schema types."""
-        # Should return types defined in schema
+        # TypeDB 3.x: 'select' replaces 'get', query rule-entity
         results = connected_client.execute_query(
-            "match $t type rule; get $t;"
+            "match $r isa rule-entity; select $r; limit 1;"
         )
         # Rule type should exist
         assert isinstance(results, list)
@@ -139,23 +140,26 @@ class TestMigrationVerification:
 
     def test_rules_exist_after_migration(self, connected_client):
         """All rules should exist after migration."""
+        # TypeDB 3.x: 'select' replaces 'get', entity is 'rule-entity'
         results = connected_client.execute_query(
-            "match $r isa rule; get $r; count;"
+            "match $r isa rule-entity, has rule-id $id; select $id; limit 50;"
         )
-        # We have ~50 rules
-        # Note: count query returns differently in 3.x
-        assert results is not None
+        # We have ~50 rules - check we get some
+        assert isinstance(results, list)
+        assert len(results) > 0, "Should have rules in database"
 
     def test_tasks_exist_after_migration(self, connected_client):
         """All tasks should exist after migration."""
+        # TypeDB 3.x: 'select' replaces 'get'
         results = connected_client.execute_query(
-            "match $t isa task; get $t; limit 10;"
+            "match $t isa task, has task-id $id; select $id; limit 10;"
         )
         assert isinstance(results, list)
 
     def test_sessions_exist_after_migration(self, connected_client):
         """Sessions should exist after migration."""
+        # TypeDB 3.x: 'select' replaces 'get', entity is 'work-session'
         results = connected_client.execute_query(
-            "match $s isa session; get $s; limit 5;"
+            "match $s isa work-session, has session-id $id; select $id; limit 5;"
         )
         assert isinstance(results, list)

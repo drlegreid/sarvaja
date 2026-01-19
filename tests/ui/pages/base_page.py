@@ -11,6 +11,8 @@ All page objects inherit from BasePage for:
 from dataclasses import dataclass
 from typing import Optional
 
+from shared.constants import APP_TITLE, DASHBOARD_URL
+
 
 @dataclass
 class Locator:
@@ -43,13 +45,13 @@ class BasePage:
     - Assertion helpers
     """
 
-    BASE_URL = "http://localhost:8081"
+    BASE_URL = DASHBOARD_URL
 
     # Common locators (GAP-UI-001: Need data-testid attributes)
     LOCATORS = {
         # Header
         'header': Locator(css='header', role='banner'),
-        'header_title': Locator(text='Sim.ai Governance Dashboard'),
+        'header_title': Locator(text=APP_TITLE),
         'header_stats': Locator(text='Rules'),
 
         # Navigation tabs

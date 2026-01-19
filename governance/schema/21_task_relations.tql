@@ -10,22 +10,26 @@ define
 # =============================================================================
 
 # Task parent-child hierarchy (task decomposition)
-task-hierarchy sub relation,
+relation task-hierarchy,
+
     relates parent-task,
     relates child-task;
 
 # Task blocks another task (sequencing dependency)
-task-blocks-task sub relation,
+relation task-blocks-task,
+
     relates blocking-task,
     relates blocked-dep-task;
 
 # Task is related to another task (soft association)
-task-related sub relation,
+relation task-related,
+
     relates related-task-a,
     relates related-task-b;
 
 # Task implemented by git commit (GAP-TASK-LINK-002)
-task-commit sub relation,
+relation task-commit,
+
     relates implementing-commit,
     relates implemented-task;
 
@@ -34,12 +38,14 @@ task-commit sub relation,
 # =============================================================================
 
 # Task references a gap (replaces gap-reference attribute)
-references-gap sub relation,
+relation references-gap,
+
     relates referencing-task,
     relates referenced-gap;
 
 # Decision is outcome of a task with authority
-task-outcome sub relation,
+relation task-outcome,
+
     relates outcome-decision,
     relates source-task,
     owns has-authority;

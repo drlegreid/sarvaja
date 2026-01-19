@@ -10,6 +10,7 @@ from trame.widgets import vuetify3 as v3, html
 
 from .content import build_session_metadata_chips, build_session_info_card
 from .evidence import build_evidence_files_card
+from .tasks import build_completed_tasks_card
 
 
 def build_session_detail_view() -> None:
@@ -66,3 +67,6 @@ def build_session_detail_view() -> None:
 
             # Evidence Files section (GAP-DATA-003)
             build_evidence_files_card()
+
+            # Completed Tasks section (GAP-DATA-INTEGRITY-001 Phase 3)
+            build_completed_tasks_card()

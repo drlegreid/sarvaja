@@ -20,7 +20,7 @@ def register_audit_tools(mcp) -> None:
     """Register audit trail MCP tools."""
 
     @mcp.tool()
-    def governance_query_audit(
+    def audit_query(
         entity_id: Optional[str] = None,
         entity_type: Optional[str] = None,
         action_type: Optional[str] = None,
@@ -64,7 +64,7 @@ def register_audit_tools(mcp) -> None:
             return json.dumps({"error": f"Failed to query audit trail: {str(e)}"})
 
     @mcp.tool()
-    def governance_audit_summary() -> str:
+    def audit_summary() -> str:
         """
         Get audit trail summary statistics.
 
@@ -83,7 +83,7 @@ def register_audit_tools(mcp) -> None:
             return json.dumps({"error": f"Failed to get audit summary: {str(e)}"})
 
     @mcp.tool()
-    def governance_entity_audit_trail(entity_id: str) -> str:
+    def audit_entity_trail(entity_id: str) -> str:
         """
         Get complete audit trail for a specific entity.
 
@@ -134,7 +134,7 @@ def register_audit_tools(mcp) -> None:
             return json.dumps({"error": f"Failed to get entity audit trail: {str(e)}"})
 
     @mcp.tool()
-    def governance_trace_correlation(correlation_id: str) -> str:
+    def audit_trace(correlation_id: str) -> str:
         """
         Trace all operations with a specific correlation ID.
 

@@ -21,10 +21,13 @@ def add_api_trace(
     endpoint: str,
     method: str = "GET",
     status_code: int = 200,
-    duration_ms: int = 0
+    duration_ms: int = 0,
+    request_body: Optional[dict] = None,
+    response_body: Optional[dict] = None,
+    request_headers: Optional[dict] = None
 ) -> None:
     """
-    Add an API call trace event.
+    Add an API call trace event with full request/response payloads.
 
     Args:
         state: Trame state object
@@ -32,7 +35,22 @@ def add_api_trace(
         method: HTTP method
         status_code: Response status code
         duration_ms: Request duration in milliseconds
+        request_body: Request payload (will be truncated if large)
+        response_body: Response payload (will be truncated if large)
+        request_headers: Request headers
     """
+    # Truncate large payloads to prevent memory issues
+    MAX_BODY_SIZE = 5000  # chars
+
+    def truncate_body(body: Optional[dict]) -> Optional[dict]:
+        if body is None:
+            return None
+        import json
+        body_str = json.dumps(body)
+        if len(body_str) > MAX_BODY_SIZE:
+            return {"_truncated": True, "_size": len(body_str), "_preview": body_str[:1000] + "..."}
+        return body
+
     event = TraceEvent(
         event_type=TraceType.API_CALL,
         message=f"{method} {endpoint}",
@@ -40,6 +58,9 @@ def add_api_trace(
         method=method,
         status_code=status_code,
         duration_ms=duration_ms,
+        request_body=truncate_body(request_body),
+        response_body=truncate_body(response_body),
+        request_headers=request_headers,
     )
 
     _add_trace_event(state, event)

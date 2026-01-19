@@ -1,4 +1,4 @@
-# Multi-Agent Governance Rules - Sim.ai
+# Multi-Agent Governance Rules
 
 Rules governing multi-agent systems, trust, and governance processes.
 

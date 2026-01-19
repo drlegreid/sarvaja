@@ -89,7 +89,8 @@ def build_sessions_list_view() -> None:
                 ):
                     with v3.VCard(
                         density="compact",
-                        click="selected_session = session; show_session_detail = true",
+                        # Per GAP-UI-SESSION-TASKS-001: Call handler to load session tasks
+                        click="trigger('select_session', [session.session_id || session.id])",
                         __properties=["data-testid"],
                         **{"data-testid": "session-row"}
                     ):

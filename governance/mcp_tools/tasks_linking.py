@@ -1,16 +1,4 @@
-"""
-Task Linking MCP Tools
-======================
-Entity linking operations for tasks.
-
-Per RULE-012: DSP Semantic Code Structure
-Per RULE-032: File size <300 lines
-Per P11.3: Entity Linkage infrastructure
-Per GAP-DATA-002: Entity linkage implementation
-
-Extracted from tasks.py per modularization plan.
-Created: 2026-01-03
-"""
+"""Task Linking MCP Tools. Per RULE-012, P11.3, GAP-DATA-002. Created: 2026-01-03."""
 
 import json
 
@@ -21,20 +9,8 @@ def register_task_linking_tools(mcp) -> None:
     """Register task linking MCP tools."""
 
     @mcp.tool()
-    def governance_task_link_session(task_id: str, session_id: str) -> str:
-        """
-        Link a task to a session (completed-in relation).
-
-        Per P11.3: Entity Linkage - tracks which session a task was completed in.
-        Per GAP-DATA-002: Entity linkage implementation.
-
-        Args:
-            task_id: Task ID (e.g., "P10.1")
-            session_id: Session ID (e.g., "SESSION-2026-01-02-PHASE11")
-
-        Returns:
-            JSON object with link status
-        """
+    def task_link_session(task_id: str, session_id: str) -> str:
+        """Link task to session (completed-in relation). Per P11.3, GAP-DATA-002."""
         client = get_typedb_client()
         try:
             if not client.connect():
@@ -57,20 +33,8 @@ def register_task_linking_tools(mcp) -> None:
             client.close()
 
     @mcp.tool()
-    def governance_task_link_rule(task_id: str, rule_id: str) -> str:
-        """
-        Link a task to a rule (implements-rule relation).
-
-        Per P11.3: Entity Linkage - tracks which rules a task implements.
-        Per GAP-DATA-002: Entity linkage implementation.
-
-        Args:
-            task_id: Task ID (e.g., "P10.1")
-            rule_id: Rule ID (e.g., "RULE-001")
-
-        Returns:
-            JSON object with link status
-        """
+    def task_link_rule(task_id: str, rule_id: str) -> str:
+        """Link task to rule (implements-rule relation). Per P11.3, GAP-DATA-002."""
         client = get_typedb_client()
         try:
             if not client.connect():
@@ -93,20 +57,8 @@ def register_task_linking_tools(mcp) -> None:
             client.close()
 
     @mcp.tool()
-    def governance_task_link_evidence(task_id: str, evidence_path: str) -> str:
-        """
-        Link evidence to a task (evidence-supports relation).
-
-        Per P11.3: Entity Linkage - tracks evidence supporting task completion.
-        Per GAP-DATA-002: Entity linkage implementation.
-
-        Args:
-            task_id: Task ID (e.g., "P10.1")
-            evidence_path: Path to evidence file (e.g., "evidence/REPORT.md")
-
-        Returns:
-            JSON object with link status
-        """
+    def task_link_evidence(task_id: str, evidence_path: str) -> str:
+        """Link evidence to task (evidence-supports relation). Per P11.3, GAP-DATA-002."""
         client = get_typedb_client()
         try:
             if not client.connect():
@@ -129,18 +81,8 @@ def register_task_linking_tools(mcp) -> None:
             client.close()
 
     @mcp.tool()
-    def governance_task_get_evidence(task_id: str) -> str:
-        """
-        Get all evidence files linked to a task.
-
-        Per P11.3: Entity Linkage - query evidence supporting task.
-
-        Args:
-            task_id: Task ID (e.g., "P10.1")
-
-        Returns:
-            JSON object with list of evidence files
-        """
+    def task_get_evidence(task_id: str) -> str:
+        """Get all evidence files linked to a task. Per P11.3."""
         client = get_typedb_client()
         try:
             if not client.connect():
@@ -157,21 +99,8 @@ def register_task_linking_tools(mcp) -> None:
             client.close()
 
     @mcp.tool()
-    def governance_task_link_commit(task_id: str, commit_sha: str, commit_message: str = None) -> str:
-        """
-        Link a task to a git commit (task-commit relation).
-
-        Per GAP-TASK-LINK-002: Task-to-commit traceability.
-        Enables code-to-task audit trail.
-
-        Args:
-            task_id: Task ID (e.g., "P10.1", "GAP-TASK-LINK-002")
-            commit_sha: Git commit SHA (short 7-char or full 40-char)
-            commit_message: Optional commit message for reference
-
-        Returns:
-            JSON object with link status
-        """
+    def task_link_commit(task_id: str, commit_sha: str, commit_message: str = None) -> str:
+        """Link task to git commit (task-commit relation). Per GAP-TASK-LINK-002."""
         client = get_typedb_client()
         try:
             if not client.connect():
@@ -194,18 +123,8 @@ def register_task_linking_tools(mcp) -> None:
             client.close()
 
     @mcp.tool()
-    def governance_task_get_commits(task_id: str) -> str:
-        """
-        Get all git commits linked to a task.
-
-        Per GAP-TASK-LINK-002: Task-to-commit traceability.
-
-        Args:
-            task_id: Task ID (e.g., "P10.1")
-
-        Returns:
-            JSON object with list of commit SHAs
-        """
+    def task_get_commits(task_id: str) -> str:
+        """Get all git commits linked to a task. Per GAP-TASK-LINK-002."""
         client = get_typedb_client()
         try:
             if not client.connect():
@@ -222,29 +141,9 @@ def register_task_linking_tools(mcp) -> None:
             client.close()
 
     @mcp.tool()
-    def governance_task_update_details(
-        task_id: str,
-        business: str = None,
-        design: str = None,
-        architecture: str = None,
-        test_section: str = None
-    ) -> str:
-        """
-        Update task detail sections (business, design, architecture, test).
-
-        Per GAP-TASK-LINK-004: Task detail sections.
-        Per TASK-TECH-01-v1: Technology Solution Documentation.
-
-        Args:
-            task_id: Task ID (e.g., "P10.1", "GAP-TASK-LINK-004")
-            business: Business section - Why (User problem, business value)
-            design: Design section - What (Functional requirements)
-            architecture: Architecture section - How (Technical approach)
-            test_section: Test section - Verification (Test plan, evidence)
-
-        Returns:
-            JSON object with update status
-        """
+    def task_update_details(task_id: str, business: str = None, design: str = None,
+                            architecture: str = None, test_section: str = None) -> str:
+        """Update task detail sections. Per GAP-TASK-LINK-004, TASK-TECH-01-v1."""
         client = get_typedb_client()
         try:
             if not client.connect():
@@ -275,18 +174,8 @@ def register_task_linking_tools(mcp) -> None:
             client.close()
 
     @mcp.tool()
-    def governance_task_get_details(task_id: str) -> str:
-        """
-        Get all detail sections for a task.
-
-        Per GAP-TASK-LINK-004: Task detail sections.
-
-        Args:
-            task_id: Task ID (e.g., "P10.1")
-
-        Returns:
-            JSON object with business, design, architecture, test_section
-        """
+    def task_get_details(task_id: str) -> str:
+        """Get all detail sections for a task. Per GAP-TASK-LINK-004."""
         client = get_typedb_client()
         try:
             if not client.connect():

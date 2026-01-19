@@ -25,7 +25,7 @@ flowchart TD
     L2D -->|No| RECOVER[ContainerRecovery.start_containers]
     L2D -->|Yes| L3
     RECOVER --> AUDIT[Audit Trail Log]
-    L3["L3: MCP Tools<br/>governance_health"] --> L4
+    L3["L3: MCP Tools<br/>health_check"] --> L4
     L4["L4: Frankel Hash<br/>State tracking"]
 ```
 
@@ -65,7 +65,7 @@ flowchart TD
 
 | Don't | Do Instead |
 |-------|------------|
-| Skip health check at session start | Always call `governance_health` first |
+| Skip health check at session start | Always call `health_check` first |
 | Assume services are running | Verify with healthcheck hook |
 | Ignore DOWN status | Follow recovery actions table |
 | Proceed without critical MCPs | Wait for recovery or notify user |

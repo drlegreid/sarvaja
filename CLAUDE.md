@@ -5,7 +5,7 @@
 
 ## Quick Context
 - **Project**: Multi-agent governance platform with TypeDB, LiteLLM, ChromaDB
-- **Version**: 1.3.0 | **Updated**: 2026-01-14
+- **Version**: 1.3.1 | **Updated**: 2026-01-17
 - **Repo**: https://github.com/drlegreid/platform-gai
 
 ## Document Map
@@ -14,7 +14,7 @@
 |------|----------|
 | **Tasks** | [TODO.md](TODO.md) |
 | **Gaps** | [docs/gaps/GAP-INDEX.md](docs/gaps/GAP-INDEX.md) |
-| **Rules** | [docs/RULES-DIRECTIVES.md](docs/RULES-DIRECTIVES.md) (41 total) |
+| **Rules** | [docs/RULES-DIRECTIVES.md](docs/RULES-DIRECTIVES.md) (55 total, 50 in TypeDB) |
 | **DevOps** | [docs/DEVOPS.md](docs/DEVOPS.md) |
 | **Shell Guide** | [docs/SHELL-GUIDE.md](docs/SHELL-GUIDE.md) |
 | **MCP Config** | [.claude/MCP.md](.claude/MCP.md) |
@@ -29,7 +29,7 @@ Claude Code Host                    Podman Stack (5 containers)
 ├── governance-agents (Trust)       ├── LiteLLM :4000
 ├── governance-sessions (DSM)       ├── Ollama :11434
 └── governance-tasks (Gaps)         ├── ChromaDB :8001
-         ↓                          └── TypeDB :1729 (41 rules)
+         ↓                          └── TypeDB :1729 (50 rules)
     MCP → TypeDB + ChromaDB
 ```
 
@@ -60,7 +60,22 @@ Data persistence: `/home/oderid/Documents/Docker/` (bind mounts)
 - `scripts/python.sh` - Run Python in container
 - `scripts/pytest.sh` - Run pytest in container
 
-## Rules Atlas (41 Rules) - Semantic IDs
+## Local Development (DEV-VENV-01-v1)
+
+**ALWAYS use project venv. NEVER install to system Python.**
+
+```bash
+# Setup (one-time)
+sudo apt install -y python3-pip python3-venv
+python3 -m venv .venv
+.venv/bin/pip install -r requirements.txt
+
+# Usage
+.venv/bin/python script.py
+.venv/bin/pytest tests/
+```
+
+## Rules Atlas (56 Rules) - Semantic IDs
 
 | Domain | Rules | File |
 |--------|-------|------|
@@ -73,9 +88,9 @@ Data persistence: `/home/oderid/Documents/Docker/` (bind mounts)
 ## Session Start Protocol
 
 ```
-1. governance_health()              → Verify TypeDB + ChromaDB
-2. governance_get_backlog(limit=10) → Load prioritized gaps
-3. Load to todo list                → Track progress
+1. health_check()              → Verify TypeDB + ChromaDB
+2. backlog_get(limit=10)       → Load prioritized gaps
+3. Load to todo list           → Track progress
 ```
 
 ## Context Recovery Protocol (RECOVER-AMNES-01-v1)
@@ -85,7 +100,7 @@ Data persistence: `/home/oderid/Documents/Docker/` (bind mounts)
 1. Read CLAUDE.md                   → Document map, architecture
 2. Read docs/DEVOPS.md              → Infrastructure setup (CRITICAL)
 3. Read .mcp.json                   → Available MCP servers
-4. governance_health()              → Verify services running
+4. health_check()              → Verify services running
 5. Read TODO.md                     → Current tasks
 6. Read docs/gaps/GAP-INDEX.md      → Open gaps
 ```
@@ -128,10 +143,24 @@ chroma_save_session_context(
 
 ## Quick Checks
 
-- [ ] `governance_health()` called at session start
+- [ ] `health_check()` called at session start
 - [ ] Tests pass: `pytest tests/ -v`
 - [ ] Gaps tracked in TODO.md
 - [ ] No secrets in code (use `.env`)
+
+## Context Efficiency (CONTEXT-SAVE-01-v1)
+
+**Monitor entropy periodically:** `/entropy`
+
+| Tool Calls | Level | Action |
+|------------|-------|--------|
+| <50 | LOW | Continue |
+| 50-100 | MEDIUM | Consider saving |
+| 100-150 | HIGH | Save now |
+| >150 | CRITICAL | STOP - Save to ChromaDB |
+
+**Before complex tasks:** Check `/entropy` to know your budget.
+**After troubleshooting:** Recovery attempts burn context fast.
 
 ## Halt Commands (WORKFLOW-AUTO-01-v1)
 

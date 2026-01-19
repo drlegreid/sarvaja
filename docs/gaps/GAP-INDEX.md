@@ -120,10 +120,10 @@
 | GAP-MCP-001 | RESOLVED | gov-sessions MCP - print() to stderr fix | HIGH | integration | [evidence/GAP-MCP-001.md](evidence/GAP-MCP-001.md) - FIXED 2026-01-17 |
 | GAP-MCP-002 | RESOLVED | gov-tasks MCP - print() to stderr fix | HIGH | integration | [evidence/GAP-MCP-002.md](evidence/GAP-MCP-002.md) - FIXED 2026-01-17 |
 | GAP-MCP-003 | RESOLVED | REST API testing - 9 tests passing (health, rules, tasks, sessions) | MEDIUM | testing | [tests/integration/test_mcp_rest_sessions.py](../../tests/integration/test_mcp_rest_sessions.py) - FIXED 2026-01-18 |
-| GAP-DATA-001 | OPEN | Evaluate TOON vs JSON for MCP output format | LOW | optimization | RD-TOON: 40% token reduction potential |
+| GAP-DATA-001 | IN_PROGRESS | Evaluate TOON vs JSON for MCP output format | MEDIUM | optimization | RD-TOON: PyPI `toons` package available, 30-60% token reduction |
 | GAP-API-001 | RESOLVED | POST /api/tasks returns 201 but doesn't persist to TypeDB | HIGH | data_integrity | FIXED 2026-01-16: Schema migration added task-resolution attribute. 9 tests pass. |
 | GAP-VALIDATE-001 | RESOLVED | Integration validation suite (REST + Playwright + tests) | HIGH | testing | [evidence/GAP-VALIDATE-001.md](evidence/GAP-VALIDATE-001.md) - FIXED 2026-01-17 |
-| GAP-MCP-PAGING-001 | OPEN | MCP tools need paging/truncation for large outputs (791K+ chars) | MEDIUM | tooling | [evidence/GAP-MCP-PAGING-001.md](evidence/GAP-MCP-PAGING-001.md) |
+| GAP-MCP-PAGING-001 | MITIGATED | MCP tools need paging/truncation for large outputs (791K+ chars) | MEDIUM | tooling | [evidence/GAP-MCP-PAGING-001.md](evidence/GAP-MCP-PAGING-001.md) - Workarounds documented, external MCPs not controllable |
 | GAP-MCP-NAMING-001 | RESOLVED | MCP tool naming - 84→26 tools (69% reduction), deprecated functions removed | HIGH | architecture | [evidence/GAP-MCP-NAMING-001.md](evidence/GAP-MCP-NAMING-001.md) - FIXED 2026-01-19 |
 | GAP-MCP-DIRECTIVE-001 | RESOLVED | MCP operational directives - 3 rules created 2026-01-18 | MEDIUM | governance | [evidence/GAP-MCP-DIRECTIVE-001.md](evidence/GAP-MCP-DIRECTIVE-001.md) |
 | GAP-TYPEDB3-DELETE-001 | RESOLVED | TypeDB 3.x delete syntax: `has $var of $entity` | HIGH | infrastructure | Fixed 2026-01-17: 6 files patched |

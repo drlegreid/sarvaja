@@ -1,7 +1,7 @@
 # Page Objects Package
 # Per RULE-004: Page Object Model (POM) Requirements
 """
-Page Object Model structure for Sim.ai Governance Dashboard.
+Page Object Model structure for Sarvaja Governance Dashboard.
 
 Each page object encapsulates:
 - Locators (data-testid selectors)

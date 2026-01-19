@@ -1,6 +1,6 @@
 # TODO Index - Sarvaja
 
-**Updated:** 2026-01-14 | **Backlog System:** [GAP-INDEX.md](docs/gaps/GAP-INDEX.md)
+**Updated:** 2026-01-17 | **Backlog System:** [GAP-INDEX.md](docs/gaps/GAP-INDEX.md)
 
 ---
 
@@ -25,16 +25,17 @@
 
 ---
 
-## Current Stats (2026-01-14)
+## Current Stats (2026-01-17)
 
 | Metric | Count |
 |--------|-------|
-| Total Gaps | 226 |
-| RESOLVED | 209 |
-| OPEN | 1 |
+| Total Gaps | 251 |
+| RESOLVED | 229 |
+| OPEN | 3 |
+| PARTIAL | 2 |
 | DEFERRED | 14 |
 | NOT_IMPLEMENTED | 2 |
-| Rules | 52 (all synced to TypeDB) |
+| Rules | 61 TypeDB (58 ACTIVE) |
 | Tests | 1,784 collected |
 
 ---

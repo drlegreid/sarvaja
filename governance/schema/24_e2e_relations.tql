@@ -10,16 +10,19 @@ define
 # =============================================================================
 
 # Session contains steps
-session-step sub relation,
+relation session-step,
+
     relates session,
     relates step;
 
 # Session generates test cases
-generates sub relation,
+relation generates,
+
     relates generating-session,
     relates generated-test;
 
 # Test case failed (for analysis)
-test-failed sub relation,
+relation test-failed,
+
     relates generated-test,
     relates failure;

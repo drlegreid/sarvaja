@@ -1,0 +1,18 @@
+{
+  "rule": {
+    "id": "RULE-022",
+    "name": "Integrity Verification (Frankel Hash)",
+    "category": "security",
+    "priority": "HIGH",
+    "status": "DRAFT",
+    "directive": "Critical files MUST have integrity verification via content hashing. Use Frankel Hash for similarity detection.",
+    "rule_type": "TECHNICAL",
+    "semantic_id": "SAFETY-INTEG-01-v1",
+    "created_date": null
+  },
+  "archived_at": "2026-01-17T20:54:56.477493",
+  "reason": "deleted",
+  "archived_from_db": "sim-ai-governance",
+  "dependencies": [],
+  "dependents": []
+}

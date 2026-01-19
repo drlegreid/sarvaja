@@ -1,0 +1,139 @@
+# TypeDB 3.x Inference Functions
+# Replaces inference rules from 30_inference_rules.tql
+# Part of: GAP-TYPEDB-INFERENCE-001
+# Created: 2026-01-17
+#
+# TypeDB 3.x uses functions instead of rules for inference.
+# Functions are called explicitly via `let...in` syntax in queries.
+#
+# Usage example:
+#   match
+#     let $dependent, $dependency in transitive_dependencies();
+#     $dependent has rule-id $depId;
+
+define
+
+# =============================================================================
+# TRANSITIVE DEPENDENCY
+# =============================================================================
+# If Rule A depends on Rule B, and Rule B depends on Rule C,
+# then Rule A transitively depends on Rule C.
+#
+# Original rule:
+#   rule transitive-dependency: when {
+#     (dependent: $a, dependency: $b) isa rule-dependency;
+#     (dependent: $b, dependency: $c) isa rule-dependency;
+#   } then {
+#     (dependent: $a, dependency: $c) isa rule-dependency;
+#   };
+
+fun transitive_dependencies() -> { rule-entity, rule-entity }:
+match
+  {
+    # Direct dependency
+    (dependent: $from, dependency: $to) isa rule-dependency;
+  } or {
+    # Transitive: A→B + B→C = A→C (recursive)
+    let $from, $via in transitive_dependencies();
+    (dependent: $via, dependency: $to) isa rule-dependency;
+  };
+return { $from, $to };
+
+
+# =============================================================================
+# CASCADE SUPERSEDED DECISIONS
+# =============================================================================
+# If Decision A supersedes Decision B, and B affects Rule R,
+# then Decision A also affects Rule R.
+#
+# Original rule:
+#   rule cascade-supersede: when {
+#     (superseding: $a, superseded: $b) isa decision-supersedes;
+#     (affecting-decision: $b, affected-rule: $r) isa decision-affects;
+#   } then {
+#     (affecting-decision: $a, affected-rule: $r) isa decision-affects;
+#   };
+
+fun cascaded_decision_affects() -> { decision, rule-entity }:
+match
+  {
+    # Direct affect
+    (affecting-decision: $decision, affected-rule: $rule) isa decision-affects;
+  } or {
+    # Cascaded via supersession
+    (superseding: $decision, superseded: $superseded) isa decision-supersedes;
+    let $superseded, $rule in cascaded_decision_affects();
+  };
+return { $decision, $rule };
+
+
+# =============================================================================
+# PRIORITY CONFLICT DETECTION
+# =============================================================================
+# Two active rules in the same category with different priorities conflict.
+#
+# Original rule:
+#   rule priority-conflict: when {
+#     $r1 isa rule-entity, has category $c, has priority $p1, has status "ACTIVE";
+#     $r2 isa rule-entity, has category $c, has priority $p2, has status "ACTIVE";
+#     not { $r1 is $r2; };
+#     not { $p1 = $p2; };
+#   } then {
+#     (conflicting-rule: $r1, conflicting-rule: $r2) isa rule-conflict;
+#   };
+
+fun priority_conflicts() -> { rule-entity, rule-entity }:
+match
+  $r1 isa rule-entity, has category $c1, has priority $p1, has status "ACTIVE";
+  $r2 isa rule-entity, has category $c2, has priority $p2, has status "ACTIVE";
+  $c1 == $c2;
+  not { $r1 is $r2; };
+  $p1 != $p2;
+return { $r1, $r2 };
+
+
+# =============================================================================
+# ESCALATION REQUIRED
+# =============================================================================
+# Proposals with disputes using "escalate" resolution method require human review.
+#
+# Original rule:
+#   rule escalation-required: when {
+#     $d (disputed-proposal: $p, disputer: $a) isa dispute, has resolution-method "escalate";
+#     $p isa proposal;
+#   } then {
+#     (escalated-proposal: $p, escalation-reason: $d) isa requires-escalation;
+#   };
+
+fun escalated_proposals() -> { proposal, dispute }:
+match
+  $dispute (disputed-proposal: $proposal, disputer: $agent) isa dispute,
+    has resolution-method "escalate";
+  $proposal isa proposal;
+return { $proposal, $dispute };
+
+
+# =============================================================================
+# PROPOSAL CASCADE
+# =============================================================================
+# When a proposal affects a rule, it also affects dependent rules.
+#
+# Original rule:
+#   rule proposal-cascade: when {
+#     (proposing: $p, affected-rule: $r1) isa proposal-affects;
+#     (dependent: $r2, dependency: $r1) isa rule-dependency;
+#   } then {
+#     (proposing: $p, affected-rule: $r2) isa proposal-affects;
+#   };
+
+fun proposal_cascade_affects() -> { proposal, rule-entity }:
+match
+  {
+    # Direct affect
+    (proposing: $proposal, affected-rule: $rule) isa proposal-affects;
+  } or {
+    # Cascade via dependency
+    let $proposal, $dependency in proposal_cascade_affects();
+    (dependent: $rule, dependency: $dependency) isa rule-dependency;
+  };
+return { $proposal, $rule };

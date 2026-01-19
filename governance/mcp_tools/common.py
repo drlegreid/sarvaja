@@ -1,13 +1,16 @@
-"""
-Common Utilities for MCP Tools
-==============================
-Shared configuration and helper functions.
-
-Per RULE-012: DSP Semantic Code Structure
-"""
-
+"""Common Utilities for MCP Tools. Per RULE-012: DSP Semantic Code Structure."""
 import os
+import warnings
+import logging
 from dataclasses import dataclass
+from functools import wraps
+
+logger = logging.getLogger(__name__)
+
+def warn_deprecated(old_name: str, new_name: str) -> None:
+    """Log deprecation warning for old tool name. Per RD-MCP-TOOL-NAMING Phase 3."""
+    msg = f"MCP tool '{old_name}' deprecated. Use '{new_name}' instead. Removal: 2026-01-31."
+    logger.warning(msg)
 
 # TypeDB configuration (from environment or defaults)
 TYPEDB_HOST = os.getenv("TYPEDB_HOST", "localhost")

@@ -28,7 +28,7 @@ When marking a fix as DONE/RESOLVED, agent MUST run verification test and includ
 | Fix Type | Verification | Evidence |
 |----------|-------------|----------|
 | Container fix | `podman ps` shows running | Terminal output |
-| MCP fix | `governance_health()` OK | Health check output |
+| MCP fix | `health_check()` OK | Health check output |
 | API fix | Curl/test passing | Test result |
 | UI fix | Playwright screenshot | Screenshot file |
 

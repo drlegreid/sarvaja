@@ -10,12 +10,14 @@ define
 # =============================================================================
 
 # Proposes relation (agent proposes a change)
-proposes sub relation,
+relation proposes,
+
     relates proposer,
     relates proposed-change;
 
 # Vote on a proposal
-vote sub relation,
+relation vote,
+
     relates voter,
     relates vote-target,
     owns vote-value,
@@ -24,7 +26,8 @@ vote sub relation,
     owns vote-weight;
 
 # Dispute a proposal
-dispute sub relation,
+relation dispute,
+
     relates disputer,
     relates disputed-proposal,
     owns dispute-id,
@@ -35,12 +38,14 @@ dispute sub relation,
     plays requires-escalation:escalation-reason;
 
 # Proposal affects a rule
-proposal-affects sub relation,
+relation proposal-affects,
+
     relates proposing,
     relates affected-rule;
 
 # Agent action tracking (for trust scoring)
-agent-action sub relation,
+relation agent-action,
+
     relates acting-agent,
     relates action-target,
     owns action-type,
@@ -48,6 +53,7 @@ agent-action sub relation,
     owns action-outcome;
 
 # Escalation indicator (inferred when human review required)
-requires-escalation sub relation,
+relation requires-escalation,
+
     relates escalated-proposal,
     relates escalation-reason;

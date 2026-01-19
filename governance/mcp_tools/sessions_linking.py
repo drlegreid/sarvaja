@@ -48,12 +48,13 @@ def register_session_linking_tools(mcp) -> None:
                 return json.dumps({"error": "Could not connect to TypeDB"})
 
             # Query tasks linked to session via completed-in relation
+            # TypeDB 3.x: 'select' replaces 'get'
             query = f'''
                 match
                     $s isa work-session, has session-id "{session_id}";
                     (completed-task: $t, hosting-session: $s) isa completed-in;
                     $t has task-id $tid, has task-name $name, has task-status $status;
-                get $tid, $name, $status;
+                select $tid, $name, $status;
             '''
             results = client.execute_query(query)
             client.close()

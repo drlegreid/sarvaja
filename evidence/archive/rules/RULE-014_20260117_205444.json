@@ -1,0 +1,18 @@
+{
+  "rule": {
+    "id": "RULE-014",
+    "name": "Autonomous Task Sequencing",
+    "category": "autonomy",
+    "priority": "CRITICAL",
+    "status": "ACTIVE",
+    "directive": "Agents MUST autonomously sequence tasks according to product strategy. Continue until explicit halt command.",
+    "rule_type": "OPERATIONAL",
+    "semantic_id": "WORKFLOW-AUTO-01-v1",
+    "created_date": null
+  },
+  "archived_at": "2026-01-17T20:54:44.084094",
+  "reason": "deleted",
+  "archived_from_db": "sim-ai-governance",
+  "dependencies": [],
+  "dependents": []
+}

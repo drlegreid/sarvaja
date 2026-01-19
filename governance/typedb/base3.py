@@ -34,7 +34,7 @@ class TypeDB3BaseClient:
     Usage:
         client = TypeDB3BaseClient()
         if client.connect():
-            results = client.execute_query("match $r isa rule; get $r;")
+            results = client.execute_query("match $r isa rule-entity; select $r;")
             client.close()
     """
 
@@ -56,7 +56,10 @@ class TypeDB3BaseClient:
             address = f"{self.host}:{self.port}"
 
             # TypeDB 3.x requires Credentials and DriverOptions
-            credentials = Credentials('', '')  # No auth for local dev
+            # Default credentials for TypeDB CE: admin/password
+            username = os.getenv("TYPEDB_USERNAME", "admin")
+            password = os.getenv("TYPEDB_PASSWORD", "password")
+            credentials = Credentials(username, password)
             options = DriverOptions(is_tls_enabled=False)
 
             self._driver = TypeDB.driver(address, credentials, options)
@@ -131,8 +134,8 @@ class TypeDB3BaseClient:
 
             # 3.x API: driver.transaction(database, tx_type)
             with self._driver.transaction(self.database, tx_type) as tx:
-                # 3.x API: tx.query(query_string) - unified interface
-                result = tx.query(query)
+                # 3.x API: tx.query(query_string).resolve() - must resolve Promise
+                result = tx.query(query).resolve()
 
                 # Process results
                 if result is None:
@@ -154,8 +157,8 @@ class TypeDB3BaseClient:
             # 3.x returns an iterator for match queries
             for answer in result:
                 row = {}
-                # In 3.x, answer variables use .variables() or similar
-                for var_name in answer.variables():
+                # In 3.x, use column_names() to get variable names
+                for var_name in answer.column_names():
                     concept = answer.get(var_name)
                     row[var_name] = self._concept_to_value(concept)
                 results.append(row)
@@ -169,19 +172,33 @@ class TypeDB3BaseClient:
         """Convert TypeDB concept to Python value.
 
         In 3.x, Thing is renamed to Instance.
+        TypeDB 3.x uses get_value() method for attributes.
         """
         if concept is None:
             return None
 
-        # Check if it's an attribute with a value
+        # TypeDB 3.x: Use get_value() method for attributes
+        if hasattr(concept, 'get_value'):
+            try:
+                return concept.get_value()
+            except Exception:
+                pass
+
+        # Fallback: Check for .value property (older API)
         if hasattr(concept, 'value'):
             return concept.value
 
         # Check if it's an entity/relation with an IID
+        if hasattr(concept, 'get_iid'):
+            try:
+                return str(concept.get_iid())
+            except Exception:
+                pass
+
         if hasattr(concept, 'iid'):
             return str(concept.iid)
 
-        # Fallback
+        # Last fallback
         return str(concept)
 
     # =========================================================================
@@ -200,7 +217,7 @@ class TypeDB3BaseClient:
             from typedb.driver import TransactionType
 
             with self._driver.transaction(self.database, TransactionType.SCHEMA) as tx:
-                tx.query(schema)
+                tx.query(schema).resolve()
                 tx.commit()
             return True
         except Exception as e:
@@ -218,7 +235,7 @@ class TypeDB3BaseClient:
             from typedb.driver import TransactionType
 
             with self._driver.transaction(self.database, TransactionType.WRITE) as tx:
-                tx.query(insert_query)
+                tx.query(insert_query).resolve()
                 tx.commit()
             return True
         except Exception as e:

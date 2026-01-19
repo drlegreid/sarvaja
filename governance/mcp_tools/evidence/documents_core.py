@@ -7,19 +7,16 @@ Per RULE-012: DSP Semantic Code Structure
 Per RULE-032: File size <300 lines
 Per RD-DOC-SERVICE: Document service with type detection + pagination
 
-Extracted from documents.py per DOC-SIZE-01-v1.
-
 Tools:
-- governance_get_document: Get document content by path (with pagination)
-- governance_list_documents: List documents in directory
+- doc_get: Get document content by path (with pagination)
+- docs_list: List documents in directory
 
 Created: 2026-01-13 (extracted from documents.py)
+Refactored: 2026-01-19 (compact aliases per RD-MCP-TOOL-NAMING)
 """
 
 import json
-import glob
 from pathlib import Path
-from typing import Optional
 
 from .common import (
     EVIDENCE_DIR,
@@ -76,11 +73,7 @@ def register_core_document_tools(mcp) -> None:
     """Register core document viewing MCP tools."""
 
     @mcp.tool()
-    def governance_get_document(
-        path: str,
-        max_lines: int = 500,
-        offset: int = 0
-    ) -> str:
+    def doc_get(path: str, max_lines: int = 500, offset: int = 0) -> str:
         """
         Get document content by path. Supports relative or absolute paths.
 
@@ -165,7 +158,7 @@ def register_core_document_tools(mcp) -> None:
             return json.dumps({"error": f"Failed to read document: {str(e)}"})
 
     @mcp.tool()
-    def governance_list_documents(
+    def docs_list(
         directory: str = "docs",
         pattern: str = "*.md",
         recursive: bool = False
@@ -229,3 +222,9 @@ def register_core_document_tools(mcp) -> None:
 
         except Exception as e:
             return json.dumps({"error": f"Failed to list documents: {str(e)}"})
+
+    # Legacy aliases for backward compatibility
+    governance_get_document = doc_get
+    governance_list_documents = docs_list
+    mcp.tool(name="governance_get_document")(governance_get_document)
+    mcp.tool(name="governance_list_documents")(governance_list_documents)

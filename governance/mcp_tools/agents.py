@@ -1,12 +1,4 @@
-"""
-Agents MCP Tools
-================
-Agent CRUD operations for P10.4 - TypeDB Integration.
-
-Per RULE-012: DSP Semantic Code Structure
-Per DECISION-003: TypeDB-First Strategy
-Per RULE-011: Multi-Agent Governance
-"""
+"""Agents MCP Tools - Agent CRUD. Per RULE-011/012, DECISION-003."""
 
 import json
 from typing import Optional
@@ -14,29 +6,13 @@ from dataclasses import asdict
 
 from governance.mcp_tools.common import get_typedb_client
 
-
 def register_agent_tools(mcp) -> None:
     """Register agent-related MCP tools."""
 
     @mcp.tool()
-    def governance_create_agent(
-        agent_id: str,
-        name: str,
-        agent_type: str,
-        trust_score: float = 0.8
-    ) -> str:
-        """
-        Create a new agent in TypeDB.
-
-        Args:
-            agent_id: Agent ID (e.g., "claude-code", "sync-agent")
-            name: Agent display name
-            agent_type: Agent type (claude-code, docker-agent, sync-agent)
-            trust_score: Initial trust score (0.0 to 1.0)
-
-        Returns:
-            JSON object with created agent confirmation
-        """
+    def agent_create(agent_id: str, name: str, agent_type: str,
+                     trust_score: float = 0.8) -> str:
+        """Create a new agent in TypeDB."""
         client = get_typedb_client()
         try:
             if not client.connect():
@@ -63,16 +39,8 @@ def register_agent_tools(mcp) -> None:
             client.close()
 
     @mcp.tool()
-    def governance_get_agent(agent_id: str) -> str:
-        """
-        Get a specific agent by ID from TypeDB.
-
-        Args:
-            agent_id: Agent ID
-
-        Returns:
-            JSON object with agent details or error if not found
-        """
+    def agent_get(agent_id: str) -> str:
+        """Get agent by ID from TypeDB."""
         client = get_typedb_client()
         try:
             if not client.connect():
@@ -87,13 +55,8 @@ def register_agent_tools(mcp) -> None:
             client.close()
 
     @mcp.tool()
-    def governance_list_agents() -> str:
-        """
-        List all agents from TypeDB.
-
-        Returns:
-            JSON array of all agents with ID, name, type, trust score
-        """
+    def agents_list() -> str:
+        """List all agents from TypeDB."""
         client = get_typedb_client()
         try:
             if not client.connect():
@@ -109,20 +72,8 @@ def register_agent_tools(mcp) -> None:
             client.close()
 
     @mcp.tool()
-    def governance_update_agent_trust(
-        agent_id: str,
-        trust_score: float
-    ) -> str:
-        """
-        Update an agent's trust score in TypeDB.
-
-        Args:
-            agent_id: Agent ID to update
-            trust_score: New trust score (0.0 to 1.0)
-
-        Returns:
-            JSON object with updated agent confirmation
-        """
+    def agent_trust_update(agent_id: str, trust_score: float) -> str:
+        """Update agent trust score."""
         if not 0.0 <= trust_score <= 1.0:
             return json.dumps({"error": "Trust score must be between 0.0 and 1.0"})
 
@@ -153,21 +104,8 @@ def register_agent_tools(mcp) -> None:
             client.close()
 
     @mcp.tool()
-    def governance_agent_dashboard() -> str:
-        """
-        Get agent observability dashboard.
-
-        Returns summary of all agents including:
-        - Active agent count
-        - Task execution stats
-        - Trust score distribution
-        - Handoff flow status
-
-        Per GAP-006: Agent observability for functional platform.
-
-        Returns:
-            JSON object with agent dashboard data
-        """
+    def agents_dashboard() -> str:
+        """Get agent dashboard with stats and summaries."""
         from governance.orchestrator.handoff import get_pending_handoffs
 
         client = get_typedb_client()
@@ -224,17 +162,8 @@ def register_agent_tools(mcp) -> None:
             client.close()
 
     @mcp.tool()
-    def governance_agent_activity(agent_id: Optional[str] = None, limit: int = 10) -> str:
-        """
-        Get recent agent activity (tasks executed, handoffs processed).
-
-        Args:
-            agent_id: Optional agent ID to filter by (None = all agents)
-            limit: Maximum number of activities to return (default: 10)
-
-        Returns:
-            JSON array of recent agent activities
-        """
+    def agent_activity(agent_id: Optional[str] = None, limit: int = 10) -> str:
+        """Get agent activity (tasks executed)."""
         client = get_typedb_client()
         try:
             if not client.connect():
@@ -271,7 +200,7 @@ def register_agent_tools(mcp) -> None:
                 "count": len(activities),
                 "filter": agent_id or "all"
             }, indent=2)
-        except Exception as e:
+        except Exception:
             # If relation doesn't exist, return empty
             return json.dumps({
                 "activities": [],

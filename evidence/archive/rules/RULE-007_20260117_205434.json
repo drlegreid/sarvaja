@@ -1,0 +1,18 @@
+{
+  "rule": {
+    "id": "RULE-007",
+    "name": "MCP Usage Protocol",
+    "category": "productivity",
+    "priority": "HIGH",
+    "status": "ACTIVE",
+    "directive": "All sessions MUST actively leverage available MCPs according to task type.",
+    "rule_type": "OPERATIONAL",
+    "semantic_id": "ARCH-MCP-01-v1",
+    "created_date": null
+  },
+  "archived_at": "2026-01-17T20:54:34.245241",
+  "reason": "deleted",
+  "archived_from_db": "sim-ai-governance",
+  "dependencies": [],
+  "dependents": []
+}

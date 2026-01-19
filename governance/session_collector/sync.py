@@ -150,7 +150,7 @@ class SessionSyncMixin:
             # First ensure work-session exists
             session_query = f'''
                 match $s isa work-session, has session-id "{self.session_id}";
-                get $s;
+                select $s;
             '''
             existing_session = client.execute_query(session_query)
 
@@ -171,7 +171,7 @@ class SessionSyncMixin:
             # Check if task exists
             task_check = f'''
                 match $t isa task, has task-id "{task.id}";
-                get $t;
+                select $t;
             '''
             existing_task = client.execute_query(task_check)
 

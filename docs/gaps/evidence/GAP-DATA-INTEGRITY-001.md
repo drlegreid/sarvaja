@@ -1,6 +1,6 @@
 # GAP-DATA-INTEGRITY-001: Dashboard Data Quality & Traceability
 
-**Priority:** CRITICAL | **Category:** data-integrity | **Status:** PARTIAL FIX
+**Priority:** CRITICAL | **Category:** data-integrity | **Status:** RESOLVED
 **Discovered:** 2026-01-16 | **Session:** SESSION-2026-01-16-PLATFORM-AUDIT
 
 ---
@@ -156,11 +156,78 @@ Verification:
 | Session evidence_files | 0% | 77% | 77% | +77% |
 | LIST query accuracy | Wrong | Fixed | Fixed | ✅ |
 
-### Remaining Work
+### Remaining Work - ALL COMPLETE
 
 1. ~~**EPIC-DR-007:** agent_id backfill~~ ✅ DONE (2026-01-17)
-2. **EPIC-DR-008:** evidence field population (3% → target 50%) - [GAP-EPIC-DR-008.md](GAP-EPIC-DR-008.md)
-3. **Phase 3:** UI navigation for relationships
+2. ~~**EPIC-DR-008:** evidence field population (3% → 100%)~~ ✅ DONE (2026-01-17) - [GAP-EPIC-DR-008.md](GAP-EPIC-DR-008.md)
+3. ~~**Phase 3:** UI navigation for relationships~~ ✅ DONE (2026-01-17)
+
+**GAP-DATA-INTEGRITY-001 RESOLVED** - All data quality objectives achieved.
+
+---
+
+## Fix Applied (2026-01-17 PM): Phase 3 - UI Navigation
+
+### Problem
+Dashboard showed session counts but couldn't navigate to see completed tasks linked to a session.
+
+### Solution
+Added session→task navigation in the UI:
+
+1. **API Endpoint:** `GET /api/sessions/{id}/tasks`
+   - Returns tasks linked via `completed-in` relation
+   - Response: `{session_id, task_count, tasks: [{task_id, name, status}]}`
+
+2. **TypeDB Query Method:** `get_tasks_for_session(session_id)`
+   - Added to `governance/typedb/queries/sessions/read.py`
+   - Uses TypeDB 3.x `select` syntax
+
+3. **UI Component:** `sessions/tasks.py`
+   - Displays completed tasks in session detail view
+   - Click task to navigate to task detail view
+
+### Files Modified
+- `governance/typedb/queries/sessions/read.py` - Added `get_tasks_for_session()`
+- `governance/routes/sessions.py` - Added `/sessions/{id}/tasks` endpoint
+- `agent/governance_ui/views/sessions/tasks.py` - New UI component
+- `agent/governance_ui/views/sessions/detail.py` - Integrated tasks card
+- `agent/governance_ui/state/initial.py` - Added `session_tasks` state
+- `agent/governance_ui/handlers/session_handlers.py` - Added `load_session_tasks`
+- `agent/governance_ui/handlers/task_handlers.py` - Added `navigate_to_task`
+
+### Validation
+```json
+GET /api/sessions/SESSION-2024-12-25-001/tasks
+{
+  "session_id": "SESSION-2024-12-25-001",
+  "task_count": 1,
+  "tasks": [{"task_id": "P9.5", "name": "Agent Trust Dashboard", "status": "DONE"}]
+}
+```
+
+### Test Coverage
+- 42/42 tests pass (unit + component + integration)
+
+---
+
+## Fix Applied (2026-01-17 PM): TypeDB 3.x API Value Extraction
+
+### Problem
+TypeDB 3.x changed attribute value extraction API. Old code used `.value` property which no longer works, causing API to return `Attribute(task-id: "P11.3")` instead of `"P11.3"`.
+
+### Solution
+Updated `governance/typedb/base.py::_concept_to_value()` to use TypeDB 3.x `get_value()` method.
+
+### Files Modified
+- `governance/typedb/base.py` - Value extraction fix (`get_value()`)
+- `governance/typedb/queries/tasks/read.py` - Query syntax fix (`select` vs `get`)
+
+### Test Coverage
+- `tests/integration/test_typedb3_value_extraction.py` - 6 tests PASSED
+
+### Validation
+- Dashboard: 60 Rules | 4 Decisions | 4 Tasks displayed correctly
+- API: Returns clean values without Attribute() wrappers
 
 ---
 

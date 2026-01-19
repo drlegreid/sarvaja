@@ -12,15 +12,15 @@ ignore the actual project backlog.
 
 import json
 from typing import List
-from governance.utils.gap_parser import GapParser, get_prioritized_gaps, get_gap_summary
-from governance.utils.work_item import WorkItem, WorkItemType, sort_by_priority, filter_open
+from governance.utils.gap_parser import GapParser, get_gap_summary
+from governance.utils.work_item import WorkItem, WorkItemType, sort_by_priority
 
 
 def register_gap_tools(mcp) -> None:
     """Register gap-related MCP tools."""
 
     @mcp.tool()
-    def governance_get_backlog(limit: int = 20) -> str:
+    def backlog_get(limit: int = 20) -> str:
         """
         Get prioritized open gaps from GAP-INDEX.md for session backlog.
 
@@ -57,7 +57,7 @@ def register_gap_tools(mcp) -> None:
             return json.dumps({"error": f"Failed to parse gaps: {str(e)}"})
 
     @mcp.tool()
-    def governance_gap_summary() -> str:
+    def gaps_summary() -> str:
         """
         Get summary statistics for all gaps.
 
@@ -71,7 +71,7 @@ def register_gap_tools(mcp) -> None:
             return json.dumps({"error": f"Failed to get summary: {str(e)}"})
 
     @mcp.tool()
-    def governance_get_critical_gaps() -> str:
+    def gaps_critical() -> str:
         """
         Get all CRITICAL priority gaps.
 
@@ -89,7 +89,7 @@ def register_gap_tools(mcp) -> None:
             return json.dumps({"error": f"Failed to get critical gaps: {str(e)}"})
 
     @mcp.tool()
-    def governance_unified_backlog(limit: int = 30, include_tasks: bool = True) -> str:
+    def backlog_unified(limit: int = 30, include_tasks: bool = True) -> str:
         """
         Get unified backlog combining gaps and tasks as WorkItems.
 
@@ -113,7 +113,7 @@ def register_gap_tools(mcp) -> None:
             gaps = parser.get_open_gaps()
             for gap in gaps:
                 work_items.append(gap.to_work_item())
-        except Exception as e:
+        except Exception:
             pass  # Continue even if gaps fail
 
         # 2. Get tasks from TypeDB (if requested)
@@ -128,7 +128,7 @@ def register_gap_tools(mcp) -> None:
                         if item.is_open:
                             work_items.append(item)
                     client.close()
-            except Exception as e:
+            except Exception:
                 pass  # Continue even if TypeDB fails
 
         # 3. Sort by priority and limit

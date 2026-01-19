@@ -3,14 +3,12 @@
 # Opik REMOVED: 2024-12-24 (DECISION-001) - overkill for current needs
 #
 # Profiles:
-#   cpu  - Production: LiteLLM, Ollama, ChromaDB, TypeDB, Agents, Governance Dashboard
-#   full - All services including Agent UI
-#   dev  - Development: ChromaDB, TypeDB, Governance Dashboard (with volume mounts)
+#   dev  - All services + test runner + volume mounts for live reload
 #
 # Run:
-#   docker compose --profile cpu up -d           # Production stack
-#   docker compose --profile dev up -d           # Dev mode with live reload
-#   docker compose --profile dev up --build -d   # Rebuild and run dev
+#   podman compose --profile dev up -d                    # Start all services
+#   podman compose --profile dev run --rm test-runner \
+#       python3 -m pytest tests/ -v                       # Run tests in container
 
 services:
   # =============================================================================
@@ -20,7 +18,7 @@ services:
   # LiteLLM Proxy - Routes requests to Claude (remote) or Ollama (local)
   litellm:
     image: ghcr.io/berriai/litellm:main-latest
-    profiles: ["cpu", "full", "dev"]
+    profiles: ["dev"]
     restart: unless-stopped
     ports:
       - "4000:4000"
@@ -46,7 +44,7 @@ services:
   # Ollama - Local CPU inference (gemma3:4b for lightweight tasks)
   ollama:
     image: docker.io/ollama/ollama:latest
-    profiles: ["cpu", "full"]
+    profiles: ["dev"]
     restart: unless-stopped
     ports:
       - "11434:11434"
@@ -74,7 +72,7 @@ services:
   # ChromaDB - Vector database for rules/memories embeddings
   chromadb:
     image: docker.io/chromadb/chroma:latest
-    profiles: ["cpu", "full", "dev"]
+    profiles: ["dev"]
     restart: unless-stopped
     ports:
       - "8001:8000"
@@ -103,14 +101,16 @@ services:
   # TypeDB - Graph database with inference engine (DECISION-003: 2024-12-24)
   # Provides: rule inference, type safety, knowledge reasoning
   # Architecture: Hybrid with ChromaDB (semantic search + inference)
+  # UPGRADED: 3.0.8 per GAP-TYPEDB-UPGRADE-001 (2026-01-17)
   typedb:
-    image: docker.io/vaticle/typedb:latest
-    profiles: ["cpu", "full", "dev"]
+    image: docker.io/typedb/typedb:3.7.3
+    profiles: ["dev"]
     restart: unless-stopped
     ports:
       - "1729:1729"
     volumes:
-      - /home/oderid/Documents/Docker/typedb_data:/opt/typedb-all-linux-x86_64/server/data
+      # TypeDB 3.7.x data path per official release notes (3.7.1)
+      - /home/oderid/Documents/Docker/typedb_data:/var/lib/typedb/data
     deploy:
       resources:
         limits:
@@ -132,7 +132,7 @@ services:
     build:
       context: ./agent
       dockerfile: Dockerfile
-    profiles: ["cpu", "full", "dev"]
+    profiles: ["dev"]
     restart: unless-stopped
     ports:
       - "7777:7777"
@@ -163,7 +163,7 @@ services:
     build:
       context: .
       dockerfile: agent/Dockerfile.dashboard
-    profiles: ["dev", "dashboard-dev"]
+    profiles: ["dev"]
     restart: unless-stopped
     ports:
       - "8081:8081"
@@ -194,6 +194,50 @@ services:
       timeout: 10s
       retries: 3
       start_period: 10s
+
+  # =============================================================================
+  # TEST LAYER
+  # =============================================================================
+
+  # Test Runner - Containerized pytest with container networking
+  # Per GAP-TEST-PROFILES: Full containerization option
+  # Usage: podman compose --profile dev run --rm test-runner python3 -m pytest tests/ -v
+  test-runner:
+    build:
+      context: .
+      dockerfile: agent/Dockerfile.dashboard
+    profiles: ["dev"]
+    entrypoint: []  # Override dashboard entrypoint
+    environment:
+      # Container networking - use service names
+      - TYPEDB_HOST=typedb
+      - TYPEDB_PORT=1729
+      - CHROMADB_HOST=chromadb
+      - CHROMADB_PORT=8000
+      - API_HOST=governance-dashboard-dev
+      - API_PORT=8082
+      - DASHBOARD_HOST=governance-dashboard-dev
+      - DASHBOARD_PORT=8081
+      - LITELLM_HOST=litellm
+      - LITELLM_PORT=4000
+      - CHROMA_AUTH_TOKEN=${CHROMA_AUTH_TOKEN:-chroma-token-dev}
+      - PYTHONPATH=/app
+    volumes:
+      # Mount local dev assets for live test updates
+      - ./agent:/app/agent:ro
+      - ./governance:/app/governance:ro
+      - ./tests:/app/tests:ro
+      - ./shared:/app/shared:ro
+      - ./docs:/app/docs:ro
+      - ./evidence:/app/evidence:rw
+      - ./results:/app/results:rw
+      - ./.claude:/app/.claude:ro
+    depends_on:
+      - typedb
+      - chromadb
+    working_dir: /app
+    # Default command - override: podman compose run test-runner pytest tests/unit -v
+    command: ["python3", "-m", "pytest", "tests/", "-v", "--tb=short", "-m", "not browser"]
 
 # =============================================================================
 # VOLUMES

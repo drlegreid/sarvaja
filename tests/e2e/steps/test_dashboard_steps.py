@@ -5,21 +5,27 @@ Per GAP-TEST-001: BDD paradigm for E2E tests.
 Per RULE-004: Exploratory Test Automation & Executable Specification.
 
 Step definitions for dashboard.feature scenarios.
+
+Run locally: pytest tests/e2e/steps/test_dashboard_steps.py -v
 """
 
 from pathlib import Path
 
 import pytest
+
+# Skip if pytest-playwright or pytest_bdd not available (container environment)
+pytest.importorskip("pytest_playwright", reason="pytest-playwright required - run locally")
+pytest.importorskip("pytest_bdd", reason="pytest-bdd required - run locally")
+
 from pytest_bdd import scenarios, given, when, then, parsers
 from playwright.sync_api import Page, expect
+
+from shared.constants import APP_TITLE, DASHBOARD_URL
 
 
 # Load all scenarios from the feature file using absolute path
 FEATURES_DIR = Path(__file__).parent.parent / "features"
 scenarios(str(FEATURES_DIR / "dashboard.feature"))
-
-
-DASHBOARD_URL = "http://localhost:8081"
 
 # Map tab names to data-testid
 TAB_SELECTORS = {
@@ -54,7 +60,7 @@ def navigate_to_dashboard(page: Page):
     """Navigate to the dashboard home page."""
     page.goto(DASHBOARD_URL)
     page.wait_for_load_state("networkidle")
-    page.wait_for_selector("text=Sim.ai Governance Dashboard", timeout=10000)
+    page.wait_for_selector(f"text={APP_TITLE}", timeout=10000)
 
 
 @when(parsers.parse('I click on "{tab}" navigation'))

@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-    Run E2E tests for Sim.ai Task UI
+    Run E2E tests for Sarvaja Task UI
 
 .DESCRIPTION
     Executes Robot Framework + Playwright tests with configurable options.
@@ -73,7 +73,7 @@ $SuitePath = Join-Path $ScriptDir $Suite
 $RobotArgs += $SuitePath
 
 Write-Host "============================================" -ForegroundColor Cyan
-Write-Host "  Sim.ai E2E Tests (Robot + Playwright)     " -ForegroundColor Cyan
+Write-Host "  Sarvaja E2E Tests (Robot + Playwright)     " -ForegroundColor Cyan
 Write-Host "============================================" -ForegroundColor Cyan
 Write-Host ""
 Write-Host "Configuration:" -ForegroundColor Yellow

@@ -45,9 +45,20 @@ def register_tests_controllers(
                 start = time.time()
                 response = client.get(f"{api_base_url}/api/tests/results?limit=10")
                 duration_ms = int((time.time() - start) * 1000)
-                add_api_trace(state, "/api/tests/results", "GET", response.status_code, duration_ms)
+
+                # Capture response body for trace
+                response_body = None
+                try:
+                    response_body = response.json()
+                except Exception:
+                    pass
+
+                add_api_trace(
+                    state, "/api/tests/results", "GET", response.status_code, duration_ms,
+                    response_body=response_body
+                )
                 if response.status_code == 200:
-                    data = response.json()
+                    data = response_body or {}
                     state.tests_recent_runs = data.get("runs", [])
                 else:
                     state.tests_recent_runs = []
@@ -92,14 +103,28 @@ def register_tests_controllers(
             with httpx.Client(timeout=30.0) as client:
                 start = time.time()
                 url = f"{api_base_url}/api/tests/run"
+                endpoint = "/api/tests/run"
                 if category:
                     url += f"?category={category}"
+                    endpoint += f"?category={category}"
                 response = client.post(url)
                 duration_ms = int((time.time() - start) * 1000)
-                add_api_trace(state, "/api/tests/run", "POST", response.status_code, duration_ms)
+
+                # Capture response body for trace
+                response_body = None
+                try:
+                    response_body = response.json()
+                except Exception:
+                    pass
+
+                add_api_trace(
+                    state, endpoint, "POST", response.status_code, duration_ms,
+                    request_body={"category": category} if category else None,
+                    response_body=response_body
+                )
 
                 if response.status_code == 200:
-                    data = response.json()
+                    data = response_body or {}
                     run_id = data.get("run_id")
                     state.tests_current_run = {
                         "run_id": run_id,

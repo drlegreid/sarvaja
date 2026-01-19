@@ -43,7 +43,7 @@ flowchart LR
 | Check | Tool | Purpose |
 |-------|------|---------|
 | Rules sync | `governance_sync_status()` | Detect TypeDB-docs divergence |
-| Rules count | `governance_health()` | Verify rule count |
+| Rules count | `health_check()` | Verify rule count |
 | Gap entropy | Check GAP-INDEX | Open gaps < 50 threshold |
 | File sizes | Health alerts | Files < 300 lines |
 | CLAUDE.md | Manual | Rules Atlas current |

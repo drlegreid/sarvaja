@@ -74,13 +74,18 @@ Plan for upgrading TypeDB Server from 2.29.1 to 3.7.x to resolve Python 3.13 dri
 
 ### Phase 3: Server Upgrade
 
-**Status:** ⚠️ READY (Requires Manual Confirmation - Destructive)
+**Status:** ✅ READY (Warranty mechanism verified)
 
 **Prerequisites verified:**
 - [x] Schema converted (governance/schema_3x/)
 - [x] Data file exists (governance/data.tql - 658 lines, 61 rules)
 - [x] Schema loader script ready (scripts/load-schema.sh)
 - [x] MCP servers can reload after restart
+- [x] **WARRANTY: Data export created (2026-01-17)**
+  - JSON: `data/exports/typedb_export_20260117_163928.json` (138 entities)
+  - 2.x TQL: `data/exports/typedb_export_20260117_163928_2x.tql`
+  - 3.x TQL: `data/exports/typedb_export_20260117_163928_3x.tql`
+  - Content hash: `81ca9412d961`
 
 **⚠️ WARNING:** This phase clears the TypeDB data volume. All existing data will be lost.
 

@@ -1,0 +1,18 @@
+{
+  "rule": {
+    "id": "RULE-003",
+    "name": "Sync Protocol for Skills & Sessions",
+    "category": "governance",
+    "priority": "HIGH",
+    "status": "DRAFT",
+    "directive": "Local skills and sessions MUST be syncable to: - Remote storage (optional cloud backup) - Team shared repositories - Cross-device continuity",
+    "rule_type": "OPERATIONAL",
+    "semantic_id": "REPORT-DEC-01-v1",
+    "created_date": null
+  },
+  "archived_at": "2026-01-17T20:54:33.866904",
+  "reason": "deleted",
+  "archived_from_db": "sim-ai-governance",
+  "dependencies": [],
+  "dependents": []
+}

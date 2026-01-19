@@ -49,7 +49,7 @@ All rules should include anti-patterns using this table format:
 
 | Don't | Do Instead |
 |-------|------------|
-| Skip health check | Always call governance_health first |
+| Skip health check | Always call health_check first |
 | Hardcode secrets | Use .env and environment variables |
 ```
 

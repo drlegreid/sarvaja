@@ -1,0 +1,18 @@
+{
+  "rule": {
+    "id": "RULE-030",
+    "name": "Docker Dev Container Workflow",
+    "category": "development",
+    "priority": "HIGH",
+    "status": "DISABLED",
+    "directive": "For UI/API development, agents MUST use Docker dev containers with volume mounts instead of local Python processes. [DISABLED: Superseded by Podman workflows per RULE-035]",
+    "rule_type": "LEAF",
+    "semantic_id": "CONTAINER-DEV-02-v1",
+    "created_date": null
+  },
+  "archived_at": "2026-01-17T20:54:57.277940",
+  "reason": "deleted",
+  "archived_from_db": "sim-ai-governance",
+  "dependencies": [],
+  "dependents": []
+}

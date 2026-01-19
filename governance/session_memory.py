@@ -1,11 +1,4 @@
-"""
-Session Memory Integration - P11.4
-Auto-save session context to claude-mem at DSP completion.
-Load context at session start (RULE-024: AMNESIA Protocol).
-
-Created: 2024-12-26
-Per: GAP-ARCH-011, GAP-PROC-001, RULE-024
-"""
+"""Session Memory Integration. Per RULE-024: AMNESIA Protocol. Created: 2024-12-26"""
 
 import json
 import os
@@ -105,23 +98,7 @@ class SessionContext:
 
 
 class SessionMemoryManager:
-    """
-    Manages session context save/load with claude-mem.
-
-    Usage:
-        manager = SessionMemoryManager()
-
-        # At session start (RULE-024 AMNESIA recovery)
-        context = await manager.recover_context()
-
-        # During session - track progress
-        manager.track_task_completed("P11.3")
-        manager.track_gap_resolved("GAP-DATA-002")
-
-        # At DSP cycle end - save context
-        await manager.save_context()
-    """
-
+    """Manages session context save/load with claude-mem. Per RULE-024."""
     COLLECTION = "claude_memories"
 
     def __init__(self, project: str = "sim-ai"):
@@ -138,65 +115,45 @@ class SessionMemoryManager:
         )
 
     def set_phase(self, phase: str) -> None:
-        """Set current phase."""
-        if self.current_context:
-            self.current_context.phase = phase
+        if self.current_context: self.current_context.phase = phase
 
     def track_task_completed(self, task_id: str) -> None:
-        """Track a completed task."""
         if self.current_context and task_id not in self.current_context.tasks_completed:
             self.current_context.tasks_completed.append(task_id)
 
     def track_task_in_progress(self, task_id: str) -> None:
-        """Track a task in progress."""
         if self.current_context and task_id not in self.current_context.tasks_in_progress:
             self.current_context.tasks_in_progress.append(task_id)
 
     def track_gap_resolved(self, gap_id: str) -> None:
-        """Track a resolved gap."""
         if self.current_context and gap_id not in self.current_context.gaps_resolved:
             self.current_context.gaps_resolved.append(gap_id)
 
     def track_gap_discovered(self, gap_id: str) -> None:
-        """Track a discovered gap."""
         if self.current_context and gap_id not in self.current_context.gaps_discovered:
             self.current_context.gaps_discovered.append(gap_id)
 
     def track_decision(self, decision: str) -> None:
-        """Track a decision made."""
         if self.current_context and decision not in self.current_context.decisions_made:
             self.current_context.decisions_made.append(decision)
 
     def track_file_modified(self, file_path: str) -> None:
-        """Track a modified file."""
         if self.current_context and file_path not in self.current_context.key_files_modified:
             self.current_context.key_files_modified.append(file_path)
 
     def set_test_results(self, passed: int, failed: int, skipped: int = 0) -> None:
-        """Set test results."""
         if self.current_context:
-            self.current_context.test_results = {
-                "passed": passed,
-                "failed": failed,
-                "skipped": skipped,
-            }
+            self.current_context.test_results = {"passed": passed, "failed": failed, "skipped": skipped}
 
     def set_summary(self, summary: str) -> None:
-        """Set session summary."""
-        if self.current_context:
-            self.current_context.summary = summary
+        if self.current_context: self.current_context.summary = summary
 
     def add_next_step(self, step: str) -> None:
-        """Add a next step."""
         if self.current_context and step not in self.current_context.next_steps:
             self.current_context.next_steps.append(step)
 
     def get_save_payload(self) -> Dict[str, Any]:
-        """
-        Get payload for saving to claude-mem.
-
-        Returns dict ready for chroma_add_documents MCP call.
-        """
+        """Get payload for saving to claude-mem."""
         if not self.current_context:
             self._init_context()
 
@@ -210,12 +167,7 @@ class SessionMemoryManager:
         }
 
     def get_recovery_query(self) -> Dict[str, Any]:
-        """
-        Get query for context recovery from claude-mem.
-
-        Returns dict ready for chroma_query_documents MCP call.
-        Per RULE-024: Always include project name in query.
-        """
+        """Get query for context recovery from claude-mem. Per RULE-024."""
         today = date.today().isoformat()
 
         return {
@@ -225,15 +177,7 @@ class SessionMemoryManager:
         }
 
     def parse_recovery_results(self, results: Dict[str, Any]) -> Dict[str, Any]:
-        """
-        Parse claude-mem query results into recovered context.
-
-        Args:
-            results: Raw results from chroma_query_documents
-
-        Returns:
-            Parsed context dict for session resumption
-        """
+        """Parse claude-mem query results into recovered context."""
         recovered = {
             "found": False,
             "sessions": [],
@@ -273,57 +217,17 @@ class SessionMemoryManager:
         return recovered
 
     def generate_amnesia_report(self, recovered: Dict[str, Any]) -> str:
-        """
-        Generate AMNESIA recovery report per RULE-024.
-
-        Args:
-            recovered: Parsed recovery results
-
-        Returns:
-            Human-readable recovery report
-        """
-        lines = [
-            "## AMNESIA Recovery Report (RULE-024)",
-            "",
-        ]
-
+        """Generate AMNESIA recovery report per RULE-024."""
+        lines = ["## AMNESIA Recovery Report (RULE-024)", ""]
         if not recovered.get("found"):
-            lines.extend([
-                "**Status:** No recent session context found in claude-mem.",
-                "",
-                "**Recommended Recovery:**",
-                "1. Read TODO.md for active tasks",
-                "2. Read R&D-BACKLOG.md for phase status",
-                "3. Check GAP-INDEX.md for open gaps",
-                "",
-            ])
+            lines.extend(["**Status:** No recent session context found.", "",
+                "**Recovery:** 1. Read TODO.md 2. Read R&D-BACKLOG.md 3. Check GAP-INDEX.md", ""])
         else:
-            lines.extend([
-                f"**Status:** Found {len(recovered.get('sessions', []))} recent sessions.",
-                "",
-            ])
-
-            if recovered.get("last_phase"):
-                lines.append(f"**Last Phase:** {recovered['last_phase']}")
-
+            lines.extend([f"**Status:** Found {len(recovered.get('sessions', []))} sessions.", ""])
+            if recovered.get("last_phase"): lines.append(f"**Last Phase:** {recovered['last_phase']}")
             if recovered.get("summary"):
-                lines.extend([
-                    "",
-                    "**Most Recent Context:**",
-                    "```",
-                    recovered["summary"][:500],
-                    "```",
-                    "",
-                ])
-
-            lines.extend([
-                "**Next Steps:**",
-                "1. Review recovered context above",
-                "2. Continue from last task",
-                "3. Check TODO.md for updates",
-                "",
-            ])
-
+                lines.extend(["", "**Recent Context:**", "```", recovered["summary"][:500], "```", ""])
+            lines.extend(["**Next:** 1. Review context 2. Continue last task 3. Check TODO.md", ""])
         return "\n".join(lines)
 
     def to_dict(self) -> Dict[str, Any]:
@@ -335,20 +239,12 @@ class SessionMemoryManager:
         }
 
 
-# Integration with DSM Tracker
 def create_dsp_session_context(
-    cycle_id: str,
-    batch_id: str,
-    phases_completed: List[str],
-    findings: List[Dict[str, Any]],
-    checkpoints: List[Dict[str, Any]],
+    cycle_id: str, batch_id: str, phases_completed: List[str],
+    findings: List[Dict[str, Any]], checkpoints: List[Dict[str, Any]],
     metrics: Dict[str, Any],
 ) -> SessionContext:
-    """
-    Create SessionContext from DSM cycle data.
-
-    Called at DSP cycle completion to save context to claude-mem.
-    """
+    """Create SessionContext from DSM cycle data for claude-mem save."""
     context = SessionContext(
         session_id=cycle_id,
         project="sim-ai",

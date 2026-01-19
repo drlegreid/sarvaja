@@ -1,0 +1,18 @@
+{
+  "rule": {
+    "id": "RULE-UI-LOADER-01-v1",
+    "name": "Reactive Loaders with Trace Status",
+    "category": "technical",
+    "priority": "MEDIUM",
+    "status": "ACTIVE",
+    "directive": "UI components MUST display reactive loading indicators with trace status for all async data operations. Loading states should include API call metadata for debugging and monitoring.",
+    "rule_type": "OPERATIONAL",
+    "semantic_id": "UI-LOADER-01-v1",
+    "created_date": null
+  },
+  "archived_at": "2026-01-17T20:48:48.530133",
+  "reason": "deleted",
+  "archived_from_db": "sim-ai-governance",
+  "dependencies": [],
+  "dependents": []
+}

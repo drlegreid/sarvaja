@@ -1,4 +1,4 @@
-# Operational Rules Index - Sim.ai
+# Operational Rules Index
 
 Rules governing testing, stability, maintenance, and task execution.
 

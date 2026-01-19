@@ -17,7 +17,7 @@ class AgentQueries:
     """
     Agent query operations for TypeDB.
 
-    Requires a client with _execute_query, _execute_write, and _client attributes.
+    Requires a client with _execute_query, _execute_write, and _driver attributes.
     Uses mixin pattern for TypeDBClient composition.
     """
 
@@ -29,7 +29,7 @@ class AgentQueries:
                 has agent-name $name,
                 has agent-type $type,
                 has trust-score $trust;
-            get $id, $name, $type, $trust;
+            select $id, $name, $type, $trust;
         """
         results = self._execute_query(query)
         agents = []
@@ -52,7 +52,7 @@ class AgentQueries:
                 has agent-name $name,
                 has agent-type $type,
                 has trust-score $trust;
-            get $name, $type, $trust;
+            select $name, $type, $trust;
         """
         results = self._execute_query(query)
         if results:

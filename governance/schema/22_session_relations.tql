@@ -10,31 +10,37 @@ define
 # =============================================================================
 
 # Task implements a rule (shows which rule a task is implementing)
-implements-rule sub relation,
+relation implements-rule,
+
     relates implementing-task,
     relates implemented-rule;
 
 # Task completed in a session (tracks when/where work was done)
-completed-in sub relation,
+relation completed-in,
+
     relates completed-task,
     relates hosting-session;
 
 # Session has evidence files (links sessions to their artifacts)
-has-evidence sub relation,
+relation has-evidence,
+
     relates evidence-session,
     relates session-evidence;
 
 # Session applied a rule (rules used/followed during session)
-session-applied-rule sub relation,
+relation session-applied-rule,
+
     relates applying-session,
     relates applied-rule;
 
 # Session made a decision (decisions made during session)
-session-decision sub relation,
+relation session-decision,
+
     relates deciding-session,
     relates session-made-decision;
 
 # Evidence supports a task (evidence proving task completion)
-evidence-supports sub relation,
+relation evidence-supports,
+
     relates supporting-evidence,
     relates supported-task;

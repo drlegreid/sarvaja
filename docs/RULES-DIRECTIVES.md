@@ -1,4 +1,4 @@
-# Sim.ai Rules Directives - Index
+# Rules Directives - Index
 
 **Status:** Active | **Updated:** 2026-01-17 | **Rules:** 55 (52 ACTIVE, 3 DRAFT/DISABLED)
 
@@ -144,6 +144,7 @@ Rules are enforced via:
 
 | Version | Date | Change |
 |---------|------|--------|
+| 5.0.0 | 2026-01-17 | **Sarvaja Rename** - Project renamed from Sim.ai per DECISION-008. Semantic IDs now primary identifiers |
 | 4.0.0 | 2026-01-13 | **Semantic Rule ID Migration** - All rules migrated to `{DOMAIN}-{SUB}-{NN}-v{N}` format per META-TAXON-01-v1 |
 | 3.1.0 | 2026-01-11 | Added RULE-041: Crash Investigation, RULE-042: Destructive Command Prevention |
 | 3.0.0 | 2026-01-03 | Added RULE-035: Shell Command Environment Selection |

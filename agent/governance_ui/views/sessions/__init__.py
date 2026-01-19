@@ -16,10 +16,12 @@ from .list import build_sessions_list_view
 from .detail import build_session_detail_view
 from .form import build_session_form_view
 from .evidence import build_evidence_attach_dialog
+from .tasks import build_completed_tasks_card
 
 __all__ = [
     "build_sessions_list_view",
     "build_session_detail_view",
     "build_session_form_view",
     "build_evidence_attach_dialog",
+    "build_completed_tasks_card",
 ]

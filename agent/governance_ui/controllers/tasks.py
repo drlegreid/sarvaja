@@ -27,7 +27,23 @@ def register_tasks_controllers(state: Any, ctrl: Any, api_base_url: str) -> None
 
     @ctrl.set("select_task")
     def select_task(task_id):
-        """Handle task selection for detail view."""
+        """Handle task selection for detail view.
+
+        Per GAP-UI-TASK-SESSION-001: Fetch full task details including
+        linked_sessions, linked_commits, linked_rules from API.
+        """
+        # Fetch full task details from API to get linked fields
+        try:
+            with httpx.Client(timeout=10.0) as client:
+                response = client.get(f"{api_base_url}/api/tasks/{task_id}")
+                if response.status_code == 200:
+                    state.selected_task = response.json()
+                    state.show_task_detail = True
+                    return
+        except Exception:
+            pass  # Fall back to cached data
+
+        # Fallback to cached list data if API fails
         for task in state.tasks:
             if task.get('task_id') == task_id or task.get('id') == task_id:
                 state.selected_task = task
@@ -39,6 +55,43 @@ def register_tasks_controllers(state: Any, ctrl: Any, api_base_url: str) -> None
         """Close task detail view."""
         state.show_task_detail = False
         state.selected_task = None
+
+    @ctrl.trigger("navigate_to_task")
+    def navigate_to_task(task_id):
+        """Navigate to task from another view (e.g., session detail).
+
+        Per GAP-DATA-INTEGRITY-001 Phase 3: UI navigation for relationships.
+        Switches to tasks view and selects the specified task.
+        """
+        if not task_id:
+            return
+
+        # Switch to tasks view
+        state.active_view = 'tasks'
+        state.show_session_detail = False
+        state.show_decision_detail = False
+
+        # Try to find task in existing list
+        found = False
+        for task in state.tasks:
+            if task.get('task_id') == task_id or task.get('id') == task_id:
+                state.selected_task = task
+                state.show_task_detail = True
+                found = True
+                break
+
+        # If not found, try to load it from API
+        if not found:
+            try:
+                with httpx.Client(timeout=10.0) as client:
+                    response = client.get(f"{api_base_url}/api/tasks/{task_id}")
+                    if response.status_code == 200:
+                        state.selected_task = response.json()
+                        state.show_task_detail = True
+                    else:
+                        state.error_message = f"Task {task_id} not found"
+            except Exception:
+                state.error_message = f"Failed to load task {task_id}"
 
     @ctrl.trigger("delete_task")
     def delete_task():

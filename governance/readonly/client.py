@@ -1,10 +1,4 @@
-"""
-ChromaDB Read-Only Client
-Created: 2024-12-25 (P7.5)
-Modularized: 2026-01-02 (RULE-032)
-
-Main read-only client that redirects writes to TypeDB.
-"""
+"""ChromaDB Read-Only Client. Redirects writes to TypeDB. Created: 2024-12-25."""
 import re
 import warnings
 from typing import Dict, Any, List
@@ -14,45 +8,17 @@ from governance.data_router import DataRouter, create_data_router
 from governance.readonly.models import DeprecationResult
 from governance.readonly.collection import ReadOnlyCollection
 
-
 class ChromaReadOnly:
-    """
-    ChromaDB Read-Only Wrapper.
-
-    Provides ChromaDB-compatible interface while:
-    - Allowing all read operations
-    - Deprecating and redirecting write operations to TypeDB
-    - Logging deprecation warnings
-
-    Example:
-        client = ChromaReadOnly()
-        results = client.query("governance", "rule compliance")
-
-        # Deprecated but redirects to TypeDB:
-        client.add("rules", ["new rule"], ["RULE-099"])
-    """
+    """ChromaDB wrapper: reads allowed, writes deprecated and redirected to TypeDB."""
 
     # ID patterns for type detection
     RULE_PATTERN = re.compile(r'^RULE-\d{3}$')
     DECISION_PATTERN = re.compile(r'^DECISION-\d{3}$')
     SESSION_PATTERN = re.compile(r'^SESSION-\d{4}-\d{2}-\d{2}')
 
-    def __init__(
-        self,
-        chroma_host: str = "localhost",
-        chroma_port: int = 8001,
-        log_deprecations: bool = True,
-        skip_connection: bool = False
-    ):
-        """
-        Initialize ChromaDB Read-Only Wrapper.
-
-        Args:
-            chroma_host: ChromaDB host
-            chroma_port: ChromaDB port
-            log_deprecations: Log deprecation warnings
-            skip_connection: Skip actual ChromaDB connection (for testing)
-        """
+    def __init__(self, chroma_host: str = "localhost", chroma_port: int = 8001,
+                 log_deprecations: bool = True, skip_connection: bool = False):
+        """Initialize ChromaDB Read-Only Wrapper."""
         self.chroma_host = chroma_host
         self.chroma_port = chroma_port
         self.log_deprecations = log_deprecations
@@ -109,29 +75,9 @@ class ChromaReadOnly:
         else:
             return 'document'
 
-    # =========================================================================
-    # READ OPERATIONS (Allowed)
-    # =========================================================================
-
-    def query(
-        self,
-        collection: str,
-        query_text: str,
-        n_results: int = 10,
-        **kwargs
-    ) -> Dict[str, Any]:
-        """
-        Query a collection (allowed).
-
-        Args:
-            collection: Collection name
-            query_text: Query text
-            n_results: Number of results
-            **kwargs: Additional query parameters
-
-        Returns:
-            Query results
-        """
+    def query(self, collection: str, query_text: str, n_results: int = 10,
+              **kwargs) -> Dict[str, Any]:
+        """Query a collection (allowed)."""
         if self.skip_connection:
             return {
                 'ids': [],
@@ -162,23 +108,8 @@ class ChromaReadOnly:
         except Exception as e:
             return {'error': str(e)}
 
-    def get(
-        self,
-        collection: str,
-        ids: List[str],
-        **kwargs
-    ) -> Dict[str, Any]:
-        """
-        Get documents by ID (allowed).
-
-        Args:
-            collection: Collection name
-            ids: Document IDs
-            **kwargs: Additional parameters
-
-        Returns:
-            Documents
-        """
+    def get(self, collection: str, ids: List[str], **kwargs) -> Dict[str, Any]:
+        """Get documents by ID (allowed)."""
         if self.skip_connection:
             return {
                 'ids': ids,
@@ -200,12 +131,7 @@ class ChromaReadOnly:
             return {'error': str(e)}
 
     def list_collections(self) -> List[str]:
-        """
-        List all collections (allowed).
-
-        Returns:
-            List of collection names
-        """
+        """List all collections (allowed)."""
         if self.skip_connection:
             return []
 
@@ -220,42 +146,12 @@ class ChromaReadOnly:
             return []
 
     def get_collection(self, name: str) -> ReadOnlyCollection:
-        """
-        Get a collection wrapper (allowed).
-
-        Args:
-            name: Collection name
-
-        Returns:
-            ReadOnlyCollection wrapper
-        """
+        """Get a collection wrapper (allowed)."""
         return ReadOnlyCollection(name, self)
 
-    # =========================================================================
-    # WRITE OPERATIONS (Deprecated, Redirect to TypeDB)
-    # =========================================================================
-
-    def add(
-        self,
-        collection: str,
-        documents: List[str],
-        ids: List[str],
-        metadatas: List[Dict] = None,
-        **kwargs
-    ) -> Dict[str, Any]:
-        """
-        Add documents (DEPRECATED - redirects to TypeDB).
-
-        Args:
-            collection: Collection name
-            documents: Documents to add
-            ids: Document IDs
-            metadatas: Optional metadata
-            **kwargs: Additional parameters
-
-        Returns:
-            Deprecation result with redirect info
-        """
+    def add(self, collection: str, documents: List[str], ids: List[str],
+            metadatas: List[Dict] = None, **kwargs) -> Dict[str, Any]:
+        """Add documents (DEPRECATED - redirects to TypeDB)."""
         self._log_deprecation(
             "add",
             f"Adding {len(documents)} documents to {collection}"
@@ -302,27 +198,9 @@ class ChromaReadOnly:
             message=f"Redirected {len(ids)} documents to TypeDB"
         ))
 
-    def update(
-        self,
-        collection: str,
-        documents: List[str],
-        ids: List[str],
-        metadatas: List[Dict] = None,
-        **kwargs
-    ) -> Dict[str, Any]:
-        """
-        Update documents (DEPRECATED - redirects to TypeDB).
-
-        Args:
-            collection: Collection name
-            documents: Updated documents
-            ids: Document IDs
-            metadatas: Optional metadata
-            **kwargs: Additional parameters
-
-        Returns:
-            Deprecation result
-        """
+    def update(self, collection: str, documents: List[str], ids: List[str],
+               metadatas: List[Dict] = None, **kwargs) -> Dict[str, Any]:
+        """Update documents (DEPRECATED - redirects to TypeDB)."""
         self._log_deprecation(
             "update",
             f"Updating {len(documents)} documents in {collection}"
@@ -331,26 +209,8 @@ class ChromaReadOnly:
         # For updates, we re-route as adds (TypeDB handles upsert)
         return self.add(collection, documents, ids, metadatas, **kwargs)
 
-    def delete(
-        self,
-        collection: str,
-        ids: List[str],
-        **kwargs
-    ) -> Dict[str, Any]:
-        """
-        Delete documents (DEPRECATED - not redirected).
-
-        Note: Delete operations are logged but not redirected to TypeDB.
-        TypeDB deletions should be handled explicitly through governance tools.
-
-        Args:
-            collection: Collection name
-            ids: Document IDs to delete
-            **kwargs: Additional parameters
-
-        Returns:
-            Deprecation result
-        """
+    def delete(self, collection: str, ids: List[str], **kwargs) -> Dict[str, Any]:
+        """Delete documents (DEPRECATED - logged but not redirected)."""
         self._log_deprecation(
             "delete",
             f"Deleting {len(ids)} documents from {collection}"
@@ -365,17 +225,8 @@ class ChromaReadOnly:
                     f"Use governance tools for TypeDB deletions."
         ))
 
-    # =========================================================================
-    # STATUS
-    # =========================================================================
-
     def get_deprecation_status(self) -> Dict[str, Any]:
-        """
-        Get deprecation status.
-
-        Returns:
-            Status dict with deprecation info
-        """
+        """Get deprecation status."""
         return {
             'writes_deprecated': True,
             'reads_allowed': True,
@@ -385,23 +236,9 @@ class ChromaReadOnly:
             'message': 'ChromaDB writes are deprecated. Use TypeDB via DataRouter.'
         }
 
-
-def create_readonly_client(
-    skip_connection: bool = False,
-    log_deprecations: bool = True,
-    **kwargs
-) -> ChromaReadOnly:
-    """
-    Factory function to create read-only ChromaDB client.
-
-    Args:
-        skip_connection: Skip actual ChromaDB connection
-        log_deprecations: Log deprecation warnings
-        **kwargs: Additional options
-
-    Returns:
-        ChromaReadOnly instance
-    """
+def create_readonly_client(skip_connection: bool = False, log_deprecations: bool = True,
+                           **kwargs) -> ChromaReadOnly:
+    """Factory function to create read-only ChromaDB client."""
     return ChromaReadOnly(
         skip_connection=skip_connection,
         log_deprecations=log_deprecations,

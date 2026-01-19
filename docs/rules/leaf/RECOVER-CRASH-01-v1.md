@@ -77,7 +77,7 @@ tail -f ~/.config/Code/logs/*/window1/exthost/Anthropic.claude-code/*.log
 After any crash with exit code 1:
 
 1. [ ] Read crash report: `grep -i error ~/.config/Code/logs/*/window1/exthost/Anthropic.claude-code/*.log | tail -20`
-2. [ ] Check MCP health: `governance_health()`
+2. [ ] Check MCP health: `health_check()`
 3. [ ] Verify claude-mem: `chroma_health()`
 4. [ ] Recover context: `chroma_recover_context(project="sim-ai")`
 5. [ ] Check TODO.md for last work

@@ -16,19 +16,25 @@ class EntropyChecker:
     """
     Monitors session entropy (context accumulation) and suggests saves.
 
+    Per GAP-CONTEXT-EFFICIENCY-001, TACTIC-3-B:
     Since Claude Code does NOT expose context usage APIs, uses heuristics:
     - Tool call count (proxy for context accumulation)
     - Session duration (time-based accumulation)
 
     Thresholds:
-    - 50 tool calls: First warning (LOW)
-    - 100 tool calls: Strong suggestion (HIGH)
+    - 50 tool calls: First warning (MEDIUM) - consider saving
+    - 100 tool calls: Strong suggestion (HIGH) - save now
+    - 150 tool calls: Critical warning (CRITICAL) - stop and save
     - 60 minutes: Time-based reminder
     """
 
-    LOW_THRESHOLD = 50      # First gentle reminder
-    HIGH_THRESHOLD = 100    # Strong save suggestion
-    TIME_THRESHOLD = 60     # Minutes before time-based reminder
+    MEDIUM_THRESHOLD = 50     # First gentle reminder
+    HIGH_THRESHOLD = 100      # Strong save suggestion
+    CRITICAL_THRESHOLD = 150  # STOP and save immediately
+    TIME_THRESHOLD = 60       # Minutes before time-based reminder
+
+    # Alias for backwards compatibility
+    LOW_THRESHOLD = MEDIUM_THRESHOLD
 
     def __init__(self, config: Optional[HookConfig] = None):
         """
@@ -84,9 +90,11 @@ class EntropyChecker:
 
         tool_count = state.get("tool_count", 0)
 
-        if tool_count >= self.HIGH_THRESHOLD:
+        if tool_count >= self.CRITICAL_THRESHOLD:
+            return HealthLevel.CRITICAL
+        elif tool_count >= self.HIGH_THRESHOLD:
             return HealthLevel.HIGH
-        elif tool_count >= self.LOW_THRESHOLD:
+        elif tool_count >= self.MEDIUM_THRESHOLD:
             return HealthLevel.MEDIUM
         else:
             return HealthLevel.LOW
@@ -109,8 +117,19 @@ class EntropyChecker:
         message = None
         resolution_path = "Run /save to preserve context"
 
+        # CRITICAL threshold - STOP and save (every 25 calls)
+        if tool_count >= self.CRITICAL_THRESHOLD and tool_count - last_warning_at >= 25:
+            warning_level = "CRITICAL"
+            message = (
+                f"[CONTEXT ENTROPY CRITICAL] {tool_count} tool calls, {int(session_minutes)}m session.\n"
+                f"SAVE CONTEXT NOW! Use chroma_save_session_context() before compaction."
+            )
+            state["last_warning_at"] = tool_count
+            state["warnings_shown"] = warnings_shown + 1
+            resolution_path = "CRITICAL: Save to ChromaDB immediately"
+
         # HIGH threshold - strong suggestion (but don't spam)
-        if tool_count >= self.HIGH_THRESHOLD and tool_count - last_warning_at >= 20:
+        elif tool_count >= self.HIGH_THRESHOLD and tool_count - last_warning_at >= 20:
             warning_level = "HIGH"
             message = (
                 f"[CONTEXT ENTROPY HIGH] {tool_count} tool calls, {int(session_minutes)}m session.\n"
@@ -120,9 +139,9 @@ class EntropyChecker:
             state["last_warning_at"] = tool_count
             state["warnings_shown"] = warnings_shown + 1
 
-        # LOW threshold - first gentle reminder
-        elif tool_count >= self.LOW_THRESHOLD and warnings_shown == 0:
-            warning_level = "LOW"
+        # MEDIUM threshold - first gentle reminder
+        elif tool_count >= self.MEDIUM_THRESHOLD and warnings_shown == 0:
+            warning_level = "MEDIUM"
             message = (
                 f"[CONTEXT CHECKPOINT] {tool_count} tool calls.\n"
                 f"Consider /save at natural breakpoints."
@@ -214,3 +233,76 @@ class EntropyChecker:
             "last_save": state.get("last_save"),
             "session_hash": state.get("session_hash", "0000")
         }
+
+
+# =============================================================================
+# CLI ENTRY POINT (for PostToolUse hooks)
+# =============================================================================
+
+def main():
+    """
+    CLI entry point for entropy monitoring.
+
+    Usage:
+        python entropy.py --increment    # Increment and check (PostToolUse)
+        python entropy.py --status       # Get current status
+        python entropy.py --reset        # Reset for new session
+
+    Exit codes:
+        0 - OK (no warning)
+        1 - Warning issued (non-blocking)
+        2 - Error
+    """
+    import argparse
+    import sys
+
+    parser = argparse.ArgumentParser(description="Entropy monitoring for Claude Code")
+    parser.add_argument("--increment", action="store_true", help="Increment tool count and check")
+    parser.add_argument("--status", action="store_true", help="Get current entropy status")
+    parser.add_argument("--reset", action="store_true", help="Reset entropy state")
+    parser.add_argument("--quiet", "-q", action="store_true", help="Suppress OK messages")
+
+    args = parser.parse_args()
+
+    try:
+        checker = EntropyChecker()
+
+        if args.increment:
+            result = checker.increment_and_check()
+            if result.is_warning:
+                print(result.message)
+                sys.exit(1)  # Non-blocking warning
+            elif not args.quiet:
+                status = checker.get_status()
+                print(f"[ENTROPY {status['entropy'].upper()}] {status['tool_count']} calls")
+            sys.exit(0)
+
+        elif args.status:
+            status = checker.get_status()
+            print(f"Entropy: {status['entropy']}")
+            print(f"Tool calls: {status['tool_count']}")
+            print(f"Session: {status['minutes']} minutes")
+            if status['last_save']:
+                print(f"Last save: {status['last_save']}")
+            sys.exit(0)
+
+        elif args.reset:
+            checker.reset()
+            print("Entropy state reset for new session")
+            sys.exit(0)
+
+        else:
+            # Default: just check without incrementing
+            result = checker.check()
+            if result.is_warning:
+                print(result.message)
+                sys.exit(1)
+            sys.exit(0)
+
+    except Exception as e:
+        print(f"Error: {e}", file=sys.stderr)
+        sys.exit(2)
+
+
+if __name__ == "__main__":
+    main()

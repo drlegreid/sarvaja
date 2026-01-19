@@ -1,0 +1,18 @@
+{
+  "rule": {
+    "id": "RULE-012",
+    "name": "Deep Sleep Protocol (DSP)",
+    "category": "workflow",
+    "priority": "HIGH",
+    "status": "ACTIVE",
+    "directive": "Periodically invoke DSP for deliberate technical backlog hygiene with MCP integration.",
+    "rule_type": "OPERATIONAL",
+    "semantic_id": "SESSION-DSM-01-v1",
+    "created_date": null
+  },
+  "archived_at": "2026-01-17T20:54:43.892778",
+  "reason": "deleted",
+  "archived_from_db": "sim-ai-governance",
+  "dependencies": [],
+  "dependents": []
+}

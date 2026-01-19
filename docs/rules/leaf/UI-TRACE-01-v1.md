@@ -20,7 +20,7 @@ UI MUST include a bottom bar displaying technical traces for developer visibilit
 | `api_call` | HTTP API request | `GET /api/rules - 200 OK - 150ms` |
 | `ui_action` | User interface action | `click on rules_table` |
 | `error` | Error occurrence | `ERROR: Connection timeout` |
-| `mcp_call` | MCP tool invocation | `governance_query_rules - OK - 85ms` |
+| `mcp_call` | MCP tool invocation | `rules_query - OK - 85ms` |
 
 ---
 

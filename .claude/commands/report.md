@@ -1,6 +1,6 @@
 ---
 description: Generate session closure report with Zen koan and GitHub issue template
-allowed-tools: mcp__governance-sessions__governance_list_sessions, mcp__governance-tasks__governance_list_all_tasks, Bash
+allowed-tools: mcp__gov-sessions__sessions_list, mcp__gov-tasks__tasks_list, Bash
 ---
 
 # /report - Session Closure Protocol

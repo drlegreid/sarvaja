@@ -1,4 +1,4 @@
-# Governance Rules Index - Sim.ai
+# Governance Rules Index
 
 Rules governing process, documentation, and agent collaboration.
 

@@ -25,14 +25,44 @@ def register_sessions_controllers(state: Any, ctrl: Any, api_base_url: str) -> N
         api_base_url: Base URL for API calls
     """
 
-    @ctrl.set("select_session")
+    @ctrl.trigger("select_session")
     def select_session(session_id):
-        """Handle session selection for detail view."""
+        """Handle session selection for detail view.
+
+        Per GAP-UI-SESSION-TASKS-001: Also load tasks linked to this session.
+        Uses @ctrl.trigger to match trigger() call from Vue click handler.
+        """
         for session in state.sessions:
             if session.get('session_id') == session_id or session.get('id') == session_id:
                 state.selected_session = session
                 state.show_session_detail = True
+                # Load session tasks (GAP-DATA-INTEGRITY-001 Phase 3)
+                load_session_tasks(session_id)
                 break
+
+    def load_session_tasks(session_id):
+        """Load tasks linked to a session via completed-in relation.
+
+        Per GAP-DATA-INTEGRITY-001 Phase 3: UI navigation for relationships.
+        Per GAP-UI-SESSION-TASKS-001: Fetch tasks from API endpoint.
+        """
+        if not session_id:
+            return
+        try:
+            state.session_tasks_loading = True
+            state.session_tasks = []
+            with httpx.Client(timeout=10.0) as client:
+                response = client.get(f"{api_base_url}/api/sessions/{session_id}/tasks")
+                if response.status_code == 200:
+                    data = response.json()
+                    state.session_tasks = data.get('tasks', [])
+                else:
+                    state.session_tasks = []
+            state.session_tasks_loading = False
+        except Exception as e:
+            state.session_tasks_loading = False
+            state.session_tasks = []
+            state.error_message = f"Failed to load session tasks: {str(e)}"
 
     @ctrl.set("close_session_detail")
     def close_session_detail():
@@ -89,10 +119,12 @@ def register_sessions_controllers(state: Any, ctrl: Any, api_base_url: str) -> N
 
                 if response.status_code in (200, 201):
                     state.status_message = f"Session {'created' if state.session_form_mode == 'create' else 'updated'} successfully"
-                    # Reload sessions from API
-                    sessions_response = client.get(f"{api_base_url}/api/sessions")
+                    # Reload sessions from API (per GAP-EXPLOR-API-001: now returns paginated response)
+                    sessions_response = client.get(f"{api_base_url}/api/sessions?limit=100")
                     if sessions_response.status_code == 200:
-                        state.sessions = sessions_response.json()
+                        data = sessions_response.json()
+                        # Handle paginated response (items) or raw list (backward compatibility)
+                        state.sessions = data.get("items", data) if isinstance(data, dict) else data
                 else:
                     state.has_error = True
                     state.error_message = f"API Error: {response.status_code} - {response.text}"
@@ -123,10 +155,12 @@ def register_sessions_controllers(state: Any, ctrl: Any, api_base_url: str) -> N
 
                 if response.status_code == 204:
                     state.status_message = f"Session {session_id} deleted successfully"
-                    # Reload sessions from API
-                    sessions_response = client.get(f"{api_base_url}/api/sessions")
+                    # Reload sessions from API (per GAP-EXPLOR-API-001: now returns paginated response)
+                    sessions_response = client.get(f"{api_base_url}/api/sessions?limit=100")
                     if sessions_response.status_code == 200:
-                        state.sessions = sessions_response.json()
+                        data = sessions_response.json()
+                        # Handle paginated response (items) or raw list (backward compatibility)
+                        state.sessions = data.get("items", data) if isinstance(data, dict) else data
                     state.show_session_detail = False
                     state.selected_session = None
                 else:
@@ -139,3 +173,48 @@ def register_sessions_controllers(state: Any, ctrl: Any, api_base_url: str) -> N
             state.has_error = True
             state.error_message = f"Failed to delete session: {str(e)}"
             state.status_message = f"Delete failed (offline mode): {str(e)}"
+
+    @ctrl.trigger("attach_evidence")
+    def attach_evidence(session_id: str, evidence_path: str):
+        """Attach evidence file to session via REST API.
+
+        Per P11.5: Session Evidence Attachments.
+        Per GAP-DATA-003: Evidence attachment functionality.
+        Moved from handlers/session_handlers.py per GAP-UI-SESSION-TASKS-001.
+        """
+        if not session_id or not evidence_path:
+            state.has_error = True
+            state.error_message = "Session ID and evidence path are required"
+            return
+
+        try:
+            state.evidence_attach_loading = True
+            with httpx.Client(timeout=10.0) as client:
+                response = client.post(
+                    f"{api_base_url}/api/sessions/{session_id}/evidence",
+                    json={"evidence_source": evidence_path}
+                )
+                if response.status_code == 201:
+                    state.status_message = f"Evidence attached: {evidence_path}"
+                    state.show_evidence_attach = False
+                    state.evidence_attach_path = ""
+
+                    # Refresh the selected session to show new evidence
+                    session_response = client.get(f"{api_base_url}/api/sessions?limit=100")
+                    if session_response.status_code == 200:
+                        data = session_response.json()
+                        state.sessions = data.get("items", data) if isinstance(data, dict) else data
+                        # Update selected session with refreshed data
+                        for session in state.sessions:
+                            sid = session.get('session_id') or session.get('id')
+                            if sid == session_id:
+                                state.selected_session = session
+                                break
+                else:
+                    state.has_error = True
+                    state.error_message = f"Failed to attach evidence: {response.status_code}"
+            state.evidence_attach_loading = False
+        except Exception as e:
+            state.evidence_attach_loading = False
+            state.has_error = True
+            state.error_message = f"Failed to attach evidence: {str(e)}"

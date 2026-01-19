@@ -17,7 +17,7 @@ class TaskDetailOperations:
 
     Handles task detail sections: business, design, architecture, test.
 
-    Requires a client with _execute_query, _client, database, get_task attributes.
+    Requires a client with _execute_query, _driver, database, get_task attributes.
     Uses mixin pattern for TypeDBClient composition.
     """
 
@@ -130,7 +130,7 @@ class TaskDetailOperations:
         Returns:
             True if update succeeded, False otherwise
         """
-        from typedb.driver import SessionType, TransactionType
+        from typedb.driver import TransactionType
 
         # Verify task exists
         task = self.get_task(task_id)
@@ -142,30 +142,28 @@ class TaskDetailOperations:
         content_escaped = content.replace('\\', '\\\\').replace('"', '\\"')
 
         try:
-            with self._client.session(self.database, SessionType.DATA) as session:
-                with session.transaction(TransactionType.WRITE) as tx:
-                    # Delete existing attribute if present
-                    delete_query = f"""
-                        match
-                            $t isa task, has task-id "{task_id}";
-                            $t has {attribute} $old;
-                        delete
-                            $t has $old;
-                    """
-                    try:
-                        tx.query.delete(delete_query)
-                    except Exception:
-                        pass  # Attribute may not exist
+            with self._driver.transaction(self.database, TransactionType.WRITE) as tx:
+                # Delete existing attribute if present (TypeDB 3.x: has $var of $entity)
+                delete_query = f"""
+                    match
+                        $t isa task, has task-id "{task_id}", has {attribute} $old;
+                    delete
+                        has $old of $t;
+                """
+                try:
+                    tx.query(delete_query).resolve()
+                except Exception:
+                    pass  # Attribute may not exist
 
-                    # Insert new attribute
-                    insert_query = f"""
-                        match
-                            $t isa task, has task-id "{task_id}";
-                        insert
-                            $t has {attribute} "{content_escaped}";
-                    """
-                    tx.query.insert(insert_query)
-                    tx.commit()
+                # Insert new attribute
+                insert_query = f"""
+                    match
+                        $t isa task, has task-id "{task_id}";
+                    insert
+                        $t has {attribute} "{content_escaped}";
+                """
+                tx.query(insert_query).resolve()
+                tx.commit()
             return True
         except Exception as e:
             print(f"Failed to update {attribute} for task {task_id}: {e}")
