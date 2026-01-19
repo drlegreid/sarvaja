@@ -68,11 +68,52 @@ def _get_default_format() -> OutputFormat:
     return OutputFormat.JSON
 
 
+# Default array limit for context efficiency (GAP-CONTEXT-ROT-001)
+DEFAULT_MAX_ARRAY_ITEMS = int(os.getenv("MCP_MAX_ARRAY_ITEMS", "30"))
+
+
+def _truncate_arrays(data: Any, max_items: int) -> Any:
+    """Recursively truncate arrays in data structure.
+
+    Per GAP-CONTEXT-ROT-001: Prevent context rot from large array responses.
+
+    Args:
+        data: Data structure to process
+        max_items: Maximum items per array
+
+    Returns:
+        Data with arrays truncated, includes _truncated markers
+    """
+    if isinstance(data, list):
+        if len(data) > max_items:
+            truncated = data[:max_items]
+            return truncated + [{"_truncated": True, "_total": len(data), "_shown": max_items}]
+        return [_truncate_arrays(item, max_items) for item in data]
+    elif isinstance(data, dict):
+        result = {}
+        for key, value in data.items():
+            # Special handling for common array keys
+            if key in ("rules", "tasks", "agents", "sessions", "gaps", "archives",
+                       "activities", "proposals", "decisions", "items", "results"):
+                if isinstance(value, list) and len(value) > max_items:
+                    result[key] = value[:max_items]
+                    result[f"_{key}_truncated"] = True
+                    result[f"_{key}_total"] = len(value)
+                    result[f"_{key}_shown"] = max_items
+                else:
+                    result[key] = _truncate_arrays(value, max_items)
+            else:
+                result[key] = _truncate_arrays(value, max_items)
+        return result
+    return data
+
+
 def format_output(
     data: Any,
     format: OutputFormat = OutputFormat.AUTO,
     indent: int = 2,
-    ensure_ascii: bool = False
+    ensure_ascii: bool = False,
+    max_array_items: Optional[int] = None
 ) -> str:
     """Format data for MCP tool output.
 
@@ -81,6 +122,8 @@ def format_output(
         format: Output format (JSON, TOON, or AUTO)
         indent: JSON indentation (ignored for TOON)
         ensure_ascii: Escape non-ASCII characters (JSON only)
+        max_array_items: Max items per array (None = use DEFAULT_MAX_ARRAY_ITEMS,
+                         0 = no truncation). Per GAP-CONTEXT-ROT-001.
 
     Returns:
         Formatted string (JSON or TOON)
@@ -92,6 +135,12 @@ def format_output(
         >>> format_output({"rules": 50}, format=OutputFormat.TOON)
         'rules: 50'
     """
+    # Apply array truncation for context efficiency
+    if max_array_items is None:
+        max_array_items = DEFAULT_MAX_ARRAY_ITEMS
+    if max_array_items > 0:
+        data = _truncate_arrays(data, max_array_items)
+
     # Resolve AUTO format
     if format == OutputFormat.AUTO:
         format = _get_default_format()

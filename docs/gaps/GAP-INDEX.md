@@ -18,8 +18,9 @@
 |----|--------|-----|----------|----------|----------|
 | GAP-CONTEXT-EFFICIENCY-001 | RESOLVED | 100% context burn on MCP troubleshooting - pre-flight validation + entropy monitoring | HIGH | stability | [evidence/GAP-CONTEXT-EFFICIENCY-001.md](evidence/GAP-CONTEXT-EFFICIENCY-001.md) |
 | GAP-ENTROPY-HOOK-001 | RESOLVED | PostToolUse hook missing - entropy counter never incremented | HIGH | infrastructure | [evidence/GAP-ENTROPY-HOOK-001.md](evidence/GAP-ENTROPY-HOOK-001.md) |
+| GAP-CONTEXT-ROT-001 | RESOLVED | Context rot from large MCP arrays - array truncation + aggressive warnings | HIGH | stability | [evidence/GAP-CONTEXT-ROT-001.md](evidence/GAP-CONTEXT-ROT-001.md) |
 
-**Resolution:** TACTIC-1 (pre-flight MCP validation), TACTIC-2 (pre-commit guard, unit tests), TACTIC-3 (entropy monitoring, CONTEXT-SAVE-01-v1 rule). GAP-ENTROPY-HOOK-001: Added PostToolUse hook + standalone CLI wrapper.
+**Resolution:** TACTIC-1 (pre-flight MCP validation), TACTIC-2 (pre-commit guard, unit tests), TACTIC-3 (entropy monitoring, CONTEXT-SAVE-01-v1 rule). GAP-ENTROPY-HOOK-001: Added PostToolUse hook + standalone CLI wrapper. GAP-CONTEXT-ROT-001: Added array truncation (30 items default), reduced CRITICAL interval to 10 calls, pre-prompt entropy check.
 
 ---
 

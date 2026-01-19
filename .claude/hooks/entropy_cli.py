@@ -94,18 +94,24 @@ def increment_and_check(quiet: bool = False) -> int:
     warning_msg = None
     exit_code = 0
 
-    # CRITICAL threshold - STOP and save (every 25 calls after threshold)
-    if tool_count >= CRITICAL_THRESHOLD and tool_count - last_warning_at >= 25:
+    # CRITICAL threshold - STOP and save (every 10 calls after threshold)
+    # Reduced interval for aggressive warning at critical level
+    # Also triggers immediately on first crossing into CRITICAL
+    is_first_critical = tool_count >= CRITICAL_THRESHOLD and last_warning_at < CRITICAL_THRESHOLD
+    is_critical_interval = tool_count >= CRITICAL_THRESHOLD and tool_count - last_warning_at >= 10
+
+    if is_first_critical or is_critical_interval:
         warning_msg = (
-            f"[CONTEXT ENTROPY CRITICAL] {tool_count} tool calls, {session_minutes}m session.\n"
-            f"SAVE CONTEXT NOW! Use chroma_save_session_context() before compaction."
+            f"⚠️ [CONTEXT ENTROPY CRITICAL] {tool_count} tool calls, {session_minutes}m session.\n"
+            f"🛑 SAVE CONTEXT NOW! Use chroma_save_session_context() before compaction.\n"
+            f"💡 Run /entropy to check status, /save to preserve work."
         )
         state["last_warning_at"] = tool_count
         state["warnings_shown"] = warnings_shown + 1
         exit_code = 1
 
-    # HIGH threshold - strong suggestion (every 20 calls)
-    elif tool_count >= HIGH_THRESHOLD and tool_count - last_warning_at >= 20:
+    # HIGH threshold - strong suggestion (every 15 calls, reduced from 20)
+    elif tool_count >= HIGH_THRESHOLD and tool_count - last_warning_at >= 15:
         warning_msg = (
             f"[CONTEXT ENTROPY HIGH] {tool_count} tool calls, {session_minutes}m session.\n"
             f"Run /save before complex tasks to preserve context."

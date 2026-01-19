@@ -43,8 +43,33 @@ def output_json(context: str) -> None:
     print(json.dumps(output))
 
 
+def check_entropy() -> tuple[str, str]:
+    """Check entropy state and return (level, warning_msg or empty)."""
+    try:
+        HOOKS_DIR = Path(__file__).parent
+        STATE_FILE = HOOKS_DIR / ".entropy_state.json"
+
+        if not STATE_FILE.exists():
+            return "LOW", ""
+
+        state = json.loads(STATE_FILE.read_text())
+        tool_count = state.get("tool_count", 0)
+
+        # Thresholds
+        CRITICAL = 150
+        HIGH = 100
+
+        if tool_count >= CRITICAL:
+            return "CRITICAL", f"⚠️ [ENTROPY CRITICAL] {tool_count} tool calls - SAVE NOW!"
+        elif tool_count >= HIGH:
+            return "HIGH", f"[ENTROPY HIGH] {tool_count} tool calls - consider /save"
+        return "OK", ""
+    except Exception:
+        return "UNKNOWN", ""
+
+
 def main():
-    """Quick health check - only warn if services down."""
+    """Quick health check - warn if services down OR entropy high."""
     try:
         # Add project root to path for shared module
         PROJECT_ROOT = Path(__file__).parent.parent.parent
@@ -52,16 +77,23 @@ def main():
 
         from governance.health import check_all_services, are_core_services_healthy, get_failed_services
 
-        services = check_all_services()
+        warnings = []
 
-        if are_core_services_healthy(services):
-            # All good - silent output (no context injection)
-            output_json("")
-        else:
-            # Services down - warn
+        # Check services
+        services = check_all_services()
+        if not are_core_services_healthy(services):
             failed = get_failed_services(services)
-            context = f"[HEALTH WARN] Down: {', '.join(failed)} | Run: podman compose --profile cpu up -d"
-            output_json(context)
+            warnings.append(f"[HEALTH WARN] Down: {', '.join(failed)} | Run: podman compose --profile cpu up -d")
+
+        # Check entropy (CRITICAL pre-warning)
+        entropy_level, entropy_msg = check_entropy()
+        if entropy_msg:
+            warnings.append(entropy_msg)
+
+        if warnings:
+            output_json(" | ".join(warnings))
+        else:
+            output_json("")
 
     except Exception as e:
         # Don't block on errors
