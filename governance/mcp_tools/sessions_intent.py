@@ -1,5 +1,4 @@
 """
-from governance.mcp_tools.common import format_mcp_result
 Session Intent MCP Tools
 ========================
 Session intent and outcome capture operations.
@@ -13,6 +12,8 @@ Created: 2026-01-10
 
 import json
 from typing import Optional
+
+from governance.mcp_tools.common import format_mcp_result
 
 # Import session collector (with fallback)
 try:
