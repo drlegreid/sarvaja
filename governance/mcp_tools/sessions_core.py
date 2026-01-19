@@ -1,6 +1,7 @@
 """Session Core MCP Tools. Per RULE-012: DSP Semantic Code Structure."""
-import json
 from typing import Optional
+
+from governance.mcp_tools.common import format_mcp_result
 
 # Import session collector (with fallback)
 try:
