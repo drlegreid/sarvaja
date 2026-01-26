@@ -2,7 +2,7 @@
 
 **Status:** PARTIAL | **Priority:** HIGH | **Category:** Testing Strategy
 **Created:** 2026-01-21 | **Updated:** 2026-01-26 | **Source:** User Request
-**Migration Progress:** 77% (1706/2217 tests)
+**Migration Progress:** 78% (1725/2217 tests)
 **Reference:** https://github.com/robotframework/robotframework
 
 ---
@@ -84,7 +84,7 @@ Migrate all tests to Robot Framework using BDD approach. Apply enterprise test w
 | RF-004 | Migrate unit tests (88 .robot files) | MEDIUM | ✅ DONE (1279 tests) | RF-002 |
 | RF-005 | Migrate chat tests (subset of pytest) | MEDIUM | DEFERRED | RF-002 |
 | RF-006 | Migrate e2e tests (4 .robot files) | HIGH | ✅ DONE (35 tests) | RF-002 |
-| RF-007 | Migrate remaining tests | MEDIUM | ⚠️ 77% migrated | RF-002 |
+| RF-007 | Migrate remaining tests | MEDIUM | ⚠️ 78% migrated | RF-002 |
 | RF-008 | Implement evidence collection | HIGH | ✅ DONE | RF-002 |
 | RF-009 | Configure CI/CD integration | MEDIUM | ✅ DONE | RF-001 |
 | RF-010 | Update test governance rules | HIGH | ✅ DONE | RF-003 |
@@ -92,10 +92,10 @@ Migrate all tests to Robot Framework using BDD approach. Apply enterprise test w
 
 **Audit 2026-01-26:**
 - pytest tests: 2217 total
-- Robot tests: **1706 tests (77% migrated)** - all pass
-- Unit tests: 109 .robot files in `tests/robot/unit/`
+- Robot tests: **1725 tests (78% migrated)** - all pass
+- Unit tests: 110 .robot files in `tests/robot/unit/`
 - E2E tests: 4 .robot files (35 tests) in `tests/robot/e2e/`
-- Libraries: 153 Python wrappers in `tests/libs/`
+- Libraries: 154 Python wrappers in `tests/libs/`
 - **Session 2026-01-26 (morning):** +10 test files migrated (task_crud_split, quality_analyzer_split, workspace_scanner_split, health, routes_chat_split, trame_ui, mcp_server_split, embedding_pipeline_split, hybrid_router, audit_trail)
 - **Session 2026-01-26 (continued):** +4 pytest files migrated:
   - test_context_preloader.py → 23 tests
@@ -106,6 +106,8 @@ Migrate all tests to Robot Framework using BDD approach. Apply enterprise test w
   - test_dsm_tracker_integration.py → 30 tests (6 split libs)
   - test_external_mcp_tools.py → 62 tests (6 split libs)
   - test_task_ui.py → 29 tests (5 split libs)
+- **Session 2026-01-26 (night):** +1 pytest file migrated (77%→78%):
+  - test_embedding_pipeline.py → 19 tests (1 lib)
 - Fixed: Browser library keyword compatibility (Page Should Contain)
 - Fixed: Invalid RF syntax (Run Keywords...OR, timeout= in Click, duplicate Tags)
 - Fixed: Skip If pattern to use safe dictionary access
