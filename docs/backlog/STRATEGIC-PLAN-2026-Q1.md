@@ -16,7 +16,7 @@ This document preserves strategic context across session compactions per RECOVER
 
 | Tier | Focus | Status | Risk |
 |------|-------|--------|------|
-| **1** | RF-007: Test Migration | **ACTIVE** (86%) | LOW |
+| **1** | RF-007: Test Migration | **ACTIVE** (88%) | LOW |
 | **2** | EPIC-EA: Enterprise Architecture | PLANNED | MEDIUM |
 | **3** | Deferred Items | STABLE | LOW |
 | **4** | Future R&D | ON HOLD | N/A |
@@ -26,8 +26,8 @@ This document preserves strategic context across session compactions per RECOVER
 ## Tier 1: RF-007 Robot Framework Migration
 
 **Goal:** 100% test migration to Robot Framework BDD
-**Progress:** 86% (1911/2217 tests)
-**Remaining:** 39 Playwright browser tests (need robotframework-browser)
+**Progress:** 88% (1950/2217 tests)
+**Remaining:** 0 - All identified pytest files migrated
 
 ### Completed Files (Phase 1)
 
@@ -56,13 +56,13 @@ This document preserves strategic context across session compactions per RECOVER
 | 14 | test_mcp_rest_sessions.py | 276 | 13 | integration | ✅ DONE |
 | 15 | test_archive.py | 301 | 13 | rules | ✅ DONE |
 | 16 | test_lacmus.py | 455 | 20 | benchmarks | ✅ DONE |
-| 17 | test_dashboard_e2e.py | 269 | 29 | browser-e2e | ⏸ PLAYWRIGHT |
-| 18 | test_session_task_navigation_e2e.py | 305 | 10 | browser-e2e | ⏸ PLAYWRIGHT |
+| 17 | test_dashboard_e2e.py | 269 | 29 | browser-e2e | ✅ DONE (dashboard_browser.robot) |
+| 18 | test_session_task_navigation_e2e.py | 305 | 10 | browser-e2e | ✅ DONE (session_task_navigation.robot) |
 | 19 | test_data_integrity_e2e.py | 385 | 9 | api-e2e | ✅ DONE (data_integrity.robot) |
 | 20 | test_platform_health_e2e.py | 387 | 7 | api-e2e | ✅ DONE (platform_health.robot) |
 | 21 | test_governance_crud_e2e.py | 1123 | 54 | api-e2e | ✅ DONE (governance_crud.robot) |
 
-**Note:** Browser E2E tests (Playwright) require robotframework-browser for migration. API E2E tests completed.
+**Note:** All 21 files migrated to Robot Framework. Browser E2E use robotframework-browser library.
 
 ### Migration Pattern (Per DOC-SIZE-01-v1)
 
@@ -155,6 +155,8 @@ On session start or compaction:
 | 2026-01-26 | RF-007 | +5 files: heuristics_example (16), platform_performance (12), typedb_functions (6), mcp_rest_sessions (13), archive (13) = 60 tests (83%→85%) |
 | 2026-01-26 | RF-007 | +1 file: lacmus (20) = 20 tests; E2E analysis: 3 files already done (data_integrity, platform_health, governance_crud) (85%→86%) |
 | 2026-01-26 | RF-007 | Created common.resource; Dry-run validation: 1871 unit tests pass |
+| 2026-01-26 | RF-007 | +2 browser E2E files: dashboard_browser (29), session_task_navigation (10) = 39 tests (86%→88%) |
+| 2026-01-26 | RF-007 | **MILESTONE: All 21 identified files migrated to Robot Framework** |
 
 ---
 
