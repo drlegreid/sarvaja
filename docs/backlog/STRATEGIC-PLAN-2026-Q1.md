@@ -16,7 +16,7 @@ This document preserves strategic context across session compactions per RECOVER
 
 | Tier | Focus | Status | Risk |
 |------|-------|--------|------|
-| **1** | RF-007: Test Migration | **ACTIVE** (81%) | LOW |
+| **1** | RF-007: Test Migration | **ACTIVE** (83%) | LOW |
 | **2** | EPIC-EA: Enterprise Architecture | PLANNED | MEDIUM |
 | **3** | Deferred Items | STABLE | LOW |
 | **4** | Future R&D | ON HOLD | N/A |
@@ -26,19 +26,43 @@ This document preserves strategic context across session compactions per RECOVER
 ## Tier 1: RF-007 Robot Framework Migration
 
 **Goal:** 100% test migration to Robot Framework BDD
-**Progress:** 81% (1801/2217 tests)
-**Remaining:** ~416 tests (all explicit pytest files now migrated)
+**Progress:** 83% (1831/2217 tests)
+**Remaining:** ~386 tests (191 tests in 11 remaining files)
 
-### Remaining Files (Priority Order)
+### Completed Files (Phase 1)
 
-| # | File | Lines | Est. Tests | Status |
-|---|------|-------|------------|--------|
+| # | File | Lines | Tests | Status |
+|---|------|-------|-------|--------|
 | 1 | test_dsm_tracker_integration.py | 564 | 30 | ✅ DONE |
 | 2 | test_external_mcp_tools.py | 736 | 62 | ✅ DONE |
 | 3 | test_task_ui.py | 542 | 29 | ✅ DONE |
 | 4 | test_embedding_pipeline.py | 297 | 19 | ✅ DONE |
 | 5 | test_chat.py | 414 | 33 | ✅ DONE (RF-005) |
 | 6 | test_langgraph_workflow.py | 629 | 43 | ✅ DONE |
+
+### Remaining Files (Phase 2 - Gap Analysis 2026-01-26)
+
+**Total Remaining:** 11 files, 191 tests
+
+| # | File | Lines | Tests | Category | Status |
+|---|------|-------|-------|----------|--------|
+| 7 | test_validation.py | 140 | 8 | rules | ✅ DONE |
+| 8 | test_integration.py | 107 | 6 | rules | ✅ DONE |
+| 9 | test_typedb3_connection.py | 165 | 10 | component | ✅ DONE |
+| 10 | test_typedb3_value_extraction.py | 153 | 6 | integration | ✅ DONE |
+| 11 | test_heuristics_example.py | 182 | 16 | heuristics | TODO |
+| 12 | test_platform_performance.py | 248 | 12 | heuristics | TODO |
+| 13 | test_typedb_functions.py | 265 | 6 | integration | TODO |
+| 14 | test_mcp_rest_sessions.py | 276 | 13 | integration | TODO |
+| 15 | test_archive.py | 301 | 13 | rules | TODO |
+| 16 | test_lacmus.py | 455 | 22 | benchmarks | TODO (split) |
+| 17 | test_dashboard_e2e.py | 269 | 29 | e2e | TODO |
+| 18 | test_session_task_navigation_e2e.py | 305 | 10 | e2e | TODO |
+| 19 | test_data_integrity_e2e.py | 385 | 9 | e2e | TODO |
+| 20 | test_platform_health_e2e.py | 387 | 7 | e2e | TODO |
+| 21 | test_governance_crud_e2e.py | 1123 | 54 | e2e | TODO (split) |
+
+**Note:** E2E category has partial Robot coverage in tests/robot/e2e/
 
 ### Migration Pattern (Per DOC-SIZE-01-v1)
 
@@ -126,6 +150,8 @@ On session start or compaction:
 | 2026-01-26 | RF-007 | +3 files: dsm_tracker_integration (30), external_mcp_tools (62), task_ui (29) = 121 tests (71%→77%) |
 | 2026-01-26 | RF-007 | +1 file: embedding_pipeline (19) = 19 tests (77%→78%) |
 | 2026-01-26 | RF-007 | +2 files: chat (33), langgraph_workflow (43) = 76 tests (78%→81%) |
+| 2026-01-26 | RF-007 | Gap analysis: 15 files, 221 tests remaining |
+| 2026-01-26 | RF-007 | +4 files: validation (8), integration (6), typedb3_connection (10), typedb3_value_extraction (6) = 30 tests (81%→83%) |
 
 ---
 
