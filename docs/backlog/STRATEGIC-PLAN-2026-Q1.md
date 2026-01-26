@@ -16,7 +16,7 @@ This document preserves strategic context across session compactions per RECOVER
 
 | Tier | Focus | Status | Risk |
 |------|-------|--------|------|
-| **1** | RF-007: Test Migration | **ACTIVE** (78%) | LOW |
+| **1** | RF-007: Test Migration | **ACTIVE** (81%) | LOW |
 | **2** | EPIC-EA: Enterprise Architecture | PLANNED | MEDIUM |
 | **3** | Deferred Items | STABLE | LOW |
 | **4** | Future R&D | ON HOLD | N/A |
@@ -26,8 +26,8 @@ This document preserves strategic context across session compactions per RECOVER
 ## Tier 1: RF-007 Robot Framework Migration
 
 **Goal:** 100% test migration to Robot Framework BDD
-**Progress:** 78% (1725/2217 tests)
-**Remaining:** ~492 tests across 2 files (+ 2 DEFERRED)
+**Progress:** 81% (1801/2217 tests)
+**Remaining:** ~416 tests (all explicit pytest files now migrated)
 
 ### Remaining Files (Priority Order)
 
@@ -37,8 +37,8 @@ This document preserves strategic context across session compactions per RECOVER
 | 2 | test_external_mcp_tools.py | 736 | 62 | ✅ DONE |
 | 3 | test_task_ui.py | 542 | 29 | ✅ DONE |
 | 4 | test_embedding_pipeline.py | 297 | 19 | ✅ DONE |
-| 5 | test_chat.py | ~400 | ~25 | DEFERRED (RF-005) |
-| 6 | test_langgraph_workflow.py | ~300 | ~20 | DEFERRED |
+| 5 | test_chat.py | 414 | 33 | ✅ DONE (RF-005) |
+| 6 | test_langgraph_workflow.py | 629 | 43 | ✅ DONE |
 
 ### Migration Pattern (Per DOC-SIZE-01-v1)
 
@@ -125,6 +125,7 @@ On session start or compaction:
 | 2026-01-26 | PLAN | Created STRATEGIC-PLAN-2026-Q1.md |
 | 2026-01-26 | RF-007 | +3 files: dsm_tracker_integration (30), external_mcp_tools (62), task_ui (29) = 121 tests (71%→77%) |
 | 2026-01-26 | RF-007 | +1 file: embedding_pipeline (19) = 19 tests (77%→78%) |
+| 2026-01-26 | RF-007 | +2 files: chat (33), langgraph_workflow (43) = 76 tests (78%→81%) |
 
 ---
 
