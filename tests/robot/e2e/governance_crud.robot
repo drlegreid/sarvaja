@@ -23,9 +23,12 @@ API Health Returns Status
     ${result}=    API Health Check
     ${healthy}=    Evaluate    $result.get('healthy', False)
     ${status_code}=    Set Variable    ${result}[status_code]
-    Should Be True    ${status_code} == 200 or ${status_code} == 503    Expected 200 or 503, got ${status_code}
-    Should Be True    'status' in $result
+    Should Be Equal As Integers    ${status_code}    200
+    ...    msg=Health check returned ${status_code}, expected 200 when services are running
+    Should Be Equal    ${result}[status]    ok
+    ...    msg=Expected status 'ok', got '${result.get("status", "MISSING")}'
     Should Be True    'typedb_connected' in $result
+    ...    msg=Health response missing 'typedb_connected' field
 
 # =============================================================================
 # Rules CRUD Tests
@@ -50,7 +53,8 @@ List Rules Via API
     Skip If    not ${typedb}    TypeDB not connected
     ${result}=    List Rules
     Should Be True    ${result}[success]    List failed: ${result}
-    Should Be True    ${result}[count] >= 0
+    Should Be True    ${result}[count] >= 30
+    ...    msg=Expected at least 30 rules (system has 36+), got ${result}[count]
 
 Update Rule Via API
     [Documentation]    Test updating a rule through API
@@ -103,7 +107,8 @@ List Tasks Via API
     [Tags]    e2e    crud    tasks
     ${result}=    List Tasks
     Should Be True    ${result}[success]    List failed: ${result}
-    Should Be True    ${result}[count] >= 0
+    Should Be True    ${result}[count] >= 10
+    ...    msg=Expected at least 10 tasks (system has 50+), got ${result}[count]
 
 Update Task Status Via API
     [Documentation]    Test updating task status through API
