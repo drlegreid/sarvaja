@@ -6,11 +6,13 @@ GAP-TEST-002: Test Reporting Modes
 - MEDIUM (default): Progress bar + summary counts
 - TRACE: Full logs for DEV isolated test runs
 - CERTIFICATION: Collects all evidence in /results directory
+- MINIMIZED: LLM-optimized trace output (per TEST-003)
 
 Usage:
     pytest tests/ --report-minimal           # Minimal mode (dots only)
     pytest tests/ --report-trace             # Trace mode (verbose -vv)
     pytest tests/ --report-cert              # Certification mode
+    pytest tests/ --report-minimized         # Minimized trace mode (TEST-003)
     pytest tests/ --report-cert --results-dir=custom  # Custom results dir
 """
 import json
@@ -18,10 +20,29 @@ import os
 import sys
 from datetime import datetime
 from pathlib import Path
-from typing import Generator
+from typing import Generator, Optional
 
 import pytest
 import httpx
+
+# Import trace minimizer for TEST-003 integration
+try:
+    from tests.evidence.trace_minimizer import (
+        TraceMinimizer,
+        MinimizedTrace,
+        ErrorCategory,
+        minimize_for_llm,
+    )
+    TRACE_MINIMIZER_AVAILABLE = True
+except ImportError:
+    TRACE_MINIMIZER_AVAILABLE = False
+
+# Import summary compressor for EPIC-TEST-COMPRESS-001
+try:
+    from tests.evidence.summary_compressor import SummaryCompressor
+    SUMMARY_COMPRESSOR_AVAILABLE = True
+except ImportError:
+    SUMMARY_COMPRESSOR_AVAILABLE = False
 
 # Service endpoints
 LITELLM_URL = os.getenv("LITELLM_URL", "http://localhost:4000")
@@ -183,6 +204,182 @@ class CertificationReporter:
         print(f"[CERT] {passed} passed, {failed} failed, {skipped} skipped")
 
 
+class TraceMinimizedReporter:
+    """
+    TEST-003: LLM-optimized trace minimization reporter.
+
+    Per RD-TESTING-STRATEGY TEST-003: Debug workflow trace minimization.
+
+    Compresses verbose test tracebacks to essential debugging info:
+    - Error classification (assertion, attribute, timeout, etc.)
+    - Stack frame filtering (removes pytest/framework internals)
+    - Message extraction (error core + relevant context)
+    - Token estimation for LLM context efficiency
+
+    Output format:
+      [ASSERTION] AssertionError: Expected ACTIVE but got INACTIVE
+        Location: test_rules.py:42 test_rule_creation()
+        Trace: CORR-20260121-ABC123
+    """
+
+    def __init__(self, config, max_frames: int = 3, max_message_length: int = 200):
+        self.config = config
+        self.passed = 0
+        self.failed = 0
+        self.skipped = 0
+        self.failed_tests: list = []
+        self.start_time = datetime.now()
+
+        # Initialize trace minimizer
+        self.minimizer: Optional[TraceMinimizer] = None
+        if TRACE_MINIMIZER_AVAILABLE:
+            self.minimizer = TraceMinimizer(
+                max_frames=max_frames,
+                max_message_length=max_message_length,
+                include_user_code_only=True
+            )
+
+        # Token tracking for LLM context efficiency
+        self.total_original_tokens = 0
+        self.total_minimized_tokens = 0
+
+    def pytest_runtest_logreport(self, report):
+        """Process test results and minimize failed tracebacks."""
+        if report.when == "call":
+            if report.passed:
+                sys.stdout.write(".")
+                self.passed += 1
+            elif report.failed:
+                sys.stdout.write("F")
+                self.failed += 1
+
+                # Minimize the traceback for LLM context efficiency
+                if self.minimizer and report.longrepr:
+                    minimized = self.minimizer.minimize_traceback(
+                        str(report.longrepr),
+                        test_id=report.nodeid,
+                    )
+                    self.failed_tests.append({
+                        "nodeid": report.nodeid,
+                        "minimized": minimized,
+                        "duration": report.duration,
+                    })
+                    self.total_original_tokens += minimized.original_tokens
+                    self.total_minimized_tokens += minimized.minimized_tokens
+                else:
+                    # Fallback if minimizer not available
+                    self.failed_tests.append({
+                        "nodeid": report.nodeid,
+                        "error": str(report.longrepr)[:500],
+                        "duration": report.duration,
+                    })
+        elif report.when == "setup" and report.skipped:
+            sys.stdout.write("S")
+            self.skipped += 1
+        sys.stdout.flush()
+
+    def pytest_sessionfinish(self, session):
+        """Print minimized failure summary."""
+        total = self.passed + self.failed + self.skipped
+        duration = (datetime.now() - self.start_time).total_seconds()
+
+        print(f"\n\n{'='*60}")
+        print(f"[MINIMIZED] Test Results ({duration:.1f}s)")
+        print(f"{'='*60}")
+        print(f"  {self.passed} passed, {self.failed} failed, {self.skipped} skipped ({total} total)")
+
+        # Show token savings if minimizer was used
+        if self.total_original_tokens > 0:
+            savings_pct = (1 - self.total_minimized_tokens / self.total_original_tokens) * 100
+            print(f"  Token savings: {self.total_original_tokens} → {self.total_minimized_tokens} ({savings_pct:.0f}% reduced)")
+
+        # Print minimized failures
+        if self.failed_tests:
+            print(f"\n{'='*60}")
+            print("[MINIMIZED] Failed Tests (LLM-optimized)")
+            print(f"{'='*60}\n")
+
+            for i, failure in enumerate(self.failed_tests, 1):
+                nodeid = failure["nodeid"]
+                print(f"[{i}] {nodeid}")
+
+                if "minimized" in failure and isinstance(failure["minimized"], MinimizedTrace):
+                    minimized: MinimizedTrace = failure["minimized"]
+                    # Print compact format
+                    print(f"    {minimized.format_compact()}")
+                else:
+                    # Fallback format
+                    print(f"    Error: {failure.get('error', 'Unknown')[:200]}")
+
+                print()
+
+        print(f"{'='*60}")
+        print("Per TEST-003: Debug workflow trace minimization")
+
+
+class CompressedReporter:
+    """
+    EPIC-TEST-COMPRESS-001: Compressed test summary reporter.
+
+    Outputs LLM-optimized compressed summary showing:
+    - Pass/fail counts with success rate
+    - Category breakdown (unit/integration/e2e)
+    - Failures only (success is implied)
+    - Compression ratio vs full output
+    """
+
+    def __init__(self, config):
+        self.config = config
+        self.results: list = []
+        self.start_time = datetime.now()
+
+    def pytest_runtest_logreport(self, report):
+        """Collect test results for compression."""
+        if report.when == "call" or (report.when == "setup" and report.skipped):
+            # Determine category from path
+            rel_path = str(report.fspath) if hasattr(report, 'fspath') else report.nodeid
+            if "/e2e/" in rel_path or "_e2e.py" in rel_path:
+                category = "e2e"
+            elif "/integration/" in rel_path:
+                category = "integration"
+            else:
+                category = "unit"
+
+            self.results.append({
+                "test_id": report.nodeid,
+                "name": report.nodeid.split("::")[-1] if "::" in report.nodeid else report.nodeid,
+                "category": category,
+                "status": report.outcome,
+                "duration_ms": report.duration * 1000 if hasattr(report, 'duration') else 0,
+                "error": str(report.longrepr)[:200] if report.failed else None,
+            })
+
+            # Print progress indicator
+            if report.passed:
+                sys.stdout.write(".")
+            elif report.failed:
+                sys.stdout.write("F")
+            elif report.skipped:
+                sys.stdout.write("S")
+            sys.stdout.flush()
+
+    def pytest_sessionfinish(self, session):
+        """Output compressed summary."""
+        if not SUMMARY_COMPRESSOR_AVAILABLE:
+            print("\n[WARN] SummaryCompressor not available")
+            return
+
+        compressor = SummaryCompressor()
+        summary = compressor.compress_test_list(self.results)
+
+        print(f"\n\n{'='*60}")
+        print("[COMPRESSED] Test Summary (EPIC-TEST-COMPRESS-001)")
+        print(f"{'='*60}")
+        print(summary.format_compact())
+        print(f"\nCompression: {summary.compression_ratio} saved")
+        print(f"{'='*60}")
+
+
 # =============================================================================
 # Pytest Hooks
 # =============================================================================
@@ -217,6 +414,18 @@ def pytest_addoption(parser):
         help="Certification mode: collect evidence in /results directory"
     )
     group.addoption(
+        "--report-minimized",
+        action="store_true",
+        default=False,
+        help="Minimized mode: LLM-optimized trace output (per TEST-003)"
+    )
+    group.addoption(
+        "--report-compressed",
+        action="store_true",
+        default=False,
+        help="Compressed mode: LLM-optimized summary (per EPIC-TEST-COMPRESS-001)"
+    )
+    group.addoption(
         "--results-dir",
         action="store",
         default="results",
@@ -240,20 +449,42 @@ def pytest_configure(config):
         is_minimal = config.getoption("--report-minimal", default=False)
         is_trace = config.getoption("--report-trace", default=False)
         is_cert = config.getoption("--report-cert", default=False)
+        is_minimized = config.getoption("--report-minimized", default=False)
+        is_compressed = config.getoption("--report-compressed", default=False)
     except (ValueError, AttributeError):
-        is_minimal = is_trace = is_cert = False
+        is_minimal = is_trace = is_cert = is_minimized = is_compressed = False
 
     # Configure based on mode
     if is_minimal:
         # Minimal mode: suppress default output
         config.option.verbose = -1
         config.pluginmanager.register(MinimalReporter(config), "minimal_reporter")
+    elif is_minimized:
+        # Minimized mode: LLM-optimized trace output (TEST-003)
+        config.option.verbose = -1
+        if TRACE_MINIMIZER_AVAILABLE:
+            config.pluginmanager.register(
+                TraceMinimizedReporter(config, max_frames=3, max_message_length=200),
+                "minimized_reporter"
+            )
+        else:
+            # Fallback to minimal if trace_minimizer not available
+            config.pluginmanager.register(MinimalReporter(config), "minimal_reporter")
+            sys.stderr.write("[WARN] trace_minimizer not available, falling back to minimal mode\n")
     elif is_trace:
         # Trace mode: maximum verbosity
         config.option.verbose = 2
     elif is_cert:
         # Certification mode: register evidence collector
         config.pluginmanager.register(CertificationReporter(config), "cert_reporter")
+    elif is_compressed:
+        # Compressed mode: LLM-optimized summary (EPIC-TEST-COMPRESS-001)
+        config.option.verbose = -1
+        if SUMMARY_COMPRESSOR_AVAILABLE:
+            config.pluginmanager.register(CompressedReporter(config), "compressed_reporter")
+        else:
+            config.pluginmanager.register(MinimalReporter(config), "minimal_reporter")
+            sys.stderr.write("[WARN] SummaryCompressor not available, falling back to minimal mode\n")
 
     # EPIC-DR-009: Run cleanup if requested
     try:

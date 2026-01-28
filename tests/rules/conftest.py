@@ -5,10 +5,27 @@ Shared fixtures for rules tests.
 Per DOC-SIZE-01-v1: Split from test_rules_crud.py (838 lines)
 """
 
+import os
 import pytest
 from unittest.mock import Mock
 
 from governance.client import TypeDBClient, Rule
+
+
+@pytest.fixture(autouse=True)
+def mcp_json_format():
+    """Force JSON output format for MCP tools during tests.
+
+    Per GAP-DATA-001: MCP_OUTPUT_FORMAT controls output format.
+    Tests expect JSON, so we set this explicitly.
+    """
+    old_value = os.environ.get("MCP_OUTPUT_FORMAT")
+    os.environ["MCP_OUTPUT_FORMAT"] = "json"
+    yield
+    if old_value is None:
+        os.environ.pop("MCP_OUTPUT_FORMAT", None)
+    else:
+        os.environ["MCP_OUTPUT_FORMAT"] = old_value
 
 
 @pytest.fixture

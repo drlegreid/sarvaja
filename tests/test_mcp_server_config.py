@@ -39,8 +39,8 @@ class TestMCPServerConfig:
         with open(MCP_CONFIG) as f:
             config = json.load(f)
 
-        expected = ["governance-core", "governance-agents",
-                    "governance-sessions", "governance-tasks"]
+        # Per GAP-MCP-NAMING-001: governance → gov
+        expected = ["gov-core", "gov-agents", "gov-sessions", "gov-tasks"]
         for server in expected:
             assert server in config["mcpServers"], f"{server} not defined"
 
@@ -58,8 +58,8 @@ class TestMCPServerConfig:
         with open(MCP_CONFIG) as f:
             config = json.load(f)
 
-        governance_servers = ["governance-core", "governance-agents",
-                              "governance-sessions", "governance-tasks"]
+        # Per GAP-MCP-NAMING-001: governance → gov
+        governance_servers = ["gov-core", "gov-agents", "gov-sessions", "gov-tasks"]
 
         for name in governance_servers:
             server = config.get("mcpServers", {}).get(name)

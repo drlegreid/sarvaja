@@ -3,6 +3,7 @@ Agent Platform E2E and Integration Tests (ATEST-002, ATEST-003, ATEST-006).
 
 Per RD-AGENT-TESTING: Comprehensive test coverage for multi-agent governance.
 Per RULE-023: Test Coverage Protocol.
+Per TEST-TAXON-01-v1: Taxonomy markers applied.
 
 Phases:
 - E2E Workflow: Gap resolution through agent chain
@@ -136,6 +137,9 @@ def mock_task_queue():
 # ATEST-002: E2E AGENT WORKFLOW TESTS
 # =============================================================================
 
+@pytest.mark.unit  # Mocked, no real dependencies
+@pytest.mark.agents
+@pytest.mark.capability
 class TestAgentWorkflowE2E:
     """E2E tests for agent workflow chains (ATEST-002)."""
 
@@ -234,6 +238,9 @@ class TestAgentWorkflowE2E:
 # ATEST-003: MULTI-AGENT CONCURRENCY TESTS
 # =============================================================================
 
+@pytest.mark.unit
+@pytest.mark.agents
+@pytest.mark.scalability
 class TestAgentConcurrency:
     """Concurrency tests for parallel agent operations (ATEST-003)."""
 
@@ -308,6 +315,10 @@ class TestAgentConcurrency:
 # ATEST-006: KANREN-AGENT INTEGRATION TESTS
 # =============================================================================
 
+@pytest.mark.unit
+@pytest.mark.agents
+@pytest.mark.trust
+@pytest.mark.validate
 class TestKanrenAgentIntegration:
     """Kanren constraint validation with agent context (ATEST-006)."""
 
@@ -424,6 +435,10 @@ class TestKanrenAgentIntegration:
 # TRUST EVOLUTION TESTS (ATEST-005)
 # =============================================================================
 
+@pytest.mark.unit
+@pytest.mark.agents
+@pytest.mark.trust
+@pytest.mark.performance
 class TestTrustEvolution:
     """Trust score evolution over agent actions (ATEST-005)."""
 
@@ -489,6 +504,9 @@ class TestTrustEvolution:
 # HANDOFF CHAIN VALIDATION (ATEST-004)
 # =============================================================================
 
+@pytest.mark.unit
+@pytest.mark.agents
+@pytest.mark.validate
 class TestHandoffChainValidation:
     """Handoff chain integrity tests (ATEST-004)."""
 
@@ -557,6 +575,10 @@ class TestHandoffChainValidation:
 # BENCHMARK METRICS (RD-LACMUS)
 # =============================================================================
 
+@pytest.mark.unit
+@pytest.mark.agents
+@pytest.mark.benchmark
+@pytest.mark.performance
 class TestAgentPlatformBenchmarks:
     """Benchmark metrics for agent platform (per RD-LACMUS)."""
 
@@ -613,6 +635,187 @@ class TestAgentPlatformBenchmarks:
         correct = sum(1 for task_id, expected in routing_rules if route(task_id) == expected)
         accuracy = correct / len(routing_rules)
         assert accuracy >= 0.90
+
+
+# =============================================================================
+# RECOVERY SCENARIOS (ATEST-008)
+# =============================================================================
+
+@pytest.mark.unit
+@pytest.mark.agents
+@pytest.mark.reliability
+class TestAgentRecoveryScenarios:
+    """Agent recovery scenario tests (ATEST-008).
+
+    Tests crash recovery, timeout handling, and reconnection scenarios
+    to ensure agent platform resilience.
+    """
+
+    async def test_agent_crash_task_reassignment(self):
+        """When agent crashes mid-task, task becomes reclaimable."""
+        # Setup
+        task_queue = MockTaskQueue()
+        await task_queue.add_task({"id": "TASK-CRASH-001", "priority": "HIGH"})
+
+        agent1 = MockAgent("AGENT-CRASH-1", "CODING", 0.85)
+        agent2 = MockAgent("AGENT-CRASH-2", "CODING", 0.80)
+
+        # Agent 1 claims task
+        claim1 = await task_queue.claim_task("TASK-CRASH-001", agent1.agent_id)
+        assert claim1 is True
+
+        # Simulate crash: release claim
+        async with task_queue._lock:
+            if "TASK-CRASH-001" in task_queue.claimed:
+                del task_queue.claimed["TASK-CRASH-001"]
+
+        # Agent 2 can now claim the task
+        claim2 = await task_queue.claim_task("TASK-CRASH-001", agent2.agent_id)
+        assert claim2 is True
+
+    async def test_task_timeout_releases_claim(self):
+        """Task times out and becomes available for other agents."""
+        task_queue = MockTaskQueue()
+        await task_queue.add_task({
+            "id": "TASK-TIMEOUT-001",
+            "priority": "MEDIUM",
+            "timeout_ms": 1000  # 1 second timeout
+        })
+
+        agent = MockAgent("AGENT-TIMEOUT-1", "CODING", 0.90)
+
+        # Claim task
+        claimed = await task_queue.claim_task("TASK-TIMEOUT-001", agent.agent_id)
+        assert claimed is True
+
+        # Simulate timeout by releasing claim (in real system, timeout handler does this)
+        async with task_queue._lock:
+            task_queue.claimed.pop("TASK-TIMEOUT-001", None)
+
+        # Task is now available
+        reclaimed = await task_queue.claim_task("TASK-TIMEOUT-001", "AGENT-NEW")
+        assert reclaimed is True
+
+    async def test_agent_reconnect_resumes_task(self):
+        """Agent reconnects and can resume previously claimed task."""
+        @dataclass
+        class MockPersistentQueue:
+            """Queue that tracks agent-task assignments persistently."""
+            assignments: Dict[str, str] = field(default_factory=dict)  # task_id -> agent_id
+
+            def assign(self, task_id: str, agent_id: str):
+                self.assignments[task_id] = agent_id
+
+            def get_agent_tasks(self, agent_id: str) -> List[str]:
+                return [t for t, a in self.assignments.items() if a == agent_id]
+
+        queue = MockPersistentQueue()
+        agent = MockAgent("AGENT-RECONNECT-1", "CODING", 0.85)
+
+        # Agent claims task
+        queue.assign("TASK-RESUME-001", agent.agent_id)
+
+        # Simulate disconnect (agent goes offline)
+        agent.status = "OFFLINE"
+
+        # Simulate reconnect
+        agent.status = "ACTIVE"
+
+        # Agent can see their previously assigned task
+        my_tasks = queue.get_agent_tasks(agent.agent_id)
+        assert "TASK-RESUME-001" in my_tasks
+
+    async def test_graceful_degradation_on_mcp_failure(self):
+        """System continues with reduced capacity when MCP service fails."""
+        @dataclass
+        class MockMCPHealth:
+            services: Dict[str, bool] = field(default_factory=dict)
+
+            def check_health(self) -> Dict[str, Any]:
+                healthy = sum(1 for ok in self.services.values() if ok)
+                total = len(self.services)
+                return {
+                    "healthy_count": healthy,
+                    "total_count": total,
+                    "degraded": healthy < total,
+                    "operational": healthy > 0
+                }
+
+        health = MockMCPHealth()
+        health.services = {
+            "typedb": True,
+            "chromadb": True,
+            "gov-core": False,  # Simulated failure
+            "gov-tasks": True,
+        }
+
+        status = health.check_health()
+        assert status["degraded"] is True
+        assert status["operational"] is True  # System still operational
+        assert status["healthy_count"] == 3
+
+    async def test_trust_decay_on_repeated_failures(self):
+        """Agent trust decays when tasks repeatedly fail."""
+        @dataclass
+        class MockTrustTracker:
+            trust_scores: Dict[str, float] = field(default_factory=dict)
+
+            def record_failure(self, agent_id: str, decay_factor: float = 0.95):
+                current = self.trust_scores.get(agent_id, 1.0)
+                self.trust_scores[agent_id] = max(0.0, current * decay_factor)
+
+            def get_trust(self, agent_id: str) -> float:
+                return self.trust_scores.get(agent_id, 1.0)
+
+        tracker = MockTrustTracker()
+        tracker.trust_scores["AGENT-FAIL-1"] = 0.90
+
+        # Simulate 3 consecutive failures
+        for _ in range(3):
+            tracker.record_failure("AGENT-FAIL-1", decay_factor=0.95)
+
+        # Trust should have decayed: 0.90 * 0.95^3 ≈ 0.77
+        final_trust = tracker.get_trust("AGENT-FAIL-1")
+        assert final_trust < 0.80  # Below original
+        assert final_trust > 0.70  # Not too low
+
+    async def test_circuit_breaker_on_service_failures(self):
+        """Circuit breaker opens after repeated service failures."""
+        @dataclass
+        class MockCircuitBreaker:
+            failures: int = 0
+            threshold: int = 3
+            state: str = "CLOSED"
+
+            def record_failure(self):
+                self.failures += 1
+                if self.failures >= self.threshold:
+                    self.state = "OPEN"
+
+            def can_proceed(self) -> bool:
+                return self.state == "CLOSED"
+
+            def reset(self):
+                self.failures = 0
+                self.state = "CLOSED"
+
+        breaker = MockCircuitBreaker(threshold=3)
+
+        # Initial state
+        assert breaker.can_proceed() is True
+
+        # Record failures
+        breaker.record_failure()
+        breaker.record_failure()
+        assert breaker.can_proceed() is True  # Still under threshold
+
+        breaker.record_failure()
+        assert breaker.can_proceed() is False  # Circuit open
+        assert breaker.state == "OPEN"
+
+        # Reset
+        breaker.reset()
+        assert breaker.can_proceed() is True
 
 
 if __name__ == "__main__":

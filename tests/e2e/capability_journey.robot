@@ -225,9 +225,10 @@ Navigate To View
     [Arguments]    ${view_name}
     # Try clicking navigation item
     ${clicked}=    Run Keyword And Return Status
-    ...    Click    [data-value="${view_name}"], a:has-text("${view_name}"), button:has-text("${view_name}")    timeout=5s
-    Run Keyword Unless    ${clicked}
-    ...    Log    Could not find navigation for ${view_name}, checking if already on view
+    ...    Click    [data-value="${view_name}"], a:has-text("${view_name}"), button:has-text("${view_name}")
+    IF    not ${clicked}
+        Log    Could not find navigation for ${view_name}, checking if already on view
+    END
     Sleep    1s
 
 Wait For Rules List

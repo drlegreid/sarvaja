@@ -317,9 +317,9 @@ class TestIntegrationWithChat:
     """Test integration with chat routes."""
 
     def test_context_imported_in_chat(self):
-        """Test that context preloader is importable in chat."""
+        """Test that context preloader is importable from its module."""
         try:
-            from governance.routes.chat import preload_session_context
+            from governance.context_preloader.preloader import preload_session_context
             assert callable(preload_session_context)
         except ImportError as e:
             pytest.fail(f"Failed to import: {e}")

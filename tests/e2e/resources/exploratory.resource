@@ -219,3 +219,20 @@ Capture Exploration Evidence
     Take Screenshot    ${name}_${timestamp}
     ${html}=    Get Page Source
     Log    Page source captured: ${name}
+
+# =============================================================================
+# SELENIUM-STYLE COMPATIBILITY KEYWORDS (Per RF audit 2026-01-25)
+# Browser library doesn't have Page Should Contain - these bridge the gap
+# =============================================================================
+
+Page Should Contain
+    [Documentation]    Verify page body contains expected text (Selenium compatibility)
+    [Arguments]    ${expected}
+    ${body}=    Get Text    body
+    Should Contain    ${body}    ${expected}
+
+Page Should Not Contain
+    [Documentation]    Verify page body does NOT contain text (Selenium compatibility)
+    [Arguments]    ${unexpected}
+    ${body}=    Get Text    body
+    Should Not Contain    ${body}    ${unexpected}

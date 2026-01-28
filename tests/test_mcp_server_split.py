@@ -102,9 +102,8 @@ class TestMCPConfigValid:
 
         servers = config.get("mcpServers", {})
         # NOTE: 'governance' monolith removed 2026-01-04 per GAP-MCP-005
-        # Only 4 domain-specific servers remain
-        expected = ["governance-core", "governance-agents",
-                    "governance-sessions", "governance-tasks"]
+        # Per GAP-MCP-NAMING-001: governance → gov
+        expected = ["gov-core", "gov-agents", "gov-sessions", "gov-tasks"]
 
         for server in expected:
             assert server in servers, f"Server {server} not in .mcp.json"
@@ -120,8 +119,8 @@ class TestMCPConfigValid:
         with open(mcp_config) as f:
             config = json.load(f)
 
-        governance_servers = ["governance-core", "governance-agents",
-                              "governance-sessions", "governance-tasks"]
+        # Per GAP-MCP-NAMING-001: governance → gov
+        governance_servers = ["gov-core", "gov-agents", "gov-sessions", "gov-tasks"]
 
         for name in governance_servers:
             server = config.get("mcpServers", {}).get(name)

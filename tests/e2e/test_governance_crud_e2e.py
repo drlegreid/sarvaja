@@ -81,7 +81,10 @@ def cleanup_test_data():
         try:
             tasks_resp = client.get("/api/tasks")
             if tasks_resp.status_code == 200:
-                for task in tasks_resp.json():
+                data = tasks_resp.json()
+                # Handle paginated response {"items": [...]} or direct list
+                tasks = data.get("items", data) if isinstance(data, dict) else data
+                for task in tasks:
                     task_id = task.get("task_id", "")
                     if task_id.startswith("TEST-"):
                         del_resp = client.delete(f"/api/tasks/{task_id}")
@@ -95,7 +98,10 @@ def cleanup_test_data():
         try:
             sessions_resp = client.get("/api/sessions")
             if sessions_resp.status_code == 200:
-                for session in sessions_resp.json():
+                data = sessions_resp.json()
+                # Handle paginated response {"items": [...]} or direct list
+                sessions = data.get("items", data) if isinstance(data, dict) else data
+                for session in sessions:
                     session_id = session.get("session_id", "")
                     if session_id.startswith("TEST-"):
                         # Only end, don't delete - preserves session history
@@ -265,7 +271,8 @@ class TestTasksCRUD:
         response = api_client.get("/api/tasks")
         assert response.status_code == 200
 
-        tasks = response.json()
+        data = response.json()
+        tasks = data.get("items", data) if isinstance(data, dict) else data
         assert isinstance(tasks, list)
 
     def test_update_task_status_via_api(self, api_client, unique_id):
@@ -322,7 +329,8 @@ class TestTasksCRUD:
         # Filter by status
         response = api_client.get("/api/tasks", params={"status": "TODO"})
         assert response.status_code == 200
-        tasks = response.json()
+        data = response.json()
+        tasks = data.get("items", data) if isinstance(data, dict) else data
         assert all(t["status"] == "TODO" for t in tasks)
 
 
@@ -345,7 +353,8 @@ class TestAgentTaskBacklog:
         response = api_client.get("/api/tasks/available")
         assert response.status_code == 200
 
-        available = response.json()
+        data = response.json()
+        available = data.get("items", data) if isinstance(data, dict) else data
         assert isinstance(available, list)
         # All available tasks should have TODO status and no agent_id
         task_ids = [t["task_id"] for t in available]
@@ -360,14 +369,19 @@ class TestAgentTaskBacklog:
             "phase": "P10",
             "status": "TODO"
         }
-        api_client.post("/api/tasks", json=task_data)
+        create_resp = api_client.post("/api/tasks", json=task_data)
+        assert create_resp.status_code == 201, f"Task creation failed: {create_resp.text}"
+
+        # Verify task exists
+        get_resp = api_client.get(f"/api/tasks/{unique_id}")
+        assert get_resp.status_code == 200, f"Task not found after create: {get_resp.text}"
 
         # Claim the task as code-agent
         response = api_client.put(
             f"/api/tasks/{unique_id}/claim",
             params={"agent_id": "code-agent"}
         )
-        assert response.status_code == 200
+        assert response.status_code == 200, f"Claim failed: {response.text}"
 
         claimed = response.json()
         assert claimed["agent_id"] == "code-agent"
@@ -504,7 +518,8 @@ class TestSessionsAPI:
         response = api_client.get("/api/sessions")
         assert response.status_code == 200
 
-        sessions = response.json()
+        data = response.json()
+        sessions = data.get("items", data) if isinstance(data, dict) else data
         assert isinstance(sessions, list)
 
     def test_end_session_via_api(self, api_client):
@@ -736,7 +751,9 @@ class TestUISmokeTests:
         response = api_client.get("/api/tasks")
         assert response.status_code == 200, "Tasks API should return 200"
 
-        tasks = response.json()
+        data = response.json()
+        # Handle paginated response format
+        tasks = data.get("items", data) if isinstance(data, dict) else data
         assert isinstance(tasks, list), "Tasks should be a list"
 
         if tasks:
@@ -776,7 +793,9 @@ class TestUISmokeTests:
         response = api_client.get("/api/sessions")
         assert response.status_code == 200, "Sessions API should return 200"
 
-        sessions = response.json()
+        data = response.json()
+        # Handle paginated response format
+        sessions = data.get("items", data) if isinstance(data, dict) else data
         assert isinstance(sessions, list), "Sessions should be a list"
 
     def test_decisions_view_loads_with_data(self, api_client):
@@ -849,7 +868,9 @@ class TestUISmokeTests:
         response = api_client.get("/api/tasks/available")
         assert response.status_code == 200, "Available Tasks API should return 200"
 
-        tasks = response.json()
+        data = response.json()
+        # Handle paginated response format
+        tasks = data.get("items", data) if isinstance(data, dict) else data
         assert isinstance(tasks, list), "Available Tasks should be a list"
 
 
@@ -929,14 +950,16 @@ class TestPaginationSortingFiltering:
         # Filter by phase
         response = api_client.get("/api/tasks", params={"phase": "P10"})
         assert response.status_code == 200
-        tasks = response.json()
+        data = response.json()
+        tasks = data.get("items", data) if isinstance(data, dict) else data
         assert all(t["phase"] == "P10" for t in tasks), "Phase filter should work"
 
     def test_sessions_pagination_offset_limit(self, api_client):
         """Test sessions pagination with offset and limit."""
         response = api_client.get("/api/sessions", params={"limit": 5, "offset": 0})
         assert response.status_code == 200
-        sessions = response.json()
+        data = response.json()
+        sessions = data.get("items", data) if isinstance(data, dict) else data
         assert len(sessions) <= 5, "Sessions limit should restrict results"
 
     def test_sessions_sorting(self, api_client):
@@ -951,7 +974,8 @@ class TestPaginationSortingFiltering:
         """Test sessions filtering by status."""
         response = api_client.get("/api/sessions", params={"status": "ACTIVE"})
         assert response.status_code == 200
-        sessions = response.json()
+        data = response.json()
+        sessions = data.get("items", data) if isinstance(data, dict) else data
         assert all(s["status"] == "ACTIVE" for s in sessions), "Status filter should work"
 
     @pytest.mark.skipif(not TYPEDB_AVAILABLE, reason="TypeDB not connected")
@@ -959,7 +983,8 @@ class TestPaginationSortingFiltering:
         """Test rules pagination with offset and limit."""
         response = api_client.get("/api/rules", params={"limit": 10, "offset": 0})
         assert response.status_code == 200
-        rules = response.json()
+        data = response.json()
+        rules = data.get("rules", data) if isinstance(data, dict) else data
         assert len(rules) <= 10, "Rules limit should restrict results"
 
     @pytest.mark.skipif(not TYPEDB_AVAILABLE, reason="TypeDB not connected")
@@ -1032,7 +1057,8 @@ class TestPaginationSortingFiltering:
             "status": "TODO"
         })
         assert response.status_code == 200
-        tasks = response.json()
+        data = response.json()
+        tasks = data.get("items", data) if isinstance(data, dict) else data
         assert len(tasks) <= 3, "Combined params should work"
         assert all(t["status"] == "TODO" for t in tasks), "Filter should apply"
 
@@ -1050,11 +1076,16 @@ class TestDataIntegrity:
 
         This catches data sync issues where one endpoint has stale data.
         """
-        # Get rules list
-        rules_response = api_client.get("/api/rules")
+        # Get rules list - request high limit to get all rules
+        rules_response = api_client.get("/api/rules", params={"limit": 200})
         if rules_response.status_code != 200:
             pytest.skip("Rules API not available")
-        rules_count = len(rules_response.json())
+        rules_data = rules_response.json()
+        # Handle both list and paginated response formats
+        if isinstance(rules_data, dict):
+            rules_count = rules_data.get("pagination", {}).get("total", len(rules_data.get("rules", [])))
+        else:
+            rules_count = len(rules_data)
 
         # Get health stats
         health_response = api_client.get("/api/health")

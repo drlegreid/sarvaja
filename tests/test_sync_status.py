@@ -4,7 +4,7 @@ Tests for governance_sync_status MCP tool.
 Per GAP-SYNC-002: Divergence Validation Workflow.
 """
 
-import json
+import yaml
 import pytest
 
 
@@ -39,8 +39,8 @@ class TestSyncStatusTool:
         result = mock_mcp.tools["governance_sync_status"]()
         assert result is not None
 
-        # Parse JSON
-        data = json.loads(result)
+        # Parse TOON/YAML format (per GAP-DATA-001)
+        data = yaml.safe_load(result)
         assert "rules" in data or "error" in data
 
     def test_sync_status_structure(self):
@@ -60,7 +60,7 @@ class TestSyncStatusTool:
         register_workspace_tools(mock_mcp)
 
         result = mock_mcp.tools["governance_sync_status"]()
-        data = json.loads(result)
+        data = yaml.safe_load(result)
 
         # Check structure (even if there's an error connecting to TypeDB)
         if "error" not in data:
@@ -81,7 +81,7 @@ class TestWorkspaceToolsRegistration:
     """Test that all workspace tools are registered."""
 
     def test_all_workspace_tools_registered(self):
-        """Test that all 8 workspace tools are registered."""
+        """Test that all 10 workspace tools are registered."""
         class MockMCP:
             def __init__(self):
                 self.tools = {}
@@ -104,10 +104,12 @@ class TestWorkspaceToolsRegistration:
             "workspace_link_rules_to_documents",
             "workspace_get_document_for_rule",
             "workspace_get_rules_for_document",
-            "governance_sync_status",  # New tool for GAP-SYNC-002
+            "governance_sync_status",  # GAP-SYNC-002
+            "workspace_sync_status",   # Alias for governance_sync_status
+            "workspace_sync_gaps_to_typedb",  # GAP-GAPS-TASKS-001
         ]
 
         for tool_name in expected_tools:
             assert tool_name in mock_mcp.tools, f"Missing tool: {tool_name}"
 
-        assert len(mock_mcp.tools) == 8
+        assert len(mock_mcp.tools) == 10

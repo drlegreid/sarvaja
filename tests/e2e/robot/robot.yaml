@@ -1,0 +1,36 @@
+# Robot Framework Configuration
+# Per RF-001: E2E Test Automation Setup
+# Per TEST-COMP-01-v1: LLM-Driven E2E Test Generation
+
+# Output configuration
+output_dir: results
+log: log.html
+report: report.html
+
+# Default settings
+variables:
+  BASE_URL: http://localhost:8081
+  API_URL: http://localhost:8082
+  BROWSER: chromium
+  HEADLESS: True
+  TIMEOUT: 30s
+
+# Include paths
+python_path:
+  - resources
+
+# Default tags
+default_tags:
+  - e2e
+
+# Tag filtering for CI
+include_tags:
+  smoke: Quick sanity checks
+  api: REST API tests
+  ui: Browser UI tests
+  crud: Create/Read/Update/Delete tests
+
+exclude_tags:
+  skip: Temporarily skipped tests
+  manual: Requires manual execution
+  slow: Long-running tests

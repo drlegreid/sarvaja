@@ -291,7 +291,6 @@ Loading State Shows During Fetch
 
 Error State Shows On API Failure
     [Documentation]    GAP-UI-005: Error message when API fails
-    [Tags]    error    ux    gap-ui-005    will-fail
+    [Tags]    error    ux    gap-ui-005    will-fail    skip
     # This would require mocking API to fail
-    [Tags]    skip
     Skip    Requires API mocking

@@ -3,6 +3,7 @@ Rules Validation Tests
 ======================
 Tests for TypeDBClient input validation on rules.
 Per DOC-SIZE-01-v1: Split from test_rules_crud.py (838 lines)
+Per TEST-TAXON-01-v1: Taxonomy markers applied.
 """
 
 import pytest
@@ -11,9 +12,13 @@ from unittest.mock import patch
 from governance.client import TypeDBClient, Rule
 
 
+@pytest.mark.unit
+@pytest.mark.rules
+@pytest.mark.validate
 class TestTypeDBClientValidation:
     """Tests for TypeDBClient input validation."""
 
+    @pytest.mark.create
     def test_create_rule_validates_category(self, mock_client, sample_rule):
         """Test that create_rule validates category."""
         with patch.object(TypeDBClient, 'connect', return_value=True):

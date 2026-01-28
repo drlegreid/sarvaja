@@ -225,7 +225,7 @@ class TestChatAPIModels:
 
     def test_chat_message_request(self):
         """ChatMessageRequest model."""
-        from governance.api import ChatMessageRequest
+        from governance.models import ChatMessageRequest
 
         request = ChatMessageRequest(
             content='/status',
@@ -239,7 +239,7 @@ class TestChatAPIModels:
 
     def test_chat_message_request_defaults(self):
         """ChatMessageRequest with defaults."""
-        from governance.api import ChatMessageRequest
+        from governance.models import ChatMessageRequest
 
         request = ChatMessageRequest(content='Hello')
 
@@ -249,7 +249,7 @@ class TestChatAPIModels:
 
     def test_chat_message_response(self):
         """ChatMessageResponse model."""
-        from governance.api import ChatMessageResponse
+        from governance.models import ChatMessageResponse
 
         response = ChatMessageResponse(
             id='MSG-001',
@@ -271,7 +271,7 @@ class TestChatCommandProcessing:
 
     def test_help_command(self):
         """Process /help command."""
-        from governance.api import _process_chat_command
+        from governance.routes.chat import _process_chat_command
 
         response = _process_chat_command('/help', 'AGENT-001')
 
@@ -281,7 +281,7 @@ class TestChatCommandProcessing:
 
     def test_status_command(self):
         """Process /status command."""
-        from governance.api import _process_chat_command
+        from governance.routes.chat import _process_chat_command
 
         response = _process_chat_command('/status', 'AGENT-001')
 
@@ -289,7 +289,7 @@ class TestChatCommandProcessing:
 
     def test_tasks_command(self):
         """Process /tasks command."""
-        from governance.api import _process_chat_command
+        from governance.routes.chat import _process_chat_command
 
         response = _process_chat_command('/tasks', 'AGENT-001')
 
@@ -298,7 +298,7 @@ class TestChatCommandProcessing:
 
     def test_rules_command(self):
         """Process /rules command."""
-        from governance.api import _process_chat_command
+        from governance.routes.chat import _process_chat_command
 
         response = _process_chat_command('/rules', 'AGENT-001')
 
@@ -306,7 +306,7 @@ class TestChatCommandProcessing:
 
     def test_agents_command(self):
         """Process /agents command."""
-        from governance.api import _process_chat_command
+        from governance.routes.chat import _process_chat_command
 
         response = _process_chat_command('/agents', 'AGENT-001')
 
@@ -314,7 +314,7 @@ class TestChatCommandProcessing:
 
     def test_search_command_no_query(self):
         """Process /search without query."""
-        from governance.api import _process_chat_command
+        from governance.routes.chat import _process_chat_command
 
         response = _process_chat_command('/search', 'AGENT-001')
 
@@ -322,7 +322,7 @@ class TestChatCommandProcessing:
 
     def test_delegate_command_no_task(self):
         """Process /delegate without task."""
-        from governance.api import _process_chat_command
+        from governance.routes.chat import _process_chat_command
 
         response = _process_chat_command('/delegate', 'AGENT-001')
 
@@ -330,7 +330,7 @@ class TestChatCommandProcessing:
 
     def test_natural_language_fallback(self):
         """Natural language processing."""
-        from governance.api import _process_chat_command
+        from governance.routes.chat import _process_chat_command
 
         response = _process_chat_command('What is the current status?', 'AGENT-001')
 

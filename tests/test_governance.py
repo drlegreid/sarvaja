@@ -155,9 +155,14 @@ class TestTypeDBClientUnit:
 
     @pytest.mark.unit
     def test_client_initialization(self):
-        """Test client initializes with default values."""
+        """Test client initializes with default values.
+
+        Note: Host defaults to TYPEDB_HOST env var ('typedb' in container, 'localhost' otherwise).
+        Per TEST-QUAL-01-v1: Test accepts both valid environment defaults.
+        """
         client = TypeDBClient()
-        assert client.host == "localhost"
+        # Accept either localhost (dev) or typedb (container) as valid defaults
+        assert client.host in ("localhost", "typedb"), f"Unexpected host: {client.host}"
         assert client.port == 1729
         assert client.database == "sim-ai-governance"
         assert client._connected is False
@@ -207,22 +212,30 @@ class TestRuleQueries:
 
     @pytest.mark.unit
     def test_get_all_rules_query_format(self):
-        """Test get_all_rules generates correct query format."""
+        """Test get_all_rules generates correct query format.
+
+        Per TEST-QUAL-01-v1: Fixed method name (_execute_query not _execute_rule_query).
+        """
         client = TypeDBClient()
         client._connected = True
 
-        # Mock _execute_query to capture the query
-        with patch.object(client, '_execute_rule_query', return_value=[]) as mock:
+        # Mock _execute_query to capture the query (correct method name)
+        with patch.object(client, '_execute_query', return_value=[]) as mock:
             client.get_all_rules()
-            mock.assert_called_once()
-            query = mock.call_args[0][0]
+            # May be called multiple times for enrichment queries
+            assert mock.call_count >= 1, "Expected at least one query"
+            query = mock.call_args_list[0][0][0]  # First call, first positional arg
             assert "match" in query
             assert "rule-entity" in query
             assert "rule-id" in query
 
     @pytest.mark.unit
     def test_get_active_rules_filters_active(self):
-        """Test get_active_rules filters for ACTIVE status."""
+        """Test get_active_rules filters for ACTIVE status.
+
+        Per TEST-QUAL-01-v1: Fixed mock expectation - code now makes multiple
+        queries for rule enrichment (rule_type, semantic_id lookups).
+        """
         client = TypeDBClient()
         client._connected = True
 
@@ -230,9 +243,11 @@ class TestRuleQueries:
             {"id": "RULE-001", "name": "Test", "cat": "gov", "pri": "HIGH", "dir": "Test"}
         ]) as mock:
             rules = client.get_active_rules()
-            mock.assert_called_once()
-            query = mock.call_args[0][0]
-            assert 'status "ACTIVE"' in query
+            # Code makes multiple queries: main + enrichment (rule_type, semantic_id)
+            assert mock.call_count >= 1, "Expected at least one query"
+            # Check first call contains ACTIVE status filter
+            first_query = mock.call_args_list[0][0][0]
+            assert 'status "ACTIVE"' in first_query
             assert len(rules) == 1
             assert rules[0].status == "ACTIVE"
 

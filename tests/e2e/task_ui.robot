@@ -123,10 +123,7 @@ Event Stream Shows Progress
 
     # Look for any progress indicator
     Wait Until Keyword Succeeds    20s    2s
-    ...    Run Keywords
-    ...    Page Should Contain    STATE_DELTA
-    ...    OR
-    ...    Page Should Contain    TEXT_MESSAGE
+    ...    Page Should Contain One Of    STATE_DELTA    TEXT_MESSAGE
 
 Event Stream Completes
     [Documentation]    Verify RUN_FINISHED or RUN_ERROR event appears
@@ -136,17 +133,6 @@ Event Stream Completes
     # Wait for completion event
     Wait Until Keyword Succeeds    30s    2s
     ...    Page Should Contain One Of    RUN_FINISHED    RUN_ERROR
-
-Page Should Contain One Of
-    [Documentation]    Verify page contains at least one of the given texts
-    [Arguments]    @{texts}
-    ${found}=    Set Variable    ${FALSE}
-    FOR    ${text}    IN    @{texts}
-        ${status}=    Run Keyword And Return Status
-        ...    Page Should Contain    ${text}
-        Return From Keyword If    ${status}
-    END
-    Fail    Page should contain one of: ${texts}
 
 # =============================================================================
 # ACCESSIBILITY TESTS
@@ -236,3 +222,13 @@ Suite Initialization
     New Context    viewport={'width': 1280, 'height': 720}
     New Page    ${UI_URL}
     Wait For Load State    networkidle    timeout=30s
+
+Page Should Contain One Of
+    [Documentation]    Verify page contains at least one of the given texts
+    [Arguments]    @{texts}
+    FOR    ${text}    IN    @{texts}
+        ${status}=    Run Keyword And Return Status
+        ...    Page Should Contain    ${text}
+        Return From Keyword If    ${status}
+    END
+    Fail    Page should contain one of: ${texts}

@@ -298,3 +298,124 @@ class TestFrankelHashUtilities:
         assert len(parent) == 64
         assert parent != hash1
         assert parent != hash2
+
+
+# =============================================================================
+# Test 7: FH-002 ASCII Tree Visualization (2026-01-25)
+# =============================================================================
+
+class TestASCIITreeVisualization:
+    """Tests for FH-002: ASCII Merkle tree rendering."""
+
+    def test_render_merkle_tree_exists(self):
+        """render_merkle_tree function exists."""
+        from governance.frankel_hash import render_merkle_tree
+        assert render_merkle_tree is not None
+
+    def test_render_merkle_tree_output(self):
+        """render_merkle_tree produces valid ASCII output."""
+        from governance.frankel_hash import build_merkle_tree, render_merkle_tree
+
+        hashes = ["a" * 64, "b" * 64, "c" * 64, "d" * 64]
+        tree = build_merkle_tree(hashes)
+        output = render_merkle_tree(tree)
+
+        assert "Merkle Tree" in output
+        assert "ROOT" in output
+        assert "L0" in output  # Leaf level
+        assert "depth=" in output
+
+    def test_render_merkle_tree_short_hashes(self):
+        """render_merkle_tree uses short hashes by default."""
+        from governance.frankel_hash import build_merkle_tree, render_merkle_tree
+
+        hashes = ["a" * 64, "b" * 64]
+        tree = build_merkle_tree(hashes)
+        output = render_merkle_tree(tree)
+
+        # Should show 8-char hashes, not full 64-char
+        assert "AAAAAAAA" in output.upper()
+        assert ("a" * 64) not in output  # Full hash shouldn't appear
+
+    def test_render_file_tree_exists(self):
+        """render_file_tree function exists."""
+        from governance.frankel_hash import render_file_tree
+        assert render_file_tree is not None
+
+    def test_render_file_tree_output(self):
+        """render_file_tree produces valid file tree."""
+        from governance.frankel_hash import render_file_tree
+
+        files = {
+            "file1.py": "a" * 64,
+            "file2.py": "b" * 64,
+        }
+        output = render_file_tree(files)
+
+        assert "File Hash Tree" in output
+        assert "file1.py" in output
+        assert "file2.py" in output
+
+    def test_render_file_tree_change_indicator(self):
+        """render_file_tree marks changed files."""
+        from governance.frankel_hash import render_file_tree
+
+        files = {"changed.py": "a" * 64, "unchanged.py": "b" * 64}
+        output = render_file_tree(files, changed=["changed.py"])
+
+        assert "[CHANGED]" in output
+
+
+# =============================================================================
+# Test 8: FH-001 Zoom View (2026-01-25)
+# =============================================================================
+
+class TestZoomView:
+    """Tests for FH-001: Interactive zoom view."""
+
+    def test_zoom_view_exists(self):
+        """zoom_view function exists."""
+        from governance.frankel_hash import zoom_view
+        assert zoom_view is not None
+
+    def test_zoom_level_0_document(self):
+        """Zoom level 0 shows document-level hash."""
+        from governance.frankel_hash import zoom_view
+
+        content = "# Header\n\nParagraph 1\n\n## Section\n\nParagraph 2"
+        output = zoom_view(content, level=0)
+
+        assert "Zoom Level 0" in output
+        assert "Document" in output
+        assert "Total chunks: 1" in output
+
+    def test_zoom_level_1_sections(self):
+        """Zoom level 1 shows section-level hashes."""
+        from governance.frankel_hash import zoom_view
+
+        content = "# Section 1\n\nContent\n\n# Section 2\n\nMore content"
+        output = zoom_view(content, level=1)
+
+        assert "Zoom Level 1" in output
+        assert "Section" in output
+        assert "Total chunks:" in output
+
+    def test_zoom_level_3_lines(self):
+        """Zoom level 3 shows line-level hashes."""
+        from governance.frankel_hash import zoom_view
+
+        content = "Line 1\nLine 2\nLine 3"
+        output = zoom_view(content, level=3)
+
+        assert "Zoom Level 3" in output
+        assert "Line" in output
+        assert "Total chunks: 3" in output
+
+    def test_zoom_view_includes_line_numbers(self):
+        """Zoom view shows line numbers."""
+        from governance.frankel_hash import zoom_view
+
+        content = "# Header\n\nParagraph"
+        output = zoom_view(content, level=1)
+
+        assert "L" in output  # Line number indicator
