@@ -77,14 +77,14 @@ Import Chunk Content Function
     [Documentation]    chunk_content function should be importable
     [Tags]    unit    chunking    embedding    import
     ${result}=    Import Chunk Content
-    Skip If    not ${result}[imported]    ${result}[error]
+    Skip If    not ${result}[imported]    ${result.get("error", "chunking module not available")}
     Should Be True    ${result}[exists]    chunk_content should exist
 
 Chunk Content Splits Long Text
     [Documentation]    chunk_content should split text exceeding chunk_size
     [Tags]    unit    chunking    embedding    split
     ${result}=    Test Chunk Content Splits Long
-    Skip If    '${result.get("skip", False)}' == 'True'    ${result}[reason]
+    Skip If    '${result.get("skip", False)}' == 'True'    ${result.get("reason", "skipped")}
     Should Be True    ${result}[multiple_chunks]    Should produce multiple chunks
     Should Be True    ${result}[all_under_limit]    All chunks should be under limit
 
@@ -92,7 +92,7 @@ Chunk Content Preserves Short Text
     [Documentation]    chunk_content should not split short text
     [Tags]    unit    chunking    embedding    preserve
     ${result}=    Test Chunk Content Preserves Short
-    Skip If    '${result.get("skip", False)}' == 'True'    ${result}[reason]
+    Skip If    '${result.get("skip", False)}' == 'True'    ${result.get("reason", "skipped")}
     Should Be True    ${result}[single_chunk]    Should produce single chunk
     Should Be True    ${result}[preserved]    Short text should be preserved
 

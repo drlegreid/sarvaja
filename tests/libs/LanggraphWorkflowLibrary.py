@@ -30,6 +30,9 @@ class LanggraphWorkflowLibrary:
     def graph_has_required_nodes(self):
         """Test that graph has all required nodes."""
         try:
+            from governance.langgraph.graph import LANGGRAPH_AVAILABLE
+            if not LANGGRAPH_AVAILABLE:
+                return {"skipped": True, "reason": "langgraph not installed"}
             from governance.langgraph_workflow import build_proposal_graph
 
             graph = build_proposal_graph()
@@ -64,6 +67,9 @@ class LanggraphWorkflowLibrary:
     def dry_run_completes(self):
         """Test that dry-run workflow completes."""
         try:
+            from governance.langgraph.graph import LANGGRAPH_AVAILABLE
+            if not LANGGRAPH_AVAILABLE:
+                return {"skipped": True, "reason": "langgraph not installed"}
             from governance.langgraph_workflow import run_proposal_workflow
 
             result = run_proposal_workflow(
@@ -105,6 +111,9 @@ class LanggraphWorkflowLibrary:
     def invalid_proposal_fails(self):
         """Test that invalid proposal fails validation."""
         try:
+            from governance.langgraph.graph import LANGGRAPH_AVAILABLE
+            if not LANGGRAPH_AVAILABLE:
+                return {"skipped": True, "reason": "langgraph not installed"}
             from governance.langgraph_workflow import run_proposal_workflow
 
             result = run_proposal_workflow(

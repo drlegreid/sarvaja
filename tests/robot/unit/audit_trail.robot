@@ -73,7 +73,7 @@ Session Visibility Tracks Rules
     [Documentation]    Session visibility tracks rules applied per task
     [Tags]    unit    audit    visibility    rules
     ${result}=    Test Session Visibility Tracks Rules
-    Skip If    '${result.get("skip", False)}' == 'True'    ${result}[reason]
+    Skip If    '${result.get("skip", False)}' == 'True'    ${result.get("reason", "skipped")}
     Should Be Equal    ${result}[task_id]    TASK-001
     Should Be True    ${result}[has_rule_001]
     Should Be True    ${result}[has_rule_021]
@@ -82,7 +82,7 @@ Session Visibility Tracks Tool Calls
     [Documentation]    Session visibility tracks tool calls per task
     [Tags]    unit    audit    visibility    tools
     ${result}=    Test Session Visibility Tracks Tool Calls
-    Skip If    '${result.get("skip", False)}' == 'True'    ${result}[reason]
+    Skip If    '${result.get("skip", False)}' == 'True'    ${result.get("reason", "skipped")}
     Should Be True    ${result}[tool_calls] >= 1
     Should Be True    ${result}[has_rule_021]
 
@@ -94,7 +94,7 @@ Full Audit Trail Flow
     [Documentation]    Complete flow: session -> task -> tool call -> rules
     [Tags]    unit    audit    e2e    flow
     ${result}=    Test Full Audit Trail Flow
-    Skip If    '${result.get("skip", False)}' == 'True'    ${result}[reason]
+    Skip If    '${result.get("skip", False)}' == 'True'    ${result.get("reason", "skipped")}
     Should Be True    ${result}[session_id_match]
     Should Be True    ${result}[task_completed]
     Should Be True    ${result}[visibility_has_session]
