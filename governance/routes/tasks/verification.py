@@ -9,7 +9,7 @@ Created: 2026-01-17
 """
 
 from fastapi import APIRouter, HTTPException, Query
-from typing import List, Optional, Literal
+from typing import List
 import logging
 
 from governance.models import TaskResponse
@@ -18,7 +18,6 @@ from governance.stores import (
     _tasks_store,
     task_to_response
 )
-from governance.task_lifecycle import TaskResolution
 
 logger = logging.getLogger(__name__)
 router = APIRouter()

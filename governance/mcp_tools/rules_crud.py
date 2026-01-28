@@ -1,8 +1,10 @@
-"""Rule CRUD MCP Tools. Per RULE-012: DSP Semantic Code Structure."""
+"""Rule CRUD MCP Tools. Per RULE-012: DSP Semantic Code Structure.
+Updated: 2026-01-20 - Added monitoring instrumentation per GAP-MONITOR-INSTRUMENT-001.
+"""
 from typing import Optional
 from dataclasses import asdict
 
-from governance.mcp_tools.common import get_typedb_client, format_mcp_result
+from governance.mcp_tools.common import get_typedb_client, format_mcp_result, log_monitor_event
 
 
 def register_rule_crud_tools(mcp) -> None:
@@ -10,7 +12,8 @@ def register_rule_crud_tools(mcp) -> None:
 
     @mcp.tool()
     def rule_create(rule_id: str, name: str, category: str, priority: str, directive: str,
-                    status: str = "DRAFT", rule_type: Optional[str] = None) -> str:
+                    status: str = "DRAFT", rule_type: Optional[str] = None,
+                    applicability: Optional[str] = None) -> str:
         """
         Create a new governance rule in TypeDB.
 
@@ -22,10 +25,20 @@ def register_rule_crud_tools(mcp) -> None:
             directive: The rule directive text
             status: Rule status (default: DRAFT)
             rule_type: Optional rule type classification
+            applicability: Enforcement level (optional) - MANDATORY|RECOMMENDED|FORBIDDEN|CONDITIONAL
+                          Per RD-RULE-APPLICABILITY: defaults to RECOMMENDED for new rules.
 
         Returns:
             JSON with created rule or error
         """
+        # RD-RULE-APPLICABILITY: Validate applicability value
+        valid_applicability = ["MANDATORY", "RECOMMENDED", "FORBIDDEN", "CONDITIONAL", None]
+        if applicability and applicability not in valid_applicability:
+            return format_mcp_result({
+                "error": f"Invalid applicability: {applicability}",
+                "valid_values": ["MANDATORY", "RECOMMENDED", "FORBIDDEN", "CONDITIONAL"]
+            })
+
         client = get_typedb_client()
 
         try:
@@ -43,6 +56,17 @@ def register_rule_crud_tools(mcp) -> None:
             )
 
             if rule:
+                # RD-RULE-APPLICABILITY: Set applicability after creation if specified
+                if applicability:
+                    rule = client.update_rule(rule_id=rule_id, applicability=applicability)
+
+                # Instrument: log rule creation event (GAP-MONITOR-INSTRUMENT-001)
+                log_monitor_event(
+                    event_type="rule_change",
+                    source="mcp-rule-create",
+                    details={"rule_id": rule_id, "action": "create", "status": status, "applicability": applicability},
+                    severity="WARNING"
+                )
                 return format_mcp_result({
                     "success": True,
                     "message": f"Rule {rule_id} created successfully",
@@ -61,7 +85,7 @@ def register_rule_crud_tools(mcp) -> None:
     def rule_update(rule_id: str, name: Optional[str] = None, category: Optional[str] = None,
                     priority: Optional[str] = None, directive: Optional[str] = None,
                     status: Optional[str] = None, rule_type: Optional[str] = None,
-                    semantic_id: Optional[str] = None) -> str:
+                    semantic_id: Optional[str] = None, applicability: Optional[str] = None) -> str:
         """
         Update an existing governance rule in TypeDB.
 
@@ -74,6 +98,7 @@ def register_rule_crud_tools(mcp) -> None:
             status: New status (optional)
             rule_type: New rule type (optional)
             semantic_id: New semantic ID for migration (optional)
+            applicability: Enforcement level (optional) - MANDATORY|RECOMMENDED|FORBIDDEN|CONDITIONAL
 
         Returns:
             JSON with updated rule or error
@@ -92,10 +117,18 @@ def register_rule_crud_tools(mcp) -> None:
                 directive=directive,
                 status=status,
                 rule_type=rule_type,
-                semantic_id=semantic_id
+                semantic_id=semantic_id,
+                applicability=applicability
             )
 
             if rule:
+                # Instrument: log rule update event (GAP-MONITOR-INSTRUMENT-001)
+                log_monitor_event(
+                    event_type="rule_change",
+                    source="mcp-rule-update",
+                    details={"rule_id": rule_id, "action": "update"},
+                    severity="WARNING"
+                )
                 return format_mcp_result({
                     "success": True,
                     "message": f"Rule {rule_id} updated successfully",
@@ -133,6 +166,13 @@ def register_rule_crud_tools(mcp) -> None:
             rule = client.deprecate_rule(rule_id, reason=reason)
 
             if rule:
+                # Instrument: log rule deprecation event (GAP-MONITOR-INSTRUMENT-001)
+                log_monitor_event(
+                    event_type="rule_change",
+                    source="mcp-rule-deprecate",
+                    details={"rule_id": rule_id, "action": "deprecate", "reason": reason},
+                    severity="WARNING"
+                )
                 result = {
                     "success": True,
                     "message": f"Rule {rule_id} deprecated",
@@ -180,6 +220,13 @@ def register_rule_crud_tools(mcp) -> None:
             deleted = client.delete_rule(rule_id)
 
             if deleted:
+                # Instrument: log rule deletion event (GAP-MONITOR-INSTRUMENT-001)
+                log_monitor_event(
+                    event_type="rule_change",
+                    source="mcp-rule-delete",
+                    details={"rule_id": rule_id, "action": "delete"},
+                    severity="CRITICAL"
+                )
                 return format_mcp_result({
                     "success": True,
                     "message": f"Rule {rule_id} permanently deleted (archived for recovery)",

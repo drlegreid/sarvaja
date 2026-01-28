@@ -220,8 +220,8 @@ def get_document_for_rule(rule_id: str) -> Optional[str]:
     """
     from governance.client import TypeDBClient
 
-    # Normalize to legacy ID for TypeDB query
-    legacy_id = normalize_rule_id(rule_id)
+    # Query with the rule ID as provided - rules now use semantic IDs as primary
+    # Note: normalize_rule_id was for legacy->semantic migration, no longer needed
 
     client = TypeDBClient()
     try:
@@ -231,7 +231,7 @@ def get_document_for_rule(rule_id: str) -> Optional[str]:
 
         query = f"""
         match
-          $r isa rule-entity, has rule-id "{legacy_id}";
+          $r isa rule-entity, has rule-id "{rule_id}";
           $d isa document, has document-path $path;
           (referencing-document: $d, referenced-rule: $r) isa document-references-rule;
         select $path;

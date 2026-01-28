@@ -29,9 +29,6 @@ import logging
 from governance.client import get_client
 from governance.models import (
     APIStatus,
-    # Backward-compatibility re-exports for tests
-    ChatMessageRequest, ChatMessageResponse, ChatSessionResponse,
-    ExecutiveReportSection, ExecutiveReportResponse,
 )
 from governance.routes import (
     rules_router, tasks_router, sessions_router,
@@ -40,7 +37,7 @@ from governance.routes import (
 )
 from governance.routes.tests import tests_router
 from governance.routes.audit import router as audit_router  # RD-DEBUG-AUDIT
-from governance.routes.chat import _process_chat_command  # Backward-compat re-export
+from governance.routes.agents.observability import router as observability_router  # GAP-MONITOR-IPC-001
 from governance.stores import (
     _tasks_store, _sessions_store, _agents_store,
     generate_chat_session_id, synthesize_execution_events,
@@ -50,9 +47,6 @@ _generate_chat_session_id = generate_chat_session_id
 _synthesize_execution_events = synthesize_execution_events
 
 # Models re-exports for backward compatibility
-from governance.models import (
-    TaskExecutionEvent, TaskExecutionResponse, FileContentResponse,
-)
 
 # Configure logging
 logger = logging.getLogger(__name__)
@@ -148,6 +142,7 @@ app.include_router(reports_router, prefix="/api")
 app.include_router(chat_router, prefix="/api")
 app.include_router(tests_router, prefix="/api")  # WORKFLOW-SHELL-01-v1: Self-assessment
 app.include_router(audit_router, prefix="/api")  # RD-DEBUG-AUDIT: Audit trail
+app.include_router(observability_router, prefix="/api/agents")  # GAP-MONITOR-IPC-001: Monitor events
 
 
 # =============================================================================

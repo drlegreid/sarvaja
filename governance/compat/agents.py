@@ -14,7 +14,6 @@ import json
 from dataclasses import asdict
 
 from governance.mcp_tools.common import get_typedb_client
-from governance.client import Agent
 
 
 def governance_create_agent(agent_id, name, agent_type, trust_score=0.8):

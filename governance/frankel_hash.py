@@ -1,13 +1,14 @@
 """Frankel Hash Evidence System. Per FH-001-008, RULE-022: Content-addressable state verification."""
 import hashlib
-import re
 from datetime import datetime
 from pathlib import Path
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any
+
 
 def compute_hash(content: str) -> str:
     """Compute SHA-256 hash of content."""
     return hashlib.sha256(content.encode('utf-8')).hexdigest()
+
 
 def compute_chunk_hashes(content: str, level: int = 1) -> List[Dict[str, Any]]:
     """Compute hashes at chunk levels: 0=doc, 1=sections, 2=paragraphs, 3=lines."""
@@ -42,7 +43,6 @@ def compute_chunk_hashes(content: str, level: int = 1) -> List[Dict[str, Any]]:
             else:
                 current_section.append(line)
 
-        # Don't forget last section
         if current_section:
             section_content = '\n'.join(current_section)
             chunks.append({
@@ -100,18 +100,17 @@ def compute_chunk_hashes(content: str, level: int = 1) -> List[Dict[str, Any]]:
         "level": level
     }]
 
+
 def build_merkle_tree(hashes: List[str]) -> Dict[str, Any]:
     """Build Merkle tree from list of leaf hashes."""
     if not hashes:
         return {"root": compute_hash(""), "levels": [[]]}
 
-    levels = [hashes[:]]  # Level 0 = leaves
+    levels = [hashes[:]]
 
     current_level = hashes[:]
     while len(current_level) > 1:
         next_level = []
-
-        # Process pairs
         for i in range(0, len(current_level), 2):
             left = current_level[i]
             right = current_level[i + 1] if i + 1 < len(current_level) else left
@@ -127,9 +126,11 @@ def build_merkle_tree(hashes: List[str]) -> Dict[str, Any]:
         "depth": len(levels)
     }
 
+
 def has_changed(new_content: str, old_hash: str) -> bool:
     """Check if content has changed compared to old hash."""
     return compute_hash(new_content) != old_hash
+
 
 def capture_workspace_state(files: List[str]) -> Dict[str, Any]:
     """Capture current state of workspace files as hash snapshot."""
@@ -144,13 +145,8 @@ def capture_workspace_state(files: List[str]) -> Dict[str, Any]:
         else:
             file_hashes[file_path] = None
 
-    # Compute root hash from all file hashes
     hash_list = [h for h in file_hashes.values() if h]
-    if hash_list:
-        tree = build_merkle_tree(hash_list)
-        root_hash = tree["root"]
-    else:
-        root_hash = compute_hash("")
+    root_hash = build_merkle_tree(hash_list)["root"] if hash_list else compute_hash("")
 
     return {
         "timestamp": datetime.now().isoformat(),
@@ -159,21 +155,17 @@ def capture_workspace_state(files: List[str]) -> Dict[str, Any]:
         "file_count": len(files)
     }
 
+
 def compare_states(state1: Dict[str, Any], state2: Dict[str, Any]) -> Dict[str, Any]:
     """Compare two workspace states and identify changes."""
     files1 = state1.get("files", {})
     files2 = state2.get("files", {})
 
-    changed = []
-    added = []
-    removed = []
-
+    changed, added, removed = [], [], []
     all_files = set(files1.keys()) | set(files2.keys())
 
     for f in all_files:
-        h1 = files1.get(f)
-        h2 = files2.get(f)
-
+        h1, h2 = files1.get(f), files2.get(f)
         if h1 is None and h2 is not None:
             added.append(f)
         elif h1 is not None and h2 is None:
@@ -182,51 +174,51 @@ def compare_states(state1: Dict[str, Any], state2: Dict[str, Any]) -> Dict[str, 
             changed.append(f)
 
     return {
-        "changed": changed,
-        "added": added,
-        "removed": removed,
+        "changed": changed, "added": added, "removed": removed,
         "root_changed": state1.get("root_hash") != state2.get("root_hash")
     }
+
 
 def compute_short_hash(content: str, length: int = 8) -> str:
     """Compute shortened hash for display (e.g., dashboard)."""
     return compute_hash(content)[:length].upper()
 
-# CLI for testing
-if __name__ == "__main__":
-    import sys
+
+def compute_state_hash(data: Dict[str, Any], length: int = 8) -> str:
+    """
+    Compute Frankel-style hash from dict state (8 chars uppercase).
+    Per FH-DUP-001: Consolidated implementation from hooks/core/state.py.
+    """
     import json
+    serialized = json.dumps(data, sort_keys=True)
+    return compute_hash(serialized)[:length].upper()
 
-    if len(sys.argv) > 1:
-        cmd = sys.argv[1]
 
-        if cmd == "hash" and len(sys.argv) >= 3:
-            file_path = sys.argv[2]
-            if Path(file_path).exists():
-                content = Path(file_path).read_text()
-                print(f"Hash: {compute_hash(content)}")
-                print(f"Short: {compute_short_hash(content)}")
-            else:
-                print(f"File not found: {file_path}")
+# Re-export visualization functions for backwards compatibility
+def render_merkle_tree(tree: Dict[str, Any], show_full: bool = False) -> str:
+    """Render Merkle tree. Delegated to frankel_viz."""
+    from governance.frankel_viz import render_merkle_tree as _render
+    return _render(tree, show_full)
 
-        elif cmd == "chunks" and len(sys.argv) >= 3:
-            file_path = sys.argv[2]
-            level = int(sys.argv[3]) if len(sys.argv) > 3 else 1
-            if Path(file_path).exists():
-                content = Path(file_path).read_text()
-                chunks = compute_chunk_hashes(content, level)
-                print(json.dumps(chunks, indent=2))
-            else:
-                print(f"File not found: {file_path}")
 
-        elif cmd == "snapshot":
-            files = sys.argv[2:] if len(sys.argv) > 2 else ["TODO.md", "CLAUDE.md"]
-            state = capture_workspace_state(files)
-            print(json.dumps(state, indent=2))
+def render_file_tree(files: Dict[str, str], changed: List[str] = None) -> str:
+    """Render file tree. Delegated to frankel_viz."""
+    from governance.frankel_viz import render_file_tree as _render
+    return _render(files, changed)
 
-        else:
-            print("Usage: python frankel_hash.py [hash|chunks|snapshot] [args]")
-    else:
-        # Default: show workspace snapshot
-        state = capture_workspace_state(["TODO.md", "CLAUDE.md"])
-        print(json.dumps(state, indent=2))
+
+def zoom_view(content: str, level: int = 0, focus_line: int = None) -> str:
+    """Generate zoom view. Delegated to frankel_viz."""
+    from governance.frankel_viz import zoom_view as _zoom
+    return _zoom(content, level, focus_line)
+
+
+def interactive_tree_cli(file_path: str) -> None:
+    """Run interactive CLI. Delegated to frankel_viz."""
+    from governance.frankel_viz import interactive_tree_cli as _cli
+    _cli(file_path)
+
+
+if __name__ == "__main__":
+    from governance.frankel_viz import main
+    main()

@@ -1,16 +1,22 @@
 """Task CRUD MCP Tools. Per RULE-012/032, DECISION-003."""
-import json
 from typing import Optional
 from dataclasses import asdict
 
 from governance.mcp_tools.common import get_typedb_client, format_mcp_result
+
+# Monitoring instrumentation per GAP-MONITOR-INSTRUMENT-001
+try:
+    from agent.governance_ui.data_access.monitoring import log_monitor_event
+    MONITORING_AVAILABLE = True
+except ImportError:
+    MONITORING_AVAILABLE = False
 
 
 def register_task_crud_tools(mcp) -> None:
     """Register task CRUD MCP tools."""
 
     @mcp.tool()
-    def task_create(task_id: str, name: str, description: str = "", status: str = "pending",
+    def task_create(task_id: str, name: str, description: str = "", status: str = "OPEN",
                     priority: str = "MEDIUM", phase: str = "P10") -> str:
         """
         Create a new task in TypeDB.
@@ -19,7 +25,7 @@ def register_task_crud_tools(mcp) -> None:
             task_id: Unique task identifier (e.g., "P12.1", "RD-001")
             name: Human-readable task name
             description: Task description/details
-            status: Task status (pending, in_progress, completed)
+            status: Task status per TASK-LIFE-01-v1 (OPEN, IN_PROGRESS, CLOSED)
             priority: Priority level (LOW, MEDIUM, HIGH, CRITICAL)
             phase: Phase identifier (e.g., "P10", "P11", "RD")
 
@@ -42,6 +48,14 @@ def register_task_crud_tools(mcp) -> None:
             )
 
             if success:
+                # Instrument task creation
+                if MONITORING_AVAILABLE:
+                    log_monitor_event(
+                        event_type="task_event",
+                        source="mcp-task-create",
+                        details={"task_id": task_id, "action": "create", "status": status, "priority": priority},
+                        severity="INFO"
+                    )
                 return format_mcp_result({
                     "task_id": task_id,
                     "name": name,
@@ -73,6 +87,13 @@ def register_task_crud_tools(mcp) -> None:
 
             task = client.get_task(task_id)
             if task:
+                # Instrument task query
+                if MONITORING_AVAILABLE:
+                    log_monitor_event(
+                        event_type="task_event",
+                        source="mcp-task-get",
+                        details={"task_id": task_id, "action": "query", "found": True}
+                    )
                 return format_mcp_result(asdict(task))
             else:
                 return format_mcp_result({"error": f"Task {task_id} not found"})
@@ -110,6 +131,13 @@ def register_task_crud_tools(mcp) -> None:
             )
 
             if success:
+                # Instrument task update
+                if MONITORING_AVAILABLE:
+                    log_monitor_event(
+                        event_type="task_event",
+                        source="mcp-task-update",
+                        details={"task_id": task_id, "action": "update", "status": status, "phase": phase}
+                    )
                 # Get updated task to return
                 task = client.get_task(task_id)
                 if task:
@@ -144,6 +172,14 @@ def register_task_crud_tools(mcp) -> None:
             success = client.delete_task(task_id)
 
             if success:
+                # Instrument task deletion
+                if MONITORING_AVAILABLE:
+                    log_monitor_event(
+                        event_type="task_event",
+                        source="mcp-task-delete",
+                        details={"task_id": task_id, "action": "delete"},
+                        severity="WARNING"
+                    )
                 return format_mcp_result({
                     "task_id": task_id,
                     "deleted": True,
@@ -227,6 +263,13 @@ def register_task_crud_tools(mcp) -> None:
             )
 
             if success:
+                # Instrument task verification
+                if MONITORING_AVAILABLE:
+                    log_monitor_event(
+                        event_type="task_event",
+                        source="mcp-task-verify",
+                        details={"task_id": task_id, "action": "verify", "method": verification_method}
+                    )
                 return format_mcp_result({
                     "task_id": task_id,
                     "status": "completed",

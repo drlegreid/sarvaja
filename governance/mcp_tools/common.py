@@ -1,12 +1,27 @@
-"""Common Utilities for MCP Tools. Per RULE-012: DSP Semantic Code Structure."""
+"""Common Utilities for MCP Tools. Per RULE-012: DSP Semantic Code Structure.
+Updated: 2026-01-21 - Added lazy monitoring import to fix circular dependency.
+"""
 import os
-import warnings
 import logging
 from dataclasses import dataclass
-from functools import wraps
 from typing import Any
 
 logger = logging.getLogger(__name__)
+
+
+def log_monitor_event(
+    event_type: str, source: str, details: dict = None, severity: str = "INFO"
+) -> None:
+    """Lazy wrapper for monitoring to avoid circular import.
+
+    Per GAP-MONITOR-INSTRUMENT-001: All MCP tools should use this for monitoring.
+    Lazy imports agent.governance_ui.data_access.monitoring only when called.
+    """
+    try:
+        from agent.governance_ui.data_access.monitoring import log_monitor_event as _log
+        _log(event_type=event_type, source=source, details=details or {}, severity=severity)
+    except ImportError:
+        pass  # Monitoring unavailable, continue silently
 
 
 # ============================================================================

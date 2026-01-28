@@ -68,6 +68,20 @@ class RuleReadQueries:
             except Exception:
                 pass  # semantic_id is optional
 
+            # Try to get optional applicability (RD-RULE-APPLICABILITY)
+            applicability = None
+            app_query = f"""
+                match $r isa rule-entity,
+                    has rule-id "{rule_id}",
+                    has applicability $app;
+                            """
+            try:
+                app_results = self._execute_query(app_query)
+                if app_results:
+                    applicability = app_results[0].get("app")
+            except Exception:
+                pass  # applicability is optional
+
             rules.append(Rule(
                 id=rule_id,
                 name=r.get("name"),
@@ -76,7 +90,8 @@ class RuleReadQueries:
                 status=r.get("stat"),
                 directive=r.get("dir"),
                 rule_type=rule_type,
-                semantic_id=semantic_id
+                semantic_id=semantic_id,
+                applicability=applicability
             ))
 
         return rules
@@ -126,6 +141,20 @@ class RuleReadQueries:
             except Exception:
                 pass
 
+            # Try to get optional applicability (RD-RULE-APPLICABILITY)
+            applicability = None
+            app_query = f"""
+                match $r isa rule-entity,
+                    has rule-id "{rule_id}",
+                    has applicability $app;
+                            """
+            try:
+                app_results = self._execute_query(app_query)
+                if app_results:
+                    applicability = app_results[0].get("app")
+            except Exception:
+                pass
+
             rules.append(Rule(
                 id=rule_id,
                 name=r.get("name"),
@@ -134,7 +163,8 @@ class RuleReadQueries:
                 status="ACTIVE",
                 directive=r.get("dir"),
                 rule_type=rule_type,
-                semantic_id=semantic_id
+                semantic_id=semantic_id,
+                applicability=applicability
             ))
 
         return rules
@@ -179,6 +209,17 @@ class RuleReadQueries:
         if sid_results:
             semantic_id = sid_results[0].get("sid")
 
+        # Try to get optional applicability (RD-RULE-APPLICABILITY)
+        applicability = None
+        app_query = f"""
+            match $r isa rule-entity,
+                has rule-id "{rule_id}",
+                has applicability $app;
+                    """
+        app_results = self._execute_query(app_query)
+        if app_results:
+            applicability = app_results[0].get("app")
+
         return Rule(
             id=rule_id,
             name=r.get("name"),
@@ -187,7 +228,8 @@ class RuleReadQueries:
             status=r.get("stat"),
             directive=r.get("dir"),
             rule_type=rule_type,
-            semantic_id=semantic_id
+            semantic_id=semantic_id,
+            applicability=applicability
         )
 
     def get_rules_by_category(self, category: str) -> List[Rule]:

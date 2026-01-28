@@ -90,7 +90,7 @@ if __name__ == "__main__":
         print(f"  Results: {result.count}")
         print(f"  Latency: {result.latency_ms:.1f}ms")
         if result.fallback_used:
-            print(f"  Fallback: Yes")
+            print("  Fallback: Yes")
         if result.error:
             print(f"  Error: {result.error}")
 

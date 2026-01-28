@@ -9,7 +9,7 @@ Provides impact analysis for rule modifications.
 Created: 2026-01-14
 """
 
-from typing import Dict, Any, Set, List
+from typing import Dict, Any, Set
 
 
 def calculate_rule_impact(

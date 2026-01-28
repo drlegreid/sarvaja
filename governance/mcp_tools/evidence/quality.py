@@ -14,8 +14,9 @@ Tools:
 Created: 2024-12-28
 """
 
-import json
 from typing import Optional
+
+from governance.mcp_tools.common import format_mcp_result
 
 # Import rule quality analyzer (with fallback)
 try:
@@ -49,7 +50,7 @@ def register_quality_tools(mcp) -> None:
             JSON health report with issues, severity, impact, and remediation
         """
         if not RULE_QUALITY_AVAILABLE:
-            return json.dumps({"error": "RuleQualityAnalyzer not available"})
+            return format_mcp_result({"error": "RuleQualityAnalyzer not available"})
 
         return analyze_rule_quality()
 
@@ -65,7 +66,7 @@ def register_quality_tools(mcp) -> None:
             JSON with affected rules, impact score, and recommendation
         """
         if not RULE_QUALITY_AVAILABLE:
-            return json.dumps({"error": "RuleQualityAnalyzer not available"})
+            return format_mcp_result({"error": "RuleQualityAnalyzer not available"})
 
         return get_rule_impact(rule_id)
 
@@ -87,6 +88,6 @@ def register_quality_tools(mcp) -> None:
             JSON array of issues with severity, impact, and remediation
         """
         if not RULE_QUALITY_AVAILABLE:
-            return json.dumps({"error": "RuleQualityAnalyzer not available"})
+            return format_mcp_result({"error": "RuleQualityAnalyzer not available"})
 
         return find_rule_issues(issue_type)

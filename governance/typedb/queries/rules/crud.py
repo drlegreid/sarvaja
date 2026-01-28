@@ -96,7 +96,8 @@ class RuleCRUDOperations:
         directive: Optional[str] = None,
         status: Optional[str] = None,
         rule_type: Optional[str] = None,
-        semantic_id: Optional[str] = None
+        semantic_id: Optional[str] = None,
+        applicability: Optional[str] = None
     ) -> Optional[Rule]:
         """
         Update an existing rule's attributes.
@@ -112,6 +113,7 @@ class RuleCRUDOperations:
             status: New status (optional)
             rule_type: New rule type (optional)
             semantic_id: New semantic ID (optional) - per META-TAXON-01-v1
+            applicability: New applicability (optional) - per RD-RULE-APPLICABILITY
 
         Returns:
             Updated Rule object or None if not found
@@ -146,6 +148,15 @@ class RuleCRUDOperations:
                 new_attrs.append(('semantic-id', semantic_id))
             elif semantic_id != existing.semantic_id:
                 updates.append(('semantic-id', existing.semantic_id, semantic_id))
+        if applicability is not None:
+            # Validate applicability value
+            valid_applicability = ["MANDATORY", "RECOMMENDED", "FORBIDDEN", "CONDITIONAL"]
+            if applicability not in valid_applicability:
+                raise ValueError(f"Invalid applicability: {applicability}. Must be one of {valid_applicability}")
+            if existing.applicability is None:
+                new_attrs.append(('applicability', applicability))
+            elif applicability != existing.applicability:
+                updates.append(('applicability', existing.applicability, applicability))
 
         if not updates and not new_attrs:
             return existing  # Nothing to update

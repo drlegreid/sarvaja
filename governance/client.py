@@ -24,7 +24,6 @@ from governance.typedb.entities import (
 )
 
 # Re-export ARCHIVE_DIR for backward compatibility (used by tests)
-from governance.typedb.queries.rules import ARCHIVE_DIR
 
 # Import modular components
 from governance.typedb.base import TypeDBBaseClient

@@ -67,7 +67,7 @@ def sync_task_session_relations():
                 errors += 1
                 print(f"  ERROR: {task_id} -> {session_id}: {e}")
 
-    print(f"\nSync complete:")
+    print("\nSync complete:")
     print(f"  Total tasks: {total}")
     print(f"  Skipped (no sessions): {skipped}")
     print(f"  Already linked: {already_linked}")

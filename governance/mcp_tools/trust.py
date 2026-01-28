@@ -5,6 +5,7 @@ Agent trust score operations (RULE-011).
 
 Per RULE-012: DSP Semantic Code Structure
 Per FP + Digital Twin Paradigm: Trust entity module
+Updated: 2026-01-20 - Added monitoring instrumentation per GAP-MONITOR-INSTRUMENT-001.
 """
 
 from dataclasses import asdict
@@ -14,6 +15,7 @@ from governance.mcp_tools.common import (
     calculate_vote_weight,
     get_typedb_client,
     format_mcp_result,
+    log_monitor_event,
 )
 
 
@@ -69,6 +71,12 @@ def register_trust_tools(mcp) -> None:
                 vote_weight=calculate_vote_weight(trust_score)
             )
 
+            # Instrument: log trust query event (GAP-MONITOR-INSTRUMENT-001)
+            log_monitor_event(
+                event_type="trust_query",
+                source="mcp-trust-get",
+                details={"agent_id": agent_id, "trust_score": trust_score}
+            )
             return format_mcp_result(asdict(score))
 
         finally:

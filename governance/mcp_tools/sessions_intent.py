@@ -10,10 +10,16 @@ Extracted from sessions_core.py per modularization plan.
 Created: 2026-01-10
 """
 
-import json
 from typing import Optional
 
 from governance.mcp_tools.common import format_mcp_result
+
+# Monitoring instrumentation per GAP-MONITOR-INSTRUMENT-001
+try:
+    from agent.governance_ui.data_access.monitoring import log_monitor_event
+    MONITORING_AVAILABLE = True
+except ImportError:
+    MONITORING_AVAILABLE = False
 
 # Import session collector (with fallback)
 try:
@@ -80,6 +86,14 @@ def register_session_intent_tools(mcp) -> None:
             previous_session_id=previous_session_id,
             initial_prompt=initial_prompt
         )
+
+        # Instrument intent capture
+        if MONITORING_AVAILABLE:
+            log_monitor_event(
+                event_type="session_event",
+                source="mcp-session-capture-intent",
+                details={"session_id": collector.session_id, "action": "capture_intent", "tasks_planned": len(task_list)}
+            )
 
         return format_mcp_result({
             "session_id": collector.session_id,
@@ -169,6 +183,20 @@ def register_session_intent_tools(mcp) -> None:
                 "untracked_achieved": list(achieved - planned),
                 "planned_not_done": list(planned - achieved - deferred)
             }
+
+        # Instrument outcome capture
+        if MONITORING_AVAILABLE:
+            log_monitor_event(
+                event_type="session_event",
+                source="mcp-session-capture-outcome",
+                details={
+                    "session_id": collector.session_id,
+                    "action": "capture_outcome",
+                    "status": status,
+                    "achieved": len(achieved_list),
+                    "deferred": len(deferred_list)
+                }
+            )
 
         return format_mcp_result({
             "session_id": collector.session_id,

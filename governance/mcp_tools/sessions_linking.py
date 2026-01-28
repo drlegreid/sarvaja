@@ -14,6 +14,13 @@ Created: 2026-01-03
 
 from governance.mcp_tools.common import format_mcp_result
 
+# Monitoring instrumentation per GAP-MONITOR-INSTRUMENT-001
+try:
+    from agent.governance_ui.data_access.monitoring import log_monitor_event
+    MONITORING_AVAILABLE = True
+except ImportError:
+    MONITORING_AVAILABLE = False
+
 # Check TypeDB availability
 try:
     from governance.client import TypeDBClient
@@ -67,6 +74,9 @@ def register_session_linking_tools(mcp) -> None:
                     "status": r.get("status")
                 })
 
+            if MONITORING_AVAILABLE:
+                log_monitor_event(event_type="link_event", source="mcp-session-get-tasks",
+                    details={"session_id": session_id, "action": "query_tasks", "count": len(tasks)})
             return format_mcp_result({
                 "session_id": session_id,
                 "tasks": tasks,
@@ -103,6 +113,9 @@ def register_session_linking_tools(mcp) -> None:
             client.close()
 
             if success:
+                if MONITORING_AVAILABLE:
+                    log_monitor_event(event_type="link_event", source="mcp-session-link-rule",
+                        details={"session_id": session_id, "rule_id": rule_id, "action": "link"})
                 return format_mcp_result({
                     "session_id": session_id,
                     "rule_id": rule_id,
@@ -144,6 +157,9 @@ def register_session_linking_tools(mcp) -> None:
             client.close()
 
             if success:
+                if MONITORING_AVAILABLE:
+                    log_monitor_event(event_type="link_event", source="mcp-session-link-decision",
+                        details={"session_id": session_id, "decision_id": decision_id, "action": "link"})
                 return format_mcp_result({
                     "session_id": session_id,
                     "decision_id": decision_id,
@@ -185,6 +201,9 @@ def register_session_linking_tools(mcp) -> None:
             client.close()
 
             if success:
+                if MONITORING_AVAILABLE:
+                    log_monitor_event(event_type="link_event", source="mcp-session-link-evidence",
+                        details={"session_id": session_id, "evidence_path": evidence_path, "action": "link"})
                 return format_mcp_result({
                     "session_id": session_id,
                     "evidence_path": evidence_path,

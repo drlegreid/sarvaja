@@ -33,6 +33,8 @@ class RuleResponse(BaseModel):
     status: str
     directive: str
     created_date: Optional[str] = None
+    document_path: Optional[str] = None  # Per GAP-UI-AUDIT-001: Rule-document linkage
+    applicability: Optional[str] = None  # Per RD-RULE-APPLICABILITY: MANDATORY|RECOMMENDED|FORBIDDEN|CONDITIONAL
 
 class TaskCreate(BaseModel):
     """Request model for creating a task."""

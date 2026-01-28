@@ -1,9 +1,9 @@
 """Document Link Extraction MCP Tools. Per DOC-LINK-01-v1."""
 
-import json
 import re
 from pathlib import Path
 
+from governance.mcp_tools.common import format_mcp_result
 from .common import (
     EVIDENCE_DIR,
     DOCS_DIR,
@@ -47,7 +47,7 @@ def register_link_document_tools(mcp) -> None:
                     break
 
         if not doc_path.exists():
-            return json.dumps({
+            return format_mcp_result({
                 "error": f"Document not found: {path}",
                 "tried_paths": [str(c) for c in candidates] if candidates else [path]
             })
@@ -108,7 +108,7 @@ def register_link_document_tools(mcp) -> None:
                 for m in re.finditer(task_pattern, content)
             ]
 
-            return json.dumps({
+            return format_mcp_result({
                 "source": str(doc_path),
                 "links": {
                     "markdown": md_links,
@@ -125,10 +125,10 @@ def register_link_document_tools(mcp) -> None:
                     "gap_refs": len(gap_refs),
                     "task_refs": len(task_refs)
                 }
-            }, indent=2)
+            })
 
         except Exception as e:
-            return json.dumps({"error": f"Failed to extract links: {str(e)}"})
+            return format_mcp_result({"error": f"Failed to extract links: {str(e)}"})
 
     @mcp.tool()
     def doc_link_resolve(link: str, context_path: str = "") -> str:
@@ -177,7 +177,7 @@ def register_link_document_tools(mcp) -> None:
                                 result["exists"] = True
                                 result["section"] = legacy_id
                                 break
-            return json.dumps(result, indent=2)
+            return format_mcp_result(result)
 
         # Check for legacy rule ID
         legacy_match = re.match(r'^RULE-(\d{3})$', link)
@@ -189,7 +189,7 @@ def register_link_document_tools(mcp) -> None:
                 leaf_path = RULES_DIR / "leaf" / f"{semantic_id}.md"
                 if leaf_path.exists():
                     result["resolved"], result["exists"] = str(leaf_path), True
-                    return json.dumps(result, indent=2)
+                    return format_mcp_result(result)
             for rule_file in ["RULES-GOVERNANCE.md", "RULES-TECHNICAL.md", "RULES-OPERATIONAL.md"]:
                 rule_path = RULES_DIR / rule_file
                 if rule_path.exists() and f"## {link}" in rule_path.read_text(encoding="utf-8"):
@@ -197,7 +197,7 @@ def register_link_document_tools(mcp) -> None:
                     result["exists"] = True
                     result["section"] = link
                     break
-            return json.dumps(result, indent=2)
+            return format_mcp_result(result)
 
         # Check for gap ID
         gap_match = re.match(r'^GAP-([A-Z]+)-(\d{3})$', link)
@@ -211,7 +211,7 @@ def register_link_document_tools(mcp) -> None:
             gap_file = GAPS_DIR / f"{link}.md"
             if gap_file.exists():
                 result["resolved"], result["exists"] = str(gap_file), True
-            return json.dumps(result, indent=2)
+            return format_mcp_result(result)
 
         # Check for task ID
         task_match = re.match(r'^(P\d+\.\d+|RD-\d{3})$', link)
@@ -226,7 +226,7 @@ def register_link_document_tools(mcp) -> None:
                 rd_file = BACKLOG_DIR / "R&D-BACKLOG.md"
                 if rd_file.exists():
                     result["resolved"], result["exists"] = str(rd_file), True
-            return json.dumps(result, indent=2)
+            return format_mcp_result(result)
 
         # Handle as regular path
         result["type"] = "path"
@@ -259,4 +259,4 @@ def register_link_document_tools(mcp) -> None:
                 result["resolved"] = str(Path(link).resolve())
                 result["tried_paths"] = [str(c) for c in candidates]
 
-        return json.dumps(result, indent=2)
+        return format_mcp_result(result)

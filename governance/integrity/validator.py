@@ -75,7 +75,7 @@ class DataIntegrityValidator:
         if id_value:
             pattern = schema.get("id_pattern")
             if pattern and not re.match(pattern, str(id_value)):
-                result.add_warning(f"id_pattern", f"ID '{id_value}' doesn't match expected pattern: {pattern}")
+                result.add_warning("id_pattern", f"ID '{id_value}' doesn't match expected pattern: {pattern}")
             else:
                 result.add_pass("id_pattern")
 

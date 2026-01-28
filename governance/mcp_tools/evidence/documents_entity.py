@@ -17,13 +17,11 @@ Created: 2026-01-13 (extracted from documents.py)
 Refactored: 2026-01-19 (removed deprecated functions per MCP-NAMING-01-v1)
 """
 
-import json
 import re
 from pathlib import Path
 
-from governance.mcp_tools.common import get_typedb_client
+from governance.mcp_tools.common import get_typedb_client, format_mcp_result
 from .common import (
-    DOCS_DIR,
     BACKLOG_DIR,
     RULES_DIR,
 )
@@ -90,12 +88,12 @@ def register_entity_document_tools(mcp) -> None:
                     elif "**Category:**" in line:
                         metadata["category"] = line.split(":**")[1].strip().rstrip("*")
 
-                return json.dumps({
+                return format_mcp_result({
                     "rule_id": rule_id,
                     "source_file": str(rule_file),
                     "content": rule_content,
                     "metadata": metadata
-                }, indent=2)
+                })
 
         # Rule not found in files - try TypeDB
         client = get_typedb_client()
@@ -104,7 +102,7 @@ def register_entity_document_tools(mcp) -> None:
                 rules = client.get_all_rules()
                 for r in rules:
                     if r.id == rule_id:
-                        return json.dumps({
+                        return format_mcp_result({
                             "rule_id": rule_id,
                             "source": "typedb",
                             "name": r.name,
@@ -113,12 +111,12 @@ def register_entity_document_tools(mcp) -> None:
                             "priority": r.priority,
                             "status": r.status,
                             "note": "Full markdown not found in docs/rules/, showing TypeDB summary"
-                        }, indent=2)
+                        })
                 client.close()
         except Exception:
             pass
 
-        return json.dumps({"error": f"Rule {rule_id} not found in docs/rules/ or TypeDB"})
+        return format_mcp_result({"error": f"Rule {rule_id} not found in docs/rules/ or TypeDB"})
 
     @mcp.tool()
     def doc_task_get(task_id: str) -> str:
@@ -184,6 +182,6 @@ def register_entity_document_tools(mcp) -> None:
             pass
 
         if not result["sources"] and "typedb" not in result:
-            return json.dumps({"error": f"Task {task_id} not found in workspace documents or TypeDB"})
+            return format_mcp_result({"error": f"Task {task_id} not found in workspace documents or TypeDB"})
 
-        return json.dumps(result, indent=2)
+        return format_mcp_result(result)

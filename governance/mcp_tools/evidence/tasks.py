@@ -13,11 +13,10 @@ Tools:
 Created: 2024-12-28
 """
 
-import json
 import re
-from pathlib import Path
 from typing import Optional
 
+from governance.mcp_tools.common import format_mcp_result
 from .common import BACKLOG_DIR
 
 
@@ -70,12 +69,12 @@ def register_task_tools(mcp) -> None:
                             "gap_id": task_dict.get('gap_id')
                         })
 
-                    return json.dumps({
+                    return format_mcp_result({
                         "tasks": tasks,
                         "count": len(tasks),
                         "phases": list(set(t["phase"] for t in tasks)),
                         "source": "typedb"
-                    }, indent=2)
+                    })
                 finally:
                     client.close()
         except Exception:
@@ -139,12 +138,12 @@ def register_task_tools(mcp) -> None:
                     "description": status_or_desc[:200] if len(status_or_desc) > 10 else ""
                 })
 
-        return json.dumps({
+        return format_mcp_result({
             "tasks": tasks,
             "count": len(tasks),
             "phases": list(set(t["phase"] for t in tasks)),
             "source": "markdown"
-        }, indent=2)
+        })
 
     @mcp.tool()
     def governance_get_task_deps(task_id: str) -> str:
@@ -192,4 +191,4 @@ def register_task_tools(mcp) -> None:
                 if phase_num > 3:
                     result["blocked_by"].append("P3 (Stabilization)")
 
-        return json.dumps(result, indent=2)
+        return format_mcp_result(result)

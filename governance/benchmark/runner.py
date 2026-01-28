@@ -49,7 +49,7 @@ class GovernanceBenchmark:
 
     def run_all(self) -> BenchmarkSuite:
         """Run all benchmark suites."""
-        print(f"\nGovernance Performance Benchmarks")
+        print("\nGovernance Performance Benchmarks")
         print(f"Iterations per test: {self.iterations}")
         print("=" * 50)
 

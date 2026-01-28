@@ -8,7 +8,6 @@ Per P10.1-P10.3: TypeDB-first seeding.
 """
 
 import logging
-from typing import Optional
 
 from governance.seed.data import get_seed_tasks, get_seed_sessions, get_seed_agents
 

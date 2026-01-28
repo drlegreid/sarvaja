@@ -11,7 +11,7 @@ from typing import TYPE_CHECKING
 from .models import Decision, Task, TYPEDB_AVAILABLE
 
 if TYPE_CHECKING:
-    from . import SessionCollector
+    pass
 
 
 class SessionSyncMixin:

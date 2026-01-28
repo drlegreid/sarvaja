@@ -1,8 +1,14 @@
 """Task Linking MCP Tools. Per RULE-012, P11.3, GAP-DATA-002. Created: 2026-01-03."""
 
-import json
 
 from governance.mcp_tools.common import get_typedb_client, format_mcp_result
+
+# Monitoring instrumentation per GAP-MONITOR-INSTRUMENT-001
+try:
+    from agent.governance_ui.data_access.monitoring import log_monitor_event
+    MONITORING_AVAILABLE = True
+except ImportError:
+    MONITORING_AVAILABLE = False
 
 
 def register_task_linking_tools(mcp) -> None:
@@ -19,6 +25,9 @@ def register_task_linking_tools(mcp) -> None:
             success = client.link_task_to_session(task_id, session_id)
 
             if success:
+                if MONITORING_AVAILABLE:
+                    log_monitor_event(event_type="link_event", source="mcp-task-link-session",
+                        details={"task_id": task_id, "session_id": session_id, "action": "link"})
                 return format_mcp_result({
                     "task_id": task_id,
                     "session_id": session_id,
@@ -43,6 +52,9 @@ def register_task_linking_tools(mcp) -> None:
             success = client.link_task_to_rule(task_id, rule_id)
 
             if success:
+                if MONITORING_AVAILABLE:
+                    log_monitor_event(event_type="link_event", source="mcp-task-link-rule",
+                        details={"task_id": task_id, "rule_id": rule_id, "action": "link"})
                 return format_mcp_result({
                     "task_id": task_id,
                     "rule_id": rule_id,
@@ -67,6 +79,9 @@ def register_task_linking_tools(mcp) -> None:
             success = client.link_evidence_to_task(task_id, evidence_path)
 
             if success:
+                if MONITORING_AVAILABLE:
+                    log_monitor_event(event_type="link_event", source="mcp-task-link-evidence",
+                        details={"task_id": task_id, "evidence_path": evidence_path, "action": "link"})
                 return format_mcp_result({
                     "task_id": task_id,
                     "evidence_path": evidence_path,
@@ -90,6 +105,9 @@ def register_task_linking_tools(mcp) -> None:
 
             evidence_files = client.get_task_evidence(task_id)
 
+            if MONITORING_AVAILABLE:
+                log_monitor_event(event_type="link_event", source="mcp-task-get-evidence",
+                    details={"task_id": task_id, "action": "query_evidence", "count": len(evidence_files)})
             return format_mcp_result({
                 "task_id": task_id,
                 "evidence_files": evidence_files,
@@ -109,6 +127,9 @@ def register_task_linking_tools(mcp) -> None:
             success = client.link_task_to_commit(task_id, commit_sha, commit_message)
 
             if success:
+                if MONITORING_AVAILABLE:
+                    log_monitor_event(event_type="link_event", source="mcp-task-link-commit",
+                        details={"task_id": task_id, "commit_sha": commit_sha, "action": "link"})
                 return format_mcp_result({
                     "task_id": task_id,
                     "commit_sha": commit_sha,
@@ -132,6 +153,9 @@ def register_task_linking_tools(mcp) -> None:
 
             commits = client.get_task_commits(task_id)
 
+            if MONITORING_AVAILABLE:
+                log_monitor_event(event_type="link_event", source="mcp-task-get-commits",
+                    details={"task_id": task_id, "action": "query_commits", "count": len(commits)})
             return format_mcp_result({
                 "task_id": task_id,
                 "commits": commits,
@@ -158,6 +182,9 @@ def register_task_linking_tools(mcp) -> None:
             )
 
             if success:
+                if MONITORING_AVAILABLE:
+                    log_monitor_event(event_type="task_event", source="mcp-task-update-details",
+                        details={"task_id": task_id, "action": "update_details"})
                 return format_mcp_result({
                     "task_id": task_id,
                     "updated_sections": [
@@ -188,6 +215,9 @@ def register_task_linking_tools(mcp) -> None:
                     "error": f"Task {task_id} not found"
                 })
 
+            if MONITORING_AVAILABLE:
+                log_monitor_event(event_type="task_event", source="mcp-task-get-details",
+                    details={"task_id": task_id, "action": "query_details"})
             return format_mcp_result({
                 "task_id": task_id,
                 **details

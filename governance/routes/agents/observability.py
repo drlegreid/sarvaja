@@ -34,6 +34,12 @@ try:
 except ImportError:
     AGENT_STATUS_AVAILABLE = False
 
+try:
+    from conflict_checker import get_conflict_summary, check_merge_conflicts
+    CONFLICT_CHECKER_AVAILABLE = True
+except ImportError:
+    CONFLICT_CHECKER_AVAILABLE = False
+
 
 @router.get("/agents/status/summary")
 async def get_agents_status_summary():
@@ -41,7 +47,7 @@ async def get_agents_status_summary():
     Get agent observability summary.
 
     Per MULTI-007: Monitoring for multi-agent workflows.
-    Includes: stuck agents, stale locks, alerts.
+    Includes: stuck agents, stale locks, merge conflicts, alerts.
     """
     if not AGENT_STATUS_AVAILABLE:
         return {
@@ -49,7 +55,25 @@ async def get_agents_status_summary():
             "status": "UNAVAILABLE"
         }
 
-    return get_agent_status_summary()
+    summary = get_agent_status_summary()
+
+    # Add conflict status if available (MULTI-007 completion)
+    if CONFLICT_CHECKER_AVAILABLE:
+        conflict_summary = get_conflict_summary()
+        summary["conflicts"] = conflict_summary.get("conflicts", [])
+        summary["conflict_count"] = conflict_summary.get("conflict_count", 0)
+        summary["has_conflicts"] = conflict_summary.get("has_conflicts", False)
+
+        # Add conflict alerts to the main alerts list
+        for alert in conflict_summary.get("alerts", []):
+            summary["alerts"].append(alert)
+            summary["alert_count"] = len(summary["alerts"])
+
+        # Update overall status if conflicts found
+        if conflict_summary.get("has_conflicts"):
+            summary["status"] = "CRITICAL"
+
+    return summary
 
 
 @router.get("/agents/status/stuck")
@@ -128,3 +152,66 @@ async def release_lock(resource: str, agent_id: str):
     if released:
         return {"released": True, "resource": resource, "agent_id": agent_id}
     raise HTTPException(status_code=404, detail=f"Lock not found or not owned by {agent_id}")
+
+
+@router.get("/agents/status/conflicts")
+async def get_merge_conflicts():
+    """
+    Get git merge conflict status.
+
+    Per MULTI-007: Merge conflict detection for multi-agent workflows.
+    Detects unmerged files and conflict markers.
+    """
+    if not CONFLICT_CHECKER_AVAILABLE:
+        return {
+            "error": "Conflict checker not available",
+            "has_conflicts": False,
+            "conflicts": [],
+            "status": "UNAVAILABLE"
+        }
+
+    return get_conflict_summary()
+
+
+@router.get("/monitor/events")
+async def get_monitor_events(
+    days: int = 1,
+    limit: int = 100,
+    event_type: Optional[str] = None,
+    severity: Optional[str] = None
+):
+    """
+    Get monitor events from audit files.
+
+    Per GAP-MONITOR-IPC-001: Cross-process event sharing via audit files.
+    Enables Dashboard UI to display real events from MCP tools.
+
+    Args:
+        days: Number of days to read (1-7)
+        limit: Max events to return (1-1000)
+        event_type: Filter by event type
+        severity: Filter by severity (INFO, WARNING, CRITICAL)
+    """
+    from agent.governance_ui.data_access.monitoring import read_audit_events
+
+    # Validate parameters
+    days = max(1, min(7, days))
+    limit = max(1, min(1000, limit))
+
+    events = read_audit_events(
+        days=days,
+        limit=limit,
+        event_type=event_type,
+        severity=severity
+    )
+
+    return {
+        "events": events,
+        "count": len(events),
+        "filters": {
+            "days": days,
+            "limit": limit,
+            "event_type": event_type,
+            "severity": severity
+        }
+    }

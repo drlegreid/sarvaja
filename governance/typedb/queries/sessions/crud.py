@@ -200,6 +200,7 @@ class SessionCRUDOperations:
         Delete a session from TypeDB.
 
         Per GAP-UI-034: Session CRUD operations.
+        Per TypeDB 3.x: delete syntax is just `delete $var;`
 
         Returns:
             True if deleted successfully, False otherwise
@@ -213,55 +214,51 @@ class SessionCRUDOperations:
 
         try:
             with self._driver.transaction(self.database, TransactionType.WRITE) as tx:
-                    # Delete all relations first (has-evidence, session-applied-rule, etc.)
-                    # Delete has-evidence relations
-                    del_evidence = f"""
-                        match
-                            $s isa work-session, has session-id "{session_id}";
-                            $r (evidence-session: $s) isa has-evidence;
-                        delete
-                            $r isa has-evidence;
-                    """
-                    try:
-                        tx.query(del_evidence).resolve()
-                    except Exception:
-                        pass
+                # Delete all relations first (has-evidence, session-applied-rule, etc.)
+                # Delete has-evidence relations
+                del_evidence = f"""
+                    match
+                        $s isa work-session, has session-id "{session_id}";
+                        $r (evidence-session: $s) isa has-evidence;
+                    delete $r;
+                """
+                try:
+                    tx.query(del_evidence).resolve()
+                except Exception:
+                    pass
 
-                    # Delete session-applied-rule relations
-                    del_rules = f"""
-                        match
-                            $s isa work-session, has session-id "{session_id}";
-                            $r (applying-session: $s) isa session-applied-rule;
-                        delete
-                            $r isa session-applied-rule;
-                    """
-                    try:
-                        tx.query(del_rules).resolve()
-                    except Exception:
-                        pass
+                # Delete session-applied-rule relations
+                del_rules = f"""
+                    match
+                        $s isa work-session, has session-id "{session_id}";
+                        $r (applying-session: $s) isa session-applied-rule;
+                    delete $r;
+                """
+                try:
+                    tx.query(del_rules).resolve()
+                except Exception:
+                    pass
 
-                    # Delete session-decision relations
-                    del_decisions = f"""
-                        match
-                            $s isa work-session, has session-id "{session_id}";
-                            $r (deciding-session: $s) isa session-decision;
-                        delete
-                            $r isa session-decision;
-                    """
-                    try:
-                        tx.query(del_decisions).resolve()
-                    except Exception:
-                        pass
+                # Delete session-decision relations
+                del_decisions = f"""
+                    match
+                        $s isa work-session, has session-id "{session_id}";
+                        $r (deciding-session: $s) isa session-decision;
+                    delete $r;
+                """
+                try:
+                    tx.query(del_decisions).resolve()
+                except Exception:
+                    pass
 
-                    # Delete the session entity itself
-                    delete_query = f"""
-                        match
-                            $s isa work-session, has session-id "{session_id}";
-                        delete
-                            $s isa work-session;
-                    """
-                    tx.query(delete_query).resolve()
-                    tx.commit()
+                # Delete the session entity itself
+                delete_query = f"""
+                    match
+                        $s isa work-session, has session-id "{session_id}";
+                    delete $s;
+                """
+                tx.query(delete_query).resolve()
+                tx.commit()
 
             return True
         except Exception as e:

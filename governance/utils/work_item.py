@@ -25,7 +25,7 @@ Usage:
 
 from dataclasses import dataclass, field
 from enum import IntEnum, Enum
-from typing import Optional, Dict, List, Any
+from typing import Dict, List, Any
 
 
 class Priority(IntEnum):

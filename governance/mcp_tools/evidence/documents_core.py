@@ -15,9 +15,9 @@ Created: 2026-01-13 (extracted from documents.py)
 Refactored: 2026-01-19 (compact aliases per RD-MCP-TOOL-NAMING)
 """
 
-import json
 from pathlib import Path
 
+from governance.mcp_tools.common import format_mcp_result
 from .common import (
     EVIDENCE_DIR,
     DOCS_DIR,
@@ -109,7 +109,7 @@ def register_core_document_tools(mcp) -> None:
                     break
 
         if not doc_path.exists():
-            return json.dumps({
+            return format_mcp_result({
                 "error": f"Document not found: {path}",
                 "tried_paths": [str(c) for c in candidates] if candidates else [path]
             })
@@ -152,10 +152,10 @@ def register_core_document_tools(mcp) -> None:
                     "has_more": offset + len(lines) < total_lines
                 }
 
-            return json.dumps(result, indent=2)
+            return format_mcp_result(result)
 
         except Exception as e:
-            return json.dumps({"error": f"Failed to read document: {str(e)}"})
+            return format_mcp_result({"error": f"Failed to read document: {str(e)}"})
 
     @mcp.tool()
     def docs_list(
@@ -183,7 +183,7 @@ def register_core_document_tools(mcp) -> None:
                 dir_path = DOCS_DIR / directory
 
         if not dir_path.exists():
-            return json.dumps({
+            return format_mcp_result({
                 "error": f"Directory not found: {directory}",
                 "tried": str(dir_path)
             })
@@ -212,16 +212,16 @@ def register_core_document_tools(mcp) -> None:
                     "modified": stat.st_mtime
                 })
 
-            return json.dumps({
+            return format_mcp_result({
                 "directory": str(dir_path),
                 "pattern": pattern,
                 "recursive": recursive,
                 "count": len(documents),
                 "documents": documents
-            }, indent=2)
+            })
 
         except Exception as e:
-            return json.dumps({"error": f"Failed to list documents: {str(e)}"})
+            return format_mcp_result({"error": f"Failed to list documents: {str(e)}"})
 
     # Legacy aliases for backward compatibility
     governance_get_document = doc_get

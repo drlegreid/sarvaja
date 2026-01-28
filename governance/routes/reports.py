@@ -13,7 +13,6 @@ from typing import Optional
 from datetime import datetime
 import logging
 
-from governance.client import get_client
 from governance.models import ExecutiveReportSection, ExecutiveReportResponse
 from governance.stores import (
     get_typedb_client,

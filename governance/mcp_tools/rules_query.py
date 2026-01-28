@@ -1,10 +1,12 @@
-"""Rule Query MCP Tools. Per RULE-012, GAP-MCP-004. Created: 2026-01-03."""
+"""Rule Query MCP Tools. Per RULE-012, GAP-MCP-004. Created: 2026-01-03.
+Updated: 2026-01-20 - Added monitoring instrumentation per GAP-MONITOR-INSTRUMENT-001.
+Updated: 2026-01-21 - Fixed circular import by using lazy import for monitoring.
+"""
 
-import json
 from typing import Optional
 from dataclasses import asdict
 
-from governance.mcp_tools.common import get_typedb_client, format_mcp_result
+from governance.mcp_tools.common import get_typedb_client, format_mcp_result, log_monitor_event
 from governance.mcp_tools.rule_fallback import (
     get_all_markdown_rules,
     get_markdown_rule_by_id,
@@ -18,13 +20,14 @@ def register_rule_query_tools(mcp) -> None:
 
     @mcp.tool()
     def rules_query(category: Optional[str] = None, status: Optional[str] = None,
-                    priority: Optional[str] = None) -> str:
+                    priority: Optional[str] = None, applicability: Optional[str] = None) -> str:
         """Query rules from TypeDB with optional filters.
 
         Args:
             category: Filter by rule category
             status: Filter by status (e.g., ACTIVE)
             priority: Filter by priority level
+            applicability: Filter by enforcement level (MANDATORY, RECOMMENDED, FORBIDDEN, CONDITIONAL)
 
         Returns:
             JSON array of matching rules
@@ -49,6 +52,16 @@ def register_rule_query_tools(mcp) -> None:
                     rules = [r for r in rules if r.priority == priority]
                 if status and status != "ACTIVE":
                     rules = [r for r in rules if r.status == status]
+                # RD-RULE-APPLICABILITY: Filter by enforcement level
+                if applicability:
+                    rules = [r for r in rules if getattr(r, 'applicability', None) == applicability]
+
+                # Instrument: log rule query event (GAP-MONITOR-INSTRUMENT-001)
+                log_monitor_event(
+                    event_type="rule_query",
+                    source="mcp-rules-query",
+                    details={"count": len(rules), "category": category, "status": status, "priority": priority, "applicability": applicability}
+                )
                 return format_mcp_result([asdict(r) for r in rules])
         except Exception:
             use_fallback = True
@@ -126,13 +139,17 @@ def register_rule_query_tools(mcp) -> None:
             client.close()
 
     @mcp.tool()
-    def wisdom_get(agent_role: str) -> str:
+    def wisdom_get(agent_role: str, applicability: Optional[str] = None) -> str:
         """Get compiled wisdom for an agent role.
 
         Composes relevant rules and workspace context for the specified agent.
+        Per RD-RULE-APPLICABILITY: Can filter by enforcement level.
 
         Args:
             agent_role: Agent role identifier (e.g., PLATFORM, QUALITY)
+            applicability: Optional filter for enforcement level (MANDATORY, RECOMMENDED, FORBIDDEN, CONDITIONAL)
+                          If not specified, returns all rules for the role.
+                          Use "MANDATORY" to get only must-comply rules.
 
         Returns:
             JSON object with agent wisdom including applicable rules
@@ -148,6 +165,11 @@ def register_rule_query_tools(mcp) -> None:
             if not client.connect():
                 return format_mcp_result({"error": "Failed to connect to TypeDB"})
             rules = client.get_active_rules()
+
+            # RD-RULE-APPLICABILITY: Filter by enforcement level if specified
+            if applicability:
+                rules = [r for r in rules if getattr(r, 'applicability', None) == applicability]
+
             rules_list = [asdict(r) for r in rules]
             workspace_path = get_workspace_path(agent_role)
             wisdom = compose_agent_wisdom(
@@ -156,6 +178,12 @@ def register_rule_query_tools(mcp) -> None:
                 workspace_path=workspace_path
             )
 
+            # Instrument: log wisdom query event (GAP-MONITOR-INSTRUMENT-001)
+            log_monitor_event(
+                event_type="rule_query",
+                source="mcp-wisdom-get",
+                details={"agent_role": agent_role, "rules_count": len(rules_list), "applicability": applicability}
+            )
             return format_mcp_result(wisdom.to_dict())
 
         except Exception as e:
@@ -185,6 +213,12 @@ def register_rule_query_tools(mcp) -> None:
             else:
                 rule = client.get_rule_by_id(rule_id)
                 if rule:
+                    # Instrument: log rule get event (GAP-MONITOR-INSTRUMENT-001)
+                    log_monitor_event(
+                        event_type="rule_query",
+                        source="mcp-rule-get",
+                        details={"rule_id": rule_id, "found": True}
+                    )
                     return format_mcp_result(asdict(rule))
                 else:
                     use_fallback = True

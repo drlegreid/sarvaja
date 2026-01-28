@@ -5,13 +5,16 @@ Per RULE-012: DSP Semantic Code Structure.
 Per GAP-FILE-002: Extracted from api.py.
 Per GAP-MCP-008: Semantic rule ID support.
 Per DOC-SIZE-01-v1: Modularized from rules.py.
+Per GAP-UI-AUDIT-001: Rule-document linkage for dashboard.
 
 Created: 2024-12-28
 Updated: 2026-01-17 - Modularized to package
+Updated: 2026-01-21 - Added document_path to rule responses
 """
 
+import logging
 from fastapi import APIRouter, HTTPException, Query
-from typing import List, Optional
+from typing import Dict, List, Optional
 
 from governance.client import get_client
 from governance.models import RuleCreate, RuleUpdate, RuleResponse
@@ -19,13 +22,55 @@ from governance.rule_linker import (
     LEGACY_TO_SEMANTIC,
     normalize_rule_id
 )
+from governance.routes.rules.search import filter_rules_by_search
 
 router = APIRouter(tags=["Rules"])
+logger = logging.getLogger(__name__)
 
 
 def get_semantic_id(legacy_id: str) -> Optional[str]:
     """Get semantic ID for a legacy rule ID. Per GAP-MCP-008."""
     return LEGACY_TO_SEMANTIC.get(legacy_id)
+
+
+def get_rule_document_paths(client, rule_ids: List[str]) -> Dict[str, str]:
+    """
+    Batch query document paths for multiple rules.
+
+    Per GAP-UI-AUDIT-001: Efficient batch query for rule-document linkage.
+
+    Args:
+        client: TypeDB client instance
+        rule_ids: List of rule IDs to query
+
+    Returns:
+        Dict mapping rule_id -> document_path
+    """
+    if not rule_ids:
+        return {}
+
+    try:
+        query = """
+        match
+          $r isa rule-entity, has rule-id $rid;
+          $d isa document, has document-path $path;
+          (referencing-document: $d, referenced-rule: $r) isa document-references-rule;
+        select $rid, $path;
+        """
+        results = client.execute_query(query)
+
+        # Build mapping of rule_id -> document_path
+        doc_paths = {}
+        for r in results:
+            rid = r.get("rid")
+            path = r.get("path")
+            if rid and path:
+                doc_paths[rid] = path
+
+        return doc_paths
+    except Exception as e:
+        logger.warning(f"Failed to query rule document paths: {e}")
+        return {}
 
 
 # =============================================================================
@@ -40,12 +85,14 @@ async def list_rules(
     order: str = Query("asc", description="Sort order: asc or desc"),
     status: Optional[str] = Query(None, description="Filter by status"),
     category: Optional[str] = Query(None, description="Filter by category"),
-    priority: Optional[str] = Query(None, description="Filter by priority")
+    priority: Optional[str] = Query(None, description="Filter by priority"),
+    search: Optional[str] = Query(None, description="Search in id, name, directive")
 ):
     """
-    List governance rules with pagination, sorting, and filtering.
+    List governance rules with pagination, sorting, filtering, and search.
 
     Per GAP-UI-036: Pagination support.
+    Per GAP-UI-SEARCH-001: Server-side search support.
     """
     client = get_client()
     if not client:
@@ -67,6 +114,10 @@ async def list_rules(
         if priority:
             rules = [r for r in rules if r.priority == priority]
 
+        # Apply search filter (GAP-UI-SEARCH-001)
+        if search:
+            rules = filter_rules_by_search(rules, search)
+
         # Apply sorting
         valid_sort_fields = ["id", "name", "priority", "status", "category"]
         sort_field = sort_by if sort_by in valid_sort_fields else "id"
@@ -75,6 +126,10 @@ async def list_rules(
 
         # Apply pagination
         rules = rules[offset:offset + limit]
+
+        # Batch query document paths (GAP-UI-AUDIT-001)
+        rule_ids = [r.id for r in rules]
+        doc_paths = get_rule_document_paths(client, rule_ids)
 
         return [
             RuleResponse(
@@ -85,7 +140,9 @@ async def list_rules(
                 priority=r.priority,
                 status=r.status,
                 directive=r.directive,
-                created_date=r.created_date.isoformat() if r.created_date else None
+                created_date=r.created_date.isoformat() if r.created_date else None,
+                document_path=doc_paths.get(r.id),
+                applicability=r.applicability  # Per RD-RULE-APPLICABILITY
             )
             for r in rules
         ]
@@ -118,6 +175,10 @@ async def get_rule(rule_id: str):
         if not rule:
             raise HTTPException(status_code=404, detail=f"Rule {rule_id} not found")
 
+        # Get document path for this rule (GAP-UI-AUDIT-001)
+        doc_paths = get_rule_document_paths(client, [rule.id])
+        doc_path = doc_paths.get(rule.id)
+
         return RuleResponse(
             id=rule.id,
             semantic_id=get_semantic_id(rule.id),
@@ -126,7 +187,9 @@ async def get_rule(rule_id: str):
             priority=rule.priority,
             status=rule.status,
             directive=rule.directive,
-            created_date=rule.created_date.isoformat() if rule.created_date else None
+            created_date=rule.created_date.isoformat() if rule.created_date else None,
+            document_path=doc_path,
+            applicability=rule.applicability  # Per RD-RULE-APPLICABILITY
         )
     except HTTPException:
         raise
@@ -159,6 +222,7 @@ async def create_rule(rule: RuleCreate):
         if not created:
             raise HTTPException(status_code=500, detail="Failed to create rule")
 
+        # New rules won't have document linkage yet
         return RuleResponse(
             id=created.id,
             semantic_id=get_semantic_id(created.id),
@@ -167,7 +231,9 @@ async def create_rule(rule: RuleCreate):
             priority=created.priority,
             status=created.status,
             directive=created.directive,
-            created_date=created.created_date.isoformat() if created.created_date else None
+            created_date=created.created_date.isoformat() if created.created_date else None,
+            document_path=None,
+            applicability=created.applicability  # Per RD-RULE-APPLICABILITY
         )
     except HTTPException:
         raise
@@ -208,6 +274,10 @@ async def update_rule(rule_id: str, rule: RuleUpdate):
         if not updated:
             raise HTTPException(status_code=500, detail="Failed to update rule")
 
+        # Get document path for updated rule (GAP-UI-AUDIT-001)
+        doc_paths = get_rule_document_paths(client, [updated.id])
+        doc_path = doc_paths.get(updated.id)
+
         return RuleResponse(
             id=updated.id,
             semantic_id=get_semantic_id(updated.id),
@@ -216,7 +286,9 @@ async def update_rule(rule_id: str, rule: RuleUpdate):
             priority=updated.priority,
             status=updated.status,
             directive=updated.directive,
-            created_date=updated.created_date.isoformat() if updated.created_date else None
+            created_date=updated.created_date.isoformat() if updated.created_date else None,
+            document_path=doc_path,
+            applicability=updated.applicability  # Per RD-RULE-APPLICABILITY
         )
     except HTTPException:
         raise

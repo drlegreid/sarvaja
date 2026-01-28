@@ -11,7 +11,7 @@ Updated: 2026-01-17 - Modularized to package
 """
 
 from fastapi import APIRouter, HTTPException, Query
-from typing import List, Optional
+from typing import Optional
 from datetime import datetime
 import logging
 import uuid

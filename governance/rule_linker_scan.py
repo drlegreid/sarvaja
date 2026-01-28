@@ -150,8 +150,14 @@ def scan_rule_documents(include_subdirs: bool = True) -> List[RuleDocument]:
             # Determine relative path from workspace root
             rel_path = os.path.relpath(item_path, WORKSPACE_ROOT)
 
-            # Extract rule IDs
+            # Extract rule IDs from content
             rule_ids = extract_rule_ids(content)
+
+            # For leaf documents, the filename IS the rule ID (semantic format)
+            # e.g., docs/rules/leaf/ARCH-INFRA-02-v1.md -> rule ID is ARCH-INFRA-02-v1
+            if rel_prefix == "leaf" and re.match(SEMANTIC_RULE_PATTERN, base_name):
+                if base_name not in rule_ids:
+                    rule_ids = [base_name] + rule_ids  # Primary ID first
 
             doc = RuleDocument(
                 document_id=doc_id,

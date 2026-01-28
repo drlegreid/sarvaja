@@ -173,3 +173,47 @@ class SessionCaptureMixin:
         ))
 
         return outcome
+
+    def capture_test_result(
+        self,
+        test_id: str,
+        name: str,
+        category: str,
+        status: str,
+        duration_ms: float = 0.0,
+        intent: Optional[str] = None,
+        linked_rules: Optional[List[str]] = None,
+        linked_gaps: Optional[List[str]] = None,
+        error_message: Optional[str] = None
+    ) -> None:
+        """
+        Capture test result event. Per GAP-TEST-EVIDENCE-002: Event-based test reporting.
+
+        Args:
+            test_id: Unique test identifier (pytest nodeid)
+            name: Test name
+            category: Test category (unit, integration, e2e)
+            status: Test outcome (passed, failed, skipped)
+            duration_ms: Test duration in milliseconds
+            intent: Test purpose/intent
+            linked_rules: Rules this test validates
+            linked_gaps: Gaps this test addresses
+            error_message: Error message if failed
+        """
+        self.events.append(SessionEvent(
+            timestamp=datetime.now().isoformat(),
+            event_type="test_result",
+            content=f"{status.upper()}: {name}",
+            metadata={
+                "session_id": self.session_id,
+                "test_id": test_id,
+                "name": name,
+                "category": category,
+                "status": status,
+                "duration_ms": duration_ms,
+                "intent": intent,
+                "linked_rules": linked_rules or [],
+                "linked_gaps": linked_gaps or [],
+                "error_message": error_message[:500] if error_message and len(error_message) > 500 else error_message
+            }
+        ))

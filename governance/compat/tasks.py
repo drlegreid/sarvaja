@@ -15,13 +15,18 @@ from dataclasses import asdict
 from datetime import datetime
 
 from governance.mcp_tools.common import get_typedb_client
-from governance.client import Task
 
 
 def _json_serializer(obj):
     """JSON serializer for objects not serializable by default json code."""
     if isinstance(obj, datetime):
         return obj.isoformat()
+    # Handle TypeDB Datetime objects (duck typing for isoformat)
+    if hasattr(obj, 'isoformat'):
+        return obj.isoformat()
+    # Handle TypeDB 3.x native datetime representation
+    if type(obj).__name__ == 'Datetime':
+        return str(obj)
     raise TypeError(f"Object of type {type(obj).__name__} is not JSON serializable")
 
 
@@ -83,7 +88,7 @@ def governance_update_task(task_id, status=None, name=None, phase=None):
             if task:
                 result = asdict(task)
                 result["message"] = f"Task {task_id} updated successfully"
-                return json.dumps(result, indent=2)
+                return json.dumps(result, indent=2, default=_json_serializer)
             return json.dumps({"task_id": task_id, "message": f"Task {task_id} updated"}, indent=2)
         return json.dumps({"error": f"Failed to update task {task_id}"})
     finally:

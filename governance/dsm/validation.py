@@ -5,10 +5,10 @@ Modularized: 2026-01-02 (RULE-032)
 
 Validates evidence requirements for each DSP phase.
 """
-from typing import Optional, List, Dict, Any
+from typing import Optional
 
 from governance.dsm.phases import DSPPhase
-from governance.dsm.models import DSMCycle, PhaseCheckpoint
+from governance.dsm.models import DSMCycle
 
 
 # Phase-specific evidence requirements

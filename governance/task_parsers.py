@@ -14,28 +14,45 @@ from typing import List, Dict, Optional
 
 
 def normalize_status(status: str) -> str:
-    """Normalize status symbols to standard values."""
+    """
+    Normalize status symbols to TASK-LIFE-01-v1 compliant values.
+
+    Per TASK-LIFE-01-v1: Valid statuses are OPEN, IN_PROGRESS, CLOSED.
+    Per GAP-TASK-DATA-QUALITY-001: Map old values to compliant ones.
+    """
     status = status.strip()
+    # Map to TASK-LIFE-01-v1 compliant values: OPEN, IN_PROGRESS, CLOSED
     status_map = {
-        "✅": "DONE",
-        "✅ DONE": "DONE",
-        "DONE": "DONE",
+        # CLOSED mappings (completed work)
+        "✅": "CLOSED",
+        "✅ DONE": "CLOSED",
+        "DONE": "CLOSED",
+        "CLOSED": "CLOSED",
+        "completed": "CLOSED",
+        "COMPLETED": "CLOSED",
+        # IN_PROGRESS mappings (active work)
         "🚧": "IN_PROGRESS",
         "IN PROGRESS": "IN_PROGRESS",
         "IN_PROGRESS": "IN_PROGRESS",
-        "⏳": "PENDING",
-        "⏳ Pending": "PENDING",
-        "PENDING": "PENDING",
-        "📋": "TODO",
-        "📋 TODO": "TODO",
-        "TODO": "TODO",
-        "⏸️": "ON_HOLD",
-        "⏸️ Hold": "ON_HOLD",
-        "⏸️ N/A": "ON_HOLD",
-        "ON HOLD": "ON_HOLD",
-        "ON_HOLD": "ON_HOLD",
+        "in_progress": "IN_PROGRESS",
+        # OPEN mappings (not yet started)
+        "⏳": "OPEN",
+        "⏳ Pending": "OPEN",
+        "PENDING": "OPEN",
+        "pending": "OPEN",
+        "📋": "OPEN",
+        "📋 TODO": "OPEN",
+        "TODO": "OPEN",
+        "OPEN": "OPEN",
+        # Hold/deferred → OPEN (per TASK-LIFE-01-v1, use resolution field for deferred)
+        "⏸️": "OPEN",
+        "⏸️ Hold": "OPEN",
+        "⏸️ N/A": "OPEN",
+        "ON HOLD": "OPEN",
+        "ON_HOLD": "OPEN",
+        "DEFERRED": "OPEN",
     }
-    return status_map.get(status, "TODO")
+    return status_map.get(status, "OPEN")
 
 
 def parse_markdown_table(content: str) -> List[Dict[str, str]]:

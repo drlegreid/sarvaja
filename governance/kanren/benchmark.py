@@ -1,7 +1,7 @@
 """Kanren Performance Benchmarks (KAN-005). Per RD-KANREN-CONTEXT: <100ms target overhead."""
 import time
 from dataclasses import dataclass
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, List
 from functools import wraps
 
 from .models import AgentContext, TaskContext, RuleContext
@@ -256,10 +256,10 @@ def print_benchmark_report():
             print(f"  Overhead: {data['overhead_pct']:.1f}%")
 
     summary = comparison["summary"]
-    print(f"\n--- Summary ---")
+    print("\n--- Summary ---")
     print(f"All Kanren benchmarks passed: {summary['all_kanren_passed']}")
     print(f"Total Kanren avg time: {summary['total_kanren_avg_ms']:.3f}ms")
-    print(f"Target: <100ms per operation")
+    print("Target: <100ms per operation")
 
     all_passed = all(r.passed for r in results)
     print(f"\n{'BENCHMARK SUITE PASSED' if all_passed else 'BENCHMARK SUITE FAILED'}")

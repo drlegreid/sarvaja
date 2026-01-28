@@ -12,7 +12,6 @@ File Structure:
     docs/rules/RULES-OPERATIONAL.md  -> RULE-004, RULE-005, RULE-012, RULE-014+
 """
 
-import os
 import re
 from dataclasses import dataclass
 from typing import Optional

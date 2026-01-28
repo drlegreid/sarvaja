@@ -21,6 +21,7 @@ entity rule-entity,
     owns directive,
     owns rule-tags,              # RD-WORKSPACE: Comma-separated skill tags (e.g., "research,analysis")
     owns applicable-roles,       # RD-WORKSPACE: Comma-separated agent roles (e.g., "RESEARCH,CODING")
+    owns applicability,          # RD-RULE-APPLICABILITY: MANDATORY|RECOMMENDED|FORBIDDEN|CONDITIONAL
     owns created-date,
     plays rule-dependency:dependent,
     plays rule-dependency:dependency,

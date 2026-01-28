@@ -5,6 +5,13 @@ from dataclasses import asdict
 
 from governance.mcp_tools.common import get_typedb_client, format_mcp_result
 
+# Monitoring instrumentation per GAP-MONITOR-INSTRUMENT-001
+try:
+    from agent.governance_ui.data_access.monitoring import log_monitor_event
+    MONITORING_AVAILABLE = True
+except ImportError:
+    MONITORING_AVAILABLE = False
+
 def register_agent_tools(mcp) -> None:
     """Register agent-related MCP tools."""
 
@@ -25,6 +32,13 @@ def register_agent_tools(mcp) -> None:
             )
 
             if success:
+                # Instrument agent creation
+                if MONITORING_AVAILABLE:
+                    log_monitor_event(
+                        event_type="agent_event",
+                        source="mcp-agent-create",
+                        details={"agent_id": agent_id, "action": "create", "agent_type": agent_type, "trust_score": trust_score}
+                    )
                 return format_mcp_result({
                     "agent_id": agent_id,
                     "name": name,
@@ -47,6 +61,13 @@ def register_agent_tools(mcp) -> None:
 
             agent = client.get_agent(agent_id)
             if agent:
+                # Instrument agent query
+                if MONITORING_AVAILABLE:
+                    log_monitor_event(
+                        event_type="agent_event",
+                        source="mcp-agent-get",
+                        details={"agent_id": agent_id, "action": "query", "found": True}
+                    )
                 return format_mcp_result(asdict(agent))
             else:
                 return format_mcp_result({"error": f"Agent {agent_id} not found"})
@@ -87,6 +108,14 @@ def register_agent_tools(mcp) -> None:
             )
 
             if success:
+                # Instrument trust update (important for monitoring)
+                if MONITORING_AVAILABLE:
+                    log_monitor_event(
+                        event_type="trust_change",
+                        source="mcp-agent-trust-update",
+                        details={"agent_id": agent_id, "action": "trust_update", "new_trust": trust_score},
+                        severity="WARNING"
+                    )
                 agent = client.get_agent(agent_id)
                 if agent:
                     result = asdict(agent)

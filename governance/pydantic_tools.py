@@ -134,7 +134,7 @@ def main():
     # Test invalid input
     try:
         bad_config = DependencyConfig(rule_id="invalid-id")
-        print(f"  Should have failed validation")
+        print("  Should have failed validation")
     except ValueError as e:
         print(f"  Correctly rejected invalid input: {e}")
 
@@ -146,7 +146,7 @@ def main():
             evidence=["Evidence 1"]
             # Missing rule_id for modify action
         )
-        print(f"  Should have failed validation")
+        print("  Should have failed validation")
     except ValueError as e:
         print(f"  Correctly rejected: {e}")
 

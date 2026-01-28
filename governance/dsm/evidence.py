@@ -6,7 +6,6 @@ Modularized: 2026-01-02 (RULE-032)
 Generates evidence files for completed DSM cycles.
 """
 from pathlib import Path
-from typing import Optional
 
 from governance.dsm.models import DSMCycle
 

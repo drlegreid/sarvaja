@@ -9,10 +9,10 @@ import json
 from datetime import datetime
 from dataclasses import asdict
 from pathlib import Path
-from typing import Dict, Any, Optional, TYPE_CHECKING
+from typing import Dict, Any, TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from . import SessionCollector
+    pass
 
 
 class SessionRenderMixin:
@@ -249,7 +249,7 @@ class SessionRenderMixin:
             "",
             "---",
             "",
-            f"*Generated per RULE-001: Session Evidence Logging*",
+            "*Generated per RULE-001: Session Evidence Logging*",
         ])
 
         return "\n".join(lines)

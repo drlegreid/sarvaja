@@ -7,7 +7,7 @@ Per GAP-FILE-003: Extracted from client.py.
 Created: 2024-12-28
 """
 
-from dataclasses import dataclass, asdict
+from dataclasses import dataclass
 from datetime import datetime
 from typing import List, Dict, Any, Optional
 
@@ -23,6 +23,7 @@ class Rule:
     directive: str
     rule_type: Optional[str] = None  # FOUNDATIONAL, OPERATIONAL, TECHNICAL, META, LEAF
     semantic_id: Optional[str] = None  # META-TAXON-01-v1: e.g., SESSION-EVID-01-v1
+    applicability: Optional[str] = None  # RD-RULE-APPLICABILITY: MANDATORY|RECOMMENDED|FORBIDDEN|CONDITIONAL
     created_date: Optional[datetime] = None
 
 

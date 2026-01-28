@@ -13,11 +13,10 @@ Tools:
 Created: 2024-12-28
 """
 
-import json
 import glob
 from pathlib import Path
 
-from governance.mcp_tools.common import get_typedb_client
+from governance.mcp_tools.common import get_typedb_client, format_mcp_result
 from .common import EVIDENCE_DIR
 
 
@@ -77,10 +76,10 @@ def register_decision_tools(mcp) -> None:
             except Exception:
                 continue
 
-        return json.dumps({
+        return format_mcp_result({
             "decisions": decisions,
             "count": len(decisions)
-        }, indent=2)
+        })
 
     @mcp.tool()
     def governance_get_decision(decision_id: str) -> str:
@@ -131,6 +130,6 @@ def register_decision_tools(mcp) -> None:
             result["evidence_content"] = evidence_file.read_text(encoding="utf-8")
 
         if len(result) == 1:  # Only has decision_id
-            return json.dumps({"error": f"Decision {decision_id} not found"})
+            return format_mcp_result({"error": f"Decision {decision_id} not found"})
 
-        return json.dumps(result, indent=2)
+        return format_mcp_result(result)

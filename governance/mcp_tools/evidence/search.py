@@ -13,12 +13,12 @@ Tools:
 Created: 2024-12-28
 """
 
-import json
 import glob
 from pathlib import Path
 from typing import Optional
 
 from .common import EVIDENCE_DIR, DOCS_DIR
+from governance.mcp_tools.common import format_mcp_result
 
 
 def register_search_tools(mcp) -> None:
@@ -61,7 +61,7 @@ def register_search_tools(mcp) -> None:
 
                 # Only return semantic results if we found something
                 if semantic_results:
-                    return json.dumps({
+                    return format_mcp_result({
                         "query": query,
                         "results": [
                             {
@@ -74,7 +74,7 @@ def register_search_tools(mcp) -> None:
                         ],
                         "count": len(semantic_results),
                         "search_method": "semantic_vector"
-                    }, indent=2)
+                    })
         except Exception:
             pass
 
@@ -104,9 +104,9 @@ def register_search_tools(mcp) -> None:
         # Sort by score descending
         results.sort(key=lambda x: x["score"], reverse=True)
 
-        return json.dumps({
+        return format_mcp_result({
             "query": query,
             "results": results[:top_k],
             "count": len(results[:top_k]),
             "search_method": "keyword_fallback"
-        }, indent=2)
+        })

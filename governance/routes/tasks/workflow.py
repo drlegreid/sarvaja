@@ -88,8 +88,15 @@ async def claim_task(
 
             updated = client.update_task_status(task_id, "IN_PROGRESS", agent_id)
             if updated:
-                _update_agent_metrics_on_claim(agent_id)
-                try_link_task_to_session(client, task_id, session_id, "claim")
+                # Non-critical operations - don't fail the claim if these fail
+                try:
+                    _update_agent_metrics_on_claim(agent_id)
+                except Exception as e:
+                    logger.warning(f"Agent metrics update failed (non-critical): {e}")
+                try:
+                    try_link_task_to_session(client, task_id, session_id, "claim")
+                except Exception as e:
+                    logger.warning(f"Task-session link failed (non-critical): {e}")
                 return task_to_response(updated)
         except HTTPException:
             raise

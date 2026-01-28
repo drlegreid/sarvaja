@@ -8,7 +8,6 @@ Per FP + Digital Twin Paradigm: Decision entity module
 Per GAP-MCP-002: Dependency health check with action_required pattern
 """
 
-import json
 import os
 from datetime import datetime
 

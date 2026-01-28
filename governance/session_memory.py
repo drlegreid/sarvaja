@@ -1,7 +1,5 @@
 """Session Memory Integration. Per RULE-024: AMNESIA Protocol. Created: 2024-12-26"""
 
-import json
-import os
 from datetime import datetime, date
 from typing import Dict, Any, List, Optional
 from dataclasses import dataclass, asdict

@@ -99,7 +99,7 @@ class HybridQueryRouter:
             if self._chromadb_client:
                 self._chromadb_client.heartbeat()
                 return True
-        except:
+        except Exception:
             pass
         return False
 

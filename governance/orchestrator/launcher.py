@@ -11,8 +11,6 @@ from typing import Optional, List, Dict, Any
 from governance.orchestrator.handoff import (
     TaskHandoff,
     get_pending_handoffs,
-    read_handoff_evidence,
-    AgentRole,
 )
 
 @dataclass

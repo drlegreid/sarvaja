@@ -94,7 +94,21 @@ class GapParser:
         gaps = []
         content = self.gap_index_path.read_text(encoding="utf-8")
 
+        # Track which section we're in to exclude "Recently Resolved"
+        in_resolved_section = False
+
         for line in content.split("\n"):
+            # Detect section headers (## headings)
+            if line.startswith("## "):
+                section_title = line[3:].strip().lower()
+                # Check if entering/leaving resolved section
+                in_resolved_section = "resolved" in section_title
+                continue
+
+            # Skip parsing gaps in the "Recently Resolved" section
+            if in_resolved_section:
+                continue
+
             gap = self._parse_line(line)
             if gap:
                 gaps.append(gap)

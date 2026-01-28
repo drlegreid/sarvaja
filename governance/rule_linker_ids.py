@@ -20,8 +20,9 @@ logger = logging.getLogger(__name__)
 # Rule ID patterns (GAP-MCP-008)
 # Legacy: RULE-001, RULE-042
 LEGACY_RULE_PATTERN = r'RULE-\d{3}'
-# Semantic: SESSION-EVID-01-v1, GOV-BICAM-01-v1
-SEMANTIC_RULE_PATTERN = r'[A-Z]+-[A-Z]+-\d{2}-v\d+'
+# Semantic: SESSION-EVID-01-v1, GOV-BICAM-01-v1, SESSION-DSP-NOTIFY-01-v1
+# Pattern allows 2+ uppercase segments before the version number
+SEMANTIC_RULE_PATTERN = r'[A-Z]+(?:-[A-Z]+)+-\d{2}-v\d+'
 
 # Semantic ID to Legacy ID mapping (for TypeDB lookups)
 # Generated from docs/rules/RULE-MIGRATION.md
@@ -90,6 +91,7 @@ SEMANTIC_TO_LEGACY = {
     "UI-TRACE-01-v1": "UI-TRACE-01-v1",
     "TEST-BDD-01-v1": "TEST-BDD-01-v1",
     "GAP-DOC-01-v1": "GAP-DOC-01-v1",
+    "TASK-VALID-01-v1": "TASK-VALID-01-v1",
 }
 
 # Reverse mapping

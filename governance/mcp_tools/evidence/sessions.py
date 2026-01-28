@@ -13,11 +13,11 @@ Tools:
 Created: 2024-12-28
 """
 
-import json
 import glob
 from pathlib import Path
 from typing import Optional
 
+from governance.mcp_tools.common import format_mcp_result
 from .common import EVIDENCE_DIR
 
 
@@ -83,11 +83,11 @@ def register_session_tools(mcp) -> None:
             except Exception:
                 continue
 
-        return json.dumps({
+        return format_mcp_result({
             "sessions": sessions,
             "count": len(sessions),
             "total_available": len(list(glob.glob(str(EVIDENCE_DIR / "SESSION-*.md"))))
-        }, indent=2)
+        })
 
     @mcp.tool()
     def governance_get_session(session_id: str) -> str:
@@ -111,7 +111,7 @@ def register_session_tools(mcp) -> None:
             if not session_id.startswith("SESSION-"):
                 filepath = EVIDENCE_DIR / f"SESSION-{session_id}"
             if not filepath.exists():
-                return json.dumps({"error": f"Session not found: {session_id}"})
+                return format_mcp_result({"error": f"Session not found: {session_id}"})
 
         try:
             content = filepath.read_text(encoding="utf-8")
@@ -127,13 +127,13 @@ def register_session_tools(mcp) -> None:
                 elif line.startswith("**Status:**"):
                     metadata["status"] = line.replace("**Status:**", "").strip()
 
-            return json.dumps({
+            return format_mcp_result({
                 "session_id": session_id.replace(".md", ""),
                 "path": str(filepath),
                 "metadata": metadata,
                 "content": content,
                 "lines": len(lines)
-            }, indent=2)
+            })
 
         except Exception as e:
-            return json.dumps({"error": f"Failed to read session: {str(e)}"})
+            return format_mcp_result({"error": f"Failed to read session: {str(e)}"})

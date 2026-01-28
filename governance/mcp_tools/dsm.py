@@ -7,9 +7,17 @@ Per RULE-012: DSP Semantic Code Structure
 Per FP + Digital Twin Paradigm: DSM entity module
 """
 
+import json
 from typing import Optional, Union, Dict, Any
 
 from governance.mcp_tools.common import format_mcp_result
+
+# Monitoring instrumentation per GAP-MONITOR-INSTRUMENT-001
+try:
+    from agent.governance_ui.data_access.monitoring import log_monitor_event
+    MONITORING_AVAILABLE = True
+except ImportError:
+    MONITORING_AVAILABLE = False
 
 # Import DSM tracker (with fallback)
 try:
@@ -45,6 +53,13 @@ def register_dsm_tools(mcp) -> None:
 
         try:
             cycle = tracker.start_cycle(batch_id)
+            # Instrument DSM cycle start
+            if MONITORING_AVAILABLE:
+                log_monitor_event(
+                    event_type="dsm_event",
+                    source="mcp-dsm-start",
+                    details={"cycle_id": cycle.cycle_id, "batch_id": batch_id, "action": "cycle_start"}
+                )
             return format_mcp_result({
                 "cycle_id": cycle.cycle_id,
                 "batch_id": cycle.batch_id,
@@ -72,6 +87,13 @@ def register_dsm_tools(mcp) -> None:
 
         try:
             new_phase = tracker.advance_phase()
+            # Instrument phase advancement
+            if MONITORING_AVAILABLE:
+                log_monitor_event(
+                    event_type="dsm_event",
+                    source="mcp-dsm-advance",
+                    details={"new_phase": new_phase.value, "action": "phase_advance"}
+                )
             return format_mcp_result({
                 "new_phase": new_phase.value,
                 "required_mcps": new_phase.required_mcps,
@@ -122,6 +144,13 @@ def register_dsm_tools(mcp) -> None:
                 metrics=parsed_metrics,
                 evidence=evidence_list
             )
+            # Instrument checkpoint
+            if MONITORING_AVAILABLE:
+                log_monitor_event(
+                    event_type="dsm_event",
+                    source="mcp-dsm-checkpoint",
+                    details={"phase": checkpoint.phase, "action": "checkpoint"}
+                )
             return format_mcp_result({
                 "phase": checkpoint.phase,
                 "description": checkpoint.description,
@@ -169,6 +198,13 @@ def register_dsm_tools(mcp) -> None:
                 severity=severity,
                 related_rules=rules
             )
+            # Instrument finding
+            if MONITORING_AVAILABLE:
+                log_monitor_event(
+                    event_type="dsm_event",
+                    source="mcp-dsm-finding",
+                    details={"finding_id": finding["id"], "finding_type": finding_type, "severity": severity, "action": "add_finding"}
+                )
             return format_mcp_result({
                 "finding_id": finding["id"],
                 "finding_type": finding_type,
@@ -211,6 +247,13 @@ def register_dsm_tools(mcp) -> None:
 
         try:
             evidence_path = tracker.complete_cycle()
+            # Instrument cycle completion
+            if MONITORING_AVAILABLE:
+                log_monitor_event(
+                    event_type="dsm_event",
+                    source="mcp-dsm-complete",
+                    details={"evidence_path": evidence_path, "action": "cycle_complete"}
+                )
             return format_mcp_result({
                 "status": "completed",
                 "evidence_path": evidence_path,

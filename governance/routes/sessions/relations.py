@@ -59,7 +59,7 @@ async def link_evidence_to_session(session_id: str, data: EvidenceLink):
         success = client.link_evidence_to_session(session_id, data.evidence_source)
         if success:
             return {
-                "message": f"Evidence linked successfully",
+                "message": "Evidence linked successfully",
                 "session_id": session_id,
                 "evidence_source": data.evidence_source
             }

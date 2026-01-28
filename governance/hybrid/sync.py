@@ -251,7 +251,7 @@ class MemorySyncBridge:
                             "exists": True,
                             "count": coll.count()
                         }
-                    except:
+                    except Exception:
                         status["collections"][coll_name] = {
                             "exists": False,
                             "count": 0

@@ -12,7 +12,7 @@ from typing import List, Optional
 from datetime import datetime
 import logging
 
-from governance.models import AgentResponse, AgentTaskAssign
+from governance.models import AgentResponse
 from governance.stores import (
     get_typedb_client,
     _agents_store, _AGENT_BASE_CONFIG,
@@ -121,10 +121,16 @@ async def get_agent(agent_id: str):
         try:
             agent = client.get_agent(agent_id)
             if agent:
-                metrics = _load_agent_metrics()
-                agent_metrics = metrics.get(agent_id, {})
-                tasks_executed = agent_metrics.get("tasks_executed", agent.tasks_executed or 0)
-                last_active = agent_metrics.get("last_active", None)
+                # Prioritize in-memory store over JSON file (handles container read-only fs)
+                if agent_id in _agents_store:
+                    tasks_executed = _agents_store[agent_id].get("tasks_executed", 0)
+                    last_active = _agents_store[agent_id].get("last_active", None)
+                else:
+                    # Fallback to JSON file
+                    metrics = _load_agent_metrics()
+                    agent_metrics = metrics.get(agent_id, {})
+                    tasks_executed = agent_metrics.get("tasks_executed", agent.tasks_executed or 0)
+                    last_active = agent_metrics.get("last_active", None)
                 base_trust = _AGENT_BASE_CONFIG.get(agent_id, {}).get("base_trust", agent.trust_score or 0.8)
 
                 # Get relations using batch lookup (2 queries total, not N*M)
@@ -167,10 +173,14 @@ async def record_agent_task(agent_id: str):
     client = get_typedb_client()
     now = datetime.now().isoformat()
 
-    # Load current metrics
-    metrics = _load_agent_metrics()
-    agent_metrics = metrics.get(agent_id, {"tasks_executed": 0})
-    tasks_executed = agent_metrics.get("tasks_executed", 0) + 1
+    # Load current metrics - prioritize in-memory over JSON (container may have read-only fs)
+    if agent_id in _agents_store:
+        current_tasks = _agents_store[agent_id].get("tasks_executed", 0)
+    else:
+        metrics = _load_agent_metrics()
+        agent_metrics = metrics.get(agent_id, {"tasks_executed": 0})
+        current_tasks = agent_metrics.get("tasks_executed", 0)
+    tasks_executed = current_tasks + 1
 
     # Calculate new trust score
     base_trust = _AGENT_BASE_CONFIG.get(agent_id, {}).get("base_trust", 0.85)
@@ -184,18 +194,23 @@ async def record_agent_task(agent_id: str):
         except Exception as e:
             logger.warning(f"Failed to update TypeDB trust for {agent_id}: {e}")
 
-    # Update in-memory store if exists
-    if agent_id in _agents_store:
-        _agents_store[agent_id]["tasks_executed"] = tasks_executed
-        _agents_store[agent_id]["last_active"] = now
-        _agents_store[agent_id]["trust_score"] = new_trust_score
+    # Update in-memory store (create entry if needed for container with read-only fs)
+    if agent_id not in _agents_store:
+        _agents_store[agent_id] = {"agent_id": agent_id, "name": agent_id, "tasks_executed": 0}
+    _agents_store[agent_id]["tasks_executed"] = tasks_executed
+    _agents_store[agent_id]["last_active"] = now
+    _agents_store[agent_id]["trust_score"] = new_trust_score
 
-    # Persist metrics to JSON
-    metrics[agent_id] = {
-        "tasks_executed": tasks_executed,
-        "last_active": now
-    }
-    _save_agent_metrics(metrics)
+    # Persist metrics to JSON (non-critical - may fail in container with read-only fs)
+    try:
+        metrics = _load_agent_metrics()
+        metrics[agent_id] = {
+            "tasks_executed": tasks_executed,
+            "last_active": now
+        }
+        _save_agent_metrics(metrics)
+    except Exception as e:
+        logger.warning(f"Failed to persist agent metrics (non-critical): {e}")
 
     # Return updated agent data
     if client:

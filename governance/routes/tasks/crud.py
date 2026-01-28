@@ -1,6 +1,6 @@
 """Tasks CRUD Routes. Per RULE-032: File Size Limit (< 300 lines)."""
 from fastapi import APIRouter, HTTPException, Query
-from typing import List, Optional
+from typing import Optional
 from datetime import datetime
 import logging
 

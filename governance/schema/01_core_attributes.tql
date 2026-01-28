@@ -29,6 +29,10 @@ attribute rule-tags value string;
 
 attribute applicable-roles value string;
 
+# RD-RULE-APPLICABILITY: Enforcement level classification
+# Values: MANDATORY, RECOMMENDED, FORBIDDEN, CONDITIONAL
+attribute applicability value string;
+
 attribute created-date value datetime;
 
 

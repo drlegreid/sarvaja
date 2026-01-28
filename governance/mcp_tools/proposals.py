@@ -5,6 +5,13 @@ import json
 from datetime import datetime
 from typing import Optional
 
+# Monitoring instrumentation per GAP-MONITOR-INSTRUMENT-001
+try:
+    from agent.governance_ui.data_access.monitoring import log_monitor_event
+    MONITORING_AVAILABLE = True
+except ImportError:
+    MONITORING_AVAILABLE = False
+
 
 def register_proposal_tools(mcp) -> None:
     """Register proposal-related MCP tools."""
@@ -56,6 +63,15 @@ def register_proposal_tools(mcp) -> None:
             "message": "Proposal created. Awaiting votes from agents."
         }
 
+        # Instrument proposal creation (governance-critical)
+        if MONITORING_AVAILABLE:
+            log_monitor_event(
+                event_type="governance_event",
+                source="mcp-proposal-create",
+                details={"proposal_id": proposal_id, "action": action, "rule_id": rule_id},
+                severity="WARNING"
+            )
+
         return format_mcp_result(proposal)
 
     @mcp.tool()
@@ -104,6 +120,14 @@ def register_proposal_tools(mcp) -> None:
             "message": f"Vote recorded with weight {vote_weight:.2f}"
         }
 
+        # Instrument vote (governance-critical)
+        if MONITORING_AVAILABLE:
+            log_monitor_event(
+                event_type="governance_event",
+                source="mcp-proposal-vote",
+                details={"proposal_id": proposal_id, "agent_id": agent_id, "vote": vote, "weight": vote_weight}
+            )
+
         return format_mcp_result(vote_record)
 
     @mcp.tool()
@@ -145,6 +169,16 @@ def register_proposal_tools(mcp) -> None:
             dispute["message"] = "ESCALATION: Human oversight required (RULE-011 bicameral model)"
         else:
             dispute["message"] = f"Dispute filed. Resolution method: {resolution_method}"
+
+        # Instrument dispute (governance-critical, potentially escalation)
+        severity = "CRITICAL" if resolution_method == "escalate" else "WARNING"
+        if MONITORING_AVAILABLE:
+            log_monitor_event(
+                event_type="governance_event",
+                source="mcp-proposal-dispute",
+                details={"proposal_id": proposal_id, "agent_id": agent_id, "resolution_method": resolution_method, "escalation": resolution_method == "escalate"},
+                severity=severity
+            )
 
         return format_mcp_result(dispute)
 
