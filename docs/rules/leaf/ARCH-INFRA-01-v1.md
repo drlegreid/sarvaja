@@ -59,6 +59,31 @@ deployment_identity:
 | Deploy without identity metadata | Include deployment_id in logs |
 | Skip port documentation | Maintain port registry table |
 
+## Test Coverage
+
+**13 robot test file(s)** validate this rule:
+
+| File | Scope |
+|------|-------|
+| `tests/robot/unit/agent_platform.robot` | unit |
+| `tests/robot/unit/chroma_migration.robot` | unit |
+| `tests/robot/unit/chroma_readonly.robot` | unit |
+| `tests/robot/unit/chromadb_sync.robot` | unit |
+| `tests/robot/unit/embedding_config.robot` | unit |
+| `tests/robot/unit/embedding_pipeline.robot` | unit |
+| `tests/robot/unit/mcp_preflight.robot` | unit |
+| `tests/robot/unit/mcp_server_config.robot` | unit |
+| `tests/robot/unit/typedb3_connection.robot` | unit |
+| `tests/robot/unit/typedb3_driver.robot` | unit |
+| `tests/robot/unit/typedb3_value_extraction.robot` | unit |
+| `tests/robot/unit/typedb_functions.robot` | unit |
+| `tests/robot/unit/vector_store.robot` | unit |
+
+```bash
+# Run all tests validating this rule
+robot --include ARCH-INFRA-01-v1 tests/robot/
+```
+
 ---
 
 *Per SESSION-DSM-01-v1: DSP Semantic Code Structure*

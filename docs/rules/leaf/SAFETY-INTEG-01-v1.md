@@ -45,6 +45,19 @@ Critical files MUST have integrity verification via content hashing. Use Frankel
 | Skip schema version tracking | Track TypeDB schema evolution |
 | Commit without hash validation | Verify integrity before push |
 
+## Test Coverage
+
+**1 robot test file(s)** validate this rule:
+
+| File | Scope |
+|------|-------|
+| `tests/robot/unit/frankel_hash.robot` | unit |
+
+```bash
+# Run all tests validating this rule
+robot --include SAFETY-INTEG-01-v1 tests/robot/
+```
+
 ---
 
 *Per SESSION-DSM-01-v1: DSP Semantic Code Structure*

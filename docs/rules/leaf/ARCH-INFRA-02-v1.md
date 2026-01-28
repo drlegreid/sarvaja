@@ -66,6 +66,19 @@ exec python -m "$1"
 - [ ] All scripts have LF line endings
 - [ ] Wrapper script tested after creation
 
+## Test Coverage
+
+**1 robot test file(s)** validate this rule:
+
+| File | Scope |
+|------|-------|
+| `tests/robot/unit/portable_config.robot` | unit |
+
+```bash
+# Run all tests validating this rule
+robot --include ARCH-INFRA-02-v1 tests/robot/
+```
+
 ---
 
 *Per SESSION-DSM-01-v1: DSP Semantic Code Structure*

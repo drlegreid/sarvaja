@@ -40,6 +40,20 @@ ALL document references MUST use relative markdown links: `[text](relative/path)
 - [ ] Links are clickable
 - [ ] No broken links
 
+## Test Coverage
+
+**2 robot test file(s)** validate this rule:
+
+| File | Scope |
+|------|-------|
+| `tests/robot/unit/document_service.robot` | unit |
+| `tests/robot/unit/workspace_scanner_split.robot` | unit |
+
+```bash
+# Run all tests validating this rule
+robot --include DOC-LINK-01-v1 tests/robot/
+```
+
 ---
 
 *Per SESSION-DSM-01-v1: DSP Semantic Code Structure*

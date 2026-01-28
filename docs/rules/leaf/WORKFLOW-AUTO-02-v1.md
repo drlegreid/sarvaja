@@ -42,6 +42,19 @@ When executing multi-step tasks, agents MUST continue until ALL tasks are comple
 - [ ] No unnecessary confirmation requests
 - [ ] Summary generated at end
 
+## Test Coverage
+
+**1 robot test file(s)** validate this rule:
+
+| File | Scope |
+|------|-------|
+| `tests/robot/unit/langgraph_extended.robot` | unit |
+
+```bash
+# Run all tests validating this rule
+robot --include WORKFLOW-AUTO-02-v1 tests/robot/
+```
+
 ---
 
 *Per SESSION-DSM-01-v1: DSP Semantic Code Structure*

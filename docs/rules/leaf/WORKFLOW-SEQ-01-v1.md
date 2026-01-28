@@ -86,6 +86,19 @@ Created 2024-12-28: Bug fix declared "complete" when only Level 1 validated. Fea
 - [ ] Level 2 verified (E2E works) → VALIDATED
 - [ ] Level 3 verified (user flow) → CERTIFIED
 
+## Test Coverage
+
+**1 robot test file(s)** validate this rule:
+
+| File | Scope |
+|------|-------|
+| `tests/robot/unit/github_sync.robot` | unit |
+
+```bash
+# Run all tests validating this rule
+robot --include WORKFLOW-SEQ-01-v1 tests/robot/
+```
+
 ---
 
 *Per SESSION-DSM-01-v1: DSP Semantic Code Structure*

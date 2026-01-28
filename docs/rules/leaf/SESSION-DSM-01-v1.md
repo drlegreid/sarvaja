@@ -67,6 +67,23 @@ flowchart LR
 - `dsm_checkpoint()` - Record progress
 - `dsm_complete()` - Generate evidence
 
+## Test Coverage
+
+**5 robot test file(s)** validate this rule:
+
+| File | Scope |
+|------|-------|
+| `tests/robot/unit/dsm_tracker.robot` | unit |
+| `tests/robot/unit/dsm_tracker_extended.robot` | unit |
+| `tests/robot/unit/dsm_tracker_integration.robot` | unit |
+| `tests/robot/unit/dsm_tracker_phases.robot` | unit |
+| `tests/robot/unit/dsm_tracker_unit.robot` | unit |
+
+```bash
+# Run all tests validating this rule
+robot --include SESSION-DSM-01-v1 tests/robot/
+```
+
 ---
 
 *Per SESSION-DSM-01-v1: DSP Semantic Code Structure*

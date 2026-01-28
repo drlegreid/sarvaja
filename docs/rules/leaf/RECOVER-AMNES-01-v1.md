@@ -73,6 +73,19 @@ mcp__claude-mem__chroma_query_documents(["sim-ai podman kubectl setup"])
 - [ ] No "what were we doing?" questions
 - [ ] Save prompts issued before transitions
 
+## Test Coverage
+
+**1 robot test file(s)** validate this rule:
+
+| File | Scope |
+|------|-------|
+| `tests/robot/unit/conflict_checker.robot` | unit |
+
+```bash
+# Run all tests validating this rule
+robot --include RECOVER-AMNES-01-v1 tests/robot/
+```
+
 ---
 
 *Per SESSION-DSM-01-v1: DSP Semantic Code Structure*

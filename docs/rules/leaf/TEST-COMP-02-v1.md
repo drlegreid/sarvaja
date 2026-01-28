@@ -53,6 +53,19 @@ Unit tests alone are INSUFFICIENT for UI claims.
 - [ ] E2E verification complete for UI
 - [ ] Evidence captured
 
+## Test Coverage
+
+**1 robot test file(s)** validate this rule:
+
+| File | Scope |
+|------|-------|
+| `tests/robot/e2e/data_integrity.robot` | e2e |
+
+```bash
+# Run all tests validating this rule
+robot --include TEST-COMP-02-v1 tests/robot/
+```
+
 ---
 
 *Per SESSION-DSM-01-v1: DSP Semantic Code Structure*

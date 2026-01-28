@@ -52,6 +52,33 @@ Large MCP servers (>50 tools) MUST be split into domain-specific servers.
 | Remove unified server immediately | Keep for backward compatibility |
 | Skip server independence tests | Verify each server starts alone |
 
+## Test Coverage
+
+**15 robot test file(s)** validate this rule:
+
+| File | Scope |
+|------|-------|
+| `tests/robot/unit/agent_platform_extended.robot` | unit |
+| `tests/robot/unit/chat.robot` | unit |
+| `tests/robot/unit/chat_extended.robot` | unit |
+| `tests/robot/unit/data_router.robot` | unit |
+| `tests/robot/unit/external_mcp_extended.robot` | unit |
+| `tests/robot/unit/external_mcp_tools.robot` | unit |
+| `tests/robot/unit/hybrid_router.robot` | unit |
+| `tests/robot/unit/litellm_routing.robot` | unit |
+| `tests/robot/unit/mcp_agents.robot` | unit |
+| `tests/robot/unit/mcp_evidence.robot` | unit |
+| `tests/robot/unit/mcp_output.robot` | unit |
+| `tests/robot/unit/mcp_rest_sessions.robot` | unit |
+| `tests/robot/unit/mcp_tasks.robot` | unit |
+| `tests/robot/unit/mcp_tools.robot` | unit |
+| `tests/robot/unit/mcp_tools_extended.robot` | unit |
+
+```bash
+# Run all tests validating this rule
+robot --include ARCH-MCP-02-v1 tests/robot/
+```
+
 ---
 
 *Per SESSION-DSM-01-v1: DSP Semantic Code Structure*

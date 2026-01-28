@@ -45,6 +45,19 @@ Before installing ANY package:
 - [ ] OctoCode used for version compatibility
 - [ ] No global Python pollution
 
+## Test Coverage
+
+**1 robot test file(s)** validate this rule:
+
+| File | Scope |
+|------|-------|
+| `tests/robot/unit/claude_hooks.robot` | unit |
+
+```bash
+# Run all tests validating this rule
+robot --include CONTAINER-DEV-01-v1 tests/robot/
+```
+
 ---
 
 *Per SESSION-DSM-01-v1: DSP Semantic Code Structure*

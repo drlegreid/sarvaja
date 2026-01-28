@@ -5,6 +5,7 @@
 **Type:** OPERATIONAL
 **Status:** ACTIVE
 **Created:** 2026-01-14
+**Updated:** 2026-01-25
 
 ## Semantic ID
 
@@ -12,7 +13,11 @@
 
 ## Directive
 
-All E2E tests MUST use Behavior-Driven Development (BDD) paradigm with Gherkin feature files:
+All E2E tests MUST use Behavior-Driven Development (BDD) paradigm.
+
+**Supported Frameworks:**
+- **Robot Framework** (PREFERRED for new tests) - Native Given/When/Then
+- **pytest-bdd** - Python with Gherkin feature files
 
 ### Structure
 
@@ -75,21 +80,58 @@ def should_see_text(page: Page, text: str):
 
 ### Test Execution
 
+**Robot Framework:**
 ```bash
-# Run all BDD tests
-pytest tests/e2e/steps/ -v
+# Run all BDD tests (compact output)
+robot --console dotted tests/
 
 # Run by tag
-pytest tests/e2e/steps/ -v -m "smoke"
+robot --include smoke tests/
 
-# Run specific feature
-pytest tests/e2e/steps/test_dashboard_steps.py -v
+# Run specific suite
+robot tests/e2e/entity_crud.robot
 ```
+
+**pytest-bdd:**
+```bash
+pytest tests/e2e/steps/ -v
+pytest tests/e2e/steps/ -v -m "smoke"
+```
+
+## BDD Beyond E2E (GAP-TEST-EVIDENCE-003)
+
+BDD principles apply at ALL test levels, not just E2E:
+
+| Level | BDD Approach |
+|-------|--------------|
+| **Unit** | Programmatic Given/When/Then via `bdd_evidence` fixture |
+| **Integration** | Contract-style Given (setup) / When (call) / Then (verify) |
+| **E2E** | Full Gherkin feature files with Playwright |
+
+### Unit/Integration BDD Pattern
+
+```python
+def test_rule_creation(bdd_evidence):
+    """Test creating governance rule. Per RULE-001."""
+    bdd_evidence.given("TypeDB is connected", {"host": "localhost"})
+    # setup code...
+
+    bdd_evidence.when("I create a new rule")
+    result = client.create_rule(rule_id="TEST-001", name="Test Rule")
+
+    bdd_evidence.then("the rule exists in TypeDB")
+    assert client.get_rule_by_id("TEST-001") is not None
+```
+
+This produces structured evidence per TEST-EVID-01-v1 without requiring Gherkin files.
+
+---
 
 ## Dependencies
 
-- RULE-023 (TEST-COMP-01-v1): Test Before Ship
-- RULE-004: Exploratory Test Automation
+- TEST-COMP-02-v1: Test Before Ship
+- TEST-EVID-01-v1: BDD Evidence Collection
+- TEST-TDD-01-v1: Test-Driven Development
 - GAP-TEST-001: BDD paradigm requirement
 
 ## Evidence
@@ -97,6 +139,22 @@ pytest tests/e2e/steps/test_dashboard_steps.py -v
 - Feature files: `tests/e2e/features/*.feature`
 - Step definitions: `tests/e2e/steps/*.py`
 - Test factories: `tests/e2e/conftest.py`
+- Programmatic BDD: `tests/evidence/collector.py`
 
 ---
 *Per GAP-TEST-001: BDD paradigm for E2E tests*
+*Per GAP-TEST-EVIDENCE-003: BDD at all test levels*
+
+## Test Coverage
+
+**2 robot test file(s)** validate this rule:
+
+| File | Scope |
+|------|-------|
+| `tests/robot/e2e/dashboard_browser.robot` | e2e |
+| `tests/robot/unit/kanren_rag.robot` | unit |
+
+```bash
+# Run all tests validating this rule
+robot --include TEST-BDD-01-v1 tests/robot/
+```

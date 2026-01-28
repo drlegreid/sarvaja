@@ -29,8 +29,9 @@ When marking a fix as DONE/RESOLVED, agent MUST run verification test and includ
 |----------|-------------|----------|
 | Container fix | `podman ps` shows running | Terminal output |
 | MCP fix | `health_check()` OK | Health check output |
-| API fix | Curl/test passing | Test result |
-| UI fix | Playwright screenshot | Screenshot file |
+| API fix | pytest or Robot test passing | Test result |
+| UI fix | Playwright screenshot (Robot/pytest) | Screenshot file |
+| Robot test fix | `robot --dryrun` + actual run | Robot report.html |
 
 ---
 
@@ -69,6 +70,22 @@ governance_verify_completion(
     evidence="5 tests passed, UI renders correctly",
     test_passed=True
 )
+```
+
+## Test Coverage
+
+**4 robot test file(s)** validate this rule:
+
+| File | Scope |
+|------|-------|
+| `tests/robot/unit/session_sync_todos.robot` | unit |
+| `tests/robot/unit/sessions_date_bug.robot` | unit |
+| `tests/robot/unit/task_commit_link.robot` | unit |
+| `tests/robot/unit/task_session_link.robot` | unit |
+
+```bash
+# Run all tests validating this rule
+robot --include TEST-FIX-01-v1 tests/robot/
 ```
 
 ---

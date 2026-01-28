@@ -103,6 +103,19 @@ set_loading_error(state, "rules", "Connection timeout", status_code=504)
 
 **Gap Trigger**: Missing loading states trigger GAP-UI-LOADER-*
 
+## Test Coverage
+
+**1 robot test file(s)** validate this rule:
+
+| File | Scope |
+|------|-------|
+| `tests/robot/unit/reactive_loaders.robot` | unit |
+
+```bash
+# Run all tests validating this rule
+robot --include UI-LOADER-01-v1 tests/robot/
+```
+
 ---
 
 *Per GAP-UI-047: Reactive loaders with trace status*

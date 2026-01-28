@@ -61,6 +61,28 @@ session_log = {
 - [ ] Artifacts tracked with actions
 - [ ] Metadata recorded
 
+## Test Coverage
+
+**10 robot test file(s)** validate this rule:
+
+| File | Scope |
+|------|-------|
+| `tests/robot/e2e/session_task_navigation.robot` | e2e |
+| `tests/robot/unit/certification_report.robot` | unit |
+| `tests/robot/unit/decision_dates.robot` | unit |
+| `tests/robot/unit/evidence_backfill.robot` | unit |
+| `tests/robot/unit/session_collector.robot` | unit |
+| `tests/robot/unit/session_memory.robot` | unit |
+| `tests/robot/unit/session_viewer.robot` | unit |
+| `tests/robot/unit/trace_bar.robot` | unit |
+| `tests/robot/unit/trace_capture.robot` | unit |
+| `tests/robot/unit/traceability.robot` | unit |
+
+```bash
+# Run all tests validating this rule
+robot --include SESSION-EVID-01-v1 tests/robot/
+```
+
 ---
 
 *Per SESSION-DSM-01-v1: DSP Semantic Code Structure*

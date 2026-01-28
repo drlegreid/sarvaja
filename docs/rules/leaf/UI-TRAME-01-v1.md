@@ -41,6 +41,19 @@ Before implementing new functionality, check cross-workspace wisdom index for ex
 - [ ] Existing patterns leveraged
 - [ ] New patterns documented for reuse
 
+## Test Coverage
+
+**1 robot test file(s)** validate this rule:
+
+| File | Scope |
+|------|-------|
+| `tests/robot/unit/trame_ui.robot` | unit |
+
+```bash
+# Run all tests validating this rule
+robot --include UI-TRAME-01-v1 tests/robot/
+```
+
 ---
 
 *Per SESSION-DSM-01-v1: DSP Semantic Code Structure*

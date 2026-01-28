@@ -47,6 +47,29 @@ flowchart LR
 - [ ] Hypothesis documented before testing
 - [ ] Evidence collected in structured format
 
+## Test Coverage
+
+**11 robot test file(s)** validate this rule:
+
+| File | Scope |
+|------|-------|
+| `tests/robot/e2e/governance_crud.robot` | e2e |
+| `tests/robot/e2e/rules_api.robot` | e2e |
+| `tests/robot/unit/curator_agent.robot` | unit |
+| `tests/robot/unit/governance.robot` | unit |
+| `tests/robot/unit/rule_fallback.robot` | unit |
+| `tests/robot/unit/rule_impact.robot` | unit |
+| `tests/robot/unit/rule_monitor.robot` | unit |
+| `tests/robot/unit/rule_quality.robot` | unit |
+| `tests/robot/unit/rules_archive.robot` | unit |
+| `tests/robot/unit/rules_governance.robot` | unit |
+| `tests/robot/unit/rules_integration.robot` | unit |
+
+```bash
+# Run all tests validating this rule
+robot --include GOV-RULE-01-v1 tests/robot/
+```
+
 ---
 
 *Per SESSION-DSM-01-v1: DSP Semantic Code Structure*

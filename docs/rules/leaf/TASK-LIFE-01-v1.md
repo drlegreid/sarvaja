@@ -104,6 +104,26 @@ Per TEST-FIX-01-v1:
 | VALIDATED | Test output, verification method |
 | CERTIFIED | User feedback reference |
 
+## Test Coverage
+
+**8 robot test file(s)** validate this rule:
+
+| File | Scope |
+|------|-------|
+| `tests/robot/unit/kanren_task.robot` | unit |
+| `tests/robot/unit/sync_status.robot` | unit |
+| `tests/robot/unit/task_completion_sync.robot` | unit |
+| `tests/robot/unit/task_crud_split.robot` | unit |
+| `tests/robot/unit/task_execution.robot` | unit |
+| `tests/robot/unit/task_lifecycle.robot` | unit |
+| `tests/robot/unit/task_ui.robot` | unit |
+| `tests/robot/unit/task_ui_extended.robot` | unit |
+
+```bash
+# Run all tests validating this rule
+robot --include TASK-LIFE-01-v1 tests/robot/
+```
+
 ---
 
 *Per SESSION-EVID-01-v1: Evidence-Based Sessions*

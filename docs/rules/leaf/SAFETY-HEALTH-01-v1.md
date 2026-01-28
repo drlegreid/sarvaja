@@ -70,6 +70,22 @@ flowchart TD
 | Ignore DOWN status | Follow recovery actions table |
 | Proceed without critical MCPs | Wait for recovery or notify user |
 
+## Test Coverage
+
+**4 robot test file(s)** validate this rule:
+
+| File | Scope |
+|------|-------|
+| `tests/robot/e2e/platform_health.robot` | e2e |
+| `tests/robot/unit/health.robot` | unit |
+| `tests/robot/unit/health_modes.robot` | unit |
+| `tests/robot/unit/mcp_status_display.robot` | unit |
+
+```bash
+# Run all tests validating this rule
+robot --include SAFETY-HEALTH-01-v1 tests/robot/
+```
+
 ---
 
 *Per SESSION-DSM-01-v1: DSP Semantic Code Structure*

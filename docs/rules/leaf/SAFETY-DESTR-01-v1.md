@@ -95,6 +95,20 @@ The hook automatically:
 - [x] Backups created when needed (scripts/typedb_export.py)
 - [x] Warranty mechanisms documented (2026-01-17)
 
+## Test Coverage
+
+**2 robot test file(s)** validate this rule:
+
+| File | Scope |
+|------|-------|
+| `tests/robot/unit/destructive_checker.robot` | unit |
+| `tests/robot/unit/shell_guidelines.robot` | unit |
+
+```bash
+# Run all tests validating this rule
+robot --include SAFETY-DESTR-01-v1 tests/robot/
+```
+
 ---
 
 *Per SESSION-DSM-01-v1: DSP Semantic Code Structure*

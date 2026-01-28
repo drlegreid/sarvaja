@@ -49,6 +49,23 @@ flowchart TD
 | Re-explore on each test run | Generate once, run many |
 | Analyze every result with LLM | Only analyze failures |
 
+## Test Coverage
+
+**5 robot test file(s)** validate this rule:
+
+| File | Scope |
+|------|-------|
+| `tests/robot/unit/benchmark.robot` | unit |
+| `tests/robot/unit/heuristics_example.robot` | unit |
+| `tests/robot/unit/journey_analyzer.robot` | unit |
+| `tests/robot/unit/lacmus_benchmark.robot` | unit |
+| `tests/robot/unit/platform_performance.robot` | unit |
+
+```bash
+# Run all tests validating this rule
+robot --include TEST-COMP-01-v1 tests/robot/
+```
+
 ---
 
 *Per SESSION-DSM-01-v1: DSP Semantic Code Structure*

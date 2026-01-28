@@ -80,6 +80,19 @@ Per enterprise development patterns, tasks MUST link to:
 
 **Gap Trigger**: Missing tech documentation triggers GAP-TASK-TECH-*.
 
+## Test Coverage
+
+**1 robot test file(s)** validate this rule:
+
+| File | Scope |
+|------|-------|
+| `tests/robot/unit/task_details.robot` | unit |
+
+```bash
+# Run all tests validating this rule
+robot --include TASK-TECH-01-v1 tests/robot/
+```
+
 ---
 
 *Per SESSION-EVID-01-v1: Evidence-Based Sessions*

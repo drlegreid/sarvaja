@@ -41,6 +41,25 @@ All source files MUST stay under 300 lines. When exceeded, IMMEDIATELY refactor 
 - [ ] OOP principles followed
 - [ ] Clear layer boundaries
 
+## Test Coverage
+
+**7 robot test file(s)** validate this rule:
+
+| File | Scope |
+|------|-------|
+| `tests/robot/unit/agents_split.robot` | unit |
+| `tests/robot/unit/context_preloader_split.robot` | unit |
+| `tests/robot/unit/dsm_tracker_split.robot` | unit |
+| `tests/robot/unit/embedding_pipeline_split.robot` | unit |
+| `tests/robot/unit/mcp_server_split.robot` | unit |
+| `tests/robot/unit/routes_chat_split.robot` | unit |
+| `tests/robot/unit/ui_infra.robot` | unit |
+
+```bash
+# Run all tests validating this rule
+robot --include DOC-SIZE-01-v1 tests/robot/
+```
+
 ---
 
 *Per SESSION-DSM-01-v1: DSP Semantic Code Structure*

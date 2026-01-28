@@ -43,6 +43,20 @@ Agents MUST autonomously sequence tasks according to product strategy. Continue 
 - [ ] Halt commands recognized
 - [ ] State saved on halt
 
+## Test Coverage
+
+**2 robot test file(s)** validate this rule:
+
+| File | Scope |
+|------|-------|
+| `tests/robot/unit/langgraph_workflow.robot` | unit |
+| `tests/robot/unit/orchestrator.robot` | unit |
+
+```bash
+# Run all tests validating this rule
+robot --include WORKFLOW-AUTO-01-v1 tests/robot/
+```
+
 ---
 
 *Per SESSION-DSM-01-v1: DSP Semantic Code Structure*

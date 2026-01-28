@@ -77,6 +77,22 @@ Trust = (Compliance * 0.4) + (Accuracy * 0.3) + (Consistency * 0.2) + (Tenure * 
 | Ignore trust scores | Check agent trust before delegation |
 | Resolve conflicts arbitrarily | Use evidence-based resolution |
 
+## Test Coverage
+
+**4 robot test file(s)** validate this rule:
+
+| File | Scope |
+|------|-------|
+| `tests/robot/unit/agent_hybrid.robot` | unit |
+| `tests/robot/unit/agent_trust.robot` | unit |
+| `tests/robot/unit/kanren_trust.robot` | unit |
+| `tests/robot/unit/trust_dashboard.robot` | unit |
+
+```bash
+# Run all tests validating this rule
+robot --include GOV-BICAM-01-v1 tests/robot/
+```
+
 ---
 
 *Per SESSION-DSM-01-v1: DSP Semantic Code Structure*

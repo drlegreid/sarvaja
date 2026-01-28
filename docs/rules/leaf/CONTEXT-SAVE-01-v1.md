@@ -105,6 +105,22 @@ ln -sf ../../scripts/check_mcp_duplicates.sh .git/hooks/pre-commit
 - RECOVER-CRASH-01-v1: Crash investigation protocol
 - MCP-HEALTH-01-v1: MCP server health checks
 
+## Test Coverage
+
+**4 robot test file(s)** validate this rule:
+
+| File | Scope |
+|------|-------|
+| `tests/robot/unit/claude_mem_toon.robot` | unit |
+| `tests/robot/unit/context_preloader.robot` | unit |
+| `tests/robot/unit/session_memory_extended.robot` | unit |
+| `tests/robot/unit/summary_compressor.robot` | unit |
+
+```bash
+# Run all tests validating this rule
+robot --include CONTEXT-SAVE-01-v1 tests/robot/
+```
+
 ---
 
 *Per SESSION-DSM-01-v1: DSP Semantic Code Structure*

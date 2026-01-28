@@ -84,6 +84,19 @@ grep -A10 "@mcp.tool" governance/mcp_tools/*.py | grep "Args:"
 - GAP-MCP-DIRECTIVE-001 (Missing operational directives)
 - DOC-SIZE-01-v1 (Documentation standards)
 
+## Test Coverage
+
+**1 robot test file(s)** validate this rule:
+
+| File | Scope |
+|------|-------|
+| `tests/robot/unit/pydantic_tools.robot` | unit |
+
+```bash
+# Run all tests validating this rule
+robot --include MCP-DOC-01-v1 tests/robot/
+```
+
 ---
 
 *Per GAP-MCP-DIRECTIVE-001: MCP operational directives*
