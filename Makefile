@@ -47,8 +47,20 @@ test-full: ## Full test suite for release (<30min)
 	$(PYTEST) tests/ -v --tb=short --timeout=1800 \
 		--junitxml=results/full-tests.xml
 
+.PHONY: test-robot
+test-robot: ## Robot Framework unit tests (all)
+	PYTHONPATH=. $(VENV)/bin/robot --loglevel WARN tests/robot/unit/
+
+.PHONY: test-robot-smoke
+test-robot-smoke: ## Robot Framework smoke tests
+	PYTHONPATH=. $(VENV)/bin/robot --include smoke --loglevel WARN tests/robot/unit/
+
+.PHONY: test-robot-e2e
+test-robot-e2e: ## Robot Framework E2E tests (requires API)
+	PYTHONPATH=. $(VENV)/bin/robot --loglevel WARN tests/robot/e2e/
+
 .PHONY: test-e2e
-test-e2e: ## E2E tests with Robot Framework
+test-e2e: ## E2E tests with Robot Framework (legacy)
 	./scripts/robot.sh -t smoke
 
 .PHONY: test-e2e-api

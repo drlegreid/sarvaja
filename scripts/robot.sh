@@ -10,6 +10,9 @@ PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
 ROBOT_DIR="${PROJECT_ROOT}/tests/e2e/robot"
 RESULTS_DIR="${ROBOT_DIR}/results"
 
+# CRITICAL: Set PYTHONPATH so governance.* and agent.* imports work
+export PYTHONPATH="${PROJECT_ROOT}:${PYTHONPATH:-}"
+
 # Default settings
 INCLUDE_TAG="${ROBOT_INCLUDE_TAG:-smoke}"
 BROWSER="${ROBOT_BROWSER:-chromium}"
