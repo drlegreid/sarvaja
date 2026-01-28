@@ -12,6 +12,7 @@ Rules governing system architecture, infrastructure, and MCP server patterns.
 | Rule | Name | Priority | Status | Type | Leaf |
 |------|------|----------|--------|------|------|
 | **ARCH-BEST-01-v1** | Architectural Best Practices | HIGH | ACTIVE | OPERATIONAL | [View](../leaf/ARCH-BEST-01-v1.md) |
+| **ARCH-EBMSF-01-v1** | EBMSF Architecture Standards | HIGH | ACTIVE | TECHNICAL | [View](../leaf/ARCH-EBMSF-01-v1.md) |
 | **ARCH-INFRA-01-v1** | Infrastructure Identity & Hardware | CRITICAL | ACTIVE | TECHNICAL | [View](../leaf/ARCH-INFRA-01-v1.md) |
 | **ARCH-MCP-02-v1** | MCP Server Separation Pattern | HIGH | ACTIVE | TECHNICAL | [View](../leaf/ARCH-MCP-02-v1.md) |
 
@@ -20,6 +21,7 @@ Rules governing system architecture, infrastructure, and MCP server patterns.
 ## Quick Reference
 
 - **ARCH-BEST-01-v1**: Separation of concerns, config over code, observability by default
+- **ARCH-EBMSF-01-v1**: Code reviews required, no hardcoded secrets in commits
 - **ARCH-INFRA-01-v1**: All infrastructure MUST be identifiable via metadata
 - **ARCH-MCP-02-v1**: Large MCP servers (>50 tools) MUST be split by domain
 

@@ -1,0 +1,18 @@
+{
+  "rule": {
+    "id": "TEST-E5908D7E",
+    "name": "To Delete TEST-E5908D7E",
+    "category": "operational",
+    "priority": "LOW",
+    "status": "DRAFT",
+    "directive": "This rule will be deleted",
+    "rule_type": null,
+    "semantic_id": null,
+    "created_date": null
+  },
+  "archived_at": "2026-01-22T19:47:37.259433",
+  "reason": "deleted",
+  "archived_from_db": "sim-ai-governance",
+  "dependencies": [],
+  "dependents": []
+}

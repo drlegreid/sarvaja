@@ -1,0 +1,20 @@
+{
+  "rule": {
+    "id": "RULE-023",
+    "name": "Test Before Ship",
+    "category": "quality",
+    "priority": "CRITICAL",
+    "status": "ACTIVE",
+    "directive": "All code changes MUST pass tests before commit; no shipping untested code; test failures block deployment",
+    "rule_type": null,
+    "semantic_id": "TEST-SHIP-01-v1",
+    "created_date": null
+  },
+  "archived_at": "2026-01-22T23:35:11.055518",
+  "reason": "deleted",
+  "archived_from_db": "sim-ai-governance",
+  "dependencies": [],
+  "dependents": [
+    "RULE-025"
+  ]
+}

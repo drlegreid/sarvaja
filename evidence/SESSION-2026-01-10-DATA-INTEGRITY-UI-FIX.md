@@ -10,6 +10,10 @@
 
 ## Event Timeline
 
+- **13:04** - Debug session started: data integrity UI fix investigation
+- **13:04** - Session concluded after 20s: automated check cycle, no events captured
+
+**Note:** Auto-generated debug session. Duration 20s — minimal automated check with no user-facing events.
 
 ---
 

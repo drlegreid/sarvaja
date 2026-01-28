@@ -19,6 +19,7 @@
       "Bash(docker exec:*)",
       "Bash(/usr/bin/podman info:*)",
       "Skill(entropy)",
+      "Skill(context-stats)",
       "Bash(python:*)",
       "Bash(python3:*)",
       "Bash(CONTAINERS_STORAGE_CONF=/dev/null podman system reset:*)"
@@ -35,9 +36,20 @@
     "playwright"
   ],
   "hooks": {
+    "Stop": [
+      {
+        "type": "command",
+        "command": "mpg123 /home/oderid/Music/train-1-99265.mp3"
+      }
+    ],
     "SessionStart": [
       {
         "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"$CLAUDE_PROJECT_DIR/.claude/hooks/entropy_cli.py\" --reset",
+            "timeout": 1
+          },
           {
             "type": "command",
             "command": "python3 \"$CLAUDE_PROJECT_DIR/.claude/hooks/healthcheck.py\"",
@@ -63,6 +75,11 @@
             "type": "command",
             "command": "python3 \"$CLAUDE_PROJECT_DIR/.claude/hooks/checkers/session_reporter.py\"",
             "timeout": 2
+          },
+          {
+            "type": "command",
+            "command": "python3 \"$CLAUDE_PROJECT_DIR/.claude/hooks/checkers/context_monitor.py\" --capture -q",
+            "timeout": 1
           }
         ]
       }
@@ -85,6 +102,11 @@
           {
             "type": "command",
             "command": "python3 \"$CLAUDE_PROJECT_DIR/.claude/hooks/entropy_cli.py\" --increment -q",
+            "timeout": 1
+          },
+          {
+            "type": "command",
+            "command": "python3 \"$CLAUDE_PROJECT_DIR/.claude/hooks/session_tool_logger.py\"",
             "timeout": 1
           }
         ]

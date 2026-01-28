@@ -149,9 +149,40 @@ class ContainerRecovery:
         """Backward-compatible alias for start_socket (docker)."""
         return self._start_docker_socket()
 
+    def _try_start_existing(self, container_names: List[str]) -> bool:
+        """
+        Try to start existing stopped containers (fast resume).
+
+        Per GAP-HOOK-RECOVERY-001: Try 'podman start' before 'podman compose up'.
+
+        Args:
+            container_names: Container names to start
+
+        Returns:
+            True if at least one container was started successfully
+        """
+        any_started = False
+        for name in container_names:
+            try:
+                # Try direct start (resume existing)
+                result = subprocess.run(
+                    [self.runtime, "start", name],
+                    capture_output=True,
+                    timeout=5
+                )
+                if result.returncode == 0:
+                    any_started = True
+            except Exception:
+                pass
+        return any_started
+
     def start_containers(self, services: Optional[List[str]] = None) -> bool:
         """
-        Start containers using compose (non-blocking).
+        Start containers - tries resume first, then compose.
+
+        Per GAP-HOOK-RECOVERY-001:
+        1. Try 'podman start <container>' (resume existing - fast)
+        2. If fails, use 'podman compose up' (create new - slower)
 
         Args:
             services: List of services to start (defaults to core services)
@@ -159,8 +190,14 @@ class ContainerRecovery:
         Returns:
             True if start command succeeded
         """
+        services = services or ["typedb", "chromadb"]
+
+        # Step 1: Try to resume existing containers (fast)
+        if self._try_start_existing(services):
+            return True
+
+        # Step 2: Fall back to compose (create new)
         try:
-            services = services or ["typedb", "chromadb"]
             cmd = self._get_compose_cmd() + ["up", "-d"] + services
 
             subprocess.Popen(

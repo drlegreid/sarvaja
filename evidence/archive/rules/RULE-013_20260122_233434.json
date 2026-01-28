@@ -1,0 +1,18 @@
+{
+  "rule": {
+    "id": "RULE-013",
+    "name": "Rules Applicability Convention",
+    "category": "traceability",
+    "priority": "MEDIUM",
+    "status": "ACTIVE",
+    "directive": "Format: {TYPE}({RULE-ID}): {Description} - gaps/TODOs must reference governing rules",
+    "rule_type": null,
+    "semantic_id": "META-TRAC-01-v1",
+    "created_date": null
+  },
+  "archived_at": "2026-01-22T23:34:34.382129",
+  "reason": "deleted",
+  "archived_from_db": "sim-ai-governance",
+  "dependencies": [],
+  "dependents": []
+}

@@ -13,7 +13,9 @@ Rules governing memory management, MCP health, and system integrity.
 |------|------|----------|--------|------|------|
 | **RECOVER-MEM-01-v1** | Memory & MCP Stability | HIGH | ACTIVE | OPERATIONAL | [View](../leaf/RECOVER-MEM-01-v1.md) |
 | **SAFETY-HEALTH-01-v1** | MCP Healthcheck Protocol | CRITICAL | ACTIVE | TECHNICAL | [View](../leaf/SAFETY-HEALTH-01-v1.md) |
+| **SAFETY-HEALTH-02-v1** | MCP Health Verification | CRITICAL | ACTIVE | OPERATIONAL | [View](../leaf/SAFETY-HEALTH-02-v1.md) |
 | **SAFETY-INTEG-01-v1** | Integrity Verification (Frankel Hash) | HIGH | DRAFT | TECHNICAL | [View](../leaf/SAFETY-INTEG-01-v1.md) |
+| **RECOVER-AMNES-02-v1** | AMNESIA Hierarchical Recovery | CRITICAL | ACTIVE | OPERATIONAL | [View](../leaf/RECOVER-AMNES-02-v1.md) |
 | **RECOVER-CRASH-01-v1** | Crash Investigation Protocol | CRITICAL | ACTIVE | OPERATIONAL | [View](../leaf/RECOVER-CRASH-01-v1.md) |
 | **CONTEXT-SAVE-01-v1** | Context Efficiency Protocol | HIGH | ACTIVE | OPERATIONAL | [View](../leaf/CONTEXT-SAVE-01-v1.md) |
 
@@ -23,7 +25,9 @@ Rules governing memory management, MCP health, and system integrity.
 
 - **RECOVER-MEM-01-v1**: Memory thresholds: <500MB=HEALTHY, >2000MB=CRITICAL, >3000MB=EMERGENCY
 - **SAFETY-HEALTH-01-v1**: Every MCP operation MUST verify health; auto-recovery on failure
+- **SAFETY-HEALTH-02-v1**: Failures logged and recovery attempted before failing
 - **SAFETY-INTEG-01-v1**: Critical files MUST have integrity verification via hashing
+- **RECOVER-AMNES-02-v1**: Use hierarchical sources: TODO.md -> R&D -> Session -> claude-mem -> GAP
 - **RECOVER-CRASH-01-v1**: On crash, IMMEDIATELY investigate logs before resuming
 - **CONTEXT-SAVE-01-v1**: Monitor entropy, save at thresholds (50/100/150 tool calls)
 

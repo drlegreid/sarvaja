@@ -1,6 +1,6 @@
 # Gap Index - Sarvaja
 
-**Last Updated:** 2026-01-26 | **Source of Truth:** TypeDB via `backlog_get()`
+**Last Updated:** 2026-01-27 | **Source of Truth:** TypeDB via `backlog_get()`
 
 | Status | Count |
 |--------|-------|
@@ -10,6 +10,8 @@
 | MITIGATED | 1 |
 | RESOLVED | 256+ |
 
+> **Test Traceability:** Run `robot --include GAP-*` to execute all 60 gap regression tests.
+
 > Use `mcp__gov-tasks__backlog_get()` for current backlog.
 > Detailed evidence in [evidence/](evidence/) per GAP-META-001.
 > Archived gaps: [GAP-INDEX-ARCHIVE.md](GAP-INDEX-ARCHIVE.md)
@@ -18,23 +20,21 @@
 
 ## Active Gaps
 
-| ID | Priority | Status | Category | Evidence |
-|----|----------|--------|----------|----------|
-| GAP-RULE-DATA-QUALITY-001 | HIGH | RESOLVED | data | [evidence](evidence/GAP-RULE-DATA-QUALITY-001.md) |
-| GAP-LANGGRAPH-QUALITY-001 | MEDIUM | DEFERRED | enhancement | [evidence](evidence/GAP-LANGGRAPH-QUALITY-001.md) |
-| GAP-API-500-001 | MEDIUM | CLOSED | external | [evidence](evidence/GAP-API-500-001.md) |
-| GAP-MCP-PAGING-001 | MEDIUM | MITIGATED | tooling | [evidence](evidence/GAP-MCP-PAGING-001.md) |
+| ID | Priority | Status | Category | Evidence | Tests |
+|----|----------|--------|----------|----------|-------|
+| GAP-LANGGRAPH-QUALITY-001 | MEDIUM | DEFERRED | enhancement | [evidence](evidence/GAP-LANGGRAPH-QUALITY-001.md) | - |
+| GAP-MCP-PAGING-001 | MEDIUM | MITIGATED | tooling | [evidence](evidence/GAP-MCP-PAGING-001.md) | - |
 
 > **Notes:**
-> - GAP-API-500-001: CLOSED (2026-01-25) - 3rd party dependency, mitigations in place
 > - GAP-MCP-PAGING-001: MITIGATED - External MCP tools, workarounds documented
 > - GAP-LANGGRAPH-QUALITY-001: DEFERRED (2026-01-26) - Option C selected, revisit when multi-agent active
 
-## Recently Resolved (2026-01-25)
+## Recently Resolved (2026-01-27)
 
 | ID | Resolution |
 |----|------------|
-| GAP-API-500-001 | Closed - 3rd party dependency (Anthropic infrastructure), mitigations in place |
+| GAP-RULE-DATA-QUALITY-001 | RESOLVED - Rule metadata fixes, 18+ null values corrected |
+| GAP-API-500-001 | CLOSED (2026-01-25) - 3rd party dependency, mitigations in place |
 
 ## Previously Resolved (2026-01-21)
 

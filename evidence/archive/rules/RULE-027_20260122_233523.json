@@ -1,0 +1,18 @@
+{
+  "rule": {
+    "id": "RULE-027",
+    "name": "API Server Restart Protocol",
+    "category": "testing",
+    "priority": "HIGH",
+    "status": "DEPRECATED",
+    "directive": "ALWAYS restart API servers after making code changes BEFORE running tests.",
+    "rule_type": "OPERATIONAL",
+    "semantic_id": "CONTAINER-RESTART-01-v1",
+    "created_date": null
+  },
+  "archived_at": "2026-01-22T23:35:23.710812",
+  "reason": "deleted",
+  "archived_from_db": "sim-ai-governance",
+  "dependencies": [],
+  "dependents": []
+}

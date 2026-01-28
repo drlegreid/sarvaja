@@ -93,6 +93,13 @@ python3 -m venv .venv
 3. Load to todo list           → Track progress
 ```
 
+## Provisional Tasks (MCP Fallback)
+
+When MCP unavailable, check [TODO.md](TODO.md) § "Provisional Tasks" for urgent items.
+
+**Current (2026-01-23):**
+- GAP-API-500-001: Track Anthropic API 500 error frequency (external)
+
 ## Context Recovery Protocol (RECOVER-AMNES-01-v1)
 
 **On compaction/amnesia, ALWAYS check in order:**

@@ -151,6 +151,30 @@ path = recovery.get_resolution_path(services)
 result = recovery.attempt_recovery(services, previous_state)
 ```
 
+## Environment Variables
+
+| Variable | Values | Default | Description |
+|----------|--------|---------|-------------|
+| `SARVAJA_HEALTH_MODE` | `quiet`, `normal`, `aggressive` | `normal` | AMNESIA detection sensitivity (GAP-HEALTH-AGGRESSIVE-001) |
+| `SARVAJA_AUTO_RECOVERY` | `enabled`, `disabled`, `prompt` | `enabled` | Auto-start containers when down (GAP-HEALTH-AUTORECOVERY) |
+
+### SARVAJA_AUTO_RECOVERY
+
+Controls whether the healthcheck automatically starts containers when they're down:
+
+- **enabled** (default): Auto-recover containers in background, report actions taken
+- **disabled**: Never auto-recover, show manual recovery command only
+- **prompt**: Show recovery command as suggestion without executing
+
+Example:
+```bash
+# Disable auto-recovery (e.g., for debugging container issues)
+export SARVAJA_AUTO_RECOVERY=disabled
+
+# Re-enable
+export SARVAJA_AUTO_RECOVERY=enabled
+```
+
 ## Hook Entry Points
 
 ### healthcheck.py

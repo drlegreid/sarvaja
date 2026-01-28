@@ -1,0 +1,18 @@
+{
+  "rule": {
+    "id": "TEST-BAE550CD",
+    "name": "To Delete TEST-BAE550CD",
+    "category": "operational",
+    "priority": "LOW",
+    "status": "DRAFT",
+    "directive": "This rule will be deleted",
+    "rule_type": null,
+    "semantic_id": null,
+    "created_date": null
+  },
+  "archived_at": "2026-01-22T21:49:22.647336",
+  "reason": "deleted",
+  "archived_from_db": "sim-ai-governance",
+  "dependencies": [],
+  "dependents": []
+}

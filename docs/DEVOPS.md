@@ -1,7 +1,7 @@
 # DevOps Reference - Sarvaja
 
-> **Parent:** [CLAUDE.md](../CLAUDE.md) | **Rule:** RULE-031, RULE-035, RULE-037
-> **Last Updated:** 2026-01-12
+> **Parent:** [CLAUDE.md](../CLAUDE.md) | **Rule:** RULE-031, RULE-035, RULE-037, CONTAINER-LIFECYCLE-01-v1
+> **Last Updated:** 2026-01-20
 
 ---
 
@@ -13,7 +13,7 @@
 |---------|-------------|
 | `docker` | `podman` |
 | `docker-compose` | `podman compose` |
-| `docker ps` | `podman compose --profile cpu ps` |
+| `docker ps` | `podman compose --profile dev ps` |
 
 Data persistence: `/home/oderid/Documents/Docker/` (bind mounts)
 
@@ -92,7 +92,8 @@ systemctl --user is-enabled podman.socket
 | Profile | Use Case | Volume Mounts | Rebuild Needed |
 |---------|----------|---------------|----------------|
 | `dev` | Development | ✅ Yes | ❌ No |
-| `cpu` | Production | ❌ No | ✅ Yes |
+
+> **Note:** Only `dev` profile exists. Production profile (cpu) not implemented.
 
 ### DEV Profile - Live Reload (ALWAYS USE FOR DEVELOPMENT)
 
@@ -115,7 +116,7 @@ podman compose --profile dev up -d
 
 Code changes in `agent/`, `governance/`, or `docs/` are **immediately reflected** without rebuilding. Just save and refresh.
 
-> ⚠️ **WARNING**: PROD (`--profile cpu`) doesn't reflect code changes. This mistake has occurred 5+ times.
+> ⚠️ **WARNING**: Only `--profile dev` exists. Using non-existent profiles causes **silent failure** - no error, no containers.
 
 ### When to Rebuild
 
@@ -159,24 +160,47 @@ MCP_MODE=venv       # Fallback to local venv
 ### Podman Compose Commands
 
 ```bash
-# Start CORE services only
-podman compose --profile cpu up -d typedb chromadb
+# Start CORE services only (TypeDB + ChromaDB)
+podman compose --profile dev up -d typedb chromadb
 
-# Start all services
-podman compose --profile cpu up -d
+# Start all services (includes dashboard, litellm, ollama)
+podman compose --profile dev up -d
 
 # Check running containers
-podman compose --profile cpu ps
+podman compose --profile dev ps
 
 # View container logs
-podman logs sarvaja-typedb-1 --tail 50
+podman logs platform_typedb_1 --tail 50
 
 # Restart specific container
-podman restart sarvaja-typedb-1
+podman restart platform_typedb_1
 
 # Stop all
-podman compose --profile cpu down
+podman compose --profile dev down
 ```
+
+### Container Lifecycle (CRITICAL - 2026-01-20 Lesson)
+
+| Action | Command | When to Use |
+|--------|---------|-------------|
+| **Start existing** | `podman start <name>` | Container exists, just stopped |
+| **Restart** | `podman restart <name>` | Container running, needs refresh |
+| **Recreate** | `podman compose up -d` | Config changed, need fresh container |
+
+**WARNING**: `up -d` recreates containers. Use `podman start` for existing stopped containers to preserve state.
+
+```bash
+# PREFER: Start existing stopped containers
+podman start platform_typedb_1 platform_chromadb_1
+
+# AVOID: Recreates containers (may lose runtime state)
+podman compose --profile dev up -d typedb chromadb
+```
+
+### Profile Note
+
+The compose file uses `--profile dev`. There is NO `cpu` profile.
+Silent failure occurs if wrong profile used - no error, just no containers start.
 
 ---
 
@@ -221,9 +245,8 @@ curl -s -H "Authorization: Bearer sk-litellm-master-key" http://localhost:4000/h
 # DEV mode - Full sequence (xubuntu)
 podman compose --profile dev up -d
 
-# PROD mode - Full sequence (when needed)
-podman compose --profile cpu up -d
-podman compose exec ollama ollama pull llama3.2:3b
+# Pull Ollama models (after services started)
+podman compose --profile dev exec ollama ollama pull llama3.2:3b
 
 # Seed TypeDB (after fresh install or data corruption)
 source ~/.venv/sarvaja/bin/activate

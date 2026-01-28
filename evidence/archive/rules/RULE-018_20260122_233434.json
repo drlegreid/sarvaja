@@ -1,0 +1,20 @@
+{
+  "rule": {
+    "id": "RULE-018",
+    "name": "Objective Reporting",
+    "category": "reporting",
+    "priority": "HIGH",
+    "status": "ACTIVE",
+    "directive": "Reports must be factual without flattery; prioritize accuracy over validation",
+    "rule_type": null,
+    "semantic_id": "REPORT-OBJ-01-v1",
+    "created_date": null
+  },
+  "archived_at": "2026-01-22T23:34:34.781960",
+  "reason": "deleted",
+  "archived_from_db": "sim-ai-governance",
+  "dependencies": [],
+  "dependents": [
+    "RULE-019"
+  ]
+}

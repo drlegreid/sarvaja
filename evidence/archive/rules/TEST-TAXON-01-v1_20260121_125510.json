@@ -1,0 +1,18 @@
+{
+  "rule": {
+    "id": "TEST-TAXON-01-v1",
+    "name": "Test Taxonomy & Marker Strategy",
+    "category": "testing",
+    "priority": "HIGH",
+    "status": "ACTIVE",
+    "directive": "All tests MUST use pytest markers following the taxonomy (scope, domain, entity, action, concern) to enable selective execution. Tests without appropriate markers are incomplete.",
+    "rule_type": null,
+    "semantic_id": null,
+    "created_date": null
+  },
+  "archived_at": "2026-01-21T12:55:10.557882",
+  "reason": "deleted",
+  "archived_from_db": "sim-ai-governance",
+  "dependencies": [],
+  "dependents": []
+}

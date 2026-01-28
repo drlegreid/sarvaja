@@ -174,9 +174,39 @@ def show_status() -> int:
 
 
 def reset_state() -> int:
-    """Reset entropy state for new session."""
+    """Reset entropy state for new session.
+
+    Per GAP-CONTEXT-ROT-CHECK: Logs previous session stats for audit trail.
+    """
+    # Load previous state for audit
+    prev_state = load_state()
+    prev_tool_count = prev_state.get("tool_count", 0)
+    prev_hash = prev_state.get("session_hash", "")
+
+    # Create new state
     state = get_default_state()
+
+    # Add previous session info to history for continuity tracking
+    if prev_tool_count > 0:
+        state["history"].append({
+            "timestamp": datetime.now().isoformat(),
+            "event": "PREVIOUS_SESSION_END",
+            "tool_count": prev_tool_count,
+            "session_hash": prev_hash
+        })
+
     save_state(state)
+
+    # Warn if previous session had high entropy (context rot indicator)
+    if prev_tool_count >= CRITICAL_THRESHOLD:
+        print(f"⚠️ Previous session had CRITICAL entropy ({prev_tool_count} calls)")
+        print("Entropy state reset for new session")
+        return 1  # Non-blocking warning
+    elif prev_tool_count >= HIGH_THRESHOLD:
+        print(f"Previous session had HIGH entropy ({prev_tool_count} calls)")
+        print("Entropy state reset for new session")
+        return 0
+
     print("Entropy state reset for new session")
     return 0
 

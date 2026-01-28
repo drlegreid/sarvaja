@@ -11,6 +11,7 @@ Rules governing development standards, DevOps, and documentation.
 
 | Rule | Name | Priority | Status | Type | Leaf |
 |------|------|----------|--------|------|------|
+| **ARCH-VERSION-01-v1** | Version Compatibility Protocol | CRITICAL | ACTIVE | OPERATIONAL | [View](../leaf/ARCH-VERSION-01-v1.md) |
 | **CONTAINER-RESTART-01-v1** | API Server Restart Protocol | HIGH | ACTIVE | OPERATIONAL | [View](../leaf/CONTAINER-RESTART-01-v1.md) |
 | **CONTAINER-DEV-02-v1** | Docker Dev Container Workflow | HIGH | **DISABLED** | LEAF | [View](../leaf/CONTAINER-DEV-02-v1.md) |
 | **DOC-SIZE-01-v1** | File Size & OOP Standards | HIGH | ACTIVE | TECHNICAL | [View](../leaf/DOC-SIZE-01-v1.md) |
@@ -24,6 +25,7 @@ Rules governing development standards, DevOps, and documentation.
 
 ## Quick Reference
 
+- **ARCH-VERSION-01-v1**: Pin versions for reproducibility, test migrations before deploying
 - **CONTAINER-RESTART-01-v1**: ALWAYS restart API servers after code changes before testing
 - **CONTAINER-DEV-02-v1**: **DISABLED** - Use Podman workflows instead (see CONTAINER-SHELL-01-v1)
 - **DOC-SIZE-01-v1**: Files MUST stay under 300 lines

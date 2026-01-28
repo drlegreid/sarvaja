@@ -1,6 +1,6 @@
 # R&D: Agent Platform Testing Strategy (ATEST-001 to ATEST-008)
 
-**Status:** IN_PROGRESS
+**Status:** COMPLETE
 **Priority:** CRITICAL
 **Vision:** Comprehensive test coverage for multi-agent governance platform
 **Created:** 2026-01-15
@@ -15,20 +15,19 @@ Systematic testing strategy for the Sarvaja agent platform, covering trust-based
 
 ---
 
-## Current Test Inventory
+## Current Test Inventory (Updated 2026-01-20)
 
 | Category | Files | Tests | Coverage |
 |----------|-------|-------|----------|
+| Agent Platform E2E | test_agent_platform.py | 27 | **HIGH** |
 | Trust Scoring | test_agent_trust.py, test_trust_dashboard.py | ~40 | **HIGH** |
 | Orchestrator | test_orchestrator.py | 32 | **HIGH** |
-| Curator Agent | test_curator_agent.py | 22 | **HIGH** |
-| Task Routing | test_lacmus.py | 5 | **MEDIUM** |
-| Handoff | test_lacmus.py | 3 | **LOW** |
-| Recovery | test_lacmus.py | 6 | **MEDIUM** |
-| E2E Workflow | test_lacmus.py | 2 (skipped) | **NONE** |
-| Kanren Integration | test_kanren_constraints.py | 45 | **HIGH** |
+| Agents Split | test_agents_split.py | 8 | **MEDIUM** |
+| Kanren Integration | test_kanren_constraints.py | 73 | **HIGH** |
 
-**Total:** ~170 tests across 9 files
+**Total:** 180 tests across 6 files (verified 2026-01-20, ATEST-008 +6)
+
+**Requirements:** pytest-asyncio (added 2026-01-20 for async test support)
 
 ---
 
@@ -58,14 +57,14 @@ Systematic testing strategy for the Sarvaja agent platform, covering trust-based
 
 | ID | Task | Status | Priority | Notes |
 |----|------|--------|----------|-------|
-| ATEST-001 | Design test pyramid for agent platform | 📋 TODO | **CRITICAL** | Unit/Integration/E2E distribution |
-| ATEST-002 | Implement E2E agent workflow test | 📋 TODO | **CRITICAL** | RESEARCH → CODING → CURATOR chain |
-| ATEST-003 | Create multi-agent concurrency tests | 📋 TODO | **HIGH** | Parallel task execution |
-| ATEST-004 | Build delegation chain validator | 📋 TODO | **HIGH** | Handoff A→B→C tracking |
-| ATEST-005 | Add trust evolution simulation | 📋 TODO | **HIGH** | Trust changes over time |
-| ATEST-006 | Integrate Kanren with agent tests | 📋 TODO | **MEDIUM** | KanrenRAGFilter + AgentContext |
-| ATEST-007 | Performance benchmark suite | 📋 TODO | **MEDIUM** | Task throughput, latency |
-| ATEST-008 | Agent recovery scenario tests | 📋 TODO | **MEDIUM** | Crash, timeout, reconnect |
+| ATEST-001 | Design test pyramid for agent platform | ✅ DONE | **CRITICAL** | 174 tests, pytest-asyncio configured |
+| ATEST-002 | Implement E2E agent workflow test | ✅ DONE | **CRITICAL** | TestAgentWorkflowE2E (4 tests) |
+| ATEST-003 | Create multi-agent concurrency tests | ✅ DONE | **HIGH** | TestAgentConcurrency (3 tests) |
+| ATEST-004 | Build delegation chain validator | ✅ DONE | **HIGH** | TestHandoffChainValidation (3 tests) |
+| ATEST-005 | Add trust evolution simulation | ✅ DONE | **HIGH** | TestTrustEvolution (4 tests) |
+| ATEST-006 | Integrate Kanren with agent tests | ✅ DONE | **MEDIUM** | TestKanrenAgentIntegration (5 tests) |
+| ATEST-007 | Performance benchmark suite | ✅ DONE | **MEDIUM** | TestAgentPlatformBenchmarks (2 tests) |
+| ATEST-008 | Agent recovery scenario tests | ✅ DONE | **MEDIUM** | TestAgentRecoveryScenarios (6 tests) |
 
 ---
 

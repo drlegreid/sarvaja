@@ -1,0 +1,22 @@
+{
+  "rule": {
+    "id": "RULE-004",
+    "name": "Exploratory Test Automation & Executable Specification",
+    "category": "testing",
+    "priority": "HIGH",
+    "status": "ACTIVE",
+    "directive": "Domain-specific heuristics (UI/API/Shell/Docker/Safety) with executable spec, evidence capture for audit, TDD cycle integration",
+    "rule_type": null,
+    "semantic_id": "TEST-AUTO-01-v1",
+    "created_date": null
+  },
+  "archived_at": "2026-01-22T23:32:43.585810",
+  "reason": "deleted",
+  "archived_from_db": "sim-ai-governance",
+  "dependencies": [],
+  "dependents": [
+    "RULE-020",
+    "RULE-023",
+    "RULE-025"
+  ]
+}

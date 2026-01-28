@@ -1,0 +1,18 @@
+{
+  "rule": {
+    "id": "RULE-011",
+    "name": "Multi-Agent Governance Protocol",
+    "category": "governance",
+    "priority": "CRITICAL",
+    "status": "ACTIVE",
+    "directive": "Bicameral model: Human oversight + AI execution, MCP manages DB state",
+    "rule_type": null,
+    "semantic_id": "GOV-BICAM-01-v1",
+    "created_date": null
+  },
+  "archived_at": "2026-01-22T23:34:34.195284",
+  "reason": "deleted",
+  "archived_from_db": "sim-ai-governance",
+  "dependencies": [],
+  "dependents": []
+}

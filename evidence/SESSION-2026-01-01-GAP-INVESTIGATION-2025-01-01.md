@@ -10,6 +10,10 @@
 
 ## Event Timeline
 
+- **03:27** - Debug session started: investigating gap tracking from 2025-01-01
+- **03:48** - Session concluded: no actionable events recorded (automated debug cycle)
+
+**Note:** Auto-generated debug session. Duration 21m with no user-facing events captured.
 
 ---
 

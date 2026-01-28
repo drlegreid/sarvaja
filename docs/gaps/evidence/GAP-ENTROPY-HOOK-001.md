@@ -72,6 +72,29 @@ python3 .claude/hooks/entropy_cli.py --reset
 # Hook will auto-trigger on next session
 ```
 
+## Task Boundary Limitation (2026-01-20 Investigation)
+
+**User Request:** Investigate why entropy hook doesn't warn at task boundaries.
+
+**Findings:**
+
+| Question | Answer |
+|----------|--------|
+| PostToolUse receives tool name? | **No** - Claude Code API doesn't expose `CLAUDE_TOOL_NAME` |
+| Filter PostToolUse by TodoWrite? | **No** - `matcher` only works for PreToolUse |
+| Current behavior | Counts ALL tool calls, warns at 50/100/150 thresholds |
+
+**Conclusion:** This is a **Claude Code API limitation**, not a code bug. There's no way to detect specifically when TodoWrite marks a task complete without reading state files after every tool call.
+
+**Workaround Options:**
+1. Check todo state periodically (expensive - runs every tool call)
+2. Request Claude Code feature: expose `CLAUDE_TOOL_NAME` for PostToolUse
+3. Accept current behavior (threshold-based warnings)
+
+**Status:** Original issue RESOLVED. Task boundary feature is UNFEASIBLE with current API.
+
+---
+
 ## Related
 
 - CONTEXT-SAVE-01-v1 (Context efficiency rule)

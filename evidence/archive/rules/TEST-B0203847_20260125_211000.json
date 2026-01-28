@@ -1,0 +1,19 @@
+{
+  "rule": {
+    "id": "TEST-B0203847",
+    "name": "Test Rule TEST-B0203847",
+    "category": "technical",
+    "priority": "HIGH",
+    "status": "DRAFT",
+    "directive": "This is a test rule created via E2E test",
+    "rule_type": null,
+    "semantic_id": null,
+    "applicability": null,
+    "created_date": null
+  },
+  "archived_at": "2026-01-25T21:10:00.391758",
+  "reason": "deleted",
+  "archived_from_db": "sim-ai-governance",
+  "dependencies": [],
+  "dependents": []
+}

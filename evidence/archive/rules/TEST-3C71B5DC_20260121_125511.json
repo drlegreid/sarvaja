@@ -1,0 +1,18 @@
+{
+  "rule": {
+    "id": "TEST-3C71B5DC",
+    "name": "Updated Name TEST-3C71B5DC",
+    "category": "governance",
+    "priority": "MEDIUM",
+    "status": "ACTIVE",
+    "directive": "Original directive",
+    "rule_type": null,
+    "semantic_id": null,
+    "created_date": null
+  },
+  "archived_at": "2026-01-21T12:55:11.052304",
+  "reason": "deleted",
+  "archived_from_db": "sim-ai-governance",
+  "dependencies": [],
+  "dependents": []
+}

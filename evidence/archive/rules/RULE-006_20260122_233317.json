@@ -1,0 +1,22 @@
+{
+  "rule": {
+    "id": "RULE-006",
+    "name": "Decision Logging",
+    "category": "governance",
+    "priority": "MEDIUM",
+    "status": "ACTIVE",
+    "directive": "Log decisions in evidence/SESSION-DECISIONS-*.md",
+    "rule_type": null,
+    "semantic_id": "REPORT-DEC-01-v1",
+    "created_date": null
+  },
+  "archived_at": "2026-01-22T23:33:17.169975",
+  "reason": "deleted",
+  "archived_from_db": "sim-ai-governance",
+  "dependencies": [],
+  "dependents": [
+    "RULE-010",
+    "RULE-013",
+    "RULE-018"
+  ]
+}

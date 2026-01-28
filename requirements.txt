@@ -35,6 +35,14 @@ kanren>=0.2.3
 # Token Optimization - Per GAP-DATA-001
 toons>=0.4.0  # TOON format: 30-60% token reduction vs JSON
 
+# File Watching - Per GAP-SYNC-AUTO-001
+watchdog>=6.0.0  # Cross-platform file monitoring
+
+# Robot Framework E2E Testing - Per RF-001
+robotframework>=7.0.0
+robotframework-browser>=19.0.0  # Playwright-based browser library
+robotframework-requests>=0.10.0  # REST API testing
+
 # Observability & Logging
 structlog>=25.0.0  # Per MCP-LOGGING-01-v1: Structured JSON logging
 # opik>=1.9.0  # Removed per DECISION-001

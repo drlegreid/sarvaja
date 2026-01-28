@@ -77,14 +77,14 @@ python3 -c "from governance.mcp_server_sessions import mcp; print(mcp.tools)"
 2. Create wrapper functions for session lifecycle
 3. Integrate via skills/hooks rather than direct MCP
 
-## Subtasks
+## Subtasks (Historical - Gap Resolved)
 
 | ID | Status | Description |
 |----|--------|-------------|
-| MCP-001-A | BLOCKED | session_start integration - tools not exposed |
-| MCP-001-B | BLOCKED | session_end integration - tools not exposed |
-| MCP-001-C | BLOCKED | DSM tracking - tools not exposed |
-| MCP-001-D | BLOCKED | Evidence search - tools not exposed |
+| MCP-001-A | RESOLVED | session_start integration - root cause fixed (stdout→stderr) |
+| MCP-001-B | RESOLVED | session_end integration - root cause fixed |
+| MCP-001-C | RESOLVED | DSM tracking - tools now exposed |
+| MCP-001-D | RESOLVED | Evidence search - tools now exposed |
 
 ## Workaround
 

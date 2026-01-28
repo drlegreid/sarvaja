@@ -45,6 +45,10 @@ class HookConfig:
     recovery_cooldown: int = 60  # Seconds between recovery attempts
     stale_process_hours: int = 2  # Python processes older than this are stale
 
+    # GAP-HEALTH-AUTORECOVERY: Auto-recovery consent setting
+    # Controlled via SARVAJA_AUTO_RECOVERY env var: enabled/disabled/prompt
+    auto_recovery_enabled: bool = True
+
     # Paths
     hooks_dir: Path = field(default_factory=lambda: Path(__file__).parent.parent)
     project_root: Path = field(default_factory=lambda: Path(__file__).parent.parent.parent.parent)

@@ -67,6 +67,18 @@ except Exception:
     WORKFLOW_CHECKER_AVAILABLE = False
     get_workflow_status = None
 
+# Import rule_applicability checker module (RD-RULE-APPLICABILITY)
+try:
+    _applicability_checker_path = Path(__file__).parent / "checkers" / "rule_applicability.py"
+    _applicability_spec = importlib.util.spec_from_file_location("rule_applicability", _applicability_checker_path)
+    _applicability_module = importlib.util.module_from_spec(_applicability_spec)
+    _applicability_spec.loader.exec_module(_applicability_module)
+    get_rule_applicability_summary = _applicability_module.get_rule_applicability_summary
+    APPLICABILITY_CHECKER_AVAILABLE = True
+except Exception:
+    APPLICABILITY_CHECKER_AVAILABLE = False
+    get_rule_applicability_summary = None
+
 # Add hooks parent to path for package-relative imports (GAP-REFACTOR-001)
 _hooks_parent = Path(__file__).parent.parent
 if str(_hooks_parent) not in sys.path:
@@ -143,6 +155,14 @@ HEALTH_MODE_THRESHOLDS = {
     "aggressive": 0.25  # Alert on any indicators
 }
 AMNESIA_THRESHOLD = HEALTH_MODE_THRESHOLDS.get(HEALTH_MODE, 0.50)
+
+# GAP-HEALTH-AUTORECOVERY: Consent-based auto-recovery toggle
+# Options: enabled (default), disabled, prompt
+# - enabled: Auto-recover containers when down (current behavior)
+# - disabled: Never auto-recover, show manual command only
+# - prompt: Show recovery command as suggestion, don't execute
+AUTO_RECOVERY_MODE = os.environ.get("SARVAJA_AUTO_RECOVERY", "enabled").lower()
+AUTO_RECOVERY_ENABLED = AUTO_RECOVERY_MODE == "enabled"
 
 
 def force_exit():
@@ -463,11 +483,21 @@ def main():
         else:
             new_unchanged_since = unchanged_since if unchanged_since and unchanged_since > 0 else time.time()
 
-        # Attempt auto-recovery if CORE services are down
+        # Attempt auto-recovery if CORE services are down (GAP-HEALTH-AUTORECOVERY)
         recovery_actions = []
+        recovery_hint = None
         required_ok = all(services.get(s, {}).get("ok", False) for s in CORE_SERVICES)
         if not required_ok:
-            recovery_actions = attempt_recovery(services, prev_state)
+            if AUTO_RECOVERY_ENABLED:
+                # Consent granted via settings - auto-recover
+                recovery_actions = attempt_recovery(services, prev_state)
+            else:
+                # Consent not granted - provide manual command instead
+                if CONTAINER_RECOVERY_AVAILABLE and ContainerRecovery:
+                    recovery = ContainerRecovery()
+                    recovery_hint = recovery.get_resolution_path(services)
+                else:
+                    recovery_hint = "podman compose --profile cpu up -d typedb chromadb"
 
         # Save current state (include recovery tracking and component hashes)
         current_state = {
@@ -512,6 +542,20 @@ def main():
             except Exception:
                 pass  # Non-critical, don't block healthcheck
 
+        # Check rule applicability (RD-RULE-APPLICABILITY Phase 3)
+        applicability = None
+        if APPLICABILITY_CHECKER_AVAILABLE:
+            try:
+                # Build context from current services and entropy state
+                applicability_context = {
+                    "services": services,
+                    "entropy_high": entropy.get("entropy") in ("HIGH", "CRITICAL"),
+                    "halt_requested": False,  # Could be set by user input
+                }
+                applicability = get_rule_applicability_summary(applicability_context)
+            except Exception:
+                pass  # Non-critical, don't block healthcheck
+
         # Format output based on state (retry ceiling affects verbosity only, not checking)
         # GAP-HEALTH-AGGRESSIVE-001: Always use detailed output in aggressive mode
         use_detailed = hash_changed or check_count == 1 or HEALTH_MODE == "aggressive"
@@ -520,16 +564,22 @@ def main():
             context = format_detailed(
                 services, master_hash, recovery_actions, amnesia, component_hashes,
                 entropy, zombies, intent, intent_amnesia, workflow,
-                core_services=CORE_SERVICES, stale_process_hours=STALE_PROCESS_HOURS
+                core_services=CORE_SERVICES, stale_process_hours=STALE_PROCESS_HOURS,
+                recovery_hint=recovery_hint, auto_recovery_enabled=AUTO_RECOVERY_ENABLED,
+                applicability=applicability
             )
         elif retry_ceiling_reached:
             # Brief output when unchanged for >30s (but we still checked current state!)
             # GAP-AMNESIA-OUTPUT-001: Pass amnesia to show warnings in summary mode
-            context = format_summary(services, master_hash, "(stable)", recovery_actions, zombies, amnesia, core_services=CORE_SERVICES)
+            context = format_summary(services, master_hash, "(stable)", recovery_actions, zombies, amnesia,
+                                    core_services=CORE_SERVICES, recovery_hint=recovery_hint,
+                                    auto_recovery_enabled=AUTO_RECOVERY_ENABLED)
         else:
             unchanged_duration = time.time() - new_unchanged_since
             # GAP-AMNESIA-OUTPUT-001: Pass amnesia to show warnings in summary mode
-            context = format_summary(services, master_hash, f"(unchanged {int(unchanged_duration)}s)", recovery_actions, zombies, amnesia, core_services=CORE_SERVICES)
+            context = format_summary(services, master_hash, f"(unchanged {int(unchanged_duration)}s)", recovery_actions, zombies, amnesia,
+                                    core_services=CORE_SERVICES, recovery_hint=recovery_hint,
+                                    auto_recovery_enabled=AUTO_RECOVERY_ENABLED)
 
         output_json(context)
 

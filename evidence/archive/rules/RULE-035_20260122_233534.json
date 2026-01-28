@@ -1,0 +1,18 @@
+{
+  "rule": {
+    "id": "RULE-035",
+    "name": "Shell Command Environment Selection",
+    "category": "devops",
+    "priority": "HIGH",
+    "status": "DEPRECATED",
+    "directive": "Agents MUST use the correct shell environment. **ALWAYS use Podman MCP tools for container operations.** Fallback to shell commands ONLY when Podman MCP is unavailable.",
+    "rule_type": "OPERATIONAL",
+    "semantic_id": "CONTAINER-SHELL-01-v1",
+    "created_date": null
+  },
+  "archived_at": "2026-01-22T23:35:34.585631",
+  "reason": "deleted",
+  "archived_from_db": "sim-ai-governance",
+  "dependencies": [],
+  "dependents": []
+}

@@ -1,0 +1,20 @@
+{
+  "rule": {
+    "id": "RULE-009",
+    "name": "Version Compatibility Protocol",
+    "category": "devops",
+    "priority": "CRITICAL",
+    "status": "ACTIVE",
+    "directive": "Pin versions for reproducibility, test migrations before deploying",
+    "rule_type": null,
+    "semantic_id": "CONTAINER-VERS-01-v1",
+    "created_date": null
+  },
+  "archived_at": "2026-01-22T23:33:17.426998",
+  "reason": "deleted",
+  "archived_from_db": "sim-ai-governance",
+  "dependencies": [],
+  "dependents": [
+    "RULE-016"
+  ]
+}

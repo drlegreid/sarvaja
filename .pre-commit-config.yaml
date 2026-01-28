@@ -70,6 +70,16 @@ repos:
         files: \.(py|yaml|yml|json)$
         exclude: \.env\.example$
 
+      # TEST-006: Smoke tests on push
+      - id: smoke-tests
+        name: Smoke Tests (TEST-006)
+        entry: bash -c '.venv/bin/pytest tests/unit/ -v -x --tb=line -q --timeout=30 2>&1 | tail -20'
+        language: system
+        files: ^(agent|governance|tests)/.*\.py$
+        pass_filenames: false
+        stages: [pre-push]
+        always_run: true
+
 # CI configuration
 ci:
   autofix_commit_msg: |

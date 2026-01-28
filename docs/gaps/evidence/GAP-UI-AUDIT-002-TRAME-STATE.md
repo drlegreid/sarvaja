@@ -1,8 +1,8 @@
 # GAP-UI-AUDIT-002: Trame State Singleton - Multiple Windows Mirror Each Other
 
-**Priority:** CRITICAL | **Category:** architecture | **Status:** OPEN (needs decision)
+**Priority:** CRITICAL | **Category:** architecture | **Status:** RESOLVED
 **Discovered:** 2026-01-18 | **Source:** User Feedback
-**Assignee:** UNASSIGNED | **Resolution:** PENDING DECISION
+**Resolution:** 2026-01-20 - Option C implemented (client-side state via sessionStorage)
 
 ---
 
@@ -86,6 +86,32 @@ If user wants quick partial fix for multi-window in single browser:
 2. Leave data state server-side (rules, tasks, sessions)
 
 This requires code changes but less than full Option C.
+
+---
+
+## Resolution (2026-01-20 DSP Session)
+
+**User Decision:** Option C - Client-side State Management
+
+**Implementation:**
+
+1. **New file:** `agent/governance_ui/components/window_state.py`
+   - `inject_window_state_isolator()` function
+   - Generates unique window ID per browser tab
+   - Saves navigation state keys to sessionStorage
+   - Restores on page load, prevents server broadcasts from overwriting
+
+2. **Modified:** `agent/governance_dashboard.py`
+   - Added `inject_window_state_isolator()` call in layout
+
+**State Keys Made Window-Local:**
+- `active_view` (navigation)
+- `show_*_detail` (detail panels)
+- `selected_*` (selections)
+
+**State Keys Remain Server-Shared:**
+- `rules`, `tasks`, `sessions`, `decisions` (data)
+- All form state (intentional for demo)
 
 ---
 

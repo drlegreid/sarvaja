@@ -1,0 +1,18 @@
+{
+  "rule": {
+    "id": "TEST-64F1B1F2",
+    "name": "Updated Name TEST-64F1B1F2",
+    "category": "governance",
+    "priority": "MEDIUM",
+    "status": "ACTIVE",
+    "directive": "Original directive",
+    "rule_type": null,
+    "semantic_id": null,
+    "created_date": null
+  },
+  "archived_at": "2026-01-23T22:24:40.964483",
+  "reason": "deleted",
+  "archived_from_db": "sim-ai-governance",
+  "dependencies": [],
+  "dependents": []
+}

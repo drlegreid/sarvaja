@@ -261,8 +261,10 @@ except Exception as e:
         assert "governance.mcp_server_tasks" in content
 
     def test_cleanup_zombie_pids_function_exists(self):
-        """cleanup_zombie_pids function is defined in healthcheck."""
-        content = open(HEALTHCHECK_SCRIPT).read()
+        """cleanup_zombie_pids function is defined in checkers/zombies.py."""
+        # Moved from healthcheck.py to checkers/zombies.py per modularization
+        zombies_script = HOOKS_DIR / "checkers" / "zombies.py"
+        content = open(zombies_script).read()
         assert "def cleanup_zombie_pids" in content
         # Linux uses kill command, not PowerShell
         assert "kill" in content

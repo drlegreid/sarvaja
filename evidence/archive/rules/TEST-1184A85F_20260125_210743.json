@@ -1,0 +1,19 @@
+{
+  "rule": {
+    "id": "TEST-1184A85F",
+    "name": "Updated Name",
+    "category": "technical",
+    "priority": "HIGH",
+    "status": "ACTIVE",
+    "directive": "Test rule: Original Name",
+    "rule_type": null,
+    "semantic_id": null,
+    "applicability": null,
+    "created_date": null
+  },
+  "archived_at": "2026-01-25T21:07:43.271873",
+  "reason": "deleted",
+  "archived_from_db": "sim-ai-governance",
+  "dependencies": [],
+  "dependents": []
+}

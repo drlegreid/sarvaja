@@ -1,0 +1,18 @@
+{
+  "rule": {
+    "id": "RULE-051",
+    "name": "Autonomous MCP Server Restart",
+    "category": "operational",
+    "priority": "HIGH",
+    "status": "DEPRECATED",
+    "directive": "Agents MAY autonomously restart MCP servers when ALL of the following conditions are met: 1. Changes are **low-risk** (code modifications only, no schema changes) 2. Changes are **proven** with multilayered tests (unit + integration) 3. No **destructive** operations pending (per SAFETY-DESTR-01-v1)",
+    "rule_type": "OPERATIONAL",
+    "semantic_id": "MCP-RESTART-AUTO-01-v1",
+    "created_date": null
+  },
+  "archived_at": "2026-01-22T23:36:00.553693",
+  "reason": "deleted",
+  "archived_from_db": "sim-ai-governance",
+  "dependencies": [],
+  "dependents": []
+}

@@ -2,6 +2,7 @@
 State management for Claude Code hooks.
 
 Per EPIC-006: Provides hash computation and state persistence.
+Per FH-DUP-001: Hash functions consolidated to governance/frankel_hash.py
 """
 
 import hashlib
@@ -10,13 +11,24 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
+# Import from consolidated module (FH-DUP-001)
+try:
+    from governance.frankel_hash import compute_state_hash as _compute_state_hash
+    _USE_GOVERNANCE = True
+except ImportError:
+    _USE_GOVERNANCE = False
+
 
 def compute_frankel_hash(data: Dict[str, Any]) -> str:
     """
     Compute Frankel-style hash (first 8 chars of SHA256, uppercase).
 
     Used for master state hashing to detect changes.
+    Per FH-DUP-001: Delegates to governance/frankel_hash.py when available.
     """
+    if _USE_GOVERNANCE:
+        return _compute_state_hash(data)
+    # Fallback for when governance module not in path
     serialized = json.dumps(data, sort_keys=True)
     return hashlib.sha256(serialized.encode()).hexdigest()[:8].upper()
 

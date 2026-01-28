@@ -1,0 +1,19 @@
+{
+  "rule": {
+    "id": "TEST-022CC784",
+    "name": "Test Rule TEST-022CC784",
+    "category": "technical",
+    "priority": "HIGH",
+    "status": "DRAFT",
+    "directive": "Test rule: Test Rule TEST-022CC784",
+    "rule_type": null,
+    "semantic_id": null,
+    "applicability": null,
+    "created_date": null
+  },
+  "archived_at": "2026-01-25T21:05:26.707574",
+  "reason": "deleted",
+  "archived_from_db": "sim-ai-governance",
+  "dependencies": [],
+  "dependents": []
+}

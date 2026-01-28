@@ -1,0 +1,19 @@
+{
+  "rule": {
+    "id": "TEST-AFC4260A",
+    "name": "To Delete TEST-AFC4260A",
+    "category": "operational",
+    "priority": "LOW",
+    "status": "DRAFT",
+    "directive": "This rule will be deleted",
+    "rule_type": null,
+    "semantic_id": null,
+    "applicability": null,
+    "created_date": null
+  },
+  "archived_at": "2026-01-25T21:09:57.918431",
+  "reason": "deleted",
+  "archived_from_db": "sim-ai-governance",
+  "dependencies": [],
+  "dependents": []
+}

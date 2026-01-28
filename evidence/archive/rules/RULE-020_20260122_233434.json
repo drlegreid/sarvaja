@@ -1,0 +1,18 @@
+{
+  "rule": {
+    "id": "RULE-020",
+    "name": "LLM-Driven E2E Test Generation",
+    "category": "testing",
+    "priority": "HIGH",
+    "status": "ACTIVE",
+    "directive": "E2E via LLM exploration -> deterministic Robot tests; LLM only for explore/analyze, not runtime",
+    "rule_type": null,
+    "semantic_id": "TEST-E2E-01-v1",
+    "created_date": null
+  },
+  "archived_at": "2026-01-22T23:34:34.943511",
+  "reason": "deleted",
+  "archived_from_db": "sim-ai-governance",
+  "dependencies": [],
+  "dependents": []
+}

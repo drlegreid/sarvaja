@@ -13,6 +13,7 @@ Rules governing session evidence, decision logging, and reporting.
 |------|------|----------|--------|------|------|
 | **SESSION-EVID-01-v1** | Session Evidence Logging | CRITICAL | ACTIVE | FOUNDATIONAL | [View](../leaf/SESSION-EVID-01-v1.md) |
 | **REPORT-DEC-01-v1** | Decision Logging & Rationale | HIGH | ACTIVE | FOUNDATIONAL | [View](../leaf/REPORT-DEC-01-v1.md) |
+| **REPORT-OBJ-01-v1** | Objective Reporting | HIGH | ACTIVE | GOVERNANCE | [View](../leaf/REPORT-OBJ-01-v1.md) |
 | **GOV-TRUST-01-v1** | Governance Audit & Review | MEDIUM | ACTIVE | FOUNDATIONAL | [View](../leaf/GOV-TRUST-01-v1.md) |
 | **GOV-TRUST-02-v1** | Agent Trust Scoring | HIGH | ACTIVE | OPERATIONAL | [View](../leaf/GOV-TRUST-02-v1.md) |
 | **GOV-RULE-02-v1** | Rule Compliance Verification | HIGH | ACTIVE | OPERATIONAL | [View](../leaf/GOV-RULE-02-v1.md) |
@@ -24,6 +25,7 @@ Rules governing session evidence, decision logging, and reporting.
 
 - **SESSION-EVID-01-v1**: All sessions MUST produce evidence logs
 - **REPORT-DEC-01-v1**: Strategic decisions MUST be logged with rationale
+- **REPORT-OBJ-01-v1**: Reports must be factual without flattery; accuracy over validation
 - **GOV-TRUST-01-v1**: Governance decisions MUST be auditable
 - **GOV-TRUST-02-v1**: Use functional feature comparison, not subjective ratings
 - **GOV-RULE-02-v1**: Provide full context when presenting decisions

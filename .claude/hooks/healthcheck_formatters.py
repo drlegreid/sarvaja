@@ -3,9 +3,63 @@ Healthcheck output formatters for Claude Code hooks.
 
 Extracted from healthcheck.py to reduce file size per RULE-032.
 Platform: Linux (xubuntu) with Podman - migrated 2026-01-09
+
+Per SESSION-DSP-NOTIFY-01-v1: DSP notifications must be prominent.
 """
 
+from datetime import datetime
+from pathlib import Path
 from typing import Any, Dict, List, Optional
+
+
+# DSP Detection per SESSION-DSP-NOTIFY-01-v1
+DSP_EVIDENCE_THRESHOLD = 20  # Evidence files threshold
+DSP_AGE_THRESHOLD_DAYS = 7   # Days since last DSP
+
+
+def check_dsp_conditions(project_root: Path = None) -> Dict[str, Any]:
+    """
+    Check for DSP suggestion conditions per SESSION-DSP-NOTIFY-01-v1.
+
+    Returns:
+        Dict with: suggested (bool), alerts (list), override_needed (bool)
+    """
+    if project_root is None:
+        project_root = Path(__file__).parent.parent.parent
+
+    alerts = []
+
+    # Check evidence file count
+    evidence_dir = project_root / "evidence"
+    try:
+        evidence_count = len(list(evidence_dir.glob("SESSION-*.md"))) if evidence_dir.exists() else 0
+        if evidence_count > DSP_EVIDENCE_THRESHOLD:
+            alerts.append(f"Evidence accumulation: {evidence_count} session files")
+    except Exception:
+        evidence_count = 0
+
+    # Check last DSP cycle age
+    try:
+        dsp_files = sorted(evidence_dir.glob("*DSP*.md"), reverse=True)
+        if dsp_files:
+            # Extract date from filename (SESSION-YYYY-MM-DD-DSP*.md)
+            latest_dsp = dsp_files[0].name
+            date_parts = latest_dsp.split("-")[1:4]  # YYYY, MM, DD
+            if len(date_parts) == 3:
+                dsp_date = datetime(int(date_parts[0]), int(date_parts[1]), int(date_parts[2]))
+                days_since = (datetime.now() - dsp_date).days
+                if days_since > DSP_AGE_THRESHOLD_DAYS:
+                    alerts.append(f"No DSP cycle in {days_since} days (threshold: {DSP_AGE_THRESHOLD_DAYS})")
+        else:
+            alerts.append("No DSP cycle found in evidence")
+    except Exception:
+        pass
+
+    return {
+        "suggested": len(alerts) >= 2,  # Trigger on 2+ conditions
+        "alerts": alerts,
+        "override_needed": len(alerts) >= 2
+    }
 
 
 def format_detailed(
@@ -20,13 +74,33 @@ def format_detailed(
     intent_amnesia: Dict = None,
     workflow: Dict = None,
     core_services: List[str] = None,
-    stale_process_hours: int = 2
+    stale_process_hours: int = 2,
+    dsp_info: Dict = None,
+    recovery_hint: str = None,
+    auto_recovery_enabled: bool = True,
+    applicability: Dict = None
 ) -> str:
     """Format detailed output with component chain, hashes, AMNESIA detection, entropy, etc."""
     core_services = core_services or ["podman", "typedb", "chromadb"]
     lines = [f"=== MCP DEPENDENCY CHAIN [Hash: {master_hash}] ===", ""]
 
     required_ok = all(services.get(s, {}).get("ok", False) for s in core_services)
+
+    # DSP Notification (FIRST - most prominent per SESSION-DSP-NOTIFY-01-v1)
+    if dsp_info is None:
+        dsp_info = check_dsp_conditions()
+    if dsp_info.get("suggested"):
+        lines.append("╔═══════════════════════════════════════════════════════════╗")
+        lines.append("║  🔴 DSP REQUIRED - Document entropy high                  ║")
+        lines.append("╠═══════════════════════════════════════════════════════════╣")
+        for alert in dsp_info.get("alerts", []):
+            lines.append(f"║  • {alert:<55} ║")
+        lines.append("╠═══════════════════════════════════════════════════════════╣")
+        lines.append("║  Options:                                                 ║")
+        lines.append("║    1. Run /deep-sleep to initiate DSP cycle               ║")
+        lines.append("║    2. Type OVERRIDE to continue without DSP               ║")
+        lines.append("╚═══════════════════════════════════════════════════════════╝")
+        lines.append("")
 
     # Check for services in starting state
     starting_services = [s for s in core_services if services.get(s, {}).get("is_starting", False)]
@@ -136,7 +210,17 @@ def format_detailed(
     if workflow:
         lines.extend(workflow.get("lines", []))
 
-    # Recovery actions or manual hint
+    # RD-RULE-APPLICABILITY: Rule Enforcement Status
+    if applicability:
+        lines.extend(applicability.get("lines", []))
+        # If blocked, add prominent warning
+        if applicability.get("blocked"):
+            lines.append("")
+            lines.append("╔═══════════════════════════════════════════════════════════╗")
+            lines.append("║  ⛔ FORBIDDEN ACTION BLOCKED                              ║")
+            lines.append("╚═══════════════════════════════════════════════════════════╝")
+
+    # Recovery actions or manual hint (GAP-HEALTH-AUTORECOVERY)
     if recovery_actions:
         lines.append("")
         lines.append("Auto-Recovery:")
@@ -145,7 +229,13 @@ def format_detailed(
         lines.append("  (Run /health again in 30-60s to verify)")
     elif not required_ok:
         lines.append("")
-        lines.append("Manual Recovery: podman compose --profile cpu up -d")
+        if not auto_recovery_enabled:
+            lines.append("⚠️ Auto-Recovery DISABLED (SARVAJA_AUTO_RECOVERY=disabled)")
+            lines.append("  Enable: export SARVAJA_AUTO_RECOVERY=enabled")
+        if recovery_hint:
+            lines.append(f"Manual Recovery: {recovery_hint}")
+        else:
+            lines.append("Manual Recovery: podman compose --profile cpu up -d")
 
     return "\n".join(lines)
 
@@ -157,11 +247,15 @@ def format_summary(
     recovery_actions: List[str] = None,
     zombies: Dict = None,
     amnesia: Dict = None,
-    core_services: List[str] = None
+    core_services: List[str] = None,
+    dsp_info: Dict = None,
+    recovery_hint: str = None,
+    auto_recovery_enabled: bool = True
 ) -> str:
     """Format summary output (for unchanged state or retry ceiling).
 
     Per GAP-AMNESIA-OUTPUT-001: Now includes AMNESIA warnings in summary mode.
+    Per SESSION-DSP-NOTIFY-01-v1: Now includes DSP warnings in summary mode.
     """
     core_services = core_services or ["podman", "typedb", "chromadb"]
     required_ok = all(services.get(s, {}).get("ok", False) for s in core_services)
@@ -185,16 +279,30 @@ def format_summary(
         confidence = int(amnesia.get("confidence", 0) * 100)
         amnesia_suffix = f" | AMNESIA RISK {confidence}%"
 
+    # SESSION-DSP-NOTIFY-01-v1: Add DSP warning to summary output
+    dsp_suffix = ""
+    if dsp_info is None:
+        dsp_info = check_dsp_conditions()
+    if dsp_info.get("suggested"):
+        dsp_suffix = " | 🔴 DSP REQUIRED - run /deep-sleep or OVERRIDE"
+
     if required_ok:
-        return f"[HEALTH OK] Hash: {master_hash} {reason}. MCP chain ready.{zombie_suffix}{amnesia_suffix}"
+        return f"[HEALTH OK] Hash: {master_hash} {reason}. MCP chain ready.{zombie_suffix}{amnesia_suffix}{dsp_suffix}"
     else:
         failed = [s for s in core_services if not services.get(s, {}).get("ok", False)]
         if recovery_actions:
             recovery_str = " | " + "; ".join(recovery_actions)
-            return f"[HEALTH RECOVERING] Hash: {master_hash} {reason}. Down: {', '.join(failed)}{recovery_str}{zombie_suffix}{amnesia_suffix}"
+            return f"[HEALTH RECOVERING] Hash: {master_hash} {reason}. Down: {', '.join(failed)}{recovery_str}{zombie_suffix}{amnesia_suffix}{dsp_suffix}"
         else:
-            hint = " | Recovery: podman compose --profile cpu up -d" if failed else ""
-            return f"[HEALTH WARN] Hash: {master_hash} {reason}. Down: {', '.join(failed)}{hint}{zombie_suffix}{amnesia_suffix}"
+            # GAP-HEALTH-AUTORECOVERY: Use specific hint or default
+            if recovery_hint:
+                hint = f" | Recovery: {recovery_hint}"
+            elif failed:
+                hint = " | Recovery: podman compose --profile cpu up -d"
+            else:
+                hint = ""
+            auto_status = "" if auto_recovery_enabled else " [AUTO-RECOVERY DISABLED]"
+            return f"[HEALTH WARN] Hash: {master_hash} {reason}. Down: {', '.join(failed)}{auto_status}{hint}{zombie_suffix}{amnesia_suffix}{dsp_suffix}"
 
 
 def format_cached(prev_state: Dict, core_services: List[str] = None) -> str:

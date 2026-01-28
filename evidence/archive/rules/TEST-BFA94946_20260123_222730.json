@@ -1,0 +1,18 @@
+{
+  "rule": {
+    "id": "TEST-BFA94946",
+    "name": "Test Rule TEST-BFA94946",
+    "category": "technical",
+    "priority": "HIGH",
+    "status": "DRAFT",
+    "directive": "This is a test rule created via E2E test",
+    "rule_type": null,
+    "semantic_id": null,
+    "created_date": null
+  },
+  "archived_at": "2026-01-23T22:27:30.469714",
+  "reason": "deleted",
+  "archived_from_db": "sim-ai-governance",
+  "dependencies": [],
+  "dependents": []
+}

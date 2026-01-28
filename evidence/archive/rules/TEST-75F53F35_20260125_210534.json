@@ -1,0 +1,19 @@
+{
+  "rule": {
+    "id": "TEST-75F53F35",
+    "name": "Test Rule TEST-75F53F35",
+    "category": "technical",
+    "priority": "HIGH",
+    "status": "DRAFT",
+    "directive": "Test rule: Test Rule TEST-75F53F35",
+    "rule_type": null,
+    "semantic_id": null,
+    "applicability": null,
+    "created_date": null
+  },
+  "archived_at": "2026-01-25T21:05:34.699121",
+  "reason": "deleted",
+  "archived_from_db": "sim-ai-governance",
+  "dependencies": [],
+  "dependents": []
+}

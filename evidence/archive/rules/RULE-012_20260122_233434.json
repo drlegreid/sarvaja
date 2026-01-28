@@ -1,0 +1,22 @@
+{
+  "rule": {
+    "id": "RULE-012",
+    "name": "Deep Sleep Protocol",
+    "category": "workflow",
+    "priority": "HIGH",
+    "status": "ACTIVE",
+    "directive": "DSP phases: AUDIT \u2192 HYPOTHESIZE \u2192 MEASURE \u2192 OPTIMIZE \u2192 VALIDATE for backlog hygiene",
+    "rule_type": null,
+    "semantic_id": "WORKFLOW-DSP-01-v1",
+    "created_date": null
+  },
+  "archived_at": "2026-01-22T23:34:34.286531",
+  "reason": "deleted",
+  "archived_from_db": "sim-ai-governance",
+  "dependencies": [],
+  "dependents": [
+    "RULE-013",
+    "RULE-014",
+    "RULE-024"
+  ]
+}

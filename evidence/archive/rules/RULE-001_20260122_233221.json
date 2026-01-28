@@ -1,0 +1,27 @@
+{
+  "rule": {
+    "id": "RULE-001",
+    "name": "Session Evidence Logging",
+    "category": "governance",
+    "priority": "CRITICAL",
+    "status": "ACTIVE",
+    "directive": "Every session MUST create evidence log in ./docs/SESSION-{date}-{topic}.md",
+    "rule_type": null,
+    "semantic_id": "SESSION-EVID-01-v1",
+    "created_date": null
+  },
+  "archived_at": "2026-01-22T23:32:21.118184",
+  "reason": "deleted",
+  "archived_from_db": "sim-ai-governance",
+  "dependencies": [],
+  "dependents": [
+    "RULE-006",
+    "RULE-010",
+    "RULE-011",
+    "RULE-012",
+    "RULE-017",
+    "RULE-018",
+    "RULE-022",
+    "RULE-024"
+  ]
+}

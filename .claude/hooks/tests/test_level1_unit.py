@@ -201,8 +201,10 @@ class TestHookConfig:
         """Default configuration has expected values."""
         from hooks.core.base import DEFAULT_CONFIG
 
-        assert DEFAULT_CONFIG.global_timeout == 3.0
-        assert DEFAULT_CONFIG.subprocess_timeout == 1.0
+        # Updated per base.py: global_timeout=15.0, subprocess_timeout=2.0
+        # (podman compose needs more time than original 3s)
+        assert DEFAULT_CONFIG.global_timeout == 15.0
+        assert DEFAULT_CONFIG.subprocess_timeout == 2.0
         assert "typedb" in DEFAULT_CONFIG.core_services
         assert "chromadb" in DEFAULT_CONFIG.core_services
 

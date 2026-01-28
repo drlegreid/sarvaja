@@ -1,0 +1,18 @@
+{
+  "rule": {
+    "id": "RULE-031",
+    "name": "Autonomous Task Continuation",
+    "category": "operational",
+    "priority": "CRITICAL",
+    "status": "DEPRECATED",
+    "directive": "When executing multi-step tasks, agents MUST continue until ALL tasks are complete or explicit halt received.",
+    "rule_type": "OPERATIONAL",
+    "semantic_id": "WORKFLOW-AUTO-02-v1",
+    "created_date": null
+  },
+  "archived_at": "2026-01-22T23:35:24.031906",
+  "reason": "deleted",
+  "archived_from_db": "sim-ai-governance",
+  "dependencies": [],
+  "dependents": []
+}

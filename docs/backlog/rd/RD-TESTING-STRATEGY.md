@@ -1,6 +1,6 @@
 # R&D: Testing Strategy (TEST-001 to TEST-006)
 
-**Status:** IN_PROGRESS
+**Status:** ✅ DONE
 **Priority:** CRITICAL
 **Vision:** Spec-First TDD - R&D produces specs, specs drive tests, tests drive product
 
@@ -10,22 +10,24 @@
 
 **Spec-First TDD Flow (Per User Directive 2024-12-27):**
 
-```
-┌─────────────────────────────────────────────────────────────────────┐
-│                    SPEC-FIRST TDD METHODOLOGY                        │
-├─────────────────────────────────────────────────────────────────────┤
-│                                                                      │
-│  ┌──────────┐     ┌──────────┐     ┌──────────┐     ┌──────────┐   │
-│  │  R&D     │ ──► │  SPEC    │ ──► │  TESTS   │ ──► │ PRODUCT  │   │
-│  │  (Spike) │     │  (TDD)   │     │  (RED)   │     │ (GREEN)  │   │
-│  └──────────┘     └──────────┘     └──────────┘     └──────────┘   │
-│       │                │                │                │          │
-│       │                ▼                ▼                ▼          │
-│       │         ┌───────────────────────────────────────────┐      │
-│       └────────►│      GAPs discovered → new R&D tasks      │      │
-│                 └───────────────────────────────────────────┘      │
-│                                                                      │
-└─────────────────────────────────────────────────────────────────────┘
+```mermaid
+flowchart LR
+    subgraph TDD["SPEC-FIRST TDD METHODOLOGY"]
+        RD["R&D<br/>(Spike)"] --> SPEC["SPEC<br/>(TDD)"]
+        SPEC --> TESTS["TESTS<br/>(RED)"]
+        TESTS --> PRODUCT["PRODUCT<br/>(GREEN)"]
+
+        SPEC --> GAPS["GAPs discovered → new R&D tasks"]
+        TESTS --> GAPS
+        PRODUCT --> GAPS
+        GAPS --> RD
+    end
+
+    style RD fill:#e1f5fe
+    style SPEC fill:#fff3e0
+    style TESTS fill:#ffebee
+    style PRODUCT fill:#e8f5e9
+    style GAPS fill:#f3e5f5
 ```
 
 **R&D Tasks = Spikes (Agile)**: Exploratory work that produces standard approaches/specs
@@ -45,11 +47,11 @@ Tests are living contracts that evolve with business requirements. During active
 | ID | Task | Status | Priority | Notes |
 |----|------|--------|----------|-------|
 | TEST-001 | Refine testing rules for reusability | ✅ DONE | **HIGH** | tests/shared/factories.py, pages.py |
-| TEST-002 | Evidence collection at trace level | 📋 TODO | **HIGH** | Full traces during certification |
-| TEST-003 | Debug workflow trace minimization | 📋 TODO | HIGH | Minimize to error for LLM context |
+| TEST-002 | Evidence collection at trace level | ✅ DONE | **HIGH** | tests/evidence/trace_capture.py, pytest --trace-capture |
+| TEST-003 | Debug workflow trace minimization | ✅ DONE | **HIGH** | tests/evidence/trace_minimizer.py, pytest --report-minimized (71% token reduction) |
 | TEST-004 | Test restructuring for rules conformity | ✅ DONE | **HIGH** | tests/TEST_REGISTRY.md rule traceability |
-| TEST-005 | GitHub milestone certification reporting | 📋 TODO | **HIGH** | Full test trace at each milestone |
-| TEST-006 | DevOps test strategy | 📋 TODO | HIGH | CI/CD integration patterns |
+| TEST-005 | GitHub milestone certification reporting | ✅ DONE | **HIGH** | tests/evidence/certification_report.py |
+| TEST-006 | DevOps test strategy | ✅ DONE | HIGH | Makefile, .pre-commit-config.yaml |
 
 ---
 

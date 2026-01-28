@@ -1,0 +1,21 @@
+{
+  "rule": {
+    "id": "RULE-005",
+    "name": "Memory and MCP Stability",
+    "category": "stability",
+    "priority": "HIGH",
+    "status": "ACTIVE",
+    "directive": "Memory thresholds monitored, MCP tiers respected",
+    "rule_type": null,
+    "semantic_id": "SAFETY-MEM-01-v1",
+    "created_date": null
+  },
+  "archived_at": "2026-01-22T23:32:43.664417",
+  "reason": "deleted",
+  "archived_from_db": "sim-ai-governance",
+  "dependencies": [],
+  "dependents": [
+    "RULE-007",
+    "RULE-021"
+  ]
+}
