@@ -10,8 +10,8 @@ from trame.widgets import vuetify3 as v3, html
 
 
 def build_risk_summary_card() -> None:
-    """Build risk assessment card."""
-    with v3.VCol(cols=4):
+    """Build risk assessment card. Per UI-RESP-01-v1: Responsive."""
+    with v3.VCol(cols=12, md=4):
         with v3.VCard(
             variant="outlined",
             __properties=["data-testid"],
@@ -61,8 +61,8 @@ def build_risk_summary_card() -> None:
 
 
 def build_recommendation_card() -> None:
-    """Build recommendation and critical rules card."""
-    with v3.VCol(cols=8):
+    """Build recommendation and critical rules. Per UI-RESP-01-v1: Responsive."""
+    with v3.VCol(cols=12, md=8):
         with v3.VCard(
             variant="outlined",
             __properties=["data-testid"],

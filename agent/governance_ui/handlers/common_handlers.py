@@ -10,9 +10,6 @@ import httpx
 from typing import Any
 from ..data_access import (
     get_proposals,
-    calculate_rule_impact,
-    build_dependency_graph,
-    generate_mermaid_graph,
     build_trust_leaderboard,
 )
 from ..trace_bar import clear_traces

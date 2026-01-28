@@ -12,9 +12,8 @@ Architecture:
 Per Phase 7: E2E Testing with Exploratory Heuristics
 """
 
-import json
 from datetime import datetime
-from dataclasses import dataclass, field, asdict
+from dataclasses import dataclass, field
 from typing import Optional
 from enum import Enum
 
@@ -97,11 +96,11 @@ class ExplorationSession:
     def to_robot_test(self) -> str:
         """Generate Robot Framework test case from session."""
         lines = [
-            f"*** Test Cases ***",
-            f"",
+            "*** Test Cases ***",
+            "",
             f"{self.name}",
-            f"    [Documentation]    Auto-generated from exploration session",
-            f"    [Tags]    generated    exploratory",
+            "    [Documentation]    Auto-generated from exploration session",
+            "    [Tags]    generated    exploratory",
         ]
 
         for step in self.steps:

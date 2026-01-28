@@ -10,9 +10,9 @@ from trame.widgets import vuetify3 as v3, html
 
 
 def build_metrics_summary() -> None:
-    """Build metrics summary cards."""
+    """Build metrics summary cards. Per UI-RESP-01-v1: Responsive breakpoints."""
     with v3.VRow(classes="mb-4"):
-        with v3.VCol(cols=3):
+        with v3.VCol(cols=12, sm=6, md=3):
             with v3.VCard(variant="outlined", classes="text-center pa-2"):
                 v3.VIcon("mdi-gavel", size="large", color="primary")
                 html.Div(
@@ -20,7 +20,7 @@ def build_metrics_summary() -> None:
                     classes="text-h5 mt-1"
                 )
                 html.Div("Rules", classes="text-caption")
-        with v3.VCol(cols=3):
+        with v3.VCol(cols=12, sm=6, md=3):
             with v3.VCard(variant="outlined", classes="text-center pa-2"):
                 v3.VIcon("mdi-robot", size="large", color="info")
                 html.Div(
@@ -28,7 +28,7 @@ def build_metrics_summary() -> None:
                     classes="text-h5 mt-1"
                 )
                 html.Div("Agents", classes="text-caption")
-        with v3.VCol(cols=3):
+        with v3.VCol(cols=12, sm=6, md=3):
             with v3.VCard(variant="outlined", classes="text-center pa-2"):
                 v3.VIcon("mdi-checkbox-marked", size="large", color="success")
                 html.Div(
@@ -36,7 +36,7 @@ def build_metrics_summary() -> None:
                     classes="text-h5 mt-1"
                 )
                 html.Div("Tasks Done", classes="text-caption")
-        with v3.VCol(cols=3):
+        with v3.VCol(cols=12, sm=6, md=3):
             with v3.VCard(variant="outlined", classes="text-center pa-2"):
                 v3.VIcon("mdi-percent", size="large", color="warning")
                 html.Div(

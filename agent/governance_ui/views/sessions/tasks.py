@@ -4,6 +4,7 @@ Session Tasks Component.
 Per RULE-012: Single Responsibility - completed tasks display.
 Per RULE-032: File size limit (<300 lines).
 Per GAP-DATA-INTEGRITY-001 Phase 3: UI navigation for relationships.
+Per UI-NAV-01-v1: Entity Navigation - pass source for back button.
 """
 
 from trame.widgets import vuetify3 as v3, html
@@ -48,7 +49,14 @@ def build_completed_tasks_card() -> None:
                     v_for="(task, idx) in session_tasks",
                     key=("idx",),
                     prepend_icon="mdi-check-circle",
-                    click="trigger('navigate_to_task', [task.task_id])",
+                    click=(
+                        "trigger('navigate_to_task', ["
+                        "task.task_id, "
+                        "'sessions', "
+                        "selected_session.session_id || selected_session.id, "
+                        "'Session: ' + (selected_session.session_id || selected_session.id)"
+                        "])"
+                    ),
                     __properties=["data-testid"],
                     **{"data-testid": "session-task-item"}
                 ):

@@ -4,6 +4,7 @@ Rules View for Governance Dashboard.
 Per RULE-012: Single Responsibility - only rules list/detail/form UI.
 Per RULE-019: UI/UX Standards - consistent view patterns.
 Per GAP-MCP-008: Semantic rule ID display support.
+Per UI-NAV-01-v1: Entity Navigation - task click with back source.
 
 This module builds the Rules view components using Trame/Vuetify 3.
 """
@@ -281,6 +282,32 @@ def build_rule_detail_view() -> None:
                         **{"data-testid": "rule-directive-text"}
                     )
 
+            # Document link (GAP-UI-AUDIT-001: rule-document linkage)
+            with v3.VCard(
+                v_if="selected_rule.document_path",
+                variant="outlined",
+                classes="mt-4",
+                __properties=["data-testid"],
+                **{"data-testid": "rule-document-link"}
+            ):
+                with v3.VCardTitle(classes="d-flex align-center", density="compact"):
+                    v3.VIcon("mdi-file-document-outline", size="small", classes="mr-2")
+                    html.Span("Source Document")
+                with v3.VCardText():
+                    v3.VBtn(
+                        v_text="selected_rule.document_path",
+                        variant="tonal",
+                        color="secondary",
+                        prepend_icon="mdi-open-in-new",
+                        click="trigger('load_file_content', [selected_rule.document_path])",
+                        __properties=["data-testid"],
+                        **{"data-testid": "rule-document-btn"}
+                    )
+                    html.Div(
+                        "Click to view the full rule specification document",
+                        classes="text-caption text-grey mt-2"
+                    )
+
             # Rule dependencies (GAP-UI-037)
             with v3.VCard(
                 v_if="selected_rule.dependencies?.length > 0",
@@ -333,7 +360,7 @@ def build_rule_detail_view() -> None:
                         **{"data-testid": "rule-no-tasks"}
                     )
 
-                    # Task list
+                    # Task list (UI-NAV-01-v1: click navigates with source)
                     with v3.VList(
                         v_if="rule_implementing_tasks.length > 0",
                         density="compact"
@@ -341,6 +368,14 @@ def build_rule_detail_view() -> None:
                         with v3.VListItem(
                             v_for="task in rule_implementing_tasks",
                             **{":key": "task.task_id"},
+                            click=(
+                                "trigger('navigate_to_task', ["
+                                "task.task_id, "
+                                "'rules', "
+                                "selected_rule.rule_id || selected_rule.id, "
+                                "'Rule: ' + (selected_rule.rule_id || selected_rule.id)"
+                                "])"
+                            ),
                             __properties=["data-testid"],
                             **{"data-testid": "implementing-task-item"}
                         ):

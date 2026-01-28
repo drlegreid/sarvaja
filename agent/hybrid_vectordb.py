@@ -12,7 +12,7 @@ import os
 import logging
 
 # Import the hybrid router from governance module
-from governance.hybrid_router import HybridQueryRouter, QueryResult, QueryType
+from governance.hybrid_router import HybridQueryRouter, QueryResult
 
 logger = logging.getLogger(__name__)
 

@@ -14,10 +14,10 @@ NAVIGATION_ITEMS = [
     {"icon": "mdi-gavel", "title": "Rules", "value": "rules"},
     {"icon": "mdi-robot", "title": "Agents", "value": "agents"},
     {"icon": "mdi-checkbox-marked", "title": "Tasks", "value": "tasks"},
-    {"icon": "mdi-format-list-bulleted", "title": "Backlog", "value": "backlog"},
+    # Backlog merged into Tasks (UI-AUDIT-2026-01-19)
     {"icon": "mdi-calendar", "title": "Sessions", "value": "sessions"},
     {"icon": "mdi-chart-bar", "title": "Executive", "value": "executive"},
-    {"icon": "mdi-lightbulb", "title": "Decisions", "value": "decisions"},
+    {"icon": "mdi-file-document-edit", "title": "Decisions", "value": "decisions"},
     {"icon": "mdi-graph", "title": "Impact", "value": "impact"},
     {"icon": "mdi-shield-account", "title": "Trust", "value": "trust"},
     {"icon": "mdi-monitor-dashboard", "title": "Monitor", "value": "monitor"},

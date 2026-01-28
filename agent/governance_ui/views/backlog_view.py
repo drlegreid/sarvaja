@@ -53,8 +53,8 @@ def build_backlog_header() -> None:
 
 
 def build_available_tasks_column() -> None:
-    """Build the available tasks column with pagination."""
-    with v3.VCol(cols=6):
+    """Build the available tasks column. Per UI-RESP-01-v1: Responsive."""
+    with v3.VCol(cols=12, md=6):
         with v3.VCard(variant="outlined"):
             with v3.VCardTitle(classes="text-subtitle-1 bg-info"):
                 v3.VIcon(icon="mdi-inbox-arrow-down", classes="mr-2")
@@ -167,8 +167,8 @@ def build_available_tasks_column() -> None:
 
 
 def build_claimed_tasks_column() -> None:
-    """Build the claimed tasks column."""
-    with v3.VCol(cols=6):
+    """Build the claimed tasks column. Per UI-RESP-01-v1: Responsive."""
+    with v3.VCol(cols=12, md=6):
         with v3.VCard(variant="outlined"):
             with v3.VCardTitle(classes="text-subtitle-1 bg-warning"):
                 v3.VIcon(icon="mdi-progress-clock", classes="mr-2")

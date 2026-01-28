@@ -19,9 +19,9 @@ import re
 import json
 import sys
 from pathlib import Path
-from typing import List, Dict, Optional, Any, Tuple
-from datetime import datetime, date
-from dataclasses import dataclass, asdict
+from typing import List, Dict, Optional, Any
+from datetime import datetime
+from dataclasses import dataclass
 
 # Add project root to path for imports
 PROJECT_ROOT = Path(__file__).parent.parent

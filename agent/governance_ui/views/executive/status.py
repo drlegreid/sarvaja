@@ -75,30 +75,30 @@ def build_session_evidence_section() -> None:
                 )
             )
         with v3.VCardText():
-            # Evidence stats
+            # Evidence stats - Per UI-RESP-01-v1: Responsive breakpoints
             with v3.VRow(dense=True):
-                with v3.VCol(cols=3):
+                with v3.VCol(cols=6, sm=3):
                     with html.Div(classes="text-center"):
                         html.Div(
                             "{{ executive_report.session_evidence.decisions_count || 0 }}",
                             classes="text-h6"
                         )
                         html.Div("Decisions", classes="text-caption text-grey")
-                with v3.VCol(cols=3):
+                with v3.VCol(cols=6, sm=3):
                     with html.Div(classes="text-center"):
                         html.Div(
                             "{{ executive_report.session_evidence.tasks_count || 0 }}",
                             classes="text-h6"
                         )
                         html.Div("Tasks", classes="text-caption text-grey")
-                with v3.VCol(cols=3):
+                with v3.VCol(cols=6, sm=3):
                     with html.Div(classes="text-center"):
                         html.Div(
                             "{{ executive_report.session_evidence.gaps_resolved || 0 }}",
                             classes="text-h6"
                         )
                         html.Div("Gaps Resolved", classes="text-caption text-grey")
-                with v3.VCol(cols=3):
+                with v3.VCol(cols=6, sm=3):
                     with html.Div(classes="text-center"):
                         html.Div(
                             "{{ executive_report.session_evidence.artifacts_count || 0 }}",

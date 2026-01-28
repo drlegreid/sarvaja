@@ -12,7 +12,7 @@ Created: 2026-01-04
 
 import asyncio
 from datetime import datetime
-from typing import Any, Optional, Callable
+from typing import Optional, Callable
 
 import httpx
 

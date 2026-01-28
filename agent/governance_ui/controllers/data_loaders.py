@@ -13,14 +13,13 @@ Updated: 2026-01-14 (trace event integration)
 
 import time
 import httpx
-from typing import Any, Callable
+from typing import Any
 
 from agent.governance_ui.trace_bar.transforms import (
     add_api_trace,
     add_error_trace,
 )
 from agent.governance_ui import (
-    get_rules,
     get_proposals,
     get_escalated_proposals,
     build_trust_leaderboard,
@@ -137,11 +136,20 @@ def register_data_loader_controllers(
             state.claimed_tasks = []
 
     def load_executive_report_data():
-        """Load executive report from REST API."""
+        """Load executive report from REST API.
+
+        Per UI-AUDIT-007: Uses executive_session_id from dropdown when selected.
+        Falls back to period-based report if no session selected.
+        """
         try:
             state.executive_loading = True
             with httpx.Client(timeout=15.0) as client:
-                params = {"period": state.executive_period or "week"}
+                params = {}
+                # UI-AUDIT-007: Use session ID when selected
+                if hasattr(state, 'executive_session_id') and state.executive_session_id:
+                    params["session_id"] = state.executive_session_id
+                else:
+                    params["period"] = state.executive_period or "week"
                 response = client.get(f"{api_base_url}/api/reports/executive", params=params)
                 if response.status_code == 200:
                     state.executive_report = response.json()
@@ -370,6 +378,32 @@ def register_data_loader_controllers(
         except Exception:
             pass
 
+        # Check DSP conditions per SESSION-DSP-NOTIFY-01-v1
+        stats["dsp_suggested"] = False
+        stats["dsp_alerts"] = []
+        try:
+            evidence_dir = Path(__file__).parent.parent.parent.parent / "evidence"
+            # Check evidence file count (>20 threshold)
+            if evidence_dir.exists():
+                evidence_count = len(list(evidence_dir.glob("SESSION-*.md")))
+                if evidence_count > 20:
+                    stats["dsp_alerts"].append(f"Evidence accumulation: {evidence_count} session files")
+                # Check last DSP cycle age (>7 days threshold)
+                dsp_files = sorted(evidence_dir.glob("*DSP*.md"), reverse=True)
+                if dsp_files:
+                    latest = dsp_files[0].name
+                    date_parts = latest.split("-")[1:4]  # YYYY, MM, DD
+                    if len(date_parts) == 3:
+                        dsp_date = datetime(int(date_parts[0]), int(date_parts[1]), int(date_parts[2]))
+                        days_since = (datetime.now() - dsp_date).days
+                        if days_since > 7:
+                            stats["dsp_alerts"].append(f"No DSP cycle in {days_since} days")
+                else:
+                    stats["dsp_alerts"].append("No DSP cycle found")
+            stats["dsp_suggested"] = len(stats["dsp_alerts"]) >= 2
+        except Exception:
+            pass
+
         state.infra_stats = stats
         state.infra_loading = False
 
@@ -432,55 +466,39 @@ def register_data_loader_controllers(
             state.infra_last_action = f"Cleanup failed: {e}"
 
     def load_workflow_status():
-        """Load workflow compliance status. Per RD-WORKFLOW Phase 4."""
-        from pathlib import Path
-        import sys
-
-        project_root = Path(__file__).parent.parent.parent.parent
-        # Import workflow_checker module
+        """Load workflow compliance status. Per UI-AUDIT-009: Real TypeDB validation."""
         try:
-            import importlib.util
-            checker_path = project_root / ".claude" / "hooks" / "checkers" / "workflow_checker.py"
-            spec = importlib.util.spec_from_file_location("workflow_checker", checker_path)
-            module = importlib.util.module_from_spec(spec)
-            spec.loader.exec_module(module)
+            # Use new workflow_compliance service (UI-AUDIT-009)
+            from governance.workflow_compliance import (
+                run_compliance_checks,
+                format_compliance_for_ui,
+            )
 
-            compliance = module.check_workflow_compliance(project_root)
+            report = run_compliance_checks()
+            ui_data = format_compliance_for_ui(report)
 
-            state.workflow_status = {
-                'overall': compliance.get('overall_status', 'UNKNOWN'),
-                'passed': compliance.get('checks_passed', 0),
-                'failed': compliance.get('checks_failed', 0),
-                'warnings': compliance.get('checks_warning', 0),
-            }
+            state.workflow_status = ui_data["status"]
 
-            # Build checks list for table
+            # Build checks list for table - include all checks with status
             checks = []
-            for v in compliance.get('violations', []):
+            for check in ui_data["checks"]:
                 checks.append({
-                    'rule_id': v.get('rule_id', ''),
-                    'check_name': v.get('check_name', ''),
-                    'status': 'FAIL',
-                    'message': v.get('message', '')
-                })
-            for w in compliance.get('warnings', []):
-                checks.append({
-                    'rule_id': w.get('rule_id', ''),
-                    'check_name': w.get('check_name', ''),
-                    'status': 'WARNING',
-                    'message': w.get('message', '')
+                    'rule_id': check.get('rule_id', ''),
+                    'check_name': check.get('check_name', ''),
+                    'status': check.get('status', 'UNKNOWN'),
+                    'message': check.get('message', '')
                 })
             state.workflow_checks = checks
 
-            state.workflow_violations = compliance.get('violations', [])
-            state.workflow_recommendations = compliance.get('recommendations', [])
+            state.workflow_violations = ui_data["violations"]
+            state.workflow_recommendations = ui_data["recommendations"]
 
         except Exception as e:
             print(f"Error loading workflow status: {e}")
             state.workflow_status = {'overall': 'ERROR', 'passed': 0, 'failed': 0, 'warnings': 0}
             state.workflow_checks = []
             state.workflow_violations = []
-            state.workflow_recommendations = [str(e)]
+            state.workflow_recommendations = [f"Compliance check failed: {e}"]
 
         state.workflow_loading = False
 

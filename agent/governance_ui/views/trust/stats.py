@@ -26,10 +26,10 @@ def build_trust_header() -> None:
 
 
 def build_governance_stats() -> None:
-    """Build governance stats cards row."""
+    """Build governance stats cards. Per UI-RESP-01-v1: Responsive."""
     with v3.VRow():
         # Total Agents
-        with v3.VCol(cols=3):
+        with v3.VCol(cols=6, sm=3):
             with v3.VCard(
                 variant="tonal",
                 color="primary",
@@ -43,7 +43,7 @@ def build_governance_stats() -> None:
                     )
                     html.Div("Total Agents", classes="text-subtitle-2")
         # Avg Trust Score
-        with v3.VCol(cols=3):
+        with v3.VCol(cols=6, sm=3):
             with v3.VCard(
                 variant="tonal",
                 color="success",
@@ -57,7 +57,7 @@ def build_governance_stats() -> None:
                     )
                     html.Div("Avg Trust Score", classes="text-subtitle-2")
         # Pending Proposals
-        with v3.VCol(cols=3):
+        with v3.VCol(cols=6, sm=3):
             with v3.VCard(
                 variant="tonal",
                 color="info",
@@ -71,7 +71,7 @@ def build_governance_stats() -> None:
                     )
                     html.Div("Pending Proposals", classes="text-subtitle-2")
         # Escalated
-        with v3.VCol(cols=3):
+        with v3.VCol(cols=6, sm=3):
             with v3.VCard(
                 variant="tonal",
                 color="warning",

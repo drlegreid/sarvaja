@@ -21,8 +21,8 @@ import json
 import uuid
 from datetime import datetime
 from enum import Enum
-from typing import Any, AsyncGenerator, Optional
-from dataclasses import dataclass, field, asdict
+from typing import AsyncGenerator, Optional
+from dataclasses import dataclass, field
 
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import StreamingResponse

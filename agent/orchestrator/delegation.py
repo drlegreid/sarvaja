@@ -14,7 +14,6 @@ Delegation Flow:
     5. Source agent receives result and continues or escalates
 """
 
-import asyncio
 from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Any, Dict, List, Optional, Callable

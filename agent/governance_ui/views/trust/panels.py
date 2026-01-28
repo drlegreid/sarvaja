@@ -10,8 +10,8 @@ from trame.widgets import vuetify3 as v3, html
 
 
 def build_trust_leaderboard() -> None:
-    """Build trust leaderboard card."""
-    with v3.VCol(cols=6):
+    """Build trust leaderboard card. Per UI-RESP-01-v1: Responsive."""
+    with v3.VCol(cols=12, md=6):
         with v3.VCard(
             variant="outlined",
             __properties=["data-testid"],
@@ -61,8 +61,8 @@ def build_trust_leaderboard() -> None:
 
 
 def build_proposals_panel() -> None:
-    """Build recent proposals panel."""
-    with v3.VCol(cols=6):
+    """Build recent proposals panel. Per UI-RESP-01-v1: Responsive."""
+    with v3.VCol(cols=12, md=6):
         with v3.VCard(
             variant="outlined",
             __properties=["data-testid"],

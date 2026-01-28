@@ -27,10 +27,8 @@ Dependencies:
 import sys
 import os
 from pathlib import Path
-from typing import List, Dict, Optional, Any
 
 from shared.constants import APP_TITLE
-import httpx
 
 # Add project root to path for imports
 PROJECT_ROOT = Path(__file__).parent.parent
@@ -45,113 +43,18 @@ if str(PROJECT_ROOT) not in sys.path:
 # =============================================================================
 from agent.governance_ui import (
     # Data access (pure functions)
-    call_mcp_tool,
     get_rules,
-    get_rules_by_category,
     get_decisions,
     get_sessions,
     get_tasks,
-    search_evidence,
-    filter_rules_by_status,
-    filter_rules_by_category,
-    filter_rules_by_search,
-    sort_rules,
-    # Impact analysis (P9.4)
-    get_rule_dependencies,
-    get_rule_dependents,
-    get_rule_conflicts,
-    build_dependency_graph,
-    calculate_rule_impact,
-    generate_mermaid_graph,
-    # Agent Trust Dashboard (P9.5)
-    get_agents,
-    get_proposals,
-    get_escalated_proposals,
-    build_trust_leaderboard,
-    get_governance_stats,
-    # Real-time Monitoring (P9.6)
-    get_rule_monitor,
-    get_monitor_feed,
-    get_monitor_alerts,
-    get_monitor_stats,
-    log_monitor_event,
-    acknowledge_monitor_alert,
-    get_top_monitored_rules,
-    get_hourly_monitor_stats,
-    # Agent Task Backlog (TODO-6)
-    get_available_tasks,
-    claim_task,
-    complete_task,
-    get_agent_tasks,
-    # State constants
-    STATUS_COLORS,
-    PRIORITY_COLORS,
-    CATEGORY_ICONS,
     NAVIGATION_ITEMS,
     RULE_CATEGORIES,
-    RULE_PRIORITIES,
     RULE_STATUSES,
-    RISK_COLORS,
-    TRUST_LEVEL_COLORS,
-    PROPOSAL_STATUS_COLORS,
-    EVENT_TYPE_COLORS,
-    EVENT_TYPE_ICONS,
-    SEVERITY_COLORS,
-    # State factory
     get_initial_state,
     # Pure transforms
-    with_loading,
-    with_error,
-    clear_error,
-    with_status,
-    with_active_view,
-    with_selected_rule,
-    with_rule_form,
-    with_filters,
-    with_sort,
-    with_impact_analysis,
-    with_graph_view,
-    # Trust dashboard (P9.5)
-    with_agents,
-    with_selected_agent,
-    with_proposals,
-    # Monitoring transforms (P9.6)
-    with_monitor_feed,
-    with_monitor_alerts,
-    with_monitor_stats,
-    with_monitor_filter,
-    with_auto_refresh,
-    with_top_rules,
-    with_hourly_stats,
-    # UI helpers
-    get_status_color,
-    get_priority_color,
-    get_category_icon,
-    format_rule_card,
-    get_risk_color,
-    format_impact_summary,
-    # Trust UI helpers (P9.5)
-    get_trust_level,
-    get_trust_level_color,
-    format_agent_card,
-    format_proposal_card,
-    # Monitoring UI helpers (P9.6)
-    get_event_type_color,
-    get_event_type_icon,
-    get_severity_color,
-    format_event_item,
-    format_alert_item,
-    # Agent Task Backlog state (TODO-6)
-    TASK_STATUS_COLORS,
     TASK_STATUSES,  # GAP-UI-EXP-004
     TASK_PHASES,  # GAP-UI-EXP-004
-    with_available_tasks,
-    with_claimed_tasks,
-    with_selected_task,
-    with_current_agent,
-    get_task_status_color,
-    format_backlog_task,
-)
+    )
 
 # View modules (extracted per GAP-FILE-001)
 from agent.governance_ui.views import (
@@ -393,6 +296,10 @@ class GovernanceDashboard:
                 # Inject mermaid.js for diagram rendering (RULE-039)
                 from agent.governance_ui.components.mermaid import inject_mermaid_script
                 inject_mermaid_script()
+
+                # Inject window state isolator (GAP-UI-AUDIT-002: Option C)
+                from agent.governance_ui.components.window_state import inject_window_state_isolator
+                inject_window_state_isolator()
 
                 # App bar with data-testid
                 with v3.VAppBar(

@@ -10,7 +10,7 @@ from trame.widgets import vuetify3 as v3, html
 
 
 def build_agent_metrics_card() -> None:
-    """Build agent metrics display card."""
+    """Build agent metrics display card. Per UI-RESP-01-v1: Responsive."""
     with v3.VCard(
         variant="outlined",
         classes="mb-4",
@@ -20,21 +20,21 @@ def build_agent_metrics_card() -> None:
         v3.VCardTitle("Metrics", density="compact")
         with v3.VCardText():
             with v3.VRow():
-                with v3.VCol(cols=4):
+                with v3.VCol(cols=12, sm=4):
                     with html.Div(classes="text-center"):
                         html.Div(
                             "{{ ((selected_agent.trust_score || 0) * 100).toFixed(0) }}%",
                             classes="text-h4"
                         )
                         html.Div("Trust Score", classes="text-caption text-grey")
-                with v3.VCol(cols=4):
+                with v3.VCol(cols=12, sm=4):
                     with html.Div(classes="text-center"):
                         html.Div(
                             "{{ selected_agent.tasks_executed || 0 }}",
                             classes="text-h4"
                         )
                         html.Div("Tasks Executed", classes="text-caption text-grey")
-                with v3.VCol(cols=4):
+                with v3.VCol(cols=12, sm=4):
                     with html.Div(classes="text-center"):
                         html.Div(
                             "{{ selected_agent.sessions_count || 0 }}",
@@ -52,12 +52,12 @@ def build_agent_metrics_card() -> None:
 
 
 def build_trust_components_breakdown() -> None:
-    """Build trust score components breakdown circles."""
+    """Build trust score components breakdown. Per UI-RESP-01-v1."""
     with v3.VRow(
         v_if="selected_agent.trust_components",
         classes="mb-4"
     ):
-        with v3.VCol(cols=3):
+        with v3.VCol(cols=6, sm=3):
             with html.Div(classes="text-center"):
                 v3.VProgressCircular(
                     model_value=(
@@ -68,7 +68,7 @@ def build_trust_components_breakdown() -> None:
                     color="primary"
                 )
                 html.Div("Compliance", classes="text-caption mt-1")
-        with v3.VCol(cols=3):
+        with v3.VCol(cols=6, sm=3):
             with html.Div(classes="text-center"):
                 v3.VProgressCircular(
                     model_value=(
@@ -79,7 +79,7 @@ def build_trust_components_breakdown() -> None:
                     color="success"
                 )
                 html.Div("Accuracy", classes="text-caption mt-1")
-        with v3.VCol(cols=3):
+        with v3.VCol(cols=6, sm=3):
             with html.Div(classes="text-center"):
                 v3.VProgressCircular(
                     model_value=(
@@ -90,7 +90,7 @@ def build_trust_components_breakdown() -> None:
                     color="warning"
                 )
                 html.Div("Consistency", classes="text-caption mt-1")
-        with v3.VCol(cols=3):
+        with v3.VCol(cols=6, sm=3):
             with html.Div(classes="text-center"):
                 v3.VProgressCircular(
                     model_value=(

@@ -7,7 +7,6 @@ Per DOC-SIZE-01-v1: File Size Limit (< 300 lines).
 Created: 2026-01-14
 """
 
-from datetime import datetime
 from typing import Any, Optional
 
 from .trace_event import TraceEvent, TraceType

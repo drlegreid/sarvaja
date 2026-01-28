@@ -38,9 +38,9 @@ def build_impact_header() -> None:
 
 
 def build_rule_selector() -> None:
-    """Build rule selector dropdown."""
+    """Build rule selector dropdown. Per UI-RESP-01-v1: Responsive."""
     with v3.VRow():
-        with v3.VCol(cols=4):
+        with v3.VCol(cols=12, sm=6, md=4):
             v3.VSelect(
                 v_model="impact_selected_rule",
                 items=("rules.map(r => r.rule_id || r.id)",),

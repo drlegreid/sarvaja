@@ -371,7 +371,6 @@ def create_rule_monitor(max_events: int = 1000, seed_demo_data: bool = True) -> 
 
 def _seed_demo_events(monitor: RuleMonitor) -> None:
     """Seed demo events for UI demonstration (GAP-UI-051)."""
-    from datetime import datetime, timedelta
 
     # Sample events for demonstration
     demo_events = [

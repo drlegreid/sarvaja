@@ -48,6 +48,16 @@ def get_initial_state() -> Dict[str, Any]:
         'show_session_detail': False,
         'show_decision_detail': False,
 
+        # Entity Navigation Context (UI-NAV-01-v1)
+        # Tracks where user came from for back navigation
+        'nav_source_view': None,       # 'sessions', 'rules', etc.
+        'nav_source_id': None,         # session_id, rule_id, etc.
+        'nav_source_label': None,      # Human-readable label for back button
+
+        # Decision Log state (UI-AUDIT-2026-01-19: repurposed decisions)
+        'decision_session_filter': None,  # Filter by session
+        'decision_session_options': [],   # Populated from sessions list
+
         # Decision form state (GAP-UI-033)
         'show_decision_form': False,
         'decision_form_mode': 'create',
@@ -143,16 +153,20 @@ def get_initial_state() -> Dict[str, Any]:
         'knowledge_gaps': [],
         'question_history': [],
 
-        # Agent Task Backlog (TODO-6, GAP-005)
+        # Unified Tasks View (UI-AUDIT-2026-01-19: merged backlog)
         'available_tasks': [],
         'claimed_tasks': [],
         'selected_task': None,
         'show_task_detail': False,
         'current_agent_id': None,
+        'tasks_agent_id': '',  # Agent ID for claim/complete (was backlog_agent_id)
+        'tasks_filter_type': 'all',  # all/available/mine/completed
+        'tasks_auto_refresh': False,  # was backlog_auto_refresh
+        'tasks_refresh_interval': 5,  # seconds
+        # Backward compat aliases (remove in future)
         'backlog_agent_id': '',
         'backlog_auto_refresh': False,
-        'backlog_refresh_interval': 5,  # seconds
-        # Backlog pagination (GAP-EXPLOR-UI-001)
+        'backlog_refresh_interval': 5,
         'backlog_page': 1,
         'backlog_per_page': 10,
         'backlog_per_page_options': [10, 25, 50],
@@ -184,6 +198,7 @@ def get_initial_state() -> Dict[str, Any]:
         'executive_report': None,
         'executive_loading': False,
         'executive_period': 'week',
+        'executive_session_id': None,  # UI-AUDIT-007: Selected session for report
 
         # Agent Chat (ORCH-006)
         'chat_messages': [],

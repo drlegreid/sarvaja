@@ -7,7 +7,6 @@ Per RULE-011: Multi-Agent Governance
 Per RULE-012: Deep Sleep Protocol
 """
 
-import asyncio
 from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Any, Dict, List, Optional

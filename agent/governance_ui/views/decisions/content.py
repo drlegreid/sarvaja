@@ -76,8 +76,8 @@ def build_decision_info_cards() -> None:
     build_decision_content_preview()
 
     with v3.VRow(classes="mt-4"):
-        # Left column: Decision information
-        with v3.VCol(cols=6):
+        # Left column: Decision information - Per UI-RESP-01-v1
+        with v3.VCol(cols=12, md=6):
             with v3.VCard(
                 variant="outlined",
                 __properties=["data-testid"],
@@ -103,8 +103,8 @@ def build_decision_info_cards() -> None:
                             subtitle=("selected_decision.status || 'N/A'",),
                             prepend_icon="mdi-check-circle",
                         )
-        # Right column: Impact
-        with v3.VCol(cols=6):
+        # Right column: Impact - Per UI-RESP-01-v1
+        with v3.VCol(cols=12, md=6):
             with v3.VCard(
                 variant="outlined",
                 __properties=["data-testid"],

@@ -45,10 +45,9 @@ def init_opik():
     """
     opik_url = os.getenv("OPIK_URL_OVERRIDE")
     project = os.getenv("OPIK_PROJECT_NAME", "sim-ai-poc")
-    
+
     if opik_url:
         try:
-            import opik
             # Opik SDK auto-configures from environment variables
             # No need to call configure() - just import and use
             print(f"Opik configured via env: {opik_url} (project: {project})")
@@ -76,14 +75,14 @@ def create_chromadb_knowledge() -> Optional[Knowledge]:
     host = os.getenv("CHROMADB_HOST")
     port = os.getenv("CHROMADB_PORT", "8000")
     token = os.getenv("CHROMA_AUTH_TOKEN")
-    
+
     if not host:
         print("ChromaDB not configured, skipping knowledge base")
         return None
-    
+
     try:
         import chromadb
-        
+
         # Create HttpClient for remote ChromaDB server
         headers = {"X-Chroma-Token": token} if token else {}
         http_client = chromadb.HttpClient(
@@ -91,23 +90,23 @@ def create_chromadb_knowledge() -> Optional[Knowledge]:
             port=int(port),
             headers=headers
         )
-        
+
         # Test connection
         http_client.heartbeat()
-        
+
         # Create Agno ChromaDb wrapper
         # Use sim_ai_knowledge collection (53 docs migrated from claude-mem)
         vector_db = ChromaDb(
             collection="sim_ai_knowledge",
         )
-        
+
         # Inject HttpClient directly (bypass default ephemeral client)
         vector_db._client = http_client
-        
+
         knowledge = Knowledge(vector_db=vector_db)
         print(f"ChromaDB knowledge connected: {host}:{port}")
         return knowledge
-        
+
     except Exception as e:
         print(f"ChromaDB knowledge init failed: {e}")
         return None
@@ -197,7 +196,7 @@ def create_agents(config: dict) -> list[Agent]:
                 chromadb_knowledge = create_chromadb_knowledge()
             if chromadb_knowledge:
                 agent_kwargs["knowledge"] = chromadb_knowledge
-        
+
         agent = Agent(**agent_kwargs)
 
         if agent_data.get("chat", True):
@@ -285,7 +284,7 @@ async def start_orchestration(engine: "OrchestratorEngine") -> None:
 def main():
     config_file = sys.argv[1] if len(sys.argv) > 1 else "/agents.yaml"
 
-    print(f"=== Sim.ai PoC Agent Server ===")
+    print("=== Sim.ai PoC Agent Server ===")
     print(f"Loading config: {config_file}")
 
     with open(config_file, "r") as f:
@@ -325,14 +324,14 @@ def main():
             """Start orchestration on server startup."""
             asyncio.create_task(start_orchestration(orchestrator))
 
-        print(f"Orchestrator endpoints enabled: /orchestrator/status, /orchestrator/dispatch")
+        print("Orchestrator endpoints enabled: /orchestrator/status, /orchestrator/dispatch")
 
     # Integrate Task UI with AG-UI event streaming (Phase 6.1)
     try:
         from agent.task_ui import integrate_task_ui
         agents_dict = {a.name: a for a in agents}
         integrate_task_ui(app, agents_dict)
-        print(f"Task UI enabled: POST /tasks, GET /tasks/{{id}}/events")
+        print("Task UI enabled: POST /tasks, GET /tasks/{id}/events")
 
         # Serve static UI (Phase 6.3)
         from fastapi.staticfiles import StaticFiles
@@ -347,7 +346,7 @@ def main():
             async def ui_redirect():
                 return FileResponse(os.path.join(static_dir, "index.html"))
 
-            print(f"Static UI available at: /ui")
+            print("Static UI available at: /ui")
     except ImportError as e:
         print(f"Task UI not available: {e}")
 

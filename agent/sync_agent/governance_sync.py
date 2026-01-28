@@ -13,10 +13,9 @@ Created: 2026-01-11
 """
 
 import asyncio
-import json
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
 import httpx
 
@@ -243,7 +242,7 @@ class GovernanceSync:
                 status = await self.get_sync_status()
 
                 if status.sync_needed:
-                    print(f"[GovernanceSync] Sync needed, running sync_all...")
+                    print("[GovernanceSync] Sync needed, running sync_all...")
                     result = await self.sync_all()
                     print(f"[GovernanceSync] Synced: tasks={result.tasks_synced}, rules={result.rules_linked}, handoffs={result.handoffs_processed}")
 

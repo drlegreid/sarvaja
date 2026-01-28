@@ -117,7 +117,7 @@ def build_compliance_summary() -> None:
 
 
 def build_validation_checks() -> None:
-    """Build validation checks table."""
+    """Build validation checks list."""
     with v3.VRow(classes="mt-4"):
         with v3.VCol(cols=12):
             with v3.VCard(
@@ -127,18 +127,44 @@ def build_validation_checks() -> None:
             ):
                 v3.VCardTitle("Validation Checks")
                 with v3.VCardText():
-                    v3.VDataTable(
-                        items=("workflow_checks",),
-                        headers=[
-                            {"title": "Rule", "key": "rule_id", "width": "120px"},
-                            {"title": "Check", "key": "check_name"},
-                            {"title": "Status", "key": "status", "width": "100px"},
-                            {"title": "Message", "key": "message"},
-                        ],
-                        density="compact",
-                        hide_default_footer=True,
-                        __properties=["data-testid"],
-                        **{"data-testid": "workflow-checks-table"}
+                    # Use VList instead of VDataTable for better Trame binding
+                    with v3.VList(density="compact"):
+                        with v3.VListItem(
+                            v_for="(check, idx) in workflow_checks",
+                            key="idx",
+                            __properties=["data-testid"],
+                            **{"data-testid": "workflow-check-item"}
+                        ):
+                            with html.Template(v_slot_prepend=True):
+                                v3.VIcon(
+                                    icon=(
+                                        "check.status === 'PASS' ? 'mdi-check-circle' : "
+                                        "check.status === 'FAIL' ? 'mdi-close-circle' : "
+                                        "check.status === 'WARNING' ? 'mdi-alert' : 'mdi-help-circle'"
+                                    ),
+                                    color=(
+                                        "check.status === 'PASS' ? 'success' : "
+                                        "check.status === 'FAIL' ? 'error' : "
+                                        "check.status === 'WARNING' ? 'warning' : 'grey'"
+                                    ),
+                                    size="small"
+                                )
+                            with v3.VListItemTitle():
+                                html.Span(
+                                    "{{ check.rule_id }}",
+                                    classes="font-weight-bold mr-2"
+                                )
+                                html.Span(
+                                    "{{ check.check_name }}",
+                                    classes="text-grey mr-2"
+                                )
+                            with v3.VListItemSubtitle():
+                                html.Span("{{ check.message }}")
+                    # Show empty state if no checks
+                    html.Div(
+                        "No compliance checks available",
+                        v_if="!workflow_checks || workflow_checks.length === 0",
+                        classes="text-center text-grey pa-4"
                     )
 
 

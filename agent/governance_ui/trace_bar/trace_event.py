@@ -54,12 +54,17 @@ class TraceEvent:
 
     def to_dict(self) -> dict:
         """Convert to dictionary for state serialization."""
+        # Parse query params from endpoint for display (GAP-UI-TRACE-001)
+        path, query_params = self._parse_endpoint()
+
         return {
             "event_id": self.event_id,
             "event_type": self.event_type.value,
             "message": self.message,
             "timestamp": self.timestamp.isoformat(),
             "endpoint": self.endpoint,
+            "path": path,  # Path without query string
+            "query_params": query_params,  # Parsed query params
             "method": self.method,
             "status_code": self.status_code,
             "duration_ms": self.duration_ms,
@@ -71,6 +76,32 @@ class TraceEvent:
             "target": self.target,
             "error_message": self.error_message,
         }
+
+    def _parse_endpoint(self) -> tuple:
+        """
+        Parse endpoint into path and query params.
+
+        Per GAP-UI-TRACE-001: Separate params for better visibility.
+
+        Returns:
+            Tuple of (path, query_params_dict)
+        """
+        if not self.endpoint:
+            return (None, None)
+
+        from urllib.parse import urlparse, parse_qs
+        parsed = urlparse(self.endpoint)
+        path = parsed.path
+
+        query_params = None
+        if parsed.query:
+            # Parse query string into dict
+            query_params = {}
+            for key, values in parse_qs(parsed.query).items():
+                # parse_qs returns lists, simplify single values
+                query_params[key] = values[0] if len(values) == 1 else values
+
+        return (path, query_params)
 
     @classmethod
     def from_dict(cls, data: dict) -> "TraceEvent":

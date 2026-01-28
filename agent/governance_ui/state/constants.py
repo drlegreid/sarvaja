@@ -61,10 +61,10 @@ NAVIGATION_ITEMS: List[Dict[str, str]] = [
     {'title': 'Rules', 'icon': 'mdi-gavel', 'value': 'rules'},
     {'title': 'Agents', 'icon': 'mdi-robot', 'value': 'agents'},
     {'title': 'Tasks', 'icon': 'mdi-checkbox-marked', 'value': 'tasks'},
-    {'title': 'Backlog', 'icon': 'mdi-inbox-arrow-down', 'value': 'backlog'},  # TODO-6
+    # Backlog merged into Tasks (UI-AUDIT-2026-01-19)
     {'title': 'Sessions', 'icon': 'mdi-timeline', 'value': 'sessions'},
     {'title': 'Executive', 'icon': 'mdi-chart-box', 'value': 'executive'},  # GAP-UI-044
-    {'title': 'Decisions', 'icon': 'mdi-scale-balance', 'value': 'decisions'},
+    {'title': 'Decisions', 'icon': 'mdi-file-document-edit', 'value': 'decisions'},  # UI-AUDIT-2026-01-19: Decision Log
     {'title': 'Impact', 'icon': 'mdi-graph', 'value': 'impact'},
     {'title': 'Trust', 'icon': 'mdi-shield-check', 'value': 'trust'},
     {'title': 'Workflow', 'icon': 'mdi-sitemap', 'value': 'workflow'},  # RD-WORKFLOW Phase 4

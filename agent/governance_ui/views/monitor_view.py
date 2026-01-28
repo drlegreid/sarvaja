@@ -56,10 +56,10 @@ def build_monitor_header() -> None:
 
 
 def build_monitor_stats() -> None:
-    """Build monitor stats cards row."""
+    """Build monitor stats cards. Per UI-RESP-01-v1: Responsive."""
     with v3.VRow():
         # Total Events
-        with v3.VCol(cols=3):
+        with v3.VCol(cols=6, sm=3):
             with v3.VCard(
                 variant="tonal",
                 color="info",
@@ -73,7 +73,7 @@ def build_monitor_stats() -> None:
                     )
                     html.Div("Total Events", classes="text-subtitle-2")
         # Active Alerts
-        with v3.VCol(cols=3):
+        with v3.VCol(cols=6, sm=3):
             with v3.VCard(
                 variant="tonal",
                 color="error",
@@ -87,7 +87,7 @@ def build_monitor_stats() -> None:
                     )
                     html.Div("Active Alerts", classes="text-subtitle-2")
         # Violations
-        with v3.VCol(cols=3):
+        with v3.VCol(cols=6, sm=3):
             with v3.VCard(
                 variant="tonal",
                 color="warning",
@@ -101,7 +101,7 @@ def build_monitor_stats() -> None:
                     )
                     html.Div("Violations", classes="text-subtitle-2")
         # Compliance Checks
-        with v3.VCol(cols=3):
+        with v3.VCol(cols=6, sm=3):
             with v3.VCard(
                 variant="tonal",
                 color="success",
@@ -117,8 +117,8 @@ def build_monitor_stats() -> None:
 
 
 def build_event_feed() -> None:
-    """Build event feed panel."""
-    with v3.VCol(cols=8):
+    """Build event feed panel. Per UI-RESP-01-v1: Responsive."""
+    with v3.VCol(cols=12, md=8):
         with v3.VCard(
             variant="outlined",
             __properties=["data-testid"],
@@ -176,8 +176,8 @@ def build_event_feed() -> None:
 
 
 def build_alerts_panel() -> None:
-    """Build alerts panel."""
-    with v3.VCol(cols=4):
+    """Build alerts panel. Per UI-RESP-01-v1: Responsive."""
+    with v3.VCol(cols=12, md=4):
         with v3.VCard(
             variant="outlined",
             color=("monitor_alerts && monitor_alerts.length > 0 ? 'error' : ''",),

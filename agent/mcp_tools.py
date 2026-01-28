@@ -16,7 +16,7 @@ Per: R&D-BACKLOG.md, CROSS-WORKSPACE-WISDOM.md
 
 import os
 import json
-from typing import Optional, List
+from typing import Optional
 from dataclasses import dataclass
 
 # Import Agno tools (available in container, may not be locally)

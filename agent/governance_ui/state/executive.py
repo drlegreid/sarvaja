@@ -9,7 +9,7 @@ Per GAP-FILE-004: Extracted from state.py
 Created: 2024-12-28
 """
 
-from typing import Dict, List, Any, Optional
+from typing import Dict, Any, Optional
 
 from .constants import EXECUTIVE_STATUS_COLORS, SECTION_STATUS_COLORS
 

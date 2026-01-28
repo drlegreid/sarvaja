@@ -213,6 +213,49 @@ def build_mcp_status_panel() -> None:
                     )
 
 
+def build_dsp_alert() -> None:
+    """
+    Build DSP alert panel. Per SESSION-DSP-NOTIFY-01-v1.
+
+    Shows prominent warning when DSP (Deep Sleep Protocol) is suggested.
+    Not buried in JSON health output - dedicated visual alert.
+    """
+    with v3.VRow(classes="mb-4"):
+        with v3.VCol(cols=12):
+            with v3.VAlert(
+                v_if="infra_stats.dsp_suggested",
+                type="warning",
+                prominent=True,
+                border="start",
+                closable=False,
+                __properties=["data-testid"],
+                **{"data-testid": "infra-dsp-alert"}
+            ):
+                with v3.VRow(align="center"):
+                    with v3.VCol(cols="auto"):
+                        v3.VIcon("mdi-sleep", size="x-large", color="warning")
+                    with v3.VCol():
+                        html.Div(
+                            "DSP Required - Document Entropy High",
+                            classes="text-h6 font-weight-bold"
+                        )
+                        html.Div(
+                            "{{ infra_stats.dsp_alerts ? infra_stats.dsp_alerts.join(' • ') : 'Run /deep-sleep or type OVERRIDE' }}",
+                            classes="text-body-2"
+                        )
+                    with v3.VCol(cols="auto"):
+                        v3.VBtn(
+                            "View DSP Guide",
+                            prepend_icon="mdi-book-open-outline",
+                            variant="tonal",
+                            color="warning",
+                            href="https://github.com/drlegreid/platform-gai/blob/master/docs/rules/leaf/SESSION-DSM-01-v1.md",
+                            target="_blank",
+                            __properties=["data-testid"],
+                            **{"data-testid": "infra-dsp-guide-btn"}
+                        )
+
+
 def build_recovery_panel() -> None:
     """Build recovery actions panel."""
     with v3.VRow(classes="mt-4"):
@@ -283,6 +326,9 @@ def build_infra_view() -> None:
         build_infra_header()
 
         with v3.VCardText():
+            # DSP Alert (most prominent per SESSION-DSP-NOTIFY-01-v1)
+            build_dsp_alert()
+
             # Services status grid
             build_services_grid()
 

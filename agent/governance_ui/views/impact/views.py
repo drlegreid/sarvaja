@@ -25,9 +25,9 @@ def build_graph_view() -> None:
                 with v3.VCardText():
                     # Mermaid diagram with proper rendering
                     build_mermaid_with_fallback("impact-graph", "mermaid_diagram")
-                    # Graph stats
+                    # Graph stats - Per UI-RESP-01-v1: Responsive
                     with v3.VRow(classes="mt-2"):
-                        with v3.VCol(cols=3):
+                        with v3.VCol(cols=12, sm=4):
                             v3.VChip(
                                 v_text=(
                                     "'Nodes: ' + "
@@ -36,7 +36,7 @@ def build_graph_view() -> None:
                                 size="small",
                                 color="primary",
                             )
-                        with v3.VCol(cols=3):
+                        with v3.VCol(cols=12, sm=4):
                             v3.VChip(
                                 v_text=(
                                     "'Dependencies: ' + "
@@ -45,7 +45,7 @@ def build_graph_view() -> None:
                                 size="small",
                                 color="info",
                             )
-                        with v3.VCol(cols=3):
+                        with v3.VCol(cols=12, sm=4):
                             v3.VChip(
                                 v_text=(
                                     "'Conflicts: ' + "
@@ -57,10 +57,10 @@ def build_graph_view() -> None:
 
 
 def build_list_view() -> None:
-    """Build the list view for dependencies."""
+    """Build the list view for dependencies. Per UI-RESP-01-v1: Responsive."""
     with v3.VRow(v_if="!show_graph_view && impact_analysis"):
         # Dependents list
-        with v3.VCol(cols=6):
+        with v3.VCol(cols=12, md=6):
             with v3.VCard(
                 variant="outlined",
                 __properties=["data-testid"],
@@ -93,7 +93,7 @@ def build_list_view() -> None:
                         )
 
         # Dependencies list
-        with v3.VCol(cols=6):
+        with v3.VCol(cols=12, md=6):
             with v3.VCard(
                 variant="outlined",
                 __properties=["data-testid"],

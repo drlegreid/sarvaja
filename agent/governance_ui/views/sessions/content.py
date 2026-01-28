@@ -6,7 +6,7 @@ Per RULE-032: File size limit (<300 lines).
 Per GAP-DATA-003: File path navigation.
 """
 
-from trame.widgets import vuetify3 as v3, html
+from trame.widgets import vuetify3 as v3
 
 
 def build_session_metadata_chips() -> None:

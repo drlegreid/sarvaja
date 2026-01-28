@@ -4,6 +4,7 @@ Tasks Detail View Component.
 Per RULE-012: Single Responsibility - only task detail UI.
 Per RULE-032: File size limit (<300 lines).
 Per GAP-FILE-001: Modularization of governance_dashboard.py.
+Per UI-NAV-01-v1: Entity Navigation - back to source button.
 """
 
 from trame.widgets import vuetify3 as v3, html
@@ -23,8 +24,8 @@ def build_task_info_cards() -> None:
     build_task_linked_items()
 
     with v3.VRow(v_if="!edit_task_mode"):
-        # Left column: Task information
-        with v3.VCol(cols=6):
+        # Left column: Task information - Per UI-RESP-01-v1: Responsive
+        with v3.VCol(cols=12, md=6):
             with v3.VCard(
                 variant="outlined",
                 __properties=["data-testid"],
@@ -48,8 +49,8 @@ def build_task_info_cards() -> None:
                             subtitle=("selected_task.status || 'TODO'",),
                             prepend_icon="mdi-list-status",
                         )
-        # Right column: Assignment info
-        with v3.VCol(cols=6):
+        # Right column: Assignment info - Per UI-RESP-01-v1
+        with v3.VCol(cols=12, md=6):
             with v3.VCard(
                 variant="outlined",
                 __properties=["data-testid"],
@@ -85,15 +86,36 @@ def build_task_detail_view() -> None:
     ):
         # Header with back button and actions
         with v3.VCardTitle(classes="d-flex align-center"):
+            # Back to source button (UI-NAV-01-v1) - shown when navigated from another entity
             v3.VBtn(
+                ("nav_source_label",),
+                v_if="nav_source_view",
+                prepend_icon="mdi-arrow-left",
+                variant="tonal",
+                color="primary",
+                size="small",
+                click="trigger('navigate_back_to_source')",
+                __properties=["data-testid"],
+                **{"data-testid": "task-detail-back-to-source"}
+            )
+            # Simple back button (no navigation source)
+            v3.VBtn(
+                v_if="!nav_source_view",
                 icon="mdi-arrow-left",
                 variant="text",
-                click="show_task_detail = false; selected_task = null",
+                click=(
+                    "show_task_detail = false; "
+                    "selected_task = null; "
+                    "nav_source_view = null; "
+                    "nav_source_id = null; "
+                    "nav_source_label = null"
+                ),
                 __properties=["data-testid"],
                 **{"data-testid": "task-detail-back-btn"}
             )
             html.Span(
                 "{{ selected_task.task_id || selected_task.id }}",
+                classes="ml-2",
                 __properties=["data-testid"],
                 **{"data-testid": "task-detail-id"}
             )

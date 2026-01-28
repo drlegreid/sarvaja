@@ -37,9 +37,9 @@ def build_search_view() -> None:
         )
 
         with v3.VCardText():
-            # Search input with button
+            # Search input with button - Per UI-RESP-01-v1: Responsive
             with v3.VRow(classes="align-center"):
-                with v3.VCol(cols=10):
+                with v3.VCol(cols=12, sm=9, md=10):
                     v3.VTextField(
                         v_model="search_query",
                         label="Search evidence...",
@@ -50,7 +50,7 @@ def build_search_view() -> None:
                         __properties=["data-testid"],
                         **{"data-testid": "search-input"}
                     )
-                with v3.VCol(cols=2):
+                with v3.VCol(cols=12, sm=3, md=2):
                     v3.VBtn(
                         "Search",
                         color="primary",

@@ -37,10 +37,13 @@ def register_backlog_controllers(
         load_backlog_data: Function to reload backlog data
     """
 
-    @ctrl.trigger("claim_backlog_task")
-    def claim_backlog_task(task_id):
-        """Agent claims a task from the backlog."""
-        if not state.backlog_agent_id:
+    @ctrl.trigger("claim_task")
+    @ctrl.trigger("claim_backlog_task")  # Backward compat
+    def claim_task(task_id):
+        """Agent claims a task. Per UI-AUDIT-2026-01-19: unified tasks view."""
+        # Support both new and legacy state var names
+        agent_id = getattr(state, 'tasks_agent_id', '') or state.backlog_agent_id
+        if not agent_id:
             state.has_error = True
             state.error_message = "Please enter an Agent ID to claim tasks"
             return
@@ -50,7 +53,7 @@ def register_backlog_controllers(
             with httpx.Client(timeout=10.0) as client:
                 response = client.put(
                     f"{api_base_url}/api/tasks/{task_id}/claim",
-                    params={"agent_id": state.backlog_agent_id}
+                    params={"agent_id": agent_id}
                 )
                 if response.status_code == 200:
                     state.status_message = f"Task {task_id} claimed successfully"
@@ -64,9 +67,10 @@ def register_backlog_controllers(
             state.has_error = True
             state.error_message = f"Error claiming task: {str(e)}"
 
-    @ctrl.trigger("complete_backlog_task")
-    def complete_backlog_task(task_id):
-        """Mark a claimed task as complete."""
+    @ctrl.trigger("complete_task")
+    @ctrl.trigger("complete_backlog_task")  # Backward compat
+    def complete_task(task_id):
+        """Mark a claimed task as complete. Per UI-AUDIT-2026-01-19."""
         try:
             state.is_loading = True
             with httpx.Client(timeout=10.0) as client:

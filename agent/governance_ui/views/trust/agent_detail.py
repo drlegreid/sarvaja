@@ -11,10 +11,10 @@ from trame.widgets import vuetify3 as v3, html
 
 
 def build_agent_detail_metrics() -> None:
-    """Build agent trust metrics row."""
+    """Build agent trust metrics. Per UI-RESP-01-v1: Responsive."""
     with v3.VRow():
         # Trust Score
-        with v3.VCol(cols=3):
+        with v3.VCol(cols=6, sm=3):
             with v3.VCard(
                 variant="tonal",
                 color=(
@@ -31,7 +31,7 @@ def build_agent_detail_metrics() -> None:
                     )
                     html.Div("Trust Score", classes="text-subtitle-2")
         # Compliance
-        with v3.VCol(cols=3):
+        with v3.VCol(cols=6, sm=3):
             with v3.VCard(
                 variant="outlined",
                 __properties=["data-testid"],
@@ -44,7 +44,7 @@ def build_agent_detail_metrics() -> None:
                     )
                     html.Div("Compliance (40%)", classes="text-caption")
         # Accuracy
-        with v3.VCol(cols=3):
+        with v3.VCol(cols=6, sm=3):
             with v3.VCard(
                 variant="outlined",
                 __properties=["data-testid"],
@@ -57,7 +57,7 @@ def build_agent_detail_metrics() -> None:
                     )
                     html.Div("Accuracy (30%)", classes="text-caption")
         # Tenure
-        with v3.VCol(cols=3):
+        with v3.VCol(cols=6, sm=3):
             with v3.VCard(
                 variant="outlined",
                 __properties=["data-testid"],

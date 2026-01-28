@@ -23,17 +23,42 @@ def build_tasks_list_view() -> None:
         **{"data-testid": "tasks-list"}
     ):
         with v3.VCardTitle(classes="d-flex align-center"):
-            html.Span("Platform Tasks")
+            html.Span("Tasks")
             v3.VSpacer()
+            # Agent ID for claim/complete (UI-AUDIT-2026-01-19: merged backlog)
+            v3.VTextField(
+                v_model="tasks_agent_id",
+                label="Agent ID",
+                variant="outlined",
+                density="compact",
+                hide_details=True,
+                style="max-width: 180px",
+                prepend_inner_icon="mdi-robot",
+                __properties=["data-testid"],
+                **{"data-testid": "tasks-agent-id"}
+            )
             v3.VBtn(
                 "Add Task",
                 prepend_icon="mdi-plus",
                 color="primary",
                 size="small",
+                classes="ml-2",
                 click="show_task_form = true",
                 __properties=["data-testid"],
                 **{"data-testid": "tasks-add-btn"}
             )
+
+        # Filter tabs (UI-AUDIT-2026-01-19: merged backlog)
+        with v3.VTabs(
+            v_model="tasks_filter_type",
+            density="compact",
+            __properties=["data-testid"],
+            **{"data-testid": "tasks-filter-tabs"}
+        ):
+            v3.VTab(value="all", text="All")
+            v3.VTab(value="available", text="Available")
+            v3.VTab(value="mine", text="My Tasks")
+            v3.VTab(value="completed", text="Completed")
 
         # Loading indicator (GAP-UI-005)
         v3.VProgressLinear(
@@ -115,14 +140,22 @@ def build_tasks_list_view() -> None:
                 with v3.VListItem(
                     v_for="task in tasks",
                     v_show=(
+                        # Text search filter
                         "(!tasks_search_query || "
                         "((task.task_id || task.id) && (task.task_id || task.id).toLowerCase()"
                         ".includes(tasks_search_query.toLowerCase())) || "
                         "((task.description || task.title || task.name) && "
                         "(task.description || task.title || task.name).toLowerCase()"
                         ".includes(tasks_search_query.toLowerCase()))) && "
+                        # Status dropdown filter
                         "(!tasks_status_filter || task.status === tasks_status_filter) && "
-                        "(!tasks_phase_filter || task.phase === tasks_phase_filter)"
+                        # Phase dropdown filter
+                        "(!tasks_phase_filter || task.phase === tasks_phase_filter) && "
+                        # Tab filter (UI-AUDIT-2026-01-19)
+                        "(tasks_filter_type === 'all' || "
+                        "(tasks_filter_type === 'available' && !task.agent_id && task.status !== 'DONE') || "
+                        "(tasks_filter_type === 'mine' && task.agent_id === tasks_agent_id) || "
+                        "(tasks_filter_type === 'completed' && task.status === 'DONE'))"
                     ),
                     **{":key": "task.task_id || task.id"},
                     click="selected_task = task; show_task_detail = true",
@@ -234,15 +267,52 @@ def build_tasks_list_view() -> None:
                                 )
                             )
                     with html.Template(v_slot_append=True):
-                        v3.VChip(
-                            v_text="task.status",
-                            color=(
-                                "task.status === 'DONE' ? 'success' : "
-                                "task.status === 'IN_PROGRESS' ? 'info' : "
-                                "task.status === 'BLOCKED' ? 'error' : 'grey'",
-                            ),
-                            size="small",
-                        )
+                        with html.Div(classes="d-flex align-center"):
+                            # Claim button (UI-AUDIT-2026-01-19)
+                            v3.VBtn(
+                                "Claim",
+                                v_if="!task.agent_id && task.status !== 'DONE'",
+                                color="primary",
+                                size="x-small",
+                                variant="tonal",
+                                disabled=("!tasks_agent_id",),
+                                click_stop=(
+                                    "trigger('claim_task', (task.task_id || task.id))"
+                                ),
+                                title=(
+                                    "tasks_agent_id ? '' : "
+                                    "'Enter Agent ID above to claim tasks'"
+                                ),
+                                classes="mr-1",
+                                __properties=["data-testid"],
+                                **{"data-testid": "task-claim-btn"}
+                            )
+                            # Complete button (UI-AUDIT-2026-01-19)
+                            v3.VBtn(
+                                "Complete",
+                                v_if=(
+                                    "task.agent_id === tasks_agent_id && "
+                                    "task.status !== 'DONE'"
+                                ),
+                                color="success",
+                                size="x-small",
+                                variant="tonal",
+                                click_stop=(
+                                    "trigger('complete_task', (task.task_id || task.id))"
+                                ),
+                                classes="mr-1",
+                                __properties=["data-testid"],
+                                **{"data-testid": "task-complete-btn"}
+                            )
+                            v3.VChip(
+                                v_text="task.status",
+                                color=(
+                                    "task.status === 'DONE' ? 'success' : "
+                                    "task.status === 'IN_PROGRESS' ? 'info' : "
+                                    "task.status === 'BLOCKED' ? 'error' : 'grey'",
+                                ),
+                                size="small",
+                            )
 
         # Pagination controls (EPIC-DR-005)
         with v3.VCardActions(

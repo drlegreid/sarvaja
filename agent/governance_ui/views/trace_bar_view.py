@@ -196,24 +196,90 @@ def build_trace_bar() -> None:
                                         color=("event.status_code < 400 ? 'success' : 'error'",),
                                         classes="ml-1",
                                     )
+                                    # Query params indicator (GAP-UI-TRACE-001)
+                                    v3.VIcon(
+                                        "mdi-help-circle-outline",
+                                        v_if="event.query_params",
+                                        size="x-small",
+                                        color="warning",
+                                        classes="ml-2",
+                                        title="Has query parameters",
+                                    )
                                     # Payload indicator
                                     v3.VIcon(
                                         "mdi-code-json",
                                         v_if="event.request_body || event.response_body",
                                         size="x-small",
-                                        color="warning",
-                                        classes="ml-2",
+                                        color="info",
+                                        classes="ml-1",
                                         title="Has payload data - click to expand",
                                     )
-                                # Expanded content with request/response
+                                    # Headers indicator
+                                    v3.VIcon(
+                                        "mdi-format-header-pound",
+                                        v_if="event.request_headers",
+                                        size="x-small",
+                                        color="purple",
+                                        classes="ml-1",
+                                        title="Has request headers",
+                                    )
+                                # Expanded content with request/response (GAP-UI-TRACE-001)
                                 with v3.VExpansionPanelText(
                                     classes="pa-2",
                                 ):
+                                    # Query params row (if present)
+                                    with v3.VRow(
+                                        v_if="event.query_params",
+                                        no_gutters=True,
+                                        dense=True,
+                                        classes="mb-2",
+                                    ):
+                                        with v3.VCol(cols=12):
+                                            html.Div(
+                                                "Query Parameters",
+                                                classes="text-caption text-warning font-weight-bold mb-1",
+                                            )
+                                            with v3.VSheet(
+                                                color="grey-darken-4",
+                                                rounded=True,
+                                                classes="pa-2",
+                                                style="font-family: monospace; font-size: 11px;",
+                                            ):
+                                                html.Pre(
+                                                    "{{ JSON.stringify(event.query_params, null, 2) }}",
+                                                    classes="ma-0 text-white",
+                                                    style="white-space: pre-wrap; word-break: break-word;",
+                                                )
+
+                                    # Headers row (if present)
+                                    with v3.VRow(
+                                        v_if="event.request_headers",
+                                        no_gutters=True,
+                                        dense=True,
+                                        classes="mb-2",
+                                    ):
+                                        with v3.VCol(cols=12):
+                                            html.Div(
+                                                "Request Headers",
+                                                classes="text-caption text-purple font-weight-bold mb-1",
+                                            )
+                                            with v3.VSheet(
+                                                color="grey-darken-4",
+                                                rounded=True,
+                                                classes="pa-2",
+                                                style="max-height: 100px; overflow: auto; font-family: monospace; font-size: 11px;",
+                                            ):
+                                                html.Pre(
+                                                    "{{ JSON.stringify(event.request_headers, null, 2) }}",
+                                                    classes="ma-0 text-white",
+                                                    style="white-space: pre-wrap; word-break: break-word;",
+                                                )
+
                                     with v3.VRow(no_gutters=True, dense=True):
-                                        # Request panel
+                                        # Request body panel
                                         with v3.VCol(cols=6, classes="pr-1"):
                                             html.Div(
-                                                "Request",
+                                                "Request Body",
                                                 classes="text-caption text-info font-weight-bold mb-1",
                                             )
                                             with v3.VSheet(

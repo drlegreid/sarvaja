@@ -10,10 +10,7 @@ Dependencies:
     pip install trame trame-vuetify trame-client
 """
 
-import asyncio
 import json
-from datetime import datetime
-from typing import Optional
 import threading
 
 from trame.app import get_server

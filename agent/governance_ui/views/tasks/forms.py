@@ -21,8 +21,9 @@ def build_task_edit_form() -> None:
             __properties=["data-testid"],
             **{"data-testid": "task-edit-description"}
         )
+        # Per UI-RESP-01-v1: Responsive form layout
         with v3.VRow():
-            with v3.VCol(cols=4):
+            with v3.VCol(cols=12, sm=4):
                 v3.VSelect(
                     v_model="edit_task_phase",
                     label="Phase",
@@ -35,7 +36,7 @@ def build_task_edit_form() -> None:
                     __properties=["data-testid"],
                     **{"data-testid": "task-edit-phase"}
                 )
-            with v3.VCol(cols=4):
+            with v3.VCol(cols=12, sm=4):
                 v3.VSelect(
                     v_model="edit_task_status",
                     label="Status",
@@ -45,7 +46,7 @@ def build_task_edit_form() -> None:
                     __properties=["data-testid"],
                     **{"data-testid": "task-edit-status"}
                 )
-            with v3.VCol(cols=4):
+            with v3.VCol(cols=12, sm=4):
                 v3.VTextField(
                     v_model="edit_task_agent",
                     label="Agent ID",

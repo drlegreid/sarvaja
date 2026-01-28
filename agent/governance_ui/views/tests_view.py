@@ -133,31 +133,46 @@ def build_current_run_panel() -> None:
                         size="small"
                     )
                 with v3.VCardText():
-                    # Summary stats
+                    # Summary stats - Per UI-RESP-01-v1: Responsive
                     with v3.VRow(dense=True, v_if="tests_current_run.total > 0"):
-                        with v3.VCol(cols=3):
+                        with v3.VCol(cols=6, sm=3):
                             html.Div("Total", classes="text-caption text-grey")
                             html.Div(
                                 "{{ tests_current_run.total }}",
                                 classes="text-h5 font-weight-bold"
                             )
-                        with v3.VCol(cols=3):
+                        with v3.VCol(cols=6, sm=3):
                             html.Div("Passed", classes="text-caption text-success")
                             html.Div(
                                 "{{ tests_current_run.passed }}",
                                 classes="text-h5 font-weight-bold text-success"
                             )
-                        with v3.VCol(cols=3):
+                        with v3.VCol(cols=6, sm=3):
                             html.Div("Failed", classes="text-caption text-error")
                             html.Div(
                                 "{{ tests_current_run.failed }}",
                                 classes="text-h5 font-weight-bold text-error"
                             )
-                        with v3.VCol(cols=3):
+                        with v3.VCol(cols=6, sm=3):
                             html.Div("Duration", classes="text-caption text-grey")
                             html.Div(
                                 "{{ (tests_current_run.duration_seconds || 0).toFixed(1) }}s",
                                 classes="text-h5 font-weight-bold"
+                            )
+                    # Evidence file link (UI-AUDIT-010)
+                    with v3.VAlert(
+                        v_if="tests_current_run.evidence_file",
+                        type="success",
+                        variant="tonal",
+                        density="compact",
+                        classes="mt-3"
+                    ):
+                        with html.Div(classes="d-flex align-center"):
+                            v3.VIcon("mdi-file-document-check", classes="mr-2")
+                            html.Span("Evidence file generated: ")
+                            html.Code(
+                                "{{ tests_current_run.evidence_file.split('/').pop() }}",
+                                classes="ml-1"
                             )
                     # Output
                     html.Pre(
