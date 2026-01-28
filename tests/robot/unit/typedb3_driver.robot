@@ -4,6 +4,7 @@ Documentation    RF-004: Unit Tests - TypeDB 3.x Driver Migration
 ...              Per GAP-TYPEDB-DRIVER-001: TypeDB 3.x upgrade path
 Library          Collections
 Library          ../../libs/TypeDB3DriverLibrary.py
+Force Tags        unit    typedb3    driver    medium    typedb    validate    ARCH-INFRA-01-v1
 
 *** Test Cases ***
 # =============================================================================

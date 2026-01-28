@@ -4,6 +4,7 @@ Documentation    RF-004: Unit Tests - Reactive Loaders with Trace Status
 ...              Per GAP-UI-047: Reactive loaders with trace status
 Library          Collections
 Library          ../../libs/ReactiveLoadersLibrary.py
+Force Tags        unit    ui    loaders    low    read    UI-LOADER-01-v1
 
 *** Test Cases ***
 # =============================================================================

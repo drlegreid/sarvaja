@@ -4,6 +4,7 @@ Documentation    RF-004: Unit Tests - UI State Management
 ...              Per DOC-SIZE-01-v1: State management tests
 Library          Collections
 Library          ../../libs/UIStateLibrary.py
+Force Tags        unit    ui    state    low    validate    UI-RESP-01-v1
 
 *** Test Cases ***
 # =============================================================================

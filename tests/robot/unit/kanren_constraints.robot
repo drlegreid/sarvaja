@@ -5,6 +5,7 @@ Documentation    RF-004: Unit Tests - Kanren Constraint Engine
 ...              Note: kanren is optional - tests skip if not installed
 Library          Collections
 Library          ../../libs/KanrenConstraintsLibrary.py
+Force Tags        unit    kanren    reasoning    high    rule    validate    TEST-TDD-01-v1
 
 *** Test Cases ***
 # =============================================================================

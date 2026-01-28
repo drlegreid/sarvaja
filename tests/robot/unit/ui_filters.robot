@@ -4,6 +4,7 @@ Documentation    RF-004: Unit Tests - UI Filter Functions
 ...              Per DOC-SIZE-01-v1: Split from test_governance_ui.py
 Library          Collections
 Library          ../../libs/UIFiltersLibrary.py
+Force Tags        unit    ui    filters    low    validate    UI-DESIGN-02-v1
 
 *** Test Cases ***
 # =============================================================================

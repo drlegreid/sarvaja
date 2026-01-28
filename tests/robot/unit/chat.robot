@@ -5,7 +5,7 @@ Documentation    Agent Chat Tests (ORCH-006)
 Library          Collections
 Library          ../../libs/ChatLibrary.py
 Resource         ../resources/common.resource
-Tags             unit    chat    orch-006    rule-023
+Force Tags             unit    chat    orch-006    rule-023    medium    mcp    session    validate    ARCH-MCP-02-v1
 
 *** Test Cases ***
 # =============================================================================

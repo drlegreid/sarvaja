@@ -4,6 +4,7 @@ Documentation    RF-004: Unit Tests - Task Execution Viewer
 ...              Per ORCH-007: Task Execution Viewer
 Library          Collections
 Library          ../../libs/TaskExecutionLibrary.py
+Force Tags        unit    tasks    execution    high    TASK-LIFE-01-v1    task    validate
 
 *** Test Cases ***
 # =============================================================================

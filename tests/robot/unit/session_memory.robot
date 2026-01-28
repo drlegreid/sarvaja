@@ -4,6 +4,7 @@ Documentation    RF-004: Unit Tests - Session Memory
 ...              Per P11.4: Session memory integration
 Library          Collections
 Library          ../../libs/SessionMemoryLibrary.py
+Force Tags        unit    sessions    memory    high    session    read    SESSION-EVID-01-v1
 
 *** Test Cases ***
 # =============================================================================

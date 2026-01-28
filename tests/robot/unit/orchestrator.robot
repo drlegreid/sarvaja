@@ -4,6 +4,8 @@ Documentation    RF-004: Unit Tests - Orchestrator
 ...              Per ORCH-002: Agent orchestrator
 Library          Collections
 Library          ../../libs/OrchestratorLibrary.py
+Library          ../../libs/OrchestratorAdvancedLibrary.py
+Force Tags        unit    agents    orchestration    high    agent    validate    WORKFLOW-AUTO-01-v1
 
 *** Test Cases ***
 # =============================================================================

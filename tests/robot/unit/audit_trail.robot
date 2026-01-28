@@ -4,6 +4,7 @@ Documentation    RF-004: Unit Tests - Audit Trail Debugability
 ...              Tests correlation_id and applied_rules tracking
 Library          Collections
 Library          ../../libs/AuditTrailLibrary.py
+Force Tags        unit    audit    trail    medium    GOV-TRANSP-01-v1    GAP-MONITOR-IPC-001    session    read
 
 *** Test Cases ***
 # =============================================================================

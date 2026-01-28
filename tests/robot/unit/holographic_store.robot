@@ -4,6 +4,7 @@ Documentation    RF-004: Unit Tests - Holographic Test Store
 ...              Per EPIC-TEST-COMPRESS-001 + FH-001: Multi-resolution evidence
 Library          Collections
 Library          ../../libs/HolographicStoreLibrary.py
+Force Tags        unit    evidence    holographic    low    TEST-EVID-01-v1    evidence-file    read
 
 *** Test Cases ***
 # =============================================================================

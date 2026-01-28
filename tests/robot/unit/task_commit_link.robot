@@ -4,6 +4,7 @@ Documentation    RF-004: Unit Tests - Task-Commit Linking
 ...              Per GAP-TASK-LINK-002: Tasks linked to github commits
 Library          Collections
 Library          ../../libs/TaskCommitLinkLibrary.py
+Force Tags        unit    tasks    commits    medium    TEST-FIX-01-v1    task    commit    link
 
 *** Test Cases ***
 # =============================================================================

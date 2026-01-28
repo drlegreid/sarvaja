@@ -5,7 +5,7 @@ Documentation    MCP Tools Tests
 Library          Collections
 Library          ../../libs/MCPToolsLibrary.py
 Resource         ../resources/common.resource
-Tags             unit    mcp    tools
+Force Tags             unit    mcp    tools    medium    validate    ARCH-MCP-02-v1
 
 *** Test Cases ***
 # =============================================================================
@@ -189,14 +189,14 @@ Test All Seven Tools Registered
 
 Test Health Response Structure
     [Documentation]    Health check response has required GAP-MCP-002 fields
-    [Tags]    health    gap-mcp-002
+    [Tags]    health    gap-mcp-002    GAP-MCP-002
     ${result}=    Health Response Structure
     Should Be True    ${result['unhealthy_fields_ok']}
     Should Be True    ${result['healthy_fields_ok']}
 
 Test Action Required Pattern For Claude Code
     [Documentation]    action_required: START_SERVICES triggers Claude Code recovery
-    [Tags]    health    gap-mcp-002
+    [Tags]    health    gap-mcp-002    GAP-MCP-002
     ${result}=    Action Required Pattern For Claude Code
     Should Be True    ${result['action_start_services']}
     Should Be True    ${result['has_typedb']}

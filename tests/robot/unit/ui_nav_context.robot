@@ -4,6 +4,7 @@ Documentation    RF-004: Unit Tests - UI Navigation Context
 ...              Per UI-NAV-01-v1: Entity Navigation Context
 Library          Collections
 Library          ../../libs/UINavContextLibrary.py
+Force Tags        unit    ui    navigation    low    GAP-UI-AUDIT-002    session    read    UI-NAV-01-v1
 
 *** Test Cases ***
 # =============================================================================

@@ -4,6 +4,7 @@ Documentation    RF-004: Unit Tests - DSM Tracker Split
 ...              Per GAP-FILE-024: dsm/tracker.py split
 Library          Collections
 Library          ../../libs/DSMTrackerSplitLibrary.py
+Force Tags        unit    dsm    split    medium    DOC-SIZE-01-v1    session    validate
 
 *** Test Cases ***
 # =============================================================================

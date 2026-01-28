@@ -6,7 +6,7 @@ Documentation    TypeDB 3.x Connection Component Tests
 Library          Collections
 Library          ../../libs/TypeDB3ConnectionLibrary.py
 Resource         ../resources/common.resource
-Tags             component    typedb3    connection
+Force Tags             component    typedb3    connection    medium    typedb    validate    ARCH-INFRA-01-v1
 
 *** Test Cases ***
 # =============================================================================

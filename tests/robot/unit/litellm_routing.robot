@@ -4,6 +4,7 @@ Documentation    RF-004: Unit Tests - LiteLLM Model Routing
 ...              Integration tests for LiteLLM routing
 Library          Collections
 Library          ../../libs/LiteLLMRoutingLibrary.py
+Force Tags        unit    llm    routing    low    validate    ARCH-MCP-02-v1
 
 *** Test Cases ***
 # =============================================================================

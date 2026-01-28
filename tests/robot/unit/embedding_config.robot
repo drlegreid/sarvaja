@@ -4,6 +4,7 @@ Documentation    RF-004: Unit Tests - Embedding Configuration
 ...              Per GAP-EMBED-001: Embedding Configuration
 Library          Collections
 Library          ../../libs/EmbeddingConfigLibrary.py
+Force Tags        unit    embedding    config    low    validate    ARCH-INFRA-01-v1
 
 *** Test Cases ***
 # =============================================================================

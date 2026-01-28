@@ -4,6 +4,7 @@ Documentation    RF-004: Unit Tests - Agent Trust Dashboard
 ...              Per P9.5: Agent trust tracking and RULE-011 compliance
 Library          Collections
 Library          ../../libs/AgentTrustLibrary.py
+Force Tags        unit    agents    trust    critical    agent    validate    GOV-BICAM-01-v1
 
 *** Test Cases ***
 # =============================================================================

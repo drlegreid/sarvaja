@@ -6,7 +6,7 @@ Documentation    Rules Validation Tests
 Library          Collections
 Library          ../../libs/RulesValidationLibrary.py
 Resource         ../resources/common.resource
-Tags             unit    rules    validation
+Force Tags             unit    rules    validation    high    TEST-TAXON-01-v1    rule    validate
 
 *** Test Cases ***
 # =============================================================================

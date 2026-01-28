@@ -4,6 +4,7 @@ Documentation    RF-004: Unit Tests - Sync Status Tool
 ...              Per GAP-SYNC-002: Divergence Validation Workflow
 Library          Collections
 Library          ../../libs/SyncStatusLibrary.py
+Force Tags             unit    sync    GAP-SYNC-002    medium    task    session    TASK-LIFE-01-v1
 
 *** Test Cases ***
 # =============================================================================

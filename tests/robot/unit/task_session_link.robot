@@ -4,6 +4,7 @@ Documentation    RF-004: Unit Tests - Task-Session Linking
 ...              Per GAP-TASK-LINK-001: Tasks linked to session documents
 Library          Collections
 Library          ../../libs/TaskSessionLinkLibrary.py
+Force Tags        unit    tasks    sessions    medium    TEST-FIX-01-v1    GAP-TASK-DATA-QUALITY-001    task    session    link
 
 *** Test Cases ***
 # =============================================================================

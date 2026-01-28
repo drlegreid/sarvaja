@@ -4,6 +4,7 @@ Documentation    RF-004: Unit Tests - Portable Configuration
 ...              Per RULE-040: Portable Configuration Patterns
 Library          Collections
 Library          ../../libs/PortableConfigLibrary.py
+Force Tags        unit    config    portable    low    validate    ARCH-INFRA-02-v1
 
 *** Test Cases ***
 # =============================================================================

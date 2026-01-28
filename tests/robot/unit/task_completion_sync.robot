@@ -4,6 +4,7 @@ Documentation    RF-004: Unit Tests - Task Completion Sync
 ...              Per MCP-002-B: Auto-mark tasks DONE when completed
 Library          Collections
 Library          ../../libs/TaskCompletionSyncLibrary.py
+Force Tags        unit    tasks    sync    medium    TASK-LIFE-01-v1    GAP-TASK-DATA-QUALITY-001    task
 
 *** Test Cases ***
 # =============================================================================

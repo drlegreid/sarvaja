@@ -5,6 +5,8 @@ Documentation    RF-004: Unit Tests - Pydantic AI Type-Safe Governance Tools
 ...              Per RULE-017: Type-Safe Tool Development
 Library          Collections
 Library          ../../libs/PydanticToolsLibrary.py
+Library          ../../libs/PydanticToolsAdvancedLibrary.py
+Force Tags        unit    tools    pydantic    low    mcp    validate    MCP-DOC-01-v1
 
 *** Test Cases ***
 # =============================================================================

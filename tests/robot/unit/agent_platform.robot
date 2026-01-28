@@ -5,7 +5,7 @@ Documentation    Agent Platform E2E and Integration Tests
 Library          Collections
 Library          ../../libs/AgentPlatformLibrary.py
 Resource         ../resources/common.resource
-Tags             unit    agents    capability
+Force Tags             unit    agents    capability    high    agent    validate    ARCH-INFRA-01-v1
 
 *** Test Cases ***
 # =============================================================================

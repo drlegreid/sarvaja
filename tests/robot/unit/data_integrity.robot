@@ -4,6 +4,7 @@ Documentation    RF-004: Unit Tests - Data Integrity Validation
 ...              Per P10.7: Entity/Relation Schema Compliance
 Library          Collections
 Library          ../../libs/DataIntegrityLibrary.py
+Force Tags        unit    integrity    data    low    tasks    task    validate    TASK-VALID-01-v1
 
 *** Test Cases ***
 # =============================================================================

@@ -4,6 +4,7 @@ Documentation    RF-004: Unit Tests - Health Modes and AMNESIA Detection
 ...              Per GAP-AMNESIA-OUTPUT-001 and GAP-HEALTH-AGGRESSIVE-001
 Library          Collections
 Library          ../../libs/HealthModesLibrary.py
+Force Tags        unit    health    modes    low    SAFETY-HEALTH-01-v1    validate
 
 *** Test Cases ***
 # =============================================================================
@@ -12,7 +13,7 @@ Library          ../../libs/HealthModesLibrary.py
 
 Format Summary Without Amnesia
     [Documentation]    GIVEN no amnesia WHEN format_summary THEN no warning
-    [Tags]    unit    health    amnesia    summary
+    [Tags]    unit    health    amnesia    summary    GAP-AMNESIA-OUTPUT-001
     ${result}=    Format Summary Without Amnesia
     ${skipped}=    Evaluate    $result.get('skipped', False)
     Skip If    ${skipped}    Import failed
@@ -21,7 +22,7 @@ Format Summary Without Amnesia
 
 Format Summary With Amnesia Detected
     [Documentation]    GIVEN amnesia detected WHEN format_summary THEN warning
-    [Tags]    unit    health    amnesia    summary
+    [Tags]    unit    health    amnesia    summary    GAP-AMNESIA-OUTPUT-001
     ${result}=    Format Summary With Amnesia Detected
     ${skipped}=    Evaluate    $result.get('skipped', False)
     Skip If    ${skipped}    Import failed
@@ -30,7 +31,7 @@ Format Summary With Amnesia Detected
 
 Format Summary Amnesia Not Detected
     [Documentation]    GIVEN low confidence WHEN format_summary THEN no warning
-    [Tags]    unit    health    amnesia    summary
+    [Tags]    unit    health    amnesia    summary    GAP-AMNESIA-OUTPUT-001
     ${result}=    Format Summary Amnesia Not Detected
     ${skipped}=    Evaluate    $result.get('skipped', False)
     Skip If    ${skipped}    Import failed
@@ -43,7 +44,7 @@ Format Summary Amnesia Not Detected
 
 Health Mode Quiet Threshold
     [Documentation]    GIVEN quiet mode WHEN check THEN 0.70 threshold
-    [Tags]    unit    health    mode    threshold
+    [Tags]    unit    health    mode    threshold    GAP-HEALTH-AGGRESSIVE-001
     ${result}=    Health Mode Quiet Threshold
     ${skipped}=    Evaluate    $result.get('skipped', False)
     Skip If    ${skipped}    Import failed
@@ -52,7 +53,7 @@ Health Mode Quiet Threshold
 
 Health Mode Normal Threshold
     [Documentation]    GIVEN normal mode WHEN check THEN 0.50 threshold
-    [Tags]    unit    health    mode    threshold
+    [Tags]    unit    health    mode    threshold    GAP-HEALTH-AGGRESSIVE-001
     ${result}=    Health Mode Normal Threshold
     ${skipped}=    Evaluate    $result.get('skipped', False)
     Skip If    ${skipped}    Import failed
@@ -61,7 +62,7 @@ Health Mode Normal Threshold
 
 Health Mode Aggressive Threshold
     [Documentation]    GIVEN aggressive mode WHEN check THEN 0.25 threshold
-    [Tags]    unit    health    mode    threshold
+    [Tags]    unit    health    mode    threshold    GAP-HEALTH-AGGRESSIVE-001
     ${result}=    Health Mode Aggressive Threshold
     ${skipped}=    Evaluate    $result.get('skipped', False)
     Skip If    ${skipped}    Import failed
@@ -70,7 +71,7 @@ Health Mode Aggressive Threshold
 
 Health Mode Default When Unset
     [Documentation]    GIVEN no ENV WHEN check THEN normal mode
-    [Tags]    unit    health    mode    default
+    [Tags]    unit    health    mode    default    GAP-HEALTH-AGGRESSIVE-001
     ${result}=    Health Mode Default When Unset
     ${skipped}=    Evaluate    $result.get('skipped', False)
     Skip If    ${skipped}    Import failed
@@ -79,7 +80,7 @@ Health Mode Default When Unset
 
 Health Mode Case Insensitive
     [Documentation]    GIVEN uppercase mode WHEN check THEN works
-    [Tags]    unit    health    mode    case
+    [Tags]    unit    health    mode    case    GAP-HEALTH-AGGRESSIVE-001
     ${result}=    Health Mode Case Insensitive
     ${skipped}=    Evaluate    $result.get('skipped', False)
     Skip If    ${skipped}    Import failed
@@ -92,7 +93,7 @@ Health Mode Case Insensitive
 
 Use Detailed In Aggressive Mode
     [Documentation]    GIVEN aggressive mode WHEN decide THEN use detailed
-    [Tags]    unit    health    aggressive    detailed
+    [Tags]    unit    health    aggressive    detailed    GAP-HEALTH-AGGRESSIVE-001
     ${result}=    Use Detailed In Aggressive Mode
     ${skipped}=    Evaluate    $result.get('skipped', False)
     Skip If    ${skipped}    Import failed
@@ -100,7 +101,7 @@ Use Detailed In Aggressive Mode
 
 Use Summary In Normal Mode
     [Documentation]    GIVEN normal mode WHEN decide THEN use summary
-    [Tags]    unit    health    normal    summary
+    [Tags]    unit    health    normal    summary    GAP-HEALTH-AGGRESSIVE-001
     ${result}=    Use Summary In Normal Mode
     ${skipped}=    Evaluate    $result.get('skipped', False)
     Skip If    ${skipped}    Import failed
@@ -112,7 +113,7 @@ Use Summary In Normal Mode
 
 Aggressive Detects Low Confidence
     [Documentation]    GIVEN 30% confidence WHEN aggressive THEN detected
-    [Tags]    unit    health    threshold    aggressive
+    [Tags]    unit    health    threshold    aggressive    GAP-HEALTH-AGGRESSIVE-001
     ${result}=    Aggressive Detects Low Confidence
     ${skipped}=    Evaluate    $result.get('skipped', False)
     Skip If    ${skipped}    Import failed
@@ -120,7 +121,7 @@ Aggressive Detects Low Confidence
 
 Normal Ignores Low Confidence
     [Documentation]    GIVEN 30% confidence WHEN normal THEN not detected
-    [Tags]    unit    health    threshold    normal
+    [Tags]    unit    health    threshold    normal    GAP-HEALTH-AGGRESSIVE-001
     ${result}=    Normal Ignores Low Confidence
     ${skipped}=    Evaluate    $result.get('skipped', False)
     Skip If    ${skipped}    Import failed
@@ -128,7 +129,7 @@ Normal Ignores Low Confidence
 
 Quiet Ignores Medium Confidence
     [Documentation]    GIVEN 60% confidence WHEN quiet THEN not detected
-    [Tags]    unit    health    threshold    quiet
+    [Tags]    unit    health    threshold    quiet    GAP-HEALTH-AGGRESSIVE-001
     ${result}=    Quiet Ignores Medium Confidence
     ${skipped}=    Evaluate    $result.get('skipped', False)
     Skip If    ${skipped}    Import failed

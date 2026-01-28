@@ -5,8 +5,9 @@ Documentation    Rules Archive and Restore Tests
 ...              Tests archive, restore, and MCP wrapper functionality.
 Library          Collections
 Library          ../../libs/RulesArchiveLibrary.py
+Library          ../../libs/RulesArchiveAdvancedLibrary.py
 Resource         ../resources/common.resource
-Tags             unit    rules    archive
+Force Tags             unit    rules    archive    low    GOV-RULE-01-v1    rule    restore
 
 *** Test Cases ***
 # =============================================================================

@@ -4,6 +4,7 @@ Documentation    RF-004: Unit Tests - MCP Agents Tools
 ...              Per P10.4: Agent CRUD MCP tools
 Library          Collections
 Library          ../../libs/MCPAgentsLibrary.py
+Force Tags        unit    mcp    agents    high    ARCH-MCP-02-v1    agent    validate
 
 *** Test Cases ***
 # =============================================================================

@@ -4,6 +4,7 @@ Documentation    RF-004: Unit Tests - Governance Module
 ...              Per DECISION-003: TypeDB-First Architecture
 Library          Collections
 Library          ../../libs/GovernanceLibrary.py
+Force Tags        unit    governance    critical    GOV-RULE-01-v1    rules    rule    validate
 
 *** Test Cases ***
 # =============================================================================

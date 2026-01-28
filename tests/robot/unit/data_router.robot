@@ -4,6 +4,7 @@ Documentation    RF-004: Unit Tests - Data Router
 ...              Per P7.3: Routing new data to TypeDB
 Library          Collections
 Library          ../../libs/DataRouterLibrary.py
+Force Tags        unit    data    routing    medium    rule    read    ARCH-MCP-02-v1
 
 *** Test Cases ***
 # =============================================================================

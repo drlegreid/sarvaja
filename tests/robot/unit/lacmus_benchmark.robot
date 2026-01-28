@@ -6,7 +6,7 @@ Documentation    Lacmus Benchmark Tests - Agent Platform PoC Validation
 Library          Collections
 Library          ../../libs/LacmusBenchmarkLibrary.py
 Resource         ../resources/common.resource
-Tags             benchmark    lacmus    agents    trust
+Force Tags             benchmark    lacmus    agents    trust    medium    agent    validate    TEST-COMP-01-v1
 
 *** Test Cases ***
 # =============================================================================

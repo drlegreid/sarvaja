@@ -4,6 +4,7 @@ Documentation    RF-004: Unit Tests - UI Constants
 ...              Per DOC-SIZE-01-v1: Constants export tests
 Library          Collections
 Library          ../../libs/UIConstantsLibrary.py
+Force Tags        unit    ui    constants    low    validate    UI-NAV-01-v1
 
 *** Test Cases ***
 # =============================================================================

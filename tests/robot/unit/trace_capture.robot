@@ -4,6 +4,7 @@ Documentation    RF-004: Unit Tests - Trace Capture Module
 ...              Per RD-TESTING-STRATEGY TEST-002: Evidence collection at trace level
 Library          Collections
 Library          ../../libs/TraceCaptureLibrary.py
+Force Tags        unit    trace    capture    medium    SESSION-EVID-01-v1    GAP-UI-TRACE-001    session    validate
 
 *** Test Cases ***
 # =============================================================================

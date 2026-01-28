@@ -4,6 +4,7 @@ Documentation    RF-004: Unit Tests - Gap Parser Module
 ...              Per DATA-QUALITY: Validates gap parsing excludes Recently Resolved
 Library          Collections
 Library          ../../libs/GapParserLibrary.py
+Force Tags        unit    gaps    parser    medium    TEST-TAXON-01-v1    gap    read
 
 *** Variables ***
 ${GAP_INDEX_WITH_RESOLVED}    SEPARATOR=\n

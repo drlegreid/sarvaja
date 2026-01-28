@@ -4,6 +4,7 @@ Documentation    RF-004: Unit Tests - Decision Dates
 ...              Per GAP-UI-EXP-001: Decisions missing dates
 Library          Collections
 Library          ../../libs/DecisionDatesLibrary.py
+Force Tags        unit    decisions    dates    low    decision    read    SESSION-EVID-01-v1
 
 *** Test Cases ***
 # =============================================================================

@@ -4,6 +4,7 @@ Documentation    RF-004: Integration Tests - MCP Server Split
 ...              Per 4-Server Split Architecture (2026-01-03)
 Library          Collections
 Library          ../../libs/McpServerSplitLibrary.py
+Force Tags        unit    mcp    server    medium    DOC-SIZE-01-v1    validate
 
 *** Test Cases ***
 # =============================================================================

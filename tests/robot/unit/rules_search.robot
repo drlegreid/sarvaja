@@ -6,6 +6,7 @@ Library          Collections
 Library          ../../libs/RulesSearchLibrary.py
 
 Suite Setup      Initialize Mock Rules
+Force Tags             unit    rules    search    GAP-UI-SEARCH-001    low    GAP-RULE-DATA-QUALITY-001    rule
 
 *** Test Cases ***
 # =============================================================================

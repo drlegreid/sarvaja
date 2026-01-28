@@ -4,6 +4,7 @@ Documentation    RF-004: Unit Tests - Agents Module Split
 ...              Per GAP-FILE-028: routes/agents.py split
 Library          Collections
 Library          ../../libs/AgentsSplitLibrary.py
+Force Tags        unit    agents    split    medium    DOC-SIZE-01-v1    agent    validate
 
 *** Test Cases ***
 # =============================================================================

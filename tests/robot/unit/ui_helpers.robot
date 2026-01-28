@@ -4,6 +4,7 @@ Documentation    RF-004: Unit Tests - UI Helpers
 ...              Per DOC-SIZE-01-v1: UI helper function tests
 Library          Collections
 Library          ../../libs/UIHelpersLibrary.py
+Force Tags        unit    ui    helpers    low    validate    UI-DESIGN-02-v1
 
 *** Test Cases ***
 # =============================================================================

@@ -4,6 +4,7 @@ Documentation    RF-004: Unit Tests - Summary Compressor
 ...              Per EPIC-TEST-COMPRESS-001: Test results compression
 Library          Collections
 Library          ../../libs/SummaryCompressorLibrary.py
+Force Tags        unit    evidence    compression    low    evidence-file    validate    CONTEXT-SAVE-01-v1
 
 *** Test Cases ***
 # =============================================================================

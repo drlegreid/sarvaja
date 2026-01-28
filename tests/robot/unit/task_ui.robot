@@ -5,7 +5,7 @@ Documentation    Task UI Tests
 Library          Collections
 Library          ../../libs/TaskUILibrary.py
 Resource         ../resources/common.resource
-Tags             unit    task-ui    agui    rule-019
+Force Tags             unit    task-ui    agui    rule-019    medium    tasks    task    read    TASK-LIFE-01-v1
 
 *** Test Cases ***
 # =============================================================================

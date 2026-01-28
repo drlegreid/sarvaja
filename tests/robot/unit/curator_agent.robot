@@ -4,6 +4,8 @@ Documentation    RF-004: Unit Tests - Rules Curator Agent
 ...              Per ORCH-005: Rules curator agent
 Library          Collections
 Library          ../../libs/CuratorAgentLibrary.py
+Library          ../../libs/CuratorAgentAdvancedLibrary.py
+Force Tags        unit    agents    curator    medium    agent    validate    GOV-RULE-01-v1
 
 *** Test Cases ***
 # =============================================================================

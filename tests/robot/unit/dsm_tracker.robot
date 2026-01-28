@@ -4,6 +4,7 @@ Documentation    RF-004: Unit Tests - DSM Tracker Module
 ...              Per RULE-012: Deep Sleep Protocol (DSP) governance
 Library          Collections
 Library          ../../libs/DSMTrackerLibrary.py
+Force Tags        unit    dsm    tracker    medium    GAP-DSP-NOTIFY-001    session    validate    SESSION-DSM-01-v1
 
 Suite Setup      Setup DSM Test Environment
 Suite Teardown   Cleanup DSM Test Environment

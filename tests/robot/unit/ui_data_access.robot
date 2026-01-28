@@ -4,6 +4,7 @@ Documentation    RF-004: Unit Tests - UI Data Access Functions
 ...              Per DOC-SIZE-01-v1: Split from test_governance_ui.py
 Library          Collections
 Library          ../../libs/UIDataAccessLibrary.py
+Force Tags        unit    ui    data    low    read    UI-DESIGN-02-v1
 
 *** Test Cases ***
 # =============================================================================

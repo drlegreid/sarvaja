@@ -5,6 +5,7 @@ Documentation    RF-004: Unit Tests - UI Infrastructure View
 ...              Per GAP-INFRA-004: Docker/Podman health dashboard
 Library          Collections
 Library          ../../libs/UIInfraLibrary.py
+Force Tags        unit    ui    infra    low    DOC-SIZE-01-v1    validate
 
 *** Test Cases ***
 # =============================================================================

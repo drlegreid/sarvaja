@@ -6,7 +6,7 @@ Documentation    Heuristics Example Tests - SFDIPOT and CRUCSS Frameworks
 Library          Collections
 Library          ../../libs/HeuristicsExampleLibrary.py
 Resource         ../resources/common.resource
-Tags             unit    heuristics    sfdipot    crucss
+Force Tags             unit    heuristics    sfdipot    crucss    low    validate    TEST-COMP-01-v1
 
 *** Test Cases ***
 # =============================================================================
@@ -31,7 +31,7 @@ Test API Routes Match Spec
 
 Test Task Description Integrity
     [Documentation]    Tasks should have descriptions (GAP-DATA-001)
-    [Tags]    sfdipot    data    task
+    [Tags]    sfdipot    data    task    GAP-DATA-001
     ${result}=    Task Description Integrity
     Should Be True    ${result['integrity_check']}
 
@@ -63,7 +63,7 @@ Test Task Status Workflow
 
 Test API Auth Required
     [Documentation]    API should require authentication (GAP-SEC-001)
-    [Tags]    crucss    security    auth
+    [Tags]    crucss    security    auth    GAP-SEC-001
     ${result}=    API Auth Required
     Should Be True    ${result['auth_check']}
 

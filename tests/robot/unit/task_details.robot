@@ -5,6 +5,7 @@ Documentation    RF-004: Unit Tests - Task Detail Sections
 ...              Per TASK-TECH-01-v1: Technology Solution Documentation
 Library          Collections
 Library          ../../libs/TaskDetailsLibrary.py
+Force Tags        unit    tasks    details    medium    GAP-TASK-DATA-QUALITY-001    task    read    TASK-TECH-01-v1
 
 *** Test Cases ***
 # =============================================================================

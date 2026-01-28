@@ -4,6 +4,7 @@ Documentation    RF-004: Unit Tests - MCP Tasks Tools
 ...              Per P10.4: Task CRUD MCP tools
 Library          Collections
 Library          ../../libs/MCPTasksLibrary.py
+Force Tags        unit    mcp    tasks    high    ARCH-MCP-02-v1    task    validate
 
 *** Test Cases ***
 # =============================================================================

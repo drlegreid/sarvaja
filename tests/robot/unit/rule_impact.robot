@@ -4,6 +4,7 @@ Documentation    RF-004: Unit Tests - Rule Impact Analyzer
 ...              Per P9.4: Rule dependency analysis and impact visualization
 Library          Collections
 Library          ../../libs/RuleImpactLibrary.py
+Force Tags        unit    rules    impact    high    GOV-RULE-01-v1    rule    validate
 
 *** Test Cases ***
 # =============================================================================

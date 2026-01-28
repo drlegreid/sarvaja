@@ -4,6 +4,7 @@ Documentation    RF-004: Unit Tests - ChromaDB Migration Tool
 ...              Per P7.4: ChromaDB migration tool
 Library          Collections
 Library          ../../libs/ChromaMigrationLibrary.py
+Force Tags        unit    chromadb    migration    low    migrate    ARCH-INFRA-01-v1
 
 *** Test Cases ***
 # =============================================================================

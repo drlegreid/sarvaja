@@ -6,7 +6,7 @@ Documentation    TypeDB 3.x Inference Functions Integration Tests
 Library          Collections
 Library          ../../libs/TypeDBFunctionsLibrary.py
 Resource         ../resources/common.resource
-Tags             integration    typedb    typedb3    functions
+Force Tags             integration    typedb    typedb3    functions    medium    validate    ARCH-INFRA-01-v1
 
 *** Test Cases ***
 # =============================================================================

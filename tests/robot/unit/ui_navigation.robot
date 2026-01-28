@@ -4,6 +4,7 @@ Documentation    RF-004: Unit Tests - UI Navigation Configuration
 ...              Per DOC-SIZE-01-v1: Split from test_governance_ui.py
 Library          Collections
 Library          ../../libs/UINavigationLibrary.py
+Force Tags        unit    ui    navigation    low    validate    UI-NAV-01-v1
 
 *** Test Cases ***
 # =============================================================================

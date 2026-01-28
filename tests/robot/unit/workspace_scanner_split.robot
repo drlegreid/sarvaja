@@ -4,6 +4,7 @@ Documentation    RF-004: Unit Tests - Workspace Scanner Split Module
 ...              Per DOC-SIZE-01-v1: Files under 400 lines
 Library          Collections
 Library          ../../libs/WorkspaceScannerSplitLibrary.py
+Force Tags        unit    workspace    scanner    medium    task    search    DOC-LINK-01-v1
 
 *** Test Cases ***
 # =============================================================================

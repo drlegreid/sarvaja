@@ -4,6 +4,7 @@ Documentation    RF-004: Unit Tests - Audit Filter Handlers
 ...              Per UI-AUDIT-004: Audit trail filterable by entity
 Library          Collections
 Library          ../../libs/AuditFilterHandlersLibrary.py
+Force Tags        unit    audit    filters    medium    GOV-TRANSP-01-v1    GAP-UI-AUDIT-004    session    read
 
 *** Test Cases ***
 # =============================================================================

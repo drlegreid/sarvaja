@@ -6,7 +6,7 @@ Documentation    TypeDB 3.x Value Extraction Integration Tests
 Library          Collections
 Library          ../../libs/TypeDB3ValueExtractionLibrary.py
 Resource         ../resources/common.resource
-Tags             integration    typedb3    api    value-extraction
+Force Tags             integration    typedb3    api    value-extraction    medium    typedb    read    ARCH-INFRA-01-v1
 
 *** Test Cases ***
 # =============================================================================

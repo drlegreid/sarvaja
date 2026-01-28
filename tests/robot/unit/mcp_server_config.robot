@@ -5,6 +5,7 @@ Documentation    RF-004: Unit Tests - MCP Server Configuration
 ...              Per ARCH-MCP-02-v1: MCP Split Architecture
 Library          Collections
 Library          ../../libs/MCPServerConfigLibrary.py
+Force Tags        unit    mcp    config    medium    ARCH-INFRA-01-v1    validate
 
 *** Test Cases ***
 # =============================================================================

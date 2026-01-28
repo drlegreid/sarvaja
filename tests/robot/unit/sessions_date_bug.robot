@@ -4,6 +4,7 @@ Documentation    RF-004: Unit Tests - Sessions Date Display Bug
 ...              Per GAP-UI-EXP-005: Sessions view date display fix
 Library          Collections
 Library          ../../libs/SessionsDateBugLibrary.py
+Force Tags        unit    sessions    dates    medium    session    validate    TEST-FIX-01-v1
 
 *** Test Cases ***
 # =============================================================================

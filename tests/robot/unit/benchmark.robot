@@ -4,6 +4,7 @@ Documentation    RF-004: Unit Tests - Benchmark Framework
 ...              Per P3.5: Governance benchmark framework
 Library          Collections
 Library          ../../libs/BenchmarkLibrary.py
+Force Tags        unit    benchmark    performance    low    validate    TEST-COMP-01-v1
 
 *** Test Cases ***
 # =============================================================================

@@ -5,6 +5,7 @@ Documentation    RF-004: Unit Tests - Shell Command Guidelines
 ...              Per P11.3: Shell MCP documentation validation
 Library          Collections
 Library          ../../libs/ShellGuidelinesLibrary.py
+Force Tags        unit    safety    shell    low    SAFETY-DESTR-01-v1    validate
 
 *** Test Cases ***
 # =============================================================================

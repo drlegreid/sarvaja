@@ -6,7 +6,7 @@ Documentation    Rules Integration and Edge Case Tests
 Library          Collections
 Library          ../../libs/RulesIntegrationLibrary.py
 Resource         ../resources/common.resource
-Tags             unit    rules    integration
+Force Tags             unit    rules    integration    high    rule    validate    GOV-RULE-01-v1
 
 *** Test Cases ***
 # =============================================================================

@@ -6,6 +6,7 @@ Library          Collections
 Library          String
 Library          OperatingSystem
 Library          ../../libs/FrankelHashLibrary.py
+Force Tags        unit    integrity    hash    high    validate    SAFETY-INTEG-01-v1
 
 *** Variables ***
 ${TEST_CONTENT}    This is test content.

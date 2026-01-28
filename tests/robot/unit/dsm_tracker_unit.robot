@@ -4,6 +4,7 @@ Documentation    RF-004: Unit Tests - DSMTracker Core
 ...              Per RULE-012: Deep Sleep Protocol
 Library          Collections
 Library          ../../libs/DSMTrackerUnitLibrary.py
+Force Tags        unit    dsm    tracker    medium    session    validate    SESSION-DSM-01-v1
 
 *** Test Cases ***
 # =============================================================================

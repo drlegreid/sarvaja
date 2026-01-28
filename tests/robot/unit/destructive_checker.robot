@@ -5,6 +5,7 @@ Documentation    RF-004: Unit Tests - Destructive Command Checker
 ...              Per SAFETY-DESTR-01-v1: Enforcement mechanism validation
 Library          Collections
 Library          ../../libs/DestructiveCheckerLibrary.py
+Force Tags        unit    safety    destructive    low    validate    SAFETY-DESTR-01-v1
 
 *** Test Cases ***
 # =============================================================================

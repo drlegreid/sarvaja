@@ -4,8 +4,9 @@ Documentation    Context Preloader Tests
 ...              Migrated from tests/test_context_preloader.py
 Library          Collections
 Library          ../../libs/ContextPreloaderLibrary.py
+Library          ../../libs/ContextPreloaderAdvancedLibrary.py
 Resource         ../resources/common.resource
-Tags             unit    context    preloader
+Force Tags             unit    context    preloader    low    sessions    session    read    CONTEXT-SAVE-01-v1
 
 *** Test Cases ***
 # =============================================================================

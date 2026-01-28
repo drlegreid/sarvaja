@@ -4,6 +4,8 @@ Documentation    RF-004: Unit Tests - MCP Evidence Tools
 ...              Per P9.1: Task/Session/Evidence MCP tools
 Library          Collections
 Library          ../../libs/MCPEvidenceLibrary.py
+Library          ../../libs/MCPEvidenceAdvancedLibrary.py
+Force Tags        unit    mcp    evidence    high    ARCH-MCP-02-v1    evidence-file    validate
 
 *** Test Cases ***
 # =============================================================================

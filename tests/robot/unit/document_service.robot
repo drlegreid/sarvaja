@@ -4,6 +4,7 @@ Documentation    RF-004: Unit Tests - Document Service
 ...              Per RD-DOC-SERVICE: Document Service Architecture
 Library          Collections
 Library          ../../libs/DocumentServiceLibrary.py
+Force Tags        unit    evidence    documents    medium    evidence-file    read    DOC-LINK-01-v1
 
 *** Test Cases ***
 # =============================================================================

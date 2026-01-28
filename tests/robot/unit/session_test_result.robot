@@ -7,6 +7,7 @@ Library          String
 Library          ../../libs/SessionTestResultLibrary.py
 
 Suite Setup      Setup Session Test Library
+Force Tags             unit    sessions    GAP-TEST-EVIDENCE-002    medium    session    validate    TEST-EVID-01-v1
 
 *** Variables ***
 ${SESSION_ID}    SESSION-2026-01-21-TEST

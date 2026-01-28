@@ -4,6 +4,7 @@ Documentation    RF-004: Unit Tests - MCP Output Format
 ...              Per GAP-DATA-001: TOON format implementation
 Library          Collections
 Library          ../../libs/MCPOutputLibrary.py
+Force Tags        unit    mcp    output    medium    ARCH-MCP-02-v1    validate
 
 *** Test Cases ***
 # =============================================================================

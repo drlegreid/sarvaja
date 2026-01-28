@@ -6,7 +6,7 @@ Documentation    LangGraph Governance Workflow Tests
 Library          Collections
 Library          ../../libs/LanggraphLibrary.py
 Resource         ../resources/common.resource
-Tags             unit    langgraph    workflow    rule-011
+Force Tags             unit    langgraph    workflow    rule-011    high    agents    agent    session    validate    WORKFLOW-AUTO-01-v1
 
 *** Test Cases ***
 # =============================================================================

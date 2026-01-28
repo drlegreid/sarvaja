@@ -5,7 +5,7 @@ Documentation    Rules Governance Tests in ChromaDB
 Library          Collections
 Library          ../../libs/RulesGovernanceLibrary.py
 Resource         ../resources/common.resource
-Tags             unit    integration    chromadb    rules
+Force Tags             unit    integration    chromadb    rules    high    rule    validate    GOV-RULE-01-v1
 
 *** Test Cases ***
 # =============================================================================

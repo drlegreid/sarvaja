@@ -4,6 +4,8 @@ Documentation    RF-004: Unit Tests - Vector Store
 ...              Per P7.1: VectorStore, embeddings, cosine similarity
 Library          Collections
 Library          ../../libs/VectorStoreLibrary.py
+Library          ../../libs/VectorStoreAdvancedLibrary.py
+Force Tags        unit    vector    store    low    validate    ARCH-INFRA-01-v1
 
 *** Test Cases ***
 # =============================================================================

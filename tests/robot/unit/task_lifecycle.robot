@@ -6,6 +6,7 @@ Documentation    RF-004: Unit Tests - Task Lifecycle Status/Resolution
 ...              Resolution (outcome): DEFERRED, IMPLEMENTED, VALIDATED, CERTIFIED
 Library          Collections
 Library          ../../libs/TaskLifecycleLibrary.py
+Force Tags        unit    tasks    lifecycle    high    TASK-LIFE-01-v1    GAP-TASK-DATA-QUALITY-001    task    validate
 
 *** Test Cases ***
 # =============================================================================

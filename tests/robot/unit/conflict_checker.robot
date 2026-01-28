@@ -4,6 +4,7 @@ Documentation    RF-004: Unit Tests - Merge Conflict Checker
 ...              Per MULTI-007: Merge conflict detection for multi-agent workflows
 Library          Collections
 Library          ../../libs/ConflictCheckerLibrary.py
+Force Tags        unit    hooks    conflict    low    RECOVER-AMNES-01-v1    rule    validate
 
 *** Test Cases ***
 # =============================================================================

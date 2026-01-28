@@ -4,6 +4,7 @@ Documentation    RF-004: Unit Tests - Task CRUD Split Module
 ...              Per DOC-SIZE-01-v1: Files under 300 lines
 Library          Collections
 Library          ../../libs/TaskCrudSplitLibrary.py
+Force Tags        unit    tasks    crud    medium    task    create    read    delete    TASK-LIFE-01-v1
 
 *** Test Cases ***
 # =============================================================================

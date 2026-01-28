@@ -4,6 +4,7 @@ Documentation    RF-004: Unit Tests - Session Tool Logger Hook
 ...              Per GAP-SESSION-THOUGHT-001: Hook integration for auto-logging
 Library          Collections
 Library          ../../libs/SessionToolLoggerLibrary.py
+Force Tags        unit    sessions    logger    low    session    monitor    SESSION-HOOK-01-v1
 
 *** Test Cases ***
 # =============================================================================

@@ -5,7 +5,7 @@ Documentation    Embedding Pipeline Tests (P7.2)
 Library          Collections
 Library          ../../libs/EmbeddingPipelineLibrary.py
 Resource         ../resources/common.resource
-Tags             unit    embedding    vector-store    p7.2
+Force Tags             unit    embedding    vector-store    p7.2    medium    validate    ARCH-INFRA-01-v1
 
 *** Test Cases ***
 # =============================================================================

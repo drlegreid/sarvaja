@@ -4,6 +4,7 @@ Documentation    RF-004: Unit Tests - File Viewer
 ...              Per GAP-DATA-003: File viewer functionality
 Library          Collections
 Library          ../../libs/FileViewerLibrary.py
+Force Tags        unit    ui    files    low    read    UI-DESIGN-02-v1
 
 *** Test Cases ***
 # =============================================================================

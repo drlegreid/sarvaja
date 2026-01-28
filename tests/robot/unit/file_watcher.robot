@@ -4,6 +4,7 @@ Documentation    RF-004: Unit Tests - File Watcher Module
 ...              Per GAP-SYNC-AUTO-001: Auto-sync file watching
 Library          Collections
 Library          ../../libs/FileWatcherLibrary.py
+Force Tags        unit    files    watcher    low    monitor    SESSION-HOOK-01-v1
 
 *** Test Cases ***
 # =============================================================================

@@ -4,6 +4,7 @@ Documentation    RF-004: Unit Tests - Rule Fallback Parser
 ...              Per GAP-MCP-004: Rule fallback to markdown files
 Library          Collections
 Library          ../../libs/RuleFallbackLibrary.py
+Force Tags        unit    rules    fallback    high    GOV-RULE-01-v1    rule    read
 
 *** Test Cases ***
 # =============================================================================

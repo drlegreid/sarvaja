@@ -4,6 +4,7 @@ Documentation    RF-004: Unit Tests - Certification Report Generator
 ...              Per RD-TESTING-STRATEGY TEST-005: GitHub milestone certification
 Library          Collections
 Library          ../../libs/CertificationReportLibrary.py
+Force Tags        unit    evidence    certification    medium    SESSION-EVID-01-v1    evidence-file    validate
 
 *** Test Cases ***
 # =============================================================================

@@ -4,6 +4,7 @@ Documentation    RF-004: Unit Tests - Embedding Pipeline Split Module
 ...              Per DOC-SIZE-01-v1: Files under 400 lines
 Library          Collections
 Library          ../../libs/EmbeddingPipelineSplitLibrary.py
+Force Tags        unit    embedding    split    low    validate    DOC-SIZE-01-v1
 
 *** Test Cases ***
 # =============================================================================

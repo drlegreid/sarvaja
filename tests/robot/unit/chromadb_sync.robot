@@ -4,6 +4,7 @@ Documentation    RF-004: Unit Tests - ChromaDB Sync State
 ...              Per P2.6: Hybrid TypeDB + ChromaDB architecture
 Library          Collections
 Library          ../../libs/ChromadbSyncLibrary.py
+Force Tags        unit    chromadb    sync    low    ARCH-INFRA-01-v1
 
 *** Test Cases ***
 # =============================================================================

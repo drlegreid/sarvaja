@@ -4,6 +4,7 @@ Documentation    RF-004: Unit Tests - ChromaDB Read-Only Wrapper
 ...              Per P7.5: ChromaDB sunset - read-only wrapper
 Library          Collections
 Library          ../../libs/ChromaReadonlyLibrary.py
+Force Tags        unit    chromadb    readonly    low    read    ARCH-INFRA-01-v1
 
 *** Test Cases ***
 # =============================================================================

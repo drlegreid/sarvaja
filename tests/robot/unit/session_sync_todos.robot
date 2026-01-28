@@ -4,6 +4,7 @@ Documentation    RF-004: Unit Tests - Session Sync Todos
 ...              Per MCP-002-A: Sync TodoWrite with TypeDB task creation
 Library          Collections
 Library          ../../libs/SessionSyncTodosLibrary.py
+Force Tags        unit    sessions    sync    medium    TEST-FIX-01-v1    session    task
 
 *** Test Cases ***
 # =============================================================================

@@ -4,6 +4,7 @@ Documentation    RF-004: Unit Tests - UI Module Existence
 ...              Per DOC-SIZE-01-v1: Split from test_governance_ui.py (395 lines)
 Library          Collections
 Library          ../../libs/UIModuleLibrary.py
+Force Tags        unit    ui    module    low    validate    UI-DESIGN-02-v1
 
 *** Test Cases ***
 # =============================================================================

@@ -7,6 +7,7 @@ Library          ../../libs/BDDEvidenceLibrary.py
 
 Suite Setup      Setup BDD Evidence Environment
 Suite Teardown   Cleanup BDD Evidence Environment
+Force Tags             unit    evidence    GAP-TEST-EVIDENCE-001    medium    GAP-TEST-EVIDENCE-003    evidence-file    validate    TEST-EVID-01-v1
 
 *** Keywords ***
 Setup BDD Evidence Environment

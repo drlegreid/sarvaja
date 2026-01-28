@@ -4,6 +4,7 @@ Documentation    RF-004: Unit Tests - Agent Hybrid Layer
 ...              Per P3.4: Agent hybrid layer integration
 Library          Collections
 Library          ../../libs/AgentHybridLibrary.py
+Force Tags        unit    agents    hybrid    low    agent    validate    GOV-BICAM-01-v1
 
 *** Test Cases ***
 # =============================================================================

@@ -4,6 +4,7 @@ Documentation    RF-004: Unit Tests - Trust Dashboard
 ...              Per P9.5: Agent trust scoring and compliance metrics
 Library          Collections
 Library          ../../libs/TrustDashboardLibrary.py
+Force Tags        unit    agents    trust    high    agent    read    GOV-BICAM-01-v1
 
 *** Test Cases ***
 # =============================================================================

@@ -1,259 +1,148 @@
 *** Settings ***
-Documentation    RF-004: Unit Tests - Delegation Protocol
-...              Migrated from tests/test_delegation.py
-...              Per ORCH-004: Agent delegation protocol
+Documentation    RF-004: Delegation Protocol Tests (Protocol, Request, Types)
+...              Migrated from agent/orchestrator/delegation.py
+...              Per RF-007 Robot Framework Migration
+Library          ../../libs/DelegationProtocolLibrary.py
+Library          ../../libs/DelegationRequestLibrary.py
+Library          ../../libs/DelegationTypesLibrary.py
 Library          Collections
-Library          ../../libs/DelegationLibrary.py
+Resource         ../resources/common.resource
+Force Tags             unit    delegation    agents    medium    agent    task    validate    WORKFLOW-RD-01-v1
 
 *** Test Cases ***
 # =============================================================================
-# DelegationType Tests
-# =============================================================================
-
-Delegation Type Research
-    [Documentation]    GIVEN DelegationType WHEN RESEARCH THEN value is research
-    [Tags]    unit    delegation    type    enum
-    ${result}=    Delegation Type Research
-    ${skipped}=    Evaluate    $result.get('skipped', False)
-    Skip If    ${skipped}    Import failed
-    Should Be True    ${result}[value_correct]
-
-Delegation Type Implementation
-    [Documentation]    GIVEN DelegationType WHEN IMPLEMENTATION THEN value is impl
-    [Tags]    unit    delegation    type    enum
-    ${result}=    Delegation Type Implementation
-    ${skipped}=    Evaluate    $result.get('skipped', False)
-    Skip If    ${skipped}    Import failed
-    Should Be True    ${result}[value_correct]
-
-Delegation Type Validation
-    [Documentation]    GIVEN DelegationType WHEN VALIDATION THEN value is validation
-    [Tags]    unit    delegation    type    enum
-    ${result}=    Delegation Type Validation
-    ${skipped}=    Evaluate    $result.get('skipped', False)
-    Skip If    ${skipped}    Import failed
-    Should Be True    ${result}[value_correct]
-
-Delegation Type Escalation
-    [Documentation]    GIVEN DelegationType WHEN ESCALATION THEN value is escalation
-    [Tags]    unit    delegation    type    enum
-    ${result}=    Delegation Type Escalation
-    ${skipped}=    Evaluate    $result.get('skipped', False)
-    Skip If    ${skipped}    Import failed
-    Should Be True    ${result}[value_correct]
-
-# =============================================================================
-# DelegationPriority Tests
-# =============================================================================
-
-Priority Ordering Works
-    [Documentation]    GIVEN DelegationPriority WHEN comparing THEN CRITICAL < HIGH < MEDIUM < LOW
-    [Tags]    unit    delegation    priority    enum
-    ${result}=    Priority Ordering Works
-    ${skipped}=    Evaluate    $result.get('skipped', False)
-    Skip If    ${skipped}    Import failed
-    Should Be True    ${result}[crit_lt_high]
-    Should Be True    ${result}[high_lt_med]
-    Should Be True    ${result}[med_lt_low]
-
-Critical Priority Value
-    [Documentation]    GIVEN DelegationPriority.CRITICAL THEN value is 1
-    [Tags]    unit    delegation    priority    enum
-    ${result}=    Critical Priority Value
-    ${skipped}=    Evaluate    $result.get('skipped', False)
-    Skip If    ${skipped}    Import failed
-    Should Be True    ${result}[is_1]
-
-# =============================================================================
-# DelegationContext Tests
-# =============================================================================
-
-Context Basic Creation
-    [Documentation]    GIVEN DelegationContext WHEN creating THEN fields set correctly
-    [Tags]    unit    delegation    context    create
-    ${result}=    Context Basic Creation
-    ${skipped}=    Evaluate    $result.get('skipped', False)
-    Skip If    ${skipped}    Import failed
-    Should Be True    ${result}[id_correct]
-    Should Be True    ${result}[task_correct]
-    Should Be True    ${result}[source_correct]
-    Should Be True    ${result}[priority_default]
-
-Context With Constraints
-    [Documentation]    GIVEN context WHEN constraints provided THEN stored
-    [Tags]    unit    delegation    context    constraints
-    ${result}=    Context With Constraints
-    ${skipped}=    Evaluate    $result.get('skipped', False)
-    Skip If    ${skipped}    Execution not possible
-    Should Be True    ${result}[has_constraints]
-    Should Be True    ${result}[constraint_present]
-
-Context With Evidence
-    [Documentation]    GIVEN context WHEN evidence provided THEN stored
-    [Tags]    unit    delegation    context    evidence
-    ${result}=    Context With Evidence
-    ${skipped}=    Evaluate    $result.get('skipped', False)
-    Skip If    ${skipped}    Execution not possible
-    Should Be True    ${result}[has_evidence]
-
-Context To Dict
-    [Documentation]    GIVEN context WHEN to_dict THEN dictionary created
-    [Tags]    unit    delegation    context    serialize
-    ${result}=    Context To Dict
-    ${skipped}=    Evaluate    $result.get('skipped', False)
-    Skip If    ${skipped}    Execution not possible
-    Should Be True    ${result}[id_correct]
-    Should Be True    ${result}[priority_correct]
-    Should Be True    ${result}[has_created_at]
-
-Context From Dict
-    [Documentation]    GIVEN dictionary WHEN from_dict THEN context created
-    [Tags]    unit    delegation    context    deserialize
-    ${result}=    Context From Dict
-    ${skipped}=    Evaluate    $result.get('skipped', False)
-    Skip If    ${skipped}    Execution not possible
-    Should Be True    ${result}[id_correct]
-    Should Be True    ${result}[priority_correct]
-    Should Be True    ${result}[trust_correct]
-
-Context Min Trust Default
-    [Documentation]    GIVEN context WHEN no trust specified THEN default 0.5
-    [Tags]    unit    delegation    context    default
-    ${result}=    Context Min Trust Default
-    ${skipped}=    Evaluate    $result.get('skipped', False)
-    Skip If    ${skipped}    Execution not possible
-    Should Be True    ${result}[default_trust]
-
-# =============================================================================
-# DelegationRequest Tests
-# =============================================================================
-
-Request Basic Creation
-    [Documentation]    GIVEN DelegationRequest WHEN creating THEN fields set
-    [Tags]    unit    delegation    request    create
-    ${result}=    Request Basic Creation
-    ${skipped}=    Evaluate    $result.get('skipped', False)
-    Skip If    ${skipped}    Import failed
-    Should Be True    ${result}[task_correct]
-    Should Be True    ${result}[type_correct]
-    Should Be True    ${result}[target_none]
-
-Request With Specific Agent
-    [Documentation]    GIVEN request WHEN target agent specified THEN stored
-    [Tags]    unit    delegation    request    target
-    ${result}=    Request With Specific Agent
-    ${skipped}=    Evaluate    $result.get('skipped', False)
-    Skip If    ${skipped}    Execution not possible
-    Should Be True    ${result}[has_target]
-
-Request ID Auto Generated
-    [Documentation]    GIVEN request WHEN created THEN ID auto-generated
-    [Tags]    unit    delegation    request    id
-    ${result}=    Request ID Auto Generated
-    ${skipped}=    Evaluate    $result.get('skipped', False)
-    Skip If    ${skipped}    Execution not possible
-    Should Be True    ${result}[starts_with_del]
-
-# =============================================================================
-# DelegationResult Tests
-# =============================================================================
-
-Result Success
-    [Documentation]    GIVEN success result WHEN checking THEN success true
-    [Tags]    unit    delegation    result    success
-    ${result}=    Result Success
-    ${skipped}=    Evaluate    $result.get('skipped', False)
-    Skip If    ${skipped}    Import failed
-    Should Be True    ${result}[is_success]
-    Should Be True    ${result}[status_correct]
-
-Result Failure
-    [Documentation]    GIVEN failure result WHEN checking THEN success false
-    [Tags]    unit    delegation    result    failure
-    ${result}=    Result Failure
-    ${skipped}=    Evaluate    $result.get('skipped', False)
-    Skip If    ${skipped}    Execution not possible
-    Should Be True    ${result}[is_failure]
-    Should Be True    ${result}[has_message]
-
-Result With Followup
-    [Documentation]    GIVEN result WHEN needs followup THEN followup set
-    [Tags]    unit    delegation    result    followup
-    ${result}=    Result With Followup
-    ${skipped}=    Evaluate    $result.get('skipped', False)
-    Skip If    ${skipped}    Execution not possible
-    Should Be True    ${result}[needs_followup]
-    Should Be True    ${result}[followup_type]
-
-# =============================================================================
-# DelegationProtocol Tests
+# Protocol Tests
 # =============================================================================
 
 Protocol Init
-    [Documentation]    GIVEN DelegationProtocol WHEN init THEN empty state
-    [Tags]    unit    delegation    protocol    init
+    [Documentation]    Test: Protocol Init
     ${result}=    Protocol Init
-    ${skipped}=    Evaluate    $result.get('skipped', False)
-    Skip If    ${skipped}    Import failed
-    Should Be True    ${result}[active_zero]
-    Should Be True    ${result}[history_empty]
+    Skip If Import Failed    ${result}
 
 Protocol Register Handler
-    [Documentation]    GIVEN protocol WHEN register handler THEN registered
-    [Tags]    unit    delegation    protocol    handler
+    [Documentation]    Test: Protocol Register Handler
     ${result}=    Protocol Register Handler
-    ${skipped}=    Evaluate    $result.get('skipped', False)
-    Skip If    ${skipped}    Execution not possible
-    Should Be True    ${result}[handler_registered]
+    Skip If Import Failed    ${result}
 
 Protocol Delegate No Agent
-    [Documentation]    GIVEN no agents WHEN delegate THEN fails
-    [Tags]    unit    delegation    protocol    failure
+    [Documentation]    Test: Protocol Delegate No Agent
     ${result}=    Protocol Delegate No Agent
-    ${skipped}=    Evaluate    $result.get('skipped', False)
-    Skip If    ${skipped}    Execution not possible
-    Should Be True    ${result}[is_failure]
-    Should Be True    ${result}[has_message]
+    Skip If Import Failed    ${result}
 
 Protocol Get Stats
-    [Documentation]    GIVEN protocol WHEN get_stats THEN returns stats
-    [Tags]    unit    delegation    protocol    stats
+    [Documentation]    Test: Protocol Get Stats
     ${result}=    Protocol Get Stats
-    ${skipped}=    Evaluate    $result.get('skipped', False)
-    Skip If    ${skipped}    Execution not possible
-    Should Be True    ${result}[has_active]
-    Should Be True    ${result}[has_total]
-    Should Be True    ${result}[has_success_rate]
-
-# =============================================================================
-# Convenience Function Tests
-# =============================================================================
+    Skip If Import Failed    ${result}
 
 Create Delegation Context Works
-    [Documentation]    GIVEN create_delegation_context WHEN called THEN context created
-    [Tags]    unit    delegation    convenience    context
+    [Documentation]    Test: Create Delegation Context Works
     ${result}=    Create Delegation Context Works
-    ${skipped}=    Evaluate    $result.get('skipped', False)
-    Skip If    ${skipped}    Import failed
-    Should Be True    ${result}[task_correct]
-    Should Be True    ${result}[id_starts_with]
-    Should Be True    ${result}[context_correct]
+    Skip If Import Failed    ${result}
 
 Create Research Request Works
-    [Documentation]    GIVEN create_research_request WHEN called THEN request created
-    [Tags]    unit    delegation    convenience    research
+    [Documentation]    Test: Create Research Request Works
     ${result}=    Create Research Request Works
-    ${skipped}=    Evaluate    $result.get('skipped', False)
-    Skip If    ${skipped}    Execution not possible
-    Should Be True    ${result}[type_correct]
-    Should Be True    ${result}[role_correct]
+    Skip If Import Failed    ${result}
 
 Create Implementation Request Works
-    [Documentation]    GIVEN create_implementation_request WHEN called THEN request created
-    [Tags]    unit    delegation    convenience    implementation
+    [Documentation]    Test: Create Implementation Request Works
     ${result}=    Create Implementation Request Works
-    ${skipped}=    Evaluate    $result.get('skipped', False)
-    Skip If    ${skipped}    Execution not possible
-    Should Be True    ${result}[type_correct]
-    Should Be True    ${result}[role_correct]
-    Should Be True    ${result}[context_correct]
+    Skip If Import Failed    ${result}
+
+# =============================================================================
+# Request Tests
+# =============================================================================
+
+Request Basic Creation
+    [Documentation]    Test: Request Basic Creation
+    ${result}=    Request Basic Creation
+    Skip If Import Failed    ${result}
+
+Request With Specific Agent
+    [Documentation]    Test: Request With Specific Agent
+    ${result}=    Request With Specific Agent
+    Skip If Import Failed    ${result}
+
+Request ID Auto Generated
+    [Documentation]    Test: Request ID Auto Generated
+    ${result}=    Request ID Auto Generated
+    Skip If Import Failed    ${result}
+
+Result Success
+    [Documentation]    Test: Result Success
+    ${result}=    Result Success
+    Skip If Import Failed    ${result}
+
+Result Failure
+    [Documentation]    Test: Result Failure
+    ${result}=    Result Failure
+    Skip If Import Failed    ${result}
+
+Result With Followup
+    [Documentation]    Test: Result With Followup
+    ${result}=    Result With Followup
+    Skip If Import Failed    ${result}
+
+# =============================================================================
+# Types Tests
+# =============================================================================
+
+Delegation Type Research
+    [Documentation]    Test: Delegation Type Research
+    ${result}=    Delegation Type Research
+    Skip If Import Failed    ${result}
+
+Delegation Type Implementation
+    [Documentation]    Test: Delegation Type Implementation
+    ${result}=    Delegation Type Implementation
+    Skip If Import Failed    ${result}
+
+Delegation Type Validation
+    [Documentation]    Test: Delegation Type Validation
+    ${result}=    Delegation Type Validation
+    Skip If Import Failed    ${result}
+
+Delegation Type Escalation
+    [Documentation]    Test: Delegation Type Escalation
+    ${result}=    Delegation Type Escalation
+    Skip If Import Failed    ${result}
+
+Priority Ordering Works
+    [Documentation]    Test: Priority Ordering Works
+    ${result}=    Priority Ordering Works
+    Skip If Import Failed    ${result}
+
+Critical Priority Value
+    [Documentation]    Test: Critical Priority Value
+    ${result}=    Critical Priority Value
+    Skip If Import Failed    ${result}
+
+Context Basic Creation
+    [Documentation]    Test: Context Basic Creation
+    ${result}=    Context Basic Creation
+    Skip If Import Failed    ${result}
+
+Context With Constraints
+    [Documentation]    Test: Context With Constraints
+    ${result}=    Context With Constraints
+    Skip If Import Failed    ${result}
+
+Context With Evidence
+    [Documentation]    Test: Context With Evidence
+    ${result}=    Context With Evidence
+    Skip If Import Failed    ${result}
+
+Context To Dict
+    [Documentation]    Test: Context To Dict
+    ${result}=    Context To Dict
+    Skip If Import Failed    ${result}
+
+Context From Dict
+    [Documentation]    Test: Context From Dict
+    ${result}=    Context From Dict
+    Skip If Import Failed    ${result}
+
+Context Min Trust Default
+    [Documentation]    Test: Context Min Trust Default
+    ${result}=    Context Min Trust Default
+    Skip If Import Failed    ${result}

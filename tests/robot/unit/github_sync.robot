@@ -4,6 +4,7 @@ Documentation    RF-004: Unit Tests - GitHub Sync
 ...              Per FH-006: GitHub sync functionality
 Library          Collections
 Library          ../../libs/GitHubSyncLibrary.py
+Force Tags        unit    sync    github    medium    WORKFLOW-SEQ-01-v1
 
 *** Test Cases ***
 # =============================================================================

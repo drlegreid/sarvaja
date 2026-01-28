@@ -6,7 +6,7 @@ Documentation    Platform Performance Heuristic Tests
 Library          Collections
 Library          ../../libs/PlatformPerformanceLibrary.py
 Resource         ../resources/common.resource
-Tags             unit    heuristics    performance    platform
+Force Tags             unit    heuristics    performance    platform    low    validate    TEST-COMP-01-v1
 
 *** Test Cases ***
 # =============================================================================

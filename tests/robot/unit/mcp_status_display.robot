@@ -4,6 +4,7 @@ Documentation    RF-004: Unit Tests - MCP Status Display
 ...              Per UI-AUDIT-011: MCP process status in Infrastructure view
 Library          Collections
 Library          ../../libs/MCPStatusDisplayLibrary.py
+Force Tags        unit    mcp    status    medium    read    SAFETY-HEALTH-01-v1
 
 *** Test Cases ***
 # =============================================================================

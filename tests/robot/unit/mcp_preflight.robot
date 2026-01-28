@@ -4,6 +4,7 @@ Documentation    RF-004: Unit Tests - MCP Pre-flight Validation
 ...              Per GAP-CONTEXT-EFFICIENCY-001, TACTIC-2-C: Test duplicate tools
 Library          Collections
 Library          ../../libs/MCPPreflightLibrary.py
+Force Tags        unit    mcp    preflight    critical    ARCH-INFRA-01-v1    validate
 
 *** Test Cases ***
 # =============================================================================

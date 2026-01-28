@@ -4,6 +4,7 @@ Documentation    RF-004: Unit Tests - Trame UI Module
 ...              Per Phase 6: Use Trame for Python-native web UI
 Library          Collections
 Library          ../../libs/TrameUiLibrary.py
+Force Tags        unit    ui    trame    low    validate    UI-TRAME-01-v1
 
 *** Test Cases ***
 # =============================================================================

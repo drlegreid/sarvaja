@@ -4,6 +4,7 @@ Documentation    RF-004: Unit Tests - Bottom Bar with Technical Traces
 ...              Per GAP-UI-048: Bottom bar with technical traces
 Library          Collections
 Library          ../../libs/TraceBarLibrary.py
+Force Tags        unit    ui    trace    medium    GAP-UI-TRACE-001    session    read    SESSION-EVID-01-v1
 
 *** Test Cases ***
 # =============================================================================

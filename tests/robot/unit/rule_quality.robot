@@ -4,6 +4,8 @@ Documentation    RF-004: Unit Tests - Rule Quality Analyzer
 ...              Per RULE-004: Exploratory Testing & Executable Spec
 Library          Collections
 Library          ../../libs/RuleQualityLibrary.py
+Library          ../../libs/RuleQualityAdvancedLibrary.py
+Force Tags        unit    rules    quality    high    GOV-RULE-01-v1    GAP-RULE-DATA-QUALITY-001    rule    validate
 
 *** Test Cases ***
 # =============================================================================

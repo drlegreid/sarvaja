@@ -5,7 +5,7 @@ Documentation    DSM Tracker Integration Tests
 Library          Collections
 Library          ../../libs/DSMTrackerIntegrationLibrary.py
 Resource         ../resources/common.resource
-Tags             unit    dsm    integration    rule-012
+Force Tags             unit    dsm    integration    rule-012    high    GAP-DSP-NOTIFY-001    session    validate    SESSION-DSM-01-v1
 
 *** Test Cases ***
 # =============================================================================

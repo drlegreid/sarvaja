@@ -4,6 +4,7 @@ Documentation    RF-004: Unit Tests - Quality Analyzer Split Module
 ...              Per DOC-SIZE-01-v1: Files under 400 lines
 Library          Collections
 Library          ../../libs/QualityAnalyzerSplitLibrary.py
+Force Tags        unit    rules    quality    low    rule    validate    TEST-QUAL-01-v1
 
 *** Test Cases ***
 # =============================================================================

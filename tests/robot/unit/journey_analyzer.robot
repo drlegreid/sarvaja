@@ -4,6 +4,8 @@ Documentation    RF-004: Unit Tests - Journey Analyzer
 ...              Per P9.7: Journey pattern analyzer
 Library          Collections
 Library          ../../libs/JourneyAnalyzerLibrary.py
+Library          ../../libs/JourneyAnalyzerAdvancedLibrary.py
+Force Tags        unit    agents    journey    low    agent    validate    TEST-COMP-01-v1
 
 *** Test Cases ***
 # =============================================================================

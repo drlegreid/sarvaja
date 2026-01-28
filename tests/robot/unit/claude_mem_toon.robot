@@ -4,6 +4,7 @@ Documentation    RF-004: Unit Tests - Claude-Mem MCP TOON Migration
 ...              Per GAP-DATA-001: TOON format for all MCP tools
 Library          Collections
 Library          ../../libs/ClaudeMemTOONLibrary.py
+Force Tags        unit    memory    toon    low    read    CONTEXT-SAVE-01-v1
 
 *** Test Cases ***
 # =============================================================================

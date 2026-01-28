@@ -4,6 +4,7 @@ Documentation    RF-004: Integration Tests - Service Health Checks
 ...              Tests service availability and basic functionality
 Library          Collections
 Library          ../../libs/HealthLibrary.py
+Force Tags        unit    health    critical    SAFETY-HEALTH-01-v1    validate
 
 *** Test Cases ***
 # =============================================================================

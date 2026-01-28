@@ -4,6 +4,7 @@ Documentation    RF-004: Unit Tests - Context Preloader Split
 ...              Per GAP-FILE-022: context_preloader.py split
 Library          Collections
 Library          ../../libs/ContextPreloaderSplitLibrary.py
+Force Tags        unit    context    split    low    DOC-SIZE-01-v1    sessions    session    read
 
 *** Test Cases ***
 # =============================================================================

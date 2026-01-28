@@ -4,6 +4,7 @@ Documentation    RF-004: Unit Tests - Trace Minimizer Module
 ...              Per RD-TESTING-STRATEGY TEST-003: Trace minimization
 Library          Collections
 Library          ../../libs/TraceMinimzerLibrary.py
+Force Tags        unit    trace    minimizer    low    TEST-EVID-01-v1    session    validate
 
 Suite Setup      Create Trace Minimizer
 

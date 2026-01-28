@@ -4,6 +4,8 @@ Documentation    RF-004: Unit Tests - Session Viewer
 ...              Per P9.3: Session evidence viewer
 Library          Collections
 Library          ../../libs/SessionViewerLibrary.py
+Library          ../../libs/SessionViewerAdvancedLibrary.py
+Force Tags        unit    sessions    viewer    high    session    read    SESSION-EVID-01-v1
 
 *** Test Cases ***
 # =============================================================================

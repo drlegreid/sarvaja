@@ -4,6 +4,8 @@ Documentation    RF-004: Unit Tests - Rule Monitor
 ...              Per P9.6: Real-time rule monitoring
 Library          Collections
 Library          ../../libs/RuleMonitorLibrary.py
+Library          ../../libs/RuleMonitorAdvancedLibrary.py
+Force Tags        unit    rules    monitor    high    GOV-RULE-01-v1    rule
 
 *** Test Cases ***
 # =============================================================================

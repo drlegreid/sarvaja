@@ -4,6 +4,7 @@ Documentation    RF-004: Unit Tests - Trace Event Query Param Parsing
 ...              Per GAP-UI-TRACE-001: Trace bar request params visibility
 Library          Collections
 Library          ../../libs/TraceEventLibrary.py
+Force Tags        unit    trace    events    medium    TEST-EVID-01-v1    session    validate
 
 *** Test Cases ***
 # =============================================================================

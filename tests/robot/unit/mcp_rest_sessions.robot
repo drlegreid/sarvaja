@@ -6,7 +6,7 @@ Documentation    MCP REST API Session Integration Tests
 Library          Collections
 Library          ../../libs/MCPRestSessionsLibrary.py
 Resource         ../resources/common.resource
-Tags             integration    mcp    rest    sessions
+Force Tags             integration    mcp    rest    sessions    medium    session    read    ARCH-MCP-02-v1
 
 *** Test Cases ***
 # =============================================================================
@@ -66,7 +66,7 @@ Test Create Task Via REST
 
 Test Task Persistence Round Trip
     [Documentation]    GAP-API-001 FIXED: Tasks persist to TypeDB
-    [Tags]    tasks    persistence
+    [Tags]    tasks    persistence    GAP-API-001
     ${result}=    Task Persistence Round Trip
     Skip If    ${result.get('skipped', False)}    ${result.get('reason', 'API not available')}
     Should Be True    ${result['persisted']}

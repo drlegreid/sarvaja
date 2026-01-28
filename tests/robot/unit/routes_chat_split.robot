@@ -4,6 +4,7 @@ Documentation    RF-004: Unit Tests - Routes Chat Split Module
 ...              Per DOC-SIZE-01-v1: Files under 400 lines
 Library          Collections
 Library          ../../libs/RoutesChatSplitLibrary.py
+Force Tags        unit    routes    chat    low    mcp    validate    DOC-SIZE-01-v1
 
 *** Test Cases ***
 # =============================================================================

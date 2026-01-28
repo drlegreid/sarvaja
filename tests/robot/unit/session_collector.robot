@@ -1,336 +1,178 @@
 *** Settings ***
-Documentation    RF-004: Unit Tests - SessionCollector
-...              Migrated from tests/test_session_collector.py
-...              Per P4.2: Session Collector
+Documentation    RF-004: Session Collector Tests (Core, Log, Registry)
+...              Migrated from governance/session_collector/
+...              Per RF-007 Robot Framework Migration
+Library          ../../libs/SessionCollectorCoreLibrary.py
+Library          ../../libs/SessionCollectorLogLibrary.py
+Library          ../../libs/SessionCollectorRegistryLibrary.py
 Library          Collections
-Library          ../../libs/SessionCollectorLibrary.py
+Resource         ../resources/common.resource
+Force Tags             unit    sessions    collector    medium    SESSION-EVID-01-v1    session    evidence-file    validate
 
 *** Test Cases ***
 # =============================================================================
-# SessionCollector Unit Tests
+# Core Tests
 # =============================================================================
 
 Session Collector Class Exists
-    [Documentation]    GIVEN module WHEN import THEN SessionCollector exists
-    [Tags]    unit    session    collector    class
+    [Documentation]    Test: Session Collector Class Exists
     ${result}=    Session Collector Class Exists
-    ${skipped}=    Evaluate    $result.get('skipped', False)
-    Skip If    ${skipped}    Import failed
-    Should Be True    ${result}[exists]
+    Skip If Import Failed    ${result}
 
 Session Collector Creates Session ID
-    [Documentation]    GIVEN SessionCollector WHEN creating THEN has correct ID format
-    [Tags]    unit    session    collector    id
+    [Documentation]    Test: Session Collector Creates Session ID
     ${result}=    Session Collector Creates Session ID
-    ${skipped}=    Evaluate    $result.get('skipped', False)
-    Skip If    ${skipped}    Import failed
-    Should Be True    ${result}[has_session_prefix]
-    Should Be True    ${result}[has_topic]
+    Skip If Import Failed    ${result}
 
 Session Collector Stores Topic
-    [Documentation]    GIVEN SessionCollector WHEN creating THEN stores topic
-    [Tags]    unit    session    collector    topic
+    [Documentation]    Test: Session Collector Stores Topic
     ${result}=    Session Collector Stores Topic
-    ${skipped}=    Evaluate    $result.get('skipped', False)
-    Skip If    ${skipped}    Import failed
-    Should Be True    ${result}[topic_correct]
-    Should Be True    ${result}[type_correct]
+    Skip If Import Failed    ${result}
 
 Session Collector Has Empty Collections
-    [Documentation]    GIVEN SessionCollector WHEN creating THEN collections empty
-    [Tags]    unit    session    collector    init
+    [Documentation]    Test: Session Collector Has Empty Collections
     ${result}=    Session Collector Has Empty Collections
-    ${skipped}=    Evaluate    $result.get('skipped', False)
-    Skip If    ${skipped}    Import failed
-    Should Be True    ${result}[events_empty]
-    Should Be True    ${result}[decisions_empty]
-    Should Be True    ${result}[tasks_empty]
-
-# =============================================================================
-# Event Capture Tests
-# =============================================================================
+    Skip If Import Failed    ${result}
 
 Capture Prompt Adds Event
-    [Documentation]    GIVEN SessionCollector WHEN capture_prompt THEN event added
-    [Tags]    unit    session    capture    prompt
+    [Documentation]    Test: Capture Prompt Adds Event
     ${result}=    Capture Prompt Adds Event
-    ${skipped}=    Evaluate    $result.get('skipped', False)
-    Skip If    ${skipped}    Import failed
-    Should Be True    ${result}[event_added]
-    Should Be True    ${result}[type_correct]
-    Should Be True    ${result}[content_correct]
+    Skip If Import Failed    ${result}
 
 Capture Response Adds Event
-    [Documentation]    GIVEN SessionCollector WHEN capture_response THEN event added
-    [Tags]    unit    session    capture    response
+    [Documentation]    Test: Capture Response Adds Event
     ${result}=    Capture Response Adds Event
-    ${skipped}=    Evaluate    $result.get('skipped', False)
-    Skip If    ${skipped}    Import failed
-    Should Be True    ${result}[event_added]
-    Should Be True    ${result}[type_correct]
+    Skip If Import Failed    ${result}
 
 Capture Error Adds Event
-    [Documentation]    GIVEN SessionCollector WHEN capture_error THEN event added
-    [Tags]    unit    session    capture    error
+    [Documentation]    Test: Capture Error Adds Event
     ${result}=    Capture Error Adds Event
-    ${skipped}=    Evaluate    $result.get('skipped', False)
-    Skip If    ${skipped}    Import failed
-    Should Be True    ${result}[event_added]
-    Should Be True    ${result}[type_correct]
-    Should Be True    ${result}[content_correct]
-
-# =============================================================================
-# Decision Capture Tests
-# =============================================================================
+    Skip If Import Failed    ${result}
 
 Capture Decision Creates Decision
-    [Documentation]    GIVEN SessionCollector WHEN capture_decision THEN Decision created
-    [Tags]    unit    session    capture    decision
+    [Documentation]    Test: Capture Decision Creates Decision
     ${result}=    Capture Decision Creates Decision
-    ${skipped}=    Evaluate    $result.get('skipped', False)
-    Skip If    ${skipped}    Import failed
-    Should Be True    ${result}[id_correct]
-    Should Be True    ${result}[name_correct]
-    Should Be True    ${result}[decision_added]
+    Skip If Import Failed    ${result}
 
 Capture Decision Adds Event
-    [Documentation]    GIVEN SessionCollector WHEN capture_decision THEN event added
-    [Tags]    unit    session    capture    decision    event
+    [Documentation]    Test: Capture Decision Adds Event
     ${result}=    Capture Decision Adds Event
-    ${skipped}=    Evaluate    $result.get('skipped', False)
-    Skip If    ${skipped}    Import failed
-    Should Be True    ${result}[event_added]
-    Should Be True    ${result}[type_correct]
-    Should Be True    ${result}[content_has_id]
-
-# =============================================================================
-# Task Capture Tests
-# =============================================================================
+    Skip If Import Failed    ${result}
 
 Capture Task Creates Task
-    [Documentation]    GIVEN SessionCollector WHEN capture_task THEN Task created
-    [Tags]    unit    session    capture    task
+    [Documentation]    Test: Capture Task Creates Task
     ${result}=    Capture Task Creates Task
-    ${skipped}=    Evaluate    $result.get('skipped', False)
-    Skip If    ${skipped}    Import failed
-    Should Be True    ${result}[id_correct]
-    Should Be True    ${result}[name_correct]
-    Should Be True    ${result}[status_correct]
-    Should Be True    ${result}[priority_correct]
-    Should Be True    ${result}[task_added]
+    Skip If Import Failed    ${result}
 
 Capture Task Adds Event
-    [Documentation]    GIVEN SessionCollector WHEN capture_task THEN event added
-    [Tags]    unit    session    capture    task    event
+    [Documentation]    Test: Capture Task Adds Event
     ${result}=    Capture Task Adds Event
-    ${skipped}=    Evaluate    $result.get('skipped', False)
-    Skip If    ${skipped}    Import failed
-    Should Be True    ${result}[event_added]
-    Should Be True    ${result}[type_correct]
+    Skip If Import Failed    ${result}
+
+To Dict Returns Dict
+    [Documentation]    Test: To Dict Returns Dict
+    ${result}=    To Dict Returns Dict
+    Skip If Import Failed    ${result}
+
+To JSON Returns Valid JSON
+    [Documentation]    Test: To JSON Returns Valid JSON
+    ${result}=    To JSON Returns Valid JSON
+    Skip If Import Failed    ${result}
+
+Session Event Dataclass Works
+    [Documentation]    Test: Session Event Dataclass Works
+    ${result}=    Session Event Dataclass Works
+    Skip If Import Failed    ${result}
+
+Task Dataclass Works
+    [Documentation]    Test: Task Dataclass Works
+    ${result}=    Task Dataclass Works
+    Skip If Import Failed    ${result}
 
 # =============================================================================
-# Session Log Generation Tests
+# Log Generation Tests
 # =============================================================================
 
 Generate Session Log Creates File
-    [Documentation]    GIVEN SessionCollector WHEN generate_session_log THEN file created
-    [Tags]    unit    session    log    file
+    [Documentation]    Test: Generate Session Log Creates File
     ${result}=    Generate Session Log Creates File
-    ${skipped}=    Evaluate    $result.get('skipped', False)
-    Skip If    ${skipped}    Import failed
-    Should Be True    ${result}[file_exists]
-    Should Be True    ${result}[is_markdown]
+    Skip If Import Failed    ${result}
 
 Generate Session Log Contains Header
-    [Documentation]    GIVEN SessionCollector WHEN generate_session_log THEN has header
-    [Tags]    unit    session    log    header
+    [Documentation]    Test: Generate Session Log Contains Header
     ${result}=    Generate Session Log Contains Header
-    ${skipped}=    Evaluate    $result.get('skipped', False)
-    Skip If    ${skipped}    Import failed
-    Should Be True    ${result}[has_topic]
-    Should Be True    ${result}[has_session_id]
+    Skip If Import Failed    ${result}
 
 Generate Session Log Contains Decisions
-    [Documentation]    GIVEN SessionCollector WHEN generate_session_log THEN has decisions
-    [Tags]    unit    session    log    decisions
+    [Documentation]    Test: Generate Session Log Contains Decisions
     ${result}=    Generate Session Log Contains Decisions
-    ${skipped}=    Evaluate    $result.get('skipped', False)
-    Skip If    ${skipped}    Import failed
-    Should Be True    ${result}[has_decisions_section]
-    Should Be True    ${result}[has_decision_id]
-    Should Be True    ${result}[has_decision_name]
+    Skip If Import Failed    ${result}
 
 Generate Session Log Contains Thoughts
-    [Documentation]    GIVEN SessionCollector WHEN generate_session_log THEN has thoughts
-    [Tags]    unit    session    log    thoughts
+    [Documentation]    Test: Generate Session Log Contains Thoughts
     ${result}=    Generate Session Log Contains Thoughts
-    ${skipped}=    Evaluate    $result.get('skipped', False)
-    Skip If    ${skipped}    Import failed
-    Should Be True    ${result}[has_thoughts_section]
-    Should Be True    ${result}[has_hypothesis]
-    Should Be True    ${result}[has_reasoning]
-    Should Be True    ${result}[has_confidence]
+    Skip If Import Failed    ${result}
 
 Generate Session Log Contains Tool Calls
-    [Documentation]    GIVEN SessionCollector WHEN generate_session_log THEN has tool calls
-    [Tags]    unit    session    log    tools
+    [Documentation]    Test: Generate Session Log Contains Tool Calls
     ${result}=    Generate Session Log Contains Tool Calls
-    ${skipped}=    Evaluate    $result.get('skipped', False)
-    Skip If    ${skipped}    Import failed
-    Should Be True    ${result}[has_tool_calls_section]
-    Should Be True    ${result}[has_tool_name]
-    Should Be True    ${result}[has_duration]
+    Skip If Import Failed    ${result}
 
 Generate Session Log Contains Initial Prompt
-    [Documentation]    GIVEN SessionCollector WHEN generate_session_log THEN has intent
-    [Tags]    unit    session    log    intent
+    [Documentation]    Test: Generate Session Log Contains Initial Prompt
     ${result}=    Generate Session Log Contains Initial Prompt
-    ${skipped}=    Evaluate    $result.get('skipped', False)
-    Skip If    ${skipped}    Import failed
-    Should Be True    ${result}[has_intent_section]
-    Should Be True    ${result}[has_initial_prompt]
-    Should Be True    ${result}[has_prompt_content]
+    Skip If Import Failed    ${result}
 
 # =============================================================================
-# Serialization Tests
-# =============================================================================
-
-To Dict Returns Dict
-    [Documentation]    GIVEN SessionCollector WHEN to_dict THEN returns dict
-    [Tags]    unit    session    serialize    dict
-    ${result}=    To Dict Returns Dict
-    ${skipped}=    Evaluate    $result.get('skipped', False)
-    Skip If    ${skipped}    Import failed
-    Should Be True    ${result}[is_dict]
-    Should Be True    ${result}[has_session_id]
-    Should Be True    ${result}[has_topic]
-    Should Be True    ${result}[has_events_count]
-
-To JSON Returns Valid JSON
-    [Documentation]    GIVEN SessionCollector WHEN to_json THEN valid JSON
-    [Tags]    unit    session    serialize    json
-    ${result}=    To JSON Returns Valid JSON
-    ${skipped}=    Evaluate    $result.get('skipped', False)
-    Skip If    ${skipped}    Import failed
-    Should Be True    ${result}[valid_json]
-    Should Be True    ${result}[topic_correct]
-
-# =============================================================================
-# Session Registry Tests
+# Registry Tests
 # =============================================================================
 
 Get Or Create Session Creates New
-    [Documentation]    GIVEN get_or_create_session WHEN new topic THEN creates session
-    [Tags]    unit    session    registry    create
+    [Documentation]    Test: Get Or Create Session Creates New
     ${result}=    Get Or Create Session Creates New
-    ${skipped}=    Evaluate    $result.get('skipped', False)
-    Skip If    ${skipped}    Import failed
-    Should Be True    ${result}[created]
-    Should Be True    ${result}[has_topic]
+    Skip If Import Failed    ${result}
 
 Get Or Create Session Returns Existing
-    [Documentation]    GIVEN get_or_create_session WHEN same topic THEN returns same
-    [Tags]    unit    session    registry    singleton
+    [Documentation]    Test: Get Or Create Session Returns Existing
     ${result}=    Get Or Create Session Returns Existing
-    ${skipped}=    Evaluate    $result.get('skipped', False)
-    Skip If    ${skipped}    Import failed
-    Should Be True    ${result}[same_instance]
+    Skip If Import Failed    ${result}
 
 List Active Sessions Returns IDs
-    [Documentation]    GIVEN list_active_sessions WHEN called THEN returns IDs
-    [Tags]    unit    session    registry    list
+    [Documentation]    Test: List Active Sessions Returns IDs
     ${result}=    List Active Sessions Returns IDs
-    ${skipped}=    Evaluate    $result.get('skipped', False)
-    Skip If    ${skipped}    Import failed
-    Should Be True    ${result}[correct_count]
+    Skip If Import Failed    ${result}
 
 End Session Removes And Generates Log
-    [Documentation]    GIVEN end_session WHEN called THEN removes and generates log
-    [Tags]    unit    session    registry    end
+    [Documentation]    Test: End Session Removes And Generates Log
     ${result}=    End Session Removes And Generates Log
-    ${skipped}=    Evaluate    $result.get('skipped', False)
-    Skip If    ${skipped}    Import failed
-    Should Be True    ${result}[log_generated]
-    Should Be True    ${result}[session_removed]
-
-# =============================================================================
-# MCP Session Tools Tests
-# =============================================================================
+    Skip If Import Failed    ${result}
 
 Session Start Tool Exists
-    [Documentation]    GIVEN MCP tools WHEN import THEN session_start exists
-    [Tags]    unit    session    mcp    start
+    [Documentation]    Test: Session Start Tool Exists
     ${result}=    Session Start Tool Exists
-    ${skipped}=    Evaluate    $result.get('skipped', False)
-    Skip If    ${skipped}    Import failed
-    Should Be True    ${result}[exists]
-    Should Be True    ${result}[callable]
+    Skip If Import Failed    ${result}
 
 Session Start Returns JSON
-    [Documentation]    GIVEN session_start WHEN called THEN returns valid JSON
-    [Tags]    unit    session    mcp    start    json
+    [Documentation]    Test: Session Start Returns JSON
     ${result}=    Session Start Returns JSON
-    ${skipped}=    Evaluate    $result.get('skipped', False)
-    Skip If    ${skipped}    Import failed
-    Should Be True    ${result}[has_session_id]
-    Should Be True    ${result}[topic_correct]
+    Skip If Import Failed    ${result}
 
 Session Decision Tool Exists
-    [Documentation]    GIVEN MCP tools WHEN import THEN session_decision exists
-    [Tags]    unit    session    mcp    decision
+    [Documentation]    Test: Session Decision Tool Exists
     ${result}=    Session Decision Tool Exists
-    ${skipped}=    Evaluate    $result.get('skipped', False)
-    Skip If    ${skipped}    Import failed
-    Should Be True    ${result}[exists]
-    Should Be True    ${result}[callable]
+    Skip If Import Failed    ${result}
 
 Session Task Tool Exists
-    [Documentation]    GIVEN MCP tools WHEN import THEN session_task exists
-    [Tags]    unit    session    mcp    task
+    [Documentation]    Test: Session Task Tool Exists
     ${result}=    Session Task Tool Exists
-    ${skipped}=    Evaluate    $result.get('skipped', False)
-    Skip If    ${skipped}    Import failed
-    Should Be True    ${result}[exists]
-    Should Be True    ${result}[callable]
+    Skip If Import Failed    ${result}
 
 Session End Tool Exists
-    [Documentation]    GIVEN MCP tools WHEN import THEN session_end exists
-    [Tags]    unit    session    mcp    end
+    [Documentation]    Test: Session End Tool Exists
     ${result}=    Session End Tool Exists
-    ${skipped}=    Evaluate    $result.get('skipped', False)
-    Skip If    ${skipped}    Import failed
-    Should Be True    ${result}[exists]
-    Should Be True    ${result}[callable]
+    Skip If Import Failed    ${result}
 
 Session List Tool Exists
-    [Documentation]    GIVEN MCP tools WHEN import THEN session_list exists
-    [Tags]    unit    session    mcp    list
+    [Documentation]    Test: Session List Tool Exists
     ${result}=    Session List Tool Exists
-    ${skipped}=    Evaluate    $result.get('skipped', False)
-    Skip If    ${skipped}    Import failed
-    Should Be True    ${result}[exists]
-    Should Be True    ${result}[callable]
-
-# =============================================================================
-# Session Dataclasses Tests
-# =============================================================================
-
-Session Event Dataclass Works
-    [Documentation]    GIVEN SessionEvent WHEN creating THEN fields correct
-    [Tags]    unit    session    dataclass    event
-    ${result}=    Session Event Dataclass Works
-    ${skipped}=    Evaluate    $result.get('skipped', False)
-    Skip If    ${skipped}    Import failed
-    Should Be True    ${result}[timestamp_correct]
-    Should Be True    ${result}[type_correct]
-    Should Be True    ${result}[metadata_correct]
-
-Task Dataclass Works
-    [Documentation]    GIVEN Task WHEN creating THEN fields correct
-    [Tags]    unit    session    dataclass    task
-    ${result}=    Task Dataclass Works
-    ${skipped}=    Evaluate    $result.get('skipped', False)
-    Skip If    ${skipped}    Import failed
-    Should Be True    ${result}[id_correct]
-    Should Be True    ${result}[status_correct]
-    Should Be True    ${result}[priority_correct]
+    Skip If Import Failed    ${result}

@@ -5,7 +5,7 @@ Documentation    External MCP Tools Tests
 Library          Collections
 Library          ../../libs/ExternalMCPToolsLibrary.py
 Resource         ../resources/common.resource
-Tags             unit    mcp    external    rule-007
+Force Tags             unit    mcp    external    rule-007    low    validate    ARCH-MCP-02-v1
 
 *** Test Cases ***
 # =============================================================================

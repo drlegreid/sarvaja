@@ -4,6 +4,7 @@ Documentation    RF-004: Unit Tests - Hybrid Query Router
 ...              Tests routing logic between TypeDB and ChromaDB
 Library          Collections
 Library          ../../libs/HybridRouterLibrary.py
+Force Tags        unit    data    routing    medium    rule    read    ARCH-MCP-02-v1
 
 *** Test Cases ***
 # =============================================================================

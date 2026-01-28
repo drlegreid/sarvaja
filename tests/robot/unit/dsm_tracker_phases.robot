@@ -4,6 +4,7 @@ Documentation    RF-004: Unit Tests - DSM Tracker Phase Transitions
 ...              Per RULE-012: Deep Sleep Protocol
 Library          Collections
 Library          ../../libs/DSMTrackerPhasesLibrary.py
+Force Tags        unit    dsm    phases    medium    session    validate    SESSION-DSM-01-v1
 
 *** Test Cases ***
 # =============================================================================

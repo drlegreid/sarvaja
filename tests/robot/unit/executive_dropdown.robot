@@ -4,6 +4,7 @@ Documentation    RF-004: Unit Tests - Executive Dropdown
 ...              Per UI-AUDIT-007: Executive Report dropdown fix
 Library          Collections
 Library          ../../libs/ExecutiveDropdownLibrary.py
+Force Tags        unit    ui    executive    low    session    read    UI-NAV-01-v1
 
 *** Test Cases ***
 # =============================================================================
