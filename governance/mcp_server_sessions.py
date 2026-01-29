@@ -34,10 +34,12 @@ metrics = MCPMetrics("gov-sessions")
 from governance.mcp_tools.sessions import register_session_tools
 from governance.mcp_tools.dsm import register_dsm_tools
 from governance.mcp_tools.evidence import register_evidence_tools
+from governance.mcp_tools.session_metrics import register_session_metrics_tools
 
 register_session_tools(mcp)
 register_dsm_tools(mcp)
 register_evidence_tools(mcp)
+register_session_metrics_tools(mcp)
 
 
 # =============================================================================
