@@ -213,45 +213,45 @@ class SessionCRUDOperations:
             return False
 
         try:
-            with self._driver.transaction(self.database, TransactionType.WRITE) as tx:
-                # Delete all relations first (has-evidence, session-applied-rule, etc.)
-                # Delete has-evidence relations
-                del_evidence = f"""
+            # Delete relations in separate transactions to avoid
+            # TypeDB 3.x variable type conflict ($r reused across types)
+            relation_queries = [
+                f"""
                     match
                         $s isa work-session, has session-id "{session_id}";
                         $r (evidence-session: $s) isa has-evidence;
                     delete $r;
-                """
-                try:
-                    tx.query(del_evidence).resolve()
-                except Exception:
-                    pass
-
-                # Delete session-applied-rule relations
-                del_rules = f"""
+                """,
+                f"""
                     match
                         $s isa work-session, has session-id "{session_id}";
                         $r (applying-session: $s) isa session-applied-rule;
                     delete $r;
-                """
-                try:
-                    tx.query(del_rules).resolve()
-                except Exception:
-                    pass
-
-                # Delete session-decision relations
-                del_decisions = f"""
+                """,
+                f"""
                     match
                         $s isa work-session, has session-id "{session_id}";
                         $r (deciding-session: $s) isa session-decision;
                     delete $r;
-                """
-                try:
-                    tx.query(del_decisions).resolve()
-                except Exception:
-                    pass
+                """,
+                f"""
+                    match
+                        $s isa work-session, has session-id "{session_id}";
+                        $r (hosting-session: $s) isa completed-in;
+                    delete $r;
+                """,
+            ]
 
-                # Delete the session entity itself
+            for query in relation_queries:
+                try:
+                    with self._driver.transaction(self.database, TransactionType.WRITE) as tx:
+                        tx.query(query).resolve()
+                        tx.commit()
+                except Exception:
+                    pass  # Relation may not exist
+
+            # Delete the session entity itself
+            with self._driver.transaction(self.database, TransactionType.WRITE) as tx:
                 delete_query = f"""
                     match
                         $s isa work-session, has session-id "{session_id}";

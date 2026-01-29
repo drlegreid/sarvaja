@@ -55,10 +55,11 @@ class DecisionQueries:
                     date_val = date_results[0].get("date")
                     if isinstance(date_val, datetime):
                         decision_date = date_val
-                    elif isinstance(date_val, str):
+                    else:
+                        # TypeDB Datetime or string — convert via str
                         try:
-                            decision_date = datetime.fromisoformat(
-                                date_val.replace("Z", "+00:00"))
+                            date_str = str(date_val)[:19]  # Trim nanoseconds
+                            decision_date = datetime.fromisoformat(date_str)
                         except (ValueError, AttributeError):
                             pass
             except Exception:
@@ -143,7 +144,8 @@ class DecisionQueries:
         name: Optional[str] = None,
         context: Optional[str] = None,
         rationale: Optional[str] = None,
-        status: Optional[str] = None
+        status: Optional[str] = None,
+        decision_date: Optional[str] = None
     ) -> Optional[Decision]:
         """
         Update an existing decision's attributes.
@@ -154,6 +156,7 @@ class DecisionQueries:
             context: New context (optional)
             rationale: New rationale (optional)
             status: New status (optional)
+            decision_date: ISO datetime string (optional)
 
         Returns:
             Updated Decision object or None if not found
@@ -171,7 +174,7 @@ class DecisionQueries:
         if not existing:
             return None
 
-        # Build update queries for each attribute
+        # Build update queries for each string attribute
         updates = []
         if name is not None:
             name_escaped = name.replace('"', '\\"')
@@ -185,10 +188,10 @@ class DecisionQueries:
         if status is not None:
             updates.append(('decision-status', status))
 
-        if not updates:
+        if not updates and decision_date is None:
             return existing  # Nothing to update
 
-        # Execute updates - TypeDB 3.x: driver.transaction() directly
+        # Execute string attribute updates
         for attr_name, new_value in updates:
             # Delete old attribute (TypeDB 3.x: has $var of $entity)
             with self._driver.transaction(self.database, TransactionType.WRITE) as tx:
@@ -204,6 +207,31 @@ class DecisionQueries:
                 insert_query = f'''
                     match $d isa decision, has decision-id "{decision_id}";
                     insert $d has {attr_name} "{new_value}";
+                '''
+                tx.query(insert_query).resolve()
+                tx.commit()
+
+        # Handle decision_date (datetime type, not string — no quotes)
+        if decision_date is not None:
+            # Delete old date if exists
+            with self._driver.transaction(self.database, TransactionType.WRITE) as tx:
+                try:
+                    delete_query = f'''
+                        match $d isa decision, has decision-id "{decision_id}", has decision-date $old;
+                        delete has $old of $d;
+                    '''
+                    tx.query(delete_query).resolve()
+                    tx.commit()
+                except Exception:
+                    pass  # May not have existing date
+
+            # Insert new date (TypeDB datetime: no quotes)
+            # Normalize to TypeDB format YYYY-MM-DDTHH:MM:SS
+            date_str = decision_date[:19]  # Trim microseconds/timezone
+            with self._driver.transaction(self.database, TransactionType.WRITE) as tx:
+                insert_query = f'''
+                    match $d isa decision, has decision-id "{decision_id}";
+                    insert $d has decision-date {date_str};
                 '''
                 tx.query(insert_query).resolve()
                 tx.commit()

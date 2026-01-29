@@ -141,7 +141,8 @@ async def update_decision(decision_id: str, decision: DecisionUpdate):
             name=decision.name,
             context=decision.context,
             rationale=decision.rationale,
-            status=decision.status
+            status=decision.status,
+            decision_date=decision.decision_date
         )
 
         if updated:

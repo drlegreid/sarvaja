@@ -113,6 +113,7 @@ class DecisionUpdate(BaseModel):
     context: Optional[str] = None
     rationale: Optional[str] = None
     status: Optional[str] = None
+    decision_date: Optional[str] = None
 
 class DecisionResponse(BaseModel):
     """Response model for a decision."""
