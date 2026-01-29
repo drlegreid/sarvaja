@@ -1,7 +1,7 @@
 """
 LangGraph Governance Workflow
 =============================
-Stateful workflow for rule proposals per RULE-011 (Multi-Agent Governance).
+Stateful workflow for rule proposals per GOV-BICAM-01-v1 (Multi-Agent Governance).
 
 **Refactored: 2024-12-28 per GAP-FILE-009**
 Original: 851 lines → Package with 5 modules (~700 lines total)
@@ -27,7 +27,7 @@ Workflow Phases:
                 ↓                   ↓
               COMPLETE            COMPLETE
 
-Per: RULE-011 (Multi-Agent Governance Protocol)
+Per: GOV-BICAM-01-v1 (Multi-Agent Governance Protocol)
 """
 
 # Re-export everything from the package for backward compatibility

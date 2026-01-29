@@ -249,7 +249,7 @@ class SessionRenderMixin:
             "",
             "---",
             "",
-            "*Generated per RULE-001: Session Evidence Logging*",
+            "*Generated per SESSION-EVID-01-v1: Session Evidence Logging*",
         ])
 
         return "\n".join(lines)

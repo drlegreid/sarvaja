@@ -1,9 +1,9 @@
 """
 Reports Routes.
 
-Per RULE-012: DSP Semantic Code Structure.
+Per SESSION-DSM-01-v1: DSP Semantic Code Structure.
 Per GAP-FILE-002: Extracted from api.py.
-Per RULE-029: Executive Reporting Pattern.
+Per REPORT-EXEC-01-v1: Executive Reporting Pattern.
 
 Created: 2024-12-28
 """
@@ -40,7 +40,7 @@ def _generate_recommendations(pending_tasks: int, avg_trust: float, active_rules
 
     if not recs:
         recs.append("System operating within normal parameters")
-        recs.append("Continue regular DSP cycles per RULE-012")
+        recs.append("Continue regular DSP cycles per SESSION-DSM-01-v1")
 
     return ". ".join(recs) + "."
 
@@ -52,7 +52,7 @@ def _generate_objectives(pending_tasks: int, completed_tasks: int) -> str:
     if pending_tasks > 0:
         objs.append(f"Complete top {min(pending_tasks, 3)} priority tasks from backlog")
     objs.append("Run DSP cycle for system health validation")
-    objs.append("Update session evidence per RULE-001")
+    objs.append("Update session evidence per SESSION-EVID-01-v1")
 
     if completed_tasks > 5:
         objs.append("Archive completed tasks to TASKS-COMPLETED.md")
@@ -66,7 +66,7 @@ def _generate_executive_report(
     end_date: Optional[str] = None
 ) -> ExecutiveReportResponse:
     """
-    Generate executive report per RULE-029 template.
+    Generate executive report per REPORT-EXEC-01-v1 template.
 
     Aggregates data from sessions, rules, tasks, and agents.
     """
@@ -133,7 +133,7 @@ def _generate_executive_report(
         ExecutiveReportSection(
             title="Compliance Status",
             content=f"{active_rules} of {rules_count} governance rules are ACTIVE. "
-                    f"All agents operating within trust thresholds per RULE-011.",
+                    f"All agents operating within trust thresholds per GOV-BICAM-01-v1.",
             metrics={
                 "active_rules": active_rules,
                 "total_rules": rules_count,
@@ -157,7 +157,7 @@ def _generate_executive_report(
         ExecutiveReportSection(
             title="Strategic Alignment",
             content=f"TypeDB-First strategy (DECISION-003) in effect. "
-                    f"{total_sessions} sessions documented with evidence trails per RULE-001.",
+                    f"{total_sessions} sessions documented with evidence trails per SESSION-EVID-01-v1.",
             metrics={
                 "sessions_documented": total_sessions,
                 "active_sessions": active_sessions,
@@ -231,7 +231,7 @@ async def get_executive_report(
     end_date: Optional[str] = Query(None, description="End date (YYYY-MM-DD)")
 ):
     """
-    Generate executive report per RULE-029.
+    Generate executive report per REPORT-EXEC-01-v1.
 
     Per GAP-UI-044: Executive Reporting UI.
 

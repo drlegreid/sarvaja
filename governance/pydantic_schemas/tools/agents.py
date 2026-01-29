@@ -3,11 +3,11 @@ Agent Trust Score Tools
 =======================
 Type-safe trust score calculation operations.
 
-Per RULE-011: Multi-Agent Governance Protocol
+Per GOV-BICAM-01-v1: Multi-Agent Governance Protocol
 Per RULE-017: Type-Safe Tool Development
 Per GAP-FILE-010: Extracted from pydantic_tools.py
 
-Trust Formula (RULE-011):
+Trust Formula (GOV-BICAM-01-v1):
 Trust = (Compliance x 0.4) + (Accuracy x 0.3) + (Consistency x 0.2) + (Tenure x 0.1)
 
 Created: 2024-12-28
@@ -20,7 +20,7 @@ def calculate_trust_score_typed(request: TrustScoreRequest) -> TrustScoreResult:
     """
     Calculate trust score with type-safe request and result.
 
-    Trust Formula (RULE-011):
+    Trust Formula (GOV-BICAM-01-v1):
     Trust = (Compliance x 0.4) + (Accuracy x 0.3) + (Consistency x 0.2) + (Tenure x 0.1)
 
     Args:
@@ -68,7 +68,7 @@ def calculate_trust_score_typed(request: TrustScoreRequest) -> TrustScoreResult:
             result = results[0]
             trust_score = float(result.get('trust', 0.0))
 
-            # Calculate vote weight per RULE-011
+            # Calculate vote weight per GOV-BICAM-01-v1
             vote_weight = 1.0 if trust_score >= 0.5 else trust_score
 
             return TrustScoreResult(

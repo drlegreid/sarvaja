@@ -1,4 +1,4 @@
-"""Proposal MCP Tools. Per RULE-011, RULE-012: Proposal, voting, dispute operations."""
+"""Proposal MCP Tools. Per GOV-BICAM-01-v1, SESSION-DSM-01-v1: Proposal, voting, dispute operations."""
 from governance.mcp_tools.common import format_mcp_result
 
 import json
@@ -25,7 +25,7 @@ def register_proposal_tools(mcp) -> None:
         directive: Optional[str] = None
     ) -> str:
         """
-        Create a governance proposal for rule changes (RULE-011).
+        Create a governance proposal for rule changes (GOV-BICAM-01-v1).
 
         Args:
             action: Proposal action - "create", "modify", or "deprecate"
@@ -82,9 +82,9 @@ def register_proposal_tools(mcp) -> None:
         reason: Optional[str] = None
     ) -> str:
         """
-        Vote on a governance proposal (RULE-011).
+        Vote on a governance proposal (GOV-BICAM-01-v1).
 
-        Votes are weighted by agent trust score per RULE-011 bicameral model.
+        Votes are weighted by agent trust score per GOV-BICAM-01-v1 bicameral model.
 
         Args:
             proposal_id: ID of the proposal to vote on
@@ -138,7 +138,7 @@ def register_proposal_tools(mcp) -> None:
         resolution_method: str = "evidence"
     ) -> str:
         """
-        File a dispute against a proposal (RULE-011).
+        File a dispute against a proposal (GOV-BICAM-01-v1).
 
         Disputes can trigger escalation to human oversight per bicameral model.
 
@@ -166,7 +166,7 @@ def register_proposal_tools(mcp) -> None:
         }
 
         if resolution_method == "escalate":
-            dispute["message"] = "ESCALATION: Human oversight required (RULE-011 bicameral model)"
+            dispute["message"] = "ESCALATION: Human oversight required (GOV-BICAM-01-v1 bicameral model)"
         else:
             dispute["message"] = f"Dispute filed. Resolution method: {resolution_method}"
 
@@ -234,7 +234,7 @@ def register_proposal_tools(mcp) -> None:
     @mcp.tool()
     def proposals_escalated() -> str:
         """
-        List proposals requiring human escalation (RULE-011 bicameral oversight).
+        List proposals requiring human escalation (GOV-BICAM-01-v1 bicameral oversight).
 
         Uses TypeDB inference to identify proposals meeting escalation criteria.
 

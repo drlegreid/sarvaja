@@ -1,9 +1,9 @@
 """
 LangGraph Governance Workflow Package
 =====================================
-Modular stateful workflow for rule proposals per RULE-011.
+Modular stateful workflow for rule proposals per GOV-BICAM-01-v1.
 
-Per RULE-012: DSP Semantic Code Structure
+Per SESSION-DSM-01-v1: DSP Semantic Code Structure
 Per GAP-FILE-009: Extracted from langgraph_workflow.py (851 lines)
 
 Modules:

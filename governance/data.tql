@@ -502,7 +502,7 @@ $task_p9_5 isa task,
     has task-id "P9.5",
     has task-name "Agent Trust Dashboard",
     has task-status "DONE",
-    has task-body "Multi-agent governance dashboard with trust scores per RULE-011",
+    has task-body "Multi-agent governance dashboard with trust scores per GOV-BICAM-01-v1",
     has phase "P9";
 
 $task_p11_3 isa task,

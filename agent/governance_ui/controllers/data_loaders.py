@@ -219,7 +219,8 @@ def register_data_loader_controllers(
                     pass
 
                 try:
-                    response, _ = _traced_get(client, "/api/tasks")
+                    page_size = getattr(state, 'tasks_per_page', 25)
+                    response, _ = _traced_get(client, f"/api/tasks?limit={page_size}&offset=0")
                     if response.status_code == 200:
                         data = response.json()
                         # Handle paginated response (EPIC-DR-003)
@@ -228,7 +229,15 @@ def register_data_loader_controllers(
                             state.tasks_pagination = data.get("pagination", {})
                         else:
                             # Backward compatibility: direct array
-                            state.tasks = data
+                            state.tasks = data[:page_size] if len(data) > page_size else data
+                            state.tasks_pagination = {
+                                "total": len(data),
+                                "offset": 0,
+                                "limit": page_size,
+                                "has_more": len(data) > page_size,
+                                "returned": min(len(data), page_size),
+                            }
+                    state.tasks_page = 1
                 except Exception:
                     pass
 

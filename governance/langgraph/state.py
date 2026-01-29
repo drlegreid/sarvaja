@@ -3,7 +3,7 @@ LangGraph State Schema
 ======================
 State types and constants for governance workflow.
 
-Per RULE-011: Multi-Agent Governance Protocol
+Per GOV-BICAM-01-v1: Multi-Agent Governance Protocol
 Per GAP-FILE-009: Extracted from langgraph_workflow.py
 
 Created: 2024-12-28
@@ -52,7 +52,7 @@ class ProposalState(TypedDict):
     affected_rules: List[str]
     recommendations: List[str]
 
-    # Voting (RULE-011)
+    # Voting (GOV-BICAM-01-v1)
     votes: List[Vote]
     votes_for: float  # Weighted sum
     votes_against: float
@@ -78,15 +78,15 @@ class ProposalState(TypedDict):
 
 
 # =============================================================================
-# CONSTANTS (RULE-011)
+# CONSTANTS (GOV-BICAM-01-v1)
 # =============================================================================
 
-# Voting thresholds per RULE-011
+# Voting thresholds per GOV-BICAM-01-v1
 QUORUM_THRESHOLD = 0.5  # 50% of eligible agents must vote
 APPROVAL_THRESHOLD = 0.67  # 67% weighted approval required
 DISPUTE_THRESHOLD = 0.75  # Disputes require 75% to override
 
-# Trust score formula components (RULE-011)
+# Trust score formula components (GOV-BICAM-01-v1)
 TRUST_WEIGHTS = {
     "compliance": 0.4,
     "accuracy": 0.3,

@@ -1,7 +1,7 @@
 """
-Trust Level Constraints (RULE-011).
+Trust Level Constraints (GOV-BICAM-01-v1).
 
-Per RULE-011: Multi-Agent Governance - trust-weighted constraints.
+Per GOV-BICAM-01-v1: Multi-Agent Governance - trust-weighted constraints.
 """
 
 from typing import Tuple
@@ -9,7 +9,7 @@ from kanren import run, var, eq, conde
 
 
 def trust_level(score: float) -> str:
-    """Determine trust level from score per RULE-011."""
+    """Determine trust level from score per GOV-BICAM-01-v1."""
     if score >= 0.9:
         return "expert"
     elif score >= 0.7:
@@ -24,7 +24,7 @@ def requires_supervisor(trust: str) -> Tuple:
     """
     Determine if agent trust level requires supervisor context.
 
-    Per RULE-011: Trust < 0.7 requires supervisor approval for critical tasks.
+    Per GOV-BICAM-01-v1: Trust < 0.7 requires supervisor approval for critical tasks.
     """
     x = var()
     return run(1, x, conde(
@@ -39,7 +39,7 @@ def can_execute_priority(trust: str, priority: str) -> Tuple:
     """
     Check if agent can execute task of given priority.
 
-    Per RULE-011:
+    Per GOV-BICAM-01-v1:
     - CRITICAL: expert or trusted only
     - HIGH: trusted and above
     - MEDIUM/LOW: all levels

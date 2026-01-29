@@ -78,10 +78,17 @@ def register_backlog_controllers(
                 if response.status_code == 200:
                     state.status_message = f"Task {task_id} completed successfully"
                     load_backlog_data()
-                    # Also refresh the main tasks list
-                    tasks_response = client.get(f"{api_base_url}/api/tasks")
+                    # Also refresh the main tasks list with pagination
+                    page_size = getattr(state, 'tasks_per_page', 25)
+                    offset = (getattr(state, 'tasks_page', 1) - 1) * page_size
+                    tasks_response = client.get(f"{api_base_url}/api/tasks", params={"limit": page_size, "offset": offset})
                     if tasks_response.status_code == 200:
-                        state.tasks = extract_items_from_response(tasks_response.json())
+                        data = tasks_response.json()
+                        if isinstance(data, dict) and "items" in data:
+                            state.tasks = data["items"]
+                            state.tasks_pagination = data.get("pagination", {})
+                        else:
+                            state.tasks = extract_items_from_response(data)
                 else:
                     state.has_error = True
                     state.error_message = f"Failed to complete task: {response.text}"

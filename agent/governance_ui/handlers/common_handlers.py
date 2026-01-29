@@ -44,11 +44,18 @@ def register_common_handlers(ctrl: Any, state: Any) -> None:
                 except Exception:
                     pass
 
-                # Load tasks
+                # Load tasks with pagination
                 try:
-                    tasks_response = client.get(f"{API_BASE_URL}/api/tasks")
+                    page_size = getattr(state, 'tasks_per_page', 25)
+                    tasks_response = client.get(f"{API_BASE_URL}/api/tasks", params={"limit": page_size, "offset": 0})
                     if tasks_response.status_code == 200:
-                        state.tasks = extract_items_from_response(tasks_response.json())
+                        data = tasks_response.json()
+                        if isinstance(data, dict) and "items" in data:
+                            state.tasks = data["items"]
+                            state.tasks_pagination = data.get("pagination", {})
+                        else:
+                            state.tasks = extract_items_from_response(data)
+                    state.tasks_page = 1
                 except Exception:
                     pass
 
