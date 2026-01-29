@@ -12,7 +12,7 @@ Test Tags        e2e    browser    dashboard    critical    ui    session    rea
 
 *** Variables ***
 ${DASHBOARD_URL}      http://localhost:8081
-${APP_TITLE}          Governance Dashboard
+${APP_TITLE}          Sarvaja Governance Dashboard
 ${PAGE_TIMEOUT}       10s
 
 *** Keywords ***

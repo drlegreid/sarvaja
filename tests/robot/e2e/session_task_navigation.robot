@@ -12,7 +12,7 @@ Test Tags        e2e    browser    sessions    tasks    medium    read    SESSIO
 
 *** Variables ***
 ${DASHBOARD_URL}         http://localhost:8081
-${APP_TITLE}             Governance Dashboard
+${APP_TITLE}             Sarvaja Governance Dashboard
 ${PAGE_TIMEOUT}          10s
 ${ELEMENT_TIMEOUT}       10s
 ${TEST_SESSION_ID}       SESSION-2026-01-10-INTENT-TEST
