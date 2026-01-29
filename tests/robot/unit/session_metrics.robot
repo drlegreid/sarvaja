@@ -12,6 +12,7 @@ ${TEST_DIR}      ${EMPTY}
 ${CORR_DIR}      ${EMPTY}
 ${SEARCH_DIR}    ${EMPTY}
 ${AGENT_DIR}     ${EMPTY}
+${ERROR_DIR}     ${EMPTY}
 
 *** Test Cases ***
 # =============================================================================
@@ -250,6 +251,38 @@ Agent Metrics Has Tool Breakdown
     ${result}=    Agent Metrics From Dir    ${AGENT_DIR}
     Dictionary Should Contain Key    ${result}[tool_breakdown]    Grep
 
+# =============================================================================
+# Error/Retry Tests (GAP-SESSION-METRICS-ERRORS)
+# =============================================================================
+
+Error Metrics Counts API Errors
+    [Documentation]    GIVEN log with 2 API errors WHEN calculate THEN api_errors=2
+    [Tags]    unit    errors    validate
+    ${result}=    Error Metrics From Dir    ${ERROR_DIR}
+    Should Be Equal As Integers    ${result}[totals][api_errors]    2
+
+Error Metrics Day Has Errors
+    [Documentation]    GIVEN errors on one day WHEN calculate THEN day api_errors=2
+    [Tags]    unit    errors    validate
+    ${result}=    Error Metrics From Dir    ${ERROR_DIR}
+    ${day}=    Set Variable    ${result}[days][0]
+    Should Be Equal As Integers    ${day}[api_errors]    2
+
+Error Metrics Has Error Rate
+    [Documentation]    GIVEN 2 errors / 6 messages WHEN calculate THEN error_rate ~0.33
+    [Tags]    unit    errors    validate
+    ${result}=    Error Metrics From Dir    ${ERROR_DIR}
+    ${rate}=    Set Variable    ${result}[totals][error_rate]
+    Should Be True    ${rate} >= 0.3
+    Should Be True    ${rate} <= 0.4
+
+Error Metrics Serializable
+    [Documentation]    GIVEN error metrics WHEN to_dict THEN api_errors key exists
+    [Tags]    unit    errors    validate
+    ${result}=    Error Metrics From Dir    ${ERROR_DIR}
+    Dictionary Should Contain Key    ${result}[totals]    api_errors
+    Dictionary Should Contain Key    ${result}[totals]    error_rate
+
 *** Keywords ***
 Setup Test Log Directory
     [Documentation]    Create temporary test directory with sample JSONL data
@@ -261,3 +294,5 @@ Setup Test Log Directory
     Set Suite Variable    ${SEARCH_DIR}    ${search_dir}
     ${agent_dir}=    Create Agent Test Dir
     Set Suite Variable    ${AGENT_DIR}    ${agent_dir}
+    ${error_dir}=    Create Error Test Dir
+    Set Suite Variable    ${ERROR_DIR}    ${error_dir}

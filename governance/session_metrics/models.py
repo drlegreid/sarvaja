@@ -64,6 +64,7 @@ class ParsedEntry:
     thinking_content: Optional[str] = None
     user_content: Optional[str] = None  # Always None (privacy)
     is_compaction: bool = False
+    is_api_error: bool = False
     model: Optional[str] = None
     # Extended fields (populated by parse_log_file_extended)
     session_id: Optional[str] = None
@@ -94,6 +95,7 @@ class DayMetrics:
     tool_calls: int = 0
     mcp_calls: int = 0
     compactions: int = 0
+    api_errors: int = 0
 
     def to_dict(self) -> dict:
         return {
@@ -105,6 +107,7 @@ class DayMetrics:
             "tool_calls": self.tool_calls,
             "mcp_calls": self.mcp_calls,
             "compactions": self.compactions,
+            "api_errors": self.api_errors,
         }
 
 
@@ -119,8 +122,10 @@ class TotalMetrics:
     mcp_calls: int = 0
     thinking_chars: int = 0
     days_covered: int = 0
+    api_errors: int = 0
 
     def to_dict(self) -> dict:
+        error_rate = round(self.api_errors / self.message_count, 2) if self.message_count > 0 else 0.0
         return {
             "active_minutes": self.active_minutes,
             "session_count": self.session_count,
@@ -129,6 +134,8 @@ class TotalMetrics:
             "mcp_calls": self.mcp_calls,
             "thinking_chars": self.thinking_chars,
             "days_covered": self.days_covered,
+            "api_errors": self.api_errors,
+            "error_rate": error_rate,
         }
 
 

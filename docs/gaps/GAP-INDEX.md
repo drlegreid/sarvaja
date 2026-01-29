@@ -24,12 +24,14 @@
 |----|----------|--------|----------|----------|-------|
 | GAP-SESSION-METRICS-CORRELATION | HIGH | RESOLVED | analytics | Per SESSION-METRICS-01-v1 | 19 pytest + 7 Robot |
 | GAP-SESSION-METRICS-CONTENT | HIGH | RESOLVED | analytics | Per SESSION-METRICS-01-v1 | 19 pytest + 6 Robot |
+| GAP-SESSION-METRICS-ERRORS | MEDIUM | RESOLVED | analytics | Per SESSION-METRICS-01-v1 | 7 pytest + 4 Robot |
 | GAP-LANGGRAPH-QUALITY-001 | MEDIUM | DEFERRED | enhancement | [evidence](evidence/GAP-LANGGRAPH-QUALITY-001.md) | - |
 | GAP-MCP-PAGING-001 | MEDIUM | MITIGATED | tooling | [evidence](evidence/GAP-MCP-PAGING-001.md) | - |
 
 > **Notes:**
 > - GAP-SESSION-METRICS-CORRELATION: RESOLVED (2026-01-29) - correlation.py with 19 pytest + 7 Robot tests
 > - GAP-SESSION-METRICS-CONTENT: RESOLVED (2026-01-29) - search.py + parse_log_file_extended with 19 pytest + 6 Robot tests
+> - GAP-SESSION-METRICS-ERRORS: RESOLVED (2026-01-29) - is_api_error detection, error_rate calculation with 7 pytest + 4 Robot tests
 > - GAP-MCP-PAGING-001: MITIGATED - External MCP tools, workarounds documented
 > - GAP-LANGGRAPH-QUALITY-001: DEFERRED (2026-01-26) - Option C selected, revisit when multi-agent active
 

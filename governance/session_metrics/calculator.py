@@ -87,6 +87,7 @@ def calculate_metrics(
     total_mcp_calls = 0
     total_thinking_chars = 0
     total_compactions = 0
+    total_api_errors = 0
 
     for entry in entries:
         for tu in entry.tool_uses:
@@ -97,6 +98,8 @@ def calculate_metrics(
         total_thinking_chars += entry.thinking_chars
         if entry.is_compaction:
             total_compactions += 1
+        if entry.is_api_error:
+            total_api_errors += 1
 
     # Per-day aggregation
     day_entries: dict[str, list[ParsedEntry]] = defaultdict(list)
@@ -114,6 +117,7 @@ def calculate_metrics(
             1 for e in d_entries for tu in e.tool_uses if tu.is_mcp
         )
         d_compactions = sum(1 for e in d_entries if e.is_compaction)
+        d_api_errors = sum(1 for e in d_entries if e.is_api_error)
         d_active = sum(s.active_minutes for s in d_sessions)
         d_wall = sum(s.wall_clock_minutes for s in d_sessions)
 
@@ -126,6 +130,7 @@ def calculate_metrics(
             tool_calls=d_tool_calls,
             mcp_calls=d_mcp_calls,
             compactions=d_compactions,
+            api_errors=d_api_errors,
         ))
 
     totals = TotalMetrics(
@@ -136,6 +141,7 @@ def calculate_metrics(
         mcp_calls=total_mcp_calls,
         thinking_chars=total_thinking_chars,
         days_covered=len(days),
+        api_errors=total_api_errors,
     )
 
     return MetricsResult(

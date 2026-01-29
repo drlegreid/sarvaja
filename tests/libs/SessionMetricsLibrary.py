@@ -299,6 +299,57 @@ class SessionMetricsLibrary:
         return summarize_correlation(correlated)
 
     # =========================================================================
+    # Error/Retry Tests (GAP-SESSION-METRICS-ERRORS)
+    # =========================================================================
+
+    def create_error_test_dir(self) -> str:
+        """Create a temp dir with normal + error JSONL entries. Returns path."""
+        self._error_dir = tempfile.mkdtemp(prefix="session_error_test_")
+        entries = [
+            {"type": "user", "timestamp": "2026-01-28T10:00:00Z",
+             "sessionId": "sess-001",
+             "message": {"role": "user", "content": "hello"}},
+            {"type": "assistant", "timestamp": "2026-01-28T10:01:00Z",
+             "sessionId": "sess-001",
+             "message": {"role": "assistant", "model": "claude-opus-4-5-20251101",
+                         "content": [{"type": "text", "text": "hi"}]}},
+            # API error (500)
+            {"type": "assistant", "timestamp": "2026-01-28T10:02:00Z",
+             "sessionId": "sess-001",
+             "isApiErrorMessage": True,
+             "message": {"role": "assistant",
+                         "content": "Internal server error (500)"}},
+            # Retry succeeds
+            {"type": "assistant", "timestamp": "2026-01-28T10:02:30Z",
+             "sessionId": "sess-001",
+             "message": {"role": "assistant", "model": "claude-opus-4-5-20251101",
+                         "content": [{"type": "text", "text": "retry ok"}]}},
+            # Another API error
+            {"type": "assistant", "timestamp": "2026-01-28T10:05:00Z",
+             "sessionId": "sess-001",
+             "isApiErrorMessage": True,
+             "message": {"role": "assistant",
+                         "content": "Overloaded (529)"}},
+            {"type": "user", "timestamp": "2026-01-28T10:06:00Z",
+             "sessionId": "sess-001",
+             "message": {"role": "user", "content": "continue"}},
+        ]
+        log_file = Path(self._error_dir) / "error-test.jsonl"
+        with open(log_file, "w") as f:
+            for e in entries:
+                f.write(json.dumps(e) + "\n")
+        return self._error_dir
+
+    def error_metrics_from_dir(self, directory: str) -> Dict[str, Any]:
+        """Calculate metrics from error test dir, return dict."""
+        from governance.session_metrics.parser import discover_log_files, parse_log_file
+        from governance.session_metrics.calculator import calculate_metrics
+        files = discover_log_files(Path(directory), include_agents=False)
+        entries = [e for f in files for e in parse_log_file(f)]
+        metrics = calculate_metrics(entries)
+        return metrics.to_dict()
+
+    # =========================================================================
     # Cleanup
     # =========================================================================
 
@@ -317,3 +368,6 @@ class SessionMetricsLibrary:
         if hasattr(self, "_agent_dir") and self._agent_dir and Path(self._agent_dir).exists():
             shutil.rmtree(self._agent_dir)
             self._agent_dir = None
+        if hasattr(self, "_error_dir") and self._error_dir and Path(self._error_dir).exists():
+            shutil.rmtree(self._error_dir)
+            self._error_dir = None

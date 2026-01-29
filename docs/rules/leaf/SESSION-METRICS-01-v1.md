@@ -79,13 +79,13 @@ Agent subprocesses: `agent-*.jsonl` in the same directory.
 | **Compaction Count** | Count of `system` entries with `subtype=compact_boundary` | count |
 | **Model Used** | Extract from `message.model` on assistant entries | string |
 | **Thinking Token Estimate** | Sum of `len(thinking_text)` across thinking blocks | chars |
+| **API Errors** | Count of entries with `isApiErrorMessage=true` | count |
+| **Error Rate** | `api_errors / message_count` (0 if no messages) | ratio |
 
 ### Optional Metrics (Future)
 
 | Metric | Description |
 |--------|-------------|
-| Error Rate | Count of entries with `isApiErrorMessage=true` |
-| Agent Subprocess Time | Parse `agent-*.jsonl` files for subagent durations |
 | Context Burn Rate | Tokens per tool call from compactMetadata |
 
 ---
@@ -215,9 +215,10 @@ Tests written BEFORE implementation (TDD).
 | `tests/unit/test_session_metrics_correlation.py` | Unit | 19 tests | PASS |
 | `tests/unit/test_session_metrics_search.py` | Unit | 19 tests | PASS |
 | `tests/unit/test_session_metrics_agents.py` | Unit | 13 tests | PASS |
-| `tests/robot/unit/session_metrics.robot` | Integration | 29 tests | PASS |
+| `tests/unit/test_session_metrics_errors.py` | Unit | 7 tests | PASS |
+| `tests/robot/unit/session_metrics.robot` | Integration | 33 tests | PASS |
 
-**Total: 124 tests, all passing.**
+**Total: 135 tests, all passing.**
 
 ---
 
@@ -243,7 +244,7 @@ Tests written BEFORE implementation (TDD).
 | ~~GAP-SESSION-METRICS-CORRELATION~~ | ~~RESOLVED (2026-01-29) - correlation.py~~ | ~~HIGH~~ |
 | ~~GAP-SESSION-METRICS-CONTENT~~ | ~~RESOLVED (2026-01-29) - search.py + session_search MCP tool~~ | ~~HIGH~~ |
 | ~~GAP-SESSION-METRICS-AGENTS~~ | ~~RESOLVED (2026-01-29) - agents.py + MCP integration~~ | ~~MEDIUM~~ |
-| GAP-SESSION-METRICS-ERRORS | API error/retry tracking (isApiErrorMessage) | MEDIUM |
+| ~~GAP-SESSION-METRICS-ERRORS~~ | ~~RESOLVED (2026-01-29) - error/retry tracking with error_rate~~ | ~~MEDIUM~~ |
 | GAP-SESSION-METRICS-PLATFORM | TypeDB entity + dashboard view + evidence gen | MEDIUM |
 | GAP-SESSION-METRICS-TEMPORAL | Temporal queries ("what was I doing at X?") | LOW |
 

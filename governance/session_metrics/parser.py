@@ -156,6 +156,9 @@ def parse_log_file(
                 and obj.get("compactMetadata") is not None
             )
 
+            # API error detection
+            is_api_error = obj.get("isApiErrorMessage", False) is True
+
             # Model
             model = msg.get("model") if isinstance(msg, dict) else None
 
@@ -171,6 +174,7 @@ def parse_log_file(
                 thinking_content=thinking_content,
                 user_content=None,  # Privacy: never store
                 is_compaction=is_compaction,
+                is_api_error=is_api_error,
                 model=model,
                 text_content=text_content,
             )
@@ -225,6 +229,7 @@ def parse_log_file_extended(
                 entry_type == "system"
                 and obj.get("compactMetadata") is not None
             )
+            is_api_error = obj.get("isApiErrorMessage", False) is True
             model = msg.get("model") if isinstance(msg, dict) else None
 
             # Extended fields
@@ -241,6 +246,7 @@ def parse_log_file_extended(
                 thinking_content=thinking_content,
                 user_content=None,
                 is_compaction=is_compaction,
+                is_api_error=is_api_error,
                 model=model,
                 session_id=session_id,
                 git_branch=git_branch,
