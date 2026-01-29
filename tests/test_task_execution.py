@@ -220,7 +220,7 @@ class TestExecutionAPIModels:
 
     def test_task_execution_event_model(self):
         """TaskExecutionEvent model has correct fields."""
-        from governance.api import TaskExecutionEvent
+        from governance.models import TaskExecutionEvent
 
         event = TaskExecutionEvent(
             event_id="EVT-001",
@@ -238,7 +238,7 @@ class TestExecutionAPIModels:
 
     def test_task_execution_response_model(self):
         """TaskExecutionResponse model has correct fields."""
-        from governance.api import TaskExecutionResponse, TaskExecutionEvent
+        from governance.models import TaskExecutionResponse, TaskExecutionEvent
 
         response = TaskExecutionResponse(
             task_id="TASK-001",

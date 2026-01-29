@@ -66,11 +66,13 @@ class TestParsersModule:
         assert callable(normalize_status)
 
     def test_normalize_status_done(self):
-        """Test done status normalization."""
+        """Test done/closed status normalization per TASK-LIFE-01-v1."""
         from governance.task_parsers import normalize_status
-        assert normalize_status("DONE") == "DONE"
-        assert normalize_status("✅") == "DONE"
-        assert normalize_status("✅ DONE") == "DONE"
+        # Per TASK-LIFE-01-v1: DONE maps to CLOSED
+        assert normalize_status("DONE") == "CLOSED"
+        assert normalize_status("✅") == "CLOSED"
+        assert normalize_status("✅ DONE") == "CLOSED"
+        assert normalize_status("CLOSED") == "CLOSED"
 
     def test_normalize_status_in_progress(self):
         """Test in progress status normalization."""

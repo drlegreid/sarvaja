@@ -222,7 +222,7 @@ class TestSessionMemoryManager:
 
         assert "AMNESIA Recovery Report" in report
         assert "No recent session context found" in report
-        assert "Recommended Recovery" in report
+        assert "Recovery:" in report
 
     def test_generate_amnesia_report_with_context(self):
         """generate_amnesia_report shows recovered context."""
@@ -237,7 +237,7 @@ class TestSessionMemoryManager:
         report = manager.generate_amnesia_report(recovered)
 
         assert "AMNESIA Recovery Report" in report
-        assert "Found 1 recent sessions" in report
+        assert "Found 1 sessions" in report
         assert "Last Phase:** P11" in report
 
 

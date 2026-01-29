@@ -184,11 +184,10 @@ class TestFileContentAPI:
 
     def test_file_content_response_model(self, client):
         """Response includes all required fields."""
-        from governance.api import FileContentResponse
+        from governance.models import FileContentResponse
 
-        # Verify model has correct fields
-        assert hasattr(FileContentResponse, '__fields__')
-        fields = FileContentResponse.__fields__
+        # Verify model has correct fields (Pydantic v2 uses model_fields)
+        fields = getattr(FileContentResponse, 'model_fields', None) or FileContentResponse.__fields__
         assert 'path' in fields
         assert 'content' in fields
         assert 'size' in fields

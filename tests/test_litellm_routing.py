@@ -1,12 +1,25 @@
 """
 Tests for LiteLLM model routing.
 Validates routing to Claude, Grok, and Ollama.
+
+Requires LiteLLM proxy running on localhost:4000.
 """
 import pytest
 import httpx
 import os
 
 
+def _litellm_available():
+    """Check if LiteLLM proxy is reachable."""
+    try:
+        with httpx.Client(timeout=3.0) as client:
+            response = client.get("http://localhost:4000/health")
+            return response.status_code in [200, 400]
+    except (httpx.ConnectError, httpx.TimeoutException):
+        return False
+
+
+@pytest.mark.skipif(not _litellm_available(), reason="LiteLLM proxy not running")
 class TestLiteLLMRouting:
     """Tests for LiteLLM model routing."""
 
@@ -16,7 +29,7 @@ class TestLiteLLMRouting:
         client = litellm_client["client"]
         base_url = litellm_client["base_url"]
         api_key = litellm_client["api_key"]
-        
+
         response = client.get(f"{base_url}/v1/models", headers={"Authorization": f"Bearer {api_key}"})
         assert response.status_code == 200
         

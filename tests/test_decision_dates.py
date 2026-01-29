@@ -77,7 +77,8 @@ class TestDecisionMCPEndpoint:
         # At least one decision should have a date
         decisions_with_dates = [
             d for d in decisions
-            if d.get("date") is not None and d.get("date") != "null"
+            if (d.get("decision_date") or d.get("date")) is not None
+            and (d.get("decision_date") or d.get("date")) != "null"
         ]
         assert len(decisions_with_dates) > 0, \
             f"At least one decision should have a date. Got: {decisions}"

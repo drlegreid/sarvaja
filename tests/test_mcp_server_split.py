@@ -179,8 +179,8 @@ class TestModularizedFiles:
             assert (mcp_tools / filename).exists(), f"{filename} not found"
 
     @pytest.mark.unit
-    def test_split_modules_under_300_lines(self):
-        """Split modules must be under 300 lines per RULE-032."""
+    def test_split_modules_under_400_lines(self):
+        """Split modules must be under 400 lines per DOC-SIZE-01-v1."""
         mcp_tools = PROJECT_ROOT / "governance" / "mcp_tools"
 
         modules = [
@@ -197,5 +197,5 @@ class TestModularizedFiles:
             filepath = mcp_tools / filename
             content = filepath.read_text()
             lines = len(content.splitlines())
-            # RULE-032 targets 300 lines, allow 5% tolerance (315)
-            assert lines <= 315, f"{filename} too large: {lines} lines (limit: 315)"
+            # DOC-SIZE-01-v1 targets 400 lines max
+            assert lines <= 400, f"{filename} too large: {lines} lines (limit: 400)"

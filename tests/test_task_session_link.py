@@ -44,7 +44,8 @@ class TestTaskLinkingMCP:
         import inspect
         from governance.mcp_tools import tasks_linking
         source = inspect.getsource(tasks_linking)
-        assert 'governance_task_link_session' in source
+        # Per GAP-MCP-NAMING-001: function name is task_link_session (not governance_ prefix)
+        assert 'task_link_session' in source
         assert '@mcp.tool()' in source
 
 
