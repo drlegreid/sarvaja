@@ -115,3 +115,72 @@ def register_session_metrics_tools(mcp) -> None:
         }
 
         return format_mcp_result(result)
+
+    @mcp.tool()
+    def session_search(
+        query: str = "",
+        session_id: Optional[str] = None,
+        git_branch: Optional[str] = None,
+        max_results: int = 50,
+        project_path: Optional[str] = None,
+    ) -> str:
+        """Search Claude Code session logs by content, session ID, or git branch.
+
+        Provides deliberate content/decision search within session transcripts.
+
+        Args:
+            query: Text to search for (case-insensitive). Empty = match all.
+            session_id: Filter to specific session ID.
+            git_branch: Filter to specific git branch.
+            max_results: Maximum results to return (default: 50).
+            project_path: Override project log directory (auto-detect if None).
+
+        Returns:
+            JSON with matching entries including timestamp, text, tools, branch.
+        """
+        from governance.session_metrics.parser import (
+            discover_log_files,
+            parse_log_file_extended,
+        )
+        from governance.session_metrics.search import (
+            search_entries,
+            results_to_dicts,
+        )
+
+        log_dir = _resolve_project_dir(project_path)
+
+        if not log_dir.is_dir():
+            return format_mcp_result({
+                "error": f"Log directory not found: {log_dir}",
+            })
+
+        log_files = discover_log_files(log_dir, include_agents=False)
+        if not log_files:
+            return format_mcp_result({
+                "error": f"No JSONL log files found in: {log_dir}",
+            })
+
+        all_entries = []
+        for lf in log_files:
+            for entry in parse_log_file_extended(lf):
+                all_entries.append(entry)
+
+        results = search_entries(
+            all_entries,
+            query=query,
+            session_id=session_id,
+            git_branch=git_branch,
+            max_results=max_results,
+        )
+
+        return format_mcp_result({
+            "results": results_to_dicts(results),
+            "total_matches": len(results),
+            "metadata": {
+                "log_dir": str(log_dir),
+                "total_entries_searched": len(all_entries),
+                "query": query,
+                "session_id": session_id,
+                "git_branch": git_branch,
+            },
+        })

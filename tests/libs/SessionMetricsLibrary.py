@@ -137,6 +137,59 @@ class SessionMetricsLibrary:
         return result
 
     # =========================================================================
+    # Search Tests
+    # =========================================================================
+
+    def create_search_test_dir(self) -> str:
+        """Create a temp dir with searchable entries. Returns path."""
+        self._search_dir = tempfile.mkdtemp(prefix="session_search_test_")
+        entries = [
+            {"type": "user", "timestamp": "2026-01-28T10:00:00Z",
+             "sessionId": "sess-A", "gitBranch": "main",
+             "message": {"role": "user", "content": "fix auth bug"}},
+            {"type": "assistant", "timestamp": "2026-01-28T10:01:00Z",
+             "sessionId": "sess-A", "gitBranch": "main",
+             "message": {"role": "assistant", "model": "claude-opus-4-5-20251101",
+                         "content": [
+                             {"type": "text", "text": "I'll fix the authentication issue."},
+                             {"type": "tool_use", "id": "t1", "name": "Read",
+                              "input": {"file_path": "/src/auth.py"}},
+                         ]}},
+            {"type": "user", "timestamp": "2026-01-29T14:00:00Z",
+             "sessionId": "sess-B", "gitBranch": "feature/dashboard",
+             "message": {"role": "user", "content": "add dashboard"}},
+            {"type": "assistant", "timestamp": "2026-01-29T14:02:00Z",
+             "sessionId": "sess-B", "gitBranch": "feature/dashboard",
+             "message": {"role": "assistant", "model": "claude-opus-4-5-20251101",
+                         "content": [
+                             {"type": "text",
+                              "text": "DECISION: Using React for the dashboard."},
+                         ]}},
+        ]
+        log_file = Path(self._search_dir) / "search-test.jsonl"
+        with open(log_file, "w") as f:
+            for e in entries:
+                f.write(json.dumps(e) + "\n")
+        return self._search_dir
+
+    def search_entries_from_dir(self, directory: str,
+                                query: str = "",
+                                session_id: str = "",
+                                git_branch: str = "") -> List[Dict[str, Any]]:
+        """Parse extended + search, return list of result dicts."""
+        from governance.session_metrics.parser import discover_log_files, parse_log_file_extended
+        from governance.session_metrics.search import search_entries, results_to_dicts
+        files = discover_log_files(Path(directory), include_agents=False)
+        entries = [e for f in files for e in parse_log_file_extended(f)]
+        results = search_entries(
+            entries,
+            query=query,
+            session_id=session_id or None,
+            git_branch=git_branch or None,
+        )
+        return results_to_dicts(results)
+
+    # =========================================================================
     # Correlation Tests
     # =========================================================================
 
@@ -215,3 +268,6 @@ class SessionMetricsLibrary:
         if hasattr(self, "_corr_dir") and self._corr_dir and Path(self._corr_dir).exists():
             shutil.rmtree(self._corr_dir)
             self._corr_dir = None
+        if hasattr(self, "_search_dir") and self._search_dir and Path(self._search_dir).exists():
+            shutil.rmtree(self._search_dir)
+            self._search_dir = None

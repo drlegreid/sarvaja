@@ -8,8 +8,9 @@ Suite Teardown   Cleanup Test Dir
 Force Tags       unit    session    metrics    SESSION-METRICS-01-v1    validate
 
 *** Variables ***
-${TEST_DIR}    ${EMPTY}
-${CORR_DIR}    ${EMPTY}
+${TEST_DIR}      ${EMPTY}
+${CORR_DIR}      ${EMPTY}
+${SEARCH_DIR}    ${EMPTY}
 
 *** Test Cases ***
 # =============================================================================
@@ -167,6 +168,57 @@ Correlation Summary Per Server
     Dictionary Should Contain Key    ${summary}[per_server]    gov-core
     Should Be Equal As Integers    ${summary}[per_server][gov-core][count]    1
 
+# =============================================================================
+# Content Search Tests (GAP-SESSION-METRICS-CONTENT)
+# =============================================================================
+
+Search Finds Text Match
+    [Documentation]    GIVEN log with text WHEN search 'authentication' THEN finds match
+    [Tags]    unit    search    validate
+    ${results}=    Search Entries From Dir    ${SEARCH_DIR}    query=authentication
+    ${len}=    Get Length    ${results}
+    Should Be True    ${len} >= 1
+
+Search Is Case Insensitive
+    [Documentation]    GIVEN log WHEN search 'DECISION' THEN finds match (case insensitive)
+    [Tags]    unit    search    validate
+    ${results}=    Search Entries From Dir    ${SEARCH_DIR}    query=DECISION
+    ${len}=    Get Length    ${results}
+    Should Be True    ${len} >= 1
+
+Search By Session ID
+    [Documentation]    GIVEN log WHEN filter session_id=sess-A THEN only sess-A entries
+    [Tags]    unit    search    validate
+    ${results}=    Search Entries From Dir    ${SEARCH_DIR}    session_id=sess-A
+    ${len}=    Get Length    ${results}
+    Should Be True    ${len} >= 1
+    FOR    ${r}    IN    @{results}
+        Should Be Equal    ${r}[session_id]    sess-A
+    END
+
+Search By Git Branch
+    [Documentation]    GIVEN log WHEN filter branch=feature/dashboard THEN only that branch
+    [Tags]    unit    search    validate
+    ${results}=    Search Entries From Dir    ${SEARCH_DIR}    git_branch=feature/dashboard
+    ${len}=    Get Length    ${results}
+    Should Be True    ${len} >= 1
+    FOR    ${r}    IN    @{results}
+        Should Be Equal    ${r}[git_branch]    feature/dashboard
+    END
+
+Search Combined Query And Branch
+    [Documentation]    GIVEN log WHEN search 'React' on feature/dashboard THEN match
+    [Tags]    unit    search    validate
+    ${results}=    Search Entries From Dir    ${SEARCH_DIR}    query=React    git_branch=feature/dashboard
+    ${len}=    Get Length    ${results}
+    Should Be True    ${len} >= 1
+
+Search No Match Returns Empty
+    [Documentation]    GIVEN log WHEN search nonexistent term THEN empty list
+    [Tags]    unit    search    validate
+    ${results}=    Search Entries From Dir    ${SEARCH_DIR}    query=zzz_no_match_zzz
+    Length Should Be    ${results}    0
+
 *** Keywords ***
 Setup Test Log Directory
     [Documentation]    Create temporary test directory with sample JSONL data
@@ -174,3 +226,5 @@ Setup Test Log Directory
     Set Suite Variable    ${TEST_DIR}    ${dir}
     ${corr_dir}=    Create Correlation Test Dir
     Set Suite Variable    ${CORR_DIR}    ${corr_dir}
+    ${search_dir}=    Create Search Test Dir
+    Set Suite Variable    ${SEARCH_DIR}    ${search_dir}

@@ -183,6 +183,7 @@ governance/session_metrics/
 ├── parser.py          # JSONL file discovery & parsing
 ├── calculator.py      # Metrics computation
 ├── correlation.py     # tool_use → tool_result latency join
+├── search.py          # Content search + session/branch filtering
 └── models.py          # Data models (dataclasses)
 ```
 
@@ -211,9 +212,10 @@ Tests written BEFORE implementation (TDD).
 | `tests/unit/test_session_metrics_parser.py` | Unit | 19 tests | PASS |
 | `tests/unit/test_session_metrics_calculator.py` | Unit | 25 tests | PASS |
 | `tests/unit/test_session_metrics_correlation.py` | Unit | 19 tests | PASS |
-| `tests/robot/unit/session_metrics.robot` | Integration | 19 tests | PASS |
+| `tests/unit/test_session_metrics_search.py` | Unit | 19 tests | PASS |
+| `tests/robot/unit/session_metrics.robot` | Integration | 25 tests | PASS |
 
-**Total: 82 tests, all passing.**
+**Total: 107 tests, all passing.**
 
 ---
 
@@ -237,7 +239,7 @@ Tests written BEFORE implementation (TDD).
 | Gap ID | Description | Priority |
 |--------|-------------|----------|
 | ~~GAP-SESSION-METRICS-CORRELATION~~ | ~~RESOLVED (2026-01-29) - correlation.py~~ | ~~HIGH~~ |
-| GAP-SESSION-METRICS-CONTENT | Deliberate content/decision search within sessions | HIGH |
+| ~~GAP-SESSION-METRICS-CONTENT~~ | ~~RESOLVED (2026-01-29) - search.py + session_search MCP tool~~ | ~~HIGH~~ |
 | GAP-SESSION-METRICS-AGENTS | Agent subprocess analytics + parent attribution | MEDIUM |
 | GAP-SESSION-METRICS-ERRORS | API error/retry tracking (isApiErrorMessage) | MEDIUM |
 | GAP-SESSION-METRICS-PLATFORM | TypeDB entity + dashboard view + evidence gen | MEDIUM |

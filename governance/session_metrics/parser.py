@@ -42,6 +42,17 @@ def _parse_timestamp(raw: str) -> datetime:
     return datetime.fromisoformat(raw)
 
 
+def _extract_text_content(content: list) -> str | None:
+    """Extract concatenated text blocks from message content."""
+    texts = []
+    if not isinstance(content, list):
+        return None
+    for block in content:
+        if isinstance(block, dict) and block.get("type") == "text":
+            texts.append(block.get("text", ""))
+    return "\n".join(texts) if texts else None
+
+
 def _extract_tool_uses(content: list) -> list[ToolUseInfo]:
     """Extract tool_use blocks from message content."""
     tools = []
@@ -148,6 +159,9 @@ def parse_log_file(
             # Model
             model = msg.get("model") if isinstance(msg, dict) else None
 
+            # Text content (assistant text blocks, not privacy-sensitive)
+            text_content = _extract_text_content(content)
+
             yield ParsedEntry(
                 timestamp=timestamp,
                 entry_type=entry_type,
@@ -158,4 +172,77 @@ def parse_log_file(
                 user_content=None,  # Privacy: never store
                 is_compaction=is_compaction,
                 model=model,
+                text_content=text_content,
+            )
+
+
+def parse_log_file_extended(
+    filepath: Path, include_thinking: bool = True
+) -> Generator[ParsedEntry, None, None]:
+    """Extended parser that also extracts session_id, git_branch, text_content.
+
+    This variant populates the extended fields on ParsedEntry for use
+    with the search module. Includes thinking by default for searchability.
+
+    Args:
+        filepath: Path to the .jsonl file.
+        include_thinking: If True, include thinking block content.
+
+    Yields:
+        ParsedEntry with extended fields populated.
+    """
+    filepath = Path(filepath)
+    with open(filepath, "r") as f:
+        for line in f:
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                obj = json.loads(line)
+            except json.JSONDecodeError:
+                continue
+
+            ts_raw = obj.get("timestamp")
+            if not ts_raw:
+                continue
+
+            try:
+                timestamp = _parse_timestamp(ts_raw)
+            except (ValueError, TypeError):
+                continue
+
+            entry_type = obj.get("type", "unknown")
+            msg = obj.get("message", {})
+            content = msg.get("content", []) if isinstance(msg, dict) else []
+
+            tool_uses = _extract_tool_uses(content)
+            mcp_meta = obj.get("mcpMeta")
+            tool_results = _extract_tool_results(content, mcp_meta)
+            thinking_chars, thinking_content = _extract_thinking(
+                content, include_thinking
+            )
+            is_compaction = (
+                entry_type == "system"
+                and obj.get("compactMetadata") is not None
+            )
+            model = msg.get("model") if isinstance(msg, dict) else None
+
+            # Extended fields
+            session_id = obj.get("sessionId")
+            git_branch = obj.get("gitBranch")
+            text_content = _extract_text_content(content)
+
+            yield ParsedEntry(
+                timestamp=timestamp,
+                entry_type=entry_type,
+                tool_uses=tool_uses,
+                tool_results=tool_results,
+                thinking_chars=thinking_chars,
+                thinking_content=thinking_content,
+                user_content=None,
+                is_compaction=is_compaction,
+                model=model,
+                session_id=session_id,
+                git_branch=git_branch,
+                text_content=text_content,
             )

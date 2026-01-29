@@ -10,7 +10,11 @@ from governance.session_metrics.models import (
     TotalMetrics,
     MetricsResult,
 )
-from governance.session_metrics.parser import discover_log_files, parse_log_file
+from governance.session_metrics.parser import (
+    discover_log_files,
+    parse_log_file,
+    parse_log_file_extended,
+)
 from governance.session_metrics.calculator import (
     split_sessions,
     calculate_metrics,
@@ -19,6 +23,10 @@ from governance.session_metrics.calculator import (
 from governance.session_metrics.correlation import (
     correlate_tool_calls,
     summarize_correlation,
+)
+from governance.session_metrics.search import (
+    search_entries,
+    results_to_dicts,
 )
 
 __all__ = [
@@ -37,4 +45,7 @@ __all__ = [
     "filter_entries_by_days",
     "correlate_tool_calls",
     "summarize_correlation",
+    "parse_log_file_extended",
+    "search_entries",
+    "results_to_dicts",
 ]

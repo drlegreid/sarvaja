@@ -65,6 +65,10 @@ class ParsedEntry:
     user_content: Optional[str] = None  # Always None (privacy)
     is_compaction: bool = False
     model: Optional[str] = None
+    # Extended fields (populated by parse_log_file_extended)
+    session_id: Optional[str] = None
+    git_branch: Optional[str] = None
+    text_content: Optional[str] = None  # Concatenated text blocks
 
 
 @dataclass
