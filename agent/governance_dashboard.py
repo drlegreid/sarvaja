@@ -148,7 +148,24 @@ class GovernanceDashboard:
             self._state.rules = get_rules()
             self._state.decisions = get_decisions()
             self._state.sessions = get_sessions(limit=100)
-            self._state.tasks = get_tasks()
+            # Load tasks with pagination to prevent DOM explosion (GAP-UI-PAGING-001)
+            try:
+                import httpx
+                page_size = 25
+                with httpx.Client(timeout=10.0) as client:
+                    resp = client.get(f"{API_BASE_URL}/api/tasks", params={"limit": page_size, "offset": 0})
+                    if resp.status_code == 200:
+                        data = resp.json()
+                        if isinstance(data, dict) and "items" in data:
+                            self._state.tasks = data["items"]
+                            self._state.tasks_pagination = data.get("pagination", {})
+                        else:
+                            self._state.tasks = data[:page_size] if len(data) > page_size else data
+                            self._state.tasks_pagination = {"total": len(data), "offset": 0, "limit": page_size, "has_more": len(data) > page_size, "returned": min(len(data), page_size)}
+                    else:
+                        self._state.tasks = get_tasks()
+            except Exception:
+                self._state.tasks = get_tasks()
 
             # Agent Task Backlog state (TODO-6)
             self._state.available_tasks = []

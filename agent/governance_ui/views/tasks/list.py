@@ -341,7 +341,7 @@ def build_tasks_list_view() -> None:
                 (
                     "'Page ' + tasks_page + ' of ' + "
                     "Math.ceil(tasks_pagination.total / tasks_per_page) + "
-                    "' (' + tasks_pagination.total + ' total)'"
+                    "' (' + tasks_pagination.total + ' total)'",
                 ),
                 classes="text-body-2 text-grey",
                 __properties=["data-testid"],

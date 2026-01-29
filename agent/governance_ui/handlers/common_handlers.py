@@ -54,7 +54,14 @@ def register_common_handlers(ctrl: Any, state: Any) -> None:
                             state.tasks = data["items"]
                             state.tasks_pagination = data.get("pagination", {})
                         else:
-                            state.tasks = extract_items_from_response(data)
+                            all_items = extract_items_from_response(data)
+                            state.tasks = all_items[:page_size]
+                            state.tasks_pagination = {
+                                "total": len(all_items), "offset": 0,
+                                "limit": page_size,
+                                "has_more": len(all_items) > page_size,
+                                "returned": min(len(all_items), page_size),
+                            }
                     state.tasks_page = 1
                 except Exception:
                     pass
