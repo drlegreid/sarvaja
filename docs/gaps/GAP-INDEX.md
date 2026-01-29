@@ -27,6 +27,7 @@
 | GAP-SESSION-METRICS-ERRORS | MEDIUM | RESOLVED | analytics | Per SESSION-METRICS-01-v1 | 7 pytest + 4 Robot |
 | GAP-SESSION-METRICS-PLATFORM | MEDIUM | RESOLVED | analytics | Per SESSION-METRICS-01-v1 | 18 pytest + 4 Robot |
 | GAP-SESSION-METRICS-TEMPORAL | LOW | RESOLVED | analytics | Per SESSION-METRICS-01-v1 | 15 pytest + 5 Robot |
+| GAP-SESSION-METRICS-UI | HIGH | RESOLVED | analytics | Per SESSION-METRICS-01-v1 | 14 pytest + 6 pytest |
 | GAP-LANGGRAPH-QUALITY-001 | MEDIUM | DEFERRED | enhancement | [evidence](evidence/GAP-LANGGRAPH-QUALITY-001.md) | - |
 | GAP-MCP-PAGING-001 | MEDIUM | MITIGATED | tooling | [evidence](evidence/GAP-MCP-PAGING-001.md) | - |
 
@@ -36,6 +37,7 @@
 > - GAP-SESSION-METRICS-ERRORS: RESOLVED (2026-01-29) - is_api_error detection, error_rate calculation with 7 pytest + 4 Robot tests
 > - GAP-SESSION-METRICS-PLATFORM: RESOLVED (2026-01-29) - evidence.py + typedb_queries.py with 18 pytest + 4 Robot tests
 > - GAP-SESSION-METRICS-TEMPORAL: RESOLVED (2026-01-29) - temporal.py with query_at_time, query_date_range, activity_timeline with 15 pytest + 5 Robot tests
+> - GAP-SESSION-METRICS-UI: RESOLVED (2026-01-29) - REST API routes + dashboard view + navigation + controller with 14 route + 6 data access tests
 > - GAP-MCP-PAGING-001: MITIGATED - External MCP tools, workarounds documented
 > - GAP-LANGGRAPH-QUALITY-001: DEFERRED (2026-01-26) - Option C selected, revisit when multi-agent active
 

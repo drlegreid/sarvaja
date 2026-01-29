@@ -32,6 +32,7 @@ from .files import router as files_router
 from .agents import router as agents_router
 from .reports import router as reports_router
 from .chat import router as chat_router
+from .metrics import router as metrics_router
 
 __all__ = [
     "rules_router",
@@ -42,4 +43,5 @@ __all__ = [
     "agents_router",
     "reports_router",
     "chat_router",
+    "metrics_router",
 ]

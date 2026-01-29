@@ -74,6 +74,7 @@ from agent.governance_ui.views import (
     build_workflow_view,  # RD-WORKFLOW Phase 4: Workflow compliance dashboard
     build_audit_view,  # RD-DEBUG-AUDIT Phase 4: Audit trail dashboard
     build_tests_view,  # WORKFLOW-SHELL-01-v1: Self-assessment test runner
+    build_metrics_view,  # SESSION-METRICS-01-v1: Session analytics dashboard
     build_trace_bar,  # GAP-UI-048: Bottom trace bar
     build_all_dialogs,  # GAP-UI-038: Shared dialogs
 )
@@ -172,6 +173,7 @@ class GovernanceDashboard:
             load_workflow_status = loaders['load_workflow_status']
             load_tests_data = loaders['load_tests_data']
             load_sessions_list = loaders['load_sessions_list']
+            load_metrics_data = loaders['load_metrics_data']
 
             # Initialize additional state for forms and filters
             self._state.show_rule_detail = False
@@ -287,6 +289,9 @@ class GovernanceDashboard:
                 elif active_view == 'tests':
                     # Auto-load test results (WORKFLOW-SHELL-01-v1)
                     load_tests_data()
+                elif active_view == 'metrics':
+                    # Auto-load session metrics (SESSION-METRICS-01-v1)
+                    load_metrics_data()
 
             with VAppLayout(
                 self._server,
@@ -377,6 +382,7 @@ class GovernanceDashboard:
                         build_workflow_view()
                         build_audit_view()
                         build_tests_view()
+                        build_metrics_view()
 
                     # =============================================================
                     # SHARED DIALOGS (GAP-UI-038)

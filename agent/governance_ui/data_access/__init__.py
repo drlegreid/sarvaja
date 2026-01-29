@@ -104,6 +104,13 @@ from .executive import (
     get_executive_report,
 )
 
+# Session metrics (SESSION-METRICS-01-v1)
+from .metrics import (
+    get_session_metrics_summary,
+    search_session_content,
+    get_activity_timeline,
+)
+
 __all__ = [
     # Core
     'MCP_TOOLS',
@@ -166,4 +173,8 @@ __all__ = [
     'get_question_history',
     # Executive
     'get_executive_report',
+    # Session Metrics
+    'get_session_metrics_summary',
+    'search_session_content',
+    'get_activity_timeline',
 ]

@@ -17,6 +17,7 @@ from typing import Dict, Any
 
 from ..loaders.loader_state import get_initial_loader_states
 from ..trace_bar.trace_store import get_initial_trace_state
+from .metrics import get_metrics_initial_state
 
 
 def get_initial_state() -> Dict[str, Any]:
@@ -263,4 +264,7 @@ def get_initial_state() -> Dict[str, Any]:
         # Trace Bar States (GAP-UI-048)
         # Bottom bar with technical traces for developer visibility
         **get_initial_trace_state(),
+
+        # Session Metrics States (SESSION-METRICS-01-v1)
+        **get_metrics_initial_state(),
     }

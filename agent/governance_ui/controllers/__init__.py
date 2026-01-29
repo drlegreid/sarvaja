@@ -34,6 +34,7 @@ from .monitor import register_monitor_controllers
 from .backlog import register_backlog_controllers
 from .chat import register_chat_controllers
 from .tests import register_tests_controllers
+from .metrics import register_metrics_controllers
 from ..handlers import register_trace_bar_handlers, register_rule_detail_handlers
 
 __all__ = [
@@ -49,6 +50,7 @@ __all__ = [
     'register_backlog_controllers',
     'register_chat_controllers',
     'register_tests_controllers',
+    'register_metrics_controllers',
 ]
 
 
@@ -96,5 +98,9 @@ def register_all_controllers(state, ctrl, api_base_url: str) -> dict:
     # Tests controller (WORKFLOW-SHELL-01-v1)
     tests_loaders = register_tests_controllers(state, ctrl, api_base_url)
     loaders['load_tests_data'] = tests_loaders['load_tests_data']
+
+    # Session Metrics controller (SESSION-METRICS-01-v1)
+    metrics_loaders = register_metrics_controllers(state, ctrl, api_base_url)
+    loaders['load_metrics_data'] = metrics_loaders['load_metrics_data']
 
     return loaders

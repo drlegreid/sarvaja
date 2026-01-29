@@ -33,7 +33,7 @@ from governance.models import (
 from governance.routes import (
     rules_router, tasks_router, sessions_router,
     evidence_router, files_router, agents_router,
-    reports_router, chat_router
+    reports_router, chat_router, metrics_router
 )
 from governance.routes.tests import tests_router
 from governance.routes.audit import router as audit_router  # RD-DEBUG-AUDIT
@@ -140,6 +140,7 @@ app.include_router(files_router, prefix="/api")
 app.include_router(agents_router, prefix="/api")
 app.include_router(reports_router, prefix="/api")
 app.include_router(chat_router, prefix="/api")
+app.include_router(metrics_router, prefix="/api")  # SESSION-METRICS-01-v1: Session analytics
 app.include_router(tests_router, prefix="/api")  # WORKFLOW-SHELL-01-v1: Self-assessment
 app.include_router(audit_router, prefix="/api")  # RD-DEBUG-AUDIT: Audit trail
 app.include_router(observability_router, prefix="/api/agents")  # GAP-MONITOR-IPC-001: Monitor events

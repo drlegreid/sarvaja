@@ -189,6 +189,15 @@ governance/session_metrics/
 ├── typedb_queries.py  # TypeQL query builders for persistence
 ├── temporal.py        # Temporal queries (query_at_time, activity_timeline)
 └── models.py          # Data models (dataclasses)
+
+governance/routes/
+└── metrics.py         # REST API endpoints (/api/metrics/*)
+
+agent/governance_ui/
+├── data_access/metrics.py    # Data access layer (REST client)
+├── state/metrics.py          # UI state properties
+├── controllers/metrics.py    # Trame event handlers
+└── views/metrics_view.py     # Dashboard view component
 ```
 
 ---
@@ -221,9 +230,11 @@ Tests written BEFORE implementation (TDD).
 | `tests/unit/test_session_metrics_errors.py` | Unit | 7 tests | PASS |
 | `tests/unit/test_session_metrics_platform.py` | Unit | 18 tests | PASS |
 | `tests/unit/test_session_metrics_temporal.py` | Unit | 15 tests | PASS |
+| `tests/unit/test_metrics_routes.py` | Unit | 14 tests | PASS |
+| `tests/unit/test_metrics_data_access.py` | Unit | 6 tests | PASS |
 | `tests/robot/unit/session_metrics.robot` | Integration | 42 tests | PASS |
 
-**Total: 177 tests, all passing.**
+**Total: 197 tests, all passing.**
 
 ---
 
@@ -252,6 +263,7 @@ Tests written BEFORE implementation (TDD).
 | ~~GAP-SESSION-METRICS-ERRORS~~ | ~~RESOLVED (2026-01-29) - error/retry tracking with error_rate~~ | ~~MEDIUM~~ |
 | ~~GAP-SESSION-METRICS-PLATFORM~~ | ~~RESOLVED (2026-01-29) - evidence.py + typedb_queries.py~~ | ~~MEDIUM~~ |
 | ~~GAP-SESSION-METRICS-TEMPORAL~~ | ~~RESOLVED (2026-01-29) - temporal.py with query_at_time + activity_timeline~~ | ~~LOW~~ |
+| ~~GAP-SESSION-METRICS-UI~~ | ~~RESOLVED (2026-01-29) - REST API + dashboard view + navigation~~ | ~~HIGH~~ |
 
 ---
 
