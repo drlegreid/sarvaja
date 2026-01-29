@@ -15,6 +15,7 @@ class ToolUseInfo:
     name: str
     input_summary: str  # JSON string, truncated to 200 chars
     is_mcp: bool = False
+    tool_use_id: Optional[str] = None
 
     @classmethod
     def from_content_block(cls, block: dict) -> ToolUseInfo:
@@ -26,7 +27,29 @@ class ToolUseInfo:
             name=name,
             input_summary=raw_input,
             is_mcp=name.startswith("mcp__"),
+            tool_use_id=block.get("id"),
         )
+
+
+@dataclass
+class ToolResultInfo:
+    """A tool_result block extracted from a log entry."""
+
+    tool_use_id: str
+    server_name: Optional[str] = None  # From mcpMeta.serverName
+
+
+@dataclass
+class CorrelatedToolCall:
+    """A tool_use joined with its tool_result for latency measurement."""
+
+    tool_use_id: str
+    tool_name: str
+    is_mcp: bool
+    use_timestamp: datetime
+    result_timestamp: datetime
+    latency_ms: int
+    server_name: Optional[str] = None
 
 
 @dataclass
@@ -36,6 +59,7 @@ class ParsedEntry:
     timestamp: datetime
     entry_type: str  # user, assistant, system, progress, etc.
     tool_uses: list[ToolUseInfo] = field(default_factory=list)
+    tool_results: list[ToolResultInfo] = field(default_factory=list)
     thinking_chars: int = 0
     thinking_content: Optional[str] = None
     user_content: Optional[str] = None  # Always None (privacy)

@@ -96,6 +96,14 @@ def register_session_metrics_tools(mcp) -> None:
         metrics = calculate_metrics(filtered, idle_threshold_min=idle_threshold_min)
         result = metrics.to_dict()
 
+        # Tool call correlation (latency measurement)
+        from governance.session_metrics.correlation import (
+            correlate_tool_calls,
+            summarize_correlation,
+        )
+        correlated = correlate_tool_calls(filtered)
+        result["correlation"] = summarize_correlation(correlated)
+
         # Add metadata
         result["metadata"] = {
             "log_dir": str(log_dir),

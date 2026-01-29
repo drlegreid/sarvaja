@@ -137,12 +137,81 @@ class SessionMetricsLibrary:
         return result
 
     # =========================================================================
+    # Correlation Tests
+    # =========================================================================
+
+    def create_correlation_test_dir(self) -> str:
+        """Create a temp dir with tool_use → tool_result pairs. Returns path."""
+        self._corr_dir = tempfile.mkdtemp(prefix="session_corr_test_")
+        entries = [
+            {"type": "user", "timestamp": "2026-01-28T10:00:00Z",
+             "sessionId": "s1",
+             "message": {"role": "user", "content": "hi"}},
+            # Assistant with 2 tool_use blocks
+            {"type": "assistant", "timestamp": "2026-01-28T10:00:05Z",
+             "sessionId": "s1",
+             "message": {"role": "assistant", "model": "claude-opus-4-5-20251101",
+                         "content": [
+                             {"type": "tool_use", "id": "tu1",
+                              "name": "Read", "input": {}},
+                             {"type": "tool_use", "id": "tu2",
+                              "name": "mcp__gov-core__health_check",
+                              "input": {}},
+                         ]}},
+            # tool_result for Read (0.5s)
+            {"type": "user", "timestamp": "2026-01-28T10:00:05.500Z",
+             "sessionId": "s1",
+             "message": {"role": "user",
+                         "content": [{"type": "tool_result",
+                                      "tool_use_id": "tu1",
+                                      "content": "file data"}]}},
+            # tool_result for MCP health_check (2s, with mcpMeta)
+            {"type": "user", "timestamp": "2026-01-28T10:00:07Z",
+             "sessionId": "s1",
+             "mcpMeta": {"serverName": "gov-core", "tool": "health_check"},
+             "message": {"role": "user",
+                         "content": [{"type": "tool_result",
+                                      "tool_use_id": "tu2",
+                                      "content": "ok"}]}},
+        ]
+        log_file = Path(self._corr_dir) / "correlation-test.jsonl"
+        with open(log_file, "w") as f:
+            for e in entries:
+                f.write(json.dumps(e) + "\n")
+        return self._corr_dir
+
+    def correlate_from_dir(self, directory: str) -> List[Dict[str, Any]]:
+        """Parse + correlate, return list of dicts."""
+        from governance.session_metrics.parser import discover_log_files, parse_log_file
+        from governance.session_metrics.correlation import correlate_tool_calls
+        files = discover_log_files(Path(directory), include_agents=False)
+        entries = [e for f in files for e in parse_log_file(f)]
+        correlated = correlate_tool_calls(entries)
+        return [{"tool_name": c.tool_name, "latency_ms": c.latency_ms,
+                 "is_mcp": c.is_mcp, "server_name": c.server_name}
+                for c in correlated]
+
+    def summarize_correlation_from_dir(self, directory: str) -> Dict[str, Any]:
+        """Parse + correlate + summarize, return summary dict."""
+        from governance.session_metrics.parser import discover_log_files, parse_log_file
+        from governance.session_metrics.correlation import (
+            correlate_tool_calls, summarize_correlation,
+        )
+        files = discover_log_files(Path(directory), include_agents=False)
+        entries = [e for f in files for e in parse_log_file(f)]
+        correlated = correlate_tool_calls(entries)
+        return summarize_correlation(correlated)
+
+    # =========================================================================
     # Cleanup
     # =========================================================================
 
     def cleanup_test_dir(self):
-        """Remove temp test directory."""
+        """Remove temp test directories."""
         import shutil
         if self._tmp_dir and Path(self._tmp_dir).exists():
             shutil.rmtree(self._tmp_dir)
             self._tmp_dir = None
+        if hasattr(self, "_corr_dir") and self._corr_dir and Path(self._corr_dir).exists():
+            shutil.rmtree(self._corr_dir)
+            self._corr_dir = None

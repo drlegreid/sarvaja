@@ -4,7 +4,7 @@
 
 | Status | Count |
 |--------|-------|
-| OPEN | 2 |
+| OPEN | 1 |
 | PARTIAL | 0 |
 | DEFERRED | 1 |
 | MITIGATED | 1 |
@@ -22,13 +22,13 @@
 
 | ID | Priority | Status | Category | Evidence | Tests |
 |----|----------|--------|----------|----------|-------|
-| GAP-SESSION-METRICS-CORRELATION | HIGH | OPEN | analytics | Per SESSION-METRICS-01-v1 | - |
+| GAP-SESSION-METRICS-CORRELATION | HIGH | RESOLVED | analytics | Per SESSION-METRICS-01-v1 | 19 pytest + 7 Robot |
 | GAP-SESSION-METRICS-CONTENT | HIGH | OPEN | analytics | Per SESSION-METRICS-01-v1 | - |
 | GAP-LANGGRAPH-QUALITY-001 | MEDIUM | DEFERRED | enhancement | [evidence](evidence/GAP-LANGGRAPH-QUALITY-001.md) | - |
 | GAP-MCP-PAGING-001 | MEDIUM | MITIGATED | tooling | [evidence](evidence/GAP-MCP-PAGING-001.md) | - |
 
 > **Notes:**
-> - GAP-SESSION-METRICS-CORRELATION: tool_use→tool_result join for MCP call latency/duration + server attribution
+> - GAP-SESSION-METRICS-CORRELATION: RESOLVED (2026-01-29) - correlation.py with 19 pytest + 7 Robot tests
 > - GAP-SESSION-METRICS-CONTENT: Deliberate content/decision search + session ID + git branch filtering
 > - GAP-MCP-PAGING-001: MITIGATED - External MCP tools, workarounds documented
 > - GAP-LANGGRAPH-QUALITY-001: DEFERRED (2026-01-26) - Option C selected, revisit when multi-agent active

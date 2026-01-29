@@ -7,7 +7,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Generator
 
-from governance.session_metrics.models import ParsedEntry, ToolUseInfo
+from governance.session_metrics.models import ParsedEntry, ToolResultInfo, ToolUseInfo
 
 
 def discover_log_files(
@@ -51,6 +51,24 @@ def _extract_tool_uses(content: list) -> list[ToolUseInfo]:
         if isinstance(block, dict) and block.get("type") == "tool_use":
             tools.append(ToolUseInfo.from_content_block(block))
     return tools
+
+
+def _extract_tool_results(content: list, mcp_meta: dict | None) -> list[ToolResultInfo]:
+    """Extract tool_result blocks from message content."""
+    results = []
+    if not isinstance(content, list):
+        return results
+    for block in content:
+        if isinstance(block, dict) and block.get("type") == "tool_result":
+            tool_use_id = block.get("tool_use_id", "")
+            server_name = None
+            if mcp_meta and isinstance(mcp_meta, dict):
+                server_name = mcp_meta.get("serverName")
+            results.append(ToolResultInfo(
+                tool_use_id=tool_use_id,
+                server_name=server_name,
+            ))
+    return results
 
 
 def _extract_thinking(content: list, include: bool) -> tuple[int, str | None]:
@@ -112,6 +130,10 @@ def parse_log_file(
             # Tool uses (from assistant content blocks)
             tool_uses = _extract_tool_uses(content)
 
+            # Tool results (from user content blocks, with mcpMeta)
+            mcp_meta = obj.get("mcpMeta")
+            tool_results = _extract_tool_results(content, mcp_meta)
+
             # Thinking
             thinking_chars, thinking_content = _extract_thinking(
                 content, include_thinking
@@ -130,6 +152,7 @@ def parse_log_file(
                 timestamp=timestamp,
                 entry_type=entry_type,
                 tool_uses=tool_uses,
+                tool_results=tool_results,
                 thinking_chars=thinking_chars,
                 thinking_content=thinking_content,
                 user_content=None,  # Privacy: never store
