@@ -104,6 +104,10 @@ def register_session_metrics_tools(mcp) -> None:
         correlated = correlate_tool_calls(filtered)
         result["correlation"] = summarize_correlation(correlated)
 
+        # Agent subprocess metrics
+        from governance.session_metrics.agents import calculate_agent_metrics
+        result["agents"] = calculate_agent_metrics(log_dir)
+
         # Add metadata
         result["metadata"] = {
             "log_dir": str(log_dir),

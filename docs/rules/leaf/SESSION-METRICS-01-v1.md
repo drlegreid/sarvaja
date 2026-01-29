@@ -184,6 +184,7 @@ governance/session_metrics/
 ├── calculator.py      # Metrics computation
 ├── correlation.py     # tool_use → tool_result latency join
 ├── search.py          # Content search + session/branch filtering
+├── agents.py          # Agent subprocess analytics
 └── models.py          # Data models (dataclasses)
 ```
 
@@ -213,9 +214,10 @@ Tests written BEFORE implementation (TDD).
 | `tests/unit/test_session_metrics_calculator.py` | Unit | 25 tests | PASS |
 | `tests/unit/test_session_metrics_correlation.py` | Unit | 19 tests | PASS |
 | `tests/unit/test_session_metrics_search.py` | Unit | 19 tests | PASS |
-| `tests/robot/unit/session_metrics.robot` | Integration | 25 tests | PASS |
+| `tests/unit/test_session_metrics_agents.py` | Unit | 13 tests | PASS |
+| `tests/robot/unit/session_metrics.robot` | Integration | 29 tests | PASS |
 
-**Total: 107 tests, all passing.**
+**Total: 124 tests, all passing.**
 
 ---
 
@@ -240,7 +242,7 @@ Tests written BEFORE implementation (TDD).
 |--------|-------------|----------|
 | ~~GAP-SESSION-METRICS-CORRELATION~~ | ~~RESOLVED (2026-01-29) - correlation.py~~ | ~~HIGH~~ |
 | ~~GAP-SESSION-METRICS-CONTENT~~ | ~~RESOLVED (2026-01-29) - search.py + session_search MCP tool~~ | ~~HIGH~~ |
-| GAP-SESSION-METRICS-AGENTS | Agent subprocess analytics + parent attribution | MEDIUM |
+| ~~GAP-SESSION-METRICS-AGENTS~~ | ~~RESOLVED (2026-01-29) - agents.py + MCP integration~~ | ~~MEDIUM~~ |
 | GAP-SESSION-METRICS-ERRORS | API error/retry tracking (isApiErrorMessage) | MEDIUM |
 | GAP-SESSION-METRICS-PLATFORM | TypeDB entity + dashboard view + evidence gen | MEDIUM |
 | GAP-SESSION-METRICS-TEMPORAL | Temporal queries ("what was I doing at X?") | LOW |

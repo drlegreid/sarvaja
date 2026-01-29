@@ -137,6 +137,49 @@ class SessionMetricsLibrary:
         return result
 
     # =========================================================================
+    # Agent Tests
+    # =========================================================================
+
+    def create_agent_test_dir(self) -> str:
+        """Create a temp dir with main + agent JSONL files. Returns path."""
+        self._agent_dir = tempfile.mkdtemp(prefix="session_agent_test_")
+        main_entries = [
+            {"type": "user", "timestamp": "2026-01-28T10:00:00Z",
+             "sessionId": "s1",
+             "message": {"role": "user", "content": "explore"}},
+            {"type": "assistant", "timestamp": "2026-01-28T10:01:00Z",
+             "sessionId": "s1",
+             "message": {"role": "assistant", "model": "claude-opus-4-5-20251101",
+                         "content": [{"type": "tool_use", "id": "tu1",
+                                      "name": "Task", "input": {}}]}},
+        ]
+        agent_entries = [
+            {"type": "assistant", "timestamp": "2026-01-28T10:01:05Z",
+             "sessionId": "s1",
+             "message": {"role": "assistant", "model": "claude-haiku-3-5-20241022",
+                         "content": [{"type": "tool_use", "id": "atu1",
+                                      "name": "Grep", "input": {}}]}},
+            {"type": "assistant", "timestamp": "2026-01-28T10:02:00Z",
+             "sessionId": "s1",
+             "message": {"role": "assistant", "model": "claude-haiku-3-5-20241022",
+                         "content": [{"type": "text", "text": "Found results."}]}},
+        ]
+        main_file = Path(self._agent_dir) / "main-session.jsonl"
+        agent_file = Path(self._agent_dir) / "agent-explore.jsonl"
+        with open(main_file, "w") as f:
+            for e in main_entries:
+                f.write(json.dumps(e) + "\n")
+        with open(agent_file, "w") as f:
+            for e in agent_entries:
+                f.write(json.dumps(e) + "\n")
+        return self._agent_dir
+
+    def agent_metrics_from_dir(self, directory: str) -> Dict[str, Any]:
+        """Calculate agent metrics for directory."""
+        from governance.session_metrics.agents import calculate_agent_metrics
+        return calculate_agent_metrics(Path(directory))
+
+    # =========================================================================
     # Search Tests
     # =========================================================================
 
@@ -271,3 +314,6 @@ class SessionMetricsLibrary:
         if hasattr(self, "_search_dir") and self._search_dir and Path(self._search_dir).exists():
             shutil.rmtree(self._search_dir)
             self._search_dir = None
+        if hasattr(self, "_agent_dir") and self._agent_dir and Path(self._agent_dir).exists():
+            shutil.rmtree(self._agent_dir)
+            self._agent_dir = None

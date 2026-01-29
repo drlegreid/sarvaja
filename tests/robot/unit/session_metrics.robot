@@ -11,6 +11,7 @@ Force Tags       unit    session    metrics    SESSION-METRICS-01-v1    validate
 ${TEST_DIR}      ${EMPTY}
 ${CORR_DIR}      ${EMPTY}
 ${SEARCH_DIR}    ${EMPTY}
+${AGENT_DIR}     ${EMPTY}
 
 *** Test Cases ***
 # =============================================================================
@@ -219,6 +220,36 @@ Search No Match Returns Empty
     ${results}=    Search Entries From Dir    ${SEARCH_DIR}    query=zzz_no_match_zzz
     Length Should Be    ${results}    0
 
+# =============================================================================
+# Agent Subprocess Tests (GAP-SESSION-METRICS-AGENTS)
+# =============================================================================
+
+Agent Metrics Counts Agents
+    [Documentation]    GIVEN dir with 1 agent file WHEN calculate THEN agent_count=1
+    [Tags]    unit    agents    validate
+    ${result}=    Agent Metrics From Dir    ${AGENT_DIR}
+    Should Be Equal As Integers    ${result}[agent_count]    1
+
+Agent Metrics Has Tool Calls
+    [Documentation]    GIVEN agent with 1 tool call WHEN calculate THEN total_tool_calls=1
+    [Tags]    unit    agents    validate
+    ${result}=    Agent Metrics From Dir    ${AGENT_DIR}
+    Should Be Equal As Integers    ${result}[total_tool_calls]    1
+
+Agent Metrics Has Per Agent Breakdown
+    [Documentation]    GIVEN 1 agent WHEN calculate THEN per_agent has 1 entry
+    [Tags]    unit    agents    validate
+    ${result}=    Agent Metrics From Dir    ${AGENT_DIR}
+    Length Should Be    ${result}[per_agent]    1
+    ${agent}=    Set Variable    ${result}[per_agent][0]
+    Should Be Equal    ${agent}[file_name]    agent-explore.jsonl
+
+Agent Metrics Has Tool Breakdown
+    [Documentation]    GIVEN agent with Grep call WHEN calculate THEN tool_breakdown has Grep
+    [Tags]    unit    agents    validate
+    ${result}=    Agent Metrics From Dir    ${AGENT_DIR}
+    Dictionary Should Contain Key    ${result}[tool_breakdown]    Grep
+
 *** Keywords ***
 Setup Test Log Directory
     [Documentation]    Create temporary test directory with sample JSONL data
@@ -228,3 +259,5 @@ Setup Test Log Directory
     Set Suite Variable    ${CORR_DIR}    ${corr_dir}
     ${search_dir}=    Create Search Test Dir
     Set Suite Variable    ${SEARCH_DIR}    ${search_dir}
+    ${agent_dir}=    Create Agent Test Dir
+    Set Suite Variable    ${AGENT_DIR}    ${agent_dir}
