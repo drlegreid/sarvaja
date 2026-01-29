@@ -337,8 +337,8 @@ def build_tasks_list_view() -> None:
                 )
 
             # Page info
-            html.Div(
-                (
+            html.Span(
+                v_text=(
                     "'Page ' + tasks_page + ' of ' + "
                     "Math.ceil(tasks_pagination.total / tasks_per_page) + "
                     "' (' + tasks_pagination.total + ' total)'",
