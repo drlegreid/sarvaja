@@ -185,6 +185,8 @@ governance/session_metrics/
 ├── correlation.py     # tool_use → tool_result latency join
 ├── search.py          # Content search + session/branch filtering
 ├── agents.py          # Agent subprocess analytics
+├── evidence.py        # Evidence markdown generation + file writing
+├── typedb_queries.py  # TypeQL query builders for persistence
 └── models.py          # Data models (dataclasses)
 ```
 
@@ -216,9 +218,10 @@ Tests written BEFORE implementation (TDD).
 | `tests/unit/test_session_metrics_search.py` | Unit | 19 tests | PASS |
 | `tests/unit/test_session_metrics_agents.py` | Unit | 13 tests | PASS |
 | `tests/unit/test_session_metrics_errors.py` | Unit | 7 tests | PASS |
-| `tests/robot/unit/session_metrics.robot` | Integration | 33 tests | PASS |
+| `tests/unit/test_session_metrics_platform.py` | Unit | 18 tests | PASS |
+| `tests/robot/unit/session_metrics.robot` | Integration | 37 tests | PASS |
 
-**Total: 135 tests, all passing.**
+**Total: 157 tests, all passing.**
 
 ---
 
@@ -245,7 +248,7 @@ Tests written BEFORE implementation (TDD).
 | ~~GAP-SESSION-METRICS-CONTENT~~ | ~~RESOLVED (2026-01-29) - search.py + session_search MCP tool~~ | ~~HIGH~~ |
 | ~~GAP-SESSION-METRICS-AGENTS~~ | ~~RESOLVED (2026-01-29) - agents.py + MCP integration~~ | ~~MEDIUM~~ |
 | ~~GAP-SESSION-METRICS-ERRORS~~ | ~~RESOLVED (2026-01-29) - error/retry tracking with error_rate~~ | ~~MEDIUM~~ |
-| GAP-SESSION-METRICS-PLATFORM | TypeDB entity + dashboard view + evidence gen | MEDIUM |
+| ~~GAP-SESSION-METRICS-PLATFORM~~ | ~~RESOLVED (2026-01-29) - evidence.py + typedb_queries.py~~ | ~~MEDIUM~~ |
 | GAP-SESSION-METRICS-TEMPORAL | Temporal queries ("what was I doing at X?") | LOW |
 
 ---

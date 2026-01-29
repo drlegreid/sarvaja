@@ -350,6 +350,45 @@ class SessionMetricsLibrary:
         return metrics.to_dict()
 
     # =========================================================================
+    # Platform Integration Tests (GAP-SESSION-METRICS-PLATFORM)
+    # =========================================================================
+
+    def generate_evidence_markdown(self, directory: str) -> str:
+        """Generate evidence markdown from log directory metrics."""
+        from governance.session_metrics.parser import discover_log_files, parse_log_file
+        from governance.session_metrics.calculator import calculate_metrics
+        from governance.session_metrics.evidence import generate_evidence_markdown
+        files = discover_log_files(Path(directory), include_agents=False)
+        entries = [e for f in files for e in parse_log_file(f)]
+        metrics = calculate_metrics(entries)
+        return generate_evidence_markdown(metrics.to_dict())
+
+    def write_evidence_file_from_dir(self, directory: str) -> str:
+        """Generate + write evidence file, return path string."""
+        from governance.session_metrics.parser import discover_log_files, parse_log_file
+        from governance.session_metrics.calculator import calculate_metrics
+        from governance.session_metrics.evidence import write_evidence_file
+        files = discover_log_files(Path(directory), include_agents=False)
+        entries = [e for f in files for e in parse_log_file(f)]
+        metrics = calculate_metrics(entries)
+        self._evidence_dir = Path(tempfile.mkdtemp(prefix="session_evidence_test_"))
+        path = write_evidence_file(metrics.to_dict(), output_dir=self._evidence_dir)
+        return str(path)
+
+    def build_metrics_insert_query(self, directory: str) -> str:
+        """Build TypeDB insert query from directory metrics."""
+        from governance.session_metrics.parser import discover_log_files, parse_log_file
+        from governance.session_metrics.calculator import calculate_metrics
+        from governance.session_metrics.typedb_queries import build_metrics_insert_query
+        files = discover_log_files(Path(directory), include_agents=False)
+        entries = [e for f in files for e in parse_log_file(f)]
+        metrics = calculate_metrics(entries)
+        return build_metrics_insert_query(
+            session_id="SESSION-TEST-METRICS",
+            metrics=metrics.to_dict(),
+        )
+
+    # =========================================================================
     # Cleanup
     # =========================================================================
 
@@ -371,3 +410,6 @@ class SessionMetricsLibrary:
         if hasattr(self, "_error_dir") and self._error_dir and Path(self._error_dir).exists():
             shutil.rmtree(self._error_dir)
             self._error_dir = None
+        if hasattr(self, "_evidence_dir") and self._evidence_dir and Path(self._evidence_dir).exists():
+            shutil.rmtree(self._evidence_dir)
+            self._evidence_dir = None

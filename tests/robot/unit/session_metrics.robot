@@ -283,6 +283,40 @@ Error Metrics Serializable
     Dictionary Should Contain Key    ${result}[totals]    api_errors
     Dictionary Should Contain Key    ${result}[totals]    error_rate
 
+# =============================================================================
+# Platform Integration Tests (GAP-SESSION-METRICS-PLATFORM)
+# =============================================================================
+
+Evidence Markdown Generated
+    [Documentation]    GIVEN test dir WHEN generate evidence THEN non-empty markdown
+    [Tags]    unit    platform    evidence    validate
+    ${md}=    Generate Evidence Markdown    ${TEST_DIR}
+    Should Not Be Empty    ${md}
+    Should Contain    ${md}    SESSION-METRICS-01-v1
+
+Evidence Markdown Has Totals
+    [Documentation]    GIVEN test dir WHEN generate evidence THEN totals section present
+    [Tags]    unit    platform    evidence    validate
+    ${md}=    Generate Evidence Markdown    ${TEST_DIR}
+    Should Contain    ${md}    Active Minutes
+    Should Contain    ${md}    Session Count
+
+Evidence File Written
+    [Documentation]    GIVEN test dir WHEN write evidence file THEN file created
+    [Tags]    unit    platform    evidence    validate
+    ${path}=    Write Evidence File From Dir    ${TEST_DIR}
+    Should Not Be Empty    ${path}
+    Should Contain    ${path}    SESSION-
+    Should Contain    ${path}    METRICS
+
+TypeDB Insert Query Built
+    [Documentation]    GIVEN test dir WHEN build insert query THEN valid TypeQL
+    [Tags]    unit    platform    typedb    validate
+    ${query}=    Build Metrics Insert Query    ${TEST_DIR}
+    Should Contain    ${query}    insert
+    Should Contain    ${query}    isa work-session
+    Should Contain    ${query}    SESSION-TEST-METRICS
+
 *** Keywords ***
 Setup Test Log Directory
     [Documentation]    Create temporary test directory with sample JSONL data
