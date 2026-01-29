@@ -28,6 +28,15 @@ from governance.session_metrics.search import (
     search_entries,
     results_to_dicts,
 )
+from governance.session_metrics.temporal import (
+    query_at_time,
+    query_date_range,
+    activity_timeline,
+)
+from governance.session_metrics.evidence import (
+    generate_evidence_markdown,
+    write_evidence_file,
+)
 
 __all__ = [
     "CorrelatedToolCall",
@@ -48,4 +57,9 @@ __all__ = [
     "parse_log_file_extended",
     "search_entries",
     "results_to_dicts",
+    "query_at_time",
+    "query_date_range",
+    "activity_timeline",
+    "generate_evidence_markdown",
+    "write_evidence_file",
 ]

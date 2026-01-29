@@ -187,6 +187,7 @@ governance/session_metrics/
 ├── agents.py          # Agent subprocess analytics
 ├── evidence.py        # Evidence markdown generation + file writing
 ├── typedb_queries.py  # TypeQL query builders for persistence
+├── temporal.py        # Temporal queries (query_at_time, activity_timeline)
 └── models.py          # Data models (dataclasses)
 ```
 
@@ -219,9 +220,10 @@ Tests written BEFORE implementation (TDD).
 | `tests/unit/test_session_metrics_agents.py` | Unit | 13 tests | PASS |
 | `tests/unit/test_session_metrics_errors.py` | Unit | 7 tests | PASS |
 | `tests/unit/test_session_metrics_platform.py` | Unit | 18 tests | PASS |
-| `tests/robot/unit/session_metrics.robot` | Integration | 37 tests | PASS |
+| `tests/unit/test_session_metrics_temporal.py` | Unit | 15 tests | PASS |
+| `tests/robot/unit/session_metrics.robot` | Integration | 42 tests | PASS |
 
-**Total: 157 tests, all passing.**
+**Total: 177 tests, all passing.**
 
 ---
 
@@ -249,7 +251,7 @@ Tests written BEFORE implementation (TDD).
 | ~~GAP-SESSION-METRICS-AGENTS~~ | ~~RESOLVED (2026-01-29) - agents.py + MCP integration~~ | ~~MEDIUM~~ |
 | ~~GAP-SESSION-METRICS-ERRORS~~ | ~~RESOLVED (2026-01-29) - error/retry tracking with error_rate~~ | ~~MEDIUM~~ |
 | ~~GAP-SESSION-METRICS-PLATFORM~~ | ~~RESOLVED (2026-01-29) - evidence.py + typedb_queries.py~~ | ~~MEDIUM~~ |
-| GAP-SESSION-METRICS-TEMPORAL | Temporal queries ("what was I doing at X?") | LOW |
+| ~~GAP-SESSION-METRICS-TEMPORAL~~ | ~~RESOLVED (2026-01-29) - temporal.py with query_at_time + activity_timeline~~ | ~~LOW~~ |
 
 ---
 

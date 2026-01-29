@@ -350,6 +350,59 @@ class SessionMetricsLibrary:
         return metrics.to_dict()
 
     # =========================================================================
+    # Temporal Query Tests (GAP-SESSION-METRICS-TEMPORAL)
+    # =========================================================================
+
+    def create_temporal_test_dir(self) -> str:
+        """Create a temp dir with multi-day JSONL entries. Returns path."""
+        self._temporal_dir = tempfile.mkdtemp(prefix="session_temporal_test_")
+        entries = [
+            {"type": "user", "timestamp": "2026-01-27T09:00:00Z",
+             "sessionId": "sess-A", "gitBranch": "main",
+             "message": {"role": "user", "content": "morning"}},
+            {"type": "assistant", "timestamp": "2026-01-27T09:05:00Z",
+             "sessionId": "sess-A", "gitBranch": "main",
+             "message": {"role": "assistant", "model": "claude-opus-4-5-20251101",
+                         "content": [{"type": "text", "text": "Fixing auth bug."},
+                                     {"type": "tool_use", "id": "t1",
+                                      "name": "Read", "input": {}}]}},
+            {"type": "user", "timestamp": "2026-01-28T14:00:00Z",
+             "sessionId": "sess-B", "gitBranch": "feature/dash",
+             "message": {"role": "user", "content": "afternoon"}},
+            {"type": "assistant", "timestamp": "2026-01-28T14:10:00Z",
+             "sessionId": "sess-B", "gitBranch": "feature/dash",
+             "message": {"role": "assistant", "model": "claude-opus-4-5-20251101",
+                         "content": [{"type": "text", "text": "Building dashboard."},
+                                     {"type": "tool_use", "id": "t2",
+                                      "name": "Edit", "input": {}}]}},
+        ]
+        log_file = Path(self._temporal_dir) / "temporal-test.jsonl"
+        with open(log_file, "w") as f:
+            for e in entries:
+                f.write(json.dumps(e) + "\n")
+        return self._temporal_dir
+
+    def query_at_time_from_dir(self, directory: str,
+                                target_iso: str,
+                                window_minutes: int = 30) -> Dict[str, Any]:
+        """Query entries near a time point."""
+        from datetime import datetime, timezone
+        from governance.session_metrics.parser import discover_log_files, parse_log_file_extended
+        from governance.session_metrics.temporal import query_at_time
+        files = discover_log_files(Path(directory), include_agents=False)
+        entries = [e for f in files for e in parse_log_file_extended(f)]
+        target = datetime.fromisoformat(target_iso)
+        return query_at_time(entries, target, window_minutes=window_minutes)
+
+    def activity_timeline_from_dir(self, directory: str) -> List[Dict[str, Any]]:
+        """Generate activity timeline from directory."""
+        from governance.session_metrics.parser import discover_log_files, parse_log_file_extended
+        from governance.session_metrics.temporal import activity_timeline
+        files = discover_log_files(Path(directory), include_agents=False)
+        entries = [e for f in files for e in parse_log_file_extended(f)]
+        return activity_timeline(entries)
+
+    # =========================================================================
     # Platform Integration Tests (GAP-SESSION-METRICS-PLATFORM)
     # =========================================================================
 
@@ -413,3 +466,6 @@ class SessionMetricsLibrary:
         if hasattr(self, "_evidence_dir") and self._evidence_dir and Path(self._evidence_dir).exists():
             shutil.rmtree(self._evidence_dir)
             self._evidence_dir = None
+        if hasattr(self, "_temporal_dir") and self._temporal_dir and Path(self._temporal_dir).exists():
+            shutil.rmtree(self._temporal_dir)
+            self._temporal_dir = None

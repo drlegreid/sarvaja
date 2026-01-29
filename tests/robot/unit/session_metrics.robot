@@ -13,6 +13,7 @@ ${CORR_DIR}      ${EMPTY}
 ${SEARCH_DIR}    ${EMPTY}
 ${AGENT_DIR}     ${EMPTY}
 ${ERROR_DIR}     ${EMPTY}
+${TEMPORAL_DIR}  ${EMPTY}
 
 *** Test Cases ***
 # =============================================================================
@@ -317,6 +318,43 @@ TypeDB Insert Query Built
     Should Contain    ${query}    isa work-session
     Should Contain    ${query}    SESSION-TEST-METRICS
 
+# =============================================================================
+# Temporal Query Tests (GAP-SESSION-METRICS-TEMPORAL)
+# =============================================================================
+
+Query At Time Finds Entries
+    [Documentation]    GIVEN multi-day log WHEN query at 09:05 Jan 27 THEN finds entries
+    [Tags]    unit    temporal    validate
+    ${result}=    Query At Time From Dir    ${TEMPORAL_DIR}    2026-01-27T09:05:00+00:00    window_minutes=30
+    ${len}=    Get Length    ${result}[entries]
+    Should Be True    ${len} >= 1
+
+Query At Time Has Summary
+    [Documentation]    GIVEN entries found WHEN query THEN summary present
+    [Tags]    unit    temporal    validate
+    ${result}=    Query At Time From Dir    ${TEMPORAL_DIR}    2026-01-27T09:05:00+00:00    window_minutes=30
+    Should Not Be Empty    ${result}[summary]
+
+Query At Time No Match
+    [Documentation]    GIVEN no entries at time WHEN query THEN empty entries
+    [Tags]    unit    temporal    validate
+    ${result}=    Query At Time From Dir    ${TEMPORAL_DIR}    2026-01-25T03:00:00+00:00    window_minutes=30
+    Length Should Be    ${result}[entries]    0
+
+Activity Timeline Has Days
+    [Documentation]    GIVEN multi-day log WHEN timeline THEN has 2 days
+    [Tags]    unit    temporal    validate
+    ${timeline}=    Activity Timeline From Dir    ${TEMPORAL_DIR}
+    Length Should Be    ${timeline}    2
+
+Activity Timeline Sorted
+    [Documentation]    GIVEN multi-day log WHEN timeline THEN sorted by date
+    [Tags]    unit    temporal    validate
+    ${timeline}=    Activity Timeline From Dir    ${TEMPORAL_DIR}
+    ${date1}=    Set Variable    ${timeline}[0][date]
+    ${date2}=    Set Variable    ${timeline}[1][date]
+    Should Be True    "${date1}" < "${date2}"
+
 *** Keywords ***
 Setup Test Log Directory
     [Documentation]    Create temporary test directory with sample JSONL data
@@ -330,3 +368,5 @@ Setup Test Log Directory
     Set Suite Variable    ${AGENT_DIR}    ${agent_dir}
     ${error_dir}=    Create Error Test Dir
     Set Suite Variable    ${ERROR_DIR}    ${error_dir}
+    ${temporal_dir}=    Create Temporal Test Dir
+    Set Suite Variable    ${TEMPORAL_DIR}    ${temporal_dir}
