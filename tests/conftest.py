@@ -125,6 +125,35 @@ def _cleanup_test_sessions(client: httpx.Client) -> dict:
     return stats
 
 
+def _cleanup_test_agents(client: httpx.Client) -> dict:
+    """Remove all test-prefixed agents. Returns cleanup statistics."""
+    stats = {"checked": 0, "deleted": 0, "failed": 0, "errors": []}
+    try:
+        response = client.get(f"{DASHBOARD_API_URL}/api/agents")
+        if response.status_code != 200:
+            stats["errors"].append(f"Failed to fetch agents: {response.status_code}")
+            return stats
+        agents = response.json()
+        if isinstance(agents, dict):
+            agents = agents.get("items", [])
+        for agent in agents:
+            agent_id = agent.get("agent_id") or agent.get("id", "")
+            if _is_test_entity(agent_id):
+                stats["checked"] += 1
+                try:
+                    del_response = client.delete(f"{DASHBOARD_API_URL}/api/agents/{agent_id}")
+                    if del_response.status_code in (200, 204):
+                        stats["deleted"] += 1
+                    else:
+                        stats["failed"] += 1
+                except Exception as e:
+                    stats["failed"] += 1
+                    stats["errors"].append(f"Delete {agent_id}: {str(e)}")
+    except Exception as e:
+        stats["errors"].append(f"Cleanup failed: {str(e)}")
+    return stats
+
+
 # =============================================================================
 # GAP-TEST-002: Test Reporting Mode Classes
 # =============================================================================
@@ -494,7 +523,8 @@ def pytest_configure(config):
             with httpx.Client(timeout=30.0) as client:
                 task_stats = _cleanup_test_tasks(client)
                 session_stats = _cleanup_test_sessions(client)
-                print(f"[CLEANUP] Removed {task_stats['deleted']} tasks, {session_stats['deleted']} sessions")
+                agent_stats = _cleanup_test_agents(client)
+                print(f"[CLEANUP] Removed {task_stats['deleted']} tasks, {session_stats['deleted']} sessions, {agent_stats['deleted']} agents")
     except (ValueError, AttributeError):
         pass
 
@@ -602,11 +632,13 @@ def cleanup_test_data():
         session_stats = _cleanup_test_sessions(client)
         print(f"[CLEANUP] Sessions: {session_stats['deleted']} deleted, {session_stats['failed']} failed")
 
-        if task_stats["errors"] or session_stats["errors"]:
+        agent_stats = _cleanup_test_agents(client)
+        print(f"[CLEANUP] Agents: {agent_stats['deleted']} deleted, {agent_stats['failed']} failed")
+
+        all_errors = task_stats["errors"] + session_stats["errors"] + agent_stats["errors"]
+        if all_errors:
             print("[CLEANUP] Errors:")
-            for err in task_stats["errors"][:5]:
-                print(f"  - {err}")
-            for err in session_stats["errors"][:5]:
+            for err in all_errors[:5]:
                 print(f"  - {err}")
 
 

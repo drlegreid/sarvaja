@@ -67,13 +67,30 @@ class AgentQueries:
 
     def insert_agent(self, agent_id: str, name: str, agent_type: str,
                      trust_score: float = 0.8) -> bool:
-        """Insert a new agent into TypeDB."""
+        """Insert a new agent into TypeDB. Deletes existing duplicates first."""
+        # Dedup: remove any existing entries with this agent_id
+        existing = self.get_agent(agent_id)
+        if existing:
+            self.delete_agent(agent_id)
+
         query = f"""
             insert $a isa agent,
                 has agent-id "{agent_id}",
                 has agent-name "{name}",
                 has agent-type "{agent_type}",
                 has trust-score {trust_score};
+        """
+        try:
+            self._execute_write(query)
+            return True
+        except Exception:
+            return False
+
+    def delete_agent(self, agent_id: str) -> bool:
+        """Delete all agent entities with the given ID from TypeDB."""
+        query = f"""
+            match $a isa agent, has agent-id "{agent_id}";
+            delete $a;
         """
         try:
             self._execute_write(query)

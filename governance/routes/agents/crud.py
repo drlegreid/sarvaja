@@ -163,6 +163,39 @@ async def get_agent(agent_id: str):
     return AgentResponse(**_agents_store[agent_id])
 
 
+@router.delete("/agents/{agent_id}", status_code=204)
+async def delete_agent(agent_id: str):
+    """
+    Delete an agent from TypeDB.
+
+    Per GAP-ARCH-003: Agent lifecycle management.
+    Returns 204 on success, 404 if agent not found.
+    """
+    client = get_typedb_client()
+    if client:
+        try:
+            existing = client.get_agent(agent_id)
+            if not existing:
+                raise HTTPException(status_code=404, detail=f"Agent {agent_id} not found")
+            success = client.delete_agent(agent_id)
+            if success:
+                # Also remove from in-memory store
+                _agents_store.pop(agent_id, None)
+                return
+            raise HTTPException(status_code=500, detail="Failed to delete agent from TypeDB")
+        except HTTPException:
+            raise
+        except Exception as e:
+            logger.warning(f"TypeDB delete failed for agent {agent_id}: {e}")
+            raise HTTPException(status_code=500, detail=str(e))
+
+    # Fallback: remove from in-memory store only
+    if agent_id in _agents_store:
+        del _agents_store[agent_id]
+        return
+    raise HTTPException(status_code=404, detail=f"Agent {agent_id} not found")
+
+
 @router.put("/agents/{agent_id}/task", response_model=AgentResponse)
 async def record_agent_task(agent_id: str):
     """
