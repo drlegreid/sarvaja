@@ -173,7 +173,7 @@ def register_tasks_controllers(state: Any, ctrl: Any, api_base_url: str) -> None
                 response = client.delete(f"{api_base_url}/api/tasks/{task_id}")
                 if response.status_code == 204:
                     state.status_message = f"Task {task_id} deleted successfully"
-                    page_size = getattr(state, 'tasks_per_page', 25)
+                    page_size = getattr(state, 'tasks_per_page', 20)
                     offset = (getattr(state, 'tasks_page', 1) - 1) * page_size
                     tasks_response = client.get(f"{api_base_url}/api/tasks", params={"limit": page_size, "offset": offset})
                     if tasks_response.status_code == 200:
@@ -231,7 +231,7 @@ def register_tasks_controllers(state: Any, ctrl: Any, api_base_url: str) -> None
                 if response.status_code == 200:
                     state.status_message = f"Task {task_id} updated successfully"
                     # Refresh tasks list with pagination
-                    page_size = getattr(state, 'tasks_per_page', 25)
+                    page_size = getattr(state, 'tasks_per_page', 20)
                     offset = (getattr(state, 'tasks_page', 1) - 1) * page_size
                     tasks_response = client.get(f"{api_base_url}/api/tasks", params={"limit": page_size, "offset": offset})
                     if tasks_response.status_code == 200:
@@ -272,7 +272,7 @@ def register_tasks_controllers(state: Any, ctrl: Any, api_base_url: str) -> None
                 if response.status_code == 201:
                     state.status_message = "Task created successfully"
                     # Reload tasks with pagination
-                    page_size = getattr(state, 'tasks_per_page', 25)
+                    page_size = getattr(state, 'tasks_per_page', 20)
                     tasks_response = client.get(f"{api_base_url}/api/tasks", params={"limit": page_size, "offset": 0})
                     if tasks_response.status_code == 200:
                         data = tasks_response.json()

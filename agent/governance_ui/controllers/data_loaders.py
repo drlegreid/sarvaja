@@ -219,7 +219,7 @@ def register_data_loader_controllers(
                     pass
 
                 try:
-                    page_size = getattr(state, 'tasks_per_page', 25)
+                    page_size = getattr(state, 'tasks_per_page', 20)
                     response, _ = _traced_get(client, f"/api/tasks?limit={page_size}&offset=0")
                     if response.status_code == 200:
                         data = response.json()

@@ -151,7 +151,7 @@ class GovernanceDashboard:
             # Load tasks with pagination to prevent DOM explosion (GAP-UI-PAGING-001)
             try:
                 import httpx
-                page_size = 25
+                page_size = 20  # Must match tasks_per_page default in state/initial.py
                 with httpx.Client(timeout=10.0) as client:
                     resp = client.get(f"{API_BASE_URL}/api/tasks", params={"limit": page_size, "offset": 0})
                     if resp.status_code == 200:

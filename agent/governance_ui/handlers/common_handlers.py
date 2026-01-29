@@ -46,7 +46,7 @@ def register_common_handlers(ctrl: Any, state: Any) -> None:
 
                 # Load tasks with pagination
                 try:
-                    page_size = getattr(state, 'tasks_per_page', 25)
+                    page_size = getattr(state, 'tasks_per_page', 20)
                     tasks_response = client.get(f"{API_BASE_URL}/api/tasks", params={"limit": page_size, "offset": 0})
                     if tasks_response.status_code == 200:
                         data = tasks_response.json()

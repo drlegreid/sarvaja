@@ -79,7 +79,7 @@ def register_backlog_controllers(
                     state.status_message = f"Task {task_id} completed successfully"
                     load_backlog_data()
                     # Also refresh the main tasks list with pagination
-                    page_size = getattr(state, 'tasks_per_page', 25)
+                    page_size = getattr(state, 'tasks_per_page', 20)
                     offset = (getattr(state, 'tasks_page', 1) - 1) * page_size
                     tasks_response = client.get(f"{api_base_url}/api/tasks", params={"limit": page_size, "offset": offset})
                     if tasks_response.status_code == 200:
