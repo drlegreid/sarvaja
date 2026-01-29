@@ -331,6 +331,63 @@ class GovernanceCRUDE2ELibrary:
             return {"success": False, "error": str(e)}
 
     # =========================================================================
+    # Negative / Validation Tests
+    # =========================================================================
+
+    @keyword("Post Rule Raw")
+    def post_rule_raw(self, rule_data: Dict[str, Any]) -> Dict[str, Any]:
+        """POST a rule and return raw status code + response."""
+        try:
+            client = self._get_client()
+            response = client.post("/api/rules", json=rule_data)
+            body = response.json() if response.headers.get("content-type", "").startswith("application/json") else {}
+            return {"status_code": response.status_code, "body": body}
+        except Exception as e:
+            return {"status_code": 0, "error": str(e)}
+
+    @keyword("Post Task Raw")
+    def post_task_raw(self, task_data: Dict[str, Any]) -> Dict[str, Any]:
+        """POST a task and return raw status code + response."""
+        try:
+            client = self._get_client()
+            response = client.post("/api/tasks", json=task_data)
+            body = response.json() if response.headers.get("content-type", "").startswith("application/json") else {}
+            return {"status_code": response.status_code, "body": body}
+        except Exception as e:
+            return {"status_code": 0, "error": str(e)}
+
+    @keyword("Post Decision Raw")
+    def post_decision_raw(self, decision_data: Dict[str, Any]) -> Dict[str, Any]:
+        """POST a decision and return raw status code + response."""
+        try:
+            client = self._get_client()
+            response = client.post("/api/decisions", json=decision_data)
+            body = response.json() if response.headers.get("content-type", "").startswith("application/json") else {}
+            return {"status_code": response.status_code, "body": body}
+        except Exception as e:
+            return {"status_code": 0, "error": str(e)}
+
+    @keyword("Get Resource Raw")
+    def get_resource_raw(self, path: str) -> Dict[str, Any]:
+        """GET a resource and return raw status code."""
+        try:
+            client = self._get_client()
+            response = client.get(f"/api/{path}")
+            return {"status_code": response.status_code}
+        except Exception as e:
+            return {"status_code": 0, "error": str(e)}
+
+    @keyword("Delete Resource Raw")
+    def delete_resource_raw(self, path: str) -> Dict[str, Any]:
+        """DELETE a resource and return raw status code."""
+        try:
+            client = self._get_client()
+            response = client.delete(f"/api/{path}")
+            return {"status_code": response.status_code}
+        except Exception as e:
+            return {"status_code": 0, "error": str(e)}
+
+    # =========================================================================
     # Cleanup
     # =========================================================================
 

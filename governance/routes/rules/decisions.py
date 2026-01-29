@@ -85,6 +85,8 @@ async def get_decision(decision_id: str):
         raise HTTPException(status_code=404, detail=f"Decision {decision_id} not found")
     except HTTPException:
         raise
+    except ValueError as e:
+        raise HTTPException(status_code=422, detail=str(e))
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -124,6 +126,8 @@ async def create_decision(decision: DecisionCreate):
         raise HTTPException(status_code=500, detail="Failed to create decision")
     except HTTPException:
         raise
+    except ValueError as e:
+        raise HTTPException(status_code=422, detail=str(e))
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -165,6 +169,8 @@ async def update_decision(decision_id: str, decision: DecisionUpdate):
         raise HTTPException(status_code=404, detail=f"Decision {decision_id} not found")
     except HTTPException:
         raise
+    except ValueError as e:
+        raise HTTPException(status_code=422, detail=str(e))
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -182,5 +188,7 @@ async def delete_decision(decision_id: str):
             raise HTTPException(status_code=404, detail=f"Decision {decision_id} not found")
     except HTTPException:
         raise
+    except ValueError as e:
+        raise HTTPException(status_code=422, detail=str(e))
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

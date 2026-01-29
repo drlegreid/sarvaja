@@ -193,6 +193,8 @@ async def get_rule(rule_id: str):
         )
     except HTTPException:
         raise
+    except ValueError as e:
+        raise HTTPException(status_code=422, detail=str(e))
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -237,6 +239,8 @@ async def create_rule(rule: RuleCreate):
         )
     except HTTPException:
         raise
+    except ValueError as e:
+        raise HTTPException(status_code=422, detail=str(e))
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -292,6 +296,8 @@ async def update_rule(rule_id: str, rule: RuleUpdate):
         )
     except HTTPException:
         raise
+    except ValueError as e:
+        raise HTTPException(status_code=422, detail=str(e))
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -356,5 +362,7 @@ async def delete_rule(rule_id: str, archive: bool = Query(True, description="Arc
         return None
     except HTTPException:
         raise
+    except ValueError as e:
+        raise HTTPException(status_code=422, detail=str(e))
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
