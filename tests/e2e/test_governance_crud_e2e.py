@@ -121,7 +121,10 @@ def cleanup_test_data():
                     for rule in rules_resp.json():
                         rule_id = rule.get("id", "")
                         if rule_id.startswith("TEST-"):
-                            del_resp = client.delete(f"/api/rules/{rule_id}")
+                            del_resp = client.delete(
+                                f"/api/rules/{rule_id}",
+                                params={"archive": "false"}
+                            )
                             if del_resp.status_code == 204:
                                 cleaned["rules"] += 1
             except Exception as e:
@@ -235,8 +238,10 @@ class TestRulesCRUD:
         }
         api_client.post("/api/rules", json=rule_data)
 
-        # Then delete
-        response = api_client.delete(f"/api/rules/{unique_id}")
+        # Then delete (archive=false to prevent TEST-* file pollution)
+        response = api_client.delete(
+            f"/api/rules/{unique_id}", params={"archive": "false"}
+        )
         assert response.status_code == 204
 
         # Verify deleted

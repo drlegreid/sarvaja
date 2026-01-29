@@ -33,6 +33,15 @@ results/
 evidence/tests/claude/
 evidence/tests/platform/
 
+# E2E test archive artifacts (prevent TEST-* pollution)
+evidence/archive/rules/TEST-*.json
+
+# Robot Framework / Playwright test output
+log.html
+output.xml
+report.html
+playwright-log.txt
+
 # OS
 .DS_Store
 Thumbs.db
