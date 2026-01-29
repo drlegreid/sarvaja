@@ -3,49 +3,16 @@ Documentation    E2E Browser Tests for Session-Task Navigation
 ...              Per: RF-007 Robot Framework Migration
 ...              Migrated from tests/e2e/test_session_task_navigation_e2e.py
 ...              Regression tests for GAP-UI-SESSION-TASKS-001
-Library          Browser    auto_closing_level=SUITE
-Resource         ../resources/common.resource
+Resource         ../resources/browser.resource
 Suite Setup      Open Dashboard Browser
 Suite Teardown   Close Browser    ALL
 Test Setup       Navigate To Sessions List
 Test Tags        e2e    browser    sessions    tasks    medium    read    SESSION-EVID-01-v1
 
 *** Variables ***
-${DASHBOARD_URL}         http://localhost:8081
-${APP_TITLE}             Sarvaja Governance Dashboard
-${PAGE_TIMEOUT}          10s
-${ELEMENT_TIMEOUT}       10s
 ${TEST_SESSION_ID}       SESSION-2026-01-10-INTENT-TEST
 
 *** Keywords ***
-Open Dashboard Browser
-    [Documentation]    Open browser for test suite
-    New Browser    chromium    headless=True
-    New Context    viewport={'width': 1280, 'height': 720}
-    New Page    ${DASHBOARD_URL}
-    Wait For Elements State    text=${APP_TITLE}    visible    timeout=${PAGE_TIMEOUT}
-
-Navigate To Sessions List
-    [Documentation]    Navigate to Sessions list view (handles detail-open state)
-    Go To    ${DASHBOARD_URL}
-    Reload
-    Wait For Elements State    text=${APP_TITLE}    visible    timeout=20s
-    Click    [data-testid='nav-sessions']
-    # Sessions may open to detail view if a session was previously selected
-    ${list_count}=    Get Element Count    text=Session Evidence
-    IF    ${list_count} == 0
-        ${back_count}=    Get Element Count    [data-testid='session-detail-back-btn']
-        IF    ${back_count} > 0
-            Click    [data-testid='session-detail-back-btn']
-        ELSE
-            ${btn_count}=    Get Element Count    button:has-text("󰁍")
-            IF    ${btn_count} > 0
-                Click    button:has-text("󰁍") >> nth=0
-            END
-        END
-    END
-    Wait For Elements State    text=Session Evidence    visible    timeout=20s
-
 Click First Session Item
     [Documentation]    Click first session item in the list
     # Ensure we're on sessions list

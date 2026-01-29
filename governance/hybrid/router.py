@@ -99,8 +99,8 @@ class HybridQueryRouter:
             if self._chromadb_client:
                 self._chromadb_client.heartbeat()
                 return True
-        except Exception:
-            pass
+        except Exception as e:
+            print(f"[HybridRouter] ChromaDB health check failed: {e}")
         return False
 
     def query(self, query_text: str, query_type: Literal["inference", "semantic", "combined", "auto"] = "auto",

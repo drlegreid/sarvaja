@@ -3,99 +3,11 @@ Documentation    RF-010: Extended View Coverage Tests
 ...              Per GAP-UI-AUDIT-002: Cover untested dashboard views
 ...              Views: Decisions, Agents detail, Search, Executive
 ...              Per ARCH-EBMSF-01-v1: Evidence-based assertions with msg=
-Library          Browser    auto_closing_level=SUITE
-Resource         ../resources/common.resource
+Resource         ../resources/browser.resource
 Suite Setup      Open Dashboard Browser
 Suite Teardown   Close Browser    ALL
 Test Setup       Navigate To Dashboard Home
 Test Tags        e2e    browser    views    ui    TEST-BDD-01-v1
-
-*** Variables ***
-${DASHBOARD_URL}      http://localhost:8081
-${APP_TITLE}          Sarvaja Governance Dashboard
-${PAGE_TIMEOUT}       10s
-${ELEMENT_TIMEOUT}    10s
-
-*** Keywords ***
-Open Dashboard Browser
-    [Documentation]    Open browser for test suite
-    New Browser    chromium    headless=True
-    New Context    viewport={'width': 1280, 'height': 720}
-    New Page    ${DASHBOARD_URL}
-    Wait For Elements State    text=${APP_TITLE}    visible    timeout=${PAGE_TIMEOUT}
-
-Navigate To Dashboard Home
-    [Documentation]    Navigate to dashboard and wait for app init
-    Go To    ${DASHBOARD_URL}
-    Reload
-    Wait For Elements State    text=${APP_TITLE}    visible    timeout=20s
-
-Navigate To Decisions List
-    [Documentation]    Navigate to Decisions list (handles detail-open SPA state)
-    Navigate To Dashboard Home
-    Click    [data-testid='nav-decisions']
-    Sleep    1s
-    # SPA may open to decision detail if previously selected
-    ${list_count}=    Get Element Count    [data-testid='decision-log']
-    IF    ${list_count} == 0
-        # In detail view - click back button (data-testid preferred)
-        ${back_testid}=    Get Element Count    [data-testid='decision-detail-back-btn']
-        IF    ${back_testid} > 0
-            Click    [data-testid='decision-detail-back-btn']
-        ELSE
-            ${back_count}=    Get Element Count    button:has-text("󰁍")
-            IF    ${back_count} > 0
-                Click    button:has-text("󰁍") >> nth=0
-            END
-        END
-    END
-    Wait For Elements State    [data-testid='decision-log']    visible    timeout=20s
-
-Navigate To Agents List
-    [Documentation]    Navigate to Agents list (handles detail-open SPA state)
-    Navigate To Dashboard Home
-    Click    [data-testid='nav-agents']
-    Sleep    1s
-    # SPA may open to agent detail if previously selected
-    ${list_count}=    Get Element Count    text=/\\d+ agents registered/
-    IF    ${list_count} == 0
-        # In detail view - click back button (data-testid preferred)
-        ${back_testid}=    Get Element Count    [data-testid='agent-detail-back-btn']
-        IF    ${back_testid} > 0
-            Click    [data-testid='agent-detail-back-btn']
-        ELSE
-            ${back_count}=    Get Element Count    button:has-text("󰁍")
-            IF    ${back_count} > 0
-                Click    button:has-text("󰁍") >> nth=0
-            END
-        END
-    END
-    Wait For Elements State    text=/\\d+ agents registered/    visible    timeout=20s
-
-Navigate To Search View
-    [Documentation]    Navigate to Search view
-    Navigate To Dashboard Home
-    Click    [data-testid='nav-search']
-    Wait For Elements State    text=Evidence Search    visible    timeout=${ELEMENT_TIMEOUT}
-
-Navigate To Executive View
-    [Documentation]    Navigate to Executive view
-    Navigate To Dashboard Home
-    Click    [data-testid='nav-executive']
-    Wait For Elements State    text=Executive Report    visible    timeout=${ELEMENT_TIMEOUT}
-
-Navigate To Rules List
-    [Documentation]    Navigate to Rules list (handles detail-open state)
-    Navigate To Dashboard Home
-    Click    [data-testid='nav-rules']
-    ${list_count}=    Get Element Count    text=/\\d+ rules loaded/
-    IF    ${list_count} == 0
-        ${back_count}=    Get Element Count    button:has-text("󰁍")
-        IF    ${back_count} > 0
-            Click    button:has-text("󰁍") >> nth=0
-        END
-    END
-    Wait For Elements State    text=/\\d+ rules loaded/    visible    timeout=20s
 
 *** Test Cases ***
 # =============================================================================

@@ -3,120 +3,28 @@ Documentation    E2E Browser Tests for Governance Dashboard
 ...              Per: RF-007 Robot Framework Migration
 ...              Migrated from tests/e2e/test_dashboard_e2e.py
 ...              Uses robotframework-browser (Playwright-based)
-Library          Browser    auto_closing_level=SUITE
-Resource         ../resources/common.resource
+Resource         ../resources/browser.resource
 Suite Setup      Open Dashboard Browser
 Suite Teardown   Close Browser    ALL
-Test Setup       Navigate To Dashboard
+Test Setup       Navigate To Dashboard Home
 Test Tags        e2e    browser    dashboard    critical    ui    session    read    TEST-BDD-01-v1
 
-*** Variables ***
-${DASHBOARD_URL}      http://localhost:8081
-${APP_TITLE}          Sarvaja Governance Dashboard
-${PAGE_TIMEOUT}       10s
-
 *** Keywords ***
-Open Dashboard Browser
-    [Documentation]    Open browser for test suite
-    New Browser    chromium    headless=True
-    New Context    viewport={'width': 1280, 'height': 720}
-    New Page    ${DASHBOARD_URL}
-    Wait For Elements State    text=${APP_TITLE}    visible    timeout=${PAGE_TIMEOUT}
-
-Navigate To Dashboard
-    [Documentation]    Navigate to dashboard and wait for app init
-    Go To    ${DASHBOARD_URL}
-    Reload
-    Wait For Elements State    text=${APP_TITLE}    visible    timeout=20s
-
 Navigate To Rules View
     [Documentation]    Navigate to Rules view list (handles detail-open state)
-    Navigate To Dashboard
-    Click    [data-testid='nav-rules']
-    # Rules may open to detail view if a rule was previously selected
-    ${list_count}=    Get Element Count    text=/\\d+ rules loaded/
-    IF    ${list_count} == 0
-        # We're in detail view - click back button to get to list
-        ${back_count}=    Get Element Count    [data-testid='rule-detail-back-btn']
-        IF    ${back_count} > 0
-            Click    [data-testid='rule-detail-back-btn']
-        ELSE
-            # Try generic back button
-            ${btn_count}=    Get Element Count    button:has-text("󰁍")
-            IF    ${btn_count} > 0
-                Click    button:has-text("󰁍") >> nth=0
-            END
-        END
-    END
-    Wait For Elements State    text=/\\d+ rules loaded/    visible    timeout=20s
+    Navigate To Rules List
 
 Navigate To Tasks View
     [Documentation]    Navigate to Tasks view
-    Navigate To Dashboard
-    Click    [data-testid='nav-tasks']
-    Wait For Elements State    text=/\\d+ tasks loaded/    visible    timeout=20s
+    Navigate To Tasks List
 
 Navigate To Sessions View
     [Documentation]    Navigate to Sessions view (handles detail-open state)
-    Navigate To Dashboard
-    Click    [data-testid='nav-sessions']
-    # Sessions may open to detail view if a session was previously selected
-    # Check for list header OR detail view, then navigate to list if needed
-    ${list_count}=    Get Element Count    text=Session Evidence
-    IF    ${list_count} == 0
-        # We're in detail view - click back button to get to list
-        ${back_count}=    Get Element Count    [data-testid='session-detail-back-btn']
-        IF    ${back_count} > 0
-            Click    [data-testid='session-detail-back-btn']
-        END
-    END
-    Wait For Elements State    text=Session Evidence    visible
-
-Navigate To Trust View
-    [Documentation]    Navigate to Trust view (handles detail-open state)
-    Navigate To Dashboard
-    Click    [data-testid='nav-trust']
-    Sleep    1s
-    # Trust may open to agent detail if previously selected
-    ${list_count}=    Get Element Count    text=Agent Trust Dashboard
-    IF    ${list_count} == 0
-        ${back_testid}=    Get Element Count    [data-testid='agent-detail-back-btn']
-        IF    ${back_testid} > 0
-            Click    [data-testid='agent-detail-back-btn']
-        ELSE
-            ${back_count}=    Get Element Count    button:has-text("󰁍")
-            IF    ${back_count} > 0
-                Click    button:has-text("󰁍") >> nth=0
-            END
-        END
-    END
-    Wait For Elements State    text=Agent Trust Dashboard    visible    timeout=20s
+    Navigate To Sessions List
 
 Navigate To Agents View
     [Documentation]    Navigate to Agents view (handles detail-open state)
-    Navigate To Dashboard
-    Click    [data-testid='nav-agents']
-    Sleep    1s
-    # Agents may open to agent detail if previously selected
-    ${list_count}=    Get Element Count    text=Registered Agents
-    IF    ${list_count} == 0
-        ${back_testid}=    Get Element Count    [data-testid='agent-detail-back-btn']
-        IF    ${back_testid} > 0
-            Click    [data-testid='agent-detail-back-btn']
-        ELSE
-            ${back_count}=    Get Element Count    button:has-text("󰁍")
-            IF    ${back_count} > 0
-                Click    button:has-text("󰁍") >> nth=0
-            END
-        END
-    END
-    Wait For Elements State    text=Registered Agents    visible    timeout=20s
-
-Navigate To Infra View
-    [Documentation]    Navigate to Infrastructure view
-    Navigate To Dashboard
-    Click    [data-testid='nav-infra']
-    Wait For Elements State    text=Infrastructure Health    visible    timeout=20s
+    Navigate To Agents List
 
 *** Test Cases ***
 # =============================================================================

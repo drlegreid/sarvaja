@@ -181,7 +181,8 @@ class TestAgentsDataIntegrity:
         # All agent types from TypeDB agents entity
         valid_types = {
             "claude-code", "docker-agent", "sync-agent", "orchestrator",
-            "researcher", "research", "coder", "coding", "curator", "assistant"
+            "researcher", "research", "coder", "coding", "curator", "assistant",
+            "test-agent"
         }
         try:
             response = client.get("/api/agents")

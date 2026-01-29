@@ -649,7 +649,7 @@ class TestFilesAPI:
         # Test with a known evidence file
         response = api_client.get(
             "/api/files/content",
-            params={"path": "evidence/SESSION-DECISIONS-2024-12-24.md"}
+            params={"path": "evidence/QUALITY-ASSESSMENT-2026-01-21.md"}
         )
 
         # Level 1: Endpoint exists and returns success
@@ -666,8 +666,8 @@ class TestFilesAPI:
 
         # Level 3: Content is actual file data (not empty, not error message)
         assert len(data["content"]) > 100, "Content appears too short for evidence file"
-        assert "DECISION-001" in data["content"], (
-            "Content doesn't contain expected 'DECISION-001' text from evidence file"
+        assert "Quality Assessment" in data["content"], (
+            "Content doesn't contain expected 'Quality Assessment' text from evidence file"
         )
 
     def test_read_evidence_file_security_denied(self, api_client):
