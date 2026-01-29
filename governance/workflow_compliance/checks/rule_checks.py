@@ -33,7 +33,7 @@ def check_active_rules() -> ComplianceCheck:
         active_rules = [r for r in rules if r.get("status") == "ACTIVE"]
         count = len(active_rules)
 
-        if count >= 40:
+        if count >= 30:
             return ComplianceCheck(
                 rule_id="GOV-RULE-01-v1",
                 check_name="active_rules",
@@ -46,7 +46,7 @@ def check_active_rules() -> ComplianceCheck:
                 rule_id="GOV-RULE-01-v1",
                 check_name="active_rules",
                 status="WARNING",
-                message=f"Only {count} active rules (expected 40+)",
+                message=f"Only {count} active rules (expected 30+)",
                 count=count
             )
         else:

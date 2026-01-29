@@ -32,7 +32,7 @@ def check_task_evidence_compliance() -> ComplianceCheck:
 
         completed_tasks = [
             t for t in tasks
-            if t.get("status") in ("DONE", "completed")
+            if t.get("status") in ("DONE", "CLOSED", "completed")
         ]
         tasks_without_evidence = [
             t for t in completed_tasks
@@ -109,7 +109,7 @@ def check_task_session_linkage() -> ComplianceCheck:
 
         completed_tasks = [
             t for t in tasks
-            if t.get("status") in ("DONE", "completed")
+            if t.get("status") in ("DONE", "CLOSED", "completed")
         ]
         tasks_without_session = [
             t for t in completed_tasks
