@@ -185,6 +185,8 @@ services:
       - ./evidence:/app/evidence:rw
       - ./.claude:/app/.claude:ro  # GAP-UI-EXP-011: Mount hooks/checkers for workflow compliance
       - ./tests:/app/tests:ro      # WORKFLOW-SHELL-01-v1: Enable pytest in container
+      - ./CLAUDE.md:/app/CLAUDE.md:ro  # RECOVER-AMNES-01-v1: Workspace file for compliance check
+      - ./TODO.md:/app/TODO.md:ro      # RECOVER-AMNES-01-v1: Workspace file for compliance check
       - ${HOME}/.claude/projects/-home-oderid-Documents-Vibe-sarvaja-platform:/app/claude-logs:ro  # SESSION-METRICS-01-v1: Claude session logs
     depends_on:
       - typedb
