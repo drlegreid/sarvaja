@@ -18,6 +18,7 @@ Rules governing session evidence, decision logging, and reporting.
 | **GOV-TRUST-02-v1** | Agent Trust Scoring | HIGH | ACTIVE | OPERATIONAL | [View](../leaf/GOV-TRUST-02-v1.md) |
 | **GOV-RULE-02-v1** | Rule Compliance Verification | HIGH | ACTIVE | OPERATIONAL | [View](../leaf/GOV-RULE-02-v1.md) |
 | **GOV-RULE-03-v1** | Rule Deprecation Protocol | HIGH | ACTIVE | TECHNICAL | [View](../leaf/GOV-RULE-03-v1.md) |
+| **GOV-BIND-01-v1** | Rule-to-Tool Binding | HIGH | ACTIVE | OPERATIONAL | [View](../leaf/GOV-BIND-01-v1.md) |
 
 ---
 
@@ -30,6 +31,7 @@ Rules governing session evidence, decision logging, and reporting.
 - **GOV-TRUST-02-v1**: Use functional feature comparison, not subjective ratings
 - **GOV-RULE-02-v1**: Provide full context when presenting decisions
 - **GOV-RULE-03-v1**: Enterprise sessions MUST produce executive summaries
+- **GOV-BIND-01-v1**: Rules MUST bind to specific tool calls, not just intent
 
 ---
 

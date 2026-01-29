@@ -1,6 +1,6 @@
 # Rules Directives - Index
 
-**Status:** Active | **Updated:** 2026-01-17 | **Rules:** 55 (52 ACTIVE, 3 DRAFT/DISABLED)
+**Status:** Active | **Updated:** 2026-01-29 | **Rules:** 57 (54 ACTIVE, 3 DRAFT/DISABLED)
 
 > **Taxonomy:** [META-TAXON-01-v1](rules/leaf/META-TAXON-01-v1.md) | **Migration:** [RULE-MIGRATION.md](rules/RULE-MIGRATION.md)
 
@@ -33,11 +33,13 @@
 | GOV-RULE-01-v1 | RULE-010 | Agent Wisdom Transmission | CRITICAL | ACTIVE |
 | GOV-RULE-02-v1 | RULE-026 | Rule Compliance Verification | HIGH | ACTIVE |
 | GOV-RULE-03-v1 | RULE-029 | Rule Deprecation Protocol | HIGH | ACTIVE |
+| GOV-BIND-01-v1 | (new) | Rule-to-Tool Binding | HIGH | ACTIVE |
 | ARCH-BEST-01-v1 | RULE-002 | Architectural Best Practices | HIGH | ACTIVE |
 | ARCH-MCP-01-v1 | RULE-007 | MCP Usage Protocol | HIGH | ACTIVE |
 | ARCH-MCP-02-v1 | RULE-036 | MCP Server Separation Pattern | HIGH | ACTIVE |
 | ARCH-INFRA-01-v1 | RULE-016 | Infrastructure Identity & Hardware | CRITICAL | ACTIVE |
 | ARCH-INFRA-02-v1 | RULE-040 | Portable Configuration Patterns | HIGH | ACTIVE |
+| ARCH-YAGNI-01-v1 | (new) | Service Proliferation Guard | HIGH | ACTIVE |
 | UI-TRAME-01-v1 | RULE-017 | Trame UI Patterns | HIGH | ACTIVE |
 | WORKFLOW-AUTO-01-v1 | RULE-014 | Autonomous Task Sequencing | CRITICAL | ACTIVE |
 | WORKFLOW-AUTO-02-v1 | RULE-031 | Autonomous Task Continuation | CRITICAL | ACTIVE |
@@ -90,8 +92,8 @@
 |--------|-------------|-------|-------|
 | **SESSION** | Session management | 3 | EVID-01, DSM-01, PROMPT-01 |
 | **REPORT** | Reporting & decisions | 4 | DEC-01, DEC-02, HUMOR-01, ISSUE-01, SUMM-01 |
-| **GOV** | Governance & trust | 9 | TRUST-01/02, BICAM-01, PROP-01/02/03, RULE-01/02/03, MODE-01 |
-| **ARCH** | Architecture | 5 | BEST-01, MCP-01/02, INFRA-01/02 |
+| **GOV** | Governance & trust | 10 | TRUST-01/02, BICAM-01, PROP-01/02/03, RULE-01/02/03, MODE-01, BIND-01 |
+| **ARCH** | Architecture | 6 | BEST-01, MCP-01/02, INFRA-01/02, YAGNI-01 |
 | **UI** | User interface | 3 | TRAME-01, LOADER-01, TRACE-01 |
 | **WORKFLOW** | Workflow & autonomy | 5 | AUTO-01/02, RD-01, SEQ-01, SHELL-01 |
 | **RECOVER** | Recovery & resilience | 3 | MEM-01, AMNES-01, CRASH-01 |
@@ -114,7 +116,7 @@
 | Level | Meaning | Count | Key Rules |
 |-------|---------|-------|-----------|
 | **CRITICAL** | Must enforce always | 16 | SESSION-EVID, GOV-BICAM, WORKFLOW-AUTO, RECOVER-AMNES, TEST-COMP-02, SAFETY-HEALTH |
-| **HIGH** | Enforce in normal ops | 23 | ARCH-*, TEST-COMP-01, CONTAINER-*, DOC-* |
+| **HIGH** | Enforce in normal ops | 25 | ARCH-*, GOV-BIND-01, TEST-COMP-01, CONTAINER-*, DOC-* |
 | **MEDIUM** | Advisory | 1 | GOV-TRUST-01 |
 
 ---

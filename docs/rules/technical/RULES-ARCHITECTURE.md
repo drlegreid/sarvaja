@@ -15,6 +15,7 @@ Rules governing system architecture, infrastructure, and MCP server patterns.
 | **ARCH-EBMSF-01-v1** | EBMSF Architecture Standards | HIGH | ACTIVE | TECHNICAL | [View](../leaf/ARCH-EBMSF-01-v1.md) |
 | **ARCH-INFRA-01-v1** | Infrastructure Identity & Hardware | CRITICAL | ACTIVE | TECHNICAL | [View](../leaf/ARCH-INFRA-01-v1.md) |
 | **ARCH-MCP-02-v1** | MCP Server Separation Pattern | HIGH | ACTIVE | TECHNICAL | [View](../leaf/ARCH-MCP-02-v1.md) |
+| **ARCH-YAGNI-01-v1** | Service Proliferation Guard | HIGH | ACTIVE | TECHNICAL | [View](../leaf/ARCH-YAGNI-01-v1.md) |
 
 ---
 
@@ -24,6 +25,7 @@ Rules governing system architecture, infrastructure, and MCP server patterns.
 - **ARCH-EBMSF-01-v1**: Code reviews required, no hardcoded secrets in commits
 - **ARCH-INFRA-01-v1**: All infrastructure MUST be identifiable via metadata
 - **ARCH-MCP-02-v1**: Large MCP servers (>50 tools) MUST be split by domain
+- **ARCH-YAGNI-01-v1**: 5-dimension critical analysis BEFORE any new service proposal
 
 ---
 

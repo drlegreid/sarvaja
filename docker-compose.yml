@@ -177,6 +177,7 @@ services:
       - CHROMADB_PORT=8000
       - CHROMA_AUTH_TOKEN=${CHROMA_AUTH_TOKEN:-chroma-token-dev}
       - GOVERNANCE_API_URL=http://localhost:8082
+      - CLAUDE_PROJECT_LOG_DIR=/app/claude-logs  # SESSION-METRICS-01-v1: Claude Code JSONL logs
     volumes:
       - ./agent:/app/agent:ro
       - ./governance:/app/governance:ro
@@ -184,6 +185,7 @@ services:
       - ./evidence:/app/evidence:rw
       - ./.claude:/app/.claude:ro  # GAP-UI-EXP-011: Mount hooks/checkers for workflow compliance
       - ./tests:/app/tests:ro      # WORKFLOW-SHELL-01-v1: Enable pytest in container
+      - ${HOME}/.claude/projects/-home-oderid-Documents-Vibe-sarvaja-platform:/app/claude-logs:ro  # SESSION-METRICS-01-v1: Claude session logs
     depends_on:
       - typedb
       - chromadb

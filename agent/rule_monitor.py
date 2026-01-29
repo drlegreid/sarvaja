@@ -373,23 +373,24 @@ def _seed_demo_events(monitor: RuleMonitor) -> None:
     """Seed demo events for UI demonstration (GAP-UI-051)."""
 
     # Sample events for demonstration
+    # Use semantic rule IDs per META-TAXON-01-v1
     demo_events = [
         {
             "event_type": "rule_query",
             "source": "claude-code",
-            "details": {"rule_id": "RULE-001", "query_type": "get"},
+            "details": {"rule_id": "SESSION-EVID-01-v1", "query_type": "get"},
             "severity": "INFO"
         },
         {
             "event_type": "compliance_check",
             "source": "task-orchestrator",
-            "details": {"rule_id": "RULE-007", "result": "PASS"},
+            "details": {"rule_id": "ARCH-MCP-01-v1", "result": "PASS"},
             "severity": "INFO"
         },
         {
             "event_type": "rule_query",
             "source": "rules-curator",
-            "details": {"rule_id": "RULE-012", "query_type": "dependencies"},
+            "details": {"rule_id": "SESSION-DSM-01-v1", "query_type": "dependencies"},
             "severity": "INFO"
         },
         {
@@ -401,19 +402,19 @@ def _seed_demo_events(monitor: RuleMonitor) -> None:
         {
             "event_type": "rule_change",
             "source": "admin",
-            "details": {"rule_id": "RULE-024", "change": "status update"},
+            "details": {"rule_id": "RECOVER-AMNES-01-v1", "change": "status update"},
             "severity": "WARNING"
         },
         {
             "event_type": "compliance_check",
             "source": "research-agent",
-            "details": {"rule_id": "RULE-021", "result": "PASS"},
+            "details": {"rule_id": "SAFETY-HEALTH-01-v1", "result": "PASS"},
             "severity": "INFO"
         },
         {
             "event_type": "violation",
             "source": "external-api",
-            "details": {"rule_id": "RULE-007", "violation": "missing MCP healthcheck"},
+            "details": {"rule_id": "ARCH-MCP-01-v1", "violation": "missing MCP healthcheck"},
             "severity": "CRITICAL"
         },
         {

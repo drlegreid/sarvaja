@@ -4,41 +4,75 @@
 
 > **Legacy ID:** RULE-027
 > **Location:** [RULES-STANDARDS.md](../operational/RULES-STANDARDS.md)
-> **Tags:** `api`, `testing`, `restart`, `protocol`
+> **Tags:** `api`, `testing`, `restart`, `podman`, `sfdc`
 
 ---
 
 ## Directive
 
-ALWAYS restart API servers after making code changes BEFORE running tests.
+ALWAYS restart API servers via **podman** after code changes BEFORE running tests. The dev profile volume mounts reflect code changes immediately — just restart the container, never rebuild.
 
 ---
 
 ## Protocol
 
-1. STOP existing server process
-2. START fresh server instance
-3. VERIFY server is responsive (/api/health)
-4. RUN tests
+| Step | Command | Purpose |
+|------|---------|---------|
+| 1. RESTART | `podman restart platform_governance-dashboard-dev_1` | Pick up code changes |
+| 2. WAIT | `sleep 10` | Container startup time |
+| 3. VERIFY | `curl -s http://localhost:8082/api/health` | Confirm responsive |
+| 4. RUN | `python3 -m pytest tests/ -v` | Run tests on fresh instance |
+
+### If Container is Stopped (Exited)
+
+```bash
+podman start platform_governance-dashboard-dev_1
+sleep 10
+curl -s http://localhost:8082/api/health
+```
+
+### If Container Doesn't Exist
+
+```bash
+podman compose --profile dev up -d
+sleep 15
+curl -s http://localhost:8082/api/health
+```
 
 ---
 
-## Anti-Patterns
+## Anti-Patterns (PROHIBITED)
 
 | Don't | Do Instead |
 |-------|-----------|
-| Run tests immediately after changes | Restart server first |
-| Assume hot-reload caught changes | Explicitly restart |
-| Debug "404" without checking server | Check if server has latest code |
+| Run tests immediately after changes | Restart container first |
+| Assume hot-reload caught changes | Explicitly restart container |
+| Debug "404" without checking server | `podman compose --profile dev ps` first |
+| `python -m governance.api --port 8082` | `podman restart platform_governance-dashboard-dev_1` |
+| `kill` / `fuser -k` server processes | `podman stop` / `podman restart` |
+| Run bare python for API server | Container serves both 8081 + 8082 |
+
+---
+
+## Tool Bindings (GOV-BIND-01-v1)
+
+| Verification | Tool | Example |
+|-------------|------|---------|
+| Health check | `mcp__rest-api__test_request` | `GET http://localhost:8082/api/health` |
+| Container status | Bash | `podman compose --profile dev ps` |
+| UI render | `mcp__playwright__browser_navigate` | `http://localhost:8081` |
 
 ---
 
 ## Validation
 
-- [ ] Server restarted after code changes
-- [ ] Health endpoint verified
-- [ ] Tests run on fresh instance
+- [ ] Container restarted via `podman restart` (not bare python)
+- [ ] Health endpoint verified: `{"status":"ok"}`
+- [ ] Tests run on fresh container instance
+- [ ] No bare python processes running on ports 8081/8082
 
 ---
 
 *Per SESSION-DSM-01-v1: DSP Semantic Code Structure*
+*Per CONTAINER-DEV-01-v1: Podman dev profile mandatory*
+*Per GOV-BIND-01-v1: Tool bindings specified*

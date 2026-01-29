@@ -17,11 +17,17 @@ from governance.mcp_tools.common import format_mcp_result
 def _resolve_project_dir(project_path: Optional[str] = None) -> Path:
     """Resolve Claude Code project log directory.
 
-    Auto-detects from cwd if project_path is None.
-    Converts cwd to Claude Code's slug format: /home/user/project → -home-user-project
+    Priority:
+    1. Explicit project_path argument
+    2. CLAUDE_PROJECT_LOG_DIR environment variable (for container use)
+    3. Auto-detect from cwd using Claude Code's slug format
     """
     if project_path:
         return Path(project_path)
+
+    env_dir = os.environ.get("CLAUDE_PROJECT_LOG_DIR")
+    if env_dir:
+        return Path(env_dir)
 
     cwd = os.getcwd()
     slug = cwd.replace("/", "-").lstrip("-")
