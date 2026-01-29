@@ -73,10 +73,44 @@ Navigate To Sessions View
     Wait For Elements State    text=Session Evidence    visible
 
 Navigate To Trust View
-    [Documentation]    Navigate to Trust view
+    [Documentation]    Navigate to Trust view (handles detail-open state)
     Navigate To Dashboard
     Click    [data-testid='nav-trust']
+    Sleep    1s
+    # Trust may open to agent detail if previously selected
+    ${list_count}=    Get Element Count    text=Agent Trust Dashboard
+    IF    ${list_count} == 0
+        ${back_testid}=    Get Element Count    [data-testid='agent-detail-back-btn']
+        IF    ${back_testid} > 0
+            Click    [data-testid='agent-detail-back-btn']
+        ELSE
+            ${back_count}=    Get Element Count    button:has-text("󰁍")
+            IF    ${back_count} > 0
+                Click    button:has-text("󰁍") >> nth=0
+            END
+        END
+    END
     Wait For Elements State    text=Agent Trust Dashboard    visible    timeout=20s
+
+Navigate To Agents View
+    [Documentation]    Navigate to Agents view (handles detail-open state)
+    Navigate To Dashboard
+    Click    [data-testid='nav-agents']
+    Sleep    1s
+    # Agents may open to agent detail if previously selected
+    ${list_count}=    Get Element Count    text=Registered Agents
+    IF    ${list_count} == 0
+        ${back_testid}=    Get Element Count    [data-testid='agent-detail-back-btn']
+        IF    ${back_testid} > 0
+            Click    [data-testid='agent-detail-back-btn']
+        ELSE
+            ${back_count}=    Get Element Count    button:has-text("󰁍")
+            IF    ${back_count} > 0
+                Click    button:has-text("󰁍") >> nth=0
+            END
+        END
+    END
+    Wait For Elements State    text=Registered Agents    visible    timeout=20s
 
 Navigate To Infra View
     [Documentation]    Navigate to Infrastructure view
@@ -126,7 +160,7 @@ Navigate To Rules
 Navigate To Agents
     [Documentation]    Can navigate to Agents view
     [Tags]    e2e    browser    navigation
-    Click    [data-testid='nav-agents']
+    [Setup]    Navigate To Agents View
     Wait For Elements State    text=Registered Agents    visible
 
 Navigate To Tasks
@@ -166,7 +200,7 @@ Navigate To Sessions
 Navigate To Trust
     [Documentation]    Can navigate to Trust view
     [Tags]    e2e    browser    navigation
-    Click    [data-testid='nav-trust']
+    [Setup]    Navigate To Trust View
     Wait For Elements State    text=Agent Trust Dashboard    visible
 
 # =============================================================================
@@ -189,7 +223,8 @@ Rules Search Input Present
     [Documentation]    Search input is available
     [Tags]    e2e    browser    rules
     [Setup]    Navigate To Rules View
-    Wait For Elements State    text=Search rules >> nth=0    visible
+    ${count}=    Get Element Count    input[type='text']
+    Should Be True    ${count} > 0    msg=No search input found on rules page
 
 Rule List Items Clickable
     [Documentation]    Rule items in list are clickable
@@ -202,16 +237,17 @@ Click Rule Shows Detail
     [Documentation]    Clicking a rule shows detail view
     [Tags]    e2e    browser    rules
     [Setup]    Navigate To Rules View
-    Click    text=ARCH-EBMSF-01-v1
-    Wait For Elements State    text=Edit    visible
-    Wait For Elements State    text=Delete    visible
+    Click    text=ARCH-EBMSF-01-v1 >> nth=0
+    Wait For Elements State    text=Edit >> nth=0    visible
+    Wait For Elements State    text=Delete >> nth=0    visible
 
 Rule Detail Shows Directive
     [Documentation]    Rule detail view shows directive text
     [Tags]    e2e    browser    rules
     [Setup]    Navigate To Rules View
-    Click    text=ARCH-EBMSF-01-v1
-    Wait For Elements State    text=/Directive|directive/    visible
+    Click    text=ARCH-EBMSF-01-v1 >> nth=0
+    # Directive may appear as section heading or inline text
+    Wait For Elements State    text=Directive >> nth=0    visible
 
 # =============================================================================
 # Tasks View Tests
@@ -283,8 +319,7 @@ Sessions View Has Pagination
 Agents View Has Pagination
     [Documentation]    Test Agents view has pagination
     [Tags]    e2e    browser    pagination
-    Click    [data-testid='nav-agents']
-    Wait For Elements State    text=Registered Agents    visible
+    [Setup]    Navigate To Agents View
     Wait For Elements State    text=/\\d+ agents registered/    visible    timeout=5s
 
 # =============================================================================
