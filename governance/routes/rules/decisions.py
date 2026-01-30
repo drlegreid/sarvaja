@@ -175,6 +175,25 @@ async def update_decision(decision_id: str, decision: DecisionUpdate):
         raise HTTPException(status_code=500, detail=str(e))
 
 
+@router.post("/decisions/{decision_id}/rules/{rule_id}", status_code=201)
+async def link_rule_to_decision(decision_id: str, rule_id: str):
+    """Link a rule to a decision via decision-affects relation."""
+    client = get_client()
+    if not client:
+        raise HTTPException(status_code=503, detail="TypeDB not connected")
+
+    try:
+        success = client.link_decision_to_rule(decision_id, rule_id)
+        if success:
+            linked_rules = client.get_decision_impacts(decision_id)
+            return {"decision_id": decision_id, "rule_id": rule_id, "linked_rules": linked_rules}
+        raise HTTPException(status_code=404, detail=f"Decision {decision_id} or rule {rule_id} not found")
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 @router.delete("/decisions/{decision_id}", status_code=204)
 async def delete_decision(decision_id: str):
     """Delete a decision. Per GAP-UI-033."""

@@ -267,3 +267,32 @@ class DecisionQueries:
 
         self._execute_write(query)
         return True
+
+    def link_decision_to_rule(self, decision_id: str, rule_id: str) -> bool:
+        """
+        Create a decision-affects relationship between a decision and a rule.
+
+        Args:
+            decision_id: Decision ID (e.g., "DECISION-003")
+            rule_id: Rule ID (e.g., "GOV-RULE-01-v1")
+
+        Returns:
+            True if linked successfully, False on failure
+        """
+        from typedb.driver import TransactionType
+
+        try:
+            with self._driver.transaction(self.database, TransactionType.WRITE) as tx:
+                link_query = f"""
+                    match
+                        $d isa decision, has decision-id "{decision_id}";
+                        $r isa rule-entity, has rule-id "{rule_id}";
+                    insert
+                        (affecting-decision: $d, affected-rule: $r) isa decision-affects;
+                """
+                tx.query(link_query).resolve()
+                tx.commit()
+            return True
+        except Exception as e:
+            print(f"Failed to link decision {decision_id} to rule {rule_id}: {e}")
+            return False

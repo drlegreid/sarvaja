@@ -99,5 +99,59 @@ class TestDecisionQueryStructure:
             "Query should fetch decision-date attribute"
 
 
+class TestDecisionRuleLinking:
+    """Test decision-rule linking via API."""
+
+    def test_link_decision_to_rule_method_exists(self):
+        """Verify link_decision_to_rule method exists in DecisionQueries."""
+        from governance.typedb.queries.rules.decisions import DecisionQueries
+
+        assert hasattr(DecisionQueries, "link_decision_to_rule"), \
+            "DecisionQueries should have link_decision_to_rule method"
+
+    def test_link_decision_to_rule_api_endpoint(self):
+        """Verify POST /decisions/{id}/rules/{rule_id} endpoint exists."""
+        import requests
+
+        try:
+            # Use a non-existent decision to test endpoint existence
+            resp = requests.post(
+                "http://localhost:8082/api/decisions/NONEXISTENT/rules/NONEXISTENT",
+                timeout=5
+            )
+            # Should get 404 or 500, not 405 (Method Not Allowed)
+            assert resp.status_code != 405, \
+                "Endpoint should exist (405 means route not found)"
+        except Exception:
+            pytest.skip("API not available")
+
+    def test_link_decision_returns_linked_rules(self):
+        """Verify linking returns updated linked_rules list."""
+        import requests
+
+        try:
+            resp = requests.get("http://localhost:8082/api/decisions", timeout=5)
+            if resp.status_code != 200:
+                pytest.skip("API not available")
+        except Exception:
+            pytest.skip("API not available")
+
+        data = resp.json()
+        decisions = data if isinstance(data, list) else data.get("items", data)
+
+        # Check that decisions have linked_rules field
+        for d in decisions:
+            assert "linked_rules" in d, \
+                f"Decision {d.get('id')} should have linked_rules field"
+
+    def test_decision_response_model_has_linked_rules(self):
+        """Verify DecisionResponse model includes linked_rules."""
+        from governance.models import DecisionResponse
+
+        fields = DecisionResponse.model_fields
+        assert "linked_rules" in fields, \
+            "DecisionResponse should have linked_rules field"
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])

@@ -116,7 +116,7 @@ def build_decision_info_cards() -> None:
                         v3.VListItem(
                             title="Affected Rules",
                             subtitle=(
-                                "(selected_decision.affected_rules || []).length + "
+                                "(selected_decision.linked_rules || []).length + "
                                 "' rules'",
                             ),
                             prepend_icon="mdi-gavel",
@@ -129,7 +129,7 @@ def build_decision_info_cards() -> None:
 
     # Affected rules chips (GAP-UI-037)
     with v3.VCard(
-        v_if="selected_decision.affected_rules?.length > 0",
+        v_if="selected_decision.linked_rules?.length > 0",
         variant="outlined",
         classes="mt-4",
         __properties=["data-testid"],
@@ -138,7 +138,7 @@ def build_decision_info_cards() -> None:
         v3.VCardTitle("Affected Rules", density="compact")
         with v3.VCardText():
             v3.VChip(
-                v_for="rule in selected_decision.affected_rules",
+                v_for="rule in selected_decision.linked_rules",
                 v_text="rule",
                 size="small",
                 color="primary",
