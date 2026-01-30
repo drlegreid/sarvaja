@@ -69,28 +69,33 @@ def _is_test_entity(entity_id: str) -> bool:
 
 
 def _cleanup_test_tasks(client: httpx.Client) -> dict:
-    """Remove all test-prefixed tasks. Returns cleanup statistics."""
+    """Remove all test-prefixed tasks (paginated). Returns cleanup statistics."""
     stats = {"checked": 0, "deleted": 0, "failed": 0, "errors": []}
     try:
-        response = client.get(f"{DASHBOARD_API_URL}/api/tasks", params={"limit": API_MAX_LIMIT})
-        if response.status_code != 200:
-            stats["errors"].append(f"Failed to fetch tasks: {response.status_code}")
-            return stats
-        data = response.json()
-        tasks = data.get("items", data) if isinstance(data, dict) else data
-        for task in tasks:
-            task_id = task.get("task_id") or task.get("id", "")
-            if _is_test_entity(task_id):
-                stats["checked"] += 1
-                try:
-                    del_response = client.delete(f"{DASHBOARD_API_URL}/api/tasks/{task_id}")
-                    if del_response.status_code in (200, 204):
-                        stats["deleted"] += 1
-                    else:
+        for _ in range(10):  # Max 10 rounds to avoid infinite loop
+            response = client.get(f"{DASHBOARD_API_URL}/api/tasks", params={"limit": API_MAX_LIMIT})
+            if response.status_code != 200:
+                stats["errors"].append(f"Failed to fetch tasks: {response.status_code}")
+                break
+            data = response.json()
+            tasks = data.get("items", data) if isinstance(data, dict) else data
+            deleted_this_round = 0
+            for task in tasks:
+                task_id = task.get("task_id") or task.get("id", "")
+                if _is_test_entity(task_id):
+                    stats["checked"] += 1
+                    try:
+                        del_response = client.delete(f"{DASHBOARD_API_URL}/api/tasks/{task_id}")
+                        if del_response.status_code in (200, 204):
+                            stats["deleted"] += 1
+                            deleted_this_round += 1
+                        else:
+                            stats["failed"] += 1
+                    except Exception as e:
                         stats["failed"] += 1
-                except Exception as e:
-                    stats["failed"] += 1
-                    stats["errors"].append(f"Delete {task_id}: {str(e)}")
+                        stats["errors"].append(f"Delete {task_id}: {str(e)}")
+            if deleted_this_round == 0:
+                break
     except Exception as e:
         stats["errors"].append(f"Cleanup failed: {str(e)}")
     return stats
@@ -111,29 +116,34 @@ def _is_test_session(session: dict) -> bool:
 
 
 def _cleanup_test_sessions(client: httpx.Client) -> dict:
-    """Remove all test-created sessions. Returns cleanup statistics."""
+    """Remove all test-created sessions (paginated). Returns cleanup statistics."""
     stats = {"checked": 0, "deleted": 0, "failed": 0, "errors": []}
     try:
-        response = client.get(f"{DASHBOARD_API_URL}/api/sessions", params={"limit": API_MAX_LIMIT})
-        if response.status_code != 200:
-            stats["errors"].append(f"Failed to fetch sessions: {response.status_code}")
-            return stats
-        sessions = response.json()
-        if isinstance(sessions, dict):
-            sessions = sessions.get("items", [])
-        for session in sessions:
-            if _is_test_session(session):
-                session_id = session.get("session_id") or session.get("id", "")
-                stats["checked"] += 1
-                try:
-                    del_response = client.delete(f"{DASHBOARD_API_URL}/api/sessions/{session_id}")
-                    if del_response.status_code in (200, 204):
-                        stats["deleted"] += 1
-                    else:
+        for _ in range(10):  # Max 10 rounds to avoid infinite loop
+            response = client.get(f"{DASHBOARD_API_URL}/api/sessions", params={"limit": API_MAX_LIMIT})
+            if response.status_code != 200:
+                stats["errors"].append(f"Failed to fetch sessions: {response.status_code}")
+                break
+            sessions = response.json()
+            if isinstance(sessions, dict):
+                sessions = sessions.get("items", [])
+            deleted_this_round = 0
+            for session in sessions:
+                if _is_test_session(session):
+                    session_id = session.get("session_id") or session.get("id", "")
+                    stats["checked"] += 1
+                    try:
+                        del_response = client.delete(f"{DASHBOARD_API_URL}/api/sessions/{session_id}")
+                        if del_response.status_code in (200, 204):
+                            stats["deleted"] += 1
+                            deleted_this_round += 1
+                        else:
+                            stats["failed"] += 1
+                    except Exception as e:
                         stats["failed"] += 1
-                except Exception as e:
-                    stats["failed"] += 1
-                    stats["errors"].append(f"Delete {session_id}: {str(e)}")
+                        stats["errors"].append(f"Delete {session_id}: {str(e)}")
+            if deleted_this_round == 0:
+                break
     except Exception as e:
         stats["errors"].append(f"Cleanup failed: {str(e)}")
     return stats
