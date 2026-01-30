@@ -15,6 +15,18 @@ class TaskReadQueries:
             # Type may not exist in older TypeDB schemas
             return []
 
+    def _fetch_task_attr(self, task_id: str, attr_name: str, var_name: str) -> Optional[str]:
+        """Fetch a single optional attribute for a task. DRY helper for _build_task_from_id."""
+        results = self._safe_query(
+            f'match $t isa task, has task-id "{task_id}", has {attr_name} ${var_name}; select ${var_name};'
+        )
+        return results[0].get(var_name) if results else None
+
+    def _fetch_task_relation(self, task_id: str, query: str, var_name: str) -> List[str]:
+        """Fetch a list of related IDs for a task. DRY helper for relationship queries."""
+        results = self._safe_query(query.format(task_id=task_id))
+        return [r.get(var_name) for r in results] if results else None
+
     def get_all_tasks(self, status: str = None, phase: str = None, agent_id: str = None) -> List[Task]:
         """Get all tasks with optional filters. Per EPIC-DR-001: batch queries optimization."""
         filters = []
@@ -164,148 +176,41 @@ class TaskReadQueries:
             phase=r.get("phase")
         )
 
-        # All optional queries use _safe_query to handle missing types (GAP-UI-EXP-009)
+        # Fetch all optional scalar attributes via DRY helper (GAP-UI-EXP-009)
+        optional_attrs = [
+            ("task-body", "body", "body"),
+            ("task-resolution", "res", "resolution"),        # GAP-UI-046
+            ("gap-reference", "gap", "gap_id"),
+            ("agent-id", "agent", "agent_id"),
+            ("task-evidence", "ev", "evidence"),
+            ("task-completed-at", "comp", "completed_at"),
+            ("task-created-at", "created", "created_at"),    # GAP-UI-035
+            ("task-claimed-at", "claimed", "claimed_at"),    # GAP-UI-035
+            ("task-business", "biz", "business"),            # TASK-TECH-01-v1
+            ("task-design", "des", "design"),
+            ("task-architecture", "arch", "architecture"),
+            ("task-test", "test", "test_section"),
+            ("item-type", "itype", "item_type"),             # GAP-GAPS-TASKS-001
+            ("document-path", "dpath", "document_path"),
+        ]
+        for attr_name, var_name, task_attr in optional_attrs:
+            value = self._fetch_task_attr(task_id, attr_name, var_name)
+            if value is not None:
+                setattr(task, task_attr, value)
 
-        # Get optional body attribute
-        body_results = self._safe_query(f'''
-            match $t isa task, has task-id "{task_id}", has task-body $body;
-            select $body;
-        ''')
-        if body_results:
-            task.body = body_results[0].get("body")
-
-        # Get optional task-resolution attribute (GAP-UI-046)
-        resolution_results = self._safe_query(f'''
-            match $t isa task, has task-id "{task_id}", has task-resolution $res;
-            select $res;
-        ''')
-        if resolution_results:
-            task.resolution = resolution_results[0].get("res")
-
-        # Get optional gap-reference attribute
-        gap_results = self._safe_query(f'''
-            match $t isa task, has task-id "{task_id}", has gap-reference $gap;
-            select $gap;
-        ''')
-        if gap_results:
-            task.gap_id = gap_results[0].get("gap")
-
-        # Get optional agent-id attribute (E2E tests requirement)
-        agent_results = self._safe_query(f'''
-            match $t isa task, has task-id "{task_id}", has agent-id $agent;
-            select $agent;
-        ''')
-        if agent_results:
-            task.agent_id = agent_results[0].get("agent")
-
-        # Get optional task-evidence attribute (E2E tests requirement)
-        evidence_results = self._safe_query(f'''
-            match $t isa task, has task-id "{task_id}", has task-evidence $ev;
-            select $ev;
-        ''')
-        if evidence_results:
-            task.evidence = evidence_results[0].get("ev")
-
-        # Get optional task-completed-at attribute (E2E tests requirement)
-        completed_results = self._safe_query(f'''
-            match $t isa task, has task-id "{task_id}", has task-completed-at $comp;
-            select $comp;
-        ''')
-        if completed_results:
-            task.completed_at = completed_results[0].get("comp")
-
-        # Get optional task-created-at attribute (GAP-UI-035)
-        created_results = self._safe_query(f'''
-            match $t isa task, has task-id "{task_id}", has task-created-at $created;
-            select $created;
-        ''')
-        if created_results:
-            task.created_at = created_results[0].get("created")
-
-        # Get optional task-claimed-at attribute (GAP-UI-035)
-        claimed_results = self._safe_query(f'''
-            match $t isa task, has task-id "{task_id}", has task-claimed-at $claimed;
-            select $claimed;
-        ''')
-        if claimed_results:
-            task.claimed_at = claimed_results[0].get("claimed")
-
-        # Get linked rules via implements-rule relationship
-        rules_results = self._safe_query(f'''
-            match
-                $t isa task, has task-id "{task_id}";
+        # Fetch relationship lists via DRY helper
+        task.linked_rules = self._fetch_task_relation(task_id, '''
+            match $t isa task, has task-id "{task_id}";
                 (implementing-task: $t, implemented-rule: $r) isa implements-rule;
-                $r has rule-id $rid;
-            select $rid;
-        ''')
-        if rules_results:
-            task.linked_rules = [r.get("rid") for r in rules_results]
-
-        # Get linked sessions via completed-in relationship
-        sessions_results = self._safe_query(f'''
-            match
-                $t isa task, has task-id "{task_id}";
+                $r has rule-id $rid; select $rid;''', "rid")
+        task.linked_sessions = self._fetch_task_relation(task_id, '''
+            match $t isa task, has task-id "{task_id}";
                 (completed-task: $t, hosting-session: $s) isa completed-in;
-                $s has session-id $sid;
-            select $sid;
-        ''')
-        if sessions_results:
-            task.linked_sessions = [r.get("sid") for r in sessions_results]
-
-        # Get linked commits via task-commit relationship (GAP-TASK-LINK-002)
-        commits_results = self._safe_query(f'''
-            match
-                $t isa task, has task-id "{task_id}";
+                $s has session-id $sid; select $sid;''', "sid")
+        task.linked_commits = self._fetch_task_relation(task_id, '''
+            match $t isa task, has task-id "{task_id}";
                 (implementing-commit: $c, implemented-task: $t) isa task-commit;
-                $c has commit-sha $sha;
-            select $sha;
-        ''')
-        if commits_results:
-            task.linked_commits = [r.get("sha") for r in commits_results]
-
-        # Get task detail sections (GAP-TASK-LINK-004, TASK-TECH-01-v1)
-        business_results = self._safe_query(f'''
-            match $t isa task, has task-id "{task_id}", has task-business $biz;
-            select $biz;
-        ''')
-        if business_results:
-            task.business = business_results[0].get("biz")
-
-        design_results = self._safe_query(f'''
-            match $t isa task, has task-id "{task_id}", has task-design $des;
-            select $des;
-        ''')
-        if design_results:
-            task.design = design_results[0].get("des")
-
-        arch_results = self._safe_query(f'''
-            match $t isa task, has task-id "{task_id}", has task-architecture $arch;
-            select $arch;
-        ''')
-        if arch_results:
-            task.architecture = arch_results[0].get("arch")
-
-        test_results = self._safe_query(f'''
-            match $t isa task, has task-id "{task_id}", has task-test $test;
-            select $test;
-        ''')
-        if test_results:
-            task.test_section = test_results[0].get("test")
-
-        # GAP-GAPS-TASKS-001: Get unified work item attributes
-        item_type_results = self._safe_query(f'''
-            match $t isa task, has task-id "{task_id}", has item-type $itype;
-            select $itype;
-        ''')
-        if item_type_results:
-            task.item_type = item_type_results[0].get("itype")
-
-        doc_path_results = self._safe_query(f'''
-            match $t isa task, has task-id "{task_id}", has document-path $dpath;
-            select $dpath;
-        ''')
-        if doc_path_results:
-            task.document_path = doc_path_results[0].get("dpath")
+                $c has commit-sha $sha; select $sha;''', "sha")
 
         return task
 

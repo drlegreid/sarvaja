@@ -20,6 +20,19 @@ class RuleReadQueries:
     Uses mixin pattern for TypeDBClient composition.
     """
 
+    def _fetch_optional_rule_attrs(self, rule_id: str) -> tuple:
+        """Fetch optional rule_type, semantic_id, applicability for a rule. DRY helper."""
+        attrs = {}
+        for attr_name, var_name in [("rule-type", "type"), ("semantic-id", "sid"), ("applicability", "app")]:
+            query = f'match $r isa rule-entity, has rule-id "{rule_id}", has {attr_name} ${var_name};'
+            try:
+                results = self._execute_query(query)
+                if results:
+                    attrs[var_name] = results[0].get(var_name)
+            except Exception:
+                pass
+        return attrs.get("type"), attrs.get("sid"), attrs.get("app")
+
     def get_all_rules(self) -> List[Rule]:
         """Get all governance rules including optional attributes."""
         # First get core attributes (required)
@@ -35,53 +48,11 @@ class RuleReadQueries:
         """
         results = self._execute_query(query)
 
-        # Build rules with core attributes
+        # Build rules with core + optional attributes
         rules = []
         for r in results:
             rule_id = r.get("id")
-
-            # Try to get optional rule_type
-            rule_type = None
-            type_query = f"""
-                match $r isa rule-entity,
-                    has rule-id "{rule_id}",
-                    has rule-type $type;
-                            """
-            try:
-                type_results = self._execute_query(type_query)
-                if type_results:
-                    rule_type = type_results[0].get("type")
-            except Exception:
-                pass  # rule_type is optional
-
-            # Try to get optional semantic_id (META-TAXON-01-v1)
-            semantic_id = None
-            sid_query = f"""
-                match $r isa rule-entity,
-                    has rule-id "{rule_id}",
-                    has semantic-id $sid;
-                            """
-            try:
-                sid_results = self._execute_query(sid_query)
-                if sid_results:
-                    semantic_id = sid_results[0].get("sid")
-            except Exception:
-                pass  # semantic_id is optional
-
-            # Try to get optional applicability (RD-RULE-APPLICABILITY)
-            applicability = None
-            app_query = f"""
-                match $r isa rule-entity,
-                    has rule-id "{rule_id}",
-                    has applicability $app;
-                            """
-            try:
-                app_results = self._execute_query(app_query)
-                if app_results:
-                    applicability = app_results[0].get("app")
-            except Exception:
-                pass  # applicability is optional
-
+            rule_type, semantic_id, applicability = self._fetch_optional_rule_attrs(rule_id)
             rules.append(Rule(
                 id=rule_id,
                 name=r.get("name"),
@@ -112,49 +83,7 @@ class RuleReadQueries:
         rules = []
         for r in results:
             rule_id = r.get("id")
-
-            # Try to get optional rule_type
-            rule_type = None
-            type_query = f"""
-                match $r isa rule-entity,
-                    has rule-id "{rule_id}",
-                    has rule-type $type;
-                            """
-            try:
-                type_results = self._execute_query(type_query)
-                if type_results:
-                    rule_type = type_results[0].get("type")
-            except Exception:
-                pass
-
-            # Try to get optional semantic_id
-            semantic_id = None
-            sid_query = f"""
-                match $r isa rule-entity,
-                    has rule-id "{rule_id}",
-                    has semantic-id $sid;
-                            """
-            try:
-                sid_results = self._execute_query(sid_query)
-                if sid_results:
-                    semantic_id = sid_results[0].get("sid")
-            except Exception:
-                pass
-
-            # Try to get optional applicability (RD-RULE-APPLICABILITY)
-            applicability = None
-            app_query = f"""
-                match $r isa rule-entity,
-                    has rule-id "{rule_id}",
-                    has applicability $app;
-                            """
-            try:
-                app_results = self._execute_query(app_query)
-                if app_results:
-                    applicability = app_results[0].get("app")
-            except Exception:
-                pass
-
+            rule_type, semantic_id, applicability = self._fetch_optional_rule_attrs(rule_id)
             rules.append(Rule(
                 id=rule_id,
                 name=r.get("name"),
@@ -186,39 +115,7 @@ class RuleReadQueries:
             return None
 
         r = results[0]
-
-        # Try to get optional rule_type
-        rule_type = None
-        type_query = f"""
-            match $r isa rule-entity,
-                has rule-id "{rule_id}",
-                has rule-type $type;
-                    """
-        type_results = self._execute_query(type_query)
-        if type_results:
-            rule_type = type_results[0].get("type")
-
-        # Try to get optional semantic_id (META-TAXON-01-v1)
-        semantic_id = None
-        sid_query = f"""
-            match $r isa rule-entity,
-                has rule-id "{rule_id}",
-                has semantic-id $sid;
-                    """
-        sid_results = self._execute_query(sid_query)
-        if sid_results:
-            semantic_id = sid_results[0].get("sid")
-
-        # Try to get optional applicability (RD-RULE-APPLICABILITY)
-        applicability = None
-        app_query = f"""
-            match $r isa rule-entity,
-                has rule-id "{rule_id}",
-                has applicability $app;
-                    """
-        app_results = self._execute_query(app_query)
-        if app_results:
-            applicability = app_results[0].get("app")
+        rule_type, semantic_id, applicability = self._fetch_optional_rule_attrs(rule_id)
 
         return Rule(
             id=rule_id,
