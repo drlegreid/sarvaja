@@ -277,11 +277,22 @@ class DecisionQueries:
             rule_id: Rule ID (e.g., "GOV-RULE-01-v1")
 
         Returns:
-            True if linked successfully, False on failure
+            True if linked successfully, False if entities not found
         """
         from typedb.driver import TransactionType
 
         try:
+            # Verify both entities exist before linking
+            with self._driver.transaction(self.database, TransactionType.READ) as tx:
+                check_query = f"""
+                    match
+                        $d isa decision, has decision-id "{decision_id}";
+                        $r isa rule-entity, has rule-id "{rule_id}";
+                """
+                results = list(tx.query(check_query).resolve())
+                if not results:
+                    return False
+
             with self._driver.transaction(self.database, TransactionType.WRITE) as tx:
                 link_query = f"""
                     match

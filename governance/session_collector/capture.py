@@ -1,10 +1,9 @@
 """Session Capture Methods. Per RULE-032: Modularized from session_collector.py."""
 
 from datetime import datetime, date
-from typing import Dict, Any
+from typing import Any, Dict, List, Optional
 
 from .models import SessionEvent, Task, Decision, SessionIntent, SessionOutcome, TYPEDB_AVAILABLE
-from typing import List, Optional
 
 class SessionCaptureMixin:
     """Mixin providing capture methods for SessionCollector. Requires session_id, events, decisions, tasks."""
