@@ -35,6 +35,38 @@ def build_sessions_list_view() -> None:
                 **{"data-testid": "sessions-add-btn"}
             )
 
+        # Session metrics summary (PLAN-UI-OVERHAUL-001 Task 5.1: Merge Metrics)
+        with v3.VCardText(classes="pb-0"):
+            with v3.VRow(dense=True, classes="mb-2"):
+                with v3.VCol(cols=6, sm=3):
+                    with v3.VCard(variant="tonal", classes="text-center pa-2"):
+                        html.Div(
+                            "{{ sessions_pagination.total || sessions.length || 0 }}",
+                            classes="text-h6"
+                        )
+                        html.Div("Total Sessions", classes="text-caption")
+                with v3.VCol(cols=6, sm=3):
+                    with v3.VCard(variant="tonal", classes="text-center pa-2"):
+                        html.Div(
+                            "{{ sessions.filter(s => s.status === 'ACTIVE').length || 0 }}",
+                            classes="text-h6"
+                        )
+                        html.Div("Active", classes="text-caption")
+                with v3.VCol(cols=6, sm=3):
+                    with v3.VCard(variant="tonal", classes="text-center pa-2"):
+                        html.Div(
+                            "{{ sessions_metrics_duration || '0h' }}",
+                            classes="text-h6"
+                        )
+                        html.Div("Total Duration", classes="text-caption")
+                with v3.VCol(cols=6, sm=3):
+                    with v3.VCard(variant="tonal", classes="text-center pa-2"):
+                        html.Div(
+                            "{{ sessions_metrics_avg_tasks || 0 }}",
+                            classes="text-h6"
+                        )
+                        html.Div("Avg Tasks/Session", classes="text-caption")
+
         # Search field
         with v3.VCardText(classes="pb-0"):
             v3.VTextField(
