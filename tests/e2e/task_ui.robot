@@ -67,8 +67,9 @@ Empty Prompt Shows Validation
     # Either form doesn't submit or shows validation
     ${submitted}=    Run Keyword And Return Status
     ...    Wait For Response    ${AGENT_URL}/tasks    timeout=2s
-    Run Keyword If    ${submitted}
-    ...    Fail    Empty prompt should not submit
+    IF    ${submitted}
+        Fail    Empty prompt should not submit
+    END
 
 # =============================================================================
 # TASK SUBMISSION TESTS
@@ -145,23 +146,24 @@ Basic Accessibility Check
     ${count}=    Get Length    ${issues}
     Log    Accessibility issues found: ${count}
     # Warn but don't fail (informational)
-    Run Keyword If    ${count} > 0
-    ...    Log    WARNING: ${count} accessibility issues: ${issues}    WARN
+    IF    ${count} > 0
+        Log    WARNING: ${count} accessibility issues: ${issues}    WARN
+    END
 
 Keyboard Navigation Works
     [Documentation]    Verify form can be navigated with keyboard
     [Tags]    accessibility    keyboard
     # Focus on first input
-    Press Keys    None    Tab
-    ${focused}=    Get Element States    :focus
-    Should Contain    ${focused}    visible
+    Keyboard Key    press    Tab
+    ${focused}=    Get Element State    :focus    visible
+    Should Be True    ${focused}
 
     # Tab through form
-    Press Keys    None    Tab
-    Press Keys    None    Tab
+    Keyboard Key    press    Tab
+    Keyboard Key    press    Tab
     # Should still be able to interact
-    ${focused2}=    Get Element States    :focus
-    Should Contain    ${focused2}    visible
+    ${focused2}=    Get Element State    :focus    visible
+    Should Be True    ${focused2}
 
 # =============================================================================
 # API TESTS (via Browser)

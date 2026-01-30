@@ -48,7 +48,7 @@ Check Referential Integrity Task Agent
     ${agent_ids}=    Get Field Values    ${agents}    agent_id
     FOR    ${task}    IN    @{tasks}
         ${aid}=    Get From Dictionary    ${task}    agent_id    default=${NONE}
-        Continue For Loop If    '${aid}' == 'None'
+        IF    '${aid}' == 'None'    CONTINUE
         Should Contain    ${agent_ids}    ${aid}    Task references non-existent agent
     END
 
@@ -58,8 +58,9 @@ Count Items With Field
     ${count}=    Set Variable    0
     FOR    ${item}    IN    @{items}
         ${value}=    Get From Dictionary    ${item}    ${field}    default=${NONE}
-        ${count}=    Run Keyword If    '${value}' != 'None' and '${value}' != ''
-        ...    Evaluate    ${count} + 1    ELSE    Set Variable    ${count}
+        IF    '${value}' != 'None' and '${value}' != ''
+            ${count}=    Evaluate    ${count} + 1
+        END
     END
     RETURN    ${count}
 
@@ -69,7 +70,8 @@ Count Items With Non Empty List
     FOR    ${item}    IN    @{items}
         ${value}=    Get From Dictionary    ${item}    ${field}    default=${EMPTY}
         ${len}=    Get Length    ${value}
-        ${count}=    Run Keyword If    ${len} > 0
-        ...    Evaluate    ${count} + 1    ELSE    Set Variable    ${count}
+        IF    ${len} > 0
+            ${count}=    Evaluate    ${count} + 1
+        END
     END
     RETURN    ${count}

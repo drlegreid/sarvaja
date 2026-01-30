@@ -64,7 +64,7 @@ def get_server_config(name: str) -> Optional[Dict]:
         with open(mcp_path) as f:
             config = json.load(f)
         return config.get("mcpServers", {}).get(name)
-    except:
+    except Exception:
         return None
 
 

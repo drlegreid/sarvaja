@@ -76,7 +76,7 @@ Task Session Referential Integrity
     ${session_ids}=    Get Field Values    ${sessions}    session_id
     FOR    ${task}    IN    @{tasks}
         ${linked}=    Get From Dictionary    ${task}    linked_sessions    default=${EMPTY}
-        Continue For Loop If    '${linked}' == ''
+        IF    '${linked}' == ''    CONTINUE
         FOR    ${sid}    IN    @{linked}
             Should Contain    ${session_ids}    ${sid}
             ...    msg=Task references non-existent session ${sid}
@@ -94,7 +94,7 @@ Task Rule Referential Integrity
     ${all_rule_ids}=    Combine Lists    ${rule_ids}    ${rule_ids2}
     FOR    ${task}    IN    @{tasks}
         ${linked}=    Get From Dictionary    ${task}    linked_rules    default=${EMPTY}
-        Continue For Loop If    '${linked}' == ''
+        IF    '${linked}' == ''    CONTINUE
         FOR    ${rid}    IN    @{linked}
             Should Contain    ${all_rule_ids}    ${rid}
             ...    msg=Task references non-existent rule ${rid}
@@ -115,14 +115,16 @@ Session Task Bidirectional Consistency
     ${session_task_map}=    Create Dictionary
     FOR    ${task}    IN    @{tasks}
         ${linked}=    Get From Dictionary    ${task}    linked_sessions    default=${EMPTY}
-        Continue For Loop If    '${linked}' == ''
+        IF    '${linked}' == ''    CONTINUE
         FOR    ${sid}    IN    @{linked}
             ${current}=    Get From Dictionary    ${session_task_map}    ${sid}    default=${EMPTY}
             ${task_id}=    Get From Dictionary    ${task}    task_id
             ${new_list}=    Create List    ${task_id}
-            ${updated}=    Run Keyword If    '${current}' == ''
-            ...    Set Variable    ${new_list}
-            ...    ELSE    Combine Lists    ${current}    ${new_list}
+            IF    '${current}' == ''
+                ${updated}=    Set Variable    ${new_list}
+            ELSE
+                ${updated}=    Combine Lists    ${current}    ${new_list}
+            END
             Set To Dictionary    ${session_task_map}    ${sid}    ${updated}
         END
     END

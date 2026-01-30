@@ -61,8 +61,9 @@ Get Field Values
     ${values}=    Create List
     FOR    ${item}    IN    @{items}
         ${value}=    Get From Dictionary    ${item}    ${field}    default=${NONE}
-        Run Keyword If    '${value}' != 'None'
-        ...    Append To List    ${values}    ${value}
+        IF    '${value}' != 'None'
+            Append To List    ${values}    ${value}
+        END
     END
     RETURN    ${values}
 

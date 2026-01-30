@@ -83,22 +83,25 @@ Check Accessibility Basics
 
     # Check for images without alt text
     ${img_no_alt}=    Get Element Count    img:not([alt])
-    Run Keyword If    ${img_no_alt} > 0
-    ...    Append To List    ${issues}    ${img_no_alt} images missing alt text
+    IF    ${img_no_alt} > 0
+        Append To List    ${issues}    ${img_no_alt} images missing alt text
+    END
 
     # Check for form inputs without labels
     ${inputs}=    Get Elements    input:not([type="hidden"])
     FOR    ${input}    IN    @{inputs}
         ${has_label}=    Run Keyword And Return Status
         ...    Get Element    label[for="${input.id}"]
-        Run Keyword If    not ${has_label}
-        ...    Append To List    ${issues}    Input missing label
+        IF    not ${has_label}
+            Append To List    ${issues}    Input missing label
+        END
     END
 
     # Check for sufficient color contrast (basic)
     ${low_contrast}=    Get Element Count    [style*="color: #999"], [style*="color: gray"]
-    Run Keyword If    ${low_contrast} > 0
-    ...    Append To List    ${issues}    Potential low contrast text
+    IF    ${low_contrast} > 0
+        Append To List    ${issues}    Potential low contrast text
+    END
 
     Log    Accessibility issues: ${issues}
     RETURN    ${issues}
@@ -146,8 +149,9 @@ Submit Task
 
     # Select agent if dropdown exists
     ${has_select}=    Get Element Count    select#agent, select[name="agent"]
-    Run Keyword If    ${has_select} > 0
-    ...    Select Options By    select#agent    value    ${agent}
+    IF    ${has_select} > 0
+        Select Options By    select#agent    value    ${agent}
+    END
 
     # Fill prompt
     Fill Text    textarea#prompt, textarea[name="prompt"]    ${prompt}
