@@ -99,8 +99,8 @@ async def get_decision(decision_id: str):
                 linked_rules = []
                 try:
                     linked_rules = client.get_decision_impacts(decision_id)
-                except Exception:
-                    pass  # Non-critical
+                except Exception as e:
+                    logger.debug(f"Failed to get decision impacts for {decision_id}: {e}")
 
                 return DecisionResponse(
                     id=d.id,
@@ -183,8 +183,8 @@ async def update_decision(decision_id: str, decision: DecisionUpdate):
             linked_rules = []
             try:
                 linked_rules = client.get_decision_impacts(decision_id)
-            except Exception:
-                pass  # Non-critical
+            except Exception as e:
+                logger.debug(f"Failed to get decision impacts for {decision_id}: {e}")
 
             return DecisionResponse(
                 id=updated.id,
