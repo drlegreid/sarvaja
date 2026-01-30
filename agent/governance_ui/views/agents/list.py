@@ -21,6 +21,16 @@ def build_agents_list_view() -> None:
             html.Span("Registered Agents")
             v3.VSpacer()
             v3.VBtn(
+                "Register Agent",
+                prepend_icon="mdi-plus",
+                color="primary",
+                size="small",
+                click="show_agent_registration = true",
+                classes="mr-2",
+                __properties=["data-testid"],
+                **{"data-testid": "agents-register-btn"}
+            )
+            v3.VBtn(
                 "Refresh",
                 prepend_icon="mdi-refresh",
                 variant="outlined",
