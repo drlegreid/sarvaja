@@ -27,6 +27,26 @@ def build_search_view() -> None:
     ):
         v3.VCardTitle("Evidence Search")
 
+        # Redirect notice (PLAN-UI-OVERHAUL-001 Task 5.3: Merged into Sessions)
+        v3.VAlert(
+            type="info",
+            density="compact",
+            classes="mx-4 mb-2",
+            text="Evidence search is now integrated into the Sessions tab.",
+            __properties=["data-testid"],
+            **{"data-testid": "search-redirect-notice"}
+        )
+        v3.VBtn(
+            "Go to Sessions",
+            color="primary",
+            variant="tonal",
+            prepend_icon="mdi-arrow-right",
+            click="active_view = 'sessions'",
+            classes="mx-4 mb-4",
+            __properties=["data-testid"],
+            **{"data-testid": "search-goto-sessions-btn"}
+        )
+
         # Loading indicator (GAP-UI-005)
         v3.VProgressLinear(
             v_if="is_loading",

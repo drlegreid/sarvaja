@@ -67,19 +67,60 @@ def build_sessions_list_view() -> None:
                         )
                         html.Div("Avg Tasks/Session", classes="text-caption")
 
-        # Search field
+        # Search field with evidence search toggle (PLAN-UI-OVERHAUL-001 Task 5.3)
         with v3.VCardText(classes="pb-0"):
-            v3.VTextField(
-                v_model="sessions_search_query",
-                label="Search sessions...",
-                prepend_inner_icon="mdi-magnify",
-                variant="outlined",
-                density="compact",
-                hide_details=True,
-                clearable=True,
-                __properties=["data-testid"],
-                **{"data-testid": "sessions-search"}
-            )
+            with v3.VRow(dense=True, classes="align-center"):
+                with v3.VCol(cols=12, sm=8, md=9):
+                    v3.VTextField(
+                        v_model="sessions_search_query",
+                        label="Search sessions...",
+                        prepend_inner_icon="mdi-magnify",
+                        variant="outlined",
+                        density="compact",
+                        hide_details=True,
+                        clearable=True,
+                        __properties=["data-testid"],
+                        **{"data-testid": "sessions-search"}
+                    )
+                with v3.VCol(cols=12, sm=4, md=3):
+                    v3.VBtn(
+                        "Evidence Search",
+                        prepend_icon="mdi-text-search",
+                        color="secondary",
+                        variant="tonal",
+                        size="small",
+                        click="trigger('perform_search', [sessions_search_query])",
+                        disabled=("!sessions_search_query",),
+                        __properties=["data-testid"],
+                        **{"data-testid": "sessions-evidence-search-btn"}
+                    )
+
+            # Inline evidence results (Task 5.3: Merge Evidence)
+            with html.Div(
+                v_if="search_results && search_results.length > 0",
+                classes="mt-2"
+            ):
+                html.Div(
+                    "{{ search_results.length }} evidence results",
+                    classes="text-caption text-grey mb-1"
+                )
+                v3.VDataTable(
+                    items=("search_results",),
+                    headers=[
+                        {"title": "Source", "key": "source", "sortable": True},
+                        {"title": "Type", "key": "source_type", "width": "120px",
+                         "sortable": True},
+                        {"title": "Score", "key": "score", "width": "100px",
+                         "sortable": True},
+                        {"title": "Content", "key": "content", "sortable": False},
+                    ],
+                    item_value="source",
+                    density="compact",
+                    items_per_page=5,
+                    hover=True,
+                    __properties=["data-testid"],
+                    **{"data-testid": "sessions-evidence-results"}
+                )
 
         # Loading indicator (GAP-UI-005)
         v3.VProgressLinear(
