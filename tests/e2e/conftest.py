@@ -74,7 +74,7 @@ class RuleFactory:
         defaults = {
             "rule_id": f"RULE-TEST-{cls._counter:03d}",
             "name": f"Test Rule {cls._counter}",
-            "category": "testing",
+            "category": "technical",
             "priority": "MEDIUM",
             "directive": f"Test directive {cls._counter}",
             "status": "ACTIVE",
