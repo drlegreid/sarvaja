@@ -76,7 +76,8 @@ def register_rules_controllers(state: Any, ctrl: Any, api_base_url: str) -> None
                     # Reload rules from API
                     rules_response = client.get(f"{api_base_url}/api/rules")
                     if rules_response.status_code == 200:
-                        state.rules = rules_response.json()
+                        data = rules_response.json()
+                        state.rules = data.get("items", data) if isinstance(data, dict) else data
                 else:
                     state.has_error = True
                     state.error_message = f"API Error: {response.status_code} - {response.text}"
@@ -109,7 +110,8 @@ def register_rules_controllers(state: Any, ctrl: Any, api_base_url: str) -> None
                     # Reload rules from API
                     rules_response = client.get(f"{api_base_url}/api/rules")
                     if rules_response.status_code == 200:
-                        state.rules = rules_response.json()
+                        data = rules_response.json()
+                        state.rules = data.get("items", data) if isinstance(data, dict) else data
                     state.show_rule_detail = False
                     state.selected_rule = None
                 else:

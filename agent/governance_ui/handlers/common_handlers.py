@@ -32,7 +32,8 @@ def register_common_handlers(ctrl: Any, state: Any) -> None:
                 try:
                     rules_response = client.get(f"{API_BASE_URL}/api/rules")
                     if rules_response.status_code == 200:
-                        state.rules = rules_response.json()
+                        data = rules_response.json()
+                        state.rules = data.get("items", data) if isinstance(data, dict) else data
                 except Exception:
                     pass
 
@@ -79,7 +80,8 @@ def register_common_handlers(ctrl: Any, state: Any) -> None:
                 try:
                     agents_response = client.get(f"{API_BASE_URL}/api/agents")
                     if agents_response.status_code == 200:
-                        state.agents = agents_response.json()
+                        data = agents_response.json()
+                        state.agents = data.get("items", data) if isinstance(data, dict) else data
                 except Exception:
                     pass
 
@@ -101,7 +103,8 @@ def register_common_handlers(ctrl: Any, state: Any) -> None:
             with httpx.Client(timeout=10.0) as client:
                 response = client.get(f"{API_BASE_URL}/api/agents")
                 if response.status_code == 200:
-                    state.agents = response.json()
+                    data = response.json()
+                    state.agents = data.get("items", data) if isinstance(data, dict) else data
                 else:
                     state.agents = []
         except Exception as e:

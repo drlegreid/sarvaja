@@ -69,7 +69,8 @@ def register_data_loader_controllers(
                     response_body=response_body
                 )
                 if response.status_code == 200:
-                    state.agents = response_body or []
+                    data = response_body or []
+                    state.agents = data.get("items", data) if isinstance(data, dict) else data
                 else:
                     state.agents = []
         except Exception as e:
@@ -207,7 +208,8 @@ def register_data_loader_controllers(
                 try:
                     response, _ = _traced_get(client, "/api/rules")
                     if response.status_code == 200:
-                        state.rules = response.json()
+                        data = response.json()
+                        state.rules = data.get("items", data) if isinstance(data, dict) else data
                 except Exception:
                     pass
 
@@ -254,7 +256,8 @@ def register_data_loader_controllers(
                 try:
                     response, _ = _traced_get(client, "/api/agents")
                     if response.status_code == 200:
-                        state.agents = response.json()
+                        data = response.json()
+                        state.agents = data.get("items", data) if isinstance(data, dict) else data
                 except Exception:
                     pass
 

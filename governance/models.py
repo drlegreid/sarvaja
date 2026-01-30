@@ -267,6 +267,11 @@ class PaginationMeta(BaseModel):
     has_more: bool
     returned: int
 
+class PaginatedRuleResponse(BaseModel):
+    """Paginated rule list response."""
+    items: List[RuleResponse]
+    pagination: PaginationMeta
+
 class PaginatedTaskResponse(BaseModel):
     """Paginated task list response. Per EPIC-DR-003."""
     items: List[TaskResponse]

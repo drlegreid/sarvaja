@@ -17,7 +17,7 @@ from fastapi import APIRouter, HTTPException, Query
 from typing import Dict, List, Optional
 
 from governance.client import get_client
-from governance.models import RuleCreate, RuleUpdate, RuleResponse
+from governance.models import RuleCreate, RuleUpdate, RuleResponse, PaginatedRuleResponse, PaginationMeta
 from governance.rule_linker import (
     LEGACY_TO_SEMANTIC,
     normalize_rule_id
@@ -77,7 +77,7 @@ def get_rule_document_paths(client, rule_ids: List[str]) -> Dict[str, str]:
 # RULES CRUD
 # =============================================================================
 
-@router.get("/rules", response_model=List[RuleResponse])
+@router.get("/rules", response_model=PaginatedRuleResponse)
 async def list_rules(
     offset: int = Query(0, ge=0, description="Skip first N results"),
     limit: int = Query(50, ge=1, le=200, description="Max results (1-200)"),
@@ -125,13 +125,14 @@ async def list_rules(
         rules.sort(key=lambda r: getattr(r, sort_field) or "", reverse=reverse)
 
         # Apply pagination
-        rules = rules[offset:offset + limit]
+        total = len(rules)
+        paginated = rules[offset:offset + limit]
 
         # Batch query document paths (GAP-UI-AUDIT-001)
-        rule_ids = [r.id for r in rules]
+        rule_ids = [r.id for r in paginated]
         doc_paths = get_rule_document_paths(client, rule_ids)
 
-        return [
+        items = [
             RuleResponse(
                 id=r.id,
                 semantic_id=get_semantic_id(r.id),
@@ -144,8 +145,18 @@ async def list_rules(
                 document_path=doc_paths.get(r.id),
                 applicability=r.applicability  # Per RD-RULE-APPLICABILITY
             )
-            for r in rules
+            for r in paginated
         ]
+        return PaginatedRuleResponse(
+            items=items,
+            pagination=PaginationMeta(
+                total=total,
+                offset=offset,
+                limit=limit,
+                has_more=(offset + limit) < total,
+                returned=len(items),
+            ),
+        )
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 

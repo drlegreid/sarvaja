@@ -12,7 +12,7 @@ from typing import List, Optional
 from datetime import datetime
 import logging
 
-from governance.models import AgentResponse
+from governance.models import AgentResponse, PaginatedAgentResponse, PaginationMeta
 from governance.stores import (
     get_typedb_client,
     _agents_store, _AGENT_BASE_CONFIG,
@@ -25,7 +25,7 @@ logger = logging.getLogger(__name__)
 router = APIRouter(tags=["Agents"])
 
 
-@router.get("/agents", response_model=List[AgentResponse])
+@router.get("/agents", response_model=PaginatedAgentResponse)
 async def list_agents(
     offset: int = Query(0, ge=0, description="Skip first N results"),
     limit: int = Query(50, ge=1, le=200, description="Max results (1-200)"),
@@ -95,15 +95,36 @@ async def list_agents(
                 result.sort(key=lambda a: getattr(a, sort_field) or "", reverse=reverse)
 
                 # Apply pagination
-                result = result[offset:offset + limit]
+                total = len(result)
+                paginated = result[offset:offset + limit]
 
-                return result
+                return PaginatedAgentResponse(
+                    items=paginated,
+                    pagination=PaginationMeta(
+                        total=total,
+                        offset=offset,
+                        limit=limit,
+                        has_more=(offset + limit) < total,
+                        returned=len(paginated),
+                    ),
+                )
         except Exception as e:
             logger.warning(f"TypeDB agents query failed, using fallback: {e}")
 
     # Fallback to in-memory (no relations available)
     agents = [AgentResponse(**a) for a in _agents_store.values()]
-    return agents[offset:offset + limit]
+    total = len(agents)
+    paginated = agents[offset:offset + limit]
+    return PaginatedAgentResponse(
+        items=paginated,
+        pagination=PaginationMeta(
+            total=total,
+            offset=offset,
+            limit=limit,
+            has_more=(offset + limit) < total,
+            returned=len(paginated),
+        ),
+    )
 
 
 @router.get("/agents/{agent_id}", response_model=AgentResponse)
