@@ -40,6 +40,37 @@ def build_agents_list_view() -> None:
                 **{"data-testid": "agents-refresh-btn"}
             )
 
+        # Governance trust stats (PLAN-UI-OVERHAUL-001 Task 5.4: Merge Trust)
+        with v3.VCardText(classes="pb-0"):
+            with v3.VRow(dense=True, classes="mb-2"):
+                with v3.VCol(cols=6, sm=3):
+                    with v3.VCard(variant="tonal", classes="text-center pa-2"):
+                        html.Div("{{ agents.length || 0 }}", classes="text-h6")
+                        html.Div("Total Agents", classes="text-caption")
+                with v3.VCol(cols=6, sm=3):
+                    with v3.VCard(variant="tonal", classes="text-center pa-2"):
+                        html.Div(
+                            "{{ governance_stats.avg_trust_score "
+                            "? (governance_stats.avg_trust_score * 100).toFixed(0) + '%' "
+                            ": '0%' }}",
+                            classes="text-h6"
+                        )
+                        html.Div("Avg Trust", classes="text-caption")
+                with v3.VCol(cols=6, sm=3):
+                    with v3.VCard(variant="tonal", classes="text-center pa-2"):
+                        html.Div(
+                            "{{ governance_stats.pending_proposals || 0 }}",
+                            classes="text-h6"
+                        )
+                        html.Div("Pending Proposals", classes="text-caption")
+                with v3.VCol(cols=6, sm=3):
+                    with v3.VCard(variant="tonal", classes="text-center pa-2"):
+                        html.Div(
+                            "{{ governance_stats.escalated_count || 0 }}",
+                            classes="text-h6"
+                        )
+                        html.Div("Escalated", classes="text-caption")
+
         # Loading indicator (GAP-UI-005)
         v3.VProgressLinear(
             v_if="is_loading",
