@@ -97,7 +97,7 @@ def build_rules_list_view() -> None:
         with v3.VCardText():
             v3.VDataTable(
                 items=("rules",),
-                headers=[
+                headers=("rules_headers", [
                     {"title": "Rule ID", "key": "id", "width": "180px", "sortable": True},
                     {"title": "Name", "key": "name", "sortable": True},
                     {"title": "Status", "key": "status", "width": "100px", "sortable": True},
@@ -106,7 +106,7 @@ def build_rules_list_view() -> None:
                     {"title": "Tasks", "key": "linked_tasks_count", "width": "80px", "sortable": True},
                     {"title": "Sessions", "key": "linked_sessions_count", "width": "90px", "sortable": True},
                     {"title": "Created", "key": "created_date", "width": "120px", "sortable": True},
-                ],
+                ]),
                 item_value="id",
                 search=("rules_search_query",),
                 density="compact",

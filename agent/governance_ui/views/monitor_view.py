@@ -128,13 +128,13 @@ def build_event_feed() -> None:
             with v3.VCardText():
                 v3.VDataTable(
                     items=("monitor_feed",),
-                    headers=[
+                    headers=("monitor_headers", [
                         {"title": "Type", "key": "event_type", "width": "130px", "sortable": True},
                         {"title": "Source", "key": "source", "sortable": True},
                         {"title": "Severity", "key": "severity", "width": "100px", "sortable": True},
                         {"title": "Timestamp", "key": "timestamp", "width": "160px", "sortable": True},
                         {"title": "Rule", "key": "rule_id", "width": "140px", "sortable": True},
-                    ],
+                    ]),
                     item_value="event_id",
                     density="compact",
                     items_per_page=20,

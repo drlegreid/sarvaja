@@ -106,14 +106,14 @@ def build_sessions_list_view() -> None:
                 )
                 v3.VDataTable(
                     items=("search_results",),
-                    headers=[
+                    headers=("evidence_headers", [
                         {"title": "Source", "key": "source", "sortable": True},
                         {"title": "Type", "key": "source_type", "width": "120px",
                          "sortable": True},
                         {"title": "Score", "key": "score", "width": "100px",
                          "sortable": True},
                         {"title": "Content", "key": "content", "sortable": False},
-                    ],
+                    ]),
                     item_value="source",
                     density="compact",
                     items_per_page=5,
@@ -135,14 +135,14 @@ def build_sessions_list_view() -> None:
         with v3.VCardText():
             v3.VDataTable(
                 items=("sessions",),
-                headers=[
+                headers=("sessions_headers", [
                     {"title": "Session ID", "key": "session_id", "width": "200px", "sortable": True},
                     {"title": "Start Time", "key": "start_time", "width": "140px", "sortable": True},
                     {"title": "End Time", "key": "end_time", "width": "140px", "sortable": True},
                     {"title": "Status", "key": "status", "width": "100px", "sortable": True},
                     {"title": "Agent", "key": "agent_id", "width": "140px", "sortable": True},
                     {"title": "Description", "key": "description"},
-                ],
+                ]),
                 item_value="session_id",
                 search=("sessions_search_query",),
                 density="compact",

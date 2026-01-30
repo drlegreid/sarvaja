@@ -162,7 +162,7 @@ def build_audit_table() -> None:
                 with v3.VCardText():
                     v3.VDataTable(
                         items=("audit_entries",),
-                        headers=[
+                        headers=("audit_headers", [
                             {"title": "Timestamp", "key": "timestamp", "width": "160px"},
                             {"title": "Action", "key": "action_type", "width": "100px"},
                             {"title": "Entity", "key": "entity_type", "width": "80px"},
@@ -170,7 +170,7 @@ def build_audit_table() -> None:
                             {"title": "Actor", "key": "actor_id", "width": "120px"},
                             {"title": "Rules Applied", "key": "applied_rules"},
                             {"title": "Correlation", "key": "correlation_id", "width": "200px"},
-                        ],
+                        ]),
                         density="compact",
                         items_per_page=20,
                         __properties=["data-testid"],

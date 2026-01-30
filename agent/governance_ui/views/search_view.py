@@ -112,12 +112,12 @@ def build_search_view() -> None:
             v3.VDataTable(
                 v_if="search_results && search_results.length > 0",
                 items=("search_results",),
-                headers=[
+                headers=("search_headers", [
                     {"title": "Source", "key": "source", "sortable": True},
                     {"title": "Type", "key": "source_type", "width": "120px", "sortable": True},
                     {"title": "Score", "key": "score", "width": "100px", "sortable": True},
                     {"title": "Content", "key": "content", "sortable": False},
-                ],
+                ]),
                 item_value="source",
                 density="compact",
                 items_per_page=20,

@@ -133,7 +133,7 @@ def build_tasks_list_view() -> None:
         with v3.VCardText(v_if="!is_loading"):
             v3.VDataTable(
                 items=("tasks",),
-                headers=[
+                headers=("tasks_headers", [
                     {"title": "Task ID", "key": "task_id", "width": "150px", "sortable": True},
                     {"title": "Description", "key": "description", "sortable": True},
                     {"title": "Status", "key": "status", "width": "100px", "sortable": True},
@@ -142,7 +142,7 @@ def build_tasks_list_view() -> None:
                     {"title": "Created", "key": "created_at", "width": "110px", "sortable": True},
                     {"title": "Completed", "key": "completed_at", "width": "110px", "sortable": True},
                     {"title": "Gap", "key": "gap_id", "width": "100px", "sortable": True},
-                ],
+                ]),
                 item_value="task_id",
                 search=("tasks_search_query",),
                 density="compact",
