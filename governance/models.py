@@ -35,6 +35,8 @@ class RuleResponse(BaseModel):
     created_date: Optional[str] = None
     document_path: Optional[str] = None  # Per GAP-UI-AUDIT-001: Rule-document linkage
     applicability: Optional[str] = None  # Per RD-RULE-APPLICABILITY: MANDATORY|RECOMMENDED|FORBIDDEN|CONDITIONAL
+    linked_tasks_count: int = 0  # Per PLAN-UI-OVERHAUL-001 Task 1.1
+    linked_sessions_count: int = 0  # Per PLAN-UI-OVERHAUL-001 Task 1.1
 
 class TaskCreate(BaseModel):
     """Request model for creating a task."""

@@ -210,7 +210,12 @@ def register_data_loader_controllers(
                     response, _ = _traced_get(client, "/api/rules")
                     if response.status_code == 200:
                         data = response.json()
-                        state.rules = data.get("items", data) if isinstance(data, dict) else data
+                        rules = data.get("items", data) if isinstance(data, dict) else data
+                        # Enrich with count fields (PLAN-UI-OVERHAUL-001 Task 1.1)
+                        for r in rules:
+                            r.setdefault("linked_tasks_count", r.get("linked_tasks_count", 0))
+                            r.setdefault("linked_sessions_count", r.get("linked_sessions_count", 0))
+                        state.rules = rules
                 except Exception:
                     pass
 

@@ -103,6 +103,8 @@ def build_rules_list_view() -> None:
                     {"title": "Status", "key": "status", "width": "100px", "sortable": True},
                     {"title": "Category", "key": "category", "width": "120px", "sortable": True},
                     {"title": "Priority", "key": "priority", "width": "100px", "sortable": True},
+                    {"title": "Tasks", "key": "linked_tasks_count", "width": "80px", "sortable": True},
+                    {"title": "Sessions", "key": "linked_sessions_count", "width": "90px", "sortable": True},
                     {"title": "Created", "key": "created_date", "width": "120px", "sortable": True},
                 ],
                 item_value="rule_id",

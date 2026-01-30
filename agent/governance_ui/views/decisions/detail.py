@@ -77,5 +77,75 @@ def build_decision_detail_view() -> None:
                 **{"data-testid": "decision-detail-rationale"}
             )
 
+            # Options considered with pros/cons (PLAN-UI-OVERHAUL-001 Task 4.2)
+            with html.Div(
+                v_if="selected_decision.options && selected_decision.options.length > 0",
+                classes="mt-4"
+            ):
+                v3.VDivider(classes="mb-4")
+                html.H3("Options Considered")
+                with v3.VExpansionPanels(variant="accordion"):
+                    with v3.VExpansionPanel(
+                        v_for="(option, idx) in selected_decision.options",
+                        **{":key": "idx"},
+                    ):
+                        with v3.VExpansionPanelTitle():
+                            v3.VIcon(
+                                v_bind_icon=(
+                                    "option.chosen ? 'mdi-check-circle' : 'mdi-circle-outline'",
+                                ),
+                                v_bind_color=(
+                                    "option.chosen ? 'success' : 'grey'",
+                                ),
+                                classes="mr-2",
+                                size="small"
+                            )
+                            html.Span("{{ option.name || option.title }}")
+                            v3.VChip(
+                                v_if="option.chosen",
+                                v_text="'Selected'",
+                                color="success",
+                                size="x-small",
+                                classes="ml-2"
+                            )
+                        with v3.VExpansionPanelText():
+                            # Pros
+                            with html.Div(
+                                v_if="option.pros && option.pros.length > 0",
+                                classes="mb-2"
+                            ):
+                                html.Span("Pros:", classes="font-weight-bold text-success")
+                                with v3.VList(density="compact"):
+                                    with v3.VListItem(
+                                        v_for="pro in option.pros",
+                                        **{":key": "pro"}
+                                    ):
+                                        with html.Template(v_slot_prepend=True):
+                                            v3.VIcon(
+                                                "mdi-plus-circle",
+                                                color="success",
+                                                size="small"
+                                            )
+                                        with v3.VListItemTitle():
+                                            html.Span("{{ pro }}")
+                            # Cons
+                            with html.Div(
+                                v_if="option.cons && option.cons.length > 0"
+                            ):
+                                html.Span("Cons:", classes="font-weight-bold text-error")
+                                with v3.VList(density="compact"):
+                                    with v3.VListItem(
+                                        v_for="con in option.cons",
+                                        **{":key": "con"}
+                                    ):
+                                        with html.Template(v_slot_prepend=True):
+                                            v3.VIcon(
+                                                "mdi-minus-circle",
+                                                color="error",
+                                                size="small"
+                                            )
+                                        with v3.VListItemTitle():
+                                            html.Span("{{ con }}")
+
             # Decision details
             build_decision_info_cards()

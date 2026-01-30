@@ -56,8 +56,55 @@ def get_rule_document_paths(client, rule_ids: List[str]) -> Dict[str, str]:
         return {}
 
 
-def _rule_to_response(rule, doc_path: Optional[str] = None) -> RuleResponse:
+def get_rule_linkage_counts(client, rule_ids: List[str]) -> Dict[str, Dict[str, int]]:
+    """
+    Batch query task and session counts linked to rules.
+    Per PLAN-UI-OVERHAUL-001 Task 1.1: Grid with Tasks/Sessions count columns.
+    """
+    if not rule_ids:
+        return {}
+    counts: Dict[str, Dict[str, int]] = {}
+    try:
+        # Count tasks linked to rules via task-rule-link
+        query = """
+        match
+          $r isa rule-entity, has rule-id $rid;
+          $t isa task-entity;
+          (linked-rule: $r, linking-task: $t) isa task-rule-link;
+        select $rid;
+        """
+        results = client.execute_query(query)
+        for r in results:
+            rid = r.get("rid")
+            if rid:
+                counts.setdefault(rid, {"tasks": 0, "sessions": 0})
+                counts[rid]["tasks"] += 1
+    except Exception as e:
+        logger.debug(f"Failed to query rule-task counts: {e}")
+    try:
+        # Count sessions linked to rules via session-rule-link
+        query = """
+        match
+          $r isa rule-entity, has rule-id $rid;
+          $s isa work-session;
+          (linked-rule: $r, linking-session: $s) isa session-rule-link;
+        select $rid;
+        """
+        results = client.execute_query(query)
+        for r in results:
+            rid = r.get("rid")
+            if rid:
+                counts.setdefault(rid, {"tasks": 0, "sessions": 0})
+                counts[rid]["sessions"] += 1
+    except Exception as e:
+        logger.debug(f"Failed to query rule-session counts: {e}")
+    return counts
+
+
+def _rule_to_response(rule, doc_path: Optional[str] = None,
+                      linkage_counts: Optional[Dict[str, int]] = None) -> RuleResponse:
     """Convert a TypeDB Rule entity to RuleResponse. DRY helper."""
+    lc = linkage_counts or {}
     return RuleResponse(
         id=rule.id,
         semantic_id=get_semantic_id(rule.id),
@@ -69,6 +116,8 @@ def _rule_to_response(rule, doc_path: Optional[str] = None) -> RuleResponse:
         created_date=rule.created_date.isoformat() if rule.created_date else None,
         document_path=doc_path,
         applicability=rule.applicability,
+        linked_tasks_count=lc.get("tasks", 0),
+        linked_sessions_count=lc.get("sessions", 0),
     )
 
 
@@ -147,8 +196,11 @@ async def list_rules(
         # Batch query document paths (GAP-UI-AUDIT-001)
         rule_ids = [r.id for r in paginated]
         doc_paths = get_rule_document_paths(client, rule_ids)
+        # Batch query linkage counts (PLAN-UI-OVERHAUL-001 Task 1.1)
+        linkage_counts = get_rule_linkage_counts(client, rule_ids)
 
-        items = [_rule_to_response(r, doc_paths.get(r.id)) for r in paginated]
+        items = [_rule_to_response(r, doc_paths.get(r.id), linkage_counts.get(r.id))
+                 for r in paginated]
         return PaginatedRuleResponse(
             items=items,
             pagination=PaginationMeta(
