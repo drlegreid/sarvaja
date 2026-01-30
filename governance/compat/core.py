@@ -11,8 +11,11 @@ Created: 2024-12-28
 
 import json
 import glob
+import logging
 import re
 from pathlib import Path
+
+logger = logging.getLogger(__name__)
 from dataclasses import asdict
 
 from governance.mcp_tools.common import get_typedb_client
@@ -100,8 +103,8 @@ def governance_list_decisions():
                     "decision_date": d.decision_date.isoformat() if d.decision_date else None
                 })
             client.close()
-    except Exception:
-        pass
+    except Exception as e:
+        logger.debug(f"Failed to query decisions from TypeDB: {e}")
     return json.dumps({"decisions": decisions, "count": len(decisions)}, indent=2)
 
 
@@ -118,8 +121,8 @@ def governance_get_decision(decision_id):
                     result["status"] = d.status
                     break
             client.close()
-    except Exception:
-        pass
+    except Exception as e:
+        logger.debug(f"Failed to get decision from TypeDB: {e}")
     if len(result) == 1:
         return json.dumps({"error": f"Decision {decision_id} not found"})
     return json.dumps(result, indent=2)

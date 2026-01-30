@@ -10,8 +10,11 @@ Per GAP-MCP-NAMING-001: Migration complete - new names only.
 """
 
 import json
+import logging
 from dataclasses import asdict
 from typing import Optional
+
+logger = logging.getLogger(__name__)
 
 from governance.mcp_tools.common import get_typedb_client
 
@@ -276,8 +279,8 @@ def governance_list_sessions(limit: int = 20, session_type: Optional[str] = None
                 "file": str(path),
                 "source": "evidence"
             })
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug(f"Failed to parse evidence session file: {e}")
 
     return json.dumps({
         "sessions": sessions,

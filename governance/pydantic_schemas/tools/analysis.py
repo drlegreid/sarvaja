@@ -9,8 +9,11 @@ Per GAP-FILE-010: Extracted from pydantic_tools.py
 Created: 2024-12-28
 """
 
+import logging
 from datetime import datetime
 from typing import Literal
+
+logger = logging.getLogger(__name__)
 
 from ..models import ImpactAnalysisConfig, ImpactAnalysisResult, HealthCheckResult
 
@@ -106,8 +109,8 @@ def health_check_typed() -> HealthCheckResult:
             try:
                 result = client.execute_query(query)
                 agents_count = int(result[0].get('count', 0)) if result else 0
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug(f"Failed to count agents: {e}")
 
             client.close()
         else:

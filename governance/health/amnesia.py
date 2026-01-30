@@ -6,8 +6,11 @@ Detect context loss indicators (RULE-024).
 AMNESIA = Autonomous Memory & Network Extraction for Session Intelligence and Awareness
 """
 
+import logging
 from dataclasses import dataclass, field
 from datetime import datetime
+
+logger = logging.getLogger(__name__)
 from typing import Dict, List, Optional
 
 # CORE services that indicate potential AMNESIA when recovering
@@ -61,8 +64,8 @@ def check_amnesia_indicators(
             if gap_hours > 1:
                 indicators.append(f"LONG_GAP_{int(gap_hours)}h")
                 confidence += min(0.4, gap_hours * 0.1)  # Max 0.4
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug(f"Failed to parse time gap for amnesia detection: {e}")
 
     # Indicator 3: Services were DOWN, now UP (restart recovery)
     if current_services:

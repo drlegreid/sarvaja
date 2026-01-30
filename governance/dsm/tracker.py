@@ -1,5 +1,6 @@
 """DSM Tracker - RULE-012 Deep Sleep Protocol cycle tracking. Created: 2024-12-24"""
 import json
+import logging
 from datetime import datetime, date
 from typing import List, Dict, Any, Optional
 from pathlib import Path
@@ -8,6 +9,8 @@ from governance.dsm.phases import DSPPhase
 from governance.dsm.models import DSMCycle, PhaseCheckpoint
 from governance.dsm.validation import validate_phase_evidence
 from governance.dsm.evidence import generate_evidence
+
+logger = logging.getLogger(__name__)
 from governance.dsm.memory import get_session_memory_payload as _get_memory_payload
 
 
@@ -47,8 +50,8 @@ class DSMTracker:
                         findings=cycle_data.get("findings", []),
                         metrics=cycle_data.get("metrics", {})
                     )
-            except (json.JSONDecodeError, KeyError):
-                pass
+            except (json.JSONDecodeError, KeyError) as e:
+                logger.debug(f"Failed to load DSM state: {e}")
 
     def _save_state(self) -> None:
         """Save state to file."""

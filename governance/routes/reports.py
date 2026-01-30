@@ -103,8 +103,8 @@ def _generate_executive_report(
             if rules:
                 rules_count = len(rules)
                 active_rules = sum(1 for r in rules if r.status == "ACTIVE")
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug(f"Failed to query rules for report: {e}")
 
     # Calculate overall status
     if avg_trust >= 0.8 and completed_tasks > pending_tasks:

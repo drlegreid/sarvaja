@@ -9,6 +9,9 @@ Handles chat command parsing and response generation.
 Created: 2024-12-28
 Refactored: 2026-01-14
 """
+import logging
+
+logger = logging.getLogger(__name__)
 
 from governance.client import get_client
 from governance.stores import _tasks_store, _agents_store, _sessions_store
@@ -36,7 +39,8 @@ def process_chat_command(content: str, agent_id: str) -> str:
         if client:
             rules = client.get_all_rules()
             rules_count = len(rules) if rules else 0
-    except Exception:
+    except Exception as e:
+        logger.debug(f"Failed to query rules for chat context: {e}")
         rules_count = 0
 
     # Command recognition
@@ -71,8 +75,8 @@ def process_chat_command(content: str, agent_id: str) -> str:
                         for r in active[:5]
                     ])
                     return f"Active Rules ({len(active)} total):\n{rule_list}"
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug(f"Failed to query active rules: {e}")
         return "No active rules found."
 
     elif content_lower.startswith("/help"):
@@ -120,8 +124,8 @@ You can also type natural language commands and I'll do my best to help!"""
                 for rule in rules:
                     if query.lower() in (rule.name or "" + rule.directive or "").lower():
                         results.append(f"Rule: {rule.id} - {rule.name}")
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug(f"Failed to search rules: {e}")
         # Search tasks from in-memory store
         for task in _tasks_store.values():
             if query.lower() in (task.get("name", "") + task.get("description", "")).lower():

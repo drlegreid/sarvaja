@@ -1,10 +1,13 @@
 """Hybrid Query Router: TypeDB (inference) + ChromaDB (semantic). Per RULE-004, RULE-010."""
 
+import logging
 import os
 import re
 import time
 from typing import Dict, Any, Optional, Literal
 from dataclasses import asdict
+
+logger = logging.getLogger(__name__)
 
 from .models import QueryType, QueryResult
 
@@ -58,7 +61,7 @@ class HybridQueryRouter:
             )
             status["typedb"] = self._typedb_client.connect()
         except Exception as e:
-            print(f"[HybridRouter] TypeDB connection failed: {e}")
+            logger.warning(f"TypeDB connection failed: {e}")
 
         # ChromaDB
         try:
@@ -71,7 +74,7 @@ class HybridQueryRouter:
             self._chromadb_client.heartbeat()
             status["chromadb"] = True
         except Exception as e:
-            print(f"[HybridRouter] ChromaDB connection failed: {e}")
+            logger.warning(f"ChromaDB connection failed: {e}")
 
         return status
 

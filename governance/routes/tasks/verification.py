@@ -51,8 +51,8 @@ async def create_verification_subtasks(
     if client:
         try:
             parent_task = client.get_task(task_id)
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug(f"Failed to get parent task from TypeDB: {e}")
 
     if not parent_task:
         if task_id not in _tasks_store:
@@ -78,8 +78,8 @@ async def create_verification_subtasks(
         if client:
             try:
                 existing = client.get_task(subtask_id)
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug(f"Failed to check subtask existence: {e}")
 
         if existing:
             created_subtasks.append(task_to_response(existing))
@@ -166,8 +166,8 @@ async def get_verification_status(task_id: str):
     if client:
         try:
             parent_task = client.get_task(task_id)
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug(f"Failed to get task for verification status: {e}")
 
     if not parent_task and task_id not in _tasks_store:
         raise HTTPException(status_code=404, detail=f"Task {task_id} not found")
@@ -190,8 +190,8 @@ async def get_verification_status(task_id: str):
         if client:
             try:
                 subtask = client.get_task(subtask_id)
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug(f"Failed to get verification subtask: {e}")
 
         if not subtask and subtask_id in _tasks_store:
             subtask = type('Task', (), _tasks_store[subtask_id])()

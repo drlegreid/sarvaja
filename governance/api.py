@@ -187,8 +187,8 @@ async def health_check():
             rules_count = len(rules) if rules else 0
             decisions = client.get_all_decisions()
             decisions_count = len(decisions) if decisions else 0
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug(f"Failed to query health counts: {e}")
 
     return APIStatus(
         status="ok" if connected else "degraded",

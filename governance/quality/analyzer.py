@@ -1,9 +1,12 @@
 """Rule Quality Analyzer. Per RULE-010, RULE-013. Created: 2024-12-24."""
 
+import logging
 import os
 from dataclasses import asdict
 from datetime import datetime
 from typing import Dict, Any, Optional, Set, List
+
+logger = logging.getLogger(__name__)
 
 from governance.quality.models import (
     IssueSeverity,
@@ -196,9 +199,9 @@ class RuleQualityAnalyzer:
                         remediation="Add reference to rule in relevant documentation (RULES-*.md, README, etc.)",
                         metadata={"referenced_by_documents": 0}
                     ))
-        except Exception:
+        except Exception as e:
             # Query may fail if no documents exist
-            pass
+            logger.debug(f"Failed to query rule document references: {e}")
 
         return issues
 

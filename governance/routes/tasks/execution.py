@@ -99,8 +99,8 @@ async def add_task_execution_event(
         try:
             if client.get_task(task_id):
                 task_exists = True
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug(f"Failed to check task existence in TypeDB: {e}")
 
     if not task_exists and task_id not in _tasks_store:
         raise HTTPException(status_code=404, detail=f"Task {task_id} not found")
