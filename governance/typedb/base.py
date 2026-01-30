@@ -9,8 +9,11 @@ Created: 2024-12-28
 Updated: 2026-01-17 (TypeDB 3.x API migration)
 """
 
+import logging
 import os
 from typing import List, Dict, Any
+
+logger = logging.getLogger(__name__)
 
 from .entities import Rule
 
@@ -56,10 +59,10 @@ class TypeDBBaseClient:
             self._connected = True
             return True
         except ImportError:
-            print("TypeDB driver not installed. Run: pip install typedb-driver>=3.7.0")
+            logger.error("TypeDB driver not installed. Run: pip install typedb-driver>=3.7.0")
             return False
         except Exception as e:
-            print(f"Failed to connect to TypeDB 3.x: {e}")
+            logger.error(f"Failed to connect to TypeDB 3.x: {e}")
             return False
 
     def close(self):

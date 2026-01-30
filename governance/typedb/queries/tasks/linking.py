@@ -7,8 +7,11 @@ Extracted from: governance/typedb/queries/tasks.py
 Created: 2026-01-04
 """
 
+import logging
 from datetime import datetime
 from typing import List
+
+logger = logging.getLogger(__name__)
 
 
 class TaskLinkingOperations:
@@ -70,7 +73,7 @@ class TaskLinkingOperations:
 
             return True
         except Exception as e:
-            print(f"Failed to link evidence {evidence_source} to task {task_id}: {e}")
+            logger.error(f"Failed to link evidence {evidence_source} to task {task_id}: {e}")
             return False
 
     def link_task_to_session(self, task_id: str, session_id: str) -> bool:
@@ -104,7 +107,7 @@ class TaskLinkingOperations:
 
             return True
         except Exception as e:
-            print(f"Failed to link task {task_id} to session {session_id}: {e}")
+            logger.error(f"Failed to link task {task_id} to session {session_id}: {e}")
             return False
 
     def link_task_to_rule(self, task_id: str, rule_id: str) -> bool:
@@ -138,7 +141,7 @@ class TaskLinkingOperations:
 
             return True
         except Exception as e:
-            print(f"Failed to link task {task_id} to rule {rule_id}: {e}")
+            logger.error(f"Failed to link task {task_id} to rule {rule_id}: {e}")
             return False
 
     def get_task_evidence(self, task_id: str) -> List[str]:
@@ -207,7 +210,7 @@ class TaskLinkingOperations:
 
             return True
         except Exception as e:
-            print(f"Failed to link task {task_id} to commit {commit_sha}: {e}")
+            logger.error(f"Failed to link task {task_id} to commit {commit_sha}: {e}")
             return False
 
     def get_task_commits(self, task_id: str) -> List[str]:

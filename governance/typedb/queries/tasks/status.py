@@ -7,10 +7,13 @@ Extracted from: governance/typedb/queries/tasks/crud.py
 Created: 2026-01-14
 """
 
+import logging
 from datetime import datetime
 from typing import Optional
 
 from ...entities import Task
+
+logger = logging.getLogger(__name__)
 
 
 def update_task_status(
@@ -188,5 +191,5 @@ def update_task_status(
 
         return client.get_task(task_id)
     except Exception as e:
-        print(f"Failed to update task {task_id}: {e}")
+        logger.error(f"Failed to update task {task_id}: {e}")
         return None

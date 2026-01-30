@@ -7,9 +7,12 @@ Extracted from: governance/typedb/queries/rules.py
 Created: 2026-01-04
 """
 
+import logging
 from typing import List, Dict, Optional
 
 from ...entities import Decision
+
+logger = logging.getLogger(__name__)
 
 
 class DecisionQueries:
@@ -305,5 +308,5 @@ class DecisionQueries:
                 tx.commit()
             return True
         except Exception as e:
-            print(f"Failed to link decision {decision_id} to rule {rule_id}: {e}")
+            logger.error(f"Failed to link decision {decision_id} to rule {rule_id}: {e}")
             return False

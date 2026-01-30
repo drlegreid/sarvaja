@@ -7,7 +7,10 @@ Per GAP-TASK-LINK-003: Task relationship management.
 Created: 2026-01-14
 """
 
+import logging
 from typing import List, Optional
+
+logger = logging.getLogger(__name__)
 
 
 class TaskRelationshipOperations:
@@ -48,7 +51,7 @@ class TaskRelationshipOperations:
                 tx.commit()
             return True
         except Exception as e:
-            print(f"Failed to link parent {parent_task_id} to child {child_task_id}: {e}")
+            logger.error(f"Failed to link parent {parent_task_id} to child {child_task_id}: {e}")
             return False
 
     def link_blocking_task(self, blocking_task_id: str, blocked_task_id: str) -> bool:
@@ -79,7 +82,7 @@ class TaskRelationshipOperations:
                 tx.commit()
             return True
         except Exception as e:
-            print(f"Failed to link blocking task {blocking_task_id}: {e}")
+            logger.error(f"Failed to link blocking task {blocking_task_id}: {e}")
             return False
 
     def link_related_tasks(self, task_id_a: str, task_id_b: str) -> bool:
@@ -110,7 +113,7 @@ class TaskRelationshipOperations:
                 tx.commit()
             return True
         except Exception as e:
-            print(f"Failed to link related tasks {task_id_a} and {task_id_b}: {e}")
+            logger.error(f"Failed to link related tasks {task_id_a} and {task_id_b}: {e}")
             return False
 
     def get_task_children(self, task_id: str) -> List[str]:

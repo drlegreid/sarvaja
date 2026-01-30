@@ -6,13 +6,33 @@ Extracted from: governance/typedb/queries/tasks.py
 
 Created: 2026-01-04
 Updated: 2026-01-14 - Extracted update_task_status to status.py
+Updated: 2026-01-30 - DRY attribute update helper, print→logger
 """
 
+import logging
 from datetime import datetime
 from typing import List, Optional
 
 from ...entities import Task
 from .status import update_task_status as _update_task_status
+
+logger = logging.getLogger(__name__)
+
+
+def _update_attribute(tx, task_id: str, attr_name: str, old_value: str, new_value: str):
+    """Delete old attribute value and insert new one for a task. DRY helper for TypeDB 3.x."""
+    new_escaped = new_value.replace('"', '\\"')
+    if old_value:
+        old_escaped = old_value.replace('"', '\\"')
+        tx.query(f'''
+            match $t isa task, has task-id "{task_id}", has {attr_name} $v;
+                $v == "{old_escaped}";
+            delete has $v of $t;
+        ''').resolve()
+    tx.query(f'''
+        match $t isa task, has task-id "{task_id}";
+        insert $t has {attr_name} "{new_escaped}";
+    ''').resolve()
 
 
 class TaskCRUDOperations:
@@ -128,7 +148,7 @@ class TaskCRUDOperations:
 
             return self.get_task(task_id)
         except Exception as e:
-            print(f"Failed to insert task {task_id}: {e}")
+            logger.error(f"Failed to insert task {task_id}: {e}")
             return None
 
     def update_task_status(
@@ -193,118 +213,24 @@ class TaskCRUDOperations:
         try:
             # TypeDB 3.x: driver.transaction() directly
             with self._driver.transaction(self.database, TransactionType.WRITE) as tx:
-                # Update status if provided
                 if status and status != current.status:
-                    # TypeDB 3.x: has $var of $entity
-                    delete_query = f"""
-                        match
-                            $t isa task, has task-id "{task_id}", has task-status $s;
-                            $s == "{current.status}";
-                        delete
-                            has $s of $t;
-                    """
-                    tx.query(delete_query).resolve()
-                    insert_query = f"""
-                        match
-                            $t isa task, has task-id "{task_id}";
-                        insert
-                            $t has task-status "{status}";
-                    """
-                    tx.query(insert_query).resolve()
-
-                # Update name if provided
+                    _update_attribute(tx, task_id, "task-status", current.status, status)
                 if name and name != current.name:
-                    if current.name:
-                        # TypeDB 3.x: has $var of $entity
-                        name_escaped = current.name.replace('"', '\\"')
-                        delete_query = f"""
-                            match
-                                $t isa task, has task-id "{task_id}", has task-name $n;
-                                $n == "{name_escaped}";
-                            delete
-                                has $n of $t;
-                        """
-                        tx.query(delete_query).resolve()
-                    insert_query = f"""
-                        match
-                            $t isa task, has task-id "{task_id}";
-                        insert
-                            $t has task-name "{name_escaped}";
-                    """
-                    tx.query(insert_query).resolve()
-
-                # Update phase if provided
+                    _update_attribute(tx, task_id, "task-name", current.name, name)
                 if phase and phase != current.phase:
-                    phase_escaped = phase.replace('"', '\\"')
-                    if current.phase:
-                        current_phase_escaped = current.phase.replace('"', '\\"')
-                        # TypeDB 3.x: has $var of $entity
-                        delete_query = f"""
-                            match
-                                $t isa task, has task-id "{task_id}", has phase $p;
-                                $p == "{current_phase_escaped}";
-                            delete
-                                has $p of $t;
-                        """
-                        tx.query(delete_query).resolve()
-                    insert_query = f"""
-                        match
-                            $t isa task, has task-id "{task_id}";
-                        insert
-                            $t has phase "{phase_escaped}";
-                    """
-                    tx.query(insert_query).resolve()
-
-                # GAP-GAPS-TASKS-001: Update item_type if provided
+                    _update_attribute(tx, task_id, "phase", current.phase, phase)
                 if item_type:
-                    item_type_escaped = item_type.replace('"', '\\"')
                     current_item_type = getattr(current, 'item_type', None)
-                    if current_item_type and current_item_type != item_type:
-                        current_item_escaped = current_item_type.replace('"', '\\"')
-                        delete_query = f"""
-                            match
-                                $t isa task, has task-id "{task_id}", has item-type $it;
-                                $it == "{current_item_escaped}";
-                            delete
-                                has $it of $t;
-                        """
-                        tx.query(delete_query).resolve()
                     if current_item_type != item_type:
-                        insert_query = f"""
-                            match
-                                $t isa task, has task-id "{task_id}";
-                            insert
-                                $t has item-type "{item_type_escaped}";
-                        """
-                        tx.query(insert_query).resolve()
-
-                # GAP-GAPS-TASKS-001: Update document_path if provided
+                        _update_attribute(tx, task_id, "item-type", current_item_type, item_type)
                 if document_path:
                     current_doc_path = getattr(current, 'document_path', None)
-                    doc_path_escaped = document_path.replace('"', '\\"')
-                    if current_doc_path and current_doc_path != document_path:
-                        current_escaped = current_doc_path.replace('"', '\\"')
-                        delete_query = f"""
-                            match
-                                $t isa task, has task-id "{task_id}", has document-path $dp;
-                                $dp == "{current_escaped}";
-                            delete
-                                has $dp of $t;
-                        """
-                        tx.query(delete_query).resolve()
                     if current_doc_path != document_path:
-                        insert_query = f"""
-                            match
-                                $t isa task, has task-id "{task_id}";
-                            insert
-                                $t has document-path "{doc_path_escaped}";
-                        """
-                        tx.query(insert_query).resolve()
-
+                        _update_attribute(tx, task_id, "document-path", current_doc_path, document_path)
                 tx.commit()
             return True
         except Exception as e:
-            print(f"Failed to update task {task_id}: {e}")
+            logger.error(f"Failed to update task {task_id}: {e}")
             return False
 
     def delete_task(self, task_id: str) -> bool:
@@ -349,5 +275,5 @@ class TaskCRUDOperations:
 
             return True
         except Exception as e:
-            print(f"Failed to delete task {task_id}: {e}")
+            logger.error(f"Failed to delete task {task_id}: {e}")
             return False

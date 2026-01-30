@@ -8,7 +8,10 @@ Per TASK-TECH-01-v1: Technology Solution Documentation.
 Created: 2026-01-14
 """
 
+import logging
 from typing import Optional
+
+logger = logging.getLogger(__name__)
 
 
 class TaskDetailOperations:
@@ -135,7 +138,7 @@ class TaskDetailOperations:
         # Verify task exists
         task = self.get_task(task_id)
         if not task:
-            print(f"Task {task_id} not found")
+            logger.warning(f"Task {task_id} not found")
             return False
 
         # Escape content for TypeQL
@@ -166,7 +169,7 @@ class TaskDetailOperations:
                 tx.commit()
             return True
         except Exception as e:
-            print(f"Failed to update {attribute} for task {task_id}: {e}")
+            logger.error(f"Failed to update {attribute} for task {task_id}: {e}")
             return False
 
     def get_task_details(self, task_id: str) -> Optional[dict]:

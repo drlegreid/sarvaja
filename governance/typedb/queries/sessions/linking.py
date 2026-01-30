@@ -7,8 +7,11 @@ Extracted from: governance/typedb/queries/sessions.py
 Created: 2026-01-04
 """
 
+import logging
 from datetime import datetime
 from typing import List
+
+logger = logging.getLogger(__name__)
 
 
 class SessionLinkingOperations:
@@ -74,7 +77,7 @@ class SessionLinkingOperations:
 
             return True
         except Exception as e:
-            print(f"Failed to link evidence {evidence_source} to session {session_id}: {e}")
+            logger.error(f"Failed to link evidence {evidence_source} to session {session_id}: {e}")
             return False
 
     def get_session_evidence(self, session_id: str) -> List[str]:
@@ -128,7 +131,7 @@ class SessionLinkingOperations:
 
             return True
         except Exception as e:
-            print(f"Failed to link rule {rule_id} to session {session_id}: {e}")
+            logger.error(f"Failed to link rule {rule_id} to session {session_id}: {e}")
             return False
 
     def link_decision_to_session(self, session_id: str, decision_id: str) -> bool:
@@ -162,7 +165,7 @@ class SessionLinkingOperations:
 
             return True
         except Exception as e:
-            print(f"Failed to link decision {decision_id} to session {session_id}: {e}")
+            logger.error(f"Failed to link decision {decision_id} to session {session_id}: {e}")
             return False
 
     def get_session_rules(self, session_id: str) -> List[str]:

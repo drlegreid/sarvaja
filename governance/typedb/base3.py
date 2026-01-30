@@ -16,8 +16,11 @@ Key API Changes from 2.x:
 - Rules → Functions
 """
 
+import logging
 import os
 from typing import List, Dict, Any, Optional
+
+logger = logging.getLogger(__name__)
 
 # Configuration
 TYPEDB_HOST = os.getenv("TYPEDB_HOST", "localhost")
@@ -67,11 +70,11 @@ class TypeDB3BaseClient:
             return True
 
         except ImportError as e:
-            print(f"TypeDB driver not installed: {e}")
-            print("Install with: pip install typedb-driver>=3.0.0")
+            logger.error(f"TypeDB driver not installed: {e}")
+            logger.error("Install with: pip install typedb-driver>=3.0.0")
             return False
         except Exception as e:
-            print(f"Failed to connect to TypeDB 3.x: {e}")
+            logger.error(f"Failed to connect to TypeDB 3.x: {e}")
             return False
 
     def close(self):

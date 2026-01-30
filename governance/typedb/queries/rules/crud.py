@@ -7,9 +7,12 @@ Extracted from: governance/typedb/queries/rules.py
 Created: 2026-01-04
 """
 
+import logging
 from typing import Optional
 
 from ...entities import Rule
+
+logger = logging.getLogger(__name__)
 
 
 class RuleCRUDOperations:
@@ -231,7 +234,7 @@ class RuleCRUDOperations:
                 self.archive_rule(rule_id, reason="deleted")
             except Exception as e:
                 # Log but don't fail deletion if archiving fails
-                print(f"Warning: Could not archive rule {rule_id}: {e}")
+                logger.warning(f"Could not archive rule {rule_id}: {e}")
 
         from typedb.driver import TransactionType
 

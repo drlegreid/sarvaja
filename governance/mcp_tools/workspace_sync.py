@@ -231,107 +231,64 @@ def register_workspace_sync_tools(mcp) -> None:
         try:
             from datetime import datetime
             from governance.utils.gap_parser import GapParser
-            from governance.mcp_tools.common import get_typedb_client, format_mcp_result
+            from governance.mcp_tools.common import typedb_client
 
             parser = GapParser()
-            all_gaps = parser.parse()  # Returns both open and resolved gaps
+            all_gaps = parser.parse()
 
             result = {
                 "timestamp": datetime.now().isoformat(),
-                "dry_run": dry_run,
-                "total_gaps": len(all_gaps),
-                "to_insert": [],
-                "to_update": [],
-                "skipped": [],
-                "errors": [],
+                "dry_run": dry_run, "total_gaps": len(all_gaps),
+                "to_insert": [], "to_update": [], "skipped": [], "errors": [],
             }
 
-            # Get existing tasks from TypeDB
-            client = get_typedb_client()
-            if not client.connect():
-                return format_mcp_result({"error": "Failed to connect to TypeDB"})
-
-            try:
+            with typedb_client() as client:
                 existing_tasks = {t.id: t for t in client.get_all_tasks()}
 
                 for gap in all_gaps:
                     gap_id = gap.id
-                    # Map gap status to task status (per GAP-UI-046)
-                    # Gaps: "open"/"resolved" -> Tasks: "OPEN"/"CLOSED"
                     task_status = "CLOSED" if gap.is_resolved else "OPEN"
+                    document_path = f"docs/gaps/evidence/{gap_id}.md"
 
                     if gap_id in existing_tasks:
-                        # Check if status update needed
-                        existing = existing_tasks[gap_id]
-                        existing_status = getattr(existing, 'status', None)
-                        needs_update = existing_status != task_status
-
-                        if needs_update:
+                        existing_status = getattr(existing_tasks[gap_id], 'status', None)
+                        if existing_status != task_status:
                             result["to_update"].append({
-                                "gap_id": gap_id,
-                                "old_status": existing_status,
+                                "gap_id": gap_id, "old_status": existing_status,
                                 "new_status": task_status,
                             })
                             if not dry_run:
                                 try:
-                                    # GAP-GAPS-TASKS-001: Update with unified work item attributes
-                                    document_path = f"docs/gaps/evidence/{gap_id}.md"
-                                    client.update_task(
-                                        gap_id,
-                                        status=task_status,
-                                        item_type="gap",
-                                        document_path=document_path
-                                    )
+                                    client.update_task(gap_id, status=task_status,
+                                                       item_type="gap", document_path=document_path)
                                 except Exception as e:
-                                    result["errors"].append({
-                                        "gap_id": gap_id,
-                                        "action": "update",
-                                        "error": str(e)
-                                    })
+                                    result["errors"].append({"gap_id": gap_id, "action": "update", "error": str(e)})
                         else:
                             result["skipped"].append(gap_id)
                     else:
-                        # New gap - insert as task
                         gap_name = gap.description[:100] if gap.description else gap_id
                         result["to_insert"].append({
-                            "gap_id": gap_id,
-                            "name": gap_name,
-                            "status": task_status,
-                            "priority": gap.priority.upper(),
+                            "gap_id": gap_id, "name": gap_name,
+                            "status": task_status, "priority": gap.priority.upper(),
                         })
                         if not dry_run:
                             try:
-                                # GAP-GAPS-TASKS-001: Full work item sync with unified attributes
-                                document_path = f"docs/gaps/evidence/{gap_id}.md"
                                 client.insert_task(
-                                    task_id=gap_id,
-                                    name=gap_name,
-                                    status=task_status,
-                                    phase="GAP",
-                                    body=f"Priority: {gap.priority.upper()}. {gap.description}",
-                                    gap_id=gap_id,  # Self-reference for traceability
-                                    item_type="gap",  # Unified work item type
-                                    document_path=document_path,  # Source doc reference
+                                    task_id=gap_id, name=gap_name, status=task_status,
+                                    phase="GAP", body=f"Priority: {gap.priority.upper()}. {gap.description}",
+                                    gap_id=gap_id, item_type="gap", document_path=document_path,
                                 )
                             except Exception as e:
-                                result["errors"].append({
-                                    "gap_id": gap_id,
-                                    "action": "insert",
-                                    "error": str(e)
-                                })
+                                result["errors"].append({"gap_id": gap_id, "action": "insert", "error": str(e)})
 
                 result["summary"] = {
-                    "inserts": len(result["to_insert"]),
-                    "updates": len(result["to_update"]),
-                    "skipped": len(result["skipped"]),
-                    "errors": len(result["errors"]),
+                    "inserts": len(result["to_insert"]), "updates": len(result["to_update"]),
+                    "skipped": len(result["skipped"]), "errors": len(result["errors"]),
                 }
-
                 return format_mcp_result(result)
 
-            finally:
-                client.close()
-
+        except ConnectionError as e:
+            return format_mcp_result({"error": str(e)})
         except Exception as e:
             logger.error(f"workspace_sync_gaps_to_typedb failed: {e}")
             return format_mcp_result({"error": str(e)})
