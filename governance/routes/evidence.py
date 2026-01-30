@@ -168,6 +168,12 @@ async def get_evidence(evidence_id: str):
     evidence_dir = os.path.join(os.path.dirname(__file__), "..", "..", "evidence")
     filepath = os.path.join(evidence_dir, f"{evidence_id}.md")
 
+    # Prevent path traversal: resolved path must stay within evidence_dir
+    real_path = os.path.realpath(filepath)
+    real_evidence_dir = os.path.realpath(evidence_dir)
+    if not real_path.startswith(real_evidence_dir + os.sep):
+        raise HTTPException(status_code=403, detail="Path traversal not allowed")
+
     if not os.path.exists(filepath):
         raise HTTPException(status_code=404, detail=f"Evidence {evidence_id} not found")
 
