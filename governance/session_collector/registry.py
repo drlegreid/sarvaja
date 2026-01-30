@@ -7,7 +7,10 @@ Contains: Global session registry and helper functions.
 """
 
 import json
+import logging
 from datetime import date
+
+logger = logging.getLogger(__name__)
 from pathlib import Path
 from typing import Dict, List, Optional, TYPE_CHECKING
 
@@ -32,8 +35,8 @@ def _persist_state() -> None:
             "count": len(_active_sessions)
         }
         STATE_FILE.write_text(json.dumps(state, indent=2))
-    except Exception:
-        pass  # Silent fail - don't disrupt main flow
+    except Exception as e:
+        logger.debug(f"Failed to save session state: {e}")
 
 
 def get_or_create_session(topic: str, session_type: str = "general") -> "SessionCollector":

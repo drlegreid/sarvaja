@@ -66,7 +66,8 @@ def governance_list_sessions(limit=20, session_type=None):
                 "topic": topic,
                 "path": str(filepath)
             })
-        except Exception:
+        except Exception as e:
+            logger.debug(f"Failed to parse session file: {e}")
             continue
     return json.dumps({"sessions": sessions, "count": len(sessions)}, indent=2)
 
@@ -165,8 +166,8 @@ def governance_list_tasks(phase=None, status=None):
                 return json.dumps({"tasks": tasks, "count": len(tasks), "source": "typedb"}, indent=2)
             finally:
                 client.close()
-    except Exception:
-        pass  # Fall through to markdown fallback
+    except Exception as e:
+        logger.debug(f"TypeDB task query failed, falling back to markdown: {e}")
 
     # Fallback to markdown parsing (backward compatibility)
     tasks = []

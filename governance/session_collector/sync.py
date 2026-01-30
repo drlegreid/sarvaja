@@ -5,8 +5,11 @@ Per RULE-032: Modularized from session_collector.py (591 lines).
 Contains: TypeDB and ChromaDB synchronization methods.
 """
 
+import logging
 import os
 from typing import TYPE_CHECKING
+
+logger = logging.getLogger(__name__)
 
 from .models import Decision, Task, TYPEDB_AVAILABLE
 
@@ -122,7 +125,8 @@ class SessionSyncMixin:
             client.close()
             return True
 
-        except Exception:
+        except Exception as e:
+            logger.debug(f"Failed to index decision to TypeDB: {e}")
             return False
 
     def _index_task_to_typedb(self, task: Task) -> bool:
@@ -199,5 +203,6 @@ class SessionSyncMixin:
             client.close()
             return True
 
-        except Exception:
+        except Exception as e:
+            logger.debug(f"Failed to index task to TypeDB: {e}")
             return False

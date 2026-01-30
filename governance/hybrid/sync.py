@@ -10,8 +10,11 @@ Per GAP-FILE-012: Extracted from hybrid_router.py
 Created: 2024-12-28
 """
 
+import logging
 import time
 from typing import Dict, Any, TYPE_CHECKING
+
+logger = logging.getLogger(__name__)
 
 from .models import SyncStatus
 
@@ -251,7 +254,8 @@ class MemorySyncBridge:
                             "exists": True,
                             "count": coll.count()
                         }
-                    except Exception:
+                    except Exception as e:
+                        logger.debug(f"Failed to get collection {coll_name}: {e}")
                         status["collections"][coll_name] = {
                             "exists": False,
                             "count": 0

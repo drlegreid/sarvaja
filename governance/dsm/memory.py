@@ -11,8 +11,11 @@ Created: 2024-12-24
 Refactored: 2026-01-14
 """
 
+import logging
 from typing import Dict, Any, Optional, TYPE_CHECKING
 from dataclasses import asdict
+
+logger = logging.getLogger(__name__)
 
 if TYPE_CHECKING:
     from governance.dsm.models import DSMCycle
@@ -57,7 +60,8 @@ def get_session_memory_payload(cycle: "DSMCycle") -> Optional[Dict[str, Any]]:
         }
     except ImportError:
         return None
-    except Exception:
+    except Exception as e:
+        logger.debug(f"Failed to create session memory payload: {e}")
         return None
 
 
