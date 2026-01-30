@@ -1,35 +1,14 @@
 """Task CRUD MCP Tools. Per RULE-012/032, DECISION-003."""
-from contextlib import contextmanager
 from typing import Optional
 from dataclasses import asdict
 
-from governance.mcp_tools.common import get_typedb_client, format_mcp_result
-
-# Monitoring instrumentation per GAP-MONITOR-INSTRUMENT-001
-try:
-    from agent.governance_ui.data_access.monitoring import log_monitor_event
-    MONITORING_AVAILABLE = True
-except ImportError:
-    MONITORING_AVAILABLE = False
-
-
-@contextmanager
-def _typedb_client():
-    """Context manager for TypeDB client connect/close."""
-    client = get_typedb_client()
-    try:
-        if not client.connect():
-            raise ConnectionError("Failed to connect to TypeDB")
-        yield client
-    finally:
-        client.close()
+from governance.mcp_tools.common import typedb_client, format_mcp_result, log_monitor_event
 
 
 def _monitor_task(source: str, task_id: str, action: str, severity: str = "INFO", **extra):
-    """Log a task monitoring event if monitoring is available."""
-    if MONITORING_AVAILABLE:
-        details = {"task_id": task_id, "action": action, **extra}
-        log_monitor_event(event_type="task_event", source=source, details=details, severity=severity)
+    """Log a task monitoring event."""
+    log_monitor_event(event_type="task_event", source=source,
+                      details={"task_id": task_id, "action": action, **extra}, severity=severity)
 
 
 def register_task_crud_tools(mcp) -> None:
@@ -53,7 +32,7 @@ def register_task_crud_tools(mcp) -> None:
             JSON with created task details or error
         """
         try:
-            with _typedb_client() as client:
+            with typedb_client() as client:
                 body = f"[Priority: {priority}] {description}" if description else f"[Priority: {priority}]"
                 success = client.insert_task(
                     task_id=task_id, name=name, status=status, phase=phase, body=body
@@ -81,7 +60,7 @@ def register_task_crud_tools(mcp) -> None:
             JSON with task details or error if not found
         """
         try:
-            with _typedb_client() as client:
+            with typedb_client() as client:
                 task = client.get_task(task_id)
                 if task:
                     _monitor_task("mcp-task-get", task_id, "query", found=True)
@@ -109,7 +88,7 @@ def register_task_crud_tools(mcp) -> None:
             return format_mcp_result({"error": "No update fields provided"})
 
         try:
-            with _typedb_client() as client:
+            with typedb_client() as client:
                 success = client.update_task(task_id=task_id, status=status, name=name, phase=phase)
                 if success:
                     _monitor_task("mcp-task-update", task_id, "update", status=status, phase=phase)
@@ -137,7 +116,7 @@ def register_task_crud_tools(mcp) -> None:
             JSON with deletion confirmation or error
         """
         try:
-            with _typedb_client() as client:
+            with typedb_client() as client:
                 success = client.delete_task(task_id)
                 if success:
                     _monitor_task("mcp-task-delete", task_id, "delete", severity="WARNING")
@@ -158,7 +137,7 @@ def register_task_crud_tools(mcp) -> None:
             JSON with array of all tasks and count
         """
         try:
-            with _typedb_client() as client:
+            with typedb_client() as client:
                 tasks = client.get_all_tasks()
                 return format_mcp_result({
                     "tasks": [asdict(t) for t in tasks],
@@ -209,7 +188,7 @@ def register_task_crud_tools(mcp) -> None:
         # Verification passed - update task status
         evidence_short = evidence[:500] if len(evidence) > 500 else evidence
         try:
-            with _typedb_client() as client:
+            with typedb_client() as client:
                 success = client.update_task(task_id=task_id, status="completed")
                 if success:
                     _monitor_task("mcp-task-verify", task_id, "verify", method=verification_method)
@@ -258,7 +237,7 @@ def register_task_crud_tools(mcp) -> None:
             return format_mcp_result({"error": "todos_json must be a JSON array"})
 
         try:
-            with _typedb_client() as client:
+            with typedb_client() as client:
                 date_str = datetime.now().strftime("%Y%m%d")
                 created, updated, skipped = 0, 0, 0
                 synced_tasks = []

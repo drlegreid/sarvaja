@@ -1,8 +1,10 @@
 """Common Utilities for MCP Tools. Per RULE-012: DSP Semantic Code Structure.
 Updated: 2026-01-21 - Added lazy monitoring import to fix circular dependency.
+Updated: 2026-01-30 - Added typedb_client context manager for DRY.
 """
 import os
 import logging
+from contextlib import contextmanager
 from dataclasses import dataclass
 from typing import Any
 
@@ -95,3 +97,23 @@ def get_typedb_client():
     """
     from governance.client import TypeDBClient
     return TypeDBClient(host=TYPEDB_HOST, port=TYPEDB_PORT, database=DATABASE_NAME)
+
+
+@contextmanager
+def typedb_client():
+    """Context manager for TypeDB client connect/close.
+
+    Usage:
+        with typedb_client() as client:
+            task = client.get_task(task_id)
+
+    Raises:
+        ConnectionError: If connection to TypeDB fails.
+    """
+    client = get_typedb_client()
+    try:
+        if not client.connect():
+            raise ConnectionError("Failed to connect to TypeDB")
+        yield client
+    finally:
+        client.close()

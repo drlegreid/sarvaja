@@ -4,14 +4,7 @@ Enables: test → GAP → evidence → session → task → rule backtracking.
 Created: 2026-01-28 | Per SESSION-EVID-01-v1, GOV-TRANSP-01-v1.
 """
 
-from typing import Optional
-from governance.mcp_tools.common import get_typedb_client, format_mcp_result
-
-try:
-    from agent.governance_ui.data_access.monitoring import log_monitor_event
-    MONITORING_AVAILABLE = True
-except ImportError:
-    MONITORING_AVAILABLE = False
+from governance.mcp_tools.common import typedb_client, format_mcp_result, log_monitor_event
 
 
 def _trace_task(client, task_id: str) -> dict:
@@ -98,45 +91,34 @@ def register_traceability_tools(mcp) -> None:
         Returns:
             Complete trace chain with all linked governance entities.
         """
-        client = get_typedb_client()
         try:
-            if not client.connect():
-                return format_mcp_result({"error": "Failed to connect to TypeDB"})
+            with typedb_client() as client:
+                result = _trace_task(client, task_id)
+                if "error" in result:
+                    return format_mcp_result(result)
 
-            result = _trace_task(client, task_id)
-            if "error" in result:
-                return format_mcp_result(result)
+                if depth >= 1:
+                    result["sessions_detail"] = [
+                        _trace_session(client, sid) for sid in result["linked_sessions"]
+                    ]
+                    result["rules_detail"] = [
+                        _trace_rule(client, rid) for rid in result["linked_rules"]
+                    ]
 
-            if depth >= 1:
-                # Expand sessions
-                sessions = []
-                for sid in result["linked_sessions"]:
-                    sessions.append(_trace_session(client, sid))
-                result["sessions_detail"] = sessions
+                if depth >= 2:
+                    for s in result.get("sessions_detail", []):
+                        known = {r.get("rule_id") for r in result.get("rules_detail", [])}
+                        s["rules_detail"] = [
+                            _trace_rule(client, rid)
+                            for rid in s.get("rules_applied", []) if rid not in known
+                        ]
 
-                # Expand rules
-                rules = []
-                for rid in result["linked_rules"]:
-                    rules.append(_trace_rule(client, rid))
-                result["rules_detail"] = rules
-
-            if depth >= 2:
-                # Expand session→rules for cross-referencing
-                for s in result.get("sessions_detail", []):
-                    s_rules = []
-                    for rid in s.get("rules_applied", []):
-                        if not any(r.get("rule_id") == rid for r in result.get("rules_detail", [])):
-                            s_rules.append(_trace_rule(client, rid))
-                    s["rules_detail"] = s_rules
-
-            if MONITORING_AVAILABLE:
                 log_monitor_event(
                     event_type="trace_event", source="mcp-trace-task-chain",
                     details={"task_id": task_id, "depth": depth})
-
-            return format_mcp_result(result)
-        finally:
-            client.close()
+                return format_mcp_result(result)
+        except ConnectionError as e:
+            return format_mcp_result({"error": str(e)})
 
     @mcp.tool()
     def trace_session_chain(session_id: str, depth: int = 1) -> str:
@@ -149,34 +131,22 @@ def register_traceability_tools(mcp) -> None:
         Returns:
             Complete trace chain with all linked governance entities.
         """
-        client = get_typedb_client()
         try:
-            if not client.connect():
-                return format_mcp_result({"error": "Failed to connect to TypeDB"})
+            with typedb_client() as client:
+                result = _trace_session(client, session_id)
+                if "error" in result:
+                    return format_mcp_result(result)
 
-            result = _trace_session(client, session_id)
-            if "error" in result:
-                return format_mcp_result(result)
+                if depth >= 1:
+                    result["tasks_detail"] = [_trace_task(client, tid) for tid in result["task_ids"]]
+                    result["rules_detail"] = [_trace_rule(client, rid) for rid in result["rules_applied"]]
 
-            if depth >= 1:
-                tasks = []
-                for tid in result["task_ids"]:
-                    tasks.append(_trace_task(client, tid))
-                result["tasks_detail"] = tasks
-
-                rules = []
-                for rid in result["rules_applied"]:
-                    rules.append(_trace_rule(client, rid))
-                result["rules_detail"] = rules
-
-            if MONITORING_AVAILABLE:
                 log_monitor_event(
                     event_type="trace_event", source="mcp-trace-session-chain",
                     details={"session_id": session_id, "depth": depth})
-
-            return format_mcp_result(result)
-        finally:
-            client.close()
+                return format_mcp_result(result)
+        except ConnectionError as e:
+            return format_mcp_result({"error": str(e)})
 
     @mcp.tool()
     def trace_rule_chain(rule_id: str, depth: int = 1) -> str:
@@ -189,44 +159,35 @@ def register_traceability_tools(mcp) -> None:
         Returns:
             Complete trace chain showing what implements this rule.
         """
-        client = get_typedb_client()
         try:
-            if not client.connect():
-                return format_mcp_result({"error": "Failed to connect to TypeDB"})
+            with typedb_client() as client:
+                result = _trace_rule(client, rule_id)
+                if "error" in result:
+                    return format_mcp_result(result)
 
-            result = _trace_rule(client, rule_id)
-            if "error" in result:
-                return format_mcp_result(result)
+                if depth >= 1:
+                    query = (
+                        f'match $t isa task, has task-id $tid; '
+                        f'$r isa governance-rule, has rule-id "{rule_id}"; '
+                        f'(implementing-task: $t, implemented-rule: $r) isa implements-rule; '
+                        f'get $tid;'
+                    )
+                    try:
+                        rows = client.execute_query(query)
+                        task_ids = [r.get("tid", r.get("task-id", "")) for r in rows if r]
+                    except Exception:
+                        task_ids = []
 
-            if depth >= 1:
-                # Find tasks implementing this rule via TypeQL
-                query = (
-                    f'match $t isa task, has task-id $tid; '
-                    f'$r isa governance-rule, has rule-id "{rule_id}"; '
-                    f'(implementing-task: $t, implemented-rule: $r) isa implements-rule; '
-                    f'get $tid;'
-                )
-                try:
-                    rows = client.execute_query(query)
-                    task_ids = [r.get("tid", r.get("task-id", "")) for r in rows if r]
-                except Exception:
-                    task_ids = []
+                    tasks = [_trace_task(client, tid) for tid in task_ids if tid]
+                    result["implementing_tasks"] = tasks
+                    result["implementing_count"] = len(tasks)
 
-                tasks = []
-                for tid in task_ids:
-                    if tid:
-                        tasks.append(_trace_task(client, tid))
-                result["implementing_tasks"] = tasks
-                result["implementing_count"] = len(tasks)
-
-            if MONITORING_AVAILABLE:
                 log_monitor_event(
                     event_type="trace_event", source="mcp-trace-rule-chain",
                     details={"rule_id": rule_id, "depth": depth})
-
-            return format_mcp_result(result)
-        finally:
-            client.close()
+                return format_mcp_result(result)
+        except ConnectionError as e:
+            return format_mcp_result({"error": str(e)})
 
     @mcp.tool()
     def trace_gap_chain(gap_id: str) -> str:
@@ -238,63 +199,48 @@ def register_traceability_tools(mcp) -> None:
         Returns:
             Complete trace chain showing gap resolution path.
         """
-        client = get_typedb_client()
         try:
-            if not client.connect():
-                return format_mcp_result({"error": "Failed to connect to TypeDB"})
+            with typedb_client() as client:
+                query = (
+                    f'match $t isa task, has task-id $tid, has gap-id "{gap_id}"; '
+                    f'get $tid;'
+                )
+                try:
+                    rows = client.execute_query(query)
+                    task_ids = [r.get("tid", r.get("task-id", "")) for r in rows if r]
+                except Exception:
+                    task_ids = []
 
-            # Find tasks with this gap_id
-            query = (
-                f'match $t isa task, has task-id $tid, has gap-id "{gap_id}"; '
-                f'get $tid;'
-            )
-            try:
-                rows = client.execute_query(query)
-                task_ids = [r.get("tid", r.get("task-id", "")) for r in rows if r]
-            except Exception:
-                task_ids = []
+                if not task_ids:
+                    return format_mcp_result({
+                        "gap_id": gap_id, "error": "No tasks found for this gap", "tasks": []
+                    })
 
-            if not task_ids:
-                return format_mcp_result({
-                    "gap_id": gap_id,
-                    "error": "No tasks found for this gap",
-                    "tasks": []
-                })
+                tasks = []
+                all_sessions, all_rules, all_evidence = set(), set(), set()
+                for tid in task_ids:
+                    if not tid:
+                        continue
+                    task_trace = _trace_task(client, tid)
+                    tasks.append(task_trace)
+                    all_sessions.update(task_trace.get("linked_sessions", []))
+                    all_rules.update(task_trace.get("linked_rules", []))
+                    all_evidence.update(task_trace.get("evidence_files", []))
 
-            tasks = []
-            all_sessions = set()
-            all_rules = set()
-            all_evidence = set()
-
-            for tid in task_ids:
-                if not tid:
-                    continue
-                task_trace = _trace_task(client, tid)
-                tasks.append(task_trace)
-                all_sessions.update(task_trace.get("linked_sessions", []))
-                all_rules.update(task_trace.get("linked_rules", []))
-                all_evidence.update(task_trace.get("evidence_files", []))
-
-            result = {
-                "gap_id": gap_id,
-                "tasks": tasks,
-                "task_count": len(tasks),
-                "unique_sessions": sorted(all_sessions),
-                "unique_rules": sorted(all_rules),
-                "unique_evidence": sorted(all_evidence),
-                "session_count": len(all_sessions),
-                "rule_count": len(all_rules),
-                "evidence_count": len(all_evidence),
-            }
-
-            if MONITORING_AVAILABLE:
                 log_monitor_event(
                     event_type="trace_event", source="mcp-trace-gap-chain",
                     details={"gap_id": gap_id, "task_count": len(tasks)})
-
-            return format_mcp_result(result)
-        finally:
-            client.close()
+                return format_mcp_result({
+                    "gap_id": gap_id, "tasks": tasks, "task_count": len(tasks),
+                    "unique_sessions": sorted(all_sessions),
+                    "unique_rules": sorted(all_rules),
+                    "unique_evidence": sorted(all_evidence),
+                    "session_count": len(all_sessions),
+                    "rule_count": len(all_rules),
+                    "evidence_count": len(all_evidence),
+                })
+        except ConnectionError as e:
+            return format_mcp_result({"error": str(e)})
 
     @mcp.tool()
     def trace_evidence_chain(evidence_path: str) -> str:
@@ -306,61 +252,52 @@ def register_traceability_tools(mcp) -> None:
         Returns:
             Which tasks, sessions, and rules this evidence supports.
         """
-        client = get_typedb_client()
         try:
-            if not client.connect():
-                return format_mcp_result({"error": "Failed to connect to TypeDB"})
+            with typedb_client() as client:
+                # Find tasks linked to this evidence
+                query = (
+                    f'match $t isa task, has task-id $tid; '
+                    f'$e isa evidence, has evidence-source "{evidence_path}"; '
+                    f'(supporting-evidence: $e, supported-task: $t) isa evidence-supports; '
+                    f'get $tid;'
+                )
+                try:
+                    rows = client.execute_query(query)
+                    task_ids = [r.get("tid", r.get("task-id", "")) for r in rows if r]
+                except Exception:
+                    task_ids = []
 
-            # Find tasks linked to this evidence
-            query = (
-                f'match $t isa task, has task-id $tid; '
-                f'$e isa evidence, has evidence-source "{evidence_path}"; '
-                f'(supporting-evidence: $e, supported-task: $t) isa evidence-supports; '
-                f'get $tid;'
-            )
-            try:
-                rows = client.execute_query(query)
-                task_ids = [r.get("tid", r.get("task-id", "")) for r in rows if r]
-            except Exception:
-                task_ids = []
+                # Find sessions linked to this evidence
+                query_sessions = (
+                    f'match $s isa work-session, has session-id $sid; '
+                    f'$e isa evidence, has evidence-source "{evidence_path}"; '
+                    f'(session-with-evidence: $s, session-evidence: $e) isa has-evidence; '
+                    f'get $sid;'
+                )
+                try:
+                    rows_s = client.execute_query(query_sessions)
+                    session_ids = [r.get("sid", r.get("session-id", "")) for r in rows_s if r]
+                except Exception:
+                    session_ids = []
 
-            # Find sessions linked to this evidence
-            query_sessions = (
-                f'match $s isa work-session, has session-id $sid; '
-                f'$e isa evidence, has evidence-source "{evidence_path}"; '
-                f'(session-with-evidence: $s, session-evidence: $e) isa has-evidence; '
-                f'get $sid;'
-            )
-            try:
-                rows_s = client.execute_query(query_sessions)
-                session_ids = [r.get("sid", r.get("session-id", "")) for r in rows_s if r]
-            except Exception:
-                session_ids = []
+                tasks = []
+                all_rules = set()
+                for tid in task_ids:
+                    if not tid:
+                        continue
+                    task_trace = _trace_task(client, tid)
+                    tasks.append(task_trace)
+                    all_rules.update(task_trace.get("linked_rules", []))
 
-            tasks = []
-            all_rules = set()
-            for tid in task_ids:
-                if not tid:
-                    continue
-                task_trace = _trace_task(client, tid)
-                tasks.append(task_trace)
-                all_rules.update(task_trace.get("linked_rules", []))
-
-            result = {
-                "evidence_path": evidence_path,
-                "linked_tasks": tasks,
-                "linked_sessions": session_ids,
-                "linked_rules": sorted(all_rules),
-                "task_count": len(tasks),
-                "session_count": len(session_ids),
-                "rule_count": len(all_rules),
-            }
-
-            if MONITORING_AVAILABLE:
                 log_monitor_event(
                     event_type="trace_event", source="mcp-trace-evidence-chain",
                     details={"evidence_path": evidence_path})
-
-            return format_mcp_result(result)
-        finally:
-            client.close()
+                return format_mcp_result({
+                    "evidence_path": evidence_path,
+                    "linked_tasks": tasks, "linked_sessions": session_ids,
+                    "linked_rules": sorted(all_rules),
+                    "task_count": len(tasks), "session_count": len(session_ids),
+                    "rule_count": len(all_rules),
+                })
+        except ConnectionError as e:
+            return format_mcp_result({"error": str(e)})
