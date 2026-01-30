@@ -60,7 +60,9 @@ Record Test Result
 
     # Track linked rules
     FOR    ${rule}    IN    @{rules}
-        Run Keyword If    '${rule}' != ''    Append To List    ${LINKED_RULES}    ${rule}
+        IF    '${rule}' != ''
+            Append To List    ${LINKED_RULES}    ${rule}
+        END
     END
 
 Link To Rule
