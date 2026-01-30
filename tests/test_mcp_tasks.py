@@ -239,7 +239,7 @@ class TestTypeDBTaskOperations:
                 # Cleanup
                 try:
                     client.delete_task("TDD-001")
-                except:
+                except Exception:
                     pass
                 client.close()
         except (ImportError, AttributeError) as e:

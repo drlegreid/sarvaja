@@ -5,6 +5,7 @@ Modularized: 2026-01-02 (RULE-032)
 
 Full edge-to-edge validation function.
 """
+import os
 from typing import Dict, Any
 
 from governance.integrity.models import ValidationLevel
@@ -13,7 +14,7 @@ from governance.integrity.validator import DataIntegrityValidator
 
 def validate_edge_to_edge(
     client=None,
-    api_url: str = "http://localhost:8082"
+    api_url: str = os.environ.get("GOVERNANCE_API_URL", "http://localhost:8082")
 ) -> Dict[str, Any]:
     """
     Run full edge-to-edge validation.

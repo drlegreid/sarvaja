@@ -222,7 +222,7 @@ class MCPTasksLibrary:
                 # Cleanup
                 try:
                     client.delete_task("TDD-001")
-                except:
+                except Exception:
                     pass
                 return {"inserted": success}
             finally:

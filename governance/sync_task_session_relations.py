@@ -11,9 +11,10 @@ Usage:
 Created: 2026-01-17
 """
 
+import os
 import requests
 
-API_BASE = "http://localhost:8082"
+API_BASE = os.environ.get("GOVERNANCE_API_URL", "http://localhost:8082")
 
 
 def sync_task_session_relations():
