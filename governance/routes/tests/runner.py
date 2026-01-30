@@ -7,12 +7,15 @@ Per UI-AUDIT-010: Evidence file linkage for Test Runner
 Created: 2026-01-17
 Updated: 2026-01-20 - Added evidence file generation
 """
+import logging
 import subprocess
 from datetime import datetime
 from pathlib import Path
 from typing import Optional, List
 from fastapi import APIRouter, Query, BackgroundTasks
 from pydantic import BaseModel
+
+logger = logging.getLogger(__name__)
 
 
 router = APIRouter(prefix="/tests", tags=["tests"])
@@ -360,5 +363,5 @@ _Evidence file: `{filename}`_
 
     except Exception as e:
         # Don't fail the test run if evidence generation fails
-        print(f"Warning: Failed to generate evidence file: {e}")
+        logger.warning(f"Failed to generate evidence file: {e}")
         return None

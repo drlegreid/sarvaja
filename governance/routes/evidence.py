@@ -41,30 +41,35 @@ def _extract_session_id(filename: str) -> str:
 # =============================================================================
 
 @router.get("/evidence", response_model=List[EvidenceResponse])
-async def list_evidence(limit: int = Query(20, description="Max results")):
+async def list_evidence(
+    offset: int = Query(0, ge=0, description="Skip first N results"),
+    limit: int = Query(20, ge=1, le=200, description="Max results (1-200)"),
+):
     """List evidence from evidence/ directory with session linkage."""
     evidence_dir = os.path.join(os.path.dirname(__file__), "..", "..", "evidence")
     evidence_list = []
 
     if os.path.exists(evidence_dir):
-        for filename in os.listdir(evidence_dir)[:limit]:
-            if filename.endswith(".md"):
-                filepath = os.path.join(evidence_dir, filename)
-                try:
-                    with open(filepath, "r", encoding="utf-8") as f:
-                        content = f.read()[:500]  # First 500 chars
+        md_files = sorted(
+            [f for f in os.listdir(evidence_dir) if f.endswith(".md")]
+        )
+        for filename in md_files[offset:offset + limit]:
+            filepath = os.path.join(evidence_dir, filename)
+            try:
+                with open(filepath, "r", encoding="utf-8") as f:
+                    content = f.read()[:500]  # First 500 chars
 
-                    session_id = _extract_session_id(filename)
+                session_id = _extract_session_id(filename)
 
-                    evidence_list.append(EvidenceResponse(
-                        evidence_id=filename.replace(".md", ""),
-                        source=filename,
-                        content=content,
-                        created_at=datetime.fromtimestamp(os.path.getctime(filepath)).isoformat(),
-                        session_id=session_id
-                    ))
-                except Exception as e:
-                    logger.warning(f"Failed to read evidence file {filename}: {e}")
+                evidence_list.append(EvidenceResponse(
+                    evidence_id=filename.replace(".md", ""),
+                    source=filename,
+                    content=content,
+                    created_at=datetime.fromtimestamp(os.path.getctime(filepath)).isoformat(),
+                    session_id=session_id
+                ))
+            except Exception as e:
+                logger.warning(f"Failed to read evidence file {filename}: {e}")
 
     return evidence_list
 
