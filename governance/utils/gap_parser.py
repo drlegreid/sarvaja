@@ -13,11 +13,14 @@ Usage:
         print(f"[{gap.priority}] {gap.id}: {gap.description}")
 """
 
+import logging
 import re
 from dataclasses import dataclass
 from pathlib import Path
 from typing import List, Optional, Dict
 from enum import IntEnum
+
+logger = logging.getLogger(__name__)
 
 # Priority ordering (lower number = higher priority)
 class Priority(IntEnum):
@@ -251,12 +254,12 @@ def get_gap_summary(path: Optional[Path] = None) -> Dict:
 
 # CLI interface for testing
 if __name__ == "__main__":
+    logging.basicConfig(level=logging.INFO)
     parser = GapParser()
     summary = parser.get_summary()
-    print(f"Gap Summary: {summary['open']} open, {summary['resolved']} resolved")
-    print(f"  CRITICAL: {summary['critical_count']}")
-    print(f"  HIGH: {summary['high_count']}")
-    print()
-    print("Top 10 prioritized gaps:")
+    logger.info(f"Gap Summary: {summary['open']} open, {summary['resolved']} resolved")
+    logger.info(f"  CRITICAL: {summary['critical_count']}")
+    logger.info(f"  HIGH: {summary['high_count']}")
+    logger.info("Top 10 prioritized gaps:")
     for gap in parser.get_prioritized(10):
-        print(f"  {gap.to_todo_format()}")
+        logger.info(f"  {gap.to_todo_format()}")

@@ -23,9 +23,12 @@ Usage:
     all_items = get_unified_backlog()
 """
 
+import logging
 from dataclasses import dataclass, field
 from enum import IntEnum, Enum
 from typing import Dict, List, Any
+
+logger = logging.getLogger(__name__)
 
 
 class Priority(IntEnum):
@@ -252,6 +255,7 @@ def group_by_type(items: List[WorkItem]) -> Dict[str, List[WorkItem]]:
 
 # CLI test
 if __name__ == "__main__":
+    logging.basicConfig(level=logging.INFO)
     # Test WorkItem creation
     item = WorkItem(
         id="GAP-TEST-001",
@@ -261,7 +265,7 @@ if __name__ == "__main__":
         item_type=WorkItemType.GAP,
         source="test",
     )
-    print(f"WorkItem: {item.to_todo_format()}")
-    print(f"Priority order: {item.priority_order}")
-    print(f"Is open: {item.is_open}")
-    print(f"Dict: {item.to_dict()}")
+    logger.info(f"WorkItem: {item.to_todo_format()}")
+    logger.info(f"Priority order: {item.priority_order}")
+    logger.info(f"Is open: {item.is_open}")
+    logger.info(f"Dict: {item.to_dict()}")

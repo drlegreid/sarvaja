@@ -25,6 +25,8 @@ Updated: 2026-01-13 - Modularized into sub-modules per DOC-SIZE-01-v1
 
 import logging
 
+logger = logging.getLogger(__name__)
+
 # Re-export from sub-modules for backwards compatibility
 from .rule_linker_ids import (
     LEGACY_RULE_PATTERN,
@@ -73,20 +75,18 @@ if __name__ == "__main__":
     import json
     logging.basicConfig(level=logging.INFO)
 
-    print("=" * 60)
-    print("Rule-Document Linker Test")
-    print("=" * 60)
+    logger.info("Rule-Document Linker Test")
 
     # Test scanning
     documents = scan_rule_documents()
-    print(f"\nScanned {len(documents)} rule documents:")
+    logger.info(f"Scanned {len(documents)} rule documents:")
 
     for doc in documents:
-        print(f"\n  {doc.document_id}:")
-        print(f"    Path: {doc.path}")
-        print(f"    Rules: {', '.join(doc.rule_ids or [])}")
+        logger.info(f"  {doc.document_id}:")
+        logger.info(f"    Path: {doc.path}")
+        logger.info(f"    Rules: {', '.join(doc.rule_ids or [])}")
 
     # Test linking (if TypeDB available)
-    print("\n--- Linking to TypeDB ---")
+    logger.info("Linking to TypeDB")
     result = link_rules_to_documents()
-    print(json.dumps(result, indent=2))
+    logger.info(json.dumps(result, indent=2))

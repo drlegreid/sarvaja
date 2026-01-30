@@ -28,6 +28,10 @@ Usage:
     results = router.query("Find all governance rules about sessions")
 """
 
+import logging
+
+logger = logging.getLogger(__name__)
+
 # =============================================================================
 # RE-EXPORTS FROM PACKAGE (Backward Compatibility)
 # =============================================================================
@@ -63,16 +67,15 @@ __all__ = [
 # =============================================================================
 
 if __name__ == "__main__":
-    print("=" * 60)
-    print("Hybrid Query Router Test (Refactored)")
-    print("=" * 60)
+    logging.basicConfig(level=logging.INFO)
+    logger.info("Hybrid Query Router Test (Refactored)")
 
     router = HybridQueryRouter()
     status = router.connect()
-    print(f"\nConnection status: {status}")
+    logger.info(f"Connection status: {status}")
 
     health = router.health_check()
-    print(f"Health: {health}")
+    logger.info(f"Health: {health}")
 
     # Test queries
     test_queries = [
@@ -82,17 +85,17 @@ if __name__ == "__main__":
         ("conflicts between rules", "inference"),
     ]
 
-    print("\n--- Query Tests ---")
+    logger.info("Query Tests")
     for query, qtype in test_queries:
         result = router.query(query, query_type=qtype)
-        print(f"\n[{result.query_type.value}] '{query}'")
-        print(f"  Source: {result.source}")
-        print(f"  Results: {result.count}")
-        print(f"  Latency: {result.latency_ms:.1f}ms")
+        logger.info(f"[{result.query_type.value}] '{query}'")
+        logger.info(f"  Source: {result.source}")
+        logger.info(f"  Results: {result.count}")
+        logger.info(f"  Latency: {result.latency_ms:.1f}ms")
         if result.fallback_used:
-            print("  Fallback: Yes")
+            logger.info("  Fallback: Yes")
         if result.error:
-            print(f"  Error: {result.error}")
+            logger.error(f"  Error: {result.error}")
 
     router.close()
-    print("\n[OK] Router test complete!")
+    logger.info("Router test complete!")

@@ -187,15 +187,15 @@ def capture_workspace_tasks() -> Dict[str, Any]:
 if __name__ == "__main__":
     import json
     logging.basicConfig(level=logging.INFO)
-    print("="*60 + "\nWorkspace Task Scanner Test\n" + "="*60)
+    logger.info("Workspace Task Scanner Test")
     tasks = scan_workspace()
-    print(f"\nScanned {len(tasks)} tasks:")
+    logger.info(f"Scanned {len(tasks)} tasks:")
     by_source: Dict[str, List[ParsedTask]] = {}
     for t in tasks:
         by_source.setdefault(t.source_file or "unknown", []).append(t)
     for src, src_tasks in by_source.items():
-        print(f"\n  {src}: {len(src_tasks)} tasks")
-        for t in src_tasks[:3]: print(f"    - {t.task_id}: {t.name[:50]}... [{t.status}]")
-        if len(src_tasks) > 3: print(f"    ... and {len(src_tasks) - 3} more")
-    print("\n--- Syncing to TypeDB ---")
-    print(json.dumps(capture_workspace_tasks(), indent=2))
+        logger.info(f"  {src}: {len(src_tasks)} tasks")
+        for t in src_tasks[:3]: logger.info(f"    - {t.task_id}: {t.name[:50]}... [{t.status}]")
+        if len(src_tasks) > 3: logger.info(f"    ... and {len(src_tasks) - 3} more")
+    logger.info("Syncing to TypeDB")
+    logger.info(json.dumps(capture_workspace_tasks(), indent=2))
