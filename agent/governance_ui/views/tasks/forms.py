@@ -165,6 +165,40 @@ def build_task_linked_items() -> None:
                     __properties=["data-testid"],
                     **{"data-testid": "task-document-btn"}
                 )
+            # Agent pipeline (PLAN-UI-OVERHAUL-001 Task 3.4: Multi-Agent Mapping)
+            with html.Div(
+                v_if=(
+                    "selected_task.involved_agents?.length > 0 || "
+                    "selected_task.agent_id"
+                ),
+                classes="mb-2"
+            ):
+                html.Span("Agent Pipeline: ", classes="font-weight-bold")
+                # Primary assigned agent
+                v3.VChip(
+                    v_if="selected_task.agent_id",
+                    v_text="selected_task.agent_id",
+                    size="small",
+                    color="info",
+                    classes="mr-1",
+                    prepend_icon="mdi-robot",
+                    __properties=["data-testid"],
+                    **{"data-testid": "task-primary-agent"}
+                )
+                # Additional involved agents
+                v3.VChip(
+                    v_for="agent in (selected_task.involved_agents || [])",
+                    v_if="agent !== selected_task.agent_id",
+                    v_text="agent",
+                    size="small",
+                    color="secondary",
+                    variant="outlined",
+                    classes="mr-1",
+                    prepend_icon="mdi-robot",
+                    __properties=["data-testid"],
+                    **{"data-testid": "task-involved-agent"}
+                )
+
             # Evidence with verification info (GAP-UI-LINKED-SESSIONS-001)
             with html.Div(
                 v_if="selected_task.evidence",
