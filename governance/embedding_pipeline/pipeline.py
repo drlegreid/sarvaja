@@ -1,7 +1,10 @@
 """Embedding Pipeline Core (P7.2). Per GAP-FILE-021, DOC-SIZE-01-v1."""
 import json
+import logging
 from pathlib import Path
 from typing import List, Dict, Optional, Any
+
+logger = logging.getLogger(__name__)
 
 from governance.vector_store import (
     VectorStore,
@@ -49,7 +52,7 @@ class EmbeddingPipeline:
             result = json.loads(governance_query_rules())
 
             if isinstance(result, dict) and 'error' in result:
-                print(f"Warning: Could not fetch rules: {result['error']}")
+                logger.warning(f"Could not fetch rules: {result['error']}")
                 return []
 
             rules = result if isinstance(result, list) else result.get('rules', [])
@@ -66,7 +69,7 @@ class EmbeddingPipeline:
             return docs
 
         except Exception as e:
-            print(f"Error embedding rules: {e}")
+            logger.error(f"Error embedding rules: {e}")
             return []
 
     def embed_and_store_rule(self, rule_id: str, rule_content: str) -> VectorDocument:
@@ -85,7 +88,7 @@ class EmbeddingPipeline:
             result = json.loads(governance_list_decisions())
 
             if 'error' in result:
-                print(f"Warning: Could not fetch decisions: {result['error']}")
+                logger.warning(f"Could not fetch decisions: {result['error']}")
                 return []
 
             decisions = result.get('decisions', [])
@@ -102,7 +105,7 @@ class EmbeddingPipeline:
             return docs
 
         except Exception as e:
-            print(f"Error embedding decisions: {e}")
+            logger.error(f"Error embedding decisions: {e}")
             return []
 
     def embed_session(self, session_id: str, session_content: str) -> VectorDocument:
@@ -129,7 +132,7 @@ class EmbeddingPipeline:
             result = json.loads(governance_list_sessions(limit=limit))
 
             if 'error' in result:
-                print(f"Warning: Could not fetch sessions: {result['error']}")
+                logger.warning(f"Could not fetch sessions: {result['error']}")
                 return []
 
             sessions = result.get('sessions', [])
@@ -147,7 +150,7 @@ class EmbeddingPipeline:
             return docs
 
         except Exception as e:
-            print(f"Error embedding sessions: {e}")
+            logger.error(f"Error embedding sessions: {e}")
             return []
 
     def store_embedding(self, doc: VectorDocument) -> bool:
@@ -176,28 +179,28 @@ class EmbeddingPipeline:
 
     def run_full_pipeline(self, dry_run: bool = False) -> Dict[str, Any]:
         """Run complete embedding pipeline."""
-        print("Starting embedding pipeline...")
+        logger.info("Starting embedding pipeline...")
 
-        print("Embedding rules...")
+        logger.info("Embedding rules...")
         rule_docs = self.embed_rules()
         if not dry_run:
             self.store_embeddings(rule_docs)
-        print(f"  Embedded {len(rule_docs)} rules")
+        logger.info(f"Embedded {len(rule_docs)} rules")
 
-        print("Embedding decisions...")
+        logger.info("Embedding decisions...")
         decision_docs = self.embed_decisions()
         if not dry_run:
             self.store_embeddings(decision_docs)
-        print(f"  Embedded {len(decision_docs)} decisions")
+        logger.info(f"Embedded {len(decision_docs)} decisions")
 
-        print("Embedding sessions...")
+        logger.info("Embedding sessions...")
         session_docs = self.embed_sessions(limit=20)
         if not dry_run:
             self.store_embeddings(session_docs)
-        print(f"  Embedded {len(session_docs)} sessions")
+        logger.info(f"Embedded {len(session_docs)} sessions")
 
         total = len(rule_docs) + len(decision_docs) + len(session_docs)
-        print(f"Pipeline complete: {total} total embeddings")
+        logger.info(f"Pipeline complete: {total} total embeddings")
 
         return {
             'rules': len(rule_docs),
