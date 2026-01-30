@@ -13,9 +13,22 @@ from pydantic import ValidationError
 from governance.models import (
     RuleCreate,
     RuleUpdate,
+    RuleResponse,
     DecisionCreate,
     DecisionUpdate,
+    DecisionResponse,
     TaskCreate,
+    TaskResponse,
+    SessionResponse,
+    SessionCreate,
+    AgentResponse,
+    PaginationMeta,
+    PaginatedRuleResponse,
+    PaginatedTaskResponse,
+    PaginatedSessionResponse,
+    PaginatedAgentResponse,
+    PaginatedDecisionResponse,
+    APIStatus,
 )
 
 
@@ -257,3 +270,178 @@ class TestTaskCreateValidation:
         assert task.body is None
         assert task.linked_rules is None
         assert task.gap_id is None
+
+
+class TestResponseModels:
+    """Validate response model construction and defaults."""
+
+    def test_rule_response_minimal(self):
+        """RuleResponse with required fields only."""
+        r = RuleResponse(
+            id="RULE-001", name="Test", category="governance",
+            priority="HIGH", status="ACTIVE", directive="Do X",
+        )
+        assert r.id == "RULE-001"
+        assert r.semantic_id is None
+        assert r.created_date is None
+        assert r.document_path is None
+
+    def test_rule_response_with_optional(self):
+        """RuleResponse with all optional fields."""
+        r = RuleResponse(
+            id="RULE-001", name="Test", category="governance",
+            priority="HIGH", status="ACTIVE", directive="Do X",
+            semantic_id="GOV-RULE-01-v1", created_date="2026-01-30",
+            document_path="docs/rules/leaf/GOV-RULE-01-v1.md",
+            applicability="MANDATORY",
+        )
+        assert r.semantic_id == "GOV-RULE-01-v1"
+        assert r.applicability == "MANDATORY"
+
+    def test_task_response_defaults(self):
+        """TaskResponse optional fields default correctly."""
+        t = TaskResponse(
+            task_id="T-001", description="Task", phase="P10", status="OPEN",
+        )
+        assert t.resolution is None
+        assert t.agent_id is None
+        assert t.linked_rules is None
+        assert t.linked_commits is None
+
+    def test_decision_response_defaults(self):
+        """DecisionResponse with defaults."""
+        d = DecisionResponse(
+            id="DECISION-001", name="D", context="C",
+            rationale="R", status="APPROVED",
+        )
+        assert d.decision_date is None
+        assert d.linked_rules == []
+
+    def test_session_response_defaults(self):
+        """SessionResponse with required fields."""
+        s = SessionResponse(
+            session_id="SESSION-2026-01-30", start_time="2026-01-30T00:00:00",
+            status="active",
+        )
+        assert s.tasks_completed == 0
+        assert s.end_time is None
+        assert s.evidence_files is None
+
+    def test_agent_response_defaults(self):
+        """AgentResponse with default list fields."""
+        a = AgentResponse(
+            agent_id="agent-001", name="Claude", agent_type="curator",
+            status="active",
+        )
+        assert a.trust_score == 0.0
+        assert a.tasks_executed == 0
+        assert a.capabilities == []
+        assert a.recent_sessions == []
+        assert a.active_tasks == []
+
+    def test_session_create_auto_id(self):
+        """SessionCreate allows optional session_id."""
+        s = SessionCreate(description="Test session")
+        assert s.session_id is None
+        assert s.agent_id is None
+
+
+class TestPaginationModels:
+    """Validate pagination model construction."""
+
+    def test_pagination_meta(self):
+        """PaginationMeta stores all fields."""
+        meta = PaginationMeta(
+            total=100, offset=0, limit=20, has_more=True, returned=20,
+        )
+        assert meta.total == 100
+        assert meta.has_more is True
+
+    def test_paginated_rule_response(self):
+        """PaginatedRuleResponse wraps items + pagination."""
+        rules = [RuleResponse(
+            id="R1", name="N", category="governance",
+            priority="LOW", status="ACTIVE", directive="D",
+        )]
+        resp = PaginatedRuleResponse(
+            items=rules,
+            pagination=PaginationMeta(
+                total=1, offset=0, limit=20, has_more=False, returned=1,
+            ),
+        )
+        assert len(resp.items) == 1
+        assert resp.pagination.total == 1
+        assert resp.pagination.has_more is False
+
+    def test_paginated_task_response(self):
+        """PaginatedTaskResponse wraps task items."""
+        tasks = [TaskResponse(
+            task_id="T1", description="D", phase="P10", status="TODO",
+        )]
+        resp = PaginatedTaskResponse(
+            items=tasks,
+            pagination=PaginationMeta(
+                total=50, offset=20, limit=20, has_more=True, returned=1,
+            ),
+        )
+        assert resp.pagination.offset == 20
+        assert resp.pagination.has_more is True
+
+    def test_paginated_empty_items(self):
+        """Paginated response with empty items list."""
+        resp = PaginatedDecisionResponse(
+            items=[],
+            pagination=PaginationMeta(
+                total=0, offset=0, limit=20, has_more=False, returned=0,
+            ),
+        )
+        assert len(resp.items) == 0
+        assert resp.pagination.returned == 0
+
+    def test_paginated_session_response(self):
+        """PaginatedSessionResponse wraps session items."""
+        sessions = [SessionResponse(
+            session_id="S1", start_time="2026-01-30T00:00:00", status="active",
+        )]
+        resp = PaginatedSessionResponse(
+            items=sessions,
+            pagination=PaginationMeta(
+                total=1, offset=0, limit=20, has_more=False, returned=1,
+            ),
+        )
+        assert resp.items[0].session_id == "S1"
+
+    def test_paginated_agent_response(self):
+        """PaginatedAgentResponse wraps agent items."""
+        agents = [AgentResponse(
+            agent_id="A1", name="Bot", agent_type="curator", status="active",
+        )]
+        resp = PaginatedAgentResponse(
+            items=agents,
+            pagination=PaginationMeta(
+                total=1, offset=0, limit=20, has_more=False, returned=1,
+            ),
+        )
+        assert resp.items[0].agent_id == "A1"
+
+
+class TestAPIStatus:
+    """Validate APIStatus model."""
+
+    def test_api_status_defaults(self):
+        """APIStatus with required fields and defaults."""
+        status = APIStatus(
+            status="healthy", typedb_connected=True,
+            rules_count=50, decisions_count=10,
+        )
+        assert status.version == "1.0.0"
+        assert status.auth_enabled is False
+
+    def test_api_status_custom(self):
+        """APIStatus with custom version."""
+        status = APIStatus(
+            status="degraded", typedb_connected=False,
+            rules_count=0, decisions_count=0, version="2.0.0",
+        )
+        assert status.version == "2.0.0"
+        assert status.typedb_connected is False
