@@ -36,19 +36,10 @@ def get_semantic_id(legacy_id: str) -> Optional[str]:
 def get_rule_document_paths(client, rule_ids: List[str]) -> Dict[str, str]:
     """
     Batch query document paths for multiple rules.
-
     Per GAP-UI-AUDIT-001: Efficient batch query for rule-document linkage.
-
-    Args:
-        client: TypeDB client instance
-        rule_ids: List of rule IDs to query
-
-    Returns:
-        Dict mapping rule_id -> document_path
     """
     if not rule_ids:
         return {}
-
     try:
         query = """
         match
@@ -58,19 +49,43 @@ def get_rule_document_paths(client, rule_ids: List[str]) -> Dict[str, str]:
         select $rid, $path;
         """
         results = client.execute_query(query)
-
-        # Build mapping of rule_id -> document_path
-        doc_paths = {}
-        for r in results:
-            rid = r.get("rid")
-            path = r.get("path")
-            if rid and path:
-                doc_paths[rid] = path
-
-        return doc_paths
+        return {r["rid"]: r["path"] for r in results if r.get("rid") and r.get("path")}
     except Exception as e:
         logger.warning(f"Failed to query rule document paths: {e}")
         return {}
+
+
+def _rule_to_response(rule, doc_path: Optional[str] = None) -> RuleResponse:
+    """Convert a TypeDB Rule entity to RuleResponse. DRY helper."""
+    return RuleResponse(
+        id=rule.id,
+        semantic_id=get_semantic_id(rule.id),
+        name=rule.name,
+        category=rule.category,
+        priority=rule.priority,
+        status=rule.status,
+        directive=rule.directive,
+        created_date=rule.created_date.isoformat() if rule.created_date else None,
+        document_path=doc_path,
+        applicability=rule.applicability,
+    )
+
+
+def _resolve_rule(client, rule_id: str):
+    """
+    Resolve a rule by ID, trying semantic then legacy format.
+    Per GAP-MCP-008: Accepts both legacy and semantic IDs.
+    Returns (actual_id, rule) or raises HTTPException(404).
+    """
+    rule = client.get_rule_by_id(rule_id)
+    if rule:
+        return rule_id, rule
+    legacy_id = normalize_rule_id(rule_id)
+    if legacy_id != rule_id:
+        rule = client.get_rule_by_id(legacy_id)
+        if rule:
+            return legacy_id, rule
+    raise HTTPException(status_code=404, detail=f"Rule {rule_id} not found")
 
 
 # =============================================================================
@@ -132,21 +147,7 @@ async def list_rules(
         rule_ids = [r.id for r in paginated]
         doc_paths = get_rule_document_paths(client, rule_ids)
 
-        items = [
-            RuleResponse(
-                id=r.id,
-                semantic_id=get_semantic_id(r.id),
-                name=r.name,
-                category=r.category,
-                priority=r.priority,
-                status=r.status,
-                directive=r.directive,
-                created_date=r.created_date.isoformat() if r.created_date else None,
-                document_path=doc_paths.get(r.id),
-                applicability=r.applicability  # Per RD-RULE-APPLICABILITY
-            )
-            for r in paginated
-        ]
+        items = [_rule_to_response(r, doc_paths.get(r.id)) for r in paginated]
         return PaginatedRuleResponse(
             items=items,
             pagination=PaginationMeta(
@@ -175,33 +176,9 @@ async def get_rule(rule_id: str):
         raise HTTPException(status_code=503, detail="TypeDB not connected")
 
     try:
-        # Try direct lookup first (rules stored with semantic IDs since 2026-01-17)
-        rule = client.get_rule_by_id(rule_id)
-
-        # If not found, try legacy format conversion
-        if not rule:
-            legacy_id = normalize_rule_id(rule_id)
-            if legacy_id != rule_id:
-                rule = client.get_rule_by_id(legacy_id)
-        if not rule:
-            raise HTTPException(status_code=404, detail=f"Rule {rule_id} not found")
-
-        # Get document path for this rule (GAP-UI-AUDIT-001)
+        _, rule = _resolve_rule(client, rule_id)
         doc_paths = get_rule_document_paths(client, [rule.id])
-        doc_path = doc_paths.get(rule.id)
-
-        return RuleResponse(
-            id=rule.id,
-            semantic_id=get_semantic_id(rule.id),
-            name=rule.name,
-            category=rule.category,
-            priority=rule.priority,
-            status=rule.status,
-            directive=rule.directive,
-            created_date=rule.created_date.isoformat() if rule.created_date else None,
-            document_path=doc_path,
-            applicability=rule.applicability  # Per RD-RULE-APPLICABILITY
-        )
+        return _rule_to_response(rule, doc_paths.get(rule.id))
     except HTTPException:
         raise
     except ValueError as e:
@@ -235,19 +212,7 @@ async def create_rule(rule: RuleCreate):
         if not created:
             raise HTTPException(status_code=500, detail="Failed to create rule")
 
-        # New rules won't have document linkage yet
-        return RuleResponse(
-            id=created.id,
-            semantic_id=get_semantic_id(created.id),
-            name=created.name,
-            category=created.category,
-            priority=created.priority,
-            status=created.status,
-            directive=created.directive,
-            created_date=created.created_date.isoformat() if created.created_date else None,
-            document_path=None,
-            applicability=created.applicability  # Per RD-RULE-APPLICABILITY
-        )
+        return _rule_to_response(created)
     except HTTPException:
         raise
     except ValueError as e:
@@ -264,18 +229,7 @@ async def update_rule(rule_id: str, rule: RuleUpdate):
         raise HTTPException(status_code=503, detail="TypeDB not connected")
 
     try:
-        # Try direct lookup first (rules stored with semantic IDs since 2026-01-17)
-        actual_id = rule_id
-        existing = client.get_rule_by_id(rule_id)
-        if not existing:
-            # Try legacy format conversion
-            legacy_id = normalize_rule_id(rule_id)
-            if legacy_id != rule_id:
-                existing = client.get_rule_by_id(legacy_id)
-                if existing:
-                    actual_id = legacy_id
-        if not existing:
-            raise HTTPException(status_code=404, detail=f"Rule {rule_id} not found")
+        actual_id, _ = _resolve_rule(client, rule_id)
 
         updated = client.update_rule(
             rule_id=actual_id,
@@ -285,26 +239,11 @@ async def update_rule(rule_id: str, rule: RuleUpdate):
             directive=rule.directive,
             status=rule.status
         )
-
         if not updated:
             raise HTTPException(status_code=500, detail="Failed to update rule")
 
-        # Get document path for updated rule (GAP-UI-AUDIT-001)
         doc_paths = get_rule_document_paths(client, [updated.id])
-        doc_path = doc_paths.get(updated.id)
-
-        return RuleResponse(
-            id=updated.id,
-            semantic_id=get_semantic_id(updated.id),
-            name=updated.name,
-            category=updated.category,
-            priority=updated.priority,
-            status=updated.status,
-            directive=updated.directive,
-            created_date=updated.created_date.isoformat() if updated.created_date else None,
-            document_path=doc_path,
-            applicability=updated.applicability  # Per RD-RULE-APPLICABILITY
-        )
+        return _rule_to_response(updated, doc_paths.get(updated.id))
     except HTTPException:
         raise
     except ValueError as e:
@@ -327,20 +266,13 @@ async def get_rule_tasks(rule_id: str):
         raise HTTPException(status_code=503, detail="TypeDB not connected")
 
     try:
-        # Try direct lookup first
         tasks = client.get_tasks_for_rule(rule_id)
-
-        # If no results, try legacy format conversion
         if not tasks:
             legacy_id = normalize_rule_id(rule_id)
             if legacy_id != rule_id:
                 tasks = client.get_tasks_for_rule(legacy_id)
 
-        return {
-            "rule_id": rule_id,
-            "implementing_tasks": tasks,
-            "count": len(tasks)
-        }
+        return {"rule_id": rule_id, "implementing_tasks": tasks, "count": len(tasks)}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -353,19 +285,7 @@ async def delete_rule(rule_id: str, archive: bool = Query(True, description="Arc
         raise HTTPException(status_code=503, detail="TypeDB not connected")
 
     try:
-        # Try direct lookup first (rules stored with semantic IDs since 2026-01-17)
-        actual_id = rule_id
-        existing = client.get_rule_by_id(rule_id)
-        if not existing:
-            # Try legacy format conversion
-            legacy_id = normalize_rule_id(rule_id)
-            if legacy_id != rule_id:
-                existing = client.get_rule_by_id(legacy_id)
-                if existing:
-                    actual_id = legacy_id
-        if not existing:
-            raise HTTPException(status_code=404, detail=f"Rule {rule_id} not found")
-
+        actual_id, _ = _resolve_rule(client, rule_id)
         deleted = client.delete_rule(actual_id, archive=archive)
         if not deleted:
             raise HTTPException(status_code=500, detail="Failed to delete rule")
