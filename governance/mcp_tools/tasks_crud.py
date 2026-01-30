@@ -1,4 +1,5 @@
 """Task CRUD MCP Tools. Per RULE-012/032, DECISION-003."""
+from contextlib import contextmanager
 from typing import Optional
 from dataclasses import asdict
 
@@ -10,6 +11,25 @@ try:
     MONITORING_AVAILABLE = True
 except ImportError:
     MONITORING_AVAILABLE = False
+
+
+@contextmanager
+def _typedb_client():
+    """Context manager for TypeDB client connect/close."""
+    client = get_typedb_client()
+    try:
+        if not client.connect():
+            raise ConnectionError("Failed to connect to TypeDB")
+        yield client
+    finally:
+        client.close()
+
+
+def _monitor_task(source: str, task_id: str, action: str, severity: str = "INFO", **extra):
+    """Log a task monitoring event if monitoring is available."""
+    if MONITORING_AVAILABLE:
+        details = {"task_id": task_id, "action": action, **extra}
+        log_monitor_event(event_type="task_event", source=source, details=details, severity=severity)
 
 
 def register_task_crud_tools(mcp) -> None:
@@ -32,42 +52,22 @@ def register_task_crud_tools(mcp) -> None:
         Returns:
             JSON with created task details or error
         """
-        client = get_typedb_client()
         try:
-            if not client.connect():
-                return format_mcp_result({"error": "Failed to connect to TypeDB"})
-
-            # Map description -> body, include priority in body (per TypeDB schema)
-            body = f"[Priority: {priority}] {description}" if description else f"[Priority: {priority}]"
-            success = client.insert_task(
-                task_id=task_id,
-                name=name,
-                status=status,
-                phase=phase,
-                body=body
-            )
-
-            if success:
-                # Instrument task creation
-                if MONITORING_AVAILABLE:
-                    log_monitor_event(
-                        event_type="task_event",
-                        source="mcp-task-create",
-                        details={"task_id": task_id, "action": "create", "status": status, "priority": priority},
-                        severity="INFO"
-                    )
-                return format_mcp_result({
-                    "task_id": task_id,
-                    "name": name,
-                    "status": status,
-                    "phase": phase,
-                    "priority": priority,
-                    "message": f"Task {task_id} created successfully"
-                })
-            else:
+            with _typedb_client() as client:
+                body = f"[Priority: {priority}] {description}" if description else f"[Priority: {priority}]"
+                success = client.insert_task(
+                    task_id=task_id, name=name, status=status, phase=phase, body=body
+                )
+                if success:
+                    _monitor_task("mcp-task-create", task_id, "create", status=status, priority=priority)
+                    return format_mcp_result({
+                        "task_id": task_id, "name": name, "status": status,
+                        "phase": phase, "priority": priority,
+                        "message": f"Task {task_id} created successfully"
+                    })
                 return format_mcp_result({"error": f"Failed to create task {task_id}"})
-        finally:
-            client.close()
+        except ConnectionError as e:
+            return format_mcp_result({"error": str(e)})
 
     @mcp.tool()
     def task_get(task_id: str) -> str:
@@ -80,25 +80,15 @@ def register_task_crud_tools(mcp) -> None:
         Returns:
             JSON with task details or error if not found
         """
-        client = get_typedb_client()
         try:
-            if not client.connect():
-                return format_mcp_result({"error": "Failed to connect to TypeDB"})
-
-            task = client.get_task(task_id)
-            if task:
-                # Instrument task query
-                if MONITORING_AVAILABLE:
-                    log_monitor_event(
-                        event_type="task_event",
-                        source="mcp-task-get",
-                        details={"task_id": task_id, "action": "query", "found": True}
-                    )
-                return format_mcp_result(asdict(task))
-            else:
+            with _typedb_client() as client:
+                task = client.get_task(task_id)
+                if task:
+                    _monitor_task("mcp-task-get", task_id, "query", found=True)
+                    return format_mcp_result(asdict(task))
                 return format_mcp_result({"error": f"Task {task_id} not found"})
-        finally:
-            client.close()
+        except ConnectionError as e:
+            return format_mcp_result({"error": str(e)})
 
     @mcp.tool()
     def task_update(task_id: str, status: Optional[str] = None, name: Optional[str] = None,
@@ -118,40 +108,22 @@ def register_task_crud_tools(mcp) -> None:
         if not any([status, name, phase]):
             return format_mcp_result({"error": "No update fields provided"})
 
-        client = get_typedb_client()
         try:
-            if not client.connect():
-                return format_mcp_result({"error": "Failed to connect to TypeDB"})
-
-            success = client.update_task(
-                task_id=task_id,
-                status=status,
-                name=name,
-                phase=phase
-            )
-
-            if success:
-                # Instrument task update
-                if MONITORING_AVAILABLE:
-                    log_monitor_event(
-                        event_type="task_event",
-                        source="mcp-task-update",
-                        details={"task_id": task_id, "action": "update", "status": status, "phase": phase}
-                    )
-                # Get updated task to return
-                task = client.get_task(task_id)
-                if task:
-                    result = asdict(task)
-                    result["message"] = f"Task {task_id} updated successfully"
-                    return format_mcp_result(result)
-                return format_mcp_result({
-                    "task_id": task_id,
-                    "message": f"Task {task_id} updated successfully"
-                })
-            else:
+            with _typedb_client() as client:
+                success = client.update_task(task_id=task_id, status=status, name=name, phase=phase)
+                if success:
+                    _monitor_task("mcp-task-update", task_id, "update", status=status, phase=phase)
+                    task = client.get_task(task_id)
+                    if task:
+                        result = asdict(task)
+                        result["message"] = f"Task {task_id} updated successfully"
+                        return format_mcp_result(result)
+                    return format_mcp_result({
+                        "task_id": task_id, "message": f"Task {task_id} updated successfully"
+                    })
                 return format_mcp_result({"error": f"Failed to update task {task_id}"})
-        finally:
-            client.close()
+        except ConnectionError as e:
+            return format_mcp_result({"error": str(e)})
 
     @mcp.tool()
     def task_delete(task_id: str) -> str:
@@ -164,31 +136,18 @@ def register_task_crud_tools(mcp) -> None:
         Returns:
             JSON with deletion confirmation or error
         """
-        client = get_typedb_client()
         try:
-            if not client.connect():
-                return format_mcp_result({"error": "Failed to connect to TypeDB"})
-
-            success = client.delete_task(task_id)
-
-            if success:
-                # Instrument task deletion
-                if MONITORING_AVAILABLE:
-                    log_monitor_event(
-                        event_type="task_event",
-                        source="mcp-task-delete",
-                        details={"task_id": task_id, "action": "delete"},
-                        severity="WARNING"
-                    )
-                return format_mcp_result({
-                    "task_id": task_id,
-                    "deleted": True,
-                    "message": f"Task {task_id} deleted successfully"
-                })
-            else:
+            with _typedb_client() as client:
+                success = client.delete_task(task_id)
+                if success:
+                    _monitor_task("mcp-task-delete", task_id, "delete", severity="WARNING")
+                    return format_mcp_result({
+                        "task_id": task_id, "deleted": True,
+                        "message": f"Task {task_id} deleted successfully"
+                    })
                 return format_mcp_result({"error": f"Failed to delete task {task_id}"})
-        finally:
-            client.close()
+        except ConnectionError as e:
+            return format_mcp_result({"error": str(e)})
 
     @mcp.tool()
     def tasks_list() -> str:
@@ -198,19 +157,15 @@ def register_task_crud_tools(mcp) -> None:
         Returns:
             JSON with array of all tasks and count
         """
-        client = get_typedb_client()
         try:
-            if not client.connect():
-                return format_mcp_result({"error": "Failed to connect to TypeDB"})
-
-            tasks = client.get_all_tasks()
-            return format_mcp_result({
-                "tasks": [asdict(t) for t in tasks],
-                "count": len(tasks),
-                "source": "typedb"
-            })
-        finally:
-            client.close()
+            with _typedb_client() as client:
+                tasks = client.get_all_tasks()
+                return format_mcp_result({
+                    "tasks": [asdict(t) for t in tasks],
+                    "count": len(tasks), "source": "typedb"
+                })
+        except ConnectionError as e:
+            return format_mcp_result({"error": str(e)})
 
     @mcp.tool()
     def task_verify(task_id: str, verification_method: str, evidence: str,
@@ -252,45 +207,27 @@ def register_task_crud_tools(mcp) -> None:
             })
 
         # Verification passed - update task status
-        client = get_typedb_client()
+        evidence_short = evidence[:500] if len(evidence) > 500 else evidence
         try:
-            if not client.connect():
-                return format_mcp_result({"error": "Failed to connect to TypeDB"})
-
-            success = client.update_task(
-                task_id=task_id,
-                status="completed"
-            )
-
-            if success:
-                # Instrument task verification
-                if MONITORING_AVAILABLE:
-                    log_monitor_event(
-                        event_type="task_event",
-                        source="mcp-task-verify",
-                        details={"task_id": task_id, "action": "verify", "method": verification_method}
-                    )
+            with _typedb_client() as client:
+                success = client.update_task(task_id=task_id, status="completed")
+                if success:
+                    _monitor_task("mcp-task-verify", task_id, "verify", method=verification_method)
+                    return format_mcp_result({
+                        "task_id": task_id, "status": "completed", "verified": True,
+                        "verification_method": verification_method,
+                        "evidence": evidence_short, "rule": "TEST-FIX-01-v1",
+                        "message": f"Task {task_id} verified and marked completed"
+                    })
                 return format_mcp_result({
-                    "task_id": task_id,
-                    "status": "completed",
-                    "verified": True,
+                    "task_id": task_id, "verified": True,
                     "verification_method": verification_method,
-                    "evidence": evidence[:500] if len(evidence) > 500 else evidence,
-                    "rule": "TEST-FIX-01-v1",
-                    "message": f"Task {task_id} verified and marked completed"
-                })
-            else:
-                # Task might not exist in TypeDB, but verification is recorded
-                return format_mcp_result({
-                    "task_id": task_id,
-                    "verified": True,
-                    "verification_method": verification_method,
-                    "evidence": evidence[:500] if len(evidence) > 500 else evidence,
+                    "evidence": evidence_short,
                     "note": "Task not in TypeDB but verification recorded",
                     "message": f"Verification complete for {task_id}"
                 })
-        finally:
-            client.close()
+        except ConnectionError as e:
+            return format_mcp_result({"error": str(e)})
 
     @mcp.tool()
     def session_sync_todos(session_id: str, todos_json: str) -> str:
@@ -320,53 +257,42 @@ def register_task_crud_tools(mcp) -> None:
         if not isinstance(todos, list):
             return format_mcp_result({"error": "todos_json must be a JSON array"})
 
-        client = get_typedb_client()
         try:
-            if not client.connect():
-                return format_mcp_result({"error": "Failed to connect to TypeDB"})
+            with _typedb_client() as client:
+                date_str = datetime.now().strftime("%Y%m%d")
+                created, updated, skipped = 0, 0, 0
+                synced_tasks = []
 
-            date_str = datetime.now().strftime("%Y%m%d")
-            created, updated, skipped = 0, 0, 0
-            synced_tasks = []
-
-            for i, todo in enumerate(todos, 1):
-                content = todo.get("content", "")
-                status = todo.get("status", "pending")
-                if not content:
-                    skipped += 1
-                    continue
-
-                # Generate task ID from session and index
-                task_id = f"TODO-{date_str}-{i:03d}"
-
-                # Check if exists
-                existing = client.get_task(task_id)
-                if existing:
-                    # Update status only
-                    if existing.status != status:
-                        client.update_task(task_id, status=status)
-                        updated += 1
-                        synced_tasks.append({"task_id": task_id, "action": "updated"})
-                    else:
+                for i, todo in enumerate(todos, 1):
+                    content = todo.get("content", "")
+                    status = todo.get("status", "pending")
+                    if not content:
                         skipped += 1
-                else:
-                    # Create new task
-                    body = f"[Session: {session_id}] {content}"
-                    client.insert_task(
-                        task_id=task_id,
-                        name=content[:100],  # Truncate long names
-                        status=status,
-                        phase="SESSION",
-                        body=body
-                    )
-                    created += 1
-                    synced_tasks.append({"task_id": task_id, "action": "created"})
+                        continue
 
-            return format_mcp_result({
-                "session_id": session_id,
-                "summary": {"created": created, "updated": updated, "skipped": skipped},
-                "tasks": synced_tasks,
-                "message": f"Synced {created + updated} tasks to TypeDB"
-            })
-        finally:
-            client.close()
+                    task_id = f"TODO-{date_str}-{i:03d}"
+                    existing = client.get_task(task_id)
+                    if existing:
+                        if existing.status != status:
+                            client.update_task(task_id, status=status)
+                            updated += 1
+                            synced_tasks.append({"task_id": task_id, "action": "updated"})
+                        else:
+                            skipped += 1
+                    else:
+                        body = f"[Session: {session_id}] {content}"
+                        client.insert_task(
+                            task_id=task_id, name=content[:100],
+                            status=status, phase="SESSION", body=body
+                        )
+                        created += 1
+                        synced_tasks.append({"task_id": task_id, "action": "created"})
+
+                return format_mcp_result({
+                    "session_id": session_id,
+                    "summary": {"created": created, "updated": updated, "skipped": skipped},
+                    "tasks": synced_tasks,
+                    "message": f"Synced {created + updated} tasks to TypeDB"
+                })
+        except ConnectionError as e:
+            return format_mcp_result({"error": str(e)})
