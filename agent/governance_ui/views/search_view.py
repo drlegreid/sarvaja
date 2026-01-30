@@ -88,53 +88,20 @@ def build_search_view() -> None:
                 html.Span("{{ search_results.length }} results found")
             )
 
-            # Results list
-            with v3.VList(
+            # Results grid (PLAN-UI-OVERHAUL-001 Task 1.4: Evidence Grid)
+            v3.VDataTable(
                 v_if="search_results && search_results.length > 0",
+                items=("search_results",),
+                headers=[
+                    {"title": "Source", "key": "source", "sortable": True},
+                    {"title": "Type", "key": "source_type", "width": "120px", "sortable": True},
+                    {"title": "Score", "key": "score", "width": "100px", "sortable": True},
+                    {"title": "Content", "key": "content", "sortable": False},
+                ],
+                item_value="source",
                 density="compact",
+                items_per_page=20,
+                hover=True,
                 __properties=["data-testid"],
-                **{"data-testid": "search-results"}
-            ):
-                with v3.VListItem(
-                    v_for="result in search_results",
-                    key=("result.source",),
-                    __properties=["data-testid"],
-                    **{"data-testid": "search-result-item"}
-                ):
-                    with html.Template(v_slot_prepend=True):
-                        v3.VIcon(
-                            icon=(
-                                "result.source_type === 'rule' ? 'mdi-gavel' : "
-                                "result.source_type === 'session' ? 'mdi-clock-outline' : "
-                                "result.source_type === 'decision' ? 'mdi-scale-balance' : "
-                                "'mdi-file-document-outline'"
-                            ),
-                            color=(
-                                "result.source_type === 'rule' ? 'primary' : "
-                                "result.source_type === 'session' ? 'info' : "
-                                "result.source_type === 'decision' ? 'warning' : 'grey'"
-                            )
-                        )
-                    with v3.VListItemTitle():
-                        html.Span("{{ result.source }}")
-                    with v3.VListItemSubtitle():
-                        # Source type badge
-                        v3.VChip(
-                            v_text="result.source_type",
-                            size="x-small",
-                            color="secondary",
-                            variant="tonal",
-                            classes="mr-2"
-                        )
-                        # Relevance score
-                        v3.VChip(
-                            v_text="'Score: ' + (result.score || 0)",
-                            size="x-small",
-                            color="info",
-                            variant="tonal"
-                        )
-                    # Content preview
-                    with html.Div(classes="text-caption text-grey mt-1"):
-                        html.Span(
-                            "{{ result.content ? result.content.substring(0, 150) + '...' : 'No preview available' }}"
-                        )
+                **{"data-testid": "search-results-table"}
+            )
