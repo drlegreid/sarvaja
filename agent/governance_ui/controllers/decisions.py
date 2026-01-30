@@ -91,7 +91,8 @@ def register_decisions_controllers(state: Any, ctrl: Any, api_base_url: str) -> 
                     # Reload decisions from API
                     decisions_response = client.get(f"{api_base_url}/api/decisions")
                     if decisions_response.status_code == 200:
-                        state.decisions = decisions_response.json()
+                        data = decisions_response.json()
+                        state.decisions = data.get("items", data) if isinstance(data, dict) else data
                 else:
                     state.has_error = True
                     state.error_message = f"API Error: {response.status_code} - {response.text}"
@@ -125,7 +126,8 @@ def register_decisions_controllers(state: Any, ctrl: Any, api_base_url: str) -> 
                     # Reload decisions from API
                     decisions_response = client.get(f"{api_base_url}/api/decisions")
                     if decisions_response.status_code == 200:
-                        state.decisions = decisions_response.json()
+                        data = decisions_response.json()
+                        state.decisions = data.get("items", data) if isinstance(data, dict) else data
                     state.show_decision_detail = False
                     state.selected_decision = None
                 else:

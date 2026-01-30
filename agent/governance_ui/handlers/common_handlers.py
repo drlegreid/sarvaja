@@ -41,7 +41,8 @@ def register_common_handlers(ctrl: Any, state: Any) -> None:
                 try:
                     decisions_response = client.get(f"{API_BASE_URL}/api/decisions")
                     if decisions_response.status_code == 200:
-                        state.decisions = decisions_response.json()
+                        data = decisions_response.json()
+                        state.decisions = data.get("items", data) if isinstance(data, dict) else data
                 except Exception:
                     pass
 

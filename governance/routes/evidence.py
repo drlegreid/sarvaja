@@ -9,19 +9,23 @@ Created: 2024-12-28
 Updated: 2026-01-10 (added search endpoint)
 """
 
-from fastapi import APIRouter, HTTPException, Query
-from typing import List, Optional
-from datetime import datetime
-from pathlib import Path
 import glob
+import logging
 import os
 import re
+from datetime import datetime
+from pathlib import Path
+
+from fastapi import APIRouter, HTTPException, Query
+from typing import List, Optional
 
 from governance.models import (
     EvidenceResponse,
     EvidenceSearchResponse,
     EvidenceSearchResult
 )
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(tags=["Evidence"])
 
@@ -59,8 +63,8 @@ async def list_evidence(limit: int = Query(20, description="Max results")):
                         created_at=datetime.fromtimestamp(os.path.getctime(filepath)).isoformat(),
                         session_id=session_id
                     ))
-                except Exception:
-                    pass
+                except Exception as e:
+                    logger.warning(f"Failed to read evidence file {filename}: {e}")
 
     return evidence_list
 
@@ -112,8 +116,8 @@ async def search_evidence(
                     count=len(semantic_results),
                     search_method="semantic_vector"
                 )
-    except Exception:
-        pass  # Fall back to keyword search
+    except Exception as e:
+        logger.debug(f"Semantic search unavailable, falling back to keyword: {e}")
 
     # Keyword search fallback
     results = []
@@ -143,7 +147,8 @@ async def search_evidence(
                         score=float(score),
                         content=content[:200] + "..." if len(content) > 200 else content
                     ))
-            except Exception:
+            except Exception as e:
+                logger.warning(f"Failed to search file {filepath}: {e}")
                 continue
 
     # Sort by score descending

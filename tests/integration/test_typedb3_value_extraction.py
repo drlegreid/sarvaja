@@ -50,7 +50,8 @@ class TestTypeDB3ValueExtraction:
         response = requests.get(f"{API_BASE}/api/rules?limit=5", timeout=10)
         assert response.status_code == 200
 
-        rules = response.json()
+        data = response.json()
+        rules = data.get("items", data) if isinstance(data, dict) else data
 
         # Should have at least some rules
         assert len(rules) > 0, "Expected at least 1 rule"
@@ -99,7 +100,8 @@ class TestTypeDB3ValueExtraction:
         response = requests.get(f"{API_BASE}/api/rules?limit=10", timeout=10)
         assert response.status_code == 200
 
-        rules = response.json()
+        data = response.json()
+        rules = data.get("items", data) if isinstance(data, dict) else data
 
         # Find a rule with semantic_id
         rules_with_semantic = [r for r in rules if r.get("semantic_id")]
@@ -142,12 +144,15 @@ class TestAPIResponseFormat:
         assert isinstance(pagination["total"], int)
         assert isinstance(pagination["offset"], int)
 
-    def test_rules_response_is_list(self):
-        """Verify rules API returns a list (not wrapped object)."""
+    def test_rules_response_is_paginated(self):
+        """Verify rules API returns a paginated response with items array."""
         response = requests.get(f"{API_BASE}/api/rules?limit=5", timeout=10)
         assert response.status_code == 200
 
-        rules = response.json()
+        data = response.json()
 
-        # Should be a list
-        assert isinstance(rules, list), f"Expected list, got {type(rules)}"
+        # Should be a paginated dict with items and pagination
+        assert isinstance(data, dict), f"Expected dict, got {type(data)}"
+        assert "items" in data, "Expected 'items' key in paginated response"
+        assert "pagination" in data, "Expected 'pagination' key in response"
+        assert isinstance(data["items"], list), "items should be a list"

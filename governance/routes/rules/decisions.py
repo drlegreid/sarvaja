@@ -10,11 +10,18 @@ Created: 2024-12-28
 Updated: 2026-01-17 - Modularized to package
 """
 
-from fastapi import APIRouter, HTTPException
-from typing import List, Dict, Any
+import logging
+
+from fastapi import APIRouter, HTTPException, Query
+from typing import List, Dict, Any, Optional
 
 from governance.client import get_client
-from governance.models import DecisionCreate, DecisionUpdate, DecisionResponse
+from governance.models import (
+    DecisionCreate, DecisionUpdate, DecisionResponse,
+    PaginatedDecisionResponse, PaginationMeta,
+)
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(tags=["Decisions"])
 
@@ -23,34 +30,56 @@ router = APIRouter(tags=["Decisions"])
 # DECISIONS CRUD
 # =============================================================================
 
-@router.get("/decisions", response_model=List[Dict[str, Any]])
-async def list_decisions():
-    """List all strategic decisions with linked rules. Per GAP-DECISION-001."""
+@router.get("/decisions", response_model=PaginatedDecisionResponse)
+async def list_decisions(
+    offset: int = Query(0, ge=0, description="Skip first N results"),
+    limit: int = Query(50, ge=1, le=200, description="Max results (1-200)"),
+    status: Optional[str] = Query(None, description="Filter by status: PENDING, APPROVED, REJECTED"),
+):
+    """List strategic decisions with pagination and linked rules. Per GAP-DECISION-001."""
     client = get_client()
     if not client:
         raise HTTPException(status_code=503, detail="TypeDB not connected")
 
     try:
         decisions = client.get_all_decisions()
-        result = []
-        for d in decisions:
+
+        # Apply status filter
+        if status:
+            decisions = [d for d in decisions if d.status == status]
+
+        total = len(decisions)
+        paginated = decisions[offset:offset + limit]
+
+        items = []
+        for d in paginated:
             # Get linked rules per GAP-DECISION-001
             linked_rules = []
             try:
                 linked_rules = client.get_decision_impacts(d.id)
-            except Exception:
-                pass  # Non-critical, return empty list
+            except Exception as e:
+                logger.warning(f"Failed to get impacts for {d.id}: {e}")
 
-            result.append({
-                "id": d.id,
-                "name": d.name,
-                "context": d.context,
-                "rationale": d.rationale,
-                "status": d.status,
-                "decision_date": d.decision_date.isoformat() if d.decision_date else None,
-                "linked_rules": linked_rules
-            })
-        return result
+            items.append(DecisionResponse(
+                id=d.id,
+                name=d.name,
+                context=d.context,
+                rationale=d.rationale,
+                status=d.status,
+                decision_date=d.decision_date.isoformat() if d.decision_date else None,
+                linked_rules=linked_rules
+            ))
+
+        return PaginatedDecisionResponse(
+            items=items,
+            pagination=PaginationMeta(
+                total=total,
+                offset=offset,
+                limit=limit,
+                has_more=(offset + limit) < total,
+                returned=len(items),
+            ),
+        )
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 

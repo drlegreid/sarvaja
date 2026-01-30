@@ -563,12 +563,15 @@ class TestDecisionsAPI:
 
     @pytest.mark.skipif(not TYPEDB_AVAILABLE, reason="TypeDB not connected")
     def test_list_decisions_via_api(self, api_client):
-        """Test listing strategic decisions."""
+        """Test listing strategic decisions (paginated response)."""
         response = api_client.get("/api/decisions")
         assert response.status_code == 200
 
-        decisions = response.json()
-        assert isinstance(decisions, list)
+        data = response.json()
+        assert isinstance(data, dict), "Decisions should return paginated response"
+        assert "items" in data, "Response should have 'items' key"
+        assert "pagination" in data, "Response should have 'pagination' key"
+        assert isinstance(data["items"], list)
 
 
 class TestCRUDWorkflows:
@@ -815,8 +818,9 @@ class TestUISmokeTests:
         assert response.status_code in (200, 500), f"Decisions API returned {response.status_code}"
 
         if response.status_code == 200:
-            decisions = response.json()
-            assert isinstance(decisions, list), "Decisions should be a list"
+            data = response.json()
+            decisions = data.get("items", data) if isinstance(data, dict) else data
+            assert isinstance(decisions, list), "Decisions items should be a list"
 
     def test_evidence_view_loads_with_data(self, api_client):
         """

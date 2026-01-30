@@ -1,16 +1,16 @@
 """Governance API Pydantic Models. Per RULE-012, GAP-FILE-002, GAP-MCP-008."""
 
 from pydantic import BaseModel, Field
-from typing import List, Optional, Dict, Any
+from typing import List, Literal, Optional, Dict, Any
 
 class RuleCreate(BaseModel):
     """Request model for creating a rule."""
-    rule_id: str = Field(..., description="Unique rule ID (e.g., RULE-025)")
-    name: str = Field(..., description="Rule name/title")
-    category: str = Field(..., description="Category: governance, technical, operational")
-    priority: str = Field(..., description="Priority: CRITICAL, HIGH, MEDIUM, LOW")
-    directive: str = Field(..., description="Rule directive text")
-    status: str = Field(default="DRAFT", description="Status: DRAFT, ACTIVE, DEPRECATED")
+    rule_id: str = Field(..., min_length=1, description="Unique rule ID (e.g., RULE-025)")
+    name: str = Field(..., min_length=1, description="Rule name/title")
+    category: Literal["governance", "technical", "operational"] = Field(..., description="Category")
+    priority: Literal["CRITICAL", "HIGH", "MEDIUM", "LOW"] = Field(..., description="Priority")
+    directive: str = Field(..., min_length=1, description="Rule directive text")
+    status: Literal["DRAFT", "ACTIVE", "DEPRECATED"] = Field(default="DRAFT", description="Status")
     # RD-WORKSPACE Phase 3: Skill tags and applicable roles
     tags: Optional[str] = Field(default=None, description="Comma-separated skill tags")
     applicable_roles: Optional[str] = Field(default=None, description="Comma-separated agent roles")
@@ -18,10 +18,10 @@ class RuleCreate(BaseModel):
 class RuleUpdate(BaseModel):
     """Request model for updating a rule."""
     name: Optional[str] = None
-    category: Optional[str] = None
-    priority: Optional[str] = None
+    category: Optional[Literal["governance", "technical", "operational"]] = None
+    priority: Optional[Literal["CRITICAL", "HIGH", "MEDIUM", "LOW"]] = None
     directive: Optional[str] = None
-    status: Optional[str] = None
+    status: Optional[Literal["DRAFT", "ACTIVE", "DEPRECATED"]] = None
 
 class RuleResponse(BaseModel):
     """Response model for a rule. Per GAP-MCP-008: includes semantic_id."""
@@ -38,9 +38,9 @@ class RuleResponse(BaseModel):
 
 class TaskCreate(BaseModel):
     """Request model for creating a task."""
-    task_id: str
-    description: str
-    phase: str
+    task_id: str = Field(..., min_length=1)
+    description: str = Field(..., min_length=1)
+    phase: str = Field(..., min_length=1)
     status: str = "TODO"
     agent_id: Optional[str] = None
     body: Optional[str] = None
@@ -101,18 +101,18 @@ class TaskExecutionResponse(BaseModel):
 
 class DecisionCreate(BaseModel):
     """Request model for creating a decision."""
-    decision_id: str = Field(..., description="Unique decision ID (e.g., DECISION-010)")
-    name: str = Field(..., description="Decision name/title")
-    context: str = Field(..., description="Context/problem statement")
-    rationale: str = Field(..., description="Reasoning for the decision")
-    status: str = Field(default="PENDING", description="Status: PENDING, APPROVED, REJECTED")
+    decision_id: str = Field(..., min_length=1, description="Unique decision ID (e.g., DECISION-010)")
+    name: str = Field(..., min_length=1, description="Decision name/title")
+    context: str = Field(..., min_length=1, description="Context/problem statement")
+    rationale: str = Field(..., min_length=1, description="Reasoning for the decision")
+    status: Literal["PENDING", "APPROVED", "REJECTED"] = Field(default="PENDING", description="Status")
 
 class DecisionUpdate(BaseModel):
     """Request model for updating a decision."""
     name: Optional[str] = None
     context: Optional[str] = None
     rationale: Optional[str] = None
-    status: Optional[str] = None
+    status: Optional[Literal["PENDING", "APPROVED", "REJECTED"]] = None
     decision_date: Optional[str] = None
 
 class DecisionResponse(BaseModel):
@@ -285,6 +285,11 @@ class PaginatedSessionResponse(BaseModel):
 class PaginatedAgentResponse(BaseModel):
     """Paginated agent list response."""
     items: List[AgentResponse]
+    pagination: PaginationMeta
+
+class PaginatedDecisionResponse(BaseModel):
+    """Paginated decision list response."""
+    items: List[DecisionResponse]
     pagination: PaginationMeta
 
 # API STATUS

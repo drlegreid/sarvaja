@@ -216,7 +216,8 @@ def register_data_loader_controllers(
                 try:
                     response, _ = _traced_get(client, "/api/decisions")
                     if response.status_code == 200:
-                        state.decisions = response.json()
+                        data = response.json()
+                        state.decisions = data.get("items", data) if isinstance(data, dict) else data
                 except Exception:
                     pass
 
