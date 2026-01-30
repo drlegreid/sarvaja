@@ -25,9 +25,12 @@ Per GAP-DATA-001: TOON is implicit default, JSON via MCP_OUTPUT_FORMAT=json.
 """
 
 import json
+import logging
 import os
 from enum import Enum
 from typing import Any, Optional
+
+logger = logging.getLogger(__name__)
 
 # Lazy-loaded TOON module
 _toons: Optional[Any] = None
@@ -157,9 +160,8 @@ def format_output(
         if toons and toons is not False:
             try:
                 return toons.dumps(data)
-            except Exception:
-                # Fallback to JSON on encoding error
-                pass
+            except Exception as e:
+                logger.debug(f"TOON encoding failed, falling back to JSON: {e}")
 
     # Default: JSON format
     return json.dumps(data, indent=indent, default=str, ensure_ascii=ensure_ascii)
@@ -190,8 +192,8 @@ def parse_input(text: str, format: OutputFormat = OutputFormat.AUTO) -> Any:
         if toons and toons is not False:
             try:
                 return toons.loads(text)
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug(f"TOON parsing failed: {e}")
 
         raise ValueError("Failed to parse input as JSON or TOON")
 
@@ -228,8 +230,8 @@ def estimate_token_savings(data: Any) -> dict:
                 "savings_percent": round(savings, 1),
                 "toon_available": True
             }
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug(f"TOON comparison failed: {e}")
 
     return {
         "json_chars": json_chars,

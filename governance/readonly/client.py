@@ -1,7 +1,10 @@
 """ChromaDB Read-Only Client. Redirects writes to TypeDB. Created: 2024-12-25."""
+import logging
 import re
 import warnings
 from typing import Dict, Any, List
+
+logger = logging.getLogger(__name__)
 from dataclasses import asdict
 
 from governance.data_router import DataRouter, create_data_router
@@ -49,7 +52,8 @@ class ChromaReadOnly:
                 )
             except ImportError:
                 return None
-            except Exception:
+            except Exception as e:
+                logger.debug(f"ChromaDB connection failed: {e}")
                 return None
 
         return self._client
@@ -142,7 +146,8 @@ class ChromaReadOnly:
 
             return [c.name for c in client.list_collections()]
 
-        except Exception:
+        except Exception as e:
+            logger.debug(f"Failed to list ChromaDB collections: {e}")
             return []
 
     def get_collection(self, name: str) -> ReadOnlyCollection:

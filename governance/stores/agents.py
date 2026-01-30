@@ -64,8 +64,8 @@ def _load_agent_metrics() -> Dict[str, Dict[str, Any]]:
         try:
             with open(_AGENT_METRICS_FILE, "r") as f:
                 metrics = json.load(f)
-        except Exception:
-            pass
+        except Exception as e:
+            logger.warning(f"Failed to load agent metrics: {e}")
     return metrics
 
 
