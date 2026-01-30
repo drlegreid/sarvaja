@@ -196,8 +196,8 @@ class TestScalability:
             response = client.get("/api/rules?limit=5")
             if response.status_code == 200:
                 data = response.json()
-                # API may return list directly or dict with "rules" key
-                rules = data.get("rules", data) if isinstance(data, dict) else data
+                # API returns paginated dict with "items" key
+                rules = data.get("items", data) if isinstance(data, dict) else data
                 # If limit is implemented, should respect it
                 # Note: limit=5 should return <= 5, but if not implemented, just ensure valid response
                 assert isinstance(rules, list), "Rules should be a list"

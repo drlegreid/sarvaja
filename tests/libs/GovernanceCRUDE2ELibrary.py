@@ -112,7 +112,8 @@ class GovernanceCRUDE2ELibrary:
             client = self._get_client()
             response = client.get("/api/rules")
             if response.status_code == 200:
-                rules = response.json()
+                data = response.json()
+                rules = data.get("items", data) if isinstance(data, dict) else data
                 return {"success": True, "rules": rules, "count": len(rules)}
             return {"success": False, "status_code": response.status_code}
         except Exception as e:
@@ -300,7 +301,8 @@ class GovernanceCRUDE2ELibrary:
             client = self._get_client()
             response = client.get("/api/agents")
             if response.status_code == 200:
-                agents = response.json()
+                data = response.json()
+                agents = data.get("items", data) if isinstance(data, dict) else data
                 return {"success": True, "agents": agents, "count": len(agents)}
             return {"success": False, "status_code": response.status_code}
         except Exception as e:

@@ -275,7 +275,8 @@ class TestDataPollutionChecks:
         if response.status_code != 200:
             pytest.skip("Rules API unavailable")
 
-        rules = response.json()
+        data = response.json()
+        rules = data.get("items", data) if isinstance(data, dict) else data
         test_rules = [r for r in rules if r.get("id", "").startswith("TEST-")]
 
         # Report count - when run as part of suite, other tests may have created garbage
@@ -310,7 +311,8 @@ class TestDataPollutionChecks:
         if response.status_code != 200:
             pytest.skip("Rules API unavailable")
 
-        rules = response.json()
+        data = response.json()
+        rules = data.get("items", data) if isinstance(data, dict) else data
         legacy_rules = [r for r in rules if r.get("id", "").startswith("RULE-")]
 
         assert len(legacy_rules) == 0, (

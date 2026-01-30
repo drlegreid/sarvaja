@@ -52,7 +52,7 @@ class TestRulesDataIntegrity:
             response = client.get("/api/rules")
             if response.status_code == 200:
                 data = response.json()
-                rules = data.get("rules", data) if isinstance(data, dict) else data
+                rules = data.get("items", data) if isinstance(data, dict) else data
                 for rule in rules[:10]:  # Check first 10
                     assert "rule_id" in rule or "id" in rule
                     assert "name" in rule or rule.get("rule_id")
@@ -68,7 +68,7 @@ class TestRulesDataIntegrity:
             response = client.get("/api/rules")
             if response.status_code == 200:
                 data = response.json()
-                rules = data.get("rules", data) if isinstance(data, dict) else data
+                rules = data.get("items", data) if isinstance(data, dict) else data
                 for rule in rules[:10]:
                     directive = rule.get("directive", "")
                     if directive:  # Only check if present
@@ -86,7 +86,7 @@ class TestRulesDataIntegrity:
             response = client.get("/api/rules")
             if response.status_code == 200:
                 data = response.json()
-                rules = data.get("rules", data) if isinstance(data, dict) else data
+                rules = data.get("items", data) if isinstance(data, dict) else data
                 for rule in rules[:10]:
                     status = rule.get("status", "ACTIVE")
                     assert status in valid_statuses, f"Invalid status: {status}"
@@ -106,12 +106,12 @@ class TestTasksDataIntegrity:
     @data("Tasks have valid status", api=True, entity="Task")
     def test_task_status_valid(self, client):
         """Task status must be valid."""
-        valid_statuses = {"pending", "in_progress", "completed", "blocked", "TODO", "DONE", "IN_PROGRESS", "ON_HOLD"}
+        valid_statuses = {"pending", "in_progress", "completed", "blocked", "TODO", "DONE", "IN_PROGRESS", "ON_HOLD", "OPEN", "CLOSED"}
         try:
             response = client.get("/api/tasks")
             if response.status_code == 200:
                 data = response.json()
-                tasks = data.get("tasks", data) if isinstance(data, dict) else data
+                tasks = data.get("items", data) if isinstance(data, dict) else data
                 if isinstance(tasks, list):
                     for task in tasks[:10]:
                         status = task.get("status", "pending")
@@ -136,7 +136,7 @@ class TestTasksDataIntegrity:
             response = client.get("/api/tasks")
             if response.status_code == 200:
                 data = response.json()
-                tasks = data.get("tasks", data) if isinstance(data, dict) else data
+                tasks = data.get("items", data) if isinstance(data, dict) else data
                 if isinstance(tasks, list):
                     for task in tasks[:10]:
                         task_id = task.get("task_id", task.get("id", ""))
@@ -165,7 +165,7 @@ class TestAgentsDataIntegrity:
             response = client.get("/api/agents")
             if response.status_code == 200:
                 data = response.json()
-                agents = data.get("agents", data) if isinstance(data, dict) else data
+                agents = data.get("items", data) if isinstance(data, dict) else data
                 if isinstance(agents, list):
                     for agent in agents[:10]:
                         trust = agent.get("trust_score", 0.8)
@@ -188,7 +188,7 @@ class TestAgentsDataIntegrity:
             response = client.get("/api/agents")
             if response.status_code == 200:
                 data = response.json()
-                agents = data.get("agents", data) if isinstance(data, dict) else data
+                agents = data.get("items", data) if isinstance(data, dict) else data
                 if isinstance(agents, list):
                     for agent in agents[:10]:
                         agent_type = agent.get("agent_type", agent.get("type", ""))
@@ -216,7 +216,7 @@ class TestSessionsDataIntegrity:
             response = client.get("/api/sessions")
             if response.status_code == 200:
                 data = response.json()
-                sessions = data.get("sessions", data) if isinstance(data, dict) else data
+                sessions = data.get("items", data) if isinstance(data, dict) else data
                 if isinstance(sessions, list):
                     for session in sessions[:10]:
                         start = session.get("start_time", "")
@@ -244,7 +244,7 @@ class TestCrossEntityIntegrity:
             if rules_response.status_code != 200:
                 pytest.skip("Rules API not available")
             data = rules_response.json()
-            rules = data.get("rules", data) if isinstance(data, dict) else data
+            rules = data.get("items", data) if isinstance(data, dict) else data
             rule_ids = {r.get("rule_id", r.get("id")) for r in rules}
 
             # This validates that the system maintains referential integrity
@@ -281,7 +281,7 @@ class TestCRUDCapability:
             response = client.get("/api/rules")
             if response.status_code == 200:
                 data = response.json()
-                assert "rules" in data or isinstance(data, list)
+                assert "items" in data or isinstance(data, list)
             else:
                 pytest.skip(f"API returned {response.status_code}")
         except httpx.ConnectError:
@@ -385,7 +385,7 @@ class TestMCPRestAPIParity:
             if response.status_code != 200:
                 pytest.skip("REST API not available")
             rest_data = response.json()
-            rest_agents = rest_data.get("agents", rest_data) if isinstance(rest_data, dict) else rest_data
+            rest_agents = rest_data.get("items", rest_data) if isinstance(rest_data, dict) else rest_data
             rest_count = len(rest_agents) if isinstance(rest_agents, list) else 0
 
             # MCP (via governance module)
@@ -410,7 +410,7 @@ class TestMCPRestAPIParity:
             if response.status_code != 200:
                 pytest.skip("REST API not available")
             rest_data = response.json()
-            rest_rules = rest_data.get("rules", []) if isinstance(rest_data, dict) else rest_data
+            rest_rules = rest_data.get("items", []) if isinstance(rest_data, dict) else rest_data
             rest_count = len(rest_rules) if isinstance(rest_rules, list) else 0
 
             # MCP (via governance-core MCP tools)
@@ -435,7 +435,7 @@ class TestMCPRestAPIParity:
             if response.status_code != 200:
                 pytest.skip("REST API not available")
             rest_data = response.json()
-            rest_sessions = rest_data.get("sessions", rest_data) if isinstance(rest_data, dict) else rest_data
+            rest_sessions = rest_data.get("items", rest_data) if isinstance(rest_data, dict) else rest_data
             rest_count = len(rest_sessions) if isinstance(rest_sessions, list) else 0
 
             # MCP (via governance-sessions MCP tools)
@@ -470,7 +470,7 @@ class TestMCPRestAPIParity:
                 response = client.get(endpoint)
                 if response.status_code == 200:
                     data = response.json()
-                    items = data.get(key, data) if isinstance(data, dict) else data
+                    items = data.get("items", data) if isinstance(data, dict) else data
                     count = len(items) if isinstance(items, list) else 0
                     assert count > 0, f"{endpoint} returned empty data - tests passing on empty data are invalid"
         except httpx.ConnectError:

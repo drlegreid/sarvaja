@@ -72,7 +72,7 @@ class TestDecisionMCPEndpoint:
             pytest.skip("API not available")
 
         data = resp.json()
-        decisions = data.get("decisions", data) if isinstance(data, dict) else data
+        decisions = data.get("items", data) if isinstance(data, dict) else data
 
         # At least one decision should have a date
         decisions_with_dates = [

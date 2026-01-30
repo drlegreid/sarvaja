@@ -191,7 +191,11 @@ class TestRulesCRUD:
         response = api_client.get("/api/rules")
         assert response.status_code == 200
 
-        rules = response.json()
+        data = response.json()
+        assert isinstance(data, dict)
+        assert "items" in data
+        assert "pagination" in data
+        rules = data["items"]
         assert isinstance(rules, list)
         # If TypeDB has data, verify structure
         if rules:
@@ -465,7 +469,9 @@ class TestAgentsAPI:
         response = api_client.get("/api/agents")
         assert response.status_code == 200
 
-        agents = response.json()
+        data = response.json()
+        assert isinstance(data, dict)
+        agents = data.get("items", [])
         assert isinstance(agents, list)
         assert len(agents) > 0  # Should have pre-configured agents
 
@@ -737,8 +743,10 @@ class TestUISmokeTests:
         response = api_client.get("/api/rules")
         assert response.status_code == 200, "Rules API should return 200"
 
-        rules = response.json()
-        assert isinstance(rules, list), "Rules should be a list"
+        data = response.json()
+        assert isinstance(data, dict), "Rules response should be paginated"
+        rules = data.get("items", [])
+        assert isinstance(rules, list), "Rules items should be a list"
         assert len(rules) > 0, "Rules list should not be empty"
 
         # Validate structure
@@ -780,8 +788,10 @@ class TestUISmokeTests:
         response = api_client.get("/api/agents")
         assert response.status_code == 200, "Agents API should return 200"
 
-        agents = response.json()
-        assert isinstance(agents, list), "Agents should be a list"
+        data = response.json()
+        assert isinstance(data, dict), "Agents response should be paginated"
+        agents = data.get("items", [])
+        assert isinstance(agents, list), "Agents items should be a list"
         assert len(agents) > 0, "Agents list should not be empty"
 
         # Validate structure
@@ -993,7 +1003,7 @@ class TestPaginationSortingFiltering:
         response = api_client.get("/api/rules", params={"limit": 10, "offset": 0})
         assert response.status_code == 200
         data = response.json()
-        rules = data.get("rules", data) if isinstance(data, dict) else data
+        rules = data.get("items", data) if isinstance(data, dict) else data
         assert len(rules) <= 10, "Rules limit should restrict results"
 
     @pytest.mark.skipif(not TYPEDB_AVAILABLE, reason="TypeDB not connected")
@@ -1010,7 +1020,8 @@ class TestPaginationSortingFiltering:
         """Test rules filtering by category."""
         response = api_client.get("/api/rules", params={"category": "governance"})
         assert response.status_code == 200
-        rules = response.json()
+        data = response.json()
+        rules = data.get("items", data) if isinstance(data, dict) else data
         if rules:
             assert all(r["category"] == "governance" for r in rules), "Category filter should work"
 
@@ -1019,7 +1030,8 @@ class TestPaginationSortingFiltering:
         """Test rules filtering by priority."""
         response = api_client.get("/api/rules", params={"priority": "CRITICAL"})
         assert response.status_code == 200
-        rules = response.json()
+        data = response.json()
+        rules = data.get("items", data) if isinstance(data, dict) else data
         if rules:
             assert all(r["priority"] == "CRITICAL" for r in rules), "Priority filter should work"
 
@@ -1027,14 +1039,16 @@ class TestPaginationSortingFiltering:
         """Test agents pagination with offset and limit."""
         response = api_client.get("/api/agents", params={"limit": 3, "offset": 0})
         assert response.status_code == 200
-        agents = response.json()
+        data = response.json()
+        agents = data.get("items", data) if isinstance(data, dict) else data
         assert len(agents) <= 3, "Agents limit should restrict results"
 
     def test_agents_sorting(self, api_client):
         """Test agents sorting."""
         response = api_client.get("/api/agents", params={"sort_by": "trust_score", "order": "desc"})
         assert response.status_code == 200
-        agents = response.json()
+        data = response.json()
+        agents = data.get("items", data) if isinstance(data, dict) else data
         if len(agents) >= 2:
             # Verify descending order
             assert agents[0]["trust_score"] >= agents[-1]["trust_score"], "Trust score should be desc"
@@ -1043,7 +1057,8 @@ class TestPaginationSortingFiltering:
         """Test agents filtering by status."""
         response = api_client.get("/api/agents", params={"status": "ACTIVE"})
         assert response.status_code == 200
-        agents = response.json()
+        data = response.json()
+        agents = data.get("items", data) if isinstance(data, dict) else data
         assert all(a["status"] == "ACTIVE" for a in agents), "Status filter should work"
 
     def test_combined_pagination_sorting_filtering(self, api_client, unique_id):
@@ -1092,7 +1107,7 @@ class TestDataIntegrity:
         rules_data = rules_response.json()
         # Handle both list and paginated response formats
         if isinstance(rules_data, dict):
-            rules_count = rules_data.get("pagination", {}).get("total", len(rules_data.get("rules", [])))
+            rules_count = rules_data.get("pagination", {}).get("total", len(rules_data.get("items", [])))
         else:
             rules_count = len(rules_data)
 
@@ -1118,7 +1133,8 @@ class TestDataIntegrity:
         agents_response = api_client.get("/api/agents")
         assert agents_response.status_code == 200, "Agents API should return 200"
 
-        agents = agents_response.json()
+        agents_data = agents_response.json()
+        agents = agents_data.get("items", agents_data) if isinstance(agents_data, dict) else agents_data
         agents_count = len(agents)
 
         # Should have at least the seed agents

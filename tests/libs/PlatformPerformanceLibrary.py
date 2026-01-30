@@ -243,7 +243,7 @@ class PlatformPerformanceLibrary:
                 return {"skipped": True, "reason": f"API returned {response.status_code}"}
 
             data = response.json()
-            rules = data.get("rules", data) if isinstance(data, dict) else data
+            rules = data.get("items", data) if isinstance(data, dict) else data
             return {"pagination_works": isinstance(rules, list)}
         except Exception as e:
             return {"skipped": True, "reason": str(e)}

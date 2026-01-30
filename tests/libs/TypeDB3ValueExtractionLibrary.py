@@ -61,7 +61,8 @@ class TypeDB3ValueExtractionLibrary:
             if response.status_code != 200:
                 return {"skipped": True, "reason": f"API returned {response.status_code}"}
 
-            rules = response.json()
+            data = response.json()
+            rules = data.get("items", data) if isinstance(data, dict) else data
 
             if not rules:
                 return {"skipped": True, "reason": "No rules in database"}
@@ -127,7 +128,8 @@ class TypeDB3ValueExtractionLibrary:
             if response.status_code != 200:
                 return {"skipped": True, "reason": f"API returned {response.status_code}"}
 
-            rules = response.json()
+            data = response.json()
+            rules = data.get("items", data) if isinstance(data, dict) else data
             rules_with_semantic = [r for r in rules if r.get("semantic_id")]
 
             if not rules_with_semantic:
@@ -197,7 +199,8 @@ class TypeDB3ValueExtractionLibrary:
             if response.status_code != 200:
                 return {"skipped": True, "reason": f"API returned {response.status_code}"}
 
-            rules = response.json()
+            data = response.json()
+            rules = data.get("items", data) if isinstance(data, dict) else data
 
             return {"is_list": isinstance(rules, list)}
         except requests.RequestException as e:
