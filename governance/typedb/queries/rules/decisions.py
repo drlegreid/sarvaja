@@ -23,6 +23,22 @@ class DecisionQueries:
     Uses mixin pattern for TypeDBClient composition.
     """
 
+    def _update_decision_attr(self, decision_id: str, attr_name: str, new_value: str) -> None:
+        """Delete old attribute and insert new value for a decision. DRY helper for TypeDB 3.x."""
+        from typedb.driver import TransactionType
+        with self._driver.transaction(self.database, TransactionType.WRITE) as tx:
+            tx.query(f'''
+                match $d isa decision, has decision-id "{decision_id}", has {attr_name} $old;
+                delete has $old of $d;
+            ''').resolve()
+            tx.commit()
+        with self._driver.transaction(self.database, TransactionType.WRITE) as tx:
+            tx.query(f'''
+                match $d isa decision, has decision-id "{decision_id}";
+                insert $d has {attr_name} "{new_value}";
+            ''').resolve()
+            tx.commit()
+
     # =========================================================================
     # DECISION QUERIES
     # =========================================================================
@@ -164,8 +180,6 @@ class DecisionQueries:
         Returns:
             Updated Decision object or None if not found
         """
-        from typedb.driver import TransactionType
-
         # Check if decision exists
         decisions = self.get_all_decisions()
         existing = None
@@ -177,66 +191,40 @@ class DecisionQueries:
         if not existing:
             return None
 
-        # Build update queries for each string attribute
-        updates = []
-        if name is not None:
-            name_escaped = name.replace('"', '\\"')
-            updates.append(('decision-name', name_escaped))
-        if context is not None:
-            context_escaped = context.replace('"', '\\"')
-            updates.append(('context', context_escaped))
-        if rationale is not None:
-            rationale_escaped = rationale.replace('"', '\\"')
-            updates.append(('rationale', rationale_escaped))
-        if status is not None:
-            updates.append(('decision-status', status.replace('"', '\\"')))
+        # Build update list from provided fields
+        field_map = [
+            ('decision-name', name), ('context', context),
+            ('rationale', rationale), ('decision-status', status),
+        ]
+        updates = [(attr, val.replace('"', '\\"')) for attr, val in field_map if val is not None]
 
         if not updates and decision_date is None:
             return existing  # Nothing to update
 
-        # Execute string attribute updates
+        # Execute string attribute updates via DRY helper
         for attr_name, new_value in updates:
-            # Delete old attribute (TypeDB 3.x: has $var of $entity)
-            with self._driver.transaction(self.database, TransactionType.WRITE) as tx:
-                delete_query = f'''
-                    match $d isa decision, has decision-id "{decision_id}", has {attr_name} $old;
-                    delete has $old of $d;
-                '''
-                tx.query(delete_query).resolve()
-                tx.commit()
+            self._update_decision_attr(decision_id, attr_name, new_value)
 
-            # Insert new attribute
-            with self._driver.transaction(self.database, TransactionType.WRITE) as tx:
-                insert_query = f'''
-                    match $d isa decision, has decision-id "{decision_id}";
-                    insert $d has {attr_name} "{new_value}";
-                '''
-                tx.query(insert_query).resolve()
-                tx.commit()
-
-        # Handle decision_date (datetime type, not string — no quotes)
+        # Handle decision_date (datetime type — no quotes in TypeQL)
         if decision_date is not None:
+            from typedb.driver import TransactionType
             # Delete old date if exists
             with self._driver.transaction(self.database, TransactionType.WRITE) as tx:
                 try:
-                    delete_query = f'''
+                    tx.query(f'''
                         match $d isa decision, has decision-id "{decision_id}", has decision-date $old;
                         delete has $old of $d;
-                    '''
-                    tx.query(delete_query).resolve()
+                    ''').resolve()
                     tx.commit()
                 except Exception:
                     pass  # May not have existing date
-
-            # Insert new date (TypeDB datetime: no quotes)
-            # Normalize to TypeDB format YYYY-MM-DDTHH:MM:SS
-            date_str = decision_date[:19]  # Trim microseconds/timezone
+            # Insert new date (TypeDB datetime: no quotes, trim to YYYY-MM-DDTHH:MM:SS)
+            date_str = decision_date[:19]
             with self._driver.transaction(self.database, TransactionType.WRITE) as tx:
-                insert_query = f'''
+                tx.query(f'''
                     match $d isa decision, has decision-id "{decision_id}";
                     insert $d has decision-date {date_str};
-                '''
-                tx.query(insert_query).resolve()
+                ''').resolve()
                 tx.commit()
 
         # Return updated decision
