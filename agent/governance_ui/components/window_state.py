@@ -34,16 +34,21 @@ def inject_window_state_isolator() -> None:
             const STORAGE_KEY = 'gov_nav_state_' + WIN_ID;
 
             // State keys that should be window-local (not shared across tabs)
+            // Updated per PLAN-UI-OVERHAUL-001 Task 0.3: full coverage
             const LOCAL_STATE_KEYS = [
                 'active_view',
                 'show_rule_detail',
                 'show_session_detail',
+                'show_session_form',
                 'show_decision_detail',
                 'show_task_detail',
+                'show_agent_detail',
+                'show_agent_registration',
                 'selected_rule',
                 'selected_session',
                 'selected_decision',
-                'selected_task'
+                'selected_task',
+                'selected_agent'
             ];
 
             // Save local state to sessionStorage
