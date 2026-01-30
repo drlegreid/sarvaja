@@ -24,7 +24,7 @@ class TestRulesGridView:
         """Rules grid headers should include key columns."""
         from agent.governance_ui.views import rules_view
         source = inspect.getsource(rules_view.build_rules_list_view)
-        required_keys = ['rule_id', 'name', 'status', 'category', 'priority']
+        required_keys = ['id', 'name', 'status', 'category', 'priority']
         for key in required_keys:
             assert key in source, f"Rules grid missing column key: {key}"
 

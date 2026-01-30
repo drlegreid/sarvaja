@@ -60,12 +60,12 @@ class TestRulesGridColumns:
 class TestTasksGridColumns:
     """Verify tasks grid has all required columns."""
 
-    def test_tasks_grid_has_sessions_column(self):
-        """Tasks grid should have Sessions count column."""
+    def test_tasks_grid_has_description_column(self):
+        """Tasks grid should have Description column matching API field."""
         from agent.governance_ui.views.tasks import list as tasks_list
         source = inspect.getsource(tasks_list)
-        assert 'linked_sessions_count' in source, (
-            "Tasks grid should have linked_sessions_count column"
+        assert 'description' in source, (
+            "Tasks grid should have description column"
         )
 
     def test_tasks_grid_has_updated_column(self):

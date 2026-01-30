@@ -98,7 +98,7 @@ def build_rules_list_view() -> None:
             v3.VDataTable(
                 items=("rules",),
                 headers=[
-                    {"title": "Rule ID", "key": "rule_id", "width": "180px", "sortable": True},
+                    {"title": "Rule ID", "key": "id", "width": "180px", "sortable": True},
                     {"title": "Name", "key": "name", "sortable": True},
                     {"title": "Status", "key": "status", "width": "100px", "sortable": True},
                     {"title": "Category", "key": "category", "width": "120px", "sortable": True},
@@ -107,7 +107,7 @@ def build_rules_list_view() -> None:
                     {"title": "Sessions", "key": "linked_sessions_count", "width": "90px", "sortable": True},
                     {"title": "Created", "key": "created_date", "width": "120px", "sortable": True},
                 ],
-                item_value="rule_id",
+                item_value="id",
                 search=("rules_search_query",),
                 density="compact",
                 items_per_page=25,
