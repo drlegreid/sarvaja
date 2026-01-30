@@ -22,7 +22,7 @@ def build_decision_metadata_chips() -> None:
             **{"data-testid": "decision-detail-status"}
         )
         v3.VChip(
-            v_text="selected_decision.date || 'No date'",
+            v_text="selected_decision.decision_date || 'No date'",
             prepend_icon="mdi-calendar",
             __properties=["data-testid"],
             **{"data-testid": "decision-detail-date"}
@@ -95,7 +95,7 @@ def build_decision_info_cards() -> None:
                         )
                         v3.VListItem(
                             title="Date",
-                            subtitle=("selected_decision.date || 'N/A'",),
+                            subtitle=("selected_decision.decision_date || 'N/A'",),
                             prepend_icon="mdi-calendar",
                         )
                         v3.VListItem(

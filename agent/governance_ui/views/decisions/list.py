@@ -123,6 +123,6 @@ def build_decisions_list_view() -> None:
                                 classes="mr-1"
                             )
                             html.Span(
-                                v_text="decision.timestamp || decision.date || ''",
+                                v_text="decision.decision_date || decision.timestamp || ''",
                                 classes="text-caption text-grey ml-1"
                             )
