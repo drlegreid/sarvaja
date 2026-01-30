@@ -11,6 +11,7 @@ from trame.widgets import vuetify3 as v3, html
 from .content import build_session_metadata_chips, build_session_info_card
 from .evidence import build_evidence_files_card
 from .tasks import build_completed_tasks_card
+from .tool_calls import build_tool_calls_card
 
 
 def build_session_detail_view() -> None:
@@ -70,3 +71,6 @@ def build_session_detail_view() -> None:
 
             # Completed Tasks section (GAP-DATA-INTEGRITY-001 Phase 3)
             build_completed_tasks_card()
+
+            # Tool Calls drill-down (PLAN-UI-OVERHAUL-001 Task 5.2)
+            build_tool_calls_card()

@@ -20,6 +20,7 @@ from .impact import (
     build_graph_view,
     build_list_view,
     build_empty_state,
+    build_global_overview,
 )
 
 
@@ -51,5 +52,8 @@ def build_impact_view() -> None:
             # List view
             build_list_view()
 
-            # Empty state
+            # Global overview (before rule selection)
+            build_global_overview()
+
+            # Empty state (fallback)
             build_empty_state()

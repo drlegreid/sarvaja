@@ -20,6 +20,7 @@ from governance.stores import (
     _tasks_store, _execution_events_store,
     synthesize_execution_events
 )
+from governance.stores.audit import record_audit
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -121,4 +122,7 @@ async def add_task_execution_event(
         _execution_events_store[task_id] = []
     _execution_events_store[task_id].append(event)
 
+    record_audit(event_type.upper(), "task", task_id,
+                 actor_id=agent_id or "system",
+                 metadata={"message": message, "event_id": event["event_id"]})
     return TaskExecutionEvent(**event)

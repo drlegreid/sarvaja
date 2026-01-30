@@ -16,7 +16,7 @@ from .analysis import (
     build_recommendation_card,
     build_analysis_results,
 )
-from .views import build_graph_view, build_list_view, build_empty_state
+from .views import build_graph_view, build_list_view, build_empty_state, build_global_overview
 
 __all__ = [
     "build_impact_header",
@@ -27,4 +27,5 @@ __all__ = [
     "build_graph_view",
     "build_list_view",
     "build_empty_state",
+    "build_global_overview",
 ]

@@ -58,44 +58,72 @@ def build_sessions_list_view() -> None:
             **{"data-testid": "sessions-loading"}
         )
 
-        # Skeleton loaders (GAP-UI-PAGING-001: Loading states)
-        with v3.VCardText(v_if="is_loading", style="max-height: 500px;"):
-            with v3.VTimeline(density="compact"):
-                # Show 4 skeleton timeline items while loading
-                with v3.VTimelineItem(
-                    v_for="n in 4",
-                    **{":key": "'skeleton-' + n"},
-                    dot_color="grey",
-                    size="small"
-                ):
-                    with v3.VCard(density="compact"):
-                        with v3.VCardTitle():
-                            v3.VSkeletonLoader(type="text", width="50%")
-                        with v3.VCardSubtitle():
-                            v3.VSkeletonLoader(type="text", width="30%")
-
-        # Sessions list content (GAP-UI-036: scrollable)
-        with v3.VCardText(v_if="!is_loading", style="max-height: 500px; overflow-y: auto;"):
-            html.Div(
-                "{{ sessions.filter(s => !sessions_search_query || (s.session_id || s.id || '').toLowerCase().includes(sessions_search_query.toLowerCase())).length }} sessions loaded",
-                classes="mb-2 text-grey"
+        # Sessions data table (PLAN-UI-OVERHAUL-001 Task 1.2: Grid with columns)
+        with v3.VCardText():
+            v3.VDataTable(
+                items=("sessions",),
+                headers=[
+                    {"title": "Session ID", "key": "session_id", "width": "200px", "sortable": True},
+                    {"title": "Start Time", "key": "start_time", "width": "140px", "sortable": True},
+                    {"title": "End Time", "key": "end_time", "width": "140px", "sortable": True},
+                    {"title": "Status", "key": "status", "width": "100px", "sortable": True},
+                    {"title": "Agent", "key": "agent_id", "width": "140px", "sortable": True},
+                    {"title": "Description", "key": "description"},
+                ],
+                item_value="session_id",
+                search=("sessions_search_query",),
+                density="compact",
+                items_per_page=("sessions_per_page",),
+                hover=True,
+                click_row=(
+                    "($event, row) => { trigger('select_session', [row.item.session_id || row.item.id]) }",
+                ),
+                loading=("is_loading",),
+                __properties=["data-testid"],
+                **{"data-testid": "sessions-table"}
             )
-            with v3.VTimeline(density="compact"):
-                with v3.VTimelineItem(
-                    v_for="session in sessions.filter(s => !sessions_search_query || (s.session_id || s.id || '').toLowerCase().includes(sessions_search_query.toLowerCase()))",
-                    key=("session.session_id || session.id",),
-                    dot_color="primary",
+
+        # Pagination controls (GAP-UI-036)
+        with v3.VCardActions(classes="d-flex justify-space-between align-center px-4"):
+            with html.Div(classes="d-flex align-center"):
+                html.Span("Items per page:", classes="text-body-2 mr-2")
+                v3.VSelect(
+                    v_model="sessions_per_page",
+                    items=("sessions_per_page_options",),
+                    variant="outlined",
+                    density="compact",
+                    hide_details=True,
+                    style="max-width: 80px",
+                    change="trigger('sessions_change_page_size')",
+                    __properties=["data-testid"],
+                    **{"data-testid": "sessions-per-page"}
+                )
+            html.Span(
+                v_text=(
+                    "'Page ' + sessions_page + ' of ' + "
+                    "Math.max(1, Math.ceil(sessions_pagination.total / sessions_per_page)) + "
+                    "' (' + sessions_pagination.total + ' total)'"
+                ),
+                classes="text-body-2 text-grey",
+                __properties=["data-testid"],
+                **{"data-testid": "sessions-page-info"}
+            )
+            with html.Div(classes="d-flex align-center"):
+                v3.VBtn(
+                    icon="mdi-chevron-left",
+                    variant="text",
                     size="small",
-                ):
-                    with v3.VCard(
-                        density="compact",
-                        # Per GAP-UI-SESSION-TASKS-001: Call handler to load session tasks
-                        click="trigger('select_session', [session.session_id || session.id])",
-                        __properties=["data-testid"],
-                        **{"data-testid": "session-row"}
-                    ):
-                        v3.VCardTitle(
-                            "{{ session.session_id || session.id }}",
-                            density="compact"
-                        )
-                        v3.VCardSubtitle("{{ session.start_time || session.date || 'No date' }}")
+                    disabled=("sessions_page <= 1",),
+                    click="trigger('sessions_prev_page')",
+                    __properties=["data-testid"],
+                    **{"data-testid": "sessions-prev-btn"}
+                )
+                v3.VBtn(
+                    icon="mdi-chevron-right",
+                    variant="text",
+                    size="small",
+                    disabled=("!sessions_pagination.has_more",),
+                    click="trigger('sessions_next_page')",
+                    __properties=["data-testid"],
+                    **{"data-testid": "sessions-next-btn"}
+                )

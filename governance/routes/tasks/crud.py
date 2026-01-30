@@ -18,6 +18,7 @@ from governance.stores import (
     _tasks_store,
     task_to_response
 )
+from governance.stores.audit import record_audit
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -50,8 +51,12 @@ async def create_task(task: TaskCreate):
                 raise HTTPException(status_code=409, detail=f"Task {task.task_id} already exists")
             created = client.insert_task(task_id=task.task_id, name=task.description, status=task.status,
                                          phase=task.phase, body=task.body, gap_id=task.gap_id,
-                                         linked_rules=task.linked_rules, linked_sessions=task.linked_sessions)
+                                         linked_rules=task.linked_rules, linked_sessions=task.linked_sessions,
+                                         agent_id=task.agent_id)
             if created:
+                record_audit("CREATE", "task", task.task_id,
+                             actor_id=task.agent_id or "system",
+                             metadata={"phase": task.phase, "status": task.status})
                 return task_to_response(created)
         except HTTPException:
             raise
@@ -116,12 +121,17 @@ async def update_task(task_id: str, update: TaskUpdate):
             }
         else:
             raise HTTPException(status_code=404, detail=f"Task {task_id} not found")
+    old_status = _tasks_store[task_id].get("status")
     for field in ["description", "phase", "status", "agent_id", "body", "linked_rules", "linked_sessions", "gap_id", "evidence"]:
         val = getattr(update, field, None)
         if val is not None:
             _tasks_store[task_id][field] = val if field != "agent_id" or val else None
             if field == "status" and val == "DONE":
                 _tasks_store[task_id]["completed_at"] = datetime.now().isoformat()
+    record_audit("UPDATE", "task", task_id,
+                 actor_id=update.agent_id or "system",
+                 old_value=old_status, new_value=update.status,
+                 metadata={"phase": update.phase})
     return TaskResponse(**_tasks_store[task_id])
 
 @router.delete("/tasks/{task_id}", status_code=204)
@@ -137,6 +147,7 @@ async def delete_task(task_id: str):
     if task_id not in _tasks_store:
         raise HTTPException(status_code=404, detail=f"Task {task_id} not found")
     del _tasks_store[task_id]
+    record_audit("DELETE", "task", task_id)
     return None
 
 @router.post("/tasks/{task_id}/rules/{rule_id}", status_code=201)

@@ -10,10 +10,16 @@ from trame.widgets import vuetify3 as v3, html
 
 
 def build_metrics_summary() -> None:
-    """Build metrics summary cards. Per UI-RESP-01-v1: Responsive breakpoints."""
+    """Build clickable metrics summary cards. Per UI-RESP-01-v1, PLAN-UI-OVERHAUL-001 Task 4.1."""
     with v3.VRow(classes="mb-4"):
         with v3.VCol(cols=12, sm=6, md=3):
-            with v3.VCard(variant="outlined", classes="text-center pa-2"):
+            with v3.VCard(
+                variant="outlined",
+                classes="text-center pa-2",
+                hover=True,
+                click="active_view = 'rules'",
+                style="cursor: pointer",
+            ):
                 v3.VIcon("mdi-gavel", size="large", color="primary")
                 html.Div(
                     "{{ executive_report.metrics_summary?.total_rules || 0 }}",
@@ -21,7 +27,13 @@ def build_metrics_summary() -> None:
                 )
                 html.Div("Rules", classes="text-caption")
         with v3.VCol(cols=12, sm=6, md=3):
-            with v3.VCard(variant="outlined", classes="text-center pa-2"):
+            with v3.VCard(
+                variant="outlined",
+                classes="text-center pa-2",
+                hover=True,
+                click="active_view = 'agents'",
+                style="cursor: pointer",
+            ):
                 v3.VIcon("mdi-robot", size="large", color="info")
                 html.Div(
                     "{{ executive_report.metrics_summary?.total_agents || 0 }}",
@@ -29,7 +41,13 @@ def build_metrics_summary() -> None:
                 )
                 html.Div("Agents", classes="text-caption")
         with v3.VCol(cols=12, sm=6, md=3):
-            with v3.VCard(variant="outlined", classes="text-center pa-2"):
+            with v3.VCard(
+                variant="outlined",
+                classes="text-center pa-2",
+                hover=True,
+                click="active_view = 'tasks'",
+                style="cursor: pointer",
+            ):
                 v3.VIcon("mdi-checkbox-marked", size="large", color="success")
                 html.Div(
                     "{{ executive_report.metrics_summary?.tasks_completed || 0 }}",
@@ -37,7 +55,13 @@ def build_metrics_summary() -> None:
                 )
                 html.Div("Tasks Done", classes="text-caption")
         with v3.VCol(cols=12, sm=6, md=3):
-            with v3.VCard(variant="outlined", classes="text-center pa-2"):
+            with v3.VCard(
+                variant="outlined",
+                classes="text-center pa-2",
+                hover=True,
+                click="active_view = 'compliance'",
+                style="cursor: pointer",
+            ):
                 v3.VIcon("mdi-percent", size="large", color="warning")
                 html.Div(
                     "{{ (executive_report.metrics_summary?.compliance_rate || 0)"

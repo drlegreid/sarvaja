@@ -117,7 +117,7 @@ def build_monitor_stats() -> None:
 
 
 def build_event_feed() -> None:
-    """Build event feed panel. Per UI-RESP-01-v1: Responsive."""
+    """Build event feed as data table. Per PLAN-UI-OVERHAUL-001 Task 6.2."""
     with v3.VCol(cols=12, md=8):
         with v3.VCard(
             variant="outlined",
@@ -125,54 +125,24 @@ def build_event_feed() -> None:
             **{"data-testid": "monitor-feed"}
         ):
             v3.VCardTitle("Event Feed")
-            with v3.VCardText(style="max-height: 400px; overflow-y: auto;"):
-                with v3.VList(density="compact"):
-                    with v3.VListItem(
-                        v_for="event in monitor_feed",
-                        key=("event.event_id",),
-                        __properties=["data-testid"],
-                        **{"data-testid": "monitor-event-item"}
-                    ):
-                        with html.Template(v_slot_prepend=True):
-                            v3.VIcon(
-                                icon=(
-                                    "event.event_type === 'rule_query' ? 'mdi-magnify' : "
-                                    "event.event_type === 'rule_change' ? 'mdi-pencil' : "
-                                    "event.event_type === 'violation' ? 'mdi-alert-circle' : "
-                                    "event.event_type === 'compliance_check' ? 'mdi-check-circle' : "
-                                    "event.event_type === 'trust_decrease' ? 'mdi-arrow-down' : "
-                                    "'mdi-arrow-up'"
-                                ),
-                                color=(
-                                    "event.event_type === 'violation' ? 'error' : "
-                                    "event.event_type === 'rule_change' ? 'warning' : "
-                                    "event.event_type === 'trust_decrease' ? 'warning' : "
-                                    "event.event_type === 'trust_increase' ? 'success' : "
-                                    "event.event_type === 'compliance_check' ? 'success' : 'info'"
-                                ),
-                                size="small",
-                            )
-                        with html.Template(v_slot_default=True):
-                            v3.VListItemTitle("{{ event.source }}")
-                            v3.VListItemSubtitle(
-                                "{{ event.event_type }} - {{ event.timestamp }}"
-                            )
-                        with html.Template(v_slot_append=True):
-                            v3.VChip(
-                                v_text="event.severity",
-                                color=(
-                                    "event.severity === 'CRITICAL' ? 'error' : "
-                                    "event.severity === 'WARNING' ? 'warning' : 'info'"
-                                ),
-                                size="x-small",
-                            )
-                    # Empty state
-                    v3.VListItem(
-                        v_if="!monitor_feed || monitor_feed.length === 0",
-                        title="No events recorded",
-                        prepend_icon="mdi-information-outline",
-                        disabled=True,
-                    )
+            with v3.VCardText():
+                v3.VDataTable(
+                    items=("monitor_feed",),
+                    headers=[
+                        {"title": "Type", "key": "event_type", "width": "130px", "sortable": True},
+                        {"title": "Source", "key": "source", "sortable": True},
+                        {"title": "Severity", "key": "severity", "width": "100px", "sortable": True},
+                        {"title": "Timestamp", "key": "timestamp", "width": "160px", "sortable": True},
+                        {"title": "Rule", "key": "rule_id", "width": "140px", "sortable": True},
+                    ],
+                    item_value="event_id",
+                    density="compact",
+                    items_per_page=20,
+                    hover=True,
+                    search=("monitor_event_type_filter",),
+                    __properties=["data-testid"],
+                    **{"data-testid": "monitor-events-table"}
+                )
 
 
 def build_alerts_panel() -> None:

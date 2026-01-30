@@ -102,6 +102,9 @@ def get_monitor_feed(limit: int = 50, event_type: Optional[str] = None) -> List[
         event_id = event.get("id") or event.get("event_id")
         if event_id and event_id not in seen_ids:
             seen_ids.add(event_id)
+            # Normalize: ensure event_type field exists (UI uses event.event_type)
+            if "event_type" not in event and "type" in event:
+                event["event_type"] = event["type"]
             merged.append(event)
 
     for event in audit_events:
@@ -111,7 +114,7 @@ def get_monitor_feed(limit: int = 50, event_type: Optional[str] = None) -> List[
             # Normalize audit event format to match monitor format
             merged.append({
                 "id": event_id,
-                "type": event.get("event_type"),
+                "event_type": event.get("event_type") or event.get("type", ""),
                 "source": event.get("source"),
                 "details": event.get("details", {}),
                 "severity": event.get("severity", "INFO"),
@@ -120,7 +123,7 @@ def get_monitor_feed(limit: int = 50, event_type: Optional[str] = None) -> List[
         elif not event_id:
             # Include events without IDs (older format)
             merged.append({
-                "type": event.get("event_type"),
+                "event_type": event.get("event_type") or event.get("type", ""),
                 "source": event.get("source"),
                 "details": event.get("details", {}),
                 "severity": event.get("severity", "INFO"),

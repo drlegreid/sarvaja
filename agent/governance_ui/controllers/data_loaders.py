@@ -19,6 +19,7 @@ from agent.governance_ui.trace_bar.transforms import (
     add_api_trace,
     add_error_trace,
 )
+from agent.governance_ui.utils import format_timestamps_in_list
 from agent.governance_ui import (
     get_proposals,
     get_escalated_proposals,
@@ -228,7 +229,8 @@ def register_data_loader_controllers(
                         data = response.json()
                         # Handle paginated response (EPIC-DR-003)
                         if isinstance(data, dict) and "items" in data:
-                            state.tasks = data["items"]
+                            state.tasks = format_timestamps_in_list(
+                                data["items"], ["created_at", "claimed_at", "completed_at"])
                             state.tasks_pagination = data.get("pagination", {})
                         else:
                             # Backward compatibility: direct array
@@ -250,7 +252,9 @@ def register_data_loader_controllers(
                     if response.status_code == 200:
                         data = response.json()
                         # Handle paginated response (items) or raw list (backward compatibility)
-                        state.sessions = data.get("items", data) if isinstance(data, dict) else data
+                        items = data.get("items", data) if isinstance(data, dict) else data
+                        state.sessions = format_timestamps_in_list(
+                            items, ["start_time", "end_time"])
                 except Exception:
                     pass
 
@@ -367,10 +371,13 @@ def register_data_loader_controllers(
                 # Extract MCP server status from components (UI-AUDIT-011)
                 components = hc_state.get("components", {})
                 # MCP servers tracked by healthcheck
+                # Always show all 5 expected servers; gov-* are on-demand MCP servers
                 mcp_names = ["claude-mem", "gov-core", "gov-agents", "gov-sessions", "gov-tasks"]
                 for name in mcp_names:
                     if name in components:
                         stats["mcp_servers"][name] = components[name]
+                    else:
+                        stats["mcp_servers"][name] = "ON-DEMAND"
         except Exception:
             pass
 

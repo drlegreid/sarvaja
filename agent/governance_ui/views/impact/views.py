@@ -126,9 +126,76 @@ def build_list_view() -> None:
                         )
 
 
-def build_empty_state() -> None:
-    """Build empty state when no rule is selected."""
-    with v3.VRow(v_if="!impact_analysis"):
+def build_global_overview() -> None:
+    """Build global overview when no rule is selected.
+
+    Per PLAN-UI-OVERHAUL-001 Task 4.3: Shows dependency statistics,
+    orphaned rules, and overall graph health before rule selection.
+    """
+    with v3.VRow(v_if="!impact_analysis && dependency_overview"):
+        # Total dependency stats
+        with v3.VCol(cols=12, md=4):
+            with v3.VCard(
+                variant="outlined",
+                __properties=["data-testid"],
+                **{"data-testid": "overview-total-stats"}
+            ):
+                v3.VCardTitle("Dependency Statistics")
+                with v3.VCardText():
+                    with html.Div(classes="d-flex flex-column ga-2"):
+                        v3.VChip(
+                            v_text="'Total Rules: ' + (dependency_overview.total_rules || 0)",
+                            color="primary",
+                            size="small",
+                        )
+                        v3.VChip(
+                            v_text="'Total Dependencies: ' + (dependency_overview.total_dependencies || 0)",
+                            color="info",
+                            size="small",
+                        )
+                        v3.VChip(
+                            v_text="'Circular Dependencies: ' + (dependency_overview.circular_count || 0)",
+                            v_bind_color="dependency_overview.circular_count > 0 ? 'error' : 'success'",
+                            size="small",
+                        )
+
+        # Orphaned rules
+        with v3.VCol(cols=12, md=8):
+            with v3.VCard(
+                variant="outlined",
+                __properties=["data-testid"],
+                **{"data-testid": "overview-orphan-rules"}
+            ):
+                with v3.VCardTitle(classes="d-flex align-center"):
+                    html.Span("Orphaned Rules")
+                    v3.VSpacer()
+                    v3.VChip(
+                        v_text="(dependency_overview.orphan_rules || []).length",
+                        size="x-small",
+                        color="warning",
+                    )
+                with v3.VCardText():
+                    html.P(
+                        "Rules with no dependencies and no dependents.",
+                        classes="text-caption text-grey mb-2",
+                    )
+                    v3.VChip(
+                        v_for="rule in (dependency_overview.orphan_rules || [])",
+                        v_text="rule",
+                        size="small",
+                        color="warning",
+                        variant="tonal",
+                        classes="mr-1 mb-1",
+                        prepend_icon="mdi-link-off",
+                    )
+                    html.Div(
+                        "No orphaned rules found",
+                        v_if="!dependency_overview.orphan_rules || dependency_overview.orphan_rules.length === 0",
+                        classes="text-grey",
+                    )
+
+    # Fallback: no overview data loaded yet
+    with v3.VRow(v_if="!impact_analysis && !dependency_overview"):
         with v3.VCol(cols=12, classes="text-center py-8"):
             v3.VIcon("mdi-graph-outline", size="64", color="grey")
             html.P(
@@ -137,3 +204,8 @@ def build_empty_state() -> None:
                 __properties=["data-testid"],
                 **{"data-testid": "impact-empty-state"}
             )
+
+
+def build_empty_state() -> None:
+    """Build empty state when no rule is selected (legacy, kept for compatibility)."""
+    pass

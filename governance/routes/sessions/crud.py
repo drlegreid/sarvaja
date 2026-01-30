@@ -30,6 +30,7 @@ from governance.stores import (
     _sessions_store,
     session_to_response
 )
+from governance.stores.audit import record_audit
 
 
 logger = logging.getLogger(__name__)
@@ -121,6 +122,9 @@ async def create_session(session: SessionCreate):
                 agent_id=session.agent_id
             )
             if created:
+                record_audit("CREATE", "session", session_id,
+                             actor_id=session.agent_id or "system",
+                             metadata={"description": session.description})
                 return session_to_response(created)
         except Exception as e:
             logger.warning(f"TypeDB session insert failed, using fallback: {e}")
@@ -233,6 +237,7 @@ async def delete_session(session_id: str):
         deleted = client.delete_session(session_id)
         if not deleted:
             raise HTTPException(status_code=500, detail="Failed to delete session")
+        record_audit("DELETE", "session", session_id)
         return None
     except HTTPException:
         raise
@@ -258,6 +263,9 @@ async def end_session(session_id: str, data: Optional[SessionEnd] = None):
                 # End the session using the correct method
                 updated = client.end_session(session_id)
                 if updated:
+                    record_audit("UPDATE", "session", session_id,
+                                 old_value="ACTIVE", new_value="COMPLETED",
+                                 metadata={"action": "end_session"})
                     return session_to_response(updated)
                 else:
                     raise HTTPException(

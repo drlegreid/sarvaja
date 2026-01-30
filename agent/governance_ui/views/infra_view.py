@@ -193,13 +193,13 @@ def build_mcp_status_panel() -> None:
                             md=3
                         ):
                             with v3.VChip(
-                                color=("status === 'OK' ? 'success' : 'warning'",),
+                                color=("status === 'OK' ? 'success' : status === 'ON-DEMAND' ? 'info' : 'warning'",),
                                 size="small",
                                 variant="flat",
                                 classes="ma-1"
                             ):
                                 v3.VIcon(
-                                    icon=("status === 'OK' ? 'mdi-check-circle' : 'mdi-alert-circle'",),
+                                    icon=("status === 'OK' ? 'mdi-check-circle' : status === 'ON-DEMAND' ? 'mdi-lightning-bolt' : 'mdi-alert-circle'",),
                                     size="small",
                                     classes="mr-1"
                                 )

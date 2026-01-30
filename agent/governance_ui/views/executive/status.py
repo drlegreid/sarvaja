@@ -42,6 +42,22 @@ def build_status_banner() -> None:
                 prepend_icon="mdi-calendar",
                 classes="ml-2"
             )
+            # Compliance rate badge (PLAN-UI-OVERHAUL-001 Task 4.1)
+            v3.VChip(
+                v_if="executive_report.metrics_summary?.compliance_rate != null",
+                v_text=(
+                    "'Compliance: ' + "
+                    "(executive_report.metrics_summary.compliance_rate || 0)"
+                    ".toFixed(0) + '%'"
+                ),
+                v_bind_color=(
+                    "executive_report.metrics_summary.compliance_rate >= 80 ? 'success' : "
+                    "executive_report.metrics_summary.compliance_rate >= 50 ? 'warning' : 'error'"
+                ),
+                size="small",
+                classes="ml-2",
+                prepend_icon="mdi-check-decagram",
+            )
             v3.VSpacer()
             html.Span(
                 "Generated: {{ executive_report.generated_at }}",

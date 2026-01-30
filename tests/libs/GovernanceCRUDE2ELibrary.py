@@ -395,31 +395,72 @@ class GovernanceCRUDE2ELibrary:
 
     @keyword("Cleanup Test Data")
     def cleanup_test_data(self) -> Dict[str, Any]:
-        """Clean up all test data created during tests."""
-        cleaned = {"tasks": 0, "rules": 0}
+        """
+        Clean up ALL TEST-* entities from the system.
+
+        Performs a full sweep (not just session-tracked IDs) to handle
+        residuals from interrupted test runs or other test frameworks.
+        """
+        cleaned = {"tasks": 0, "rules": 0, "sessions": 0}
         client = self._get_client()
 
-        # Cleanup tasks
-        for task_id in self._cleanup_ids["tasks"][:]:
+        # Sweep ALL TEST-* tasks from the system
+        try:
+            response = client.get("/api/tasks?limit=1000")
+            if response.status_code == 200:
+                data = response.json()
+                tasks = data.get("items", data) if isinstance(data, dict) else data
+                for task in tasks:
+                    task_id = task.get("task_id", "")
+                    if task_id.startswith("TEST-"):
+                        try:
+                            if client.delete(f"/api/tasks/{task_id}").status_code == 204:
+                                cleaned["tasks"] += 1
+                        except Exception:
+                            pass
+        except Exception:
+            pass
+
+        # Sweep ALL TEST-* sessions (end active ones, delete completed)
+        try:
+            response = client.get("/api/sessions?limit=200")
+            if response.status_code == 200:
+                data = response.json()
+                sessions = data.get("items", data) if isinstance(data, dict) else data
+                for session in sessions:
+                    sid = session.get("session_id", "")
+                    if sid.startswith("TEST-SESSION-") or sid.startswith("TEST-"):
+                        try:
+                            status = session.get("status", "")
+                            if status == "ACTIVE":
+                                client.put(f"/api/sessions/{sid}/end")
+                            client.delete(f"/api/sessions/{sid}")
+                            cleaned["sessions"] += 1
+                        except Exception:
+                            pass
+        except Exception:
+            pass
+
+        # Sweep ALL TEST-* rules (requires TypeDB)
+        if self.check_typedb_available():
             try:
-                response = client.delete(f"/api/tasks/{task_id}")
-                if response.status_code == 204:
-                    cleaned["tasks"] += 1
-                    self._cleanup_ids["tasks"].remove(task_id)
+                response = client.get("/api/rules")
+                if response.status_code == 200:
+                    data = response.json()
+                    rules = data.get("items", data) if isinstance(data, dict) else data
+                    for rule in rules:
+                        rule_id = rule.get("id", "")
+                        if rule_id.startswith("TEST-"):
+                            try:
+                                if client.delete(f"/api/rules/{rule_id}", params={"archive": "false"}).status_code == 204:
+                                    cleaned["rules"] += 1
+                            except Exception:
+                                pass
             except Exception:
                 pass
 
-        # Cleanup rules
-        if self.check_typedb_available():
-            for rule_id in self._cleanup_ids["rules"][:]:
-                try:
-                    response = client.delete(f"/api/rules/{rule_id}")
-                    if response.status_code == 204:
-                        cleaned["rules"] += 1
-                        self._cleanup_ids["rules"].remove(rule_id)
-                except Exception:
-                    pass
-
+        # Also clear session-tracked IDs
+        self._cleanup_ids = {"tasks": [], "rules": [], "sessions": []}
         return cleaned
 
     def __del__(self):

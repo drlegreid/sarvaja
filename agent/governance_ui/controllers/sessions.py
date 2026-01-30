@@ -14,6 +14,8 @@ Updated: 2026-01-02 (GAP-UI-034)
 import httpx
 from typing import Any
 
+from agent.governance_ui.utils import format_timestamps_in_list
+
 
 def register_sessions_controllers(state: Any, ctrl: Any, api_base_url: str) -> None:
     """
@@ -119,12 +121,8 @@ def register_sessions_controllers(state: Any, ctrl: Any, api_base_url: str) -> N
 
                 if response.status_code in (200, 201):
                     state.status_message = f"Session {'created' if state.session_form_mode == 'create' else 'updated'} successfully"
-                    # Reload sessions from API (per GAP-EXPLOR-API-001: now returns paginated response)
-                    sessions_response = client.get(f"{api_base_url}/api/sessions?limit=100")
-                    if sessions_response.status_code == 200:
-                        data = sessions_response.json()
-                        # Handle paginated response (items) or raw list (backward compatibility)
-                        state.sessions = data.get("items", data) if isinstance(data, dict) else data
+                    # Reload sessions via paginated loader (GAP-UI-036)
+                    load_sessions_page()
                 else:
                     state.has_error = True
                     state.error_message = f"API Error: {response.status_code} - {response.text}"
@@ -155,12 +153,8 @@ def register_sessions_controllers(state: Any, ctrl: Any, api_base_url: str) -> N
 
                 if response.status_code == 204:
                     state.status_message = f"Session {session_id} deleted successfully"
-                    # Reload sessions from API (per GAP-EXPLOR-API-001: now returns paginated response)
-                    sessions_response = client.get(f"{api_base_url}/api/sessions?limit=100")
-                    if sessions_response.status_code == 200:
-                        data = sessions_response.json()
-                        # Handle paginated response (items) or raw list (backward compatibility)
-                        state.sessions = data.get("items", data) if isinstance(data, dict) else data
+                    # Reload sessions via paginated loader (GAP-UI-036)
+                    load_sessions_page()
                     state.show_session_detail = False
                     state.selected_session = None
                 else:
@@ -173,6 +167,60 @@ def register_sessions_controllers(state: Any, ctrl: Any, api_base_url: str) -> N
             state.has_error = True
             state.error_message = f"Failed to delete session: {str(e)}"
             state.status_message = f"Delete failed (offline mode): {str(e)}"
+
+    def load_sessions_page():
+        """Load sessions with pagination (GAP-UI-036)."""
+        try:
+            state.is_loading = True
+            offset = (state.sessions_page - 1) * state.sessions_per_page
+            with httpx.Client(timeout=10.0) as client:
+                response = client.get(
+                    f"{api_base_url}/api/sessions",
+                    params={"offset": offset, "limit": state.sessions_per_page}
+                )
+                if response.status_code == 200:
+                    data = response.json()
+                    if isinstance(data, dict) and "items" in data:
+                        state.sessions = format_timestamps_in_list(
+                            data["items"], ["start_time", "end_time"])
+                        state.sessions_pagination = data.get("pagination", {
+                            "total": 0, "offset": offset,
+                            "limit": state.sessions_per_page,
+                            "has_more": False, "returned": len(data["items"]),
+                        })
+                    else:
+                        state.sessions = format_timestamps_in_list(
+                            data, ["start_time", "end_time"])
+                        state.sessions_pagination = {
+                            "total": len(data), "offset": 0,
+                            "limit": len(data), "has_more": False,
+                            "returned": len(data),
+                        }
+            state.is_loading = False
+        except Exception as e:
+            state.is_loading = False
+            state.has_error = True
+            state.error_message = f"Failed to load sessions: {str(e)}"
+
+    @ctrl.trigger("sessions_prev_page")
+    def sessions_prev_page():
+        """Go to previous page of sessions (GAP-UI-036)."""
+        if state.sessions_page > 1:
+            state.sessions_page -= 1
+            load_sessions_page()
+
+    @ctrl.trigger("sessions_next_page")
+    def sessions_next_page():
+        """Go to next page of sessions (GAP-UI-036)."""
+        if state.sessions_pagination.get("has_more", False):
+            state.sessions_page += 1
+            load_sessions_page()
+
+    @ctrl.trigger("sessions_change_page_size")
+    def sessions_change_page_size():
+        """Change sessions items per page and reload (GAP-UI-036)."""
+        state.sessions_page = 1
+        load_sessions_page()
 
     @ctrl.trigger("attach_evidence")
     def attach_evidence(session_id: str, evidence_path: str):
@@ -199,17 +247,13 @@ def register_sessions_controllers(state: Any, ctrl: Any, api_base_url: str) -> N
                     state.show_evidence_attach = False
                     state.evidence_attach_path = ""
 
-                    # Refresh the selected session to show new evidence
-                    session_response = client.get(f"{api_base_url}/api/sessions?limit=100")
-                    if session_response.status_code == 200:
-                        data = session_response.json()
-                        state.sessions = data.get("items", data) if isinstance(data, dict) else data
-                        # Update selected session with refreshed data
-                        for session in state.sessions:
-                            sid = session.get('session_id') or session.get('id')
-                            if sid == session_id:
-                                state.selected_session = session
-                                break
+                    # Refresh sessions and update selected session
+                    load_sessions_page()
+                    for session in state.sessions:
+                        sid = session.get('session_id') or session.get('id')
+                        if sid == session_id:
+                            state.selected_session = session
+                            break
                 else:
                     state.has_error = True
                     state.error_message = f"Failed to attach evidence: {response.status_code}"

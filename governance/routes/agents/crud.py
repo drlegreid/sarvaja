@@ -52,19 +52,20 @@ async def list_agents(
                 metrics = _load_agent_metrics()
 
                 # Build relations lookup ONCE for all agents (optimization)
-                sessions_by_agent, tasks_by_agent = build_agent_relations_lookup(client)
+                sessions_by_agent, tasks_by_agent, task_count_by_agent = build_agent_relations_lookup(client)
 
                 result = []
                 for agent in typedb_agents:
                     agent_metrics = metrics.get(agent.id, {})
-                    tasks_executed = agent_metrics.get("tasks_executed", agent.tasks_executed or 0)
                     last_active = agent_metrics.get("last_active", None)
                     base_trust = _AGENT_BASE_CONFIG.get(agent.id, {}).get("base_trust", agent.trust_score or 0.8)
 
                     # Get relations from pre-built lookup (GAP-UI-048)
-                    recent_sessions, active_tasks = get_agent_relations_from_lookup(
-                        agent.id, sessions_by_agent, tasks_by_agent
+                    recent_sessions, active_tasks, task_count = get_agent_relations_from_lookup(
+                        agent.id, sessions_by_agent, tasks_by_agent, task_count_by_agent
                     )
+                    # Use TypeDB task count (real data) over JSON metrics
+                    tasks_executed = task_count or agent_metrics.get("tasks_executed", 0)
 
                     # Get capabilities from config (GAP-AGENT-004)
                     capabilities = _AGENT_BASE_CONFIG.get(agent.id, {}).get("capabilities", [])
@@ -142,23 +143,22 @@ async def get_agent(agent_id: str):
         try:
             agent = client.get_agent(agent_id)
             if agent:
-                # Prioritize in-memory store over JSON file (handles container read-only fs)
+                # Get last_active from in-memory or JSON metrics
                 if agent_id in _agents_store:
-                    tasks_executed = _agents_store[agent_id].get("tasks_executed", 0)
                     last_active = _agents_store[agent_id].get("last_active", None)
                 else:
-                    # Fallback to JSON file
                     metrics = _load_agent_metrics()
                     agent_metrics = metrics.get(agent_id, {})
-                    tasks_executed = agent_metrics.get("tasks_executed", agent.tasks_executed or 0)
                     last_active = agent_metrics.get("last_active", None)
                 base_trust = _AGENT_BASE_CONFIG.get(agent_id, {}).get("base_trust", agent.trust_score or 0.8)
 
                 # Get relations using batch lookup (2 queries total, not N*M)
-                sessions_by_agent, tasks_by_agent = build_agent_relations_lookup(client)
-                recent_sessions, active_tasks = get_agent_relations_from_lookup(
-                    agent_id, sessions_by_agent, tasks_by_agent
+                sessions_by_agent, tasks_by_agent, task_count_by_agent = build_agent_relations_lookup(client)
+                recent_sessions, active_tasks, task_count = get_agent_relations_from_lookup(
+                    agent_id, sessions_by_agent, tasks_by_agent, task_count_by_agent
                 )
+                # Use TypeDB task count (real data) over JSON metrics
+                tasks_executed = task_count or (_agents_store.get(agent_id, {}).get("tasks_executed", 0))
 
                 # Get capabilities from config (GAP-AGENT-004)
                 capabilities = _AGENT_BASE_CONFIG.get(agent_id, {}).get("capabilities", [])
@@ -272,9 +272,9 @@ async def record_agent_task(agent_id: str):
             agent = client.get_agent(agent_id)
             if agent:
                 # Get relations using batch lookup
-                sessions_by_agent, tasks_by_agent = build_agent_relations_lookup(client)
-                recent_sessions, active_tasks = get_agent_relations_from_lookup(
-                    agent_id, sessions_by_agent, tasks_by_agent
+                sessions_by_agent, tasks_by_agent, task_count_by_agent = build_agent_relations_lookup(client)
+                recent_sessions, active_tasks, _ = get_agent_relations_from_lookup(
+                    agent_id, sessions_by_agent, tasks_by_agent, task_count_by_agent
                 )
                 # Get capabilities from config (GAP-AGENT-004)
                 capabilities = _AGENT_BASE_CONFIG.get(agent_id, {}).get("capabilities", [])

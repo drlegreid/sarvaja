@@ -86,6 +86,73 @@ def build_decision_form_view() -> None:
                     **{"data-testid": "decision-form-status"}
                 )
 
+                # Options considered (PLAN-UI-OVERHAUL-001 Task 4.2)
+                with v3.VCard(
+                    variant="outlined",
+                    classes="mb-3 pa-3",
+                    __properties=["data-testid"],
+                    **{"data-testid": "decision-form-options"}
+                ):
+                    with html.Div(classes="d-flex align-center mb-2"):
+                        html.Span("Options Considered", classes="text-subtitle-2")
+                        v3.VSpacer()
+                        v3.VBtn(
+                            "Add Option",
+                            prepend_icon="mdi-plus",
+                            size="small",
+                            variant="tonal",
+                            click=(
+                                "form_decision_options = "
+                                "[...(form_decision_options || []), "
+                                "{label: '', pros: '', cons: ''}]"
+                            ),
+                            __properties=["data-testid"],
+                            **{"data-testid": "decision-add-option-btn"}
+                        )
+                    with html.Div(
+                        v_for="(opt, idx) in (form_decision_options || [])",
+                        **{":key": "idx"},
+                        classes="mb-2"
+                    ):
+                        with v3.VCard(variant="tonal", classes="pa-2"):
+                            v3.VTextField(
+                                v_model="opt.label",
+                                label="Option name",
+                                variant="outlined",
+                                density="compact",
+                                hide_details=True,
+                                classes="mb-1",
+                            )
+                            v3.VTextField(
+                                v_model="opt.pros",
+                                label="Pros (comma-separated)",
+                                variant="outlined",
+                                density="compact",
+                                hide_details=True,
+                                classes="mb-1",
+                                prepend_inner_icon="mdi-thumb-up-outline",
+                            )
+                            v3.VTextField(
+                                v_model="opt.cons",
+                                label="Cons (comma-separated)",
+                                variant="outlined",
+                                density="compact",
+                                hide_details=True,
+                                prepend_inner_icon="mdi-thumb-down-outline",
+                            )
+
+                # Selected option
+                v3.VTextField(
+                    v_model="form_decision_selected_option",
+                    label="Selected Option",
+                    hint="Which option was chosen",
+                    variant="outlined",
+                    density="compact",
+                    classes="mb-3",
+                    __properties=["data-testid"],
+                    **{"data-testid": "decision-form-selected-option"}
+                )
+
         with v3.VCardActions():
             v3.VSpacer()
             v3.VBtn(

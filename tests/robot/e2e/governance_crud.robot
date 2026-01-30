@@ -6,6 +6,7 @@ Library          Collections
 Library          ../../libs/GovernanceCRUDE2ELibrary.py
 Test Tags        e2e    api    governance    high    rules    rule    task    create    read    delete    GOV-RULE-01-v1
 
+Suite Setup       Cleanup Test Data
 Suite Teardown    Cleanup Test Data
 
 *** Variables ***

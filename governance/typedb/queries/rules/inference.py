@@ -5,9 +5,13 @@ Per RULE-032: File Size Limit (< 300 lines)
 Extracted from: governance/typedb/queries/rules.py
 
 Created: 2026-01-04
+Updated: 2026-01-30 - Added create_rule_dependency
 """
 
+import logging
 from typing import List, Dict
+
+logger = logging.getLogger(__name__)
 
 
 class RuleInferenceQueries:
@@ -59,6 +63,36 @@ class RuleInferenceQueries:
         """
         results = self._execute_query(query, infer=True)
         return [{"rule1": r.get("id1"), "rule2": r.get("id2")} for r in results]
+
+    def create_rule_dependency(self, dependent_id: str, dependency_id: str) -> bool:
+        """
+        Create a rule-dependency relation between two rules.
+
+        Args:
+            dependent_id: Rule that depends on the other
+            dependency_id: Rule being depended upon
+
+        Returns:
+            True if relation was created
+        """
+        from typedb.driver import TransactionType
+
+        try:
+            with self._driver.transaction(self.database, TransactionType.WRITE) as tx:
+                query = f"""
+                    match
+                        $r1 isa rule-entity, has rule-id "{dependent_id}";
+                        $r2 isa rule-entity, has rule-id "{dependency_id}";
+                    insert
+                        (dependent: $r1, dependency: $r2) isa rule-dependency;
+                """
+                tx.query(query).resolve()
+                tx.commit()
+            logger.info(f"Created dependency: {dependent_id} -> {dependency_id}")
+            return True
+        except Exception as e:
+            logger.warning(f"Failed to create dependency {dependent_id}->{dependency_id}: {e}")
+            return False
 
     def get_decision_impacts(self, decision_id: str) -> List[str]:
         """

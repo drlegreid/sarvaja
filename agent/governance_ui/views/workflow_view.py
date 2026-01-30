@@ -195,6 +195,22 @@ def build_violations_panel() -> None:
                                     classes="font-weight-bold mr-2"
                                 )
                                 html.Span("{{ violation.message }}")
+                            with html.Template(v_slot_append=True):
+                                v3.VBtn(
+                                    "Create Task",
+                                    size="x-small",
+                                    variant="tonal",
+                                    color="primary",
+                                    prepend_icon="mdi-plus",
+                                    click=(
+                                        "active_view = 'tasks'; "
+                                        "show_task_form = true; "
+                                        "form_task_description = "
+                                        "'Fix violation: ' + violation.rule_id + ' - ' + violation.message"
+                                    ),
+                                    __properties=["data-testid"],
+                                    **{"data-testid": "violation-create-task-btn"}
+                                )
 
 
 def build_recommendations() -> None:

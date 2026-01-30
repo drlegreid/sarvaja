@@ -3,19 +3,67 @@ Chat Command Processing.
 
 Per GAP-FILE-023: Extracted from routes/chat.py
 Per DOC-SIZE-01-v1: Files under 400 lines
+Per PLAN-UI-OVERHAUL-001 Task 3.5: LLM integration for natural language.
 
 Handles chat command parsing and response generation.
 
 Created: 2024-12-28
 Refactored: 2026-01-14
+Updated: 2026-01-30 - LLM integration via LiteLLM
 """
 import logging
+import os
 
 logger = logging.getLogger(__name__)
 
 from governance.client import get_client
 from governance.stores import _tasks_store, _agents_store, _sessions_store
 from governance.context_preloader import preload_session_context
+
+# LiteLLM proxy configuration
+LITELLM_BASE_URL = os.environ.get("LITELLM_BASE_URL", "http://localhost:4000")
+LITELLM_API_KEY = os.environ.get("LITELLM_API_KEY", "sk-litellm-master-key")
+LLM_MODEL = os.environ.get("MODEL_NAME", "claude-sonnet-4-20250514")
+
+GOVERNANCE_SYSTEM_PROMPT = (
+    "You are a governance assistant for the Sarvaja platform. "
+    "You help users understand rules, tasks, sessions, and decisions. "
+    "Keep responses concise and actionable. "
+    "If you don't know something, suggest using /help for available commands."
+)
+
+
+def query_llm(message: str, system_prompt: str = "") -> str:
+    """
+    Query LLM via LiteLLM proxy for natural language chat responses.
+
+    Falls back to a helpful message if LiteLLM is unavailable.
+    """
+    try:
+        import httpx
+        messages = []
+        if system_prompt:
+            messages.append({"role": "system", "content": system_prompt})
+        messages.append({"role": "user", "content": message})
+
+        resp = httpx.post(
+            f"{LITELLM_BASE_URL}/v1/chat/completions",
+            json={"model": LLM_MODEL, "messages": messages, "max_tokens": 512},
+            headers={"Authorization": f"Bearer {LITELLM_API_KEY}"},
+            timeout=30.0,
+        )
+        if resp.status_code == 200:
+            data = resp.json()
+            return data["choices"][0]["message"]["content"]
+        logger.warning(f"LLM query failed: HTTP {resp.status_code}")
+    except Exception as e:
+        logger.warning(f"LLM query error: {e}")
+
+    return (
+        "LLM is currently unavailable. "
+        "Use /help to see available commands, "
+        "or try again later."
+    )
 
 
 def process_chat_command(content: str, agent_id: str) -> str:
@@ -142,28 +190,13 @@ You can also type natural language commands and I'll do my best to help!"""
         return f"__DELEGATE__:{task_desc}"
 
     else:
-        # Natural language processing (simplified)
-        if "status" in content_lower:
-            return (
-                f"Current system status:\n"
-                f"- {rules_count} rules configured\n"
-                f"- {tasks_count} tasks tracked\n"
-                f"- {agents_count} agents available\n"
-                f"- All systems operational."
-            )
-        elif "help" in content_lower:
-            return (
-                "I can help you with governance tasks. "
-                "Try commands like /status, /tasks, /rules, "
-                "or just describe what you need!"
-            )
-        else:
-            return (
-                f"Received: '{content}'\n\n"
-                "I'm here to help with governance tasks. "
-                "Use /help to see available commands, "
-                "or describe what you need in natural language."
-            )
+        # Natural language processing via LLM (PLAN-UI-OVERHAUL-001 Task 3.5)
+        context = (
+            f"{GOVERNANCE_SYSTEM_PROMPT}\n\n"
+            f"Platform context: {rules_count} rules, {tasks_count} tasks, "
+            f"{agents_count} agents, {sessions_count} sessions."
+        )
+        return query_llm(content, system_prompt=context)
 
 
-__all__ = ["process_chat_command"]
+__all__ = ["process_chat_command", "query_llm"]

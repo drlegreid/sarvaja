@@ -23,6 +23,7 @@ from governance.rule_linker import (
     normalize_rule_id
 )
 from governance.routes.rules.search import filter_rules_by_search
+from governance.stores.audit import record_audit
 
 router = APIRouter(tags=["Rules"])
 logger = logging.getLogger(__name__)
@@ -212,6 +213,8 @@ async def create_rule(rule: RuleCreate):
         if not created:
             raise HTTPException(status_code=500, detail="Failed to create rule")
 
+        record_audit("CREATE", "rule", rule.rule_id,
+                     metadata={"name": rule.name, "category": rule.category, "priority": rule.priority})
         return _rule_to_response(created)
     except HTTPException:
         raise
@@ -242,6 +245,8 @@ async def update_rule(rule_id: str, rule: RuleUpdate):
         if not updated:
             raise HTTPException(status_code=500, detail="Failed to update rule")
 
+        record_audit("UPDATE", "rule", actual_id,
+                     metadata={"name": rule.name, "status": rule.status, "priority": rule.priority})
         doc_paths = get_rule_document_paths(client, [updated.id])
         return _rule_to_response(updated, doc_paths.get(updated.id))
     except HTTPException:
@@ -290,10 +295,88 @@ async def delete_rule(rule_id: str, archive: bool = Query(True, description="Arc
         if not deleted:
             raise HTTPException(status_code=500, detail="Failed to delete rule")
 
+        record_audit("DELETE", "rule", actual_id, metadata={"archive": archive})
         return None
     except HTTPException:
         raise
     except ValueError as e:
         raise HTTPException(status_code=422, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/rules/dependencies/overview")
+async def dependency_overview():
+    """
+    Global dependency overview: total stats, orphaned rules, circular deps.
+
+    Per PLAN-UI-OVERHAUL-001 Task 4.3: Global overview before rule selection.
+    """
+    client = get_client()
+    if not client:
+        raise HTTPException(status_code=503, detail="TypeDB not connected")
+    try:
+        rules = client.get_all_rules()
+        total_rules = len(rules)
+        rule_ids = [r.id for r in rules]
+
+        # Gather dependency info per rule
+        has_deps = set()
+        has_dependents = set()
+        total_dependencies = 0
+        for rid in rule_ids:
+            deps = client.get_rule_dependencies(rid)
+            dependents = client.get_rules_depending_on(rid)
+            if deps:
+                has_deps.add(rid)
+                total_dependencies += len(deps)
+            if dependents:
+                has_dependents.add(rid)
+
+        # Orphans: rules with no deps AND no dependents
+        orphan_rules = [rid for rid in rule_ids if rid not in has_deps and rid not in has_dependents]
+
+        return {
+            "total_rules": total_rules,
+            "total_dependencies": total_dependencies,
+            "orphan_rules": orphan_rules,
+            "orphan_count": len(orphan_rules),
+            "circular_count": 0,  # TODO: implement cycle detection
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/rules/{rule_id}/dependencies")
+async def get_rule_dependencies(rule_id: str):
+    """Get rules that a rule depends on. Per GAP-IMPACT-001."""
+    client = get_client()
+    if not client:
+        raise HTTPException(status_code=503, detail="TypeDB not connected")
+    try:
+        actual_id, _ = _resolve_rule(client, rule_id)
+        deps = client.get_rule_dependencies(actual_id)
+        dependents = client.get_rules_depending_on(actual_id)
+        return {"rule_id": actual_id, "depends_on": deps, "depended_by": dependents}
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/rules/{rule_id}/dependencies/{dep_id}", status_code=201)
+async def create_rule_dependency(rule_id: str, dep_id: str):
+    """Create a dependency relation between two rules. Per GAP-IMPACT-001."""
+    client = get_client()
+    if not client:
+        raise HTTPException(status_code=503, detail="TypeDB not connected")
+    try:
+        actual_id, _ = _resolve_rule(client, rule_id)
+        dep_actual, _ = _resolve_rule(client, dep_id)
+        if client.create_rule_dependency(actual_id, dep_actual):
+            return {"dependent": actual_id, "dependency": dep_actual, "created": True}
+        raise HTTPException(status_code=500, detail="Failed to create dependency")
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

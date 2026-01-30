@@ -55,7 +55,8 @@ class TaskCRUDOperations:
         linked_sessions: List[str] = None,
         resolution: str = "NONE",
         item_type: str = None,
-        document_path: str = None
+        document_path: str = None,
+        agent_id: str = None
     ) -> Optional[Task]:
         """
         Insert a new task into TypeDB.
@@ -113,6 +114,9 @@ class TaskCRUDOperations:
                 if document_path:
                     doc_path_escaped = document_path.replace('"', '\\"')
                     insert_parts.append(f'has document-path "{doc_path_escaped}"')
+                if agent_id:
+                    agent_id_escaped = agent_id.replace('"', '\\"')
+                    insert_parts.append(f'has agent-id "{agent_id_escaped}"')
 
                 insert_query = f"""
                     insert $t isa task,

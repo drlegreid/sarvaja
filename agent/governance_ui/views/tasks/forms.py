@@ -87,9 +87,10 @@ def build_task_content_preview() -> None:
             html.Pre(
                 "{{ selected_task.body || selected_task.content }}",
                 style="white-space: pre-wrap; font-family: monospace; "
-                      "font-size: 0.875rem; background: #f5f5f5; "
+                      "font-size: 0.875rem; "
                       "padding: 12px; border-radius: 4px; max-height: 300px; "
                       "overflow-y: auto;",
+                classes="bg-surface-variant",
                 __properties=["data-testid"],
                 **{"data-testid": "task-content-text"}
             )
@@ -148,6 +149,22 @@ def build_task_linked_items() -> None:
                     classes="mr-1",
                     prepend_icon="mdi-calendar-clock"
                 )
+            # Document linkage (PLAN-UI-OVERHAUL-001 Task 2.4)
+            with html.Div(
+                v_if="selected_task.document_path",
+                classes="mb-2"
+            ):
+                html.Span("Document: ", classes="font-weight-bold")
+                v3.VBtn(
+                    v_text="selected_task.document_path",
+                    variant="tonal",
+                    size="small",
+                    color="secondary",
+                    prepend_icon="mdi-file-document-outline",
+                    click="trigger('load_file_content', [selected_task.document_path])",
+                    __properties=["data-testid"],
+                    **{"data-testid": "task-document-btn"}
+                )
             # Evidence with verification info (GAP-UI-LINKED-SESSIONS-001)
             with html.Div(
                 v_if="selected_task.evidence",
@@ -157,8 +174,9 @@ def build_task_linked_items() -> None:
                 html.Pre(
                     "{{ selected_task.evidence }}",
                     style="white-space: pre-wrap; font-family: monospace; "
-                          "font-size: 0.8rem; background: #e8f5e9; "
+                          "font-size: 0.8rem; "
                           "padding: 8px; border-radius: 4px; margin-top: 4px;",
+                    classes="bg-surface-variant",
                     __properties=["data-testid"],
                     **{"data-testid": "task-evidence-text"}
                 )

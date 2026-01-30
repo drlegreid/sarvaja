@@ -129,190 +129,30 @@ def build_tasks_list_view() -> None:
                 **{"data-testid": "tasks-filter-phase"}
             )
 
-        # Tasks list content (GAP-UI-036: scrollable)
-        with v3.VCardText(v_if="!is_loading", style="max-height: 500px; overflow-y: auto;"):
-            html.Div("{{ tasks.length }} tasks loaded", classes="mb-2 text-grey")
-            with v3.VList(
+        # Tasks data table (PLAN-UI-OVERHAUL-001 Task 1.3: Grid with columns)
+        with v3.VCardText(v_if="!is_loading"):
+            v3.VDataTable(
+                items=("tasks",),
+                headers=[
+                    {"title": "Task ID", "key": "task_id", "width": "150px", "sortable": True},
+                    {"title": "Name", "key": "name", "sortable": True},
+                    {"title": "Status", "key": "status", "width": "110px", "sortable": True},
+                    {"title": "Phase", "key": "phase", "width": "80px", "sortable": True},
+                    {"title": "Agent", "key": "agent_id", "width": "140px", "sortable": True},
+                    {"title": "Created", "key": "created_at", "width": "120px", "sortable": True},
+                    {"title": "Gap", "key": "gap_id", "width": "120px", "sortable": True},
+                ],
+                item_value="task_id",
+                search=("tasks_search_query",),
                 density="compact",
+                items_per_page=("tasks_per_page",),
+                hover=True,
+                click_row=(
+                    "($event, row) => { selected_task = row.item; show_task_detail = true }",
+                ),
                 __properties=["data-testid"],
                 **{"data-testid": "tasks-table"}
-            ):
-                with v3.VListItem(
-                    v_for="task in tasks",
-                    v_show=(
-                        # Text search filter
-                        "(!tasks_search_query || "
-                        "((task.task_id || task.id) && (task.task_id || task.id).toLowerCase()"
-                        ".includes(tasks_search_query.toLowerCase())) || "
-                        "((task.description || task.title || task.name) && "
-                        "(task.description || task.title || task.name).toLowerCase()"
-                        ".includes(tasks_search_query.toLowerCase()))) && "
-                        # Status dropdown filter
-                        "(!tasks_status_filter || task.status === tasks_status_filter) && "
-                        # Phase dropdown filter
-                        "(!tasks_phase_filter || task.phase === tasks_phase_filter) && "
-                        # Tab filter (UI-AUDIT-2026-01-19)
-                        "(tasks_filter_type === 'all' || "
-                        "(tasks_filter_type === 'available' && !task.agent_id && task.status !== 'DONE') || "
-                        "(tasks_filter_type === 'mine' && task.agent_id === tasks_agent_id) || "
-                        "(tasks_filter_type === 'completed' && task.status === 'DONE'))"
-                    ),
-                    **{":key": "task.task_id || task.id"},
-                    click="selected_task = task; show_task_detail = true",
-                    __properties=["data-testid"],
-                    **{"data-testid": "task-item"}
-                ):
-                    with html.Template(v_slot_prepend=True):
-                        v3.VIcon(
-                            icon=(
-                                "task.status === 'DONE' ? 'mdi-checkbox-marked' : "
-                                "task.status === 'IN_PROGRESS' ? 'mdi-progress-clock' : "
-                                "'mdi-checkbox-blank-outline'",
-                            ),
-                            color=(
-                                "task.status === 'DONE' ? 'success' : "
-                                "task.status === 'IN_PROGRESS' ? 'info' : 'grey'",
-                            ),
-                        )
-                    with v3.VListItemTitle():
-                        html.Span(
-                            "{{ task.task_id || task.id }}: "
-                            "{{ task.description || task.title || task.name }}"
-                        )
-                    with v3.VListItemSubtitle():
-                        # Metadata chips (GAP-UI-049 enhancement)
-                        with html.Div(classes="d-flex align-center flex-wrap mb-1"):
-                            v3.VChip(
-                                v_text="task.phase",
-                                size="x-small",
-                                color="primary",
-                                variant="tonal",
-                                classes="mr-1"
-                            )
-                            v3.VChip(
-                                v_text="task.status",
-                                size="x-small",
-                                v_bind_color=(
-                                    "task.status === 'DONE' ? 'success' : "
-                                    "task.status === 'IN_PROGRESS' ? 'info' : "
-                                    "task.status === 'BLOCKED' ? 'error' : 'grey'"
-                                ),
-                                variant="tonal",
-                                classes="mr-1"
-                            )
-                            # Resolution badge (GAP-UI-LINKED-SESSIONS-001)
-                            v3.VChip(
-                                v_if="task.resolution && task.resolution !== 'NONE'",
-                                v_text="task.resolution",
-                                size="x-small",
-                                v_bind_color=(
-                                    "task.resolution === 'CERTIFIED' ? 'success' : "
-                                    "task.resolution === 'VALIDATED' ? 'info' : "
-                                    "task.resolution === 'IMPLEMENTED' ? 'warning' : "
-                                    "'grey'"
-                                ),
-                                variant="flat",
-                                prepend_icon=(
-                                    "task.resolution === 'CERTIFIED' ? 'mdi-check-decagram' : "
-                                    "task.resolution === 'VALIDATED' ? 'mdi-test-tube' : "
-                                    "task.resolution === 'IMPLEMENTED' ? 'mdi-code-tags' : "
-                                    "'mdi-help-circle'"
-                                ),
-                                classes="mr-1"
-                            )
-                            v3.VChip(
-                                v_if="task.agent_id",
-                                v_text="task.agent_id",
-                                size="x-small",
-                                color="secondary",
-                                variant="tonal",
-                                prepend_icon="mdi-robot",
-                                classes="mr-1"
-                            )
-                            # Linked items indicators (GAP-UI-049)
-                            v3.VChip(
-                                v_if="task.gap_id",
-                                v_text="task.gap_id",
-                                size="x-small",
-                                color="warning",
-                                variant="tonal",
-                                prepend_icon="mdi-alert-circle-outline",
-                                classes="mr-1"
-                            )
-                            # Date display (GAP-UI-035)
-                            html.Span(
-                                v_if="task.created_at",
-                                v_text="task.created_at",
-                                classes="text-caption text-grey ml-2"
-                            )
-                        # Linked rules and sessions count (GAP-UI-049)
-                        with html.Div(
-                            v_if=(
-                                "task.linked_rules?.length > 0 || "
-                                "task.linked_sessions?.length > 0"
-                            ),
-                            classes="d-flex align-center text-caption text-grey"
-                        ):
-                            html.Span(
-                                v_if="task.linked_rules?.length > 0",
-                                v_text=(
-                                    "'Rules: ' + task.linked_rules.join(', ')"
-                                ),
-                                classes="mr-2"
-                            )
-                            html.Span(
-                                v_if="task.linked_sessions?.length > 0",
-                                v_text=(
-                                    "'Sessions: ' + task.linked_sessions.length"
-                                )
-                            )
-                    with html.Template(v_slot_append=True):
-                        with html.Div(classes="d-flex align-center"):
-                            # Claim button (UI-AUDIT-2026-01-19)
-                            v3.VBtn(
-                                "Claim",
-                                v_if="!task.agent_id && task.status !== 'DONE'",
-                                color="primary",
-                                size="x-small",
-                                variant="tonal",
-                                disabled=("!tasks_agent_id",),
-                                click_stop=(
-                                    "trigger('claim_task', (task.task_id || task.id))"
-                                ),
-                                title=(
-                                    "tasks_agent_id ? '' : "
-                                    "'Enter Agent ID above to claim tasks'"
-                                ),
-                                classes="mr-1",
-                                __properties=["data-testid"],
-                                **{"data-testid": "task-claim-btn"}
-                            )
-                            # Complete button (UI-AUDIT-2026-01-19)
-                            v3.VBtn(
-                                "Complete",
-                                v_if=(
-                                    "task.agent_id === tasks_agent_id && "
-                                    "task.status !== 'DONE'"
-                                ),
-                                color="success",
-                                size="x-small",
-                                variant="tonal",
-                                click_stop=(
-                                    "trigger('complete_task', (task.task_id || task.id))"
-                                ),
-                                classes="mr-1",
-                                __properties=["data-testid"],
-                                **{"data-testid": "task-complete-btn"}
-                            )
-                            v3.VChip(
-                                v_text="task.status",
-                                color=(
-                                    "task.status === 'DONE' ? 'success' : "
-                                    "task.status === 'IN_PROGRESS' ? 'info' : "
-                                    "task.status === 'BLOCKED' ? 'error' : 'grey'",
-                                ),
-                                size="small",
-                            )
+            )
 
         # Pagination controls (EPIC-DR-005)
         with v3.VCardActions(

@@ -93,97 +93,29 @@ def build_rules_list_view() -> None:
                 **{"data-testid": "rules-filter-category"}
             )
 
-        # Rules list content (GAP-UI-036: scrollable)
-        with v3.VCardText(style="max-height: 500px; overflow-y: auto;"):
-            html.Div("{{ rules.length }} rules loaded", classes="mb-2 text-grey")
-
-            with v3.VList(
+        # Rules data table (PLAN-UI-OVERHAUL-001 Task 1.1: Grid with columns)
+        with v3.VCardText():
+            v3.VDataTable(
+                items=("rules",),
+                headers=[
+                    {"title": "Rule ID", "key": "rule_id", "width": "180px", "sortable": True},
+                    {"title": "Name", "key": "name", "sortable": True},
+                    {"title": "Status", "key": "status", "width": "100px", "sortable": True},
+                    {"title": "Category", "key": "category", "width": "120px", "sortable": True},
+                    {"title": "Priority", "key": "priority", "width": "100px", "sortable": True},
+                    {"title": "Created", "key": "created_date", "width": "120px", "sortable": True},
+                ],
+                item_value="rule_id",
+                search=("rules_search_query",),
                 density="compact",
+                items_per_page=25,
+                hover=True,
+                click_row=(
+                    "($event, row) => { selected_rule = row.item; show_rule_detail = true }",
+                ),
                 __properties=["data-testid"],
                 **{"data-testid": "rules-table"}
-            ):
-                with v3.VListItem(
-                    v_for="rule in rules",
-                    v_show=(
-                        "!rules_search_query || "
-                        "(rule.id && rule.id.toLowerCase()"
-                        ".includes(rules_search_query.toLowerCase())) || "
-                        "(rule.semantic_id && rule.semantic_id.toLowerCase()"
-                        ".includes(rules_search_query.toLowerCase())) || "
-                        "(rule.name && rule.name.toLowerCase()"
-                        ".includes(rules_search_query.toLowerCase())) || "
-                        "(rule.directive && rule.directive.toLowerCase()"
-                        ".includes(rules_search_query.toLowerCase()))"
-                    ),
-                    click="selected_rule = rule; show_rule_detail = true",
-                    **{":key": "rule.id"},
-                    __properties=["data-testid"],
-                    **{"data-testid": "rule-item"}
-                ):
-                    with html.Template(v_slot_prepend=True):
-                        v3.VIcon("mdi-gavel", color="primary")
-                    with v3.VListItemTitle():
-                        html.Span("{{ rule.id }}: {{ rule.name }}")
-                        # Semantic ID (GAP-MCP-008)
-                        v3.VChip(
-                            v_if="rule.semantic_id",
-                            v_text="rule.semantic_id",
-                            size="x-small",
-                            color="secondary",
-                            variant="outlined",
-                            classes="ml-2"
-                        )
-                    with v3.VListItemSubtitle():
-                        # Metadata chips
-                        with html.Div(classes="d-flex align-center mb-1"):
-                            v3.VChip(
-                                v_text="rule.category",
-                                size="x-small",
-                                color="primary",
-                                variant="tonal",
-                                classes="mr-1"
-                            )
-                            v3.VChip(
-                                v_text="rule.status",
-                                size="x-small",
-                                v_bind_color=(
-                                    "rule.status === 'ACTIVE' ? 'success' : "
-                                    "rule.status === 'DRAFT' ? 'warning' : 'grey'"
-                                ),
-                                variant="tonal",
-                                classes="mr-1"
-                            )
-                            v3.VChip(
-                                v_text="rule.priority",
-                                size="x-small",
-                                v_bind_color=(
-                                    "rule.priority === 'CRITICAL' ? 'error' : "
-                                    "rule.priority === 'HIGH' ? 'warning' : "
-                                    "rule.priority === 'MEDIUM' ? 'info' : 'grey'"
-                                ),
-                                variant="tonal",
-                                classes="mr-1"
-                            )
-                            # Date display (GAP-UI-035)
-                            html.Span(
-                                v_if="rule.created_date",
-                                v_text="rule.created_date",
-                                classes="text-caption text-grey ml-2"
-                            )
-                        # Directive excerpt (GAP-UI-047)
-                        html.Div(
-                            v_if="rule.directive",
-                            v_text=(
-                                "rule.directive.length > 100 ? "
-                                "rule.directive.substring(0, 100) + '...' : "
-                                "rule.directive"
-                            ),
-                            classes="text-caption text-grey",
-                            style="white-space: nowrap; overflow: hidden; "
-                                  "text-overflow: ellipsis; max-width: 600px;",
-                            __properties=["data-testid"],
-                            **{"data-testid": "rule-directive-excerpt"}
-                        )
+            )
 
 
 def build_rule_detail_view() -> None:
@@ -276,8 +208,9 @@ def build_rule_detail_view() -> None:
                     html.Pre(
                         "{{ selected_rule.directive || 'No directive specified' }}",
                         style="white-space: pre-wrap; font-family: inherit; "
-                              "font-size: 0.875rem; background: #f5f5f5; "
+                              "font-size: 0.875rem; "
                               "padding: 12px; border-radius: 4px; margin: 0;",
+                        classes="bg-surface-variant",
                         __properties=["data-testid"],
                         **{"data-testid": "rule-directive-text"}
                     )

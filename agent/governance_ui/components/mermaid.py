@@ -31,7 +31,7 @@ def inject_mermaid_script() -> None:
             script.onload = function() {{
                 mermaid.initialize({{
                     startOnLoad: false,
-                    theme: 'default',
+                    theme: document.documentElement.classList.contains('v-theme--dark') ? 'dark' : 'default',
                     securityLevel: 'loose',
                     flowchart: {{
                         useMaxWidth: true,
@@ -97,9 +97,8 @@ def build_mermaid_diagram(diagram_id: str, source_var: str) -> None:
     # Container where SVG will be rendered
     html.Div(
         id=diagram_id,
-        classes="mermaid-container",
+        classes="mermaid-container bg-surface-variant",
         style=(
-            "background: #f8f9fa; "
             "padding: 16px; "
             "border-radius: 8px; "
             "min-height: 200px; "
@@ -129,7 +128,8 @@ def build_mermaid_with_fallback(diagram_id: str, source_var: str) -> None:
         with html.Details(classes="mt-2"):
             html.Summary(
                 "View Source",
-                style="cursor: pointer; color: #666; font-size: 12px;"
+                style="cursor: pointer; font-size: 12px;",
+                classes="text-medium-emphasis"
             )
             html.Pre(
                 f"{{{{ {source_var} }}}}",

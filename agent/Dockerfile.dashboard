@@ -30,16 +30,18 @@ COPY tests /app/tests
 COPY shared /app/shared
 
 # Create entrypoint that runs both Dashboard + API
+# Task 0.2: API uses uvicorn --reload for hot-reload on code changes
 RUN echo '#!/bin/sh\n\
-echo "=== Sim.ai Governance Stack ==="\n\
+echo "=== Sarvaja Governance Stack ==="\n\
 echo "Dashboard Port: ${DASHBOARD_PORT:-8081}"\n\
 echo "API Port: ${API_PORT:-8082}"\n\
 echo "TypeDB: ${TYPEDB_HOST:-typedb}:${TYPEDB_PORT:-1729}"\n\
 cd /app\n\
 \n\
-# Start API in background\n\
-echo "Starting Governance API on port ${API_PORT:-8082}..."\n\
-python -m governance.api --port ${API_PORT:-8082} &\n\
+# Start API with auto-reload in background\n\
+echo "Starting Governance API on port ${API_PORT:-8082} (auto-reload)..."\n\
+python -m uvicorn governance.api:app --host 0.0.0.0 --port ${API_PORT:-8082} \\\n\
+  --reload --reload-dir /app/governance --reload-dir /app/shared &\n\
 API_PID=$!\n\
 \n\
 # Give API time to start\n\

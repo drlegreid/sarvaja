@@ -44,8 +44,9 @@ def build_decision_content_preview() -> None:
             html.Pre(
                 "{{ selected_decision.context }}",
                 style="white-space: pre-wrap; font-family: inherit; "
-                      "font-size: 0.875rem; background: #f5f5f5; "
+                      "font-size: 0.875rem; "
                       "padding: 12px; border-radius: 4px; margin: 0;",
+                classes="bg-surface-variant",
                 __properties=["data-testid"],
                 **{"data-testid": "decision-context-text"}
             )
@@ -63,8 +64,9 @@ def build_decision_content_preview() -> None:
             html.Pre(
                 "{{ selected_decision.rationale }}",
                 style="white-space: pre-wrap; font-family: inherit; "
-                      "font-size: 0.875rem; background: #e3f2fd; "
+                      "font-size: 0.875rem; "
                       "padding: 12px; border-radius: 4px; margin: 0;",
+                classes="bg-surface-variant",
                 __properties=["data-testid"],
                 **{"data-testid": "decision-rationale-text"}
             )
@@ -126,6 +128,73 @@ def build_decision_info_cards() -> None:
                             subtitle=("selected_decision.category || 'N/A'",),
                             prepend_icon="mdi-tag",
                         )
+
+    # Options considered (PLAN-UI-OVERHAUL-001 Task 4.2)
+    with v3.VCard(
+        v_if="selected_decision.options?.length > 0",
+        variant="outlined",
+        classes="mt-4",
+        __properties=["data-testid"],
+        **{"data-testid": "decision-options-card"}
+    ):
+        with v3.VCardTitle(classes="d-flex align-center", density="compact"):
+            html.Span("Options Considered")
+            v3.VSpacer()
+            v3.VChip(
+                v_if="selected_decision.selected_option",
+                v_text="'Chosen: ' + selected_decision.selected_option",
+                color="success",
+                size="small",
+                prepend_icon="mdi-check",
+            )
+        with v3.VCardText():
+            with html.Div(
+                v_for="(opt, idx) in selected_decision.options",
+                **{":key": "idx"},
+                classes="mb-3"
+            ):
+                with v3.VCard(
+                    variant="tonal",
+                    v_bind_color=(
+                        "selected_decision.selected_option === opt.label"
+                        " ? 'success' : undefined"
+                    ),
+                ):
+                    with v3.VCardTitle(density="compact"):
+                        v3.VIcon(
+                            v_if="selected_decision.selected_option === opt.label",
+                            icon="mdi-check-circle",
+                            color="success",
+                            size="small",
+                            classes="mr-1",
+                        )
+                        html.Span("{{ opt.label }}")
+                    with v3.VCardText():
+                        # Pros
+                        with html.Div(
+                            v_if="opt.pros?.length > 0",
+                            classes="mb-1"
+                        ):
+                            html.Span("Pros: ", classes="text-success font-weight-bold text-caption")
+                            v3.VChip(
+                                v_for="pro in opt.pros",
+                                v_text="pro",
+                                size="x-small",
+                                color="success",
+                                variant="tonal",
+                                classes="mr-1",
+                            )
+                        # Cons
+                        with html.Div(v_if="opt.cons?.length > 0"):
+                            html.Span("Cons: ", classes="text-error font-weight-bold text-caption")
+                            v3.VChip(
+                                v_for="con in opt.cons",
+                                v_text="con",
+                                size="x-small",
+                                color="error",
+                                variant="tonal",
+                                classes="mr-1",
+                            )
 
     # Affected rules chips (GAP-UI-037)
     with v3.VCard(
