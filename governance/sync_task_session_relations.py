@@ -21,7 +21,7 @@ def sync_task_session_relations():
     """Sync linked_sessions from tasks to TypeDB completed-in relations via REST API."""
 
     # Get all tasks
-    response = requests.get(f"{API_BASE}/api/tasks?limit=200")
+    response = requests.get(f"{API_BASE}/api/tasks?limit=200", timeout=30)
     if response.status_code != 200:
         print(f"ERROR: Failed to get tasks: {response.status_code}")
         return 1
@@ -48,7 +48,8 @@ def sync_task_session_relations():
             try:
                 # Create the relation via API (POST /tasks/{task_id}/sessions/{session_id})
                 link_response = requests.post(
-                    f"{API_BASE}/api/tasks/{task_id}/sessions/{session_id}"
+                    f"{API_BASE}/api/tasks/{task_id}/sessions/{session_id}",
+                    timeout=30
                 )
 
                 if link_response.status_code in (200, 201):
@@ -77,7 +78,7 @@ def sync_task_session_relations():
 
     # Verify by checking a session
     print("\nVerification:")
-    verify_response = requests.get(f"{API_BASE}/api/sessions/SESSION-2026-01-11-B2A608")
+    verify_response = requests.get(f"{API_BASE}/api/sessions/SESSION-2026-01-11-B2A608", timeout=30)
     if verify_response.status_code == 200:
         session = verify_response.json()
         print(f"  SESSION-2026-01-11-B2A608: tasks_completed = {session.get('tasks_completed')}")

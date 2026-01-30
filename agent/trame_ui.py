@@ -199,6 +199,7 @@ class SimAITrameUI:
                         "prompt": self.state.prompt,
                         "agent": self.state.selected_agent,
                     },
+                    timeout=30,
                 )
 
                 if response.ok:
@@ -241,6 +242,7 @@ class SimAITrameUI:
                 with requests.get(
                     f"{self.api_base}/tasks/{task_id}/events",
                     stream=True,
+                    timeout=120,
                 ) as response:
                     for line in response.iter_lines():
                         if line:
@@ -264,7 +266,7 @@ class SimAITrameUI:
         """Refresh task list."""
         try:
             import requests
-            response = requests.get(f"{self.api_base}/tasks")
+            response = requests.get(f"{self.api_base}/tasks", timeout=30)
             if response.ok:
                 self.state.tasks = response.json()[:10]
         except Exception as e:
