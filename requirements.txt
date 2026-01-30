@@ -41,7 +41,7 @@ watchdog>=6.0.0  # Cross-platform file monitoring
 # Robot Framework E2E Testing - Per RF-001
 robotframework>=7.0.0
 robotframework-browser>=19.0.0  # Playwright-based browser library
-robotframework-requests>=0.10.0  # REST API testing
+robotframework-requests>=0.9.0  # REST API testing
 
 # Observability & Logging
 structlog>=25.0.0  # Per MCP-LOGGING-01-v1: Structured JSON logging
