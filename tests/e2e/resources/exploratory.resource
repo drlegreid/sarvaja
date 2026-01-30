@@ -188,15 +188,15 @@ Explore API Endpoints
     ${results}=    Create Dictionary
 
     # Test health endpoint
-    ${health}=    Http    GET    ${BASE_URL}/health
+    ${health}=    Http    ${BASE_URL}/health    method=GET
     Set To Dictionary    ${results}    health    ${health.status}
 
     # Test tasks list
-    ${tasks}=    Http    GET    ${API_URL}
+    ${tasks}=    Http    ${API_URL}    method=GET
     Set To Dictionary    ${results}    tasks_list    ${tasks.status}
 
     # Test docs endpoint
-    ${docs}=    Http    GET    ${BASE_URL}/docs
+    ${docs}=    Http    ${BASE_URL}/docs    method=GET
     Set To Dictionary    ${results}    docs    ${docs.status}
 
     RETURN    ${results}
@@ -205,7 +205,7 @@ Submit Task Via API
     [Documentation]    Submit task directly via API
     [Arguments]    ${prompt}    ${agent}=orchestrator
     ${body}=    Create Dictionary    prompt=${prompt}    agent=${agent}
-    ${response}=    Http    POST    ${API_URL}    ${body}
+    ${response}=    Http    ${API_URL}    method=POST    body=${body}
     RETURN    ${response}
 
 # =============================================================================

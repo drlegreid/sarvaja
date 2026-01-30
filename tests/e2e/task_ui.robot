@@ -170,20 +170,20 @@ Keyboard Navigation Works
 API Health Check
     [Documentation]    Verify API is healthy
     [Tags]    api    health
-    ${response}=    Http    GET    ${AGENT_URL}/health
+    ${response}=    Http    ${AGENT_URL}/health    method=GET
     Should Be Equal As Integers    ${response.status}    200
 
 API Tasks Endpoint Works
     [Documentation]    Verify tasks API returns valid response
     [Tags]    api    functional
-    ${response}=    Http    GET    ${AGENT_URL}/tasks
+    ${response}=    Http    ${AGENT_URL}/tasks    method=GET
     Should Be Equal As Integers    ${response.status}    200
 
 API Task Submission Works
     [Documentation]    Verify task can be submitted via API
     [Tags]    api    functional
     ${body}=    Create Dictionary    prompt=API test task    agent=orchestrator
-    ${response}=    Http    POST    ${AGENT_URL}/tasks    ${body}
+    ${response}=    Http    ${AGENT_URL}/tasks    method=POST    body=${body}
     Should Be Equal As Integers    ${response.status}    200
     Dictionary Should Contain Key    ${response.body}    task_id
 
