@@ -229,18 +229,20 @@ class TaskCRUDOperations:
                         match
                             $t isa task, has task-id "{task_id}";
                         insert
-                            $t has task-name "{name}";
+                            $t has task-name "{name_escaped}";
                     """
                     tx.query(insert_query).resolve()
 
                 # Update phase if provided
                 if phase and phase != current.phase:
+                    phase_escaped = phase.replace('"', '\\"')
                     if current.phase:
+                        current_phase_escaped = current.phase.replace('"', '\\"')
                         # TypeDB 3.x: has $var of $entity
                         delete_query = f"""
                             match
                                 $t isa task, has task-id "{task_id}", has phase $p;
-                                $p == "{current.phase}";
+                                $p == "{current_phase_escaped}";
                             delete
                                 has $p of $t;
                         """
@@ -249,18 +251,20 @@ class TaskCRUDOperations:
                         match
                             $t isa task, has task-id "{task_id}";
                         insert
-                            $t has phase "{phase}";
+                            $t has phase "{phase_escaped}";
                     """
                     tx.query(insert_query).resolve()
 
                 # GAP-GAPS-TASKS-001: Update item_type if provided
                 if item_type:
+                    item_type_escaped = item_type.replace('"', '\\"')
                     current_item_type = getattr(current, 'item_type', None)
                     if current_item_type and current_item_type != item_type:
+                        current_item_escaped = current_item_type.replace('"', '\\"')
                         delete_query = f"""
                             match
                                 $t isa task, has task-id "{task_id}", has item-type $it;
-                                $it == "{current_item_type}";
+                                $it == "{current_item_escaped}";
                             delete
                                 has $it of $t;
                         """
@@ -270,7 +274,7 @@ class TaskCRUDOperations:
                             match
                                 $t isa task, has task-id "{task_id}";
                             insert
-                                $t has item-type "{item_type}";
+                                $t has item-type "{item_type_escaped}";
                         """
                         tx.query(insert_query).resolve()
 

@@ -51,14 +51,17 @@ class SessionCRUDOperations:
                     insert_parts = [f'has session-id "{session_id}"']
 
                     if name:
-                        insert_parts.append(f'has session-name "{name}"')
+                        name_escaped = name.replace('"', '\\"')
+                        insert_parts.append(f'has session-name "{name_escaped}"')
                     if description:
                         desc_escaped = description.replace('"', '\\"')
                         insert_parts.append(f'has session-description "{desc_escaped}"')
                     if file_path:
-                        insert_parts.append(f'has session-file-path "{file_path}"')
+                        path_escaped = file_path.replace('"', '\\"')
+                        insert_parts.append(f'has session-file-path "{path_escaped}"')
                     if agent_id:
-                        insert_parts.append(f'has agent-id "{agent_id}"')
+                        agent_escaped = agent_id.replace('"', '\\"')
+                        insert_parts.append(f'has agent-id "{agent_escaped}"')
 
                     # Add started-at timestamp (TypeDB datetime format: YYYY-MM-DDTHH:MM:SS)
                     now = datetime.now()
@@ -165,11 +168,12 @@ class SessionCRUDOperations:
                             pass
 
                         # Insert new agent_id
+                        agent_escaped = agent_id.replace('"', '\\"')
                         insert_query = f"""
                             match
                                 $s isa work-session, has session-id "{session_id}";
                             insert
-                                $s has agent-id "{agent_id}";
+                                $s has agent-id "{agent_escaped}";
                         """
                         tx.query(insert_query).resolve()
 

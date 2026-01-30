@@ -129,34 +129,34 @@ class RuleCRUDOperations:
         updates = []
         new_attrs = []  # For attributes that don't exist yet
         if name is not None and name != existing.name:
-            updates.append(('rule-name', existing.name, name))
+            updates.append(('rule-name', existing.name.replace('"', '\\"'), name.replace('"', '\\"')))
         if category is not None and category != existing.category:
-            updates.append(('category', existing.category, category))
+            updates.append(('category', existing.category.replace('"', '\\"'), category.replace('"', '\\"')))
         if priority is not None and priority != existing.priority:
-            updates.append(('priority', existing.priority, priority))
+            updates.append(('priority', existing.priority.replace('"', '\\"'), priority.replace('"', '\\"')))
         if status is not None and status != existing.status:
-            updates.append(('status', existing.status, status))
+            updates.append(('status', existing.status.replace('"', '\\"'), status.replace('"', '\\"')))
         if directive is not None and directive != existing.directive:
             updates.append(('directive', existing.directive.replace('"', '\\"'), directive.replace('"', '\\"')))
         if rule_type is not None:
             if existing.rule_type is None:
-                new_attrs.append(('rule-type', rule_type))
+                new_attrs.append(('rule-type', rule_type.replace('"', '\\"')))
             elif rule_type != existing.rule_type:
-                updates.append(('rule-type', existing.rule_type, rule_type))
+                updates.append(('rule-type', existing.rule_type.replace('"', '\\"'), rule_type.replace('"', '\\"')))
         if semantic_id is not None:
             if existing.semantic_id is None:
-                new_attrs.append(('semantic-id', semantic_id))
+                new_attrs.append(('semantic-id', semantic_id.replace('"', '\\"')))
             elif semantic_id != existing.semantic_id:
-                updates.append(('semantic-id', existing.semantic_id, semantic_id))
+                updates.append(('semantic-id', existing.semantic_id.replace('"', '\\"'), semantic_id.replace('"', '\\"')))
         if applicability is not None:
             # Validate applicability value
             valid_applicability = ["MANDATORY", "RECOMMENDED", "FORBIDDEN", "CONDITIONAL"]
             if applicability not in valid_applicability:
                 raise ValueError(f"Invalid applicability: {applicability}. Must be one of {valid_applicability}")
             if existing.applicability is None:
-                new_attrs.append(('applicability', applicability))
+                new_attrs.append(('applicability', applicability.replace('"', '\\"')))
             elif applicability != existing.applicability:
-                updates.append(('applicability', existing.applicability, applicability))
+                updates.append(('applicability', existing.applicability.replace('"', '\\"'), applicability.replace('"', '\\"')))
 
         if not updates and not new_attrs:
             return existing  # Nothing to update

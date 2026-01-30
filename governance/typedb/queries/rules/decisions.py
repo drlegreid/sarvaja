@@ -186,7 +186,7 @@ class DecisionQueries:
             rationale_escaped = rationale.replace('"', '\\"')
             updates.append(('rationale', rationale_escaped))
         if status is not None:
-            updates.append(('decision-status', status))
+            updates.append(('decision-status', status.replace('"', '\\"')))
 
         if not updates and decision_date is None:
             return existing  # Nothing to update

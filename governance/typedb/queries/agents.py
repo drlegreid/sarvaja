@@ -73,11 +73,13 @@ class AgentQueries:
         if existing:
             self.delete_agent(agent_id)
 
+        name_escaped = name.replace('"', '\\"')
+        type_escaped = agent_type.replace('"', '\\"')
         query = f"""
             insert $a isa agent,
                 has agent-id "{agent_id}",
-                has agent-name "{name}",
-                has agent-type "{agent_type}",
+                has agent-name "{name_escaped}",
+                has agent-type "{type_escaped}",
                 has trust-score {trust_score};
         """
         try:
@@ -110,11 +112,13 @@ class AgentQueries:
             match $a isa agent, has agent-id "{agent_id}";
             delete $a;
         """
+        name_escaped = current.name.replace('"', '\\"')
+        type_escaped = current.agent_type.replace('"', '\\"')
         insert_query = f"""
             insert $a isa agent,
                 has agent-id "{agent_id}",
-                has agent-name "{current.name}",
-                has agent-type "{current.agent_type}",
+                has agent-name "{name_escaped}",
+                has agent-type "{type_escaped}",
                 has trust-score {trust_score};
         """
         try:
