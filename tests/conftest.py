@@ -96,8 +96,22 @@ def _cleanup_test_tasks(client: httpx.Client) -> dict:
     return stats
 
 
+_TEST_AGENT_IDS = {"test-agent", "end-test-agent", "claude-code-test"}
+
+
+def _is_test_session(session: dict) -> bool:
+    """Check if session was created by E2E tests (by ID prefix or agent_id)."""
+    session_id = session.get("session_id") or session.get("id", "")
+    if _is_test_entity(session_id):
+        return True
+    agent_id = session.get("agent_id", "")
+    if agent_id in _TEST_AGENT_IDS:
+        return True
+    return False
+
+
 def _cleanup_test_sessions(client: httpx.Client) -> dict:
-    """Remove all test-prefixed sessions. Returns cleanup statistics."""
+    """Remove all test-created sessions. Returns cleanup statistics."""
     stats = {"checked": 0, "deleted": 0, "failed": 0, "errors": []}
     try:
         response = client.get(f"{DASHBOARD_API_URL}/api/sessions", params={"limit": API_MAX_LIMIT})
@@ -108,8 +122,8 @@ def _cleanup_test_sessions(client: httpx.Client) -> dict:
         if isinstance(sessions, dict):
             sessions = sessions.get("items", [])
         for session in sessions:
-            session_id = session.get("session_id") or session.get("id", "")
-            if _is_test_entity(session_id):
+            if _is_test_session(session):
+                session_id = session.get("session_id") or session.get("id", "")
                 stats["checked"] += 1
                 try:
                     del_response = client.delete(f"{DASHBOARD_API_URL}/api/sessions/{session_id}")
