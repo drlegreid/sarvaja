@@ -110,7 +110,7 @@ Explore Form Behavior
     [Documentation]    Heuristic: Test form validation and submission patterns
     [Arguments]    ${form_selector}=form
     ${form_exists}=    Get Element Count    ${form_selector}
-    Return From Keyword If    ${form_exists} == 0    ${EMPTY}
+    IF    ${form_exists} == 0    RETURN    ${EMPTY}
 
     ${results}=    Create Dictionary
 

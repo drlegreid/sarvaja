@@ -231,6 +231,6 @@ Page Should Contain One Of
     FOR    ${text}    IN    @{texts}
         ${status}=    Run Keyword And Return Status
         ...    Page Should Contain    ${text}
-        Return From Keyword If    ${status}
+        IF    ${status}    RETURN
     END
     Fail    Page should contain one of: ${texts}
