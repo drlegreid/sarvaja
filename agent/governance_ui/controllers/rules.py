@@ -23,7 +23,7 @@ def register_rules_controllers(state: Any, ctrl: Any, api_base_url: str) -> None
         api_base_url: Base URL for API calls
     """
 
-    @ctrl.set("select_rule")
+    @ctrl.trigger("select_rule")
     def select_rule(rule_id):
         """Handle rule selection for detail view."""
         for rule in state.rules:

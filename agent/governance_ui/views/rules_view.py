@@ -112,9 +112,8 @@ def build_rules_list_view() -> None:
                 density="compact",
                 items_per_page=25,
                 hover=True,
-                click_row=(
-                    "($event, row) => { selected_rule = row.item; show_rule_detail = true }",
-                ),
+                click_row="($event, row) => { trigger('select_rule', [row.item.id]) }",
+                __events=[("click_row", "click:row")],
                 __properties=["data-testid"],
                 **{"data-testid": "rules-table"}
             )

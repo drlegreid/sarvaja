@@ -148,9 +148,8 @@ def build_sessions_list_view() -> None:
                 density="compact",
                 items_per_page=("sessions_per_page",),
                 hover=True,
-                click_row=(
-                    "($event, row) => { trigger('select_session', [row.item.session_id || row.item.id]) }",
-                ),
+                click_row="($event, row) => { trigger('select_session', [row.item.session_id || row.item.id]) }",
+                __events=[("click_row", "click:row")],
                 loading=("is_loading",),
                 __properties=["data-testid"],
                 **{"data-testid": "sessions-table"}

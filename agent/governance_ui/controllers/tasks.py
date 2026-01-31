@@ -25,7 +25,7 @@ def register_tasks_controllers(state: Any, ctrl: Any, api_base_url: str) -> None
         api_base_url: Base URL for API calls
     """
 
-    @ctrl.set("select_task")
+    @ctrl.trigger("select_task")
     def select_task(task_id):
         """Handle task selection for detail view.
 

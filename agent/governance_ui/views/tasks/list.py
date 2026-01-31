@@ -148,9 +148,8 @@ def build_tasks_list_view() -> None:
                 density="compact",
                 items_per_page=("tasks_per_page",),
                 hover=True,
-                click_row=(
-                    "($event, row) => { selected_task = row.item; show_task_detail = true }",
-                ),
+                click_row="($event, row) => { trigger('select_task', [row.item.task_id || row.item.id]) }",
+                __events=[("click_row", "click:row")],
                 __properties=["data-testid"],
                 **{"data-testid": "tasks-table"}
             )
