@@ -39,6 +39,7 @@ from governance.routes.tests import tests_router
 from governance.routes.audit import router as audit_router  # RD-DEBUG-AUDIT
 from governance.routes.agents.observability import router as observability_router  # GAP-MONITOR-IPC-001
 from governance.routes.proposals import router as proposals_router  # GOV-BICAM-01-v1: LangGraph workflow
+from governance.routes.infra import router as infra_router  # EPIC-7.1: Container logs
 from governance.stores import (
     _tasks_store, _sessions_store, _agents_store,
     generate_chat_session_id, synthesize_execution_events,
@@ -146,6 +147,7 @@ app.include_router(tests_router, prefix="/api")  # WORKFLOW-SHELL-01-v1: Self-as
 app.include_router(audit_router, prefix="/api")  # RD-DEBUG-AUDIT: Audit trail
 app.include_router(observability_router, prefix="/api/agents")  # GAP-MONITOR-IPC-001: Monitor events
 app.include_router(proposals_router, prefix="/api")  # GOV-BICAM-01-v1: LangGraph proposal workflow
+app.include_router(infra_router)  # EPIC-7.1: Container logs via podman socket
 
 
 # =============================================================================

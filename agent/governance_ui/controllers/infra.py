@@ -143,23 +143,64 @@ def get_system_stats() -> dict[str, Any]:
     return stats
 
 
+PODMAN_SOCKET = "/run/podman/podman.sock"
+
+
+def _fetch_logs_via_socket(container_name: str, lines: int) -> str:
+    """Fetch container logs via podman REST API unix socket."""
+    import http.client
+    conn = http.client.HTTPConnection("localhost")
+    # Override socket to use unix domain socket
+    import socket as _socket
+    sock = _socket.socket(_socket.AF_UNIX, _socket.SOCK_STREAM)
+    sock.connect(PODMAN_SOCKET)
+    conn.sock = sock
+    try:
+        path = f"/v4.0.0/containers/{container_name}/logs?stdout=true&stderr=true&tail={lines}"
+        conn.request("GET", path)
+        resp = conn.getresponse()
+        if resp.status != 200:
+            return f"Error {resp.status}: {resp.read().decode(errors='replace')}"
+        raw = resp.read()
+        # Podman log stream has 8-byte header per frame (stream type + size)
+        # Strip these headers to get clean text
+        output_lines = []
+        pos = 0
+        while pos + 8 <= len(raw):
+            size = int.from_bytes(raw[pos + 4:pos + 8], "big")
+            if pos + 8 + size > len(raw):
+                break
+            chunk = raw[pos + 8:pos + 8 + size].decode(errors="replace")
+            output_lines.append(chunk.rstrip("\n"))
+            pos += 8 + size
+        if not output_lines and raw:
+            # Fallback: treat as plain text (some podman versions)
+            return raw.decode(errors="replace")
+        return "\n".join(output_lines)
+    finally:
+        conn.close()
+
+
 def get_container_logs(
     container_name: str = "platform_governance-dashboard-dev_1",
     lines: int = 50,
     level_filter: str = ""
 ) -> list[str]:
-    """Fetch recent container logs via podman. Returns list of log lines."""
+    """Fetch recent container logs. Uses podman socket if available, else CLI."""
     try:
-        cmd = ["podman", "logs", "--tail", str(lines), container_name]
-        result = subprocess.run(cmd, capture_output=True, text=True, timeout=5)
-        output = result.stdout + result.stderr
+        if os.path.exists(PODMAN_SOCKET):
+            output = _fetch_logs_via_socket(container_name, lines)
+        else:
+            cmd = ["podman", "logs", "--tail", str(lines), container_name]
+            result = subprocess.run(cmd, capture_output=True, text=True, timeout=5)
+            output = result.stdout + result.stderr
         log_lines = [l for l in output.strip().split("\n") if l.strip()]
         if level_filter:
             level_upper = level_filter.upper()
             log_lines = [l for l in log_lines if level_upper in l.upper()]
         return log_lines[-lines:]
-    except Exception:
-        return ["Unable to fetch container logs"]
+    except Exception as e:
+        return [f"Unable to fetch container logs: {e}"]
 
 
 CONTAINER_NAMES = {

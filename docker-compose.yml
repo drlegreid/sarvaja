@@ -189,6 +189,7 @@ services:
       - ./CLAUDE.md:/app/CLAUDE.md:ro   # RECOVER-AMNES-01-v1
       - ./TODO.md:/app/TODO.md:ro       # RECOVER-AMNES-01-v1
       - ${HOME}/.claude/projects/-home-oderid-Documents-Vibe-sarvaja-platform:/app/claude-logs:ro
+      - /tmp/podman-api.sock:/run/podman/podman.sock:ro  # EPIC-7.1: Container logs via podman API
     depends_on:
       - typedb
       - chromadb

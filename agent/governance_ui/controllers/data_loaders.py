@@ -11,6 +11,7 @@ Created: 2024-12-28
 Updated: 2026-01-14 (trace event integration)
 """
 
+import os
 import time
 import httpx
 from typing import Any
@@ -513,13 +514,19 @@ def register_data_loader_controllers(
 
     @ctrl.trigger("load_container_logs")
     def load_container_logs(container: str = "dashboard", lines: int = 50, level: str = ""):
-        """Load container logs for the log viewer panel."""
-        from agent.governance_ui.controllers.infra import (
-            get_container_logs, CONTAINER_NAMES,
-        )
-        container_name = CONTAINER_NAMES.get(container, container)
-        log_lines = get_container_logs(container_name, lines, level)
-        state.infra_log_lines = log_lines
+        """Load container logs via API endpoint (uses podman socket)."""
+        import httpx
+        api_url = os.environ.get("GOVERNANCE_API_URL", "http://localhost:8082")
+        try:
+            resp = httpx.get(
+                f"{api_url}/api/infra/logs",
+                params={"container": container, "tail": lines, "level": level or ""},
+                timeout=10,
+            )
+            data = resp.json()
+            state.infra_log_lines = data.get("lines", ["No logs returned"])
+        except Exception as e:
+            state.infra_log_lines = [f"Failed to fetch logs: {e}"]
         state.infra_log_container = container
 
     @ctrl.trigger("cleanup_zombies")
