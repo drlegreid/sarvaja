@@ -203,6 +203,75 @@ async def health_check():
     )
 
 
+@app.get("/api/mcp/readiness")
+async def mcp_readiness():
+    """MCP usage enforcement audit & readiness check.
+
+    Reports which MCP servers are configured, their backend dependencies,
+    and whether the service layer is properly integrated.
+    """
+    from agent.governance_ui.controllers.infra import (
+        MCP_SERVER_META, SERVICE_CONFIG, check_port,
+    )
+
+    # Check backend service health
+    backends = {}
+    for svc_name, (_, _, host_port) in SERVICE_CONFIG.items():
+        backends[svc_name] = check_port("localhost", host_port)
+
+    # Check each MCP server readiness
+    servers = {}
+    all_ready = True
+    for name, meta in MCP_SERVER_META.items():
+        deps = meta.get("depends_on", [])
+        deps_ok = all(backends.get(d, False) for d in deps)
+        ready = not deps or deps_ok
+        servers[name] = {
+            "tools": meta.get("tools", 0),
+            "depends_on": deps,
+            "deps_ok": deps_ok,
+            "ready": ready,
+            "desc": meta.get("desc", ""),
+        }
+        if not ready:
+            all_ready = False
+
+    # Check service layer integration
+    service_audit = {
+        "tasks": _check_service_integration("governance.services.tasks"),
+        "sessions": _check_service_integration("governance.services.sessions"),
+        "rules": _check_service_integration("governance.services.rules"),
+        "agents": _check_service_integration("governance.services.agents"),
+    }
+
+    return {
+        "status": "READY" if all_ready else "PARTIAL",
+        "backends": backends,
+        "mcp_servers": servers,
+        "service_layer": service_audit,
+        "total_tools": sum(s["tools"] for s in servers.values()),
+        "ready_count": sum(1 for s in servers.values() if s["ready"]),
+        "total_count": len(servers),
+    }
+
+
+def _module_exists(module_name: str) -> bool:
+    """Check if a Python module exists."""
+    import importlib
+    try:
+        importlib.import_module(module_name)
+        return True
+    except ImportError:
+        return False
+
+
+def _check_service_integration(module_name: str) -> str:
+    """Check if a service layer module is integrated."""
+    if _module_exists(module_name):
+        return "SERVICE_LAYER"
+    return "DIRECT_TYPEDB"
+
+
 # =============================================================================
 # MAIN
 # =============================================================================

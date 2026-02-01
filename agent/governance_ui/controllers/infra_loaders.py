@@ -98,8 +98,8 @@ def register_infra_loader_controllers(
                 stats["component_hashes"] = hc_state.get("component_hashes", {})
                 stats["component_statuses"] = hc_state.get("components", {})
                 components = hc_state.get("components", {})
-                mcp_names = ["claude-mem", "gov-core", "gov-agents", "gov-sessions", "gov-tasks"]
-                for name in mcp_names:
+                from agent.governance_ui.controllers.infra import MCP_SERVERS
+                for name in MCP_SERVERS:
                     if name in components:
                         stats["mcp_servers"][name] = components[name]
                     else:
@@ -246,5 +246,31 @@ def register_infra_loader_controllers(
             state.infra_last_action = "Cleaned up zombie MCP processes"
         except Exception as e:
             state.infra_last_action = f"Cleanup failed: {e}"
+
+    @ctrl.trigger("load_python_processes")
+    def load_python_processes():
+        """Load detailed python process list. Per C.4: Process drill-down."""
+        try:
+            result = subprocess.run(
+                ["ps", "aux"],
+                capture_output=True, text=True, timeout=5
+            )
+            lines = result.stdout.strip().split("\n")
+            infra_python_procs = []
+            for line in lines[1:]:  # Skip header
+                if "python3" in line.lower() or "python" in line.lower():
+                    parts = line.split(None, 10)
+                    if len(parts) >= 11:
+                        infra_python_procs.append({
+                            "pid": parts[1],
+                            "cpu": parts[2],
+                            "mem": parts[3],
+                            "command": parts[10][:120],
+                        })
+            state.infra_python_procs = infra_python_procs
+            state.python_process_list = infra_python_procs  # Alias
+        except Exception as e:
+            state.infra_python_procs = []
+            state.python_process_list = []
 
     return {'load_infra_status': load_infra_status}

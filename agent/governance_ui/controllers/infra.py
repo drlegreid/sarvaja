@@ -19,7 +19,18 @@ from typing import Any
 
 
 # Expected MCP servers in the governance platform
-MCP_SERVERS = ["claude-mem", "gov-core", "gov-agents", "gov-sessions", "gov-tasks"]
+MCP_SERVERS = ["claude-mem", "gov-core", "gov-agents", "gov-sessions", "gov-tasks", "rest-api", "playwright"]
+
+# MCP server metadata: tool counts, backend dependencies, descriptions
+MCP_SERVER_META = {
+    "claude-mem": {"tools": 7, "depends_on": ["chromadb"], "desc": "Memory & AMNESIA recovery"},
+    "gov-core": {"tools": 16, "depends_on": ["typedb", "chromadb"], "desc": "Rules, decisions, workspace"},
+    "gov-agents": {"tools": 11, "depends_on": ["typedb"], "desc": "Agent CRUD, trust, proposals"},
+    "gov-sessions": {"tools": 30, "depends_on": ["typedb", "chromadb"], "desc": "Sessions, evidence, DSM"},
+    "gov-tasks": {"tools": 25, "depends_on": ["typedb"], "desc": "Tasks, gaps, audit, handoffs"},
+    "rest-api": {"tools": 1, "depends_on": [], "desc": "REST API testing (port 8082)"},
+    "playwright": {"tools": 17, "depends_on": [], "desc": "E2E UI testing (Firefox)"},
+}
 
 # Service configuration: (container_host, container_port, host_port)
 SERVICE_CONFIG = {
@@ -213,22 +224,38 @@ CONTAINER_NAMES = {
 
 
 def get_mcp_server_details(project_root: Path | None = None) -> dict[str, dict]:
-    """Parse .mcp.json for server details (command, env, comment)."""
+    """Parse .mcp.json for server details with metadata and readiness."""
     if project_root is None:
         project_root = Path(__file__).parent.parent.parent.parent
     mcp_config_path = project_root / ".mcp.json"
     result = {}
+
+    # Check backend service readiness for dependency resolution
+    backend_status = {}
+    for svc_name in SERVICE_CONFIG:
+        _, _, host_port = SERVICE_CONFIG[svc_name]
+        backend_status[svc_name] = check_port("localhost", host_port)
+
     try:
         if mcp_config_path.exists():
             with open(mcp_config_path) as f:
                 config = json.load(f)
             for name, server in config.get("mcpServers", {}).items():
+                meta = MCP_SERVER_META.get(name, {})
+                deps = meta.get("depends_on", [])
+                deps_ok = all(backend_status.get(d, False) for d in deps)
+                ready = "READY" if (not deps or deps_ok) else "DEPS-DOWN"
+
                 result[name] = {
                     "type": server.get("type", "unknown"),
                     "command": " ".join(
                         [server.get("command", "")] + server.get("args", [])
                     ),
                     "comment": server.get("_comment", ""),
+                    "tools": meta.get("tools", 0),
+                    "depends_on": deps,
+                    "desc": meta.get("desc", ""),
+                    "ready": ready,
                 }
     except Exception:
         pass

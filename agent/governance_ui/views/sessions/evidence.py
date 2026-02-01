@@ -30,7 +30,20 @@ def build_evidence_files_card() -> None:
                 **{"data-testid": "attach-evidence-btn"}
             )
         with v3.VCardText():
-            # List existing evidence files
+            # B.4: Search filter for evidence files
+            v3.VTextField(
+                v_model="evidence_search",
+                label="Filter evidence...",
+                prepend_icon="mdi-magnify",
+                variant="outlined",
+                density="compact",
+                hide_details=True,
+                clearable=True,
+                classes="mb-3",
+                __properties=["data-testid"],
+                **{"data-testid": "evidence-search-input"}
+            )
+            # List existing evidence files (client-side filtered)
             with v3.VList(
                 v_if=(
                     "selected_session.evidence_files && "
@@ -39,7 +52,13 @@ def build_evidence_files_card() -> None:
                 density="compact"
             ):
                 v3.VListItem(
-                    v_for="(filePath, idx) in selected_session.evidence_files",
+                    v_for=(
+                        "(filePath, idx) in "
+                        "selected_session.evidence_files.filter("
+                        "f => !evidence_search || "
+                        "f.toLowerCase().includes(evidence_search.toLowerCase())"
+                        ")"
+                    ),
                     key=("idx",),
                     v_text="filePath",
                     prepend_icon="mdi-file-document-outline",

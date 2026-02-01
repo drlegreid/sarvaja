@@ -9,6 +9,79 @@ Per GAP-UI-037: Task body/content preview and linked items.
 from trame.widgets import vuetify3 as v3, html
 
 
+def build_task_create_dialog() -> None:
+    """Build the task creation dialog (shown when show_task_form is true).
+
+    Per B.1: Fix task create dialog - dialog bound to show_task_form state.
+    """
+    with v3.VDialog(
+        v_model="show_task_form",
+        max_width="600px",
+        __properties=["data-testid"],
+        **{"data-testid": "task-create-dialog"}
+    ):
+        with v3.VCard():
+            v3.VCardTitle("Create New Task")
+            with v3.VCardText():
+                v3.VTextField(
+                    v_model="form_task_id",
+                    label="Task ID (e.g., GAP-XXX-001)",
+                    variant="outlined",
+                    density="compact",
+                    classes="mb-3",
+                    __properties=["data-testid"],
+                    **{"data-testid": "task-create-id"}
+                )
+                v3.VTextField(
+                    v_model="form_task_description",
+                    label="Description",
+                    variant="outlined",
+                    density="compact",
+                    classes="mb-3",
+                    __properties=["data-testid"],
+                    **{"data-testid": "task-create-description"}
+                )
+                with v3.VRow():
+                    with v3.VCol(cols=12, sm=6):
+                        v3.VSelect(
+                            v_model="form_task_phase",
+                            label="Phase",
+                            items=[
+                                "P3", "P4", "P5", "P6", "P7", "P8", "P9", "P10",
+                                "RD", "TOOL", "DOC", "FH", "TEST"
+                            ],
+                            variant="outlined",
+                            density="compact",
+                            __properties=["data-testid"],
+                            **{"data-testid": "task-create-phase"}
+                        )
+                    with v3.VCol(cols=12, sm=6):
+                        v3.VTextField(
+                            v_model="form_task_agent",
+                            label="Agent ID (optional)",
+                            variant="outlined",
+                            density="compact",
+                            __properties=["data-testid"],
+                            **{"data-testid": "task-create-agent"}
+                        )
+            with v3.VCardActions():
+                v3.VSpacer()
+                v3.VBtn(
+                    "Cancel",
+                    variant="text",
+                    click="show_task_form = false",
+                    __properties=["data-testid"],
+                    **{"data-testid": "task-create-cancel-btn"}
+                )
+                v3.VBtn(
+                    "Create",
+                    color="primary",
+                    click="create_task(); show_task_form = false",
+                    __properties=["data-testid"],
+                    **{"data-testid": "task-create-submit-btn"}
+                )
+
+
 def build_task_edit_form() -> None:
     """Build the task edit form (shown when edit_task_mode is true)."""
     with html.Div(v_if="edit_task_mode"):

@@ -60,14 +60,13 @@ class TestMCPStatusDataLoader:
         assert '"mcp_servers"' in source or "'mcp_servers'" in source
 
     def test_mcp_names_extracted(self):
-        """Verify known MCP server names are extracted."""
-        import inspect
-        from agent.governance_ui.controllers import infra_loaders
-
-        source = inspect.getsource(infra_loaders)
+        """Verify known MCP server names are available via MCP_SERVERS."""
+        from agent.governance_ui.controllers.infra import MCP_SERVERS
 
         # Should have claude-mem at minimum
-        assert "claude-mem" in source
+        assert "claude-mem" in MCP_SERVERS
+        assert "gov-core" in MCP_SERVERS
+        assert "gov-tasks" in MCP_SERVERS
 
     def test_healthcheck_state_file_read(self):
         """Verify healthcheck state file is read for MCP status."""

@@ -27,6 +27,26 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/tests", tags=["tests"])
 
 
+def _resolve_test_root() -> str:
+    """Resolve the project root directory containing tests/.
+
+    Checks /app (container), then walks up from this file to find tests/ dir.
+    Returns absolute path string.
+    """
+    # Container path
+    if Path("/app/tests").is_dir():
+        return "/app"
+
+    # Walk up from this file to find project root with tests/
+    current = Path(__file__).resolve()
+    for parent in current.parents:
+        if (parent / "tests").is_dir() and (parent / "tests" / "unit").is_dir():
+            return str(parent)
+
+    # Fallback to cwd
+    return str(Path.cwd())
+
+
 class TestResult(BaseModel):
     """Individual test result."""
     nodeid: str
@@ -47,8 +67,43 @@ class TestRunSummary(BaseModel):
     tests: List[TestResult]
 
 
-# In-memory store for test results (simple approach)
+# Default persistence directory
+_RESULTS_DIR = str(Path(_resolve_test_root()) / "evidence" / "test-results")
+
+# In-memory store for test results (D.2: also persisted to disk)
 _test_results: dict = {}
+
+
+def _persist_result(run_id: str, result: dict, results_dir: str = None) -> None:
+    """Persist a test result to JSON file. Per D.2."""
+    import json
+    target_dir = Path(results_dir or _RESULTS_DIR)
+    target_dir.mkdir(parents=True, exist_ok=True)
+    filepath = target_dir / f"{run_id}.json"
+    filepath.write_text(json.dumps(result, indent=2, default=str))
+
+
+def _load_persisted_results(results_dir: str = None) -> dict:
+    """Load persisted test results from disk. Per D.2."""
+    import json
+    target_dir = Path(results_dir or _RESULTS_DIR)
+    results = {}
+    if target_dir.is_dir():
+        for filepath in sorted(target_dir.glob("*.json"), reverse=True)[:50]:
+            try:
+                data = json.loads(filepath.read_text())
+                run_id = filepath.stem
+                results[run_id] = data
+            except Exception:
+                continue
+    return results
+
+
+# Load persisted results on import (D.2: survive restarts)
+try:
+    _test_results.update(_load_persisted_results())
+except Exception:
+    pass
 
 
 @router.get("/categories")
@@ -60,13 +115,98 @@ async def list_test_categories():
     """
     return {
         "categories": [
-            {"id": "unit", "name": "Unit Tests", "pattern": "tests/test_*.py", "description": "Fast unit tests"},
-            {"id": "governance", "name": "Governance", "pattern": "tests/test_governance*.py", "description": "TypeDB governance tests"},
-            {"id": "ui", "name": "UI Tests", "pattern": "tests/test_*_ui.py", "description": "Dashboard UI tests"},
-            {"id": "kanren", "name": "Kanren", "pattern": "tests/test_kanren*.py", "description": "Constraint engine tests"},
-            {"id": "api", "name": "API Tests", "pattern": "tests/test_api*.py", "description": "REST API tests"},
-            {"id": "e2e", "name": "E2E Health", "pattern": "tests/e2e/test_platform_health_e2e.py", "description": "Platform health E2E"},
+            {"id": "unit", "name": "Unit Tests", "pattern": "tests/unit/", "description": "Fast unit tests"},
+            {"id": "governance", "name": "Governance", "pattern": "tests/test_governance.py tests/test_rules_governance.py", "description": "TypeDB governance tests"},
+            {"id": "ui", "name": "UI Tests", "pattern": "tests/unit/ui/", "description": "Dashboard UI tests"},
+            {"id": "kanren", "name": "Kanren", "pattern": "tests/test_kanren_constraints.py", "description": "Constraint engine tests"},
+            {"id": "api", "name": "API Tests", "pattern": "tests/test_data_integrity.py tests/test_chat.py", "description": "REST API tests"},
+            {"id": "e2e", "name": "E2E Tests", "pattern": "tests/e2e/", "description": "End-to-end pytest tests"},
+            {"id": "robot", "name": "Robot Framework", "pattern": "tests/robot/e2e/", "description": "Robot Framework E2E suites"},
+            {"id": "rules", "name": "Rules Tests", "pattern": "tests/rules/", "description": "Rule validation tests"},
         ]
+    }
+
+
+@router.get("/preflight")
+async def preflight_check():
+    """
+    Verify test files are accessible before running.
+
+    Returns discovered test files per category, resolved root path,
+    and total file count. Use this to diagnose test runner issues.
+    """
+    test_root = _resolve_test_root()
+    root_path = Path(test_root)
+    tests_dir = root_path / "tests"
+
+    categories = []
+    total_files = 0
+
+    # Unit tests
+    unit_dir = tests_dir / "unit"
+    unit_files = sorted(unit_dir.glob("test_*.py")) if unit_dir.is_dir() else []
+    # Also include unit/ui/ tests
+    if (unit_dir / "ui").is_dir():
+        unit_files.extend(sorted((unit_dir / "ui").glob("test_*.py")))
+    categories.append({
+        "id": "unit",
+        "name": "Unit Tests",
+        "file_count": len(unit_files),
+        "files": [str(f.relative_to(root_path)) for f in unit_files[:20]],
+    })
+    total_files += len(unit_files)
+
+    # Robot Framework tests
+    robot_dirs = [tests_dir / "robot" / "e2e", tests_dir / "robot"]
+    robot_files = []
+    for rd in robot_dirs:
+        if rd.is_dir():
+            robot_files.extend(sorted(rd.glob("*.robot")))
+    categories.append({
+        "id": "robot",
+        "name": "Robot Framework",
+        "file_count": len(robot_files),
+        "files": [str(f.relative_to(root_path)) for f in robot_files[:20]],
+    })
+    total_files += len(robot_files)
+
+    # E2E pytest tests
+    e2e_dir = tests_dir / "e2e"
+    e2e_files = sorted(e2e_dir.glob("test_*.py")) if e2e_dir.is_dir() else []
+    categories.append({
+        "id": "e2e",
+        "name": "E2E Tests",
+        "file_count": len(e2e_files),
+        "files": [str(f.relative_to(root_path)) for f in e2e_files[:20]],
+    })
+    total_files += len(e2e_files)
+
+    # Root-level test files
+    root_tests = sorted(tests_dir.glob("test_*.py"))
+    categories.append({
+        "id": "root",
+        "name": "Root Tests",
+        "file_count": len(root_tests),
+        "files": [str(f.relative_to(root_path)) for f in root_tests[:20]],
+    })
+    total_files += len(root_tests)
+
+    # Rules tests
+    rules_dir = tests_dir / "rules"
+    rules_files = sorted(rules_dir.glob("test_*.py")) if rules_dir.is_dir() else []
+    categories.append({
+        "id": "rules",
+        "name": "Rules Tests",
+        "file_count": len(rules_files),
+        "files": [str(f.relative_to(root_path)) for f in rules_files[:20]],
+    })
+    total_files += len(rules_files)
+
+    return {
+        "test_root": test_root,
+        "tests_dir_exists": tests_dir.is_dir(),
+        "total_files": total_files,
+        "categories": categories,
     }
 
 
@@ -92,16 +232,18 @@ async def run_tests(
         cmd.append(pattern)
     elif category:
         patterns = {
-            "unit": "tests/test_governance.py",
-            "governance": "tests/test_governance.py tests/test_governance_ui.py",
-            "ui": "tests/test_governance_ui.py tests/test_task_ui.py",
+            "unit": "tests/unit/",
+            "governance": "tests/test_governance.py tests/test_rules_governance.py",
+            "ui": "tests/unit/ui/",
             "kanren": "tests/test_kanren_constraints.py",
-            "api": "tests/test_data_integrity.py",
-            "e2e": "tests/e2e/test_platform_health_e2e.py",
+            "api": "tests/test_data_integrity.py tests/test_chat.py",
+            "e2e": "tests/e2e/",
+            "robot": "tests/robot/e2e/",
+            "rules": "tests/rules/",
         }
         cmd.extend(patterns.get(category, "tests/").split())
     else:
-        cmd.append("tests/test_governance.py")  # Default: fast governance tests
+        cmd.append("tests/unit/")  # Default: fast unit tests
 
     # Add markers if specified
     if markers:
@@ -129,7 +271,7 @@ async def get_test_results(run_id: str):
     """Get results for a specific test run."""
     if run_id not in _test_results:
         return {"error": "Run not found", "run_id": run_id}
-    return _test_results[run_id]
+    return {"run_id": run_id, **_test_results[run_id]}
 
 
 @router.get("/results")
@@ -139,10 +281,26 @@ async def list_test_results(limit: int = Query(10, le=50)):
     return {"runs": [{"run_id": k, **v} for k, v in sorted_runs[:limit]]}
 
 
+@router.post("/heuristic/run")
+async def run_heuristic_tests(
+    domain: Optional[str] = Query(None, description="Domain filter: TASK, SESSION, RULE, AGENT"),
+):
+    """
+    Run heuristic data integrity checks. Per D.4.
+
+    Returns structured results with per-check status and summary.
+    """
+    import os
+    from governance.routes.tests.heuristic_runner import run_heuristic_checks
+    api_url = os.getenv("GOVERNANCE_API_URL", "http://localhost:8082")
+    results = run_heuristic_checks(api_base_url=api_url, domain=domain)
+    return results
+
+
 @router.get("/robot/summary")
 async def get_robot_summary():
     """Parse Robot Framework output.xml for summary stats."""
-    project_root = Path("/app") if Path("/app").exists() else Path(".")
+    project_root = Path(_resolve_test_root())
     output_xml = project_root / "output.xml"
 
     if not output_xml.exists():
@@ -195,7 +353,7 @@ async def serve_robot_report(file: str = Query("report.html")):
     if file not in allowed_files:
         return {"error": f"File not allowed. Choose from: {allowed_files}"}
 
-    project_root = Path("/app") if Path("/app").exists() else Path(".")
+    project_root = Path(_resolve_test_root())
     file_path = project_root / file
 
     if not file_path.exists():
@@ -207,13 +365,15 @@ async def serve_robot_report(file: str = Query("report.html")):
 def _execute_tests(run_id: str, cmd: list, category: str = None):
     """Execute pytest and store results with evidence generation."""
     start_time = datetime.now()
+    test_root = _resolve_test_root()
+    logger.info(f"Test run {run_id}: cmd={cmd}, cwd={test_root}, category={category}")
     try:
         result = subprocess.run(
             cmd,
             capture_output=True,
             text=True,
             timeout=300,  # 5 minute timeout
-            cwd=str(Path("/app") if Path("/app").exists() else Path(".")),
+            cwd=test_root,
         )
         duration = (datetime.now() - start_time).total_seconds()
 
@@ -249,18 +409,33 @@ def _execute_tests(run_id: str, cmd: list, category: str = None):
             test_result["evidence_file"] = evidence_path
 
         _test_results[run_id] = test_result
+        # D.2: Persist to disk
+        try:
+            _persist_result(run_id, test_result)
+        except Exception as pe:
+            logger.warning(f"Failed to persist test result: {pe}")
 
     except subprocess.TimeoutExpired:
-        _test_results[run_id] = {
+        timeout_result = {
             "status": "timeout",
             "timestamp": start_time.isoformat(),
             "error": "Test run exceeded 5 minute timeout",
             "category": category,
         }
+        _test_results[run_id] = timeout_result
+        try:
+            _persist_result(run_id, timeout_result)
+        except Exception:
+            pass
     except Exception as e:
-        _test_results[run_id] = {
+        error_result = {
             "status": "error",
             "timestamp": start_time.isoformat(),
             "error": str(e),
             "category": category,
         }
+        _test_results[run_id] = error_result
+        try:
+            _persist_result(run_id, error_result)
+        except Exception:
+            pass

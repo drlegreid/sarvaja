@@ -49,6 +49,11 @@ def build_service_card(
         with v3.VCard(
             variant="outlined",
             color=(f"{is_ok} ? 'success' : 'error'",),
+            click=(
+                f"infra_log_container = '{service_id}'; "
+                f"trigger('load_container_logs', ['{service_id}', 50, ''])"
+            ),
+            style="cursor: pointer;",
             __properties=["data-testid"],
             **{"data-testid": f"infra-card-{service_id}"}
         ):
@@ -208,7 +213,7 @@ def build_system_stats() -> None:
 
 
 def build_mcp_status_panel() -> None:
-    """Build MCP server status panel. Per UI-AUDIT-011."""
+    """Build MCP server status panel with readiness and tool counts."""
     with v3.VRow(classes="mt-4"):
         with v3.VCol(cols=12):
             with v3.VCard(
@@ -218,67 +223,77 @@ def build_mcp_status_panel() -> None:
             ):
                 v3.VCardTitle("MCP Server Status")
                 with v3.VCardText():
-                    with v3.VRow(dense=True):
-                        # Display MCP servers from healthcheck state
-                        with v3.VCol(
-                            v_for="(status, name) in (infra_stats.mcp_servers || {})",
-                            key="name",
-                            cols=6,
-                            md=3
-                        ):
-                            with v3.VChip(
-                                color=("status === 'OK' ? 'success' : status === 'ON-DEMAND' ? 'info' : 'warning'",),
-                                size="small",
-                                variant="flat",
-                                classes="ma-1"
-                            ):
-                                v3.VIcon(
-                                    icon=("status === 'OK' ? 'mdi-check-circle' : status === 'ON-DEMAND' ? 'mdi-lightning-bolt' : 'mdi-alert-circle'",),
-                                    size="small",
-                                    classes="mr-1"
-                                )
-                                html.Span("{{ name }}")
                     # Empty state
                     v3.VAlert(
-                        v_if="!infra_stats.mcp_servers || Object.keys(infra_stats.mcp_servers).length === 0",
+                        v_if="!infra_stats.mcp_details || Object.keys(infra_stats.mcp_details).length === 0",
                         type="info",
                         density="compact",
                         text="MCP server status not available. Run healthcheck to update."
                     )
-                    # Server details table from .mcp.json
-                    with html.Div(
+                    # Enhanced details table with readiness
+                    with v3.VTable(
                         v_if="infra_stats.mcp_details && Object.keys(infra_stats.mcp_details).length > 0",
-                        classes="mt-4"
+                        density="compact"
                     ):
-                        html.H4("Server Configuration", classes="text-subtitle-2 mb-2")
-                        with v3.VTable(density="compact"):
-                            with html.Thead():
-                                with html.Tr():
-                                    html.Th("Server")
-                                    html.Th("Type")
-                                    html.Th("Command")
-                                    html.Th("Description")
-                            with html.Tbody():
-                                with html.Tr(
-                                    v_for="(detail, sname) in infra_stats.mcp_details",
-                                    key="sname",
-                                ):
-                                    html.Td("{{ sname }}", classes="font-weight-medium")
-                                    with html.Td():
-                                        v3.VChip(
-                                            v_text="detail.type",
-                                            size="x-small",
-                                            variant="outlined"
-                                        )
-                                    html.Td(
-                                        "{{ detail.command }}",
-                                        classes="text-caption",
-                                        style="max-width: 300px; overflow: hidden; text-overflow: ellipsis;"
+                        with html.Thead():
+                            with html.Tr():
+                                html.Th("Server")
+                                html.Th("Status")
+                                html.Th("Ready")
+                                html.Th("Tools")
+                                html.Th("Dependencies")
+                                html.Th("Description")
+                        with html.Tbody():
+                            with html.Tr(
+                                v_for="(detail, sname) in infra_stats.mcp_details",
+                                key="sname",
+                            ):
+                                # Server name
+                                html.Td("{{ sname }}", classes="font-weight-medium")
+                                # Healthcheck status chip
+                                with html.Td():
+                                    v3.VChip(
+                                        v_text=(
+                                            "(infra_stats.mcp_servers || {})[sname] || 'ON-DEMAND'",
+                                        ),
+                                        size="x-small",
+                                        color=(
+                                            "(infra_stats.mcp_servers || {})[sname] === 'OK' "
+                                            "? 'success' : 'info'",
+                                        ),
+                                        variant="flat",
                                     )
-                                    html.Td(
-                                        "{{ detail.comment || '-' }}",
-                                        classes="text-caption"
+                                # Backend readiness chip
+                                with html.Td():
+                                    v3.VChip(
+                                        v_text="detail.ready",
+                                        size="x-small",
+                                        color=(
+                                            "detail.ready === 'READY' ? 'success' : 'error'",
+                                        ),
+                                        variant="flat",
                                     )
+                                # Tool count
+                                html.Td("{{ detail.tools || 0 }}", classes="text-center")
+                                # Dependencies
+                                with html.Td():
+                                    v3.VChip(
+                                        v_for="dep in (detail.depends_on || [])",
+                                        v_text="dep",
+                                        size="x-small",
+                                        variant="outlined",
+                                        classes="mr-1",
+                                    )
+                                    html.Span(
+                                        v_if="!detail.depends_on || detail.depends_on.length === 0",
+                                        v_text="'none'",
+                                        classes="text-caption text-grey",
+                                    )
+                                # Description
+                                html.Td(
+                                    "{{ detail.desc || detail.comment || '-' }}",
+                                    classes="text-caption",
+                                )
 
 
 def build_dsp_alert() -> None:

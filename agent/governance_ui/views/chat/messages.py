@@ -18,7 +18,9 @@ def build_user_message() -> None:
         color="primary",
         variant="tonal",
         classes="ml-auto",
-        style="max-width: 80%;"
+        style="max-width: 80%;",
+        __properties=["data-testid"],
+        **{"data-testid": "chat-user-message"},
     ):
         with v3.VCardText(classes="py-2"):
             html.Pre(
@@ -38,7 +40,9 @@ def build_agent_message() -> None:
         color="success",
         variant="tonal",
         classes="mr-auto",
-        style="max-width: 80%;"
+        style="max-width: 80%;",
+        __properties=["data-testid"],
+        **{"data-testid": "chat-agent-message"},
     ):
         with v3.VCardText(classes="py-2"):
             with html.Div(classes="d-flex align-center mb-1"):

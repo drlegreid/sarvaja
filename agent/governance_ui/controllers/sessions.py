@@ -54,6 +54,38 @@ def register_sessions_controllers(state: Any, ctrl: Any, api_base_url: str) -> N
         # Load session tasks (GAP-DATA-INTEGRITY-001 Phase 3)
         load_session_tasks(session_id)
 
+        # B.3: Load session tool calls and thoughts
+        load_session_tool_calls(session_id)
+        load_session_thinking_items(session_id)
+
+    def load_session_tool_calls(session_id):
+        """Load tool calls for a session. Per B.3."""
+        if not session_id:
+            return
+        try:
+            state.session_tool_calls = []
+            with httpx.Client(timeout=10.0) as client:
+                response = client.get(f"{api_base_url}/api/sessions/{session_id}/tool_calls")
+                if response.status_code == 200:
+                    data = response.json()
+                    state.session_tool_calls = data.get('tool_calls', [])
+        except Exception:
+            state.session_tool_calls = []
+
+    def load_session_thinking_items(session_id):
+        """Load thinking/reasoning items for a session. Per B.3."""
+        if not session_id:
+            return
+        try:
+            state.session_thinking_items = []
+            with httpx.Client(timeout=10.0) as client:
+                response = client.get(f"{api_base_url}/api/sessions/{session_id}/thoughts")
+                if response.status_code == 200:
+                    data = response.json()
+                    state.session_thinking_items = data.get('thoughts', [])
+        except Exception:
+            state.session_thinking_items = []
+
     def load_session_tasks(session_id):
         """Load tasks linked to a session via completed-in relation.
 

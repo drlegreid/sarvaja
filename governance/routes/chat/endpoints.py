@@ -27,9 +27,16 @@ from governance.stores import (
 from governance.context_preloader import preload_session_context
 
 from .commands import process_chat_command
+from .session_bridge import (
+    start_chat_session,
+    record_chat_tool_call,
+)
 
 
 logger = logging.getLogger(__name__)
+
+# Track active governance sessions per chat session
+_chat_gov_sessions: Dict[str, Any] = {}
 router = APIRouter(tags=["Chat"])
 
 
@@ -195,8 +202,34 @@ async def send_chat_message(request: ChatMessageRequest):
     })
     agent_name = agent.get("name", "Agent")
 
+    # Start governance session for new chat sessions (A.2 session bridge)
+    gov_collector = _chat_gov_sessions.get(session_id)
+    if gov_collector is None:
+        try:
+            topic = request.content[:60] if request.content else "Chat session"
+            gov_collector = start_chat_session(agent_id, topic)
+            _chat_gov_sessions[session_id] = gov_collector
+        except Exception as e:
+            logger.warning(f"Failed to start governance session: {e}")
+
     # Process command
+    import time as _time
+    _cmd_start = _time.time()
     response_content = process_chat_command(request.content, agent_id)
+    _cmd_duration = int((_time.time() - _cmd_start) * 1000)
+
+    # Record tool call in governance session
+    if gov_collector:
+        try:
+            record_chat_tool_call(
+                gov_collector,
+                tool_name=request.content.split()[0] if request.content else "chat",
+                arguments={"content": request.content[:200]},
+                result=response_content[:500],
+                duration_ms=_cmd_duration,
+            )
+        except Exception as e:
+            logger.debug(f"Failed to record chat tool call: {e}")
 
     # Handle async delegation
     if response_content.startswith("__DELEGATE__:"):

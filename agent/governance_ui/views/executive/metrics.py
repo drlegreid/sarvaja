@@ -19,6 +19,8 @@ def build_metrics_summary() -> None:
                 hover=True,
                 click="active_view = 'rules'",
                 style="cursor: pointer",
+                __properties=["data-testid"],
+                **{"data-testid": "metric-rules-card"},
             ):
                 v3.VIcon("mdi-gavel", size="large", color="primary")
                 html.Div(
@@ -33,6 +35,8 @@ def build_metrics_summary() -> None:
                 hover=True,
                 click="active_view = 'agents'",
                 style="cursor: pointer",
+                __properties=["data-testid"],
+                **{"data-testid": "metric-agents-card"},
             ):
                 v3.VIcon("mdi-robot", size="large", color="info")
                 html.Div(
@@ -47,6 +51,8 @@ def build_metrics_summary() -> None:
                 hover=True,
                 click="active_view = 'tasks'",
                 style="cursor: pointer",
+                __properties=["data-testid"],
+                **{"data-testid": "metric-tasks-card"},
             ):
                 v3.VIcon("mdi-checkbox-marked", size="large", color="success")
                 html.Div(
@@ -61,6 +67,8 @@ def build_metrics_summary() -> None:
                 hover=True,
                 click="active_view = 'compliance'",
                 style="cursor: pointer",
+                __properties=["data-testid"],
+                **{"data-testid": "metric-compliance-card"},
             ):
                 v3.VIcon("mdi-percent", size="large", color="warning")
                 html.Div(

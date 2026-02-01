@@ -26,9 +26,10 @@ LITELLM_API_KEY = os.environ.get("LITELLM_API_KEY", "sk-litellm-dev-key")
 LLM_MODEL = os.environ.get("MODEL_NAME", "claude-sonnet")
 
 GOVERNANCE_SYSTEM_PROMPT = (
-    "You are a governance assistant for the Sarvaja platform. "
-    "You help users understand rules, tasks, sessions, and decisions. "
+    "You are a governance assistant for the Sarvaja platform (multi-agent governance with TypeDB). "
+    "You help users understand rules, tasks, sessions, decisions, and agent trust scores. "
     "Keep responses concise and actionable. "
+    "Available commands: /status, /tasks, /rules, /agents, /sessions, /context, /search, /delegate. "
     "If you don't know something, suggest using /help for available commands."
 )
 
@@ -48,7 +49,7 @@ def query_llm(message: str, system_prompt: str = "") -> str:
 
         resp = httpx.post(
             f"{LITELLM_BASE_URL}/v1/chat/completions",
-            json={"model": LLM_MODEL, "messages": messages, "max_tokens": 512},
+            json={"model": LLM_MODEL, "messages": messages, "max_tokens": 2048},
             headers={"Authorization": f"Bearer {LITELLM_API_KEY}"},
             timeout=30.0,
         )
@@ -137,6 +138,7 @@ def process_chat_command(content: str, agent_id: str) -> str:
 - /tasks - List pending tasks
 - /rules - List active rules
 - /agents - List available agents
+- /sessions - List recent sessions
 - /context - Show loaded strategic context
 - /search <query> - Search evidence
 - /delegate <task> - Delegate a task
@@ -151,6 +153,26 @@ You can also type natural language commands and I'll do my best to help!"""
             return context.to_agent_prompt()
         except Exception as e:
             return f"Failed to load context: {str(e)}"
+
+    elif content_lower.startswith("/sessions"):
+        sessions = list(_sessions_store.values())
+        if sessions:
+            # Sort by start_time descending (most recent first)
+            sessions_sorted = sorted(
+                sessions,
+                key=lambda s: s.get("start_time", ""),
+                reverse=True,
+            )
+            session_list = "\n".join([
+                f"- {s.get('session_id', 'unknown')}: "
+                f"{s.get('status', 'UNKNOWN')} | "
+                f"agent: {s.get('agent_id', 'none')} | "
+                f"started: {s.get('start_time', 'N/A')[:16]}"
+                + (f"\n  intent: {s.get('intent', '')}" if s.get("intent") else "")
+                for s in sessions_sorted[:10]
+            ])
+            return f"Sessions ({len(sessions)} total):\n{session_list}"
+        return "No sessions found. Sessions are created when agents perform work."
 
     elif content_lower.startswith("/agents"):
         agents = list(_agents_store.values())

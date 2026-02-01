@@ -113,6 +113,7 @@ def build_tasks_list_view() -> None:
                 hide_details=True,
                 clearable=True,
                 style="max-width: 150px",
+                update_modelValue="trigger('tasks_apply_filters')",
                 __properties=["data-testid"],
                 **{"data-testid": "tasks-filter-status"}
             )
@@ -125,6 +126,7 @@ def build_tasks_list_view() -> None:
                 hide_details=True,
                 clearable=True,
                 style="max-width: 150px; margin-left: 8px",
+                update_modelValue="trigger('tasks_apply_filters')",
                 __properties=["data-testid"],
                 **{"data-testid": "tasks-filter-phase"}
             )

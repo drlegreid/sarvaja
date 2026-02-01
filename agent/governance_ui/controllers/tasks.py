@@ -295,19 +295,35 @@ def register_tasks_controllers(state: Any, ctrl: Any, api_base_url: str) -> None
             state.status_message = f"Task creation failed: {str(e)}"
             state.show_task_form = False
 
+    @ctrl.trigger("tasks_apply_filters")
+    def tasks_apply_filters():
+        """Apply task filters and reload page 1. Per B.2: Wire filters to API."""
+        state.tasks_page = 1
+        load_tasks_page()
+
     def load_tasks_page():
         """
-        Load tasks with pagination (EPIC-DR-005).
+        Load tasks with pagination and filters (EPIC-DR-005, B.2).
 
-        Fetches tasks from API with offset/limit based on current page.
+        Fetches tasks from API with offset/limit and optional status/phase filters.
         """
         try:
             state.is_loading = True
             offset = (state.tasks_page - 1) * state.tasks_per_page
+            params = {"offset": offset, "limit": state.tasks_per_page}
+
+            # B.2: Include active filters in API request
+            tasks_status_filter = getattr(state, 'tasks_status_filter', None)
+            tasks_phase_filter = getattr(state, 'tasks_phase_filter', None)
+            if tasks_status_filter:
+                params["status"] = tasks_status_filter
+            if tasks_phase_filter:
+                params["phase"] = tasks_phase_filter
+
             with httpx.Client(timeout=10.0) as client:
                 response = client.get(
                     f"{api_base_url}/api/tasks",
-                    params={"offset": offset, "limit": state.tasks_per_page}
+                    params=params
                 )
                 if response.status_code == 200:
                     data = response.json()

@@ -20,41 +20,87 @@ logger = logging.getLogger(__name__)
 # =============================================================================
 
 _AGENT_METRICS_FILE = os.path.join(os.path.dirname(__file__), "..", "data", "agent_metrics.json")
+_AGENTS_YAML_FILE = os.path.join(os.path.dirname(__file__), "..", "..", "agents.yaml")
+
+# Map agents.yaml keys to agent store IDs
+_YAML_KEY_TO_AGENT_ID = {
+    "orchestrator": "task-orchestrator",
+    "rules_curator": "rules-curator",
+    "researcher": "research-agent",
+    "coder": "code-agent",
+    "simple_assistant": "local-assistant",
+}
 
 # Base agent definitions (static config - fallback if TypeDB unavailable)
 # Per GAP-AGENT-004: Added capabilities field
+# Per user feedback: Only local Claude Code agent is active by default.
+# Other agents are STOPPED until explicitly started.
 _AGENT_BASE_CONFIG = {
+    "code-agent": {
+        "name": "Claude Code Agent",
+        "agent_type": "claude-code",
+        "base_trust": 0.88,
+        "default_status": "ACTIVE",
+        "capabilities": [
+            "code_generation", "refactoring", "test_writing",
+            "task_management", "session_management", "rule_compliance",
+        ],
+    },
     "task-orchestrator": {
         "name": "Task Orchestrator",
         "agent_type": "orchestrator",
         "base_trust": 0.95,
+        "default_status": "STOPPED",
         "capabilities": ["task_management", "delegation", "priority_assignment"],
     },
     "rules-curator": {
         "name": "Rules Curator",
         "agent_type": "curator",
         "base_trust": 0.90,
+        "default_status": "STOPPED",
         "capabilities": ["rule_creation", "rule_modification", "compliance_review"],
     },
     "research-agent": {
         "name": "Research Agent",
         "agent_type": "researcher",
         "base_trust": 0.85,
+        "default_status": "STOPPED",
         "capabilities": ["web_search", "document_analysis", "knowledge_synthesis"],
-    },
-    "code-agent": {
-        "name": "Code Agent",
-        "agent_type": "coder",
-        "base_trust": 0.88,
-        "capabilities": ["code_generation", "refactoring", "test_writing"],
     },
     "local-assistant": {
         "name": "Local Assistant",
         "agent_type": "assistant",
         "base_trust": 0.92,
+        "default_status": "STOPPED",
         "capabilities": ["file_operations", "command_execution", "session_management"],
     },
 }
+
+
+def _load_workflow_configs() -> Dict[str, Dict[str, Any]]:
+    """Load workflow configs from agents.yaml, keyed by agent store ID."""
+    configs = {}
+    if not os.path.exists(_AGENTS_YAML_FILE):
+        return configs
+    try:
+        import yaml
+        with open(_AGENTS_YAML_FILE, "r") as f:
+            data = yaml.safe_load(f)
+        for yaml_key, agent_conf in (data or {}).get("agents", {}).items():
+            agent_id = _YAML_KEY_TO_AGENT_ID.get(yaml_key)
+            if agent_id:
+                configs[agent_id] = {
+                    "description": agent_conf.get("description", ""),
+                    "instructions": agent_conf.get("instructions", ""),
+                    "model": agent_conf.get("model", {}).get("name", ""),
+                    "tools": [
+                        k for k in ("use_knowledge", "chat", "markdown")
+                        if agent_conf.get(k)
+                    ],
+                }
+    except Exception as e:
+        logger.warning(f"Failed to load agents.yaml workflow configs: {e}")
+    return configs
 
 
 def _load_agent_metrics() -> Dict[str, Dict[str, Any]]:
@@ -94,25 +140,31 @@ def _calculate_trust_score(agent_id: str, tasks_executed: int, base_trust: float
 
 
 def _build_agents_store() -> Dict[str, Dict[str, Any]]:
-    """Build agents store with persistent metrics merged with base config."""
+    """Build agents store with persistent metrics and workflow configs."""
     metrics = _load_agent_metrics()
+    workflow_configs = _load_workflow_configs()
     agents = {}
 
     for agent_id, config in _AGENT_BASE_CONFIG.items():
         agent_metrics = metrics.get(agent_id, {})
         tasks_executed = agent_metrics.get("tasks_executed", 0)
         last_active = agent_metrics.get("last_active", None)
+        wf = workflow_configs.get(agent_id, {})
 
         agents[agent_id] = {
             "agent_id": agent_id,
             "name": config["name"],
             "agent_type": config["agent_type"],
-            "status": "ACTIVE",
+            "status": config.get("default_status", "STOPPED"),
             "tasks_executed": tasks_executed,
             "trust_score": _calculate_trust_score(agent_id, tasks_executed, config["base_trust"]),
             "last_active": last_active,
-            # Per GAP-AGENT-004: Include capabilities
             "capabilities": config.get("capabilities", []),
+            # Workflow config from agents.yaml
+            "description": wf.get("description", ""),
+            "instructions": wf.get("instructions", ""),
+            "model": wf.get("model", ""),
+            "tools": wf.get("tools", []),
         }
 
     return agents
