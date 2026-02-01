@@ -111,11 +111,6 @@ class TestHybridQueryInAgent:
 class TestHybridVectorDb:
     """Test HybridVectorDb that wraps both ChromaDB and TypeDB."""
 
-    def test_hybrid_vectordb_class_exists(self):
-        """HybridVectorDb adapter should exist."""
-        from agent.hybrid_vectordb import HybridVectorDb
-        assert HybridVectorDb is not None
-
     def test_hybrid_vectordb_implements_search(self):
         """HybridVectorDb should implement search method."""
         from agent.hybrid_vectordb import HybridVectorDb

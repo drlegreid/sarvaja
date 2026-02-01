@@ -22,34 +22,6 @@ GOVERNANCE_DIR = PROJECT_ROOT / "governance"
 # Test 1: Package Structure
 # =============================================================================
 
-class TestPackageStructure:
-    """Tests for the new package structure."""
-
-    def test_embedding_pipeline_package_exists(self):
-        """embedding_pipeline should be a package (directory with __init__.py)."""
-        package_dir = GOVERNANCE_DIR / "embedding_pipeline"
-        init_file = package_dir / "__init__.py"
-        # Either old file or new package should exist
-        old_file = GOVERNANCE_DIR / "embedding_pipeline.py"
-        assert package_dir.exists() or old_file.exists(), \
-            "Either embedding_pipeline/ package or embedding_pipeline.py must exist"
-
-    def test_chunking_module_exists(self):
-        """Chunking module should exist in package."""
-        chunking_file = GOVERNANCE_DIR / "embedding_pipeline" / "chunking.py"
-        # Only check if package exists (for TDD - this fails until implemented)
-        package_dir = GOVERNANCE_DIR / "embedding_pipeline"
-        if package_dir.exists():
-            assert chunking_file.exists(), "chunking.py must exist in package"
-
-    def test_pipeline_module_exists(self):
-        """Pipeline core module should exist in package."""
-        pipeline_file = GOVERNANCE_DIR / "embedding_pipeline" / "pipeline.py"
-        package_dir = GOVERNANCE_DIR / "embedding_pipeline"
-        if package_dir.exists():
-            assert pipeline_file.exists(), "pipeline.py must exist in package"
-
-
 # =============================================================================
 # Test 2: Backward Compatibility
 # =============================================================================

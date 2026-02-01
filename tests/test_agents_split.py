@@ -17,12 +17,6 @@ ROUTES_DIR = Path(__file__).parent.parent / "governance" / "routes"
 class TestAgentsSplit:
     """Test agents module structure after split."""
 
-    def test_agents_module_exists(self):
-        """Verify agents.py exists (may be main file or package)."""
-        agents_file = ROUTES_DIR / "agents.py"
-        agents_pkg = ROUTES_DIR / "agents" / "__init__.py"
-        assert agents_file.exists() or agents_pkg.exists(), "agents module must exist"
-
     def test_agents_under_300_lines(self):
         """Verify main agents module is under 300 lines per DOC-SIZE-01-v1."""
         agents_file = ROUTES_DIR / "agents.py"
@@ -30,21 +24,6 @@ class TestAgentsSplit:
             with open(agents_file, "r") as f:
                 lines = len(f.readlines())
             assert lines < 300, f"agents.py has {lines} lines, should be <300"
-
-    def test_observability_module_exists(self):
-        """Verify observability.py extraction exists."""
-        # Could be agents/observability.py or observability.py
-        obs_file = ROUTES_DIR / "agents" / "observability.py"
-        if not obs_file.exists():
-            obs_file = ROUTES_DIR / "observability.py"
-        assert obs_file.exists(), "observability.py should be extracted"
-
-    def test_visibility_module_exists(self):
-        """Verify visibility.py extraction exists."""
-        vis_file = ROUTES_DIR / "agents" / "visibility.py"
-        if not vis_file.exists():
-            vis_file = ROUTES_DIR / "visibility.py"
-        assert vis_file.exists(), "visibility.py should be extracted"
 
 
 class TestBackwardCompatibility:

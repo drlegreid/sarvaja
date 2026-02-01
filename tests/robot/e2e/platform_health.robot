@@ -3,7 +3,7 @@ Documentation    RF-006: E2E Platform Health Tests
 ...              Per RULE-004: Thin-slice platform verification
 ...              Migrated from tests/e2e/test_platform_health_e2e.py
 Library          Collections
-Library          ../../libs/PlatformHealthE2ELibrary.py
+Library          libs/PlatformHealthE2ELibrary.py
 Test Tags        e2e    api    health    critical    SAFETY-HEALTH-01-v1    validate
 
 *** Test Cases ***

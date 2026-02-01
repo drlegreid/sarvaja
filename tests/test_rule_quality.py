@@ -14,11 +14,6 @@ from dataclasses import dataclass
 class TestRuleQualityAnalyzerUnit:
     """Unit tests for RuleQualityAnalyzer class."""
 
-    def test_rule_quality_analyzer_class_exists(self):
-        """RuleQualityAnalyzer class exists and is importable."""
-        from governance.rule_quality import RuleQualityAnalyzer
-        assert RuleQualityAnalyzer is not None
-
     def test_issue_severity_enum(self):
         """IssueSeverity enum has expected values."""
         from governance.rule_quality import IssueSeverity

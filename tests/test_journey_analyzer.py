@@ -13,34 +13,6 @@ from unittest.mock import patch, MagicMock
 
 
 # =============================================================================
-# MODULE EXISTENCE TESTS
-# =============================================================================
-
-class TestJourneyAnalyzerModule:
-    """Test that JourneyAnalyzer module exists and is importable."""
-
-    def test_journey_analyzer_module_exists(self):
-        """Module should exist."""
-        from agent import journey_analyzer
-        assert journey_analyzer is not None
-
-    def test_journey_analyzer_class(self):
-        """JourneyAnalyzer class should exist."""
-        from agent.journey_analyzer import JourneyAnalyzer
-        assert JourneyAnalyzer is not None
-
-    def test_analyzer_has_required_methods(self):
-        """Analyzer should have core methods."""
-        from agent.journey_analyzer import JourneyAnalyzer
-        analyzer = JourneyAnalyzer()
-        assert hasattr(analyzer, 'log_question')
-        assert hasattr(analyzer, 'get_recurring_questions')
-        assert hasattr(analyzer, 'detect_patterns')
-        assert hasattr(analyzer, 'get_knowledge_gaps')
-        assert hasattr(analyzer, 'get_question_history')
-
-
-# =============================================================================
 # QUESTION LOGGING TESTS
 # =============================================================================
 

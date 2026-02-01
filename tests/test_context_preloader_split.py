@@ -22,22 +22,6 @@ GOVERNANCE_DIR = PROJECT_ROOT / "governance"
 # Test 1: Package Structure
 # =============================================================================
 
-class TestPackageStructure:
-    """Tests for the new package structure."""
-
-    def test_context_preloader_package_exists(self):
-        """context_preloader should be a module or package."""
-        package_dir = GOVERNANCE_DIR / "context_preloader"
-        old_file = GOVERNANCE_DIR / "context_preloader.py"
-        assert package_dir.exists() or old_file.exists(), \
-            "Either context_preloader/ package or context_preloader.py must exist"
-
-    def test_models_module_exists(self):
-        """Models module should exist in package."""
-        models_file = GOVERNANCE_DIR / "context_preloader" / "models.py"
-        package_dir = GOVERNANCE_DIR / "context_preloader"
-        if package_dir.exists():
-            assert models_file.exists(), "models.py must exist in package"
 
 
 # =============================================================================

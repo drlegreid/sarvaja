@@ -52,15 +52,6 @@ class TestAgentsMCPToolsExist:
     """Validate Agents MCP tools are registered."""
 
     @pytest.mark.unit
-    def test_agents_tools_importable(self):
-        """Agents MCP tools module must be importable."""
-        try:
-            from governance.mcp_tools.agents import register_agent_tools
-            assert register_agent_tools is not None
-        except ImportError as e:
-            pytest.skip(f"Agents MCP tools not yet implemented: {e}")
-
-    @pytest.mark.unit
     def test_agents_tools_registered(self):
         """Agents tools must be included in register_all_tools."""
         try:

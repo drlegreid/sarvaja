@@ -7,47 +7,7 @@ Strategic Goal: Transition to TypeDB-first architecture.
 """
 import pytest
 import json
-from pathlib import Path
 from datetime import datetime
-
-# Project paths
-PROJECT_ROOT = Path(__file__).parent.parent
-GOVERNANCE_DIR = PROJECT_ROOT / "governance"
-
-
-class TestReadOnlyWrapperModule:
-    """Verify P7.5 read-only wrapper module exists."""
-
-    @pytest.mark.unit
-    def test_readonly_wrapper_module_exists(self):
-        """Read-only wrapper module must exist."""
-        wrapper_file = GOVERNANCE_DIR / "chroma_readonly.py"
-        assert wrapper_file.exists(), "governance/chroma_readonly.py not found"
-
-    @pytest.mark.unit
-    def test_readonly_wrapper_class(self):
-        """ChromaReadOnly class must be importable."""
-        from governance.chroma_readonly import ChromaReadOnly
-
-        wrapper = ChromaReadOnly()
-        assert wrapper is not None
-
-    @pytest.mark.unit
-    def test_wrapper_has_required_methods(self):
-        """Wrapper must have required methods."""
-        from governance.chroma_readonly import ChromaReadOnly
-
-        wrapper = ChromaReadOnly()
-
-        # Read operations
-        assert hasattr(wrapper, 'query')
-        assert hasattr(wrapper, 'get')
-        assert hasattr(wrapper, 'list_collections')
-
-        # Deprecated write operations
-        assert hasattr(wrapper, 'add')
-        assert hasattr(wrapper, 'update')
-        assert hasattr(wrapper, 'delete')
 
 
 class TestReadOperations:

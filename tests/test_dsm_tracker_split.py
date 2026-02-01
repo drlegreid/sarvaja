@@ -23,23 +23,6 @@ DSM_DIR = GOVERNANCE_DIR / "dsm"
 # Test 1: Module Structure
 # =============================================================================
 
-class TestModuleStructure:
-    """Tests for module structure."""
-
-    def test_tracker_module_exists(self):
-        """tracker.py should exist in dsm/."""
-        tracker_file = DSM_DIR / "tracker.py"
-        assert tracker_file.exists(), "dsm/tracker.py must exist"
-
-    def test_memory_module_exists(self):
-        """memory.py should exist in dsm/ (if split was done)."""
-        memory_file = DSM_DIR / "memory.py"
-        # Only check if file exists - skip if not yet implemented
-        if not memory_file.exists():
-            pytest.skip("memory.py not yet extracted")
-        assert memory_file.exists()
-
-
 # =============================================================================
 # Test 2: Backward Compatibility
 # =============================================================================

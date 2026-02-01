@@ -16,12 +16,6 @@ class TestVectorStoreModule:
     """Unit tests for vector store module."""
 
     @pytest.mark.unit
-    def test_module_exists(self):
-        """Vector store module must exist."""
-        vector_file = GOVERNANCE_DIR / "vector_store.py"
-        assert vector_file.exists(), "governance/vector_store.py not found"
-
-    @pytest.mark.unit
     def test_vector_document_dataclass(self):
         """VectorDocument dataclass must be importable."""
         from governance.vector_store import VectorDocument

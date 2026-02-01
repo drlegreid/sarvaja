@@ -16,11 +16,6 @@ from unittest.mock import Mock, patch
 class TestSessionCollectorUnit:
     """Unit tests for SessionCollector class."""
 
-    def test_session_collector_class_exists(self):
-        """SessionCollector class exists and is importable."""
-        from governance.session_collector import SessionCollector
-        assert SessionCollector is not None
-
     def test_session_collector_creates_session_id(self):
         """SessionCollector generates correct session ID format."""
         from governance.session_collector import SessionCollector

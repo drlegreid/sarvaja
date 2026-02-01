@@ -7,42 +7,7 @@ Strategic Goal: Understand rule relationships and change impacts.
 """
 import pytest
 import json
-from pathlib import Path
 from datetime import datetime
-
-# Project paths
-PROJECT_ROOT = Path(__file__).parent.parent
-AGENT_DIR = PROJECT_ROOT / "agent"
-
-
-class TestRuleImpactModule:
-    """Verify P9.4 rule impact analyzer module exists."""
-
-    @pytest.mark.unit
-    def test_rule_impact_module_exists(self):
-        """Rule impact module must exist."""
-        impact_file = AGENT_DIR / "rule_impact.py"
-        assert impact_file.exists(), "agent/rule_impact.py not found"
-
-    @pytest.mark.unit
-    def test_rule_impact_class(self):
-        """RuleImpactAnalyzer class must be importable."""
-        from agent.rule_impact import RuleImpactAnalyzer
-
-        analyzer = RuleImpactAnalyzer()
-        assert analyzer is not None
-
-    @pytest.mark.unit
-    def test_analyzer_has_required_methods(self):
-        """Analyzer must have required methods."""
-        from agent.rule_impact import RuleImpactAnalyzer
-
-        analyzer = RuleImpactAnalyzer()
-
-        assert hasattr(analyzer, 'analyze_dependencies')
-        assert hasattr(analyzer, 'get_impact_graph')
-        assert hasattr(analyzer, 'simulate_change')
-        assert hasattr(analyzer, 'get_affected_rules')
 
 
 class TestDependencyAnalysis:

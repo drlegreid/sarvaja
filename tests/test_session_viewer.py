@@ -7,43 +7,7 @@ Strategic Goal: Navigate session artifacts with timeline, search, and detail vie
 """
 import pytest
 import json
-from pathlib import Path
 from datetime import datetime
-
-# Project paths
-PROJECT_ROOT = Path(__file__).parent.parent
-AGENT_DIR = PROJECT_ROOT / "agent"
-EVIDENCE_DIR = PROJECT_ROOT / "evidence"
-
-
-class TestSessionViewerModule:
-    """Verify P9.3 session viewer module exists."""
-
-    @pytest.mark.unit
-    def test_session_viewer_module_exists(self):
-        """Session viewer module must exist."""
-        ui_file = AGENT_DIR / "session_viewer.py"
-        assert ui_file.exists(), "agent/session_viewer.py not found"
-
-    @pytest.mark.unit
-    def test_session_viewer_class(self):
-        """SessionViewer class must be importable."""
-        from agent.session_viewer import SessionViewer
-
-        viewer = SessionViewer()
-        assert viewer is not None
-
-    @pytest.mark.unit
-    def test_viewer_has_required_methods(self):
-        """Viewer must have required methods."""
-        from agent.session_viewer import SessionViewer
-
-        viewer = SessionViewer()
-
-        assert hasattr(viewer, 'get_sessions_timeline')
-        assert hasattr(viewer, 'get_session_detail')
-        assert hasattr(viewer, 'search_in_session')
-        assert hasattr(viewer, 'get_session_metadata')
 
 
 class TestSessionTimeline:

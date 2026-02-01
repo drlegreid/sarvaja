@@ -220,11 +220,6 @@ class TestDSMCycleDataclass:
 class TestDSMTrackerInitialization:
     """Tests for DSMTracker initialization."""
 
-    def test_tracker_class_exists(self):
-        """DSMTracker class exists and is importable."""
-        from governance.dsm_tracker import DSMTracker
-        assert DSMTracker is not None
-
     def test_tracker_creates_with_defaults(self):
         """DSMTracker creates with default paths."""
         from governance.dsm_tracker import DSMTracker

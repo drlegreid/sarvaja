@@ -7,42 +7,7 @@ Strategic Goal: Live visibility into rule compliance and changes.
 """
 import pytest
 import json
-from pathlib import Path
 from datetime import datetime
-
-# Project paths
-PROJECT_ROOT = Path(__file__).parent.parent
-AGENT_DIR = PROJECT_ROOT / "agent"
-
-
-class TestRuleMonitorModule:
-    """Verify P9.6 rule monitor module exists."""
-
-    @pytest.mark.unit
-    def test_rule_monitor_module_exists(self):
-        """Rule monitor module must exist."""
-        monitor_file = AGENT_DIR / "rule_monitor.py"
-        assert monitor_file.exists(), "agent/rule_monitor.py not found"
-
-    @pytest.mark.unit
-    def test_rule_monitor_class(self):
-        """RuleMonitor class must be importable."""
-        from agent.rule_monitor import RuleMonitor
-
-        monitor = RuleMonitor()
-        assert monitor is not None
-
-    @pytest.mark.unit
-    def test_monitor_has_required_methods(self):
-        """Monitor must have required methods."""
-        from agent.rule_monitor import RuleMonitor
-
-        monitor = RuleMonitor()
-
-        assert hasattr(monitor, 'get_feed')
-        assert hasattr(monitor, 'log_event')
-        assert hasattr(monitor, 'get_alerts')
-        assert hasattr(monitor, 'get_statistics')
 
 
 class TestEventLogging:

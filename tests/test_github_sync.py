@@ -15,12 +15,6 @@ class TestGitHubSyncModule:
     """Unit tests for GitHub sync module."""
 
     @pytest.mark.unit
-    def test_module_exists(self):
-        """GitHub sync module must exist."""
-        sync_file = GOVERNANCE_DIR / "github_sync.py"
-        assert sync_file.exists(), "governance/github_sync.py not found"
-
-    @pytest.mark.unit
     def test_rdtask_dataclass(self):
         """RDTask dataclass must be importable."""
         from governance.github_sync import RDTask

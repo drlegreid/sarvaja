@@ -20,12 +20,6 @@ class TestMCPEvidenceToolsExist:
     """Verify P9.1 evidence MCP tools are defined."""
 
     @pytest.mark.unit
-    def test_compat_module_exists(self):
-        """Compat module must exist (mcp_server.py deprecated 2026-01-04)."""
-        compat_file = GOVERNANCE_DIR / "compat" / "__init__.py"
-        assert compat_file.exists(), "governance/compat/__init__.py not found"
-
-    @pytest.mark.unit
     def test_evidence_tools_defined(self):
         """Evidence viewing tools must be defined in compat module."""
         from governance import compat

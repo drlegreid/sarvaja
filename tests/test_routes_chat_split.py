@@ -23,22 +23,6 @@ ROUTES_DIR = GOVERNANCE_DIR / "routes"
 # Test 1: Package Structure
 # =============================================================================
 
-class TestPackageStructure:
-    """Tests for the new package structure."""
-
-    def test_chat_routes_exists(self):
-        """chat routes should be a module or package."""
-        chat_package = ROUTES_DIR / "chat"
-        chat_file = ROUTES_DIR / "chat.py"
-        assert chat_package.exists() or chat_file.exists(), \
-            "Either routes/chat/ package or routes/chat.py must exist"
-
-    def test_commands_module_exists(self):
-        """Commands module should exist in package."""
-        commands_file = ROUTES_DIR / "chat" / "commands.py"
-        chat_package = ROUTES_DIR / "chat"
-        if chat_package.exists():
-            assert commands_file.exists(), "commands.py must exist in package"
 
 
 # =============================================================================

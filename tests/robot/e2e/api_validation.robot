@@ -3,7 +3,7 @@ Documentation    RF-009: API Input Validation & Negative Tests
 ...              Per GAP-TEST-LENIENCY-001: Ensure API rejects invalid input
 ...              Per ARCH-EBMSF-01-v1: Evidence-based assertions with msg=
 Library          Collections
-Library          ../../libs/GovernanceCRUDE2ELibrary.py
+Library          libs/GovernanceCRUDE2ELibrary.py
 Suite Setup       Cleanup Test Data
 Suite Teardown    Cleanup Test Data
 Test Tags        e2e    api    validation    negative    TEST-QUAL-01-v1

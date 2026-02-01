@@ -26,15 +26,6 @@ from typing import List, Dict, Any
 class TestContentHashing:
     """Tests for content-addressable hashing."""
 
-    def test_frankel_hash_module_exists(self):
-        """Frankel hash module is importable."""
-        try:
-            from governance.frankel_hash import compute_hash
-            assert compute_hash is not None
-        except ImportError:
-            # Module doesn't exist yet - TDD will create it
-            pytest.skip("frankel_hash module not implemented yet")
-
     def test_compute_document_hash(self):
         """compute_hash generates consistent hash for document content."""
         try:

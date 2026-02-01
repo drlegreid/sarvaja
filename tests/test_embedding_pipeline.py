@@ -7,43 +7,6 @@ Strategic Goal: Enable semantic search across governance artifacts.
 """
 import pytest
 import json
-from pathlib import Path
-
-# Project paths
-PROJECT_ROOT = Path(__file__).parent.parent
-GOVERNANCE_DIR = PROJECT_ROOT / "governance"
-
-
-class TestEmbeddingPipelineModule:
-    """Verify P7.2 embedding pipeline module exists."""
-
-    @pytest.mark.unit
-    def test_pipeline_module_exists(self):
-        """Embedding pipeline module must exist (file or package)."""
-        pipeline_file = GOVERNANCE_DIR / "embedding_pipeline.py"
-        pipeline_package = GOVERNANCE_DIR / "embedding_pipeline" / "__init__.py"
-        assert pipeline_file.exists() or pipeline_package.exists(), \
-            "governance/embedding_pipeline (module or package) not found"
-
-    @pytest.mark.unit
-    def test_pipeline_class(self):
-        """EmbeddingPipeline class must be importable."""
-        from governance.embedding_pipeline import EmbeddingPipeline
-
-        pipeline = EmbeddingPipeline()
-        assert pipeline is not None
-
-    @pytest.mark.unit
-    def test_pipeline_has_required_methods(self):
-        """Pipeline must have required methods."""
-        from governance.embedding_pipeline import EmbeddingPipeline
-
-        pipeline = EmbeddingPipeline()
-
-        assert hasattr(pipeline, 'embed_rules')
-        assert hasattr(pipeline, 'embed_decisions')
-        assert hasattr(pipeline, 'embed_sessions')
-        assert hasattr(pipeline, 'run_full_pipeline')
 
 
 class TestRuleEmbeddings:

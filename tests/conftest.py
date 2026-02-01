@@ -561,28 +561,60 @@ def pytest_collection_modifyitems(config, items):
     """Auto-mark tests based on their file path.
 
     Path patterns:
-    - tests/e2e/* -> e2e marker
-    - tests/integration/* -> integration marker
-    - tests/unit/* -> unit marker
-    - *_e2e.py -> e2e marker
-    - Files importing pytest_playwright -> browser marker
+    - tests/e2e/* or *_e2e.py -> e2e marker
+    - tests/integration/* or *_integration.py -> integration marker
+    - tests/unit/* or *_unit.py -> unit marker
+    - tests/component/* -> component marker
+    - tests/benchmarks/* -> benchmark, performance markers
+    - tests/heuristics/* -> heuristic marker
+    - Root-level tests -> domain markers from filename keywords
     """
+    # Domain keyword -> marker mapping for root-level test files
+    _domain_keywords = {
+        'rule': 'rules', 'rules': 'rules', 'governance': 'rules',
+        'agent': 'agents', 'agents': 'agents', 'trust': 'agents',
+        'delegation': 'agents', 'orchestrator': 'agents',
+        'session': 'sessions', 'sessions': 'sessions', 'dsm': 'sessions',
+        'task': 'tasks', 'tasks': 'tasks',
+        'mcp': 'mcp', 'chroma': 'chroma', 'chromadb': 'chroma',
+        'trame': 'ui', 'ui': 'ui', 'dashboard': 'ui',
+        'hook': 'hooks', 'hooks': 'hooks',
+        'embedding': 'chroma', 'vector': 'chroma',
+    }
+
     for item in items:
-        # Get relative path
         rel_path = str(item.fspath)
 
         # Auto-mark based on directory
         if "/e2e/" in rel_path or "_e2e.py" in rel_path:
             item.add_marker(pytest.mark.e2e)
-            # Check if it's a browser test (has playwright imports)
             if hasattr(item, 'module'):
                 module_source = getattr(item.module, '__file__', '')
                 if 'playwright' in str(module_source).lower():
                     item.add_marker(pytest.mark.browser)
-        elif "/integration/" in rel_path:
+        elif "/integration/" in rel_path or "_integration.py" in rel_path:
             item.add_marker(pytest.mark.integration)
-        elif "/unit/" in rel_path:
+        elif "/unit/" in rel_path or "_unit.py" in rel_path:
             item.add_marker(pytest.mark.unit)
+        elif "/component/" in rel_path:
+            item.add_marker(pytest.mark.component)
+        elif "/benchmarks/" in rel_path:
+            item.add_marker(pytest.mark.benchmark)
+            item.add_marker(pytest.mark.performance)
+        elif "/heuristics/" in rel_path:
+            item.add_marker(pytest.mark.heuristic)
+
+        # Auto-mark root-level tests by filename keywords
+        filename = str(item.fspath.basename) if hasattr(item.fspath, 'basename') else ''
+        if filename.startswith('test_') and '/unit/' not in rel_path and '/e2e/' not in rel_path:
+            # Strip test_ prefix and .py suffix, split on underscores
+            parts = filename.replace('test_', '', 1).replace('.py', '').split('_')
+            markers_added = set()
+            for part in parts:
+                marker_name = _domain_keywords.get(part)
+                if marker_name and marker_name not in markers_added:
+                    item.add_marker(getattr(pytest.mark, marker_name))
+                    markers_added.add(marker_name)
 
 
 # =============================================================================

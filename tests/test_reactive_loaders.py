@@ -108,13 +108,6 @@ class TestTraceStatusFields:
 class TestLoaderStateModule:
     """Test loader state module exists."""
 
-    def test_loader_module_exists(self):
-        """Verify reactive_loaders module can be created."""
-        import os
-        module_dir = 'agent/governance_ui/loaders'
-        # Module should be creatable
-        assert os.path.basename(module_dir) == 'loaders'
-
     def test_state_initial_has_loader_fields(self):
         """Verify state/initial.py includes loader metadata fields."""
         import os

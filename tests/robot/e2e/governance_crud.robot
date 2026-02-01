@@ -3,7 +3,7 @@ Documentation    RF-006: E2E Governance CRUD Tests
 ...              Per GAP-UI-028: Tests must verify actual functionality
 ...              Migrated from tests/e2e/test_governance_crud_e2e.py
 Library          Collections
-Library          ../../libs/GovernanceCRUDE2ELibrary.py
+Library          libs/GovernanceCRUDE2ELibrary.py
 Test Tags        e2e    api    governance    high    rules    rule    task    create    read    delete    GOV-RULE-01-v1
 
 Suite Setup       Cleanup Test Data

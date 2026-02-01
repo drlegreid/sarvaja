@@ -14,11 +14,6 @@ from unittest.mock import Mock, MagicMock
 class TestTaskSessionLinkInfrastructure:
     """Test task-session linking infrastructure."""
 
-    def test_linking_module_exists(self):
-        """Verify linking module exists."""
-        from governance.typedb.queries.tasks import TaskLinkingOperations
-        assert TaskLinkingOperations is not None
-
     def test_linking_has_link_task_to_session(self):
         """Verify link_task_to_session method exists."""
         from governance.typedb.queries.tasks.linking import TaskLinkingOperations

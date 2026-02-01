@@ -26,18 +26,46 @@ Test suites MUST be executed in split groups for faster feedback. Full test runs
 ## Execution Commands
 
 ```bash
-# Quick feedback (unit + MCP)
-pytest tests/ -k "unit" --timeout=30
-pytest tests/test_mcp*.py --timeout=60
+# Quick feedback: pytest unit only (fastest - ~3s)
+.venv/bin/python3 -m pytest tests/unit/ --report-compressed --tb=no
 
-# Integration (parallel)
-pytest tests/ -k "integration" --timeout=120
+# Full pytest (all scopes - ~70s)
+.venv/bin/python3 -m pytest tests/ --report-compressed --tb=short
 
-# Full suite (split)
-pytest tests/test_session*.py tests/test_mcp*.py -v
-pytest tests/test_governance*.py tests/test_typedb*.py -v
-pytest tests/test_*_e2e.py -v
+# Robot Framework (E2E + integration)
+robot --include e2e tests/robot/
+robot --include integration tests/robot/
+
+# By domain
+.venv/bin/python3 -m pytest -m rules tests/
+robot --include rules tests/robot/
 ```
+
+---
+
+## Report Modes (EPIC-TEST-COMPRESS-001)
+
+Always use `--report-compressed` for LLM-optimized output:
+
+| Flag | Output | Use Case |
+|------|--------|----------|
+| `--report-compressed` | `[PASS] 1197/1200 (100%) \| 2.1s` | Default for Claude Code |
+| `--report-minimized` | Trace-minimized failures | Debugging failures |
+| `--report-cert` | JSON evidence in `results/` | CI/CD certification |
+| `--report-minimal` | Dots only (. F S) | Lowest context |
+
+---
+
+## Framework Split (Per TEST-STRUCT-01-v1 Section 4)
+
+| Scope | Framework | Command |
+|-------|-----------|---------|
+| Unit | **pytest only** | `pytest tests/unit/` |
+| E2E | **Robot only** | `robot --include e2e tests/robot/` |
+| Integration | **Robot preferred** | `robot --include integration tests/robot/` |
+| Browser | **Robot + Browser** | `robot --include browser tests/robot/e2e/` |
+
+Do NOT run unit tests in Robot Framework -- pytest is the canonical unit test runner.
 
 ---
 
@@ -57,10 +85,11 @@ pytestmark = pytest.mark.skipif(
 
 ## Validation
 
-- [ ] No single test file takes >30s to complete
+- [ ] Unit tests complete in <30s (`pytest tests/unit/`)
 - [ ] Optional dependency tests skip gracefully
 - [ ] CI runs groups in parallel where possible
-- [ ] Local dev gets unit feedback in <30s
+- [ ] `--report-compressed` used for all LLM-facing test output
+- [ ] No pytest↔Robot duplication for same scope
 
 ---
 

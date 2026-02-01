@@ -21,16 +21,6 @@ QUALITY_DIR = GOVERNANCE_DIR / "quality"
 class TestQualityAnalyzerSplit:
     """Test quality analyzer module structure after split."""
 
-    def test_analyzer_module_exists(self):
-        """Verify analyzer.py exists."""
-        analyzer_file = QUALITY_DIR / "analyzer.py"
-        assert analyzer_file.exists(), "analyzer.py must exist"
-
-    def test_impact_module_exists(self):
-        """Verify impact.py extraction exists."""
-        impact_file = QUALITY_DIR / "impact.py"
-        assert impact_file.exists(), "impact.py should be extracted"
-
     def test_analyzer_under_400_lines(self):
         """Verify analyzer.py is under 400 lines per DOC-SIZE-01-v1."""
         analyzer_file = QUALITY_DIR / "analyzer.py"

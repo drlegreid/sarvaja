@@ -7,42 +7,7 @@ Strategic Goal: Monitor and enforce multi-agent governance.
 """
 import pytest
 import json
-from pathlib import Path
 from datetime import datetime
-
-# Project paths
-PROJECT_ROOT = Path(__file__).parent.parent
-AGENT_DIR = PROJECT_ROOT / "agent"
-
-
-class TestAgentTrustModule:
-    """Verify P9.5 agent trust module exists."""
-
-    @pytest.mark.unit
-    def test_agent_trust_module_exists(self):
-        """Agent trust module must exist."""
-        trust_file = AGENT_DIR / "agent_trust.py"
-        assert trust_file.exists(), "agent/agent_trust.py not found"
-
-    @pytest.mark.unit
-    def test_agent_trust_class(self):
-        """AgentTrustDashboard class must be importable."""
-        from agent.agent_trust import AgentTrustDashboard
-
-        dashboard = AgentTrustDashboard()
-        assert dashboard is not None
-
-    @pytest.mark.unit
-    def test_dashboard_has_required_methods(self):
-        """Dashboard must have required methods."""
-        from agent.agent_trust import AgentTrustDashboard
-
-        dashboard = AgentTrustDashboard()
-
-        assert hasattr(dashboard, 'get_trust_score')
-        assert hasattr(dashboard, 'get_compliance_status')
-        assert hasattr(dashboard, 'record_action')
-        assert hasattr(dashboard, 'get_trust_history')
 
 
 class TestTrustScoring:

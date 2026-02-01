@@ -20,16 +20,6 @@ GOVERNANCE_DIR = Path(__file__).parent.parent / "governance"
 class TestWorkspaceScannerSplit:
     """Test workspace scanner module structure after split."""
 
-    def test_scanner_module_exists(self):
-        """Verify workspace_scanner.py exists."""
-        scanner_file = GOVERNANCE_DIR / "workspace_scanner.py"
-        assert scanner_file.exists(), "workspace_scanner.py must exist"
-
-    def test_parsers_module_exists(self):
-        """Verify task_parsers.py extraction exists."""
-        parsers_file = GOVERNANCE_DIR / "task_parsers.py"
-        assert parsers_file.exists(), "task_parsers.py should be extracted"
-
     def test_scanner_under_400_lines(self):
         """Verify workspace_scanner.py is under 400 lines per DOC-SIZE-01-v1."""
         scanner_file = GOVERNANCE_DIR / "workspace_scanner.py"

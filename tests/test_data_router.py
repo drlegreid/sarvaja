@@ -7,42 +7,7 @@ Strategic Goal: All new rules/decisions/sessions automatically stored in TypeDB.
 """
 import pytest
 import json
-from pathlib import Path
 from datetime import datetime
-
-# Project paths
-PROJECT_ROOT = Path(__file__).parent.parent
-GOVERNANCE_DIR = PROJECT_ROOT / "governance"
-
-
-class TestDataRouterModule:
-    """Verify P7.3 data router module exists."""
-
-    @pytest.mark.unit
-    def test_data_router_module_exists(self):
-        """Data router module must exist."""
-        router_file = GOVERNANCE_DIR / "data_router.py"
-        assert router_file.exists(), "governance/data_router.py not found"
-
-    @pytest.mark.unit
-    def test_data_router_class(self):
-        """DataRouter class must be importable."""
-        from governance.data_router import DataRouter
-
-        router = DataRouter()
-        assert router is not None
-
-    @pytest.mark.unit
-    def test_router_has_required_methods(self):
-        """Router must have required methods."""
-        from governance.data_router import DataRouter
-
-        router = DataRouter()
-
-        assert hasattr(router, 'route_rule')
-        assert hasattr(router, 'route_decision')
-        assert hasattr(router, 'route_session')
-        assert hasattr(router, 'route_auto')
 
 
 class TestRuleRouting:

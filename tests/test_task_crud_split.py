@@ -17,22 +17,12 @@ QUERIES_DIR = Path(__file__).parent.parent / "governance" / "typedb" / "queries"
 class TestTaskCrudSplit:
     """Test task CRUD module structure after split."""
 
-    def test_crud_module_exists(self):
-        """Verify crud.py exists."""
-        crud_file = QUERIES_DIR / "crud.py"
-        assert crud_file.exists(), "crud.py must exist"
-
     def test_crud_under_400_lines(self):
         """Verify crud.py is under 400 lines per DOC-SIZE-01-v1."""
         crud_file = QUERIES_DIR / "crud.py"
         with open(crud_file, "r") as f:
             lines = len(f.readlines())
         assert lines < 400, f"crud.py has {lines} lines, should be <400"
-
-    def test_status_module_exists(self):
-        """Verify status.py extraction exists."""
-        status_file = QUERIES_DIR / "status.py"
-        assert status_file.exists(), "status.py should be extracted"
 
     def test_status_module_under_300_lines(self):
         """Verify status.py is under 300 lines."""

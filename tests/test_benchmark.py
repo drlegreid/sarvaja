@@ -17,12 +17,6 @@ class TestBenchmarkFramework:
     """Unit tests for benchmark framework."""
 
     @pytest.mark.unit
-    def test_benchmark_module_exists(self):
-        """Benchmark module must exist."""
-        benchmark_file = GOVERNANCE_DIR / "benchmark.py"
-        assert benchmark_file.exists(), "governance/benchmark.py not found"
-
-    @pytest.mark.unit
     def test_benchmark_result_dataclass(self):
         """BenchmarkResult dataclass must be importable."""
         from governance.benchmark import BenchmarkResult

@@ -3,7 +3,7 @@ Documentation    RF-006: E2E Data Integrity Tests
 ...              Per GAP-UI-AUDIT-2026-01-18: Verify data traceability
 ...              Migrated from tests/e2e/test_data_integrity_e2e.py
 Library          Collections
-Library          ../../libs/DataIntegrityE2ELibrary.py
+Library          libs/DataIntegrityE2ELibrary.py
 Test Tags        e2e    api    integrity    high    tasks    task    validate    TEST-COMP-02-v1
 
 *** Test Cases ***

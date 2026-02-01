@@ -7,42 +7,7 @@ Strategic Goal: Consolidate all governance data in TypeDB-first architecture.
 """
 import pytest
 import json
-from pathlib import Path
 from datetime import datetime
-
-# Project paths
-PROJECT_ROOT = Path(__file__).parent.parent
-GOVERNANCE_DIR = PROJECT_ROOT / "governance"
-
-
-class TestMigrationToolModule:
-    """Verify P7.4 migration tool module exists."""
-
-    @pytest.mark.unit
-    def test_migration_tool_module_exists(self):
-        """Migration tool module must exist."""
-        migration_file = GOVERNANCE_DIR / "chroma_migration.py"
-        assert migration_file.exists(), "governance/chroma_migration.py not found"
-
-    @pytest.mark.unit
-    def test_migration_tool_class(self):
-        """ChromaMigration class must be importable."""
-        from governance.chroma_migration import ChromaMigration
-
-        migrator = ChromaMigration(dry_run=True, skip_connection=True)
-        assert migrator is not None
-
-    @pytest.mark.unit
-    def test_migrator_has_required_methods(self):
-        """Migrator must have required methods."""
-        from governance.chroma_migration import ChromaMigration
-
-        migrator = ChromaMigration(dry_run=True, skip_connection=True)
-
-        assert hasattr(migrator, 'scan_chroma')
-        assert hasattr(migrator, 'migrate_collection')
-        assert hasattr(migrator, 'migrate_all')
-        assert hasattr(migrator, 'get_migration_status')
 
 
 class TestChromaScan:

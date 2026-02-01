@@ -48,15 +48,6 @@ class TestTasksMCPToolsExist:
     """Validate Tasks MCP tools are registered."""
 
     @pytest.mark.unit
-    def test_tasks_tools_importable(self):
-        """Tasks MCP tools module must be importable."""
-        try:
-            from governance.mcp_tools.tasks import register_task_tools
-            assert register_task_tools is not None
-        except ImportError as e:
-            pytest.skip(f"Tasks MCP tools not yet implemented: {e}")
-
-    @pytest.mark.unit
     def test_tasks_tools_registered(self):
         """Tasks tools must be included in register_all_tools."""
         from governance.mcp_tools import register_all_tools

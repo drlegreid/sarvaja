@@ -196,13 +196,104 @@ def rule_factory(api_client):
 
 ---
 
+## 4. Framework Separation (CRITICAL - No Cross-Framework Duplication)
+
+### Rule
+Each test layer MUST use ONE framework. pytest and Robot Framework MUST NOT duplicate the same test logic.
+
+### Framework Responsibilities
+
+| Layer | Framework | Rationale |
+|-------|-----------|-----------|
+| **Unit tests** | pytest | Native Python, fast, fixtures |
+| **E2E / Integration** | Robot Framework | Structured reporting, tags, BDD |
+| **Browser tests** | Robot Framework + Browser | Keyword-driven, report-friendly |
+| **API validation** | Robot Framework | Data-driven tables, tagging |
+
+### Anti-Patterns (PROHIBITED)
+
+```
+# BAD: Triple-layer duplication
+tests/test_vector_store.py           # pytest test
+tests/libs/VectorStoreLibrary.py     # wrapper library
+tests/robot/unit/vector_store.robot  # Robot test calling wrapper
+
+# GOOD: One framework per layer
+tests/unit/test_vector_store.py      # pytest unit test (ONLY)
+tests/robot/e2e/vector_store.robot   # Robot E2E test (different scope)
+```
+
+### Migration Path
+1. Unit tests in `tests/` root that have Robot equivalents → keep pytest, remove Robot wrapper
+2. Robot `tests/libs/*.py` that wrap pytest logic → remove after migration
+3. Robot unit tests (`tests/robot/unit/`) → graduate to E2E or remove
+
+---
+
+## 5. No Low-Value Structural Tests
+
+### Rule
+Tests that only verify module/class/method existence MUST be removed. Import failures will surface in behavioral tests naturally.
+
+### Prohibited Patterns
+```python
+# BAD: Zero regression value
+def test_module_exists():
+    assert Path("governance/client.py").exists()
+
+def test_class_exists():
+    from governance.client import GovernanceClient
+    assert GovernanceClient is not None
+
+def test_has_required_methods():
+    assert hasattr(GovernanceClient, "get_all_rules")
+```
+
+### Acceptable Alternative
+```python
+# GOOD: Test the behavior, not the structure
+def test_get_all_rules_returns_list():
+    client = GovernanceClient()
+    rules = client.get_all_rules()
+    assert isinstance(rules, list)
+```
+
+---
+
 ## Compliance
 
 - **NEW tests** MUST follow DRY, SRP, OOP before merge
+- **NEW tests** MUST NOT duplicate logic across pytest and Robot Framework
 - **EXISTING tests** SHOULD be refactored during maintenance cycles
 - **Code review** MUST check for repeated logic (>3 occurrences)
 - **Library files** MUST use class-based structure with `ROBOT_LIBRARY_SCOPE`
 - **Each test** MUST validate a single behavior
+- **`test_*_module_exists`** patterns MUST be removed in next maintenance cycle
+
+---
+
+## Compliance Audit (2026-02-01)
+
+| Check | Status | Detail |
+|-------|--------|--------|
+| DRY: No duplicate logic | **PASS** | 75 Robot unit wrappers removed (Phase 2) |
+| DRY: Shared keywords used | **PASS** | 1,184 inline skip blocks eliminated (Phase 2) |
+| SRP: One behavior per test | **PASS** | 56 structural tests removed from 32 files (Phase 1) |
+| OOP: Class-based libraries | **PASS** | 3 E2E libraries retained in `tests/robot/e2e/libs/` |
+| Framework separation | **PASS** | Unit=pytest only, E2E=Robot only |
+| Marker coverage (pytest) | **PASS** | 82.1% auto-marked (extended conftest hook) |
+| Tag coverage (Robot) | PASS | ~100% tagged |
+
+**Remediation completed (2026-02-01):**
+1. ~~Remove 75 Robot unit wrappers~~ → DONE: 134 Robot unit files + 191 wrapper libs removed
+2. ~~Remove ~200 structural tests~~ → DONE: 56 low-value tests removed from 32 files
+3. ~~Consolidate 1,184 inline skip blocks~~ → DONE: eliminated with Robot unit removal
+4. ~~Mark unmarked pytest tests~~ → DONE: auto-marking extended (82.1% coverage)
+
+**Post-cleanup metrics:**
+- Pytest: 3,015 tests collected (unit: 1,197, E2E: 67, root: ~1,751)
+- Robot Framework: 4 E2E suites with 3 shared libraries
+- Files removed: 325 (134 Robot unit + 191 wrapper libs)
 
 ---
 
@@ -212,6 +303,9 @@ def rule_factory(api_client):
 - Resource files with reusable keywords
 - Library classes with proper scope settings
 - `conftest.py` with shared fixtures
+- Compliance audit: 2026-02-01 (this section)
+- Phase 1: 56 structural tests removed from 32 files
+- Phase 2: 325 files removed (Robot unit + wrapper libs)
 
 ---
 
@@ -221,6 +315,7 @@ def rule_factory(api_client):
 - ARCH-EBMSF-01-v1: Test evidence structure (WHY/WHAT/PROVE)
 - TEST-BDD-01-v1: BDD syntax (Given/When/Then)
 - DOC-SIZE-01-v1: File size limits (max 300 lines)
+- TEST-EXEC-01-v1: Split test execution (framework separation)
 
 ---
 

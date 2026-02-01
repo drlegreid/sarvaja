@@ -12,31 +12,6 @@ from unittest.mock import Mock, patch, MagicMock
 
 
 # =============================================================================
-# IMPORT TESTS
-# =============================================================================
-
-class TestTrameImports:
-    """Tests for Trame module imports."""
-
-    def test_trame_ui_importable(self):
-        """Trame UI module can be imported."""
-        try:
-            from agent.trame_ui import SimAITrameUI
-            assert SimAITrameUI is not None
-        except ImportError as e:
-            pytest.skip(f"Trame not installed: {e}")
-
-    def test_create_trame_app_importable(self):
-        """Factory function can be imported."""
-        try:
-            from agent.trame_ui import create_trame_app
-            assert create_trame_app is not None
-            assert callable(create_trame_app)
-        except ImportError as e:
-            pytest.skip(f"Trame not installed: {e}")
-
-
-# =============================================================================
 # FACTORY FUNCTION TESTS
 # =============================================================================
 

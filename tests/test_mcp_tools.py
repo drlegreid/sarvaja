@@ -44,11 +44,6 @@ def is_tool_callable(method):
 class TestGovernanceToolsUnit:
     """Unit tests for GovernanceTools class."""
 
-    def test_governance_tools_class_exists(self):
-        """GovernanceTools class exists and is importable."""
-        from agent.mcp_tools import GovernanceTools
-        assert GovernanceTools is not None
-
     def test_governance_tools_is_toolkit(self):
         """GovernanceTools inherits from Toolkit (real or stub)."""
         from agent.mcp_tools import GovernanceTools, Toolkit
