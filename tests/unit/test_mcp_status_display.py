@@ -52,9 +52,9 @@ class TestMCPStatusDataLoader:
     def test_mcp_servers_in_stats_init(self):
         """Verify mcp_servers key is initialized in stats."""
         import inspect
-        from agent.governance_ui.controllers import data_loaders
+        from agent.governance_ui.controllers import infra_loaders
 
-        source = inspect.getsource(data_loaders)
+        source = inspect.getsource(infra_loaders)
 
         # Should have mcp_servers in stats initialization
         assert '"mcp_servers"' in source or "'mcp_servers'" in source
@@ -62,9 +62,9 @@ class TestMCPStatusDataLoader:
     def test_mcp_names_extracted(self):
         """Verify known MCP server names are extracted."""
         import inspect
-        from agent.governance_ui.controllers import data_loaders
+        from agent.governance_ui.controllers import infra_loaders
 
-        source = inspect.getsource(data_loaders)
+        source = inspect.getsource(infra_loaders)
 
         # Should have claude-mem at minimum
         assert "claude-mem" in source
