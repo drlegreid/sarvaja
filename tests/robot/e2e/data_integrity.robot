@@ -1,10 +1,13 @@
 *** Settings ***
 Documentation    RF-006: E2E Data Integrity Tests
 ...              Per GAP-UI-AUDIT-2026-01-18: Verify data traceability
-...              Migrated from tests/e2e/test_data_integrity_e2e.py
+...              Per D.3: Uses shared keywords from common_setup.resource
 Library          Collections
 Library          libs/DataIntegrityE2ELibrary.py
+Resource         ../resources/common_setup.resource
 Test Tags        e2e    api    integrity    high    tasks    task    validate    TEST-COMP-02-v1
+
+Suite Setup      Platform Setup
 
 *** Test Cases ***
 # =============================================================================
@@ -22,9 +25,7 @@ Closed Tasks Have Session Linkage
     [Documentation]    Per TASK-LIFE-01-v1: Closed tasks SHOULD have session linkage
     [Tags]    e2e    integrity    linkage    baseline    TASK-LIFE-01-v1
     ${result}=    Check Task Session Linkage
-    ${skipped}=    Evaluate    $result.get('skipped', False)
-    ${reason}=    Evaluate    $result.get('reason', 'Unknown')
-    Skip If    ${skipped}    ${reason}
+    Handle Skippable Result    ${result}
     Log    Task-Session Linkage: ${result}[linkage_rate]% (${result}[with_linkage]/${result}[total_closed])
     # Baseline: 5% achieved 2026-01-19
     Should Be True    ${result}[linkage_rate] >= 5    Linkage below baseline: ${result}[linkage_rate]%
@@ -37,9 +38,7 @@ Implemented Tasks Have Evidence
     [Documentation]    Per TEST-FIX-01-v1: IMPLEMENTED tasks SHOULD have evidence
     [Tags]    e2e    integrity    evidence    backfill    TEST-FIX-01-v1
     ${result}=    Check Task Evidence Linkage
-    ${skipped}=    Evaluate    $result.get('skipped', False)
-    ${reason}=    Evaluate    $result.get('reason', 'Unknown')
-    Skip If    ${skipped}    ${reason}
+    Handle Skippable Result    ${result}
     Log    Task-Evidence Linkage: ${result}[evidence_rate]% (${result}[with_evidence]/${result}[total_implemented])
     # Informational - backfill needed if below 70%
     IF    ${result}[evidence_rate] < 70
@@ -54,9 +53,7 @@ Sessions Have Evidence Files
     [Documentation]    Sessions SHOULD have evidence files
     [Tags]    e2e    integrity    sessions    evidence
     ${result}=    Check Session Evidence Files
-    ${skipped}=    Evaluate    $result.get('skipped', False)
-    ${reason}=    Evaluate    $result.get('reason', 'Unknown')
-    Skip If    ${skipped}    ${reason}
+    Handle Skippable Result    ${result}
     Log    Session-Evidence: ${result}[evidence_rate]% (${result}[with_evidence_files]/${result}[total_sessions])
     Log    Files found: ${result}[files_found], missing: ${result}[files_missing]
 
@@ -68,9 +65,7 @@ Tasks Have Commit Linkage
     [Documentation]    Per GAP-TASK-LINK-002: Tasks MAY have commit linkage
     [Tags]    e2e    integrity    commits    optional    GAP-TASK-LINK-002
     ${result}=    Check Task Commit Linkage
-    ${skipped}=    Evaluate    $result.get('skipped', False)
-    ${reason}=    Evaluate    $result.get('reason', 'Unknown')
-    Skip If    ${skipped}    ${reason}
+    Handle Skippable Result    ${result}
     Log    Task-Commit Linkage: ${result}[linkage_rate]% (${result}[with_commits]/${result}[total_tasks])
 
 # =============================================================================
@@ -103,9 +98,7 @@ Data Integrity Report
     [Documentation]    Generate comprehensive data integrity report
     [Tags]    e2e    integrity    report    summary
     ${report}=    Generate Integrity Report
-    ${skipped}=    Evaluate    $report.get('skipped', False)
-    ${reason}=    Evaluate    $report.get('reason', 'Unknown')
-    Skip If    ${skipped}    ${reason}
+    Handle Skippable Result    ${report}
     Log    \n========================================
     Log    DATA INTEGRITY REPORT
     Log    ========================================

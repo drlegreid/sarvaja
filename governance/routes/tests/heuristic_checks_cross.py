@@ -105,6 +105,51 @@ def check_pagination_contract(api_base_url: str) -> dict:
     }
 
 
+def check_decisions_link_rules(api_base_url: str) -> dict:
+    """H-CROSS-003: Decisions must link to at least one rule."""
+    if _is_self_referential(api_base_url):
+        return {"status": "SKIP", "message": "Self-referential: use REST MCP", "violations": []}
+    decisions = _api_get(api_base_url, "/api/decisions?limit=100")
+    if not decisions:
+        return {"status": "SKIP", "message": "No decisions found", "violations": []}
+    violations = []
+    for d in decisions:
+        rules = d.get("rules_applied", d.get("rule_ids", []))
+        if not rules:
+            violations.append(d.get("decision_id", d.get("id", "unknown")))
+    return {
+        "status": "FAIL" if violations else "PASS",
+        "message": (
+            f"{len(violations)}/{len(decisions)} decisions not linked to any rule"
+            if violations else f"All {len(decisions)} decisions link to rules"
+        ),
+        "violations": violations[:20],
+    }
+
+
+def check_rule_document_paths(api_base_url: str) -> dict:
+    """H-RULE-001: Every ACTIVE rule must have a document_path."""
+    if _is_self_referential(api_base_url):
+        return {"status": "SKIP", "message": "Self-referential: use REST MCP", "violations": []}
+    rules = _api_get(api_base_url, "/api/rules?limit=200")
+    active = [r for r in rules if r.get("status") == "ACTIVE"]
+    if not active:
+        return {"status": "SKIP", "message": "No active rules found", "violations": []}
+    violations = [
+        r.get("rule_id", "unknown")
+        for r in active
+        if not r.get("document_path")
+    ]
+    return {
+        "status": "FAIL" if violations else "PASS",
+        "message": (
+            f"{len(violations)}/{len(active)} active rules lack document_path"
+            if violations else f"All {len(active)} active rules have document_path"
+        ),
+        "violations": violations[:20],
+    }
+
+
 # ===== UI DOMAIN =====
 
 def check_testid_coverage(api_base_url: str) -> dict:
@@ -138,6 +183,8 @@ def check_testid_coverage(api_base_url: str) -> dict:
 
 CROSS_API_UI_CHECKS = [
     {"id": "H-CROSS-001", "domain": "CROSS-ENTITY", "name": "Service layer coverage", "check_fn": check_service_layer_coverage},
+    {"id": "H-CROSS-003", "domain": "CROSS-ENTITY", "name": "Decisions link to rules", "check_fn": check_decisions_link_rules},
+    {"id": "H-RULE-001", "domain": "RULE", "name": "Active rules have document_path", "check_fn": check_rule_document_paths},
     {"id": "H-API-001", "domain": "API", "name": "Endpoint health", "check_fn": check_api_endpoint_health},
     {"id": "H-API-002", "domain": "API", "name": "Pagination contract", "check_fn": check_pagination_contract},
     {"id": "H-UI-003", "domain": "UI", "name": "data-testid coverage", "check_fn": check_testid_coverage},

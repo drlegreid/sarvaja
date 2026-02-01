@@ -1,10 +1,13 @@
 *** Settings ***
 Documentation    RF-006: E2E Platform Health Tests
 ...              Per RULE-004: Thin-slice platform verification
-...              Migrated from tests/e2e/test_platform_health_e2e.py
+...              Per D.3: Uses shared keywords from common_setup.resource
 Library          Collections
 Library          libs/PlatformHealthE2ELibrary.py
+Resource         ../resources/common_setup.resource
 Test Tags        e2e    api    health    critical    SAFETY-HEALTH-01-v1    validate
+
+Suite Setup      Platform Setup
 
 *** Test Cases ***
 # =============================================================================
@@ -15,17 +18,13 @@ TypeDB Is Accessible
     [Documentation]    CRITICAL: TypeDB must be accessible
     [Tags]    e2e    health    typedb    critical
     ${result}=    TypeDB Health Check
-    ${skipped}=    Evaluate    $result.get('skipped', False)
-    Skip If    ${skipped}    TypeDB check skipped
-    Should Be True    ${result}[healthy]    TypeDB unhealthy: ${result}
+    Assert Result Healthy    ${result}    TypeDB
 
 ChromaDB Is Accessible
     [Documentation]    CRITICAL: ChromaDB must be accessible
     [Tags]    e2e    health    chromadb    critical
     ${result}=    ChromaDB Health Check
-    ${skipped}=    Evaluate    $result.get('skipped', False)
-    Skip If    ${skipped}    ChromaDB check skipped
-    Should Be True    ${result}[healthy]    ChromaDB unhealthy: ${result}
+    Assert Result Healthy    ${result}    ChromaDB
 
 # =============================================================================
 # Kanren Constraint Engine Tests
@@ -35,9 +34,7 @@ Kanren Constraint Engine Works
     [Documentation]    CRITICAL: Kanren constraints must work
     [Tags]    e2e    health    kanren    critical
     ${result}=    Kanren Health Check
-    ${skipped}=    Evaluate    $result.get('skipped', False)
-    Skip If    ${skipped}    Kanren not available
-    Should Be True    ${result}[healthy]    Kanren unhealthy: ${result}
+    Assert Result Healthy    ${result}    Kanren
     Should Be True    ${result}[rag_filter_works]    RAG filtering failed
     Should Be True    ${result}[task_assignment_works]    Task assignment failed
 
@@ -45,9 +42,7 @@ Kanren Performance Is Under Target
     [Documentation]    KAN-005: Kanren performance under target
     [Tags]    e2e    health    kanren    performance
     ${result}=    Kanren Benchmark Check
-    ${skipped}=    Evaluate    $result.get('skipped', False)
-    Skip If    ${skipped}    Kanren benchmark not available
-    Should Be True    ${result}[healthy]    Kanren benchmark failed
+    Assert Result Healthy    ${result}    Kanren benchmark
 
 # =============================================================================
 # Service Endpoint Tests
@@ -77,6 +72,4 @@ MCP Core Services Can Import
     [Documentation]    MCP CORE services can be imported
     [Tags]    e2e    health    mcp    core
     ${result}=    MCP Core Services Check
-    ${skipped}=    Evaluate    $result.get('skipped', False)
-    Skip If    ${skipped}    MCP check skipped
-    Should Be True    ${result}[healthy]    MCP services failed: ${result}
+    Assert Result Healthy    ${result}    MCP Core Services
