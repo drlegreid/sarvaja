@@ -131,8 +131,6 @@ async def end_session(session_id: str, data: Optional[SessionEnd] = None):
         )
         if result is None:
             raise HTTPException(status_code=404, detail=f"Session {session_id} not found")
-        if isinstance(result, SessionResponse):
-            return result
-        return SessionResponse(**result)
+        return _ensure_response(result)
     except ValueError as e:
         raise HTTPException(status_code=409, detail=str(e))
