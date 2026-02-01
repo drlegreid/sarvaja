@@ -187,7 +187,7 @@ class TestPlaywrightChecks:
         assert "sessions" in nav_keys
         assert "agents" in nav_keys
 
-    @patch("governance.routes.tests.playwright_checks.httpx")
+    @patch("governance.routes.tests.playwright_api_fallback.httpx")
     def test_check_api_data_integrity_pass(self, mock_httpx):
         """Data integrity check passes when all endpoints return 200 with pagination."""
         mock_resp = MagicMock()
@@ -197,12 +197,12 @@ class TestPlaywrightChecks:
         }
         mock_httpx.get.return_value = mock_resp
 
-        from governance.routes.tests.playwright_checks import _check_api_data_integrity
-        result = _check_api_data_integrity("http://test:8082")
+        from governance.routes.tests.playwright_api_fallback import check_api_data_integrity
+        result = check_api_data_integrity("http://test:8082")
         assert result["status"] == "PASS"
         assert result["id"] == "PW-INTEGRITY-001"
 
-    @patch("governance.routes.tests.playwright_checks.httpx")
+    @patch("governance.routes.tests.playwright_api_fallback.httpx")
     def test_check_api_data_integrity_missing_pagination(self, mock_httpx):
         """Data integrity fails when pagination missing."""
         mock_resp = MagicMock()
@@ -210,13 +210,13 @@ class TestPlaywrightChecks:
         mock_resp.json.return_value = {"items": []}  # No pagination
         mock_httpx.get.return_value = mock_resp
 
-        from governance.routes.tests.playwright_checks import _check_api_data_integrity
-        result = _check_api_data_integrity("http://test:8082")
+        from governance.routes.tests.playwright_api_fallback import check_api_data_integrity
+        result = check_api_data_integrity("http://test:8082")
         assert result["status"] == "FAIL"
         assert len(result["violations"]) > 0
 
     @patch("governance.routes.tests.playwright_checks._try_playwright_import")
-    @patch("governance.routes.tests.playwright_checks.httpx")
+    @patch("governance.routes.tests.playwright_api_fallback.httpx")
     def test_api_fallback_used_when_no_playwright(self, mock_httpx, mock_pw):
         """Falls back to API checks when playwright not installed."""
         mock_pw.return_value = None

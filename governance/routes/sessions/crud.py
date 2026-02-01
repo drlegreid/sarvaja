@@ -23,6 +23,15 @@ logger = logging.getLogger(__name__)
 router = APIRouter(tags=["Sessions"])
 
 
+def _ensure_response(result) -> SessionResponse:
+    """Normalize service result to SessionResponse.
+
+    Service layer may return a SessionResponse (from TypeDB path)
+    or a dict (from in-memory fallback). Handle both.
+    """
+    return _ensure_response(result)
+
+
 # =============================================================================
 # SESSIONS CRUD
 # =============================================================================
@@ -48,7 +57,7 @@ async def list_sessions(
             returned=len(result["items"]),
         )
         return PaginatedSessionResponse(
-            items=[SessionResponse(**s) for s in result["items"]],
+            items=[_ensure_response(s) for s in result["items"]],
             pagination=pagination,
         )
     except (TypeDBUnavailable, ConnectionError) as e:
@@ -66,7 +75,7 @@ async def create_session(session: SessionCreate):
             agent_id=session.agent_id,
             source="rest-api",
         )
-        return SessionResponse(**result)
+        return _ensure_response(result)
     except ValueError as e:
         raise HTTPException(status_code=409, detail=str(e))
 
@@ -77,7 +86,7 @@ async def get_session(session_id: str):
     try:
         session = session_service.get_session(session_id)
         if session:
-            return SessionResponse(**session)
+            return _ensure_response(session)
         raise HTTPException(status_code=404, detail=f"Session {session_id} not found")
     except (TypeDBUnavailable, ConnectionError) as e:
         logger.error(f"TypeDB unavailable: {e}")
@@ -97,7 +106,7 @@ async def update_session(session_id: str, data: SessionUpdate):
     )
     if result is None:
         raise HTTPException(status_code=404, detail=f"Session {session_id} not found")
-    return SessionResponse(**result)
+    return _ensure_response(result)
 
 
 @router.delete("/sessions/{session_id}", status_code=204)
@@ -120,6 +129,8 @@ async def end_session(session_id: str, data: Optional[SessionEnd] = None):
         )
         if result is None:
             raise HTTPException(status_code=404, detail=f"Session {session_id} not found")
+        if isinstance(result, SessionResponse):
+            return result
         return SessionResponse(**result)
     except ValueError as e:
         raise HTTPException(status_code=409, detail=str(e))

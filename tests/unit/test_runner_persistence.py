@@ -21,7 +21,7 @@ class TestResultPersistence:
 
     def test_persist_result_writes_file(self):
         """_persist_result should write JSON file to results directory."""
-        from governance.routes.tests.runner import _persist_result
+        from governance.routes.tests.runner_store import _persist_result
         with tempfile.TemporaryDirectory() as tmpdir:
             result = {
                 "status": "completed",
@@ -37,7 +37,7 @@ class TestResultPersistence:
 
     def test_load_persisted_results(self):
         """_load_persisted_results should read JSON files from directory."""
-        from governance.routes.tests.runner import _load_persisted_results
+        from governance.routes.tests.runner_store import _load_persisted_results
         with tempfile.TemporaryDirectory() as tmpdir:
             # Write a result file
             result = {"status": "completed", "total": 5, "passed": 5}

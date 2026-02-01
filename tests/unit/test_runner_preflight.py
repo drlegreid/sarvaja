@@ -97,12 +97,12 @@ class TestPathResolution:
 
     def test_resolve_test_root_finds_tests_dir(self):
         """_resolve_test_root should find a directory containing tests/."""
-        from governance.routes.tests.runner import _resolve_test_root
+        from governance.routes.tests.runner_store import _resolve_test_root
         root = _resolve_test_root()
         assert (Path(root) / "tests").is_dir()
 
     def test_resolve_test_root_has_unit_tests(self):
         """Resolved root should contain tests/unit/ subdirectory."""
-        from governance.routes.tests.runner import _resolve_test_root
+        from governance.routes.tests.runner_store import _resolve_test_root
         root = _resolve_test_root()
         assert (Path(root) / "tests" / "unit").is_dir()
