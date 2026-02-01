@@ -404,60 +404,72 @@ class GovernanceCRUDE2ELibrary:
         cleaned = {"tasks": 0, "rules": 0, "sessions": 0}
         client = self._get_client()
 
-        # Sweep ALL TEST-* tasks from the system
-        try:
-            response = client.get("/api/tasks?limit=1000")
-            if response.status_code == 200:
+        # Sweep ALL TEST-* tasks (loop: API limit=200 max per page)
+        for _ in range(50):  # safety cap
+            try:
+                response = client.get("/api/tasks?limit=200")
+                if response.status_code != 200:
+                    break
                 data = response.json()
                 tasks = data.get("items", data) if isinstance(data, dict) else data
-                for task in tasks:
-                    task_id = task.get("task_id", "")
-                    if task_id.startswith("TEST-"):
-                        try:
-                            if client.delete(f"/api/tasks/{task_id}").status_code == 204:
-                                cleaned["tasks"] += 1
-                        except Exception:
-                            pass
-        except Exception:
-            pass
+                test_tasks = [t for t in tasks if t.get("task_id", "").startswith("TEST-")]
+                if not test_tasks:
+                    break
+                for task in test_tasks:
+                    try:
+                        if client.delete(f"/api/tasks/{task['task_id']}").status_code == 204:
+                            cleaned["tasks"] += 1
+                    except Exception:
+                        pass
+            except Exception:
+                break
 
-        # Sweep ALL TEST-* sessions (end active ones, delete completed)
-        try:
-            response = client.get("/api/sessions?limit=200")
-            if response.status_code == 200:
+        # Sweep ALL TEST-* sessions (loop for pagination)
+        for _ in range(10):  # safety cap
+            try:
+                response = client.get("/api/sessions?limit=200")
+                if response.status_code != 200:
+                    break
                 data = response.json()
                 sessions = data.get("items", data) if isinstance(data, dict) else data
-                for session in sessions:
-                    sid = session.get("session_id", "")
-                    if sid.startswith("TEST-SESSION-") or sid.startswith("TEST-"):
-                        try:
-                            status = session.get("status", "")
-                            if status == "ACTIVE":
-                                client.put(f"/api/sessions/{sid}/end")
-                            client.delete(f"/api/sessions/{sid}")
-                            cleaned["sessions"] += 1
-                        except Exception:
-                            pass
-        except Exception:
-            pass
+                test_sessions = [
+                    s for s in sessions
+                    if s.get("session_id", "").startswith("TEST-")
+                ]
+                if not test_sessions:
+                    break
+                for session in test_sessions:
+                    sid = session["session_id"]
+                    try:
+                        if session.get("status") == "ACTIVE":
+                            client.put(f"/api/sessions/{sid}/end")
+                        client.delete(f"/api/sessions/{sid}")
+                        cleaned["sessions"] += 1
+                    except Exception:
+                        pass
+            except Exception:
+                break
 
-        # Sweep ALL TEST-* rules (requires TypeDB)
+        # Sweep ALL TEST-* rules (loop for pagination)
         if self.check_typedb_available():
-            try:
-                response = client.get("/api/rules?limit=500")
-                if response.status_code == 200:
+            for _ in range(10):  # safety cap
+                try:
+                    response = client.get("/api/rules?limit=200")
+                    if response.status_code != 200:
+                        break
                     data = response.json()
                     rules = data.get("items", data) if isinstance(data, dict) else data
-                    for rule in rules:
-                        rule_id = rule.get("id", "")
-                        if rule_id.startswith("TEST-"):
-                            try:
-                                if client.delete(f"/api/rules/{rule_id}", params={"archive": "false"}).status_code == 204:
-                                    cleaned["rules"] += 1
-                            except Exception:
-                                pass
-            except Exception:
-                pass
+                    test_rules = [r for r in rules if r.get("id", "").startswith("TEST-")]
+                    if not test_rules:
+                        break
+                    for rule in test_rules:
+                        try:
+                            if client.delete(f"/api/rules/{rule['id']}", params={"archive": "false"}).status_code == 204:
+                                cleaned["rules"] += 1
+                        except Exception:
+                            pass
+                except Exception:
+                    break
 
         # Also clear session-tracked IDs
         self._cleanup_ids = {"tasks": [], "rules": [], "sessions": []}
