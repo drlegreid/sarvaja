@@ -155,6 +155,89 @@ def register_tests_controllers(
         except Exception as e:
             add_error_trace(state, f"View run failed: {str(e)}", f"/api/tests/results/{run_id}")
 
+    def _start_regression(skip_dynamic: bool = False):
+        """Shared regression launcher."""
+        state.tests_running = True
+        try:
+            with httpx.Client(timeout=30.0) as client:
+                start = time.time()
+                url = f"{api_base_url}/api/tests/regression/run"
+                if skip_dynamic:
+                    url += "?skip_dynamic=true"
+                response = client.post(url)
+                duration_ms = int((time.time() - start) * 1000)
+
+                response_body = None
+                try:
+                    response_body = response.json()
+                except Exception:
+                    pass
+
+                add_api_trace(
+                    state, "/api/tests/regression/run", "POST",
+                    response.status_code, duration_ms,
+                    response_body=response_body,
+                )
+
+                if response.status_code == 200:
+                    data = response_body or {}
+                    run_id = data.get("run_id")
+                    state.tests_current_run = {
+                        "run_id": run_id,
+                        "status": "running",
+                        "category": "regression",
+                        "total": 0,
+                        "passed": 0,
+                        "failed": 0,
+                    }
+                    # Poll with longer timeout for regression
+                    thread = threading.Thread(
+                        target=poll_for_regression,
+                        args=(run_id,),
+                        daemon=True,
+                    )
+                    thread.start()
+        except Exception as e:
+            add_error_trace(
+                state, f"Regression failed: {str(e)}",
+                "/api/tests/regression/run",
+            )
+            state.tests_running = False
+
+    def poll_for_regression(run_id: str):
+        """Background polling for regression results (longer timeout)."""
+        max_polls = 90  # Up to 3 minutes
+        for _ in range(max_polls):
+            time.sleep(2)
+            try:
+                with httpx.Client(timeout=10.0) as client:
+                    response = client.get(
+                        f"{api_base_url}/api/tests/results/{run_id}"
+                    )
+                    if response.status_code == 200:
+                        data = response.json()
+                        state.tests_current_run = data
+                        state.dirty("tests_current_run")
+                        if data.get("status") != "running":
+                            load_tests_data()
+                            state.tests_running = False
+                            state.dirty("tests_running")
+                            return
+            except Exception:
+                pass
+        state.tests_running = False
+        state.dirty("tests_running")
+
+    @ctrl.trigger("run_regression")
+    def on_run_regression():
+        """Run full regression (static + heuristic + dynamic)."""
+        _start_regression(skip_dynamic=False)
+
+    @ctrl.trigger("run_regression_static")
+    def on_run_regression_static():
+        """Run regression with only static + heuristic (skip Playwright)."""
+        _start_regression(skip_dynamic=True)
+
     @ctrl.trigger("load_robot_summary")
     def on_load_robot_summary():
         """Load Robot Framework report summary."""

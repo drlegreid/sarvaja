@@ -123,6 +123,7 @@ async def list_test_categories():
             {"id": "e2e", "name": "E2E Tests", "pattern": "tests/e2e/", "description": "End-to-end pytest tests"},
             {"id": "robot", "name": "Robot Framework", "pattern": "tests/robot/e2e/", "description": "Robot Framework E2E suites"},
             {"id": "rules", "name": "Rules Tests", "pattern": "tests/rules/", "description": "Rule validation tests"},
+            {"id": "regression", "name": "Full Regression", "pattern": "all", "description": "Static + Heuristic + Dynamic Playwright (default)"},
         ]
     }
 
@@ -295,6 +296,91 @@ async def run_heuristic_tests(
     api_url = os.getenv("GOVERNANCE_API_URL", "http://localhost:8082")
     results = run_heuristic_checks(api_base_url=api_url, domain=domain)
     return results
+
+
+@router.post("/regression/run")
+async def run_regression_tests(
+    background_tasks: BackgroundTasks,
+    skip_dynamic: bool = Query(False, description="Skip Playwright dynamic checks"),
+):
+    """
+    Run full regression cycle: static + heuristic + dynamic Playwright.
+
+    This is the default regression run. Phases:
+      1. Static: pytest unit tests
+      2. Heuristic: data integrity checks across all domains
+      3. Dynamic: Playwright browser checks (chat, all screens, data integrity)
+
+    Returns run_id for polling via /tests/results/{run_id}.
+    """
+    run_id = f"REG-{datetime.now().strftime('%Y%m%d-%H%M%S')}"
+
+    _test_results[run_id] = {
+        "status": "running",
+        "timestamp": datetime.now().isoformat(),
+        "category": "regression",
+        "command": f"regression (skip_dynamic={skip_dynamic})",
+    }
+
+    background_tasks.add_task(
+        _execute_regression, run_id, skip_dynamic
+    )
+
+    return {
+        "run_id": run_id,
+        "status": "started",
+        "category": "regression",
+        "phases": ["static", "heuristic"] + ([] if skip_dynamic else ["dynamic"]),
+    }
+
+
+def _execute_regression(run_id: str, skip_dynamic: bool = False):
+    """Execute full regression and store results."""
+    start_time = datetime.now()
+    try:
+        from governance.routes.tests.regression_runner import run_regression
+
+        result = run_regression(skip_dynamic=skip_dynamic)
+        duration = (datetime.now() - start_time).total_seconds()
+
+        # Map regression result to standard test result shape
+        test_result = {
+            "status": "completed" if result["verdict"] == "PASS" else "failed",
+            "timestamp": start_time.isoformat(),
+            "duration_seconds": duration,
+            "category": "regression",
+            "verdict": result["verdict"],
+            "total": sum(p.get("total", 0) for p in result["phases"]),
+            "passed": sum(p.get("passed", 0) for p in result["phases"]),
+            "failed": sum(p.get("failed", 0) for p in result["phases"]),
+            "skipped": sum(p.get("skipped", 0) for p in result["phases"]),
+            "phases": result["phases"],
+            "summary": result["summary"],
+            "command": f"regression (skip_dynamic={skip_dynamic})",
+        }
+
+        # Generate evidence
+        evidence_path = generate_evidence_file(run_id, test_result, "regression")
+        if evidence_path:
+            test_result["evidence_file"] = evidence_path
+
+        _test_results[run_id] = test_result
+        try:
+            _persist_result(run_id, test_result)
+        except Exception as pe:
+            logger.warning(f"Failed to persist regression result: {pe}")
+
+    except Exception as e:
+        _test_results[run_id] = {
+            "status": "error",
+            "timestamp": start_time.isoformat(),
+            "error": str(e),
+            "category": "regression",
+        }
+        try:
+            _persist_result(run_id, _test_results[run_id])
+        except Exception:
+            pass
 
 
 @router.get("/robot/summary")
