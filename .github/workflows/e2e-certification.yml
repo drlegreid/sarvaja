@@ -85,7 +85,7 @@ jobs:
 
     services:
       typedb:
-        image: vaticle/typedb:2.29.0
+        image: typedb/typedb:3.7.3
         ports:
           - 1729:1729
         options: >-
@@ -167,7 +167,7 @@ jobs:
 
     services:
       typedb:
-        image: vaticle/typedb:2.29.0
+        image: typedb/typedb:3.7.3
         ports:
           - 1729:1729
 
