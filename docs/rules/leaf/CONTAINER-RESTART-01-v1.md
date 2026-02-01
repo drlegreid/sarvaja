@@ -21,7 +21,12 @@ ALWAYS restart API servers via **podman** after code changes BEFORE running test
 | 1. RESTART | `podman restart platform_governance-dashboard-dev_1` | Pick up code changes |
 | 2. WAIT | `sleep 10` | Container startup time |
 | 3. VERIFY | `curl -s http://localhost:8082/api/health` | Confirm responsive |
-| 4. RUN | `python3 -m pytest tests/ -v` | Run tests on fresh instance |
+| 4. UNIT | `.venv/bin/python3 -m pytest tests/unit/ -v` | Run unit tests |
+| 5. E2E | `.venv/bin/python3 -m pytest tests/e2e/ -v` | Run E2E API tests |
+| 6. ROBOT | `robot tests/robot/` | Run Robot Framework tests (if UI changes) |
+| 7. PLAYWRIGHT | `mcp__playwright__browser_navigate` + snapshot | Visual verification (if UI changes) |
+
+**CRITICAL:** Steps 1-5 are MANDATORY for ALL code changes. Steps 6-7 are MANDATORY for UI/view changes. Skipping restart (step 1) before testing is a QUALITY VIOLATION.
 
 ### If Container is Stopped (Exited)
 
@@ -51,6 +56,8 @@ curl -s http://localhost:8082/api/health
 | `python -m governance.api --port 8082` | `podman restart platform_governance-dashboard-dev_1` |
 | `kill` / `fuser -k` server processes | `podman stop` / `podman restart` |
 | Run bare python for API server | Container serves both 8081 + 8082 |
+| Skip E2E tests after UI changes | Run Robot + Playwright verification |
+| Claim "done" without restart + test | Follow FULL protocol (all 7 steps) |
 
 ---
 

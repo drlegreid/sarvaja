@@ -33,14 +33,26 @@ def register_sessions_controllers(state: Any, ctrl: Any, api_base_url: str) -> N
 
         Per GAP-UI-SESSION-TASKS-001: Also load tasks linked to this session.
         Uses @ctrl.trigger to match trigger() call from Vue click handler.
+        Fetches full detail from API for evidence_files and linked relations.
         """
+        # Start with list data for immediate display
         for session in state.sessions:
             if session.get('session_id') == session_id or session.get('id') == session_id:
                 state.selected_session = session
                 state.show_session_detail = True
-                # Load session tasks (GAP-DATA-INTEGRITY-001 Phase 3)
-                load_session_tasks(session_id)
                 break
+
+        # Fetch full detail from API (includes evidence_files, linked_rules)
+        import httpx
+        try:
+            resp = httpx.get(f"{api_base_url}/api/sessions/{session_id}", timeout=10.0)
+            if resp.status_code == 200:
+                state.selected_session = resp.json()
+        except Exception:
+            pass  # Keep list data on failure
+
+        # Load session tasks (GAP-DATA-INTEGRITY-001 Phase 3)
+        load_session_tasks(session_id)
 
     def load_session_tasks(session_id):
         """Load tasks linked to a session via completed-in relation.

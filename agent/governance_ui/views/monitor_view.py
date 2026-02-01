@@ -140,6 +140,8 @@ def build_event_feed() -> None:
                     items_per_page=20,
                     hover=True,
                     search=("monitor_event_type_filter",),
+                    click_row="($event, row) => { if (row.item.rule_id) trigger('navigate_to_entity', ['rule', row.item.rule_id]) }",
+                    __events=[("click_row", "click:row")],
                     __properties=["data-testid"],
                     **{"data-testid": "monitor-events-table"}
                 )
@@ -210,6 +212,8 @@ def build_top_rules_section() -> None:
                             color="primary",
                             variant="outlined",
                             size="small",
+                            click="trigger('navigate_to_entity', ['rule', rule.rule_id])",
+                            style="cursor: pointer;",
                         )
                         # Empty state
                         html.Span(

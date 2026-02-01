@@ -333,10 +333,50 @@ class GovernanceDashboard:
                     v3.VAppBarTitle(APP_TITLE)
                     v3.VSpacer()
                     v3.VChip(
-                        "{{ rules.length }} Rules | {{ decisions.length }} Decisions",
+                        "{{ rules.length }} Rules",
                         size="small",
                         color="white",
                         variant="outlined",
+                        click="active_view = 'rules'",
+                        style="cursor: pointer;",
+                        __properties=["data-testid"],
+                        **{"data-testid": "toolbar-rules-chip"}
+                    )
+                    v3.VChip(
+                        "{{ decisions.length }} Decisions",
+                        size="small",
+                        color="white",
+                        variant="outlined",
+                        click="active_view = 'decisions'",
+                        style="cursor: pointer;",
+                        classes="ml-1",
+                        __properties=["data-testid"],
+                        **{"data-testid": "toolbar-decisions-chip"}
+                    )
+                    v3.VChip(
+                        "{{ '#' + ((infra_stats && infra_stats.frankel_hash) || '').substring(0, 8) }}",
+                        v_if="infra_stats && infra_stats.frankel_hash",
+                        size="small",
+                        variant="outlined",
+                        prepend_icon=(
+                            "infra_stats.status === 'healthy' ? 'mdi-shield-check' : "
+                            "infra_stats.status === 'degraded' ? 'mdi-shield-alert' : "
+                            "'mdi-shield-off'",
+                        ),
+                        click="active_view = 'infra'",
+                        style="cursor: pointer;",
+                        classes="ml-1",
+                        color=(
+                            "infra_stats.status === 'healthy' ? '#4caf50' : "
+                            "infra_stats.status === 'degraded' ? '#ff9800' : "
+                            "'#f44336'",
+                        ),
+                        title=(
+                            "'Health: ' + (infra_stats.status || 'unknown') + "
+                            "' | Last: ' + (infra_stats.last_check || 'Never')",
+                        ),
+                        __properties=["data-testid"],
+                        **{"data-testid": "toolbar-health-chip"}
                     )
                     v3.VBtn(
                         icon="mdi-refresh",

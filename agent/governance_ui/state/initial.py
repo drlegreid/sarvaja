@@ -241,9 +241,13 @@ def get_initial_state() -> Dict[str, Any]:
             'memory_pct': 0,
             'python_procs': 0,
             'mcp_servers': {},
+            'status': 'unknown',
         },
         'infra_loading': False,
         'infra_last_action': '',
+        'infra_log_lines': [],
+        'infra_log_container': 'dashboard',
+        'infra_log_level': '',
 
         # Workflow Compliance (RD-WORKFLOW Phase 4)
         'workflow_status': {'overall': 'UNKNOWN', 'passed': 0, 'failed': 0, 'warnings': 0},
@@ -251,6 +255,17 @@ def get_initial_state() -> Dict[str, Any]:
         'workflow_violations': [],
         'workflow_recommendations': [],
         'workflow_loading': False,
+        # LangGraph Proposal Workflow (GOV-BICAM-01-v1)
+        'workflow_info': None,
+        'proposal_history': [],
+        'proposal_action': 'create',
+        'proposal_hypothesis': '',
+        'proposal_evidence': '',
+        'proposal_rule_id': '',
+        'proposal_directive': '',
+        'proposal_dry_run': True,
+        'proposal_submitting': False,
+        'proposal_result': None,
 
         # Audit Trail (RD-DEBUG-AUDIT Phase 4)
         'audit_summary': {'total_entries': 0, 'by_action_type': {}, 'by_entity_type': {}, 'by_actor': {}, 'retention_days': 7},
@@ -268,6 +283,7 @@ def get_initial_state() -> Dict[str, Any]:
         'tests_running': False,
         'tests_current_run': None,
         'tests_recent_runs': [],
+        'robot_summary': None,
 
         # Reactive Loader States (GAP-UI-047)
         # Per-component loading with trace status

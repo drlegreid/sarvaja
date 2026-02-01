@@ -12,15 +12,40 @@ Usage:
 
 import argparse
 import sys
+from pathlib import Path
+from datetime import datetime, timedelta
 
 import httpx
 
 API_URL = "http://localhost:8082"
+PROJECT_ROOT = Path(__file__).parent.parent
+
+
+def cleanup_evidence_archives(dry_run: bool = False, max_age_days: int = 7) -> int:
+    """Remove TEST-* evidence archive files older than max_age_days."""
+    archive_dir = PROJECT_ROOT / "evidence" / "archive" / "rules"
+    if not archive_dir.exists():
+        return 0
+
+    cutoff = datetime.now() - timedelta(days=max_age_days)
+    cleaned = 0
+    for f in archive_dir.glob("TEST-*.json"):
+        if f.stat().st_mtime < cutoff.timestamp():
+            if dry_run:
+                print(f"  [DRY] Would delete archive {f.name}")
+            else:
+                f.unlink()
+            cleaned += 1
+    print(f"Found {cleaned} TEST-* archive files older than {max_age_days} days")
+    return cleaned
 
 
 def cleanup(dry_run: bool = False) -> dict:
     """Remove all TEST-* entities from the system."""
-    cleaned = {"tasks": 0, "rules": 0, "sessions": 0}
+    cleaned = {"tasks": 0, "rules": 0, "sessions": 0, "archives": 0}
+
+    # Clean evidence archives first (no API needed)
+    cleaned["archives"] = cleanup_evidence_archives(dry_run)
 
     with httpx.Client(base_url=API_URL, timeout=30.0) as client:
         # Check API is up

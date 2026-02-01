@@ -39,7 +39,8 @@ def task_to_response(task: TypeDBTask):
         linked_sessions=task.linked_sessions,
         linked_commits=task.linked_commits,  # Per GAP-TASK-LINK-002
         gap_id=task.gap_id,
-        evidence=task.evidence
+        evidence=task.evidence,
+        document_path=task.document_path
     )
 
 

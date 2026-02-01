@@ -21,9 +21,9 @@ from governance.stores import _tasks_store, _agents_store, _sessions_store
 from governance.context_preloader import preload_session_context
 
 # LiteLLM proxy configuration
-LITELLM_BASE_URL = os.environ.get("LITELLM_BASE_URL", "http://localhost:4000")
-LITELLM_API_KEY = os.environ.get("LITELLM_API_KEY", "sk-litellm-master-key")
-LLM_MODEL = os.environ.get("MODEL_NAME", "claude-sonnet-4-20250514")
+LITELLM_BASE_URL = os.environ.get("LITELLM_BASE_URL", "http://litellm:4000")
+LITELLM_API_KEY = os.environ.get("LITELLM_API_KEY", "sk-litellm-dev-key")
+LLM_MODEL = os.environ.get("MODEL_NAME", "claude-sonnet")
 
 GOVERNANCE_SYSTEM_PROMPT = (
     "You are a governance assistant for the Sarvaja platform. "
@@ -55,14 +55,18 @@ def query_llm(message: str, system_prompt: str = "") -> str:
         if resp.status_code == 200:
             data = resp.json()
             return data["choices"][0]["message"]["content"]
-        logger.warning(f"LLM query failed: HTTP {resp.status_code}")
+        logger.warning(f"LLM query failed: HTTP {resp.status_code} - {resp.text[:200]}")
+        return (
+            f"LLM returned an error (HTTP {resp.status_code}). "
+            "Use /help to see available commands, or try again later."
+        )
     except Exception as e:
         logger.warning(f"LLM query error: {e}")
 
     return (
-        "LLM is currently unavailable. "
-        "Use /help to see available commands, "
-        "or try again later."
+        "Cannot reach the LLM service (LiteLLM proxy). "
+        "Check that the LiteLLM container is running. "
+        "Use /help to see available commands."
     )
 
 

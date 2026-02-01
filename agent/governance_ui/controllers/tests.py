@@ -155,6 +155,17 @@ def register_tests_controllers(
         except Exception as e:
             add_error_trace(state, f"View run failed: {str(e)}", f"/api/tests/results/{run_id}")
 
+    @ctrl.trigger("load_robot_summary")
+    def on_load_robot_summary():
+        """Load Robot Framework report summary."""
+        try:
+            with httpx.Client(timeout=10.0) as client:
+                response = client.get(f"{api_base_url}/api/tests/robot/summary")
+                if response.status_code == 200:
+                    state.robot_summary = response.json()
+        except Exception as e:
+            state.robot_summary = {"available": False, "message": str(e)}
+
     return {
         "load_tests_data": load_tests_data,
     }

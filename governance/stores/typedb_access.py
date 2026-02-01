@@ -195,7 +195,8 @@ def _task_to_dict(task) -> Dict[str, Any]:
         "linked_rules": task.linked_rules,
         "linked_sessions": task.linked_sessions,
         "gap_id": task.gap_id,
-        "evidence": task.evidence
+        "evidence": task.evidence,
+        "document_path": task.document_path
     }
 
 

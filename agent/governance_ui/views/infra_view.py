@@ -154,7 +154,7 @@ def build_system_stats() -> None:
                         v_if="infra_stats.python_procs > 20",
                         classes="text-caption text-warning"
                     ).__setattr__("innerHTML", "Consider cleanup")
-        # Frankel Hash
+        # Frankel Hash with component breakdown (Plan 7.3)
         with v3.VCol(cols=12, md=4):
             with v3.VCard(
                 variant="tonal",
@@ -171,6 +171,40 @@ def build_system_stats() -> None:
                         "{{ infra_stats.last_check || 'Never' }}",
                         classes="text-caption text-grey"
                     )
+                    # Component hash breakdown
+                    with html.Div(
+                        v_if=(
+                            "infra_stats.component_hashes && "
+                            "Object.keys(infra_stats.component_hashes).length > 0"
+                        ),
+                        classes="mt-2"
+                    ):
+                        html.Div(
+                            "Components",
+                            classes="text-caption text-grey mb-1"
+                        )
+                        with html.Div(
+                            v_for=(
+                                "(hash, name) in "
+                                "(infra_stats.component_hashes || {})"
+                            ),
+                            classes="d-flex justify-space-between align-center"
+                        ):
+                            html.Span(
+                                "{{ name }}",
+                                classes="text-caption"
+                            )
+                            v3.VChip(
+                                v_text="hash",
+                                size="x-small",
+                                variant="outlined",
+                                color=(
+                                    "infra_stats.component_statuses && "
+                                    "infra_stats.component_statuses[name] === 'OK' "
+                                    "? 'success' : 'error'",
+                                ),
+                                classes="font-mono"
+                            )
 
 
 def build_mcp_status_panel() -> None:
@@ -211,6 +245,40 @@ def build_mcp_status_panel() -> None:
                         density="compact",
                         text="MCP server status not available. Run healthcheck to update."
                     )
+                    # Server details table from .mcp.json
+                    with html.Div(
+                        v_if="infra_stats.mcp_details && Object.keys(infra_stats.mcp_details).length > 0",
+                        classes="mt-4"
+                    ):
+                        html.H4("Server Configuration", classes="text-subtitle-2 mb-2")
+                        with v3.VTable(density="compact"):
+                            with html.Thead():
+                                with html.Tr():
+                                    html.Th("Server")
+                                    html.Th("Type")
+                                    html.Th("Command")
+                                    html.Th("Description")
+                            with html.Tbody():
+                                with html.Tr(
+                                    v_for="(detail, sname) in infra_stats.mcp_details",
+                                    key="sname",
+                                ):
+                                    html.Td("{{ sname }}", classes="font-weight-medium")
+                                    with html.Td():
+                                        v3.VChip(
+                                            v_text="detail.type",
+                                            size="x-small",
+                                            variant="outlined"
+                                        )
+                                    html.Td(
+                                        "{{ detail.command }}",
+                                        classes="text-caption",
+                                        style="max-width: 300px; overflow: hidden; text-overflow: ellipsis;"
+                                    )
+                                    html.Td(
+                                        "{{ detail.comment || '-' }}",
+                                        classes="text-caption"
+                                    )
 
 
 def build_dsp_alert() -> None:
@@ -254,6 +322,72 @@ def build_dsp_alert() -> None:
                             __properties=["data-testid"],
                             **{"data-testid": "infra-dsp-guide-btn"}
                         )
+
+
+def build_logs_panel() -> None:
+    """Build container logs viewer panel."""
+    with v3.VRow(classes="mt-4"):
+        with v3.VCol(cols=12):
+            with v3.VCard(
+                variant="outlined",
+                __properties=["data-testid"],
+                **{"data-testid": "infra-logs-panel"}
+            ):
+                with v3.VCardTitle(classes="d-flex align-center"):
+                    v3.VIcon("mdi-text-box-outline", classes="mr-2")
+                    html.Span("Container Logs")
+                    v3.VSpacer()
+                    v3.VSelect(
+                        v_model=("infra_log_container",),
+                        items=("['dashboard', 'typedb', 'chromadb', 'litellm', 'ollama']",),
+                        density="compact",
+                        hide_details=True,
+                        style="max-width: 160px;",
+                        classes="mr-2",
+                        __properties=["data-testid"],
+                        **{"data-testid": "logs-container-select"}
+                    )
+                    v3.VSelect(
+                        v_model=("infra_log_level",),
+                        items=("['', 'ERROR', 'WARNING', 'INFO']",),
+                        density="compact",
+                        hide_details=True,
+                        label="Level",
+                        clearable=True,
+                        style="max-width: 120px;",
+                        classes="mr-2"
+                    )
+                    v3.VBtn(
+                        "Load Logs",
+                        prepend_icon="mdi-refresh",
+                        variant="outlined",
+                        size="small",
+                        click=(
+                            "trigger('load_container_logs', "
+                            "[infra_log_container, 50, infra_log_level])"
+                        ),
+                        __properties=["data-testid"],
+                        **{"data-testid": "logs-refresh-btn"}
+                    )
+                with v3.VCardText():
+                    html.Pre(
+                        v_if="infra_log_lines && infra_log_lines.length > 0",
+                        v_text="infra_log_lines.join('\\n')",
+                        style=(
+                            "max-height: 300px; overflow-y: auto; "
+                            "font-size: 12px; background: #1e1e1e; "
+                            "color: #d4d4d4; padding: 12px; border-radius: 4px; "
+                            "white-space: pre-wrap; word-break: break-all;"
+                        ),
+                        __properties=["data-testid"],
+                        **{"data-testid": "logs-output"}
+                    )
+                    v3.VAlert(
+                        v_if="!infra_log_lines || infra_log_lines.length === 0",
+                        type="info",
+                        density="compact",
+                        text="Click 'Load Logs' to fetch container logs."
+                    )
 
 
 def build_recovery_panel() -> None:
@@ -337,6 +471,9 @@ def build_infra_view() -> None:
 
             # MCP server status (UI-AUDIT-011)
             build_mcp_status_panel()
+
+            # Container logs viewer
+            build_logs_panel()
 
             # Recovery actions
             build_recovery_panel()

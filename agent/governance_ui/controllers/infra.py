@@ -143,6 +143,57 @@ def get_system_stats() -> dict[str, Any]:
     return stats
 
 
+def get_container_logs(
+    container_name: str = "platform_governance-dashboard-dev_1",
+    lines: int = 50,
+    level_filter: str = ""
+) -> list[str]:
+    """Fetch recent container logs via podman. Returns list of log lines."""
+    try:
+        cmd = ["podman", "logs", "--tail", str(lines), container_name]
+        result = subprocess.run(cmd, capture_output=True, text=True, timeout=5)
+        output = result.stdout + result.stderr
+        log_lines = [l for l in output.strip().split("\n") if l.strip()]
+        if level_filter:
+            level_upper = level_filter.upper()
+            log_lines = [l for l in log_lines if level_upper in l.upper()]
+        return log_lines[-lines:]
+    except Exception:
+        return ["Unable to fetch container logs"]
+
+
+CONTAINER_NAMES = {
+    "dashboard": "platform_governance-dashboard-dev_1",
+    "typedb": "platform_typedb_1",
+    "chromadb": "platform_chromadb_1",
+    "litellm": "platform_litellm_1",
+    "ollama": "platform_ollama_1",
+}
+
+
+def get_mcp_server_details(project_root: Path | None = None) -> dict[str, dict]:
+    """Parse .mcp.json for server details (command, env, comment)."""
+    if project_root is None:
+        project_root = Path(__file__).parent.parent.parent.parent
+    mcp_config_path = project_root / ".mcp.json"
+    result = {}
+    try:
+        if mcp_config_path.exists():
+            with open(mcp_config_path) as f:
+                config = json.load(f)
+            for name, server in config.get("mcpServers", {}).items():
+                result[name] = {
+                    "type": server.get("type", "unknown"),
+                    "command": " ".join(
+                        [server.get("command", "")] + server.get("args", [])
+                    ),
+                    "comment": server.get("_comment", ""),
+                }
+    except Exception:
+        pass
+    return result
+
+
 def check_dsp_conditions(evidence_dir: Path | None = None) -> dict[str, Any]:
     """Check DSP (Deep Sleep Protocol) conditions. Per SESSION-DSP-NOTIFY-01-v1."""
     result: dict[str, Any] = {"dsp_suggested": False, "dsp_alerts": []}

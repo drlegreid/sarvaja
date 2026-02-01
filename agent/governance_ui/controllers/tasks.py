@@ -271,9 +271,11 @@ def register_tasks_controllers(state: Any, ctrl: Any, api_base_url: str) -> None
                 response = client.post(f"{api_base_url}/api/tasks", json=task_data)
                 if response.status_code == 201:
                     state.status_message = "Task created successfully"
-                    # Reload tasks with pagination
+                    # Reload tasks preserving current page
                     page_size = getattr(state, 'tasks_per_page', 20)
-                    tasks_response = client.get(f"{api_base_url}/api/tasks", params={"limit": page_size, "offset": 0})
+                    current_page = getattr(state, 'tasks_page', 1)
+                    offset = (current_page - 1) * page_size
+                    tasks_response = client.get(f"{api_base_url}/api/tasks", params={"limit": page_size, "offset": offset})
                     if tasks_response.status_code == 200:
                         data = tasks_response.json()
                         if isinstance(data, dict) and "items" in data:
@@ -281,7 +283,6 @@ def register_tasks_controllers(state: Any, ctrl: Any, api_base_url: str) -> None
                             state.tasks_pagination = data.get("pagination", {})
                         else:
                             state.tasks = extract_items_from_response(data)
-                    state.tasks_page = 1
                 else:
                     state.has_error = True
                     state.error_message = f"Failed to create task: {response.status_code}"

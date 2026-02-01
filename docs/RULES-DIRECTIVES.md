@@ -81,6 +81,7 @@
 | TASK-LIFE-01-v1 | (new) | Task Lifecycle Management | HIGH | ACTIVE |
 | UI-LOADER-01-v1 | (new) | UI Loader State Pattern | HIGH | ACTIVE |
 | UI-TRACE-01-v1 | (new) | UI Trace Bar Display | MEDIUM | ACTIVE |
+| UI-COLOR-01-v1 | (new) | Color Harmony & Palette Standards | HIGH | ACTIVE |
 | TEST-BDD-01-v1 | (new) | BDD Testing with Gherkin | HIGH | ACTIVE |
 | GAP-DOC-01-v1 | (new) | Gap Documentation Standard | HIGH | ACTIVE |
 
@@ -94,7 +95,7 @@
 | **REPORT** | Reporting & decisions | 4 | DEC-01, DEC-02, HUMOR-01, ISSUE-01, SUMM-01 |
 | **GOV** | Governance & trust | 10 | TRUST-01/02, BICAM-01, PROP-01/02/03, RULE-01/02/03, MODE-01, BIND-01 |
 | **ARCH** | Architecture | 6 | BEST-01, MCP-01/02, INFRA-01/02, YAGNI-01 |
-| **UI** | User interface | 3 | TRAME-01, LOADER-01, TRACE-01 |
+| **UI** | User interface | 4 | TRAME-01, LOADER-01, TRACE-01, COLOR-01 |
 | **WORKFLOW** | Workflow & autonomy | 5 | AUTO-01/02, RD-01, SEQ-01, SHELL-01 |
 | **RECOVER** | Recovery & resilience | 3 | MEM-01, AMNES-01, CRASH-01 |
 | **TEST** | Testing & validation | 7 | GUARD-01, COMP-01/02, FIX-01, EXEC-01, UI-VERIFY-01, BDD-01 |

@@ -64,8 +64,9 @@ async def list_agents(
                     recent_sessions, active_tasks, task_count = get_agent_relations_from_lookup(
                         agent.id, sessions_by_agent, tasks_by_agent, task_count_by_agent
                     )
-                    # Use TypeDB task count (real data) over JSON metrics
-                    tasks_executed = task_count or agent_metrics.get("tasks_executed", 0)
+                    # Use TypeDB task count, fallback to in-memory store, then JSON metrics
+                    store_count = _agents_store.get(agent.id, {}).get("tasks_executed", 0)
+                    tasks_executed = task_count or store_count or agent_metrics.get("tasks_executed", 0)
 
                     # Get capabilities from config (GAP-AGENT-004)
                     capabilities = _AGENT_BASE_CONFIG.get(agent.id, {}).get("capabilities", [])
@@ -157,8 +158,8 @@ async def get_agent(agent_id: str):
                 recent_sessions, active_tasks, task_count = get_agent_relations_from_lookup(
                     agent_id, sessions_by_agent, tasks_by_agent, task_count_by_agent
                 )
-                # Use TypeDB task count (real data) over JSON metrics
-                tasks_executed = task_count or (_agents_store.get(agent_id, {}).get("tasks_executed", 0))
+                # TypeDB task count is source of truth for tasks linked to agent
+                tasks_executed = task_count
 
                 # Get capabilities from config (GAP-AGENT-004)
                 capabilities = _AGENT_BASE_CONFIG.get(agent_id, {}).get("capabilities", [])
@@ -227,14 +228,15 @@ async def record_agent_task(agent_id: str):
     client = get_typedb_client()
     now = datetime.now().isoformat()
 
-    # Load current metrics - prioritize in-memory over JSON (container may have read-only fs)
-    if agent_id in _agents_store:
-        current_tasks = _agents_store[agent_id].get("tasks_executed", 0)
-    else:
-        metrics = _load_agent_metrics()
-        agent_metrics = metrics.get(agent_id, {"tasks_executed": 0})
-        current_tasks = agent_metrics.get("tasks_executed", 0)
-    tasks_executed = current_tasks + 1
+    # Get TypeDB task count as base, +1 for this execution
+    typedb_count = 0
+    if client:
+        try:
+            _, _, task_count_by_agent = build_agent_relations_lookup(client)
+            typedb_count = task_count_by_agent.get(agent_id, 0)
+        except Exception:
+            pass
+    tasks_executed = typedb_count + 1
 
     # Calculate new trust score
     base_trust = _AGENT_BASE_CONFIG.get(agent_id, {}).get("base_trust", 0.85)

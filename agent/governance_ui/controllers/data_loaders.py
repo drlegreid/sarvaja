@@ -271,6 +271,12 @@ def register_data_loader_controllers(
                 except Exception:
                     pass
 
+            # Also refresh infra health for toolbar indicator
+            try:
+                load_infra_status()
+            except Exception:
+                pass
+
             state.is_loading = False
             state.status_message = "Data refreshed from API"
         except Exception as e:
@@ -373,6 +379,9 @@ def register_data_loader_controllers(
                     hc_state = json.load(f)
                 stats["frankel_hash"] = hc_state.get("master_hash", "--------")
                 stats["last_check"] = hc_state.get("last_check", "Never")[:19]
+                # Component hash breakdown (Plan 7.3)
+                stats["component_hashes"] = hc_state.get("component_hashes", {})
+                stats["component_statuses"] = hc_state.get("components", {})
                 # Extract MCP server status from components (UI-AUDIT-011)
                 components = hc_state.get("components", {})
                 # MCP servers tracked by healthcheck
@@ -429,6 +438,31 @@ def register_data_loader_controllers(
         except Exception:
             pass
 
+        # Load MCP server details from .mcp.json
+        try:
+            from agent.governance_ui.controllers.infra import get_mcp_server_details
+            stats["mcp_details"] = get_mcp_server_details()
+        except Exception:
+            stats["mcp_details"] = {}
+
+        # Derive overall health status from service checks
+        required_down = any(
+            s.get("status") == "DOWN"
+            for name, s in services.items()
+            if name in ("podman", "typedb", "chromadb")
+        )
+        optional_down = any(
+            s.get("status") == "OFF"
+            for name, s in services.items()
+            if name in ("litellm", "ollama")
+        )
+        if required_down:
+            stats["status"] = "down"
+        elif optional_down:
+            stats["status"] = "degraded"
+        else:
+            stats["status"] = "healthy"
+
         state.infra_stats = stats
         state.infra_loading = False
 
@@ -476,6 +510,17 @@ def register_data_loader_controllers(
             state.infra_last_action = "Restarting stack... (refresh in 60s)"
         except Exception as e:
             state.infra_last_action = f"Failed to restart stack: {e}"
+
+    @ctrl.trigger("load_container_logs")
+    def load_container_logs(container: str = "dashboard", lines: int = 50, level: str = ""):
+        """Load container logs for the log viewer panel."""
+        from agent.governance_ui.controllers.infra import (
+            get_container_logs, CONTAINER_NAMES,
+        )
+        container_name = CONTAINER_NAMES.get(container, container)
+        log_lines = get_container_logs(container_name, lines, level)
+        state.infra_log_lines = log_lines
+        state.infra_log_container = container
 
     @ctrl.trigger("cleanup_zombies")
     def cleanup_zombies():
@@ -529,9 +574,55 @@ def register_data_loader_controllers(
 
     @ctrl.trigger("load_workflow_status")
     def trigger_load_workflow_status():
-        """Trigger for loading workflow status."""
+        """Trigger for loading workflow status + proposal info."""
         state.workflow_loading = True
         load_workflow_status()
+        # Also load proposal workflow info and history
+        import httpx
+        import os
+        api_url = os.getenv('GOVERNANCE_API_URL', 'http://localhost:8082')
+        try:
+            resp = httpx.get(f"{api_url}/api/proposals/workflow-info", timeout=10.0)
+            if resp.status_code == 200:
+                state.workflow_info = resp.json()
+        except Exception:
+            pass
+        try:
+            resp = httpx.get(f"{api_url}/api/proposals/history", timeout=10.0)
+            if resp.status_code == 200:
+                state.proposal_history = resp.json().get("items", [])
+        except Exception:
+            pass
+
+    @ctrl.trigger("submit_proposal")
+    def trigger_submit_proposal():
+        """Submit a governance proposal through LangGraph workflow."""
+        import httpx
+        import os
+        state.proposal_submitting = True
+        api_url = os.getenv('GOVERNANCE_API_URL', 'http://localhost:8082')
+        try:
+            evidence = [e.strip() for e in (state.proposal_evidence or "").split(",") if e.strip()]
+            body = {
+                "action": state.proposal_action or "create",
+                "hypothesis": state.proposal_hypothesis or "",
+                "evidence": evidence or ["no evidence provided"],
+                "rule_id": state.proposal_rule_id or None,
+                "directive": state.proposal_directive or None,
+                "dry_run": state.proposal_dry_run if hasattr(state, 'proposal_dry_run') else True,
+            }
+            resp = httpx.post(f"{api_url}/api/proposals/submit", json=body, timeout=30.0)
+            if resp.status_code == 200:
+                state.proposal_result = resp.json()
+                # Refresh history
+                hist = httpx.get(f"{api_url}/api/proposals/history", timeout=10.0)
+                if hist.status_code == 200:
+                    state.proposal_history = hist.json().get("items", [])
+            else:
+                state.proposal_result = {"decision": "error", "decision_reasoning": resp.text}
+        except Exception as e:
+            state.proposal_result = {"decision": "error", "decision_reasoning": str(e)}
+        state.proposal_submitting = False
 
     # =========================================================================
     # AUDIT TRAIL DATA LOADER (RD-DEBUG-AUDIT Phase 4)
@@ -583,6 +674,57 @@ def register_data_loader_controllers(
         """Trigger for loading audit trail."""
         state.audit_loading = True
         load_audit_trail()
+
+    # =========================================================================
+    # CROSS-VIEW NAVIGATION (PLAN-UI-OVERHAUL Task 6.1)
+    # =========================================================================
+
+    @ctrl.trigger("navigate_to_entity")
+    def navigate_to_entity(entity_type, entity_id):
+        """Navigate to an entity's detail view from audit/monitor.
+
+        Switches active_view to the entity's tab and selects the entity.
+        Per UI-VUE-IMPL-01-v1: uses @ctrl.trigger for Vue-callable.
+        """
+        entity_type_lower = (entity_type or "").lower()
+
+        if entity_type_lower == "rule":
+            state.active_view = "rules"
+            # Find and select the rule
+            for rule in (state.rules or []):
+                if rule.get("rule_id") == entity_id or rule.get("id") == entity_id:
+                    state.selected_rule = rule
+                    state.show_rule_detail = True
+                    return
+            # If not found in loaded data, still navigate
+            state.show_rule_detail = False
+
+        elif entity_type_lower == "task":
+            state.active_view = "tasks"
+            for task in (state.tasks or []):
+                if task.get("task_id") == entity_id or task.get("id") == entity_id:
+                    state.selected_task = task
+                    state.show_task_detail = True
+                    return
+            state.show_task_detail = False
+
+        elif entity_type_lower == "session":
+            state.active_view = "sessions"
+            for session in (state.sessions or []):
+                if session.get("session_id") == entity_id or session.get("id") == entity_id:
+                    state.selected_session = session
+                    state.show_session_detail = True
+                    return
+            state.show_session_detail = False
+
+        elif entity_type_lower == "decision":
+            state.active_view = "decisions"
+            for decision in (state.decisions or []):
+                if decision.get("decision_id") == entity_id or decision.get("id") == entity_id:
+                    state.selected_decision = decision
+                    state.show_decision_detail = True
+                    return
+            state.show_decision_detail = False
 
     # =========================================================================
     # SESSIONS LIST LOADER (UI-AUDIT-007: Executive dropdown fix)

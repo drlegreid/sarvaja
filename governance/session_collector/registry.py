@@ -79,9 +79,59 @@ def end_session(topic: str) -> Optional[str]:
         log_path = collector.generate_session_log()
         collector.sync_to_chromadb()
         _persist_state()  # Update state file for hooks
+
+        # Auto-link evidence and rules to session in TypeDB
+        _auto_link_session_evidence(session_id, log_path, collector)
+
         return log_path
 
     return None
+
+
+def _auto_link_session_evidence(
+    session_id: str, log_path: str, collector: "SessionCollector"
+) -> None:
+    """
+    Auto-link evidence file and applied rules to session in TypeDB.
+
+    Called after session_end to populate has-evidence and
+    session-applied-rule relations automatically.
+    """
+    try:
+        from governance.client import get_client
+        client = get_client()
+        if not client or not client.is_connected():
+            logger.debug("TypeDB not available for auto-linking")
+            return
+
+        # Link the generated evidence file
+        if log_path:
+            try:
+                client.link_evidence_to_session(session_id, log_path)
+                logger.info(f"Auto-linked evidence {log_path} to {session_id}")
+            except Exception as e:
+                logger.debug(f"Failed to link evidence: {e}")
+
+        # Link rules referenced in session decisions/events
+        linked_rules = set()
+        for decision in getattr(collector, 'decisions', []):
+            rule_id = decision.get('rule_id') if isinstance(decision, dict) else None
+            if rule_id:
+                linked_rules.add(rule_id)
+        for event in getattr(collector, 'events', []):
+            rule_id = event.get('rule_id') if isinstance(event, dict) else None
+            if rule_id:
+                linked_rules.add(rule_id)
+
+        for rule_id in linked_rules:
+            try:
+                client.link_rule_to_session(session_id, rule_id)
+                logger.info(f"Auto-linked rule {rule_id} to {session_id}")
+            except Exception as e:
+                logger.debug(f"Failed to link rule {rule_id}: {e}")
+
+    except Exception as e:
+        logger.debug(f"Auto-link failed (non-critical): {e}")
 
 
 def list_active_sessions() -> List[str]:

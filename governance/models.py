@@ -79,6 +79,7 @@ class TaskResponse(BaseModel):
     linked_commits: Optional[List[str]] = None  # Per GAP-TASK-LINK-002: Git commit linkage
     gap_id: Optional[str] = None
     evidence: Optional[str] = None  # May include [Verification: L1/L2/L3] prefix
+    document_path: Optional[str] = None
 
 class TaskExecutionEvent(BaseModel):
     """Task execution event for execution log (ORCH-007)."""

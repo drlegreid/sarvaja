@@ -39,6 +39,17 @@ RISK_COLORS: Dict[str, str] = {
 
 
 # =============================================================================
+# TOOLBAR HEALTH ICONS (Per UI-COLOR-01-v1: on deep-purple app bar)
+# =============================================================================
+
+TOOLBAR_HEALTH_ICONS: Dict[str, str] = {
+    'healthy': 'mdi-shield-check',
+    'degraded': 'mdi-shield-alert',
+    'unhealthy': 'mdi-shield-off',
+}
+
+
+# =============================================================================
 # CATEGORY ICONS
 # =============================================================================
 

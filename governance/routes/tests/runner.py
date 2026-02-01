@@ -139,6 +139,71 @@ async def list_test_results(limit: int = Query(10, le=50)):
     return {"runs": [{"run_id": k, **v} for k, v in sorted_runs[:limit]]}
 
 
+@router.get("/robot/summary")
+async def get_robot_summary():
+    """Parse Robot Framework output.xml for summary stats."""
+    project_root = Path("/app") if Path("/app").exists() else Path(".")
+    output_xml = project_root / "output.xml"
+
+    if not output_xml.exists():
+        return {"available": False, "message": "No Robot Framework output.xml found"}
+
+    try:
+        import xml.etree.ElementTree as ET
+        tree = ET.parse(str(output_xml))
+        root = tree.getroot()
+
+        # Parse <statistics> section
+        stats_elem = root.find(".//statistics/total/stat")
+        total_pass = int(stats_elem.get("pass", 0)) if stats_elem is not None else 0
+        total_fail = int(stats_elem.get("fail", 0)) if stats_elem is not None else 0
+        total_skip = int(stats_elem.get("skip", 0)) if stats_elem is not None else 0
+
+        # Get generation timestamp
+        generated = root.get("generated", "")
+
+        # Get suite-level stats
+        suites = []
+        for suite_stat in root.findall(".//statistics/suite/stat"):
+            suites.append({
+                "name": suite_stat.text or suite_stat.get("name", ""),
+                "pass": int(suite_stat.get("pass", 0)),
+                "fail": int(suite_stat.get("fail", 0)),
+            })
+
+        return {
+            "available": True,
+            "generated": generated,
+            "total": total_pass + total_fail + total_skip,
+            "passed": total_pass,
+            "failed": total_fail,
+            "skipped": total_skip,
+            "suites": suites,
+            "report_exists": (project_root / "report.html").exists(),
+            "log_exists": (project_root / "log.html").exists(),
+        }
+    except Exception as e:
+        return {"available": False, "message": f"Error parsing output.xml: {e}"}
+
+
+@router.get("/robot/report")
+async def serve_robot_report(file: str = Query("report.html")):
+    """Serve Robot Framework report HTML files."""
+    from fastapi.responses import FileResponse
+
+    allowed_files = {"report.html", "log.html"}
+    if file not in allowed_files:
+        return {"error": f"File not allowed. Choose from: {allowed_files}"}
+
+    project_root = Path("/app") if Path("/app").exists() else Path(".")
+    file_path = project_root / file
+
+    if not file_path.exists():
+        return {"error": f"{file} not found"}
+
+    return FileResponse(str(file_path), media_type="text/html")
+
+
 def _execute_tests(run_id: str, cmd: list, category: str = None):
     """Execute pytest and store results with evidence generation."""
     start_time = datetime.now()

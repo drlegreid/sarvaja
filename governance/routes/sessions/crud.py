@@ -185,6 +185,9 @@ async def update_session(session_id: str, data: SessionUpdate):
             session["tasks_completed"] = data.tasks_completed
         if data.agent_id is not None:
             session["agent_id"] = data.agent_id
+        record_audit("UPDATE", "session", session_id,
+                     actor_id=data.agent_id or "system",
+                     metadata={"source": "in-memory-fallback"})
         return SessionResponse(**session)
 
     try:
@@ -202,6 +205,11 @@ async def update_session(session_id: str, data: SessionUpdate):
             agent_id=data.agent_id
         )
         if updated:
+            record_audit("UPDATE", "session", session_id,
+                         actor_id=data.agent_id or "system",
+                         old_value=existing.get("status"),
+                         new_value=data.status or existing.get("status"),
+                         metadata={"description": data.description})
             return session_to_response(updated)
         raise HTTPException(status_code=500, detail="Failed to update session")
     except HTTPException:

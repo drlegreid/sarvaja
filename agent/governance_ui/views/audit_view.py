@@ -173,6 +173,9 @@ def build_audit_table() -> None:
                         ]),
                         density="compact",
                         items_per_page=20,
+                        hover=True,
+                        click_row="($event, row) => { trigger('navigate_to_entity', [row.item.entity_type, row.item.entity_id]) }",
+                        __events=[("click_row", "click:row")],
                         __properties=["data-testid"],
                         **{"data-testid": "audit-entries-table"}
                     )
