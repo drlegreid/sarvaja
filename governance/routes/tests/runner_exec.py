@@ -147,6 +147,51 @@ def execute_regression(run_id: str, skip_dynamic: bool = False):
             pass
 
 
+def execute_heuristic(run_id: str, domain: str = None):
+    """Execute heuristic checks in background thread and store results."""
+    start_time = datetime.now()
+    try:
+        import os
+        from governance.routes.tests.heuristic_runner import run_heuristic_checks
+
+        api_url = os.getenv("GOVERNANCE_API_URL", "http://localhost:8082")
+        result = run_heuristic_checks(api_base_url=api_url, domain=domain)
+        duration = (datetime.now() - start_time).total_seconds()
+
+        summary = result.get("summary", {})
+        test_result = {
+            "status": "completed" if summary.get("failed", 0) == 0 and summary.get("errors", 0) == 0 else "failed",
+            "timestamp": start_time.isoformat(),
+            "duration_seconds": duration,
+            "category": "heuristic",
+            "total": summary.get("total", 0),
+            "passed": summary.get("passed", 0),
+            "failed": summary.get("failed", 0),
+            "skipped": summary.get("skipped", 0),
+            "errors": summary.get("errors", 0),
+            "checks": result.get("checks", []),
+            "summary": summary,
+        }
+
+        _test_results[run_id] = test_result
+        try:
+            _persist_result(run_id, test_result)
+        except Exception as pe:
+            logger.warning(f"Failed to persist heuristic result: {pe}")
+
+    except Exception as e:
+        _test_results[run_id] = {
+            "status": "error",
+            "timestamp": start_time.isoformat(),
+            "error": str(e),
+            "category": "heuristic",
+        }
+        try:
+            _persist_result(run_id, _test_results[run_id])
+        except Exception:
+            pass
+
+
 def parse_robot_xml(test_root: str) -> dict:
     """Parse Robot Framework output.xml for summary stats."""
     project_root = Path(test_root)

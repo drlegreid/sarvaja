@@ -22,6 +22,7 @@ from governance.routes.tests.runner_store import (
 from governance.routes.tests.runner_exec import (
     execute_tests,
     execute_regression,
+    execute_heuristic,
     parse_robot_xml,
 )
 
@@ -207,14 +208,26 @@ async def list_test_results(limit: int = Query(10, le=50)):
 
 @router.post("/heuristic/run")
 async def run_heuristic_tests(
+    background_tasks: BackgroundTasks,
     domain: Optional[str] = Query(None, description="Domain filter: TASK, SESSION, RULE, AGENT"),
 ):
-    """Run heuristic data integrity checks. Per D.4."""
-    import os
-    from governance.routes.tests.heuristic_runner import run_heuristic_checks
-    api_url = os.getenv("GOVERNANCE_API_URL", "http://localhost:8082")
-    results = run_heuristic_checks(api_base_url=api_url, domain=domain)
-    return results
+    """Run heuristic data integrity checks in background. Per D.4.
+
+    Returns run_id for polling via /tests/results/{run_id}.
+    Runs in background thread to avoid deadlock from self-referential API calls.
+    """
+    run_id = f"HEUR-{datetime.now().strftime('%Y%m%d-%H%M%S')}"
+
+    _test_results[run_id] = {
+        "status": "running",
+        "timestamp": datetime.now().isoformat(),
+        "category": "heuristic",
+        "command": f"heuristic (domain={domain})",
+    }
+
+    background_tasks.add_task(execute_heuristic, run_id, domain)
+
+    return {"run_id": run_id, "status": "started", "category": "heuristic"}
 
 
 @router.post("/regression/run")

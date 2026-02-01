@@ -29,7 +29,9 @@ def _ensure_response(result) -> SessionResponse:
     Service layer may return a SessionResponse (from TypeDB path)
     or a dict (from in-memory fallback). Handle both.
     """
-    return _ensure_response(result)
+    if isinstance(result, SessionResponse):
+        return result
+    return SessionResponse(**result)
 
 
 # =============================================================================
