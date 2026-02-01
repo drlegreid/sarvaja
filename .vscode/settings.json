@@ -11,5 +11,6 @@
   "files.associations": {
     "*.md": "markdown",
     "docker-compose*.yml": "dockercompose"
-  }
+  },
+  "makefile.configureOnOpen": false
 }

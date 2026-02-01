@@ -1,5 +1,7 @@
 {
-  "active_sessions": [],
-  "last_session": null,
-  "count": 0
+  "active_sessions": [
+    "SESSION-2026-01-30-MCP-TEST"
+  ],
+  "last_session": "SESSION-2026-01-30-MCP-TEST",
+  "count": 1
 }

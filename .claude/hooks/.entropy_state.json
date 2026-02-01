@@ -1,10 +1,17 @@
 {
-  "session_start": "2026-01-28T23:30:52.003636",
-  "session_hash": "0000",
-  "tool_count": 1,
-  "check_count": 1,
+  "session_start": "2026-01-01T00:00:00",
+  "session_hash": "HIGH",
+  "tool_count": 121,
+  "check_count": 2,
   "last_save": null,
-  "warnings_shown": 0,
-  "last_warning_at": 0,
-  "history": []
+  "warnings_shown": 2,
+  "last_warning_at": 120,
+  "history": [
+    {
+      "timestamp": "2026-02-01T02:53:23.348945",
+      "event": "WARNING_HIGH",
+      "tool_count": 120,
+      "session_hash": "HIGH"
+    }
+  ]
 }
