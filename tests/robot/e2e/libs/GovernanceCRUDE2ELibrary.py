@@ -444,7 +444,7 @@ class GovernanceCRUDE2ELibrary:
         # Sweep ALL TEST-* rules (requires TypeDB)
         if self.check_typedb_available():
             try:
-                response = client.get("/api/rules")
+                response = client.get("/api/rules?limit=500")
                 if response.status_code == 200:
                     data = response.json()
                     rules = data.get("items", data) if isinstance(data, dict) else data
