@@ -128,7 +128,17 @@ def build_system_stats() -> None:
                 **{"data-testid": "infra-stat-memory"}
             ):
                 with v3.VCardText():
-                    html.Div("Memory Usage", classes="text-subtitle-2 text-grey")
+                    with html.Div(classes="d-flex align-center"):
+                        html.Div("Memory Usage", classes="text-subtitle-2 text-grey")
+                        with v3.VTooltip(location="top"):
+                            with html.Template(v_slot_activator="{ props }"):
+                                v3.VIcon(
+                                    "mdi-information-outline",
+                                    size="x-small",
+                                    classes="ml-1 text-grey",
+                                    v_bind="props",
+                                )
+                            html.Span("Green: <70% | Yellow: 70-85% | Red: >85%")
                     html.Div(
                         "{{ infra_stats.memory_pct || 0 }}%",
                         classes="text-h4 font-weight-bold"
@@ -150,7 +160,17 @@ def build_system_stats() -> None:
                 **{"data-testid": "infra-stat-procs"}
             ):
                 with v3.VCardText():
-                    html.Div("Python Processes", classes="text-subtitle-2 text-grey")
+                    with html.Div(classes="d-flex align-center"):
+                        html.Div("Python Processes", classes="text-subtitle-2 text-grey")
+                        with v3.VTooltip(location="top"):
+                            with html.Template(v_slot_activator="{ props }"):
+                                v3.VIcon(
+                                    "mdi-information-outline",
+                                    size="x-small",
+                                    classes="ml-1 text-grey",
+                                    v_bind="props",
+                                )
+                            html.Span("Warning at >20 processes. Normal: 5-15.")
                     html.Div(
                         "{{ infra_stats.python_procs || 0 }}",
                         classes="text-h4 font-weight-bold"
@@ -167,7 +187,20 @@ def build_system_stats() -> None:
                 **{"data-testid": "infra-stat-hash"}
             ):
                 with v3.VCardText():
-                    html.Div("Health Hash", classes="text-subtitle-2 text-grey")
+                    with html.Div(classes="d-flex align-center"):
+                        html.Div("Health Hash", classes="text-subtitle-2 text-grey")
+                        with v3.VTooltip(location="top"):
+                            with html.Template(v_slot_activator="{ props }"):
+                                v3.VIcon(
+                                    "mdi-information-outline",
+                                    size="x-small",
+                                    classes="ml-1 text-grey",
+                                    v_bind="props",
+                                )
+                            html.Span(
+                                "8-char hash of service states. "
+                                "Changes when any service status changes."
+                            )
                     html.Div(
                         "{{ infra_stats.frankel_hash || '--------' }}",
                         classes="text-h5 font-weight-bold font-mono"
@@ -247,6 +280,8 @@ def build_mcp_status_panel() -> None:
                             with html.Tr(
                                 v_for="(detail, sname) in infra_stats.mcp_details",
                                 key="sname",
+                                click="mcp_selected_server = sname; show_mcp_detail = true",
+                                style="cursor: pointer;",
                             ):
                                 # Server name
                                 html.Td("{{ sname }}", classes="font-weight-medium")
@@ -294,6 +329,181 @@ def build_mcp_status_panel() -> None:
                                     "{{ detail.desc || detail.comment || '-' }}",
                                     classes="text-caption",
                                 )
+
+
+def build_mcp_detail_dialog() -> None:
+    """Build MCP server detail dialog. Per C.2."""
+    with v3.VDialog(
+        v_model=("show_mcp_detail",),
+        max_width=600,
+    ):
+        with v3.VCard(v_if="mcp_selected_server"):
+            with v3.VCardTitle(classes="d-flex align-center"):
+                v3.VIcon("mdi-server-network", classes="mr-2")
+                html.Span("{{ mcp_selected_server }}")
+                v3.VSpacer()
+                v3.VBtn(
+                    icon="mdi-close",
+                    variant="text",
+                    click="show_mcp_detail = false",
+                )
+            with v3.VCardText():
+                # Status chips
+                with html.Div(classes="mb-3"):
+                    v3.VChip(
+                        v_text=(
+                            "(infra_stats.mcp_servers || {})"
+                            "[mcp_selected_server] || 'ON-DEMAND'",
+                        ),
+                        color=(
+                            "(infra_stats.mcp_servers || {})"
+                            "[mcp_selected_server] === 'OK' "
+                            "? 'success' : 'info'",
+                        ),
+                        variant="flat",
+                        classes="mr-2",
+                    )
+                    v3.VChip(
+                        v_text=(
+                            "infra_stats.mcp_details && "
+                            "infra_stats.mcp_details[mcp_selected_server] "
+                            "? infra_stats.mcp_details[mcp_selected_server].ready "
+                            ": 'UNKNOWN'",
+                        ),
+                        color=(
+                            "infra_stats.mcp_details && "
+                            "infra_stats.mcp_details[mcp_selected_server] && "
+                            "infra_stats.mcp_details[mcp_selected_server].ready === 'READY' "
+                            "? 'success' : 'error'",
+                        ),
+                        variant="flat",
+                    )
+                # Command
+                with html.Div(classes="mb-3"):
+                    html.Div("Command", classes="text-subtitle-2 text-grey")
+                    html.Pre(
+                        (
+                            "infra_stats.mcp_details && "
+                            "infra_stats.mcp_details[mcp_selected_server] "
+                            "? infra_stats.mcp_details[mcp_selected_server].command "
+                            ": 'N/A'",
+                        ),
+                        style=(
+                            "font-size: 12px; background: #1e1e1e; "
+                            "color: #d4d4d4; padding: 8px; border-radius: 4px; "
+                            "white-space: pre-wrap; word-break: break-all;"
+                        ),
+                    )
+                # Tools & Dependencies
+                with v3.VRow():
+                    with v3.VCol(cols=6):
+                        html.Div("Registered Tools", classes="text-subtitle-2 text-grey")
+                        html.Div(
+                            (
+                                "infra_stats.mcp_details && "
+                                "infra_stats.mcp_details[mcp_selected_server] "
+                                "? infra_stats.mcp_details[mcp_selected_server].tools "
+                                ": 0",
+                            ),
+                            classes="text-h5 font-weight-bold",
+                        )
+                    with v3.VCol(cols=6):
+                        html.Div("Dependencies", classes="text-subtitle-2 text-grey")
+                        with html.Div(classes="d-flex flex-wrap ga-1 mt-1"):
+                            v3.VChip(
+                                v_for=(
+                                    "dep in ("
+                                    "infra_stats.mcp_details && "
+                                    "infra_stats.mcp_details[mcp_selected_server] "
+                                    "? infra_stats.mcp_details[mcp_selected_server].depends_on "
+                                    ": [])"
+                                ),
+                                v_text="dep",
+                                size="small",
+                                variant="outlined",
+                            )
+                            html.Span(
+                                "None",
+                                v_if=(
+                                    "!infra_stats.mcp_details || "
+                                    "!infra_stats.mcp_details[mcp_selected_server] || "
+                                    "!infra_stats.mcp_details[mcp_selected_server].depends_on || "
+                                    "infra_stats.mcp_details[mcp_selected_server]"
+                                    ".depends_on.length === 0"
+                                ),
+                                classes="text-caption text-grey",
+                            )
+                # Description
+                with html.Div(classes="mt-3"):
+                    html.Div("Description", classes="text-subtitle-2 text-grey")
+                    html.Div(
+                        (
+                            "infra_stats.mcp_details && "
+                            "infra_stats.mcp_details[mcp_selected_server] "
+                            "? (infra_stats.mcp_details[mcp_selected_server].desc || "
+                            "infra_stats.mcp_details[mcp_selected_server].comment || "
+                            "'N/A') : 'N/A'",
+                        ),
+                        classes="text-body-2",
+                    )
+
+
+def build_python_procs_panel() -> None:
+    """Build Python process drill-down panel. Per C.4."""
+    with v3.VRow(classes="mt-4"):
+        with v3.VCol(cols=12):
+            with v3.VExpansionPanels(
+                v_model=("show_python_procs",),
+                __properties=["data-testid"],
+                **{"data-testid": "infra-python-procs-panel"}
+            ):
+                with v3.VExpansionPanel():
+                    with v3.VExpansionPanelTitle(
+                        click="trigger('load_python_processes')",
+                    ):
+                        v3.VIcon("mdi-language-python", classes="mr-2")
+                        html.Span("Python Process Details")
+                        v3.VSpacer()
+                        v3.VChip(
+                            v_text=(
+                                "(infra_python_procs || []).length + ' processes'",
+                            ),
+                            size="small",
+                            variant="tonal",
+                        )
+                    with v3.VExpansionPanelText():
+                        with v3.VTable(
+                            v_if="infra_python_procs && infra_python_procs.length > 0",
+                            density="compact",
+                        ):
+                            with html.Thead():
+                                with html.Tr():
+                                    html.Th("PID")
+                                    html.Th("CPU %")
+                                    html.Th("MEM %")
+                                    html.Th("Command")
+                            with html.Tbody():
+                                with html.Tr(
+                                    v_for="proc in infra_python_procs",
+                                ):
+                                    html.Td(
+                                        "{{ proc.pid }}",
+                                        classes="font-weight-medium",
+                                    )
+                                    html.Td("{{ proc.cpu }}%")
+                                    html.Td("{{ proc.mem }}%")
+                                    html.Td(
+                                        "{{ proc.command }}",
+                                        classes="text-caption",
+                                        style="max-width: 400px; overflow: hidden; "
+                                              "text-overflow: ellipsis;",
+                                    )
+                        v3.VAlert(
+                            v_if="!infra_python_procs || infra_python_procs.length === 0",
+                            type="info",
+                            density="compact",
+                            text="No Python processes found.",
+                        )
 
 
 def build_dsp_alert() -> None:
@@ -487,8 +697,14 @@ def build_infra_view() -> None:
             # MCP server status (UI-AUDIT-011)
             build_mcp_status_panel()
 
+            # Python process drill-down (C.4)
+            build_python_procs_panel()
+
             # Container logs viewer
             build_logs_panel()
 
             # Recovery actions
             build_recovery_panel()
+
+    # MCP detail dialog (C.2) - must be outside VCard
+    build_mcp_detail_dialog()

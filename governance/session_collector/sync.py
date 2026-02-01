@@ -54,17 +54,22 @@ class SessionSyncMixin:
             summary = self._generate_summary()
 
             # Upsert to ChromaDB
+            metadata = {
+                "session_type": self.session_type,
+                "topic": self.topic,
+                "start_time": self.start_time.isoformat(),
+                "decisions_count": len(self.decisions),
+                "tasks_count": len(self.tasks),
+                "events_count": len(self.events),
+            }
+            # A.4: Include agent_id for session-agent linking
+            if getattr(self, "agent_id", None):
+                metadata["agent_id"] = self.agent_id
+
             collection.upsert(
                 ids=[self.session_id],
                 documents=[summary],
-                metadatas=[{
-                    "session_type": self.session_type,
-                    "topic": self.topic,
-                    "start_time": self.start_time.isoformat(),
-                    "decisions_count": len(self.decisions),
-                    "tasks_count": len(self.tasks),
-                    "events_count": len(self.events)
-                }]
+                metadatas=[metadata],
             )
 
             return True
@@ -159,12 +164,16 @@ class SessionSyncMixin:
             existing_session = client.execute_query(session_query)
 
             if not existing_session:
-                # Create work-session
+                # Create work-session with agent_id (A.4: session-agent linking)
+                agent_part = ""
+                if getattr(self, "agent_id", None):
+                    agent_escaped = self.agent_id.replace('"', '\\"')
+                    agent_part = f',\n                        has agent-id "{agent_escaped}"'
                 create_session_query = f'''
                     insert $s isa work-session,
                         has session-id "{self.session_id}",
                         has session-name "{self.topic}",
-                        has session-description "Session for {self.session_type}";
+                        has session-description "Session for {self.session_type}"{agent_part};
                 '''
                 client.execute_query(create_session_query)
 

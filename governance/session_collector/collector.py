@@ -34,7 +34,8 @@ class SessionCollector(SessionCaptureMixin, SessionSyncMixin, SessionRenderMixin
         self,
         topic: str,
         session_type: str = "general",
-        evidence_dir: str = None
+        evidence_dir: str = None,
+        agent_id: str = None,
     ):
         """
         Initialize session collector.
@@ -43,10 +44,12 @@ class SessionCollector(SessionCaptureMixin, SessionSyncMixin, SessionRenderMixin
             topic: Session topic (e.g., "STRATEGIC-VISION", "RD-HASKELL-MCP")
             session_type: Type of session (general, strategic, research, debug)
             evidence_dir: Directory for evidence files (default: ./evidence)
+            agent_id: Agent that owns this session (A.4: session-agent linking)
         """
         self.session_id = f"SESSION-{date.today()}-{topic.upper()}"
         self.topic = topic
         self.session_type = session_type
+        self.agent_id = agent_id
         self.start_time = datetime.now()
         self.end_time: Optional[datetime] = None
 

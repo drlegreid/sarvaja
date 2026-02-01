@@ -198,6 +198,7 @@ def check_agent_last_active(api_base_url: str) -> dict:
 # Per DOC-SIZE-01-v1: Cross-entity/API/UI checks split to heuristic_checks_cross.py
 
 from governance.routes.tests.heuristic_checks_cross import CROSS_API_UI_CHECKS
+from governance.routes.tests.heuristic_checks_session import SESSION_EVIDENCE_CHECKS
 
 HEURISTIC_CHECKS = [
     {"id": "H-TASK-001", "domain": "TASK", "name": "Task descriptions", "check_fn": check_task_descriptions},
@@ -210,4 +211,4 @@ HEURISTIC_CHECKS = [
     {"id": "H-RULE-004", "domain": "RULE", "name": "No TEST-* rule artifacts", "check_fn": check_no_test_rules},
     {"id": "H-AGENT-001", "domain": "AGENT", "name": "Agent trust scores", "check_fn": check_agent_trust_scores},
     {"id": "H-AGENT-002", "domain": "AGENT", "name": "Agent last_active recency", "check_fn": check_agent_last_active},
-] + CROSS_API_UI_CHECKS
+] + SESSION_EVIDENCE_CHECKS + CROSS_API_UI_CHECKS

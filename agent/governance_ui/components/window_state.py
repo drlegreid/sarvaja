@@ -2,124 +2,35 @@
 Window-Isolated State Management for Trame.
 
 Per GAP-UI-AUDIT-002: Client-side state to prevent multi-window mirroring.
-Per Option C: Move navigation/filter state to Vue (browser-side).
 
-This component injects JavaScript that:
-1. Generates unique window ID on page load
-2. Saves navigation state to sessionStorage per-window
-3. Restores navigation state from sessionStorage on page load
-4. Prevents server-side state broadcasts from overwriting local nav state
+The JS file (static/window_isolator.js) is loaded via a <script> tag
+injected into Trame's HTML template by GovernanceDashboard._inject_html_script().
+
+Neither html.Script() nor v-effect works in this Trame/Vue 3 build:
+- html.Script: Vue 3 strips <script> tags from component templates
+- v-effect: not a registered Vue directive in this build
+
+v6 wraps trame.state.state with a JS Proxy that blocks remote writes
+to navigation/selection keys. Only allows writes during local user
+interaction (click/keydown on nav elements). Data payloads pass through.
+
+Key findings from v4/v5 debugging:
+- state[key] bracket access does NOT work on trame.state
+- Vue.watch doesn't fire (state.state is NOT Vue-reactive)
+- _updateFromServer is NOT the only state update path
+- wslink sets state.state[key] directly (discovered via Proxy logging)
+- Proxy on state.state IS the correct interception point
 
 Created: 2026-01-20 (DSP Session)
+Updated: 2026-02-01 - v6: Proxy on state.state (replaces v4 Vue.watch / v5 _updateFromServer)
 """
-
-from trame.widgets import html
 
 
 def inject_window_state_isolator() -> None:
+    """No-op: script is now loaded via HTML template injection.
+
+    Kept for backward compatibility with governance_dashboard.py import.
+    The actual injection is done by GovernanceDashboard._inject_html_script()
+    which adds <script src="/govstatic/window_isolator.js"> to index.html.
     """
-    Inject window state isolation script.
-
-    Call this once in the layout after VAppLayout initialization.
-    This prevents multiple windows from mirroring navigation state.
-    """
-    html.Script(
-        """
-        (function() {
-            // Generate unique window ID if not exists
-            if (!window.__govWindowId) {
-                window.__govWindowId = 'win_' + Math.random().toString(36).substr(2, 9);
-            }
-            const WIN_ID = window.__govWindowId;
-            const STORAGE_KEY = 'gov_nav_state_' + WIN_ID;
-
-            // State keys that should be window-local (not shared across tabs)
-            // Updated per PLAN-UI-OVERHAUL-001 Task 0.3: full coverage
-            const LOCAL_STATE_KEYS = [
-                'active_view',
-                'show_rule_detail',
-                'show_session_detail',
-                'show_session_form',
-                'show_decision_detail',
-                'show_task_detail',
-                'show_agent_detail',
-                'show_agent_registration',
-                'selected_rule',
-                'selected_session',
-                'selected_decision',
-                'selected_task',
-                'selected_agent'
-            ];
-
-            // Save local state to sessionStorage
-            function saveLocalState() {
-                if (!window.trame || !window.trame.state) return;
-                const state = window.trame.state;
-                const localState = {};
-                LOCAL_STATE_KEYS.forEach(key => {
-                    if (state[key] !== undefined) {
-                        localState[key] = state[key];
-                    }
-                });
-                sessionStorage.setItem(STORAGE_KEY, JSON.stringify(localState));
-            }
-
-            // Restore local state from sessionStorage
-            function restoreLocalState() {
-                if (!window.trame || !window.trame.state) return;
-                try {
-                    const saved = sessionStorage.getItem(STORAGE_KEY);
-                    if (saved) {
-                        const localState = JSON.parse(saved);
-                        const state = window.trame.state;
-                        Object.keys(localState).forEach(key => {
-                            if (LOCAL_STATE_KEYS.includes(key)) {
-                                state[key] = localState[key];
-                            }
-                        });
-                    }
-                } catch (e) {
-                    console.warn('Failed to restore window state:', e);
-                }
-            }
-
-            // Watch for state changes and save
-            function setupStateWatcher() {
-                if (!window.trame || !window.trame.state) {
-                    setTimeout(setupStateWatcher, 100);
-                    return;
-                }
-
-                // Restore on load
-                restoreLocalState();
-
-                // Save on state change (debounced)
-                let saveTimer = null;
-                const originalSet = window.trame.state.__lookupSetter__ ?
-                    null : Object.getOwnPropertyDescriptor(Object.getPrototypeOf(window.trame.state), 'active_view');
-
-                // Use MutationObserver pattern for Vue reactivity
-                LOCAL_STATE_KEYS.forEach(key => {
-                    let lastValue = window.trame.state[key];
-                    setInterval(() => {
-                        const currentValue = window.trame.state[key];
-                        if (currentValue !== lastValue) {
-                            lastValue = currentValue;
-                            clearTimeout(saveTimer);
-                            saveTimer = setTimeout(saveLocalState, 50);
-                        }
-                    }, 100);
-                });
-
-                console.log('[GAP-UI-AUDIT-002] Window state isolator active:', WIN_ID);
-            }
-
-            // Initialize when DOM ready
-            if (document.readyState === 'loading') {
-                document.addEventListener('DOMContentLoaded', setupStateWatcher);
-            } else {
-                setupStateWatcher();
-            }
-        })();
-        """
-    )
+    pass

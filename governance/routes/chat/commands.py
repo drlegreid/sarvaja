@@ -19,6 +19,7 @@ logger = logging.getLogger(__name__)
 from governance.client import get_client
 from governance.stores import _tasks_store, _agents_store, _sessions_store
 from governance.context_preloader import preload_session_context
+from governance.services.sessions import list_sessions
 
 # LiteLLM proxy configuration
 LITELLM_BASE_URL = os.environ.get("LITELLM_BASE_URL", "http://litellm:4000")
@@ -155,23 +156,34 @@ You can also type natural language commands and I'll do my best to help!"""
             return f"Failed to load context: {str(e)}"
 
     elif content_lower.startswith("/sessions"):
-        sessions = list(_sessions_store.values())
-        if sessions:
-            # Sort by start_time descending (most recent first)
-            sessions_sorted = sorted(
-                sessions,
+        # Query TypeDB via service layer (with in-memory fallback)
+        try:
+            result = list_sessions(sort_by="started_at", order="desc", limit=10)
+            sessions = result.get("items", [])
+            total = result.get("pagination", {}).get("total", len(sessions))
+        except Exception as e:
+            logger.debug(f"Service layer session query failed: {e}")
+            sessions = sorted(
+                _sessions_store.values(),
                 key=lambda s: s.get("start_time", ""),
                 reverse=True,
-            )
+            )[:10]
+            total = len(_sessions_store)
+
+        if sessions:
+            active_count = sum(1 for s in sessions if s.get("status") == "ACTIVE")
             session_list = "\n".join([
                 f"- {s.get('session_id', 'unknown')}: "
                 f"{s.get('status', 'UNKNOWN')} | "
                 f"agent: {s.get('agent_id', 'none')} | "
                 f"started: {s.get('start_time', 'N/A')[:16]}"
-                + (f"\n  intent: {s.get('intent', '')}" if s.get("intent") else "")
-                for s in sessions_sorted[:10]
+                + (f"\n  evidence: {len(s.get('evidence_files', []))} files"
+                   if s.get("evidence_files") else "")
+                for s in sessions
             ])
-            return f"Sessions ({len(sessions)} total):\n{session_list}"
+            return (
+                f"Sessions ({total} total, {active_count} active):\n{session_list}"
+            )
         return "No sessions found. Sessions are created when agents perform work."
 
     elif content_lower.startswith("/agents"):
@@ -217,10 +229,37 @@ You can also type natural language commands and I'll do my best to help!"""
 
     else:
         # Natural language processing via LLM (PLAN-UI-OVERHAUL-001 Task 3.5)
+        # A.3: Enriched context with active tasks, recent sessions, available commands
+        active_tasks = [
+            t for t in _tasks_store.values()
+            if t.get("status") in ("pending", "IN_PROGRESS", "in_progress")
+        ]
+        active_task_summary = ""
+        if active_tasks:
+            active_task_summary = "\n\nActive tasks:\n" + "\n".join(
+                f"- {t.get('task_id')}: {t.get('name')} ({t.get('status')})"
+                for t in active_tasks[:5]
+            )
+
+        recent_sessions_summary = ""
+        try:
+            sr = list_sessions(sort_by="started_at", order="desc", limit=5)
+            recent = sr.get("items", [])
+            if recent:
+                recent_sessions_summary = "\n\nRecent sessions:\n" + "\n".join(
+                    f"- {s.get('session_id')}: {s.get('status')} "
+                    f"(agent: {s.get('agent_id', 'none')})"
+                    for s in recent
+                )
+        except Exception:
+            pass
+
         context = (
             f"{GOVERNANCE_SYSTEM_PROMPT}\n\n"
             f"Platform context: {rules_count} rules, {tasks_count} tasks, "
             f"{agents_count} agents, {sessions_count} sessions."
+            f"{active_task_summary}"
+            f"{recent_sessions_summary}"
         )
         return query_llm(content, system_prompt=context)
 

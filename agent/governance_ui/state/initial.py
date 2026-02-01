@@ -80,6 +80,7 @@ def get_initial_state() -> Dict[str, Any]:
         'show_evidence_attach': False,
         'evidence_attach_path': '',
         'evidence_attach_loading': False,
+        'evidence_search': '',  # B.4: Evidence search filter
 
         # Session Tasks (GAP-DATA-INTEGRITY-001 Phase 3)
         'session_tasks': [],
@@ -248,6 +249,12 @@ def get_initial_state() -> Dict[str, Any]:
         'infra_log_lines': [],
         'infra_log_container': 'dashboard',
         'infra_log_level': '',
+        # MCP detail dialog (C.2)
+        'show_mcp_detail': False,
+        'mcp_selected_server': None,
+        # Python process drill-down (C.4)
+        'infra_python_procs': [],
+        'show_python_procs': False,
 
         # Workflow Compliance (RD-WORKFLOW Phase 4)
         'workflow_status': {'overall': 'UNKNOWN', 'passed': 0, 'failed': 0, 'warnings': 0},

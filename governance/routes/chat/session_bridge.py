@@ -43,6 +43,7 @@ def start_chat_session(
     collector = SessionCollector(
         topic=safe_topic,
         session_type=session_type,
+        agent_id=agent_id,
     )
 
     # Register in sessions store for dashboard visibility

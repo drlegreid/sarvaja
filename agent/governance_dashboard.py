@@ -117,6 +117,27 @@ class GovernanceDashboard:
     # TRAME SERVER
     # =========================================================================
 
+    def _inject_html_script(self, script_src: str) -> None:
+        """Inject a <script src> into Trame's HTML template before </body>.
+
+        Neither html.Script() nor v-effect work in this Trame/Vue 3 build:
+        - html.Script: Vue 3 strips <script> from component templates
+        - v-effect: not a registered directive (only Vuetify directives exist)
+
+        This patches the trame-client index.html directly at startup.
+        """
+        import trame_client
+        www_dir = Path(trame_client.__file__).parent / "module" / "vue3-www"
+        index_html = www_dir / "index.html"
+        if not index_html.exists():
+            return
+        content = index_html.read_text()
+        tag = f'<script src="{script_src}"></script>'
+        if tag in content:
+            return  # Already injected
+        content = content.replace("</body>", f"  {tag}\n  </body>")
+        index_html.write_text(content)
+
     def build_ui(self):
         """
         Build complete Trame UI layout.
@@ -139,6 +160,15 @@ class GovernanceDashboard:
 
             self._server = get_server(client_type="vue3", name="governance-dashboard")
             self._state = self._server.state
+
+            # Serve static JS files (window isolator, etc.)
+            static_dir = str(Path(__file__).parent / "governance_ui" / "static")
+            self._server.serve["govstatic"] = static_dir
+
+            # Inject window_isolator.js into Trame's HTML template
+            # (html.Script doesn't work: Vue 3 strips <script> from templates)
+            # (v-effect doesn't work: not a registered directive in this build)
+            self._inject_html_script("/govstatic/window_isolator.js")
 
             # Initialize state (from package pure function)
             for key, value in get_initial_state().items():
