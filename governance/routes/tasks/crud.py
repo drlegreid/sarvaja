@@ -62,6 +62,9 @@ async def create_task(task: TaskCreate):
             gap_id=task.gap_id, linked_rules=task.linked_rules,
             linked_sessions=task.linked_sessions, source="rest-api",
         )
+        # Service returns TaskResponse directly (via task_to_response)
+        if isinstance(result, TaskResponse):
+            return result
         return TaskResponse(**result)
     except ValueError as e:
         raise HTTPException(status_code=409, detail=str(e))
@@ -73,6 +76,9 @@ async def get_task(task_id: str):
     result = task_service.get_task(task_id)
     if result is None:
         raise HTTPException(status_code=404, detail=f"Task {task_id} not found")
+    # Service returns TaskResponse directly (via task_to_response)
+    if isinstance(result, TaskResponse):
+        return result
     return TaskResponse(**result)
 
 
@@ -94,6 +100,9 @@ async def update_task(task_id: str, update: TaskUpdate):
     )
     if result is None:
         raise HTTPException(status_code=404, detail=f"Task {task_id} not found")
+    # Service returns TaskResponse directly (via task_to_response)
+    if isinstance(result, TaskResponse):
+        return result
     return TaskResponse(**result)
 
 

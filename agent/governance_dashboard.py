@@ -174,15 +174,41 @@ class GovernanceDashboard:
             for key, value in get_initial_state().items():
                 setattr(self._state, key, value)
 
-            # Load initial data (from package pure functions)
-            self._state.rules = get_rules()
-            self._state.decisions = get_decisions()
-            self._state.sessions = get_sessions(limit=100)
-            # Load tasks with pagination to prevent DOM explosion (GAP-UI-PAGING-001)
+            # Load initial data via REST API (not MCP) to get full data including document_path
+            # Per GAP-UI-PAGING-001: Use pagination to prevent DOM explosion
+            import httpx
             try:
-                import httpx
-                page_size = 20  # Must match tasks_per_page default in state/initial.py
                 with httpx.Client(timeout=10.0) as client:
+                    # Rules - REST API includes document_path, MCP function doesn't
+                    resp = client.get(f"{API_BASE_URL}/api/rules")
+                    if resp.status_code == 200:
+                        data = resp.json()
+                        self._state.rules = data.get("items", data) if isinstance(data, dict) else data
+                    else:
+                        self._state.rules = get_rules()
+
+                    # Decisions
+                    resp = client.get(f"{API_BASE_URL}/api/decisions")
+                    if resp.status_code == 200:
+                        data = resp.json()
+                        self._state.decisions = data.get("items", data) if isinstance(data, dict) else data
+                    else:
+                        self._state.decisions = get_decisions()
+
+                    # Sessions with pagination
+                    page_size = 20
+                    resp = client.get(f"{API_BASE_URL}/api/sessions", params={"limit": page_size, "offset": 0})
+                    if resp.status_code == 200:
+                        data = resp.json()
+                        if isinstance(data, dict) and "items" in data:
+                            self._state.sessions = data["items"]
+                            self._state.sessions_pagination = data.get("pagination", {})
+                        else:
+                            self._state.sessions = data[:page_size] if len(data) > page_size else data
+                    else:
+                        self._state.sessions = get_sessions(limit=100)
+
+                    # Tasks with pagination
                     resp = client.get(f"{API_BASE_URL}/api/tasks", params={"limit": page_size, "offset": 0})
                     if resp.status_code == 200:
                         data = resp.json()
@@ -195,6 +221,10 @@ class GovernanceDashboard:
                     else:
                         self._state.tasks = get_tasks()
             except Exception:
+                # Fallback to MCP functions if REST API fails
+                self._state.rules = get_rules()
+                self._state.decisions = get_decisions()
+                self._state.sessions = get_sessions(limit=100)
                 self._state.tasks = get_tasks()
 
             # Agent Task Backlog state (TODO-6)

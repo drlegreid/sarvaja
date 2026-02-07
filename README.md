@@ -1,208 +1,207 @@
-# Sim.ai PoC - Local Agent Platform
+# Sarvaja Platform
 
-Multi-agent orchestration platform with observability and hybrid inference (Claude remote + Ollama local).
+> **Sarvaja** (Sanskrit: सर्वज) = "All-Knowing" / Omniscient
+
+Multi-agent governance platform with TypeDB, LiteLLM, and ChromaDB. Provides AI-assisted task management, rule-based governance, and session tracking.
+
+**Version**: 1.3.1 | **Updated**: 2026-02-08
 
 ## Architecture
 
 ```
-┌─────────────────────────────────────────────────────────────────┐
-│                        AGENT LAYER                               │
-│  ┌─────────────┐ ┌─────────────┐ ┌─────────────┐ ┌────────────┐ │
-│  │ Orchestrator│ │Rules Curator│ │  Researcher │ │   Coder    │ │
-│  └──────┬──────┘ └──────┬──────┘ └──────┬──────┘ └─────┬──────┘ │
-│         └───────────────┴───────────────┴───────────────┘       │
-│                              │ AgentOS :7777                     │
-├──────────────────────────────┼──────────────────────────────────┤
-│                        ROUTING LAYER                             │
-│                    ┌─────────┴─────────┐                        │
-│                    │     LiteLLM       │ :4000                  │
-│                    │  (Model Router)   │                        │
-│                    └────┬─────────┬────┘                        │
-│           ┌─────────────┘         └─────────────┐               │
-│           ▼                                     ▼               │
-│    ┌──────────────┐                    ┌──────────────┐         │
-│    │ Claude Opus  │ (Remote)           │   Ollama     │ :11434  │
-│    │ Claude Sonnet│                    │ gemma3:4b    │ (Local) │
-│    └──────────────┘                    └──────────────┘         │
-├─────────────────────────────────────────────────────────────────┤
-│                     OBSERVABILITY LAYER                          │
-│                    ┌──────────────────┐                         │
-│                    │       Opik       │ :5173/:5174             │
-│                    │  (Tracing/Eval)  │                         │
-│                    └──────────────────┘                         │
-├─────────────────────────────────────────────────────────────────┤
-│                       STORAGE LAYER                              │
-│    ┌──────────────┐              ┌──────────────┐               │
-│    │   ChromaDB   │ :8001        │    SQLite    │               │
-│    │  (Vectors)   │              │ (Agent State)│               │
-│    └──────────────┘              └──────────────┘               │
-└─────────────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────────────┐
+│                        CLAUDE CODE HOST                              │
+│  ┌─────────────────────────────────────────────────────────────┐   │
+│  │                    MCP SERVERS                               │   │
+│  │  ┌────────────┐ ┌────────────┐ ┌────────────┐ ┌───────────┐ │   │
+│  │  │ gov-core   │ │ gov-agents │ │gov-sessions│ │ gov-tasks │ │   │
+│  │  │ (Rules)    │ │ (Trust)    │ │ (DSM)      │ │ (Gaps)    │ │   │
+│  │  └─────┬──────┘ └─────┬──────┘ └─────┬──────┘ └─────┬─────┘ │   │
+│  │        └──────────────┴──────────────┴──────────────┘       │   │
+│  │                           │                                  │   │
+│  │                    TypeDB + ChromaDB                         │   │
+│  └─────────────────────────────────────────────────────────────┘   │
+└─────────────────────────────────────────────────────────────────────┘
+                                │
+┌─────────────────────────────────────────────────────────────────────┐
+│                     PODMAN STACK (5 containers)                      │
+│                                                                      │
+│  ┌────────────┐ ┌────────────┐ ┌────────────┐ ┌────────────┐       │
+│  │ Dashboard  │ │  LiteLLM   │ │   Ollama   │ │  ChromaDB  │       │
+│  │   :8081    │ │   :4000    │ │  :11434    │ │   :8001    │       │
+│  │  REST API  │ │ (Router)   │ │  (Local)   │ │ (Vectors)  │       │
+│  │   :8082    │ │            │ │            │ │            │       │
+│  └────────────┘ └────────────┘ └────────────┘ └────────────┘       │
+│                                                                      │
+│  ┌────────────────────────────────────────────────────────────┐    │
+│  │                      TypeDB :1729                            │    │
+│  │              (Rules, Sessions, Tasks, Agents)                │    │
+│  └────────────────────────────────────────────────────────────┘    │
+└─────────────────────────────────────────────────────────────────────┘
 ```
 
 ## Quick Start
 
-```powershell
+```bash
 # 1. Configure environment
 cp .env.example .env
 # Edit .env → Set ANTHROPIC_API_KEY
 
-# 2. Deploy (CPU profile for laptop)
-.\deploy.ps1 -Action up -Profile cpu
+# 2. Create Python virtual environment
+python3 -m venv .venv
+.venv/bin/pip install -r requirements.txt
 
-# 3. Pull Ollama models
-.\deploy.ps1 -Action pull-models
+# 3. Start Podman stack
+podman compose --profile cpu --profile dashboard-dev up -d
 
-# 4. Check health
-.\deploy.ps1 -Action health
+# 4. Verify services
+podman compose --profile cpu ps
 
-# 5. Run tests
-.\deploy.ps1 -Action test
-
-# 6. Start monitoring (optional)
-.\deploy.ps1 -Action opik
+# 5. Access dashboard
+open http://localhost:8081
 ```
-
-## DevOps Commands
-
-| Command | Description |
-|---------|-------------|
-| `.\deploy.ps1 -Action up` | Start all services |
-| `.\deploy.ps1 -Action down` | Stop all services |
-| `.\deploy.ps1 -Action status` | Show container status |
-| `.\deploy.ps1 -Action logs` | Tail service logs |
-| `.\deploy.ps1 -Action health` | Run health checks |
-| `.\deploy.ps1 -Action test` | Run pytest suite |
-| `.\deploy.ps1 -Action pull-models` | Pull Ollama models |
-| `.\deploy.ps1 -Action opik` | Start Opik dashboard |
-| `.\deploy.ps1 -Action rebuild` | Rebuild containers |
-
-See `docs/DEPLOYMENT.md` for detailed deployment guide.
 
 ## Services
 
 | Service | Port | Description |
 |---------|------|-------------|
-| **Agents API** | 7777 | AgentOS multi-agent API |
+| **Dashboard** | 8081 | Trame/Vue 3 governance UI |
+| **REST API** | 8082 | FastAPI backend |
+| **TypeDB** | 1729 | Graph database (rules, sessions, tasks) |
+| **ChromaDB** | 8001 | Vector embeddings (claude-mem) |
 | **LiteLLM** | 4000 | Model routing proxy |
-| **Opik** | 5173/5174 | Tracing UI and API |
-| **ChromaDB** | 8001 | Vector database |
 | **Ollama** | 11434 | Local CPU inference |
-| **Agent UI** | 3000 | Web interface (full profile) |
 
-## Resource Requirements
+## MCP Servers
 
-**CPU Profile (laptop):**
-- RAM: ~8GB allocated
-- CPU: 4 cores recommended
-- Disk: ~10GB for models
+The platform exposes governance functionality via Model Context Protocol (MCP):
 
-**Full Profile (server):**
-- RAM: 16GB+ recommended
-- Add Agent UI service
+| Server | Purpose | Key Tools |
+|--------|---------|-----------|
+| `gov-core` | Rules management | `rules_query`, `rule_create`, `rule_update` |
+| `gov-agents` | Agent trust | `agents_list`, `agent_trust_update` |
+| `gov-sessions` | Session tracking | `session_start`, `session_decision` |
+| `gov-tasks` | Task management | `task_create`, `task_verify`, `backlog_get` |
 
-## Model Routing
+## Key Features
 
-LiteLLM routes requests based on model name:
+### Governance Dashboard
+- **Rules View**: Browse 55+ governance rules with filtering and search
+- **Sessions View**: Track agent sessions with evidence and tool calls
+- **Tasks View**: Manage task backlog with phase/status filters
+- **Infrastructure View**: Monitor service health and MCP status
 
-| Model | Backend | Use Case |
-|-------|---------|----------|
-| `claude-opus` | Anthropic API | Complex R&D, reasoning |
-| `claude-sonnet` | Anthropic API | Balanced tasks |
-| `gemma-local` | Ollama | Simple tasks, offline |
-| `llama-local` | Ollama | Medium complexity |
+### Document Linkage
+Rules and tasks can link to source documents (markdown files in `docs/rules/`). Click "Source Document" in detail views to open the file viewer.
 
-## Agents
+### CRUD Operations
+Full create, read, update, delete support for:
+- Rules (`/api/rules`)
+- Tasks (`/api/tasks`)
+- Sessions (`/api/sessions`)
+- Decisions (`/api/decisions`)
 
-1. **Task Orchestrator** - Routes tasks by complexity
-2. **Rules Curator** - Manages rules in ChromaDB
-3. **Research Agent** - Deep analysis (Claude Opus)
-4. **Code Agent** - Programming tasks
-5. **Local Assistant** - Simple tasks (Ollama)
+## Development
 
-## Commands
+```bash
+# Run tests
+.venv/bin/pytest tests/ -v
 
-```powershell
-# Start stack
-.\deploy.ps1 -Action up -Profile cpu
+# Run dashboard locally (outside container)
+.venv/bin/python -m agent.governance_dashboard
 
-# Stop stack
-.\deploy.ps1 -Action down
-
-# View logs
-.\deploy.ps1 -Action logs
-
-# Health check
-.\deploy.ps1 -Action health
-
-# Pull Ollama models
-.\deploy.ps1 -Action pull-models
-
-# Manual Docker commands
-docker compose --profile cpu up -d
-docker compose logs -f agents
-docker compose down
+# Check API health
+curl http://localhost:8082/api/health
 ```
 
-## Observability
+## Container Commands
 
-Access Opik UI at http://localhost:5173 to:
-- View trace timelines
-- Analyze token usage
-- Evaluate agent responses
-- Track multi-agent workflows
+**IMPORTANT: Use Podman, not Docker** (per xubuntu migration)
 
-## Integration with Existing Stack
+```bash
+# Start services
+podman compose --profile cpu --profile dashboard-dev up -d
 
-This PoC integrates with your existing infrastructure:
-- **agno-agi**: Shares ChromaDB data patterns
-- **localgai**: Compatible MCP architecture
-- **mcp_trials**: Windsurf configuration compatible
+# Stop services
+podman compose --profile cpu down
+
+# View logs
+podman logs <container_id>
+
+# Restart dashboard
+podman compose --profile dev restart governance-dashboard-dev
+
+# Rebuild dashboard image
+podman build -t platform_governance-dashboard-dev:latest -f Dockerfile.dashboard .
+```
+
+## Project Structure
+
+```
+platform/
+├── agent/                  # Dashboard and UI components
+│   ├── governance_dashboard.py
+│   └── governance_ui/      # Trame/Vue 3 views and controllers
+├── governance/             # Backend services
+│   ├── routes/             # FastAPI endpoints
+│   ├── services/           # Business logic
+│   └── stores/             # Data access (TypeDB, in-memory)
+├── docs/
+│   ├── rules/              # Rule source documents (leaf/*.md)
+│   ├── gaps/               # Gap tracking (GAP-INDEX.md)
+│   └── DEVOPS.md           # Infrastructure guide
+├── tests/
+│   ├── unit/               # Python unit tests
+│   ├── robot/              # Robot Framework E2E tests
+│   └── e2e/                # End-to-end integration tests
+└── evidence/               # Session evidence files
+```
+
+## Documentation
+
+| Document | Description |
+|----------|-------------|
+| [CLAUDE.md](CLAUDE.md) | Project rules and session protocols |
+| [docs/DEVOPS.md](docs/DEVOPS.md) | Infrastructure and deployment |
+| [docs/gaps/GAP-INDEX.md](docs/gaps/GAP-INDEX.md) | Open gaps and improvements |
+| [docs/RULES-DIRECTIVES.md](docs/RULES-DIRECTIVES.md) | All 55 governance rules |
+| [.claude/MCP.md](.claude/MCP.md) | MCP server configuration |
+
+## Current Status (2026-02-08)
+
+- [x] TypeDB integration with 55 governance rules
+- [x] Governance dashboard with Trame/Vue 3
+- [x] MCP servers for all domains (core, agents, sessions, tasks)
+- [x] REST API with full CRUD operations
+- [x] Document viewer for rule source files
+- [x] Session evidence attachment and viewing
+- [x] Heuristic data integrity checks
+- [x] Robot Framework E2E test suite
 
 ## Troubleshooting
 
-**Docker not running:**
-```powershell
-Start-Process "C:\Program Files\Docker\Docker\Docker Desktop.exe"
+**TypeDB not connecting:**
+```bash
+# Check if TypeDB container is running
+podman ps | grep typedb
+
+# Restart TypeDB
+podman compose --profile cpu restart typedb
 ```
 
-**Ollama model pull fails:**
-```powershell
-docker exec -it sim-ai-ollama-1 ollama pull gemma3:4b
+**Dashboard shows stale data:**
+- Click "Refresh" button in the UI
+- Or restart the dashboard container
+
+**MCP server errors:**
+```bash
+# Check for orphan containers
+podman ps -a | grep mcp
+
+# Remove orphans
+podman rm -f <container_name>
 ```
 
-**Memory issues:**
-Reduce Ollama memory limit in docker-compose.yml:
-```yaml
-deploy:
-  resources:
-    limits:
-      memory: 2G  # Lower from 4G
-```
+## License
 
-## Skeptical Notes
-
-Per the counter-analysis:
-- **CPU bottleneck**: Expect 1-2 tokens/s on i7 for local inference
-- **RAM limits**: Monitor with `docker stats`, stay under 12GB total
-- **Integration debt**: Test Opik traces before trusting metrics
-- **ChromaDB drift**: Validate embeddings periodically
-
-## Current Status
-
-- [x] Docker stack deployed (LiteLLM, ChromaDB, Ollama, Agents)
-- [x] 5 agents running on port 7777
-- [x] Kayba ACE framework available (`pip install ace-framework`)
-- [x] Opik cloned locally (start with `cd opik && ./opik.sh`)
-- [x] Python test suite created
-- [x] Rules governance framework documented
-- [x] Sync agent skeleton implemented
-- [ ] Pull Ollama model: `docker exec sim-ai-ollama-1 ollama pull gemma3:4b`
-- [ ] Start Opik dashboard
-- [ ] Add XAI_API_KEY for Grok integration
-
-## Next Steps
-
-1. [ ] Scale to server with `--profile full`
-2. [ ] Integrate pgvector for visual workflows
-3. [ ] Add failure injection for resilience testing
-4. [ ] Fix ChromaDB knowledge integration with Agno wrapper
+Private - All rights reserved.
