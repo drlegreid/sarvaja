@@ -1,5 +1,5 @@
 /**
- * Window State Isolator v6 - Per GAP-UI-AUDIT-002
+ * Window State Isolator v7 - Per GAP-UI-AUDIT-002
  *
  * Prevents multi-window state mirroring in Trame by wrapping
  * trame.state.state with a JS Proxy that blocks remote writes
@@ -14,7 +14,12 @@
  * progress (click/keydown on nav elements). Remote broadcasts
  * are silently dropped for these keys.
  *
- * Key findings from v4/v5 debugging:
+ * v7 fix (GAP-UI-POLLING-001): Allow initial server state sync.
+ * The proxy was blocking initial state like active_view='rules'
+ * because no user interaction had occurred yet. Now we allow all
+ * writes until 1s after setup, then start blocking remote updates.
+ *
+ * Key findings from v4/v5/v6 debugging:
  * - state[key] bracket access does NOT work on trame.state (use .state.state[key])
  * - Vue.watch doesn't fire because state.state is NOT Vue-reactive
  * - _updateFromServer() is NOT the only state update path
@@ -52,6 +57,7 @@
 
     var localChangeInProgress = false;
     var localChangeTimer = null;
+    var initialSyncComplete = false;  // Allow initial state sync from server
 
     function markLocalChange() {
         localChangeInProgress = true;
@@ -59,6 +65,12 @@
         localChangeTimer = setTimeout(function() {
             localChangeInProgress = false;
         }, 500);
+    }
+
+    function markInitialSyncComplete() {
+        // Called after initial state is loaded - start blocking remote updates
+        initialSyncComplete = true;
+        console.log('[isolator] Initial sync complete, now blocking remote updates');
     }
 
     function saveToStorage(stateObj) {
@@ -88,11 +100,14 @@
         var realState = trameState.state;
 
         // Capture user interactions as LOCAL changes
+        // Expanded selector to include table rows, cards, and other clickable elements
         document.addEventListener('click', function(e) {
-            var navItem = e.target.closest(
-                '[data-testid^="nav-"], .v-list-item, .v-tab, .v-btn'
+            var clickable = e.target.closest(
+                '[data-testid^="nav-"], .v-list-item, .v-tab, .v-btn, ' +
+                'tr[cursor=pointer], .v-data-table tbody tr, .v-card, ' +
+                '[role="row"], [role="listitem"], [role="option"]'
             );
-            if (navItem) {
+            if (clickable) {
                 markLocalChange();
             }
         }, true);
@@ -109,13 +124,16 @@
         var proxy = new Proxy(realState, {
             set: function(target, prop, value) {
                 if (localKeySet[prop]) {
-                    if (localChangeInProgress) {
-                        // Local user action: allow write, save to storage
+                    // Allow writes during: (1) initial sync, (2) local user interaction
+                    if (!initialSyncComplete || localChangeInProgress) {
                         target[prop] = value;
-                        saveToStorage(target);
+                        if (initialSyncComplete) {
+                            // Only save to storage after initial sync (local changes)
+                            saveToStorage(target);
+                        }
                         return true;
                     } else {
-                        // Remote broadcast: block the write silently
+                        // Remote broadcast after initial sync: block the write silently
                         console.debug('[isolator] Blocked remote write:', prop, '=', JSON.stringify(value));
                         return true; // Return true to avoid TypeError
                     }
@@ -155,10 +173,16 @@
         // Save initial state
         saveToStorage(realState);
 
+        // Mark initial sync complete after a short delay
+        // This allows Trame's initial state sync to complete before we start blocking
+        setTimeout(function() {
+            markInitialSyncComplete();
+        }, 1000);
+
         // Also expose markLocalChange for programmatic use
         window.__govMarkLocalChange = markLocalChange;
 
-        console.log('[GAP-UI-AUDIT-002] Window isolator v6 (Proxy) active:', WIN_ID);
+        console.log('[GAP-UI-AUDIT-002] Window isolator v7 (Proxy + InitSync) active:', WIN_ID);
     }
 
     // Start setup when DOM is ready
