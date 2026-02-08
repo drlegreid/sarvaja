@@ -90,6 +90,31 @@ def check_no_test_tasks(api_base_url: str) -> dict:
     }
 
 
+def check_task_session_linkage(api_base_url: str) -> dict:
+    """H-TASK-005: Tasks should have linked_sessions (per DATA-LINK-01-v1).
+
+    Non-TEST tasks that are not BLOCKED should be linked to at least one session.
+    Orphan tasks indicate the task was created outside session context.
+    """
+    tasks = _api_get(api_base_url, "/api/tasks?limit=200")
+    # Exclude TEST-* tasks and BLOCKED tasks from this check
+    relevant = [
+        t for t in tasks
+        if not (t.get("task_id", "").startswith("TEST-"))
+        and t.get("status") not in ("BLOCKED",)
+    ]
+    violations = [
+        t.get("task_id", "unknown")
+        for t in relevant
+        if not t.get("linked_sessions")
+    ]
+    return {
+        "status": "FAIL" if violations else "PASS",
+        "message": f"{len(violations)}/{len(relevant)} tasks have no linked sessions (orphans)" if violations else f"All {len(relevant)} tasks linked to sessions",
+        "violations": violations[:20],
+    }
+
+
 # ===== SESSION DOMAIN =====
 
 def check_session_agent_id(api_base_url: str) -> dict:
@@ -205,6 +230,7 @@ HEURISTIC_CHECKS = [
     {"id": "H-TASK-002", "domain": "TASK", "name": "IN_PROGRESS agent assignment", "check_fn": check_in_progress_agent},
     {"id": "H-TASK-003", "domain": "TASK", "name": "DONE completion timestamps", "check_fn": check_done_completed_at},
     {"id": "H-TASK-004", "domain": "TASK", "name": "No TEST-* task artifacts", "check_fn": check_no_test_tasks},
+    {"id": "H-TASK-005", "domain": "TASK", "name": "Task-session linkage (DATA-LINK-01)", "check_fn": check_task_session_linkage},
     {"id": "H-SESSION-001", "domain": "SESSION", "name": "Active session agent_id", "check_fn": check_session_agent_id},
     {"id": "H-SESSION-004", "domain": "SESSION", "name": "No TEST-* session artifacts", "check_fn": check_no_test_sessions},
     {"id": "H-RULE-003", "domain": "RULE", "name": "Rule directive content", "check_fn": check_rule_directives},
