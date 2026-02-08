@@ -84,7 +84,7 @@ NAVIGATION_ITEMS: List[Dict[str, str]] = [
     {'title': 'Infrastructure', 'icon': 'mdi-server', 'value': 'infra'},  # GAP-INFRA-004
     {'title': 'Metrics', 'icon': 'mdi-chart-line', 'value': 'metrics'},  # SESSION-METRICS-01-v1
     {'title': 'Tests', 'icon': 'mdi-test-tube', 'value': 'tests'},  # WORKFLOW-SHELL-01-v1
-    {'title': 'Search', 'icon': 'mdi-magnify', 'value': 'search'},
+    # Evidence Search removed - now integrated into Sessions tab (2026-02-08)
 ]
 
 

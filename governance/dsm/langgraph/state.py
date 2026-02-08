@@ -99,6 +99,7 @@ def create_initial_state(
     batch_id: Optional[str] = None,
     dry_run: bool = False,
     available_mcps: Optional[List[str]] = None,
+    force_advance: bool = False,
 ) -> DSPState:
     """Create initial DSP cycle state.
 
@@ -106,6 +107,7 @@ def create_initial_state(
         batch_id: Optional batch identifier for grouping cycles
         dry_run: If True, skip actual modifications
         available_mcps: List of available MCP servers
+        force_advance: If True, skip MCP availability checks
 
     Returns:
         Initial DSPState for workflow execution
@@ -150,7 +152,7 @@ def create_initial_state(
 
         # Execution
         "dry_run": dry_run,
-        "force_advance": False,
+        "force_advance": force_advance,
 
         # Status
         "status": "pending",

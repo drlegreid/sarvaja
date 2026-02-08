@@ -195,6 +195,7 @@ def run_dsp_workflow(
     batch_id: Optional[str] = None,
     dry_run: bool = True,
     available_mcps: Optional[List[str]] = None,
+    force_advance: bool = False,
 ) -> DSPState:
     """Run the DSP workflow.
 
@@ -204,6 +205,7 @@ def run_dsp_workflow(
         batch_id: Optional batch identifier
         dry_run: If True, skip actual modifications
         available_mcps: List of available MCP servers
+        force_advance: If True, skip MCP availability checks
 
     Returns:
         Final DSPState after workflow completion
@@ -213,6 +215,7 @@ def run_dsp_workflow(
         batch_id=batch_id,
         dry_run=dry_run,
         available_mcps=available_mcps or ["claude-mem", "governance", "sequential-thinking"],
+        force_advance=force_advance,
     )
 
     if not LANGGRAPH_AVAILABLE:
