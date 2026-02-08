@@ -36,10 +36,12 @@
     var WIN_ID = window.__govWindowId;
     var STORAGE_KEY = 'gov_nav_state_' + WIN_ID;
 
-    // Keys to isolate per-window (navigation + selection state)
+    // Keys to isolate per-window (navigation + selection + viewer state)
     var localKeySet = {};
     [
+        // Navigation state
         'active_view',
+        // Detail view visibility
         'show_rule_detail',
         'show_session_detail',
         'show_session_form',
@@ -48,11 +50,23 @@
         'show_agent_detail',
         'show_agent_registration',
         'show_task_form',
+        'show_rule_form',
+        // Selection state
         'selected_rule',
         'selected_session',
         'selected_decision',
         'selected_task',
-        'selected_agent'
+        'selected_agent',
+        // File viewer state (GAP-UI-SESSION-ISOLATION-001)
+        'show_file_viewer',
+        'file_viewer_path',
+        'file_viewer_content',
+        'file_viewer_loading',
+        'file_viewer_error',
+        // Task execution state
+        'show_task_execution',
+        'task_execution_log',
+        'task_execution_loading'
     ].forEach(function(k) { localKeySet[k] = true; });
 
     var localChangeInProgress = false;

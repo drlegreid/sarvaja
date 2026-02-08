@@ -11,6 +11,7 @@ Usage:
 from .navigation import build_navigation
 from .dialogs import build_confirm_dialog, build_error_dialog
 from .cards import build_entity_card, build_stat_card
+from .list_styles import inject_list_styles
 
 __all__ = [
     "build_navigation",
@@ -18,4 +19,5 @@ __all__ = [
     "build_error_dialog",
     "build_entity_card",
     "build_stat_card",
+    "inject_list_styles",
 ]

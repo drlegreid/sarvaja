@@ -383,6 +383,10 @@ class GovernanceDashboard:
                 from agent.governance_ui.components.window_state import inject_window_state_isolator
                 inject_window_state_isolator()
 
+                # Inject list styles (UI-LIST-01: alternating rows, full-height containers)
+                from agent.governance_ui.components.list_styles import inject_list_styles
+                inject_list_styles()
+
                 # App bar with data-testid
                 with v3.VAppBar(
                     color="deep-purple",
