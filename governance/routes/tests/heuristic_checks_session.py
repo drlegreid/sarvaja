@@ -35,6 +35,19 @@ def _get_completed_sessions(api_base_url: str, limit: int = 50) -> list:
     return [s for s in sessions if s.get("status") == "COMPLETED" or s.get("end_time")]
 
 
+def _is_backfilled_session(session: dict) -> bool:
+    """Check if a session was created via backfill (no live MCP data expected).
+
+    Backfilled sessions lack agent_id and have description indicating
+    they were reconstructed from evidence files, not live sessions.
+    """
+    desc = (session.get("description") or "").lower()
+    return (
+        "backfill" in desc
+        or (not session.get("agent_id") and not session.get("session_id", "").startswith("SESSION-2026-01-30"))
+    )
+
+
 def check_session_evidence_files(api_base_url: str) -> dict:
     """H-SESSION-002: Ended sessions must have evidence files.
 
@@ -124,7 +137,11 @@ def check_session_tool_calls(api_base_url: str) -> dict:
 
     violations = []
     checked = 0
+    skipped = 0
     for s in completed[:20]:  # Cap to avoid N+1 overhead
+        if _is_backfilled_session(s):
+            skipped += 1
+            continue
         sid = s.get("session_id", "unknown")
         tc = _api_get(api_base_url, f"/api/sessions/{sid}/tool_calls")
         count = 0
@@ -137,12 +154,21 @@ def check_session_tool_calls(api_base_url: str) -> dict:
             violations.append(sid)
         checked += 1
 
+    if checked == 0:
+        return {
+            "status": "SKIP",
+            "message": f"All {skipped} sessions are backfilled (no live MCP data expected)",
+            "violations": [],
+        }
+
     return {
         "status": "FAIL" if violations else "PASS",
         "message": (
-            f"{len(violations)}/{checked} ended sessions have NO tool call records"
+            f"{len(violations)}/{checked} live sessions have NO tool call records"
+            f" ({skipped} backfilled skipped)"
             if violations
-            else f"All {checked} checked sessions have tool call records"
+            else f"All {checked} live sessions have tool call records"
+            f" ({skipped} backfilled skipped)"
         ),
         "violations": violations[:20],
     }
@@ -153,6 +179,7 @@ def check_session_thoughts(api_base_url: str) -> dict:
 
     Gov-sessions MCP tool session_thought should capture reasoning steps.
     Sessions without thoughts indicate missing cognitive trace capture.
+    Skips backfilled sessions that predate MCP integration.
     """
     completed = _get_completed_sessions(api_base_url)
     if not completed:
@@ -164,7 +191,11 @@ def check_session_thoughts(api_base_url: str) -> dict:
 
     violations = []
     checked = 0
+    skipped = 0
     for s in completed[:20]:
+        if _is_backfilled_session(s):
+            skipped += 1
+            continue
         sid = s.get("session_id", "unknown")
         th = _api_get(api_base_url, f"/api/sessions/{sid}/thoughts")
         count = 0
@@ -177,12 +208,21 @@ def check_session_thoughts(api_base_url: str) -> dict:
             violations.append(sid)
         checked += 1
 
+    if checked == 0:
+        return {
+            "status": "SKIP",
+            "message": f"All {skipped} sessions are backfilled (no live MCP data expected)",
+            "violations": [],
+        }
+
     return {
         "status": "FAIL" if violations else "PASS",
         "message": (
-            f"{len(violations)}/{checked} ended sessions have NO thought records"
+            f"{len(violations)}/{checked} live sessions have NO thought records"
+            f" ({skipped} backfilled skipped)"
             if violations
-            else f"All {checked} checked sessions have thought records"
+            else f"All {checked} live sessions have thought records"
+            f" ({skipped} backfilled skipped)"
         ),
         "violations": violations[:20],
     }

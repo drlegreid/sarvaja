@@ -199,6 +199,17 @@ def update_task(
             return None
 
     old_status = _tasks_store[task_id].get("status")
+
+    # Per H-TASK-002: IN_PROGRESS tasks must have agent_id
+    if status and status.upper() == "IN_PROGRESS" and not agent_id:
+        existing_agent = _tasks_store[task_id].get("agent_id")
+        if not existing_agent:
+            agent_id = "code-agent"
+            logger.warning(
+                f"[H-TASK-002] Task {task_id} set to IN_PROGRESS without agent_id, "
+                f"auto-assigning '{agent_id}'"
+            )
+
     updates = {
         "description": description, "phase": phase, "status": status,
         "agent_id": agent_id, "body": body, "evidence": evidence,

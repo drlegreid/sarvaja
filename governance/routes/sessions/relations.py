@@ -186,32 +186,52 @@ async def get_session_evidence(session_id: str):
     Get all evidence files linked to a session.
 
     Per P11.5: Session Evidence Attachments.
+    Per H-SESSION-002: Fallback to filesystem scan when TypeDB has no links.
     """
     client = get_typedb_client()
+    evidence = []
 
-    if not client:
-        raise HTTPException(
-            status_code=503,
-            detail="TypeDB not available"
-        )
+    if client:
+        try:
+            session = client.get_session(session_id)
+            if not session:
+                raise HTTPException(
+                    status_code=404,
+                    detail=f"Session {session_id} not found"
+                )
+            evidence = client.get_session_evidence(session_id)
+        except HTTPException:
+            raise
+        except Exception as e:
+            logger.warning(f"TypeDB evidence query failed, using fallback: {e}")
 
-    try:
-        # Verify session exists
-        session = client.get_session(session_id)
-        if not session:
-            raise HTTPException(
-                status_code=404,
-                detail=f"Session {session_id} not found"
-            )
+    # H-SESSION-002: Filesystem fallback — scan evidence/ for matching files
+    if not evidence:
+        evidence = _scan_evidence_filesystem(session_id)
 
-        evidence = client.get_session_evidence(session_id)
-        return {
-            "session_id": session_id,
-            "evidence_count": len(evidence),
-            "evidence_files": evidence
-        }
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.error(f"Error getting session evidence: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+    return {
+        "session_id": session_id,
+        "evidence_count": len(evidence),
+        "evidence_files": evidence
+    }
+
+
+def _scan_evidence_filesystem(session_id: str) -> list:
+    """Scan evidence/ directory for files matching session ID.
+
+    Per H-SESSION-002: Provides fallback when TypeDB evidence links are missing.
+    """
+    import os
+    evidence_dir = os.path.join(os.getcwd(), "evidence")
+    if not os.path.isdir(evidence_dir):
+        return []
+
+    matches = []
+    for filename in os.listdir(evidence_dir):
+        if not filename.endswith(".md"):
+            continue
+        # Match SESSION-{id}.md or DSM-{date} patterns
+        if session_id in filename:
+            matches.append(f"evidence/{filename}")
+
+    return sorted(matches)

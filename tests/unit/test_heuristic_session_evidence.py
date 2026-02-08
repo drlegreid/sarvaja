@@ -127,7 +127,7 @@ class TestSessionToolCalls:
                 resp.json = lambda: {"tool_call_count": 5, "tool_calls": [{"tool": "x"}] * 5}
             else:
                 resp.json = lambda: [
-                    {"session_id": "S-001", "status": "COMPLETED", "end_time": "2026-01-01T00:00:00"},
+                    {"session_id": "S-001", "status": "COMPLETED", "end_time": "2026-01-01T00:00:00", "agent_id": "test-agent"},
                 ]
             return resp
 
@@ -145,7 +145,7 @@ class TestSessionToolCalls:
                 resp.json = lambda: {"tool_call_count": 0, "tool_calls": []}
             else:
                 resp.json = lambda: [
-                    {"session_id": "S-001", "status": "COMPLETED", "end_time": "2026-01-01T00:00:00"},
+                    {"session_id": "S-001", "status": "COMPLETED", "end_time": "2026-01-01T00:00:00", "agent_id": "test-agent"},
                 ]
             return resp
 
@@ -182,7 +182,7 @@ class TestSessionThoughts:
                 resp.json = lambda: {"thought_count": 3, "thoughts": [{"t": "x"}] * 3}
             else:
                 resp.json = lambda: [
-                    {"session_id": "S-001", "status": "COMPLETED", "end_time": "2026-01-01T00:00:00"},
+                    {"session_id": "S-001", "status": "COMPLETED", "end_time": "2026-01-01T00:00:00", "agent_id": "test-agent"},
                 ]
             return resp
 
@@ -200,7 +200,7 @@ class TestSessionThoughts:
                 resp.json = lambda: {"thought_count": 0, "thoughts": []}
             else:
                 resp.json = lambda: [
-                    {"session_id": "S-001", "status": "COMPLETED", "end_time": "2026-01-01T00:00:00"},
+                    {"session_id": "S-001", "status": "COMPLETED", "end_time": "2026-01-01T00:00:00", "agent_id": "test-agent"},
                 ]
             return resp
 
