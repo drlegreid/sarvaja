@@ -16,9 +16,12 @@ def register_task_crud_tools(mcp) -> None:
 
     @mcp.tool()
     def task_create(task_id: str, name: str, description: str = "", status: str = "OPEN",
-                    priority: str = "MEDIUM", phase: str = "P10") -> str:
+                    priority: str = "MEDIUM", phase: str = "P10",
+                    session_id: Optional[str] = None) -> str:
         """
         Create a new task in TypeDB.
+
+        Per DATA-LINK-01-v1: Tasks can be linked to a session at creation time.
 
         Args:
             task_id: Unique task identifier (e.g., "P12.1", "RD-001")
@@ -27,6 +30,7 @@ def register_task_crud_tools(mcp) -> None:
             status: Task status per TASK-LIFE-01-v1 (OPEN, IN_PROGRESS, CLOSED)
             priority: Priority level (LOW, MEDIUM, HIGH, CRITICAL)
             phase: Phase identifier (e.g., "P10", "P11", "RD")
+            session_id: Optional session ID to link this task to (per DATA-LINK-01-v1)
 
         Returns:
             JSON with created task details or error
@@ -34,16 +38,23 @@ def register_task_crud_tools(mcp) -> None:
         try:
             with typedb_client() as client:
                 body = f"[Priority: {priority}] {description}" if description else f"[Priority: {priority}]"
+                # Per DATA-LINK-01-v1: Pass session_id for auto-linking
+                linked_sessions = [session_id] if session_id else None
                 success = client.insert_task(
-                    task_id=task_id, name=name, status=status, phase=phase, body=body
+                    task_id=task_id, name=name, status=status, phase=phase, body=body,
+                    linked_sessions=linked_sessions
                 )
                 if success:
-                    _monitor_task("mcp-task-create", task_id, "create", status=status, priority=priority)
-                    return format_mcp_result({
+                    _monitor_task("mcp-task-create", task_id, "create", status=status,
+                                  priority=priority, session_id=session_id)
+                    result = {
                         "task_id": task_id, "name": name, "status": status,
                         "phase": phase, "priority": priority,
                         "message": f"Task {task_id} created successfully"
-                    })
+                    }
+                    if session_id:
+                        result["linked_sessions"] = [session_id]
+                    return format_mcp_result(result)
                 return format_mcp_result({"error": f"Failed to create task {task_id}"})
         except ConnectionError as e:
             return format_mcp_result({"error": str(e)})
@@ -129,19 +140,52 @@ def register_task_crud_tools(mcp) -> None:
             return format_mcp_result({"error": str(e)})
 
     @mcp.tool()
-    def tasks_list() -> str:
+    def tasks_list(
+        status: Optional[str] = None,
+        phase: Optional[str] = None,
+        limit: int = 50,
+        offset: int = 0,
+    ) -> str:
         """
-        List all tasks from TypeDB.
+        List tasks from TypeDB with optional filtering and pagination.
+
+        Per ARCH-MCP-PARITY-01-v1: Provides REST API-equivalent filtering.
+
+        Args:
+            status: Filter by status (TODO, IN_PROGRESS, DONE, BLOCKED)
+            phase: Filter by phase (P10, P11, RD, etc.)
+            limit: Maximum number of results (default: 50, max: 200)
+            offset: Skip first N results for pagination (default: 0)
 
         Returns:
-            JSON with array of all tasks and count
+            JSON with tasks array, count, and pagination info
         """
         try:
+            # Cap limit at 200 per API parity
+            limit = min(limit, 200)
+
             with typedb_client() as client:
-                tasks = client.get_all_tasks()
+                all_tasks = client.get_all_tasks()
+
+                # Apply filters
+                filtered = all_tasks
+                if status:
+                    filtered = [t for t in filtered if t.status == status.upper()]
+                if phase:
+                    filtered = [t for t in filtered if t.phase == phase.upper()]
+
+                # Apply pagination
+                total = len(filtered)
+                paginated = filtered[offset:offset + limit]
+
                 return format_mcp_result({
-                    "tasks": [asdict(t) for t in tasks],
-                    "count": len(tasks), "source": "typedb"
+                    "tasks": [asdict(t) for t in paginated],
+                    "count": len(paginated),
+                    "total": total,
+                    "offset": offset,
+                    "limit": limit,
+                    "has_more": (offset + len(paginated)) < total,
+                    "source": "typedb"
                 })
         except ConnectionError as e:
             return format_mcp_result({"error": str(e)})

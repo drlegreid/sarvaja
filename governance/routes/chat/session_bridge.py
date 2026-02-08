@@ -75,6 +75,9 @@ def record_chat_tool_call(
     """
     Record a tool call (chat command execution) in the session.
 
+    Per DATA-COMPLETE-01-v1: Tool calls are synced to _sessions_store
+    for visibility via /sessions/{id}/tool_calls API.
+
     Args:
         collector: Active SessionCollector
         tool_name: Command or tool name (e.g., "/status", "query_llm")
@@ -91,6 +94,20 @@ def record_chat_tool_call(
         success=success,
     )
 
+    # Per DATA-COMPLETE-01-v1: Sync to _sessions_store for API visibility
+    session_id = collector.session_id
+    if session_id in _sessions_store:
+        if "tool_calls" not in _sessions_store[session_id]:
+            _sessions_store[session_id]["tool_calls"] = []
+        _sessions_store[session_id]["tool_calls"].append({
+            "tool_name": tool_name,
+            "arguments": arguments or {},
+            "result": (result[:200] + "...") if result and len(result) > 200 else result,
+            "duration_ms": duration_ms,
+            "success": success,
+            "timestamp": datetime.now().isoformat(),
+        })
+
 
 def record_chat_thought(
     collector: SessionCollector,
@@ -101,6 +118,9 @@ def record_chat_thought(
 ) -> None:
     """
     Record a thought/reasoning step in the session.
+
+    Per DATA-COMPLETE-01-v1: Thoughts are synced to _sessions_store
+    for visibility via /sessions/{id}/thoughts API.
 
     Args:
         collector: Active SessionCollector
@@ -115,6 +135,19 @@ def record_chat_thought(
         related_tools=related_tools,
         confidence=confidence,
     )
+
+    # Per DATA-COMPLETE-01-v1: Sync to _sessions_store for API visibility
+    session_id = collector.session_id
+    if session_id in _sessions_store:
+        if "thoughts" not in _sessions_store[session_id]:
+            _sessions_store[session_id]["thoughts"] = []
+        _sessions_store[session_id]["thoughts"].append({
+            "thought": thought[:500] if len(thought) > 500 else thought,
+            "thought_type": thought_type,
+            "related_tools": related_tools,
+            "confidence": confidence,
+            "timestamp": datetime.now().isoformat(),
+        })
 
 
 def end_chat_session(
