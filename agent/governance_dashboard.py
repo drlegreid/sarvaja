@@ -55,6 +55,10 @@ from agent.governance_ui import (
     TASK_STATUSES,  # GAP-UI-EXP-004
     TASK_PHASES,  # GAP-UI-EXP-004
     )
+from agent.governance_ui.utils import (
+    format_timestamps_in_list, compute_session_metrics,
+    compute_session_duration, compute_timeline_data,
+)
 
 # View modules (extracted per GAP-FILE-001)
 from agent.governance_ui.views import (
@@ -201,12 +205,36 @@ class GovernanceDashboard:
                     if resp.status_code == 200:
                         data = resp.json()
                         if isinstance(data, dict) and "items" in data:
-                            self._state.sessions = data["items"]
+                            items = data["items"]
                             self._state.sessions_pagination = data.get("pagination", {})
                         else:
-                            self._state.sessions = data[:page_size] if len(data) > page_size else data
+                            items = data[:page_size] if len(data) > page_size else data
+                        # GAP-SESSION-STATS-001: Compute metrics BEFORE formatting
+                        metrics = compute_session_metrics(items)
+                        self._state.sessions_metrics_duration = metrics["duration"]
+                        self._state.sessions_metrics_avg_tasks = metrics["avg_tasks"]
+                        # F.2: Add duration column before formatting
+                        for item in items:
+                            item["duration"] = compute_session_duration(
+                                item.get("start_time", ""), item.get("end_time", ""))
+                        tl_vals, tl_labels = compute_timeline_data(items)
+                        self._state.sessions_timeline_data = tl_vals
+                        self._state.sessions_timeline_labels = tl_labels
+                        agents = sorted(set(
+                            s.get("agent_id") for s in items if s.get("agent_id")))
+                        self._state.sessions_agent_options = agents
+                        self._state.sessions = format_timestamps_in_list(
+                            items, ["start_time", "end_time"])
                     else:
                         self._state.sessions = get_sessions(limit=100)
+
+                    # GAP-UI-EXP-012: Load agents at startup (not just on-demand)
+                    resp = client.get(f"{API_BASE_URL}/api/agents")
+                    if resp.status_code == 200:
+                        data = resp.json()
+                        self._state.agents = data.get("items", data) if isinstance(data, dict) else data
+                    else:
+                        self._state.agents = []
 
                     # Tasks with pagination
                     resp = client.get(f"{API_BASE_URL}/api/tasks", params={"limit": page_size, "offset": 0})

@@ -14,7 +14,10 @@ Updated: 2026-01-02 (GAP-UI-034)
 import httpx
 from typing import Any
 
-from agent.governance_ui.utils import format_timestamps_in_list
+from agent.governance_ui.utils import (
+    format_timestamps_in_list, compute_session_metrics,
+    compute_session_duration, compute_timeline_data, compute_pivot_data,
+)
 
 
 def register_sessions_controllers(state: Any, ctrl: Any, api_base_url: str) -> None:
@@ -212,34 +215,65 @@ def register_sessions_controllers(state: Any, ctrl: Any, api_base_url: str) -> N
             state.error_message = f"Failed to delete session: {str(e)}"
             state.status_message = f"Delete failed (offline mode): {str(e)}"
 
+    def _apply_session_metrics(items):
+        """Apply session metrics to state from raw items. Per GAP-SESSION-STATS-001."""
+        metrics = compute_session_metrics(items)
+        state.sessions_metrics_duration = metrics["duration"]
+        state.sessions_metrics_avg_tasks = metrics["avg_tasks"]
+
     def load_sessions_page():
-        """Load sessions with pagination (GAP-UI-036)."""
+        """Load sessions with pagination and filters (GAP-UI-036, F.1)."""
         try:
             state.is_loading = True
             offset = (state.sessions_page - 1) * state.sessions_per_page
+            params = {"offset": offset, "limit": state.sessions_per_page}
+            # F.1: Apply column filters to API query
+            if getattr(state, 'sessions_filter_status', None):
+                params["status"] = state.sessions_filter_status
+            if getattr(state, 'sessions_filter_agent', None):
+                params["agent_id"] = state.sessions_filter_agent
             with httpx.Client(timeout=10.0) as client:
-                response = client.get(
-                    f"{api_base_url}/api/sessions",
-                    params={"offset": offset, "limit": state.sessions_per_page}
-                )
+                response = client.get(f"{api_base_url}/api/sessions", params=params)
                 if response.status_code == 200:
                     data = response.json()
                     if isinstance(data, dict) and "items" in data:
-                        state.sessions = format_timestamps_in_list(
-                            data["items"], ["start_time", "end_time"])
+                        items = data["items"]
                         state.sessions_pagination = data.get("pagination", {
-                            "total": 0, "offset": offset,
+                            "total": data.get("total", 0), "offset": offset,
                             "limit": state.sessions_per_page,
-                            "has_more": False, "returned": len(data["items"]),
+                            "has_more": data.get("has_more", False),
+                            "returned": len(items),
                         })
                     else:
-                        state.sessions = format_timestamps_in_list(
-                            data, ["start_time", "end_time"])
+                        items = data
                         state.sessions_pagination = {
-                            "total": len(data), "offset": 0,
-                            "limit": len(data), "has_more": False,
-                            "returned": len(data),
+                            "total": len(items), "offset": 0,
+                            "limit": len(items), "has_more": False,
+                            "returned": len(items),
                         }
+                    # GAP-UI-EXP-005: Normalize date->start_time for legacy data
+                    for item in items:
+                        if not item.get("start_time") and item.get("date"):
+                            item["start_time"] = item["date"]
+                    # Compute metrics BEFORE formatting (needs raw ISO timestamps)
+                    _apply_session_metrics(items)
+                    # F.2: Add duration column to each item
+                    for item in items:
+                        item["duration"] = compute_session_duration(
+                            item.get("start_time", ""), item.get("end_time", ""))
+                    # F.3: Timeline data
+                    tl_values, tl_labels = compute_timeline_data(items)
+                    state.sessions_timeline_data = tl_values
+                    state.sessions_timeline_labels = tl_labels
+                    # F.1: Extract unique agent options for filter dropdown
+                    agents = sorted(set(
+                        s.get("agent_id") for s in items
+                        if s.get("agent_id")
+                    ))
+                    state.sessions_agent_options = agents
+                    # Format timestamps and set state
+                    state.sessions = format_timestamps_in_list(
+                        items, ["start_time", "end_time"])
             state.is_loading = False
         except Exception as e:
             state.is_loading = False
@@ -266,19 +300,69 @@ def register_sessions_controllers(state: Any, ctrl: Any, api_base_url: str) -> N
         state.sessions_page = 1
         load_sessions_page()
 
+    @ctrl.trigger("sessions_apply_filters")
+    def sessions_apply_filters():
+        """F.1: Apply column filters and reload sessions."""
+        state.sessions_page = 1
+        load_sessions_page()
+
+    # F.1: Reactive filter handlers — Vuetify 3 VSelect doesn't emit `change`
+    # in Trame, so we use @state.change() to detect filter value changes.
+    @state.change("sessions_filter_status")
+    def _on_filter_status_change(sessions_filter_status, **kwargs):
+        state.sessions_page = 1
+        load_sessions_page()
+
+    @state.change("sessions_filter_agent")
+    def _on_filter_agent_change(sessions_filter_agent, **kwargs):
+        state.sessions_page = 1
+        load_sessions_page()
+
+    @ctrl.trigger("sessions_toggle_view")
+    def sessions_toggle_view():
+        """F.4: Toggle between table and pivot view."""
+        if state.sessions_view_mode == "pivot":
+            _compute_pivot()
+
+    @state.change("sessions_view_mode")
+    def _on_view_mode_change(sessions_view_mode, **kwargs):
+        if sessions_view_mode == "pivot":
+            _compute_pivot()
+
+    @ctrl.trigger("sessions_compute_pivot")
+    def sessions_compute_pivot_trigger():
+        """F.4: Recompute pivot data when group-by changes."""
+        _compute_pivot()
+
+    @state.change("sessions_pivot_group_by")
+    def _on_pivot_group_change(sessions_pivot_group_by, **kwargs):
+        if state.sessions_view_mode == "pivot":
+            _compute_pivot()
+
+    def _compute_pivot():
+        """Compute pivot aggregations from current session data."""
+        # Need raw data with ISO timestamps for duration; use a separate API call
+        try:
+            with httpx.Client(timeout=10.0) as client:
+                response = client.get(
+                    f"{api_base_url}/api/sessions",
+                    params={"limit": 200}
+                )
+                if response.status_code == 200:
+                    data = response.json()
+                    items = data.get("items", data) if isinstance(data, dict) else data
+                    group_by = getattr(state, 'sessions_pivot_group_by', 'agent_id')
+                    state.sessions_pivot_data = compute_pivot_data(items, group_by)
+        except Exception:
+            state.sessions_pivot_data = []
+
     @ctrl.trigger("attach_evidence")
     def attach_evidence(session_id: str, evidence_path: str):
-        """Attach evidence file to session via REST API.
-
-        Per P11.5: Session Evidence Attachments.
-        Per GAP-DATA-003: Evidence attachment functionality.
-        Moved from handlers/session_handlers.py per GAP-UI-SESSION-TASKS-001.
-        """
+        """Attach evidence file to session via REST API."""
         if not session_id or not evidence_path:
             state.has_error = True
             state.error_message = "Session ID and evidence path are required"
             return
-
         try:
             state.evidence_attach_loading = True
             with httpx.Client(timeout=10.0) as client:
@@ -290,14 +374,7 @@ def register_sessions_controllers(state: Any, ctrl: Any, api_base_url: str) -> N
                     state.status_message = f"Evidence attached: {evidence_path}"
                     state.show_evidence_attach = False
                     state.evidence_attach_path = ""
-
-                    # Refresh sessions and update selected session
                     load_sessions_page()
-                    for session in state.sessions:
-                        sid = session.get('session_id') or session.get('id')
-                        if sid == session_id:
-                            state.selected_session = session
-                            break
                 else:
                     state.has_error = True
                     state.error_message = f"Failed to attach evidence: {response.status_code}"

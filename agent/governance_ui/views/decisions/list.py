@@ -65,7 +65,7 @@ def build_decisions_list_view() -> None:
         )
 
         # Decision Log content (UI-AUDIT-2026-01-19: session-linked)
-        with v3.VCardText(style="max-height: 500px; overflow-y: auto;"):
+        with v3.VCardText(style="max-height: calc(100vh - 280px); overflow-y: auto;"):
             html.Div(
                 "{{ decisions.length }} decisions in log",
                 classes="mb-2 text-grey"

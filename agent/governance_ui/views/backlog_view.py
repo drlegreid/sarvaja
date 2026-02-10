@@ -179,7 +179,7 @@ def build_claimed_tasks_column() -> None:
                     size="small",
                     color="warning",
                 )
-            with v3.VCardText(style="max-height: 500px; overflow-y: auto"):
+            with v3.VCardText(style="max-height: calc(100vh - 280px); overflow-y: auto"):
                 with html.Div(
                     v_if="!backlog_agent_id",
                     classes="text-grey text-center py-4"

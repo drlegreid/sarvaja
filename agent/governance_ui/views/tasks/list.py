@@ -70,7 +70,7 @@ def build_tasks_list_view() -> None:
         )
 
         # Skeleton loaders (GAP-UI-PAGING-001: Loading states)
-        with v3.VCardText(v_if="is_loading", style="max-height: 500px;"):
+        with v3.VCardText(v_if="is_loading", style="max-height: calc(100vh - 280px);"):
             with v3.VList(density="compact"):
                 # Show 5 skeleton items while loading
                 with v3.VListItem(v_for="n in 5", **{":key": "'skeleton-' + n"}):
@@ -148,8 +148,9 @@ def build_tasks_list_view() -> None:
                 item_value="task_id",
                 search=("tasks_search_query",),
                 density="compact",
-                items_per_page=("tasks_per_page",),
+                items_per_page=-1,
                 hover=True,
+                hide_default_footer=True,
                 click_row="($event, row) => { trigger('select_task', [row.item.task_id || row.item.id]) }",
                 __events=[("click_row", "click:row")],
                 __properties=["data-testid"],
@@ -173,7 +174,7 @@ def build_tasks_list_view() -> None:
                     density="compact",
                     hide_details=True,
                     style="max-width: 80px",
-                    change="trigger('tasks_change_page_size')",
+                    update_modelValue="trigger('tasks_change_page_size')",
                     __properties=["data-testid"],
                     **{"data-testid": "tasks-per-page"}
                 )

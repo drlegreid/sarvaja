@@ -1,6 +1,6 @@
 # Rules Directives - Index
 
-**Status:** Active | **Updated:** 2026-01-29 | **Rules:** 57 (54 ACTIVE, 3 DRAFT/DISABLED)
+**Status:** Active | **Updated:** 2026-02-10 | **Rules:** 58 (55 ACTIVE, 3 DRAFT/DISABLED)
 
 > **Taxonomy:** [META-TAXON-01-v1](rules/leaf/META-TAXON-01-v1.md) | **Migration:** [RULE-MIGRATION.md](rules/RULE-MIGRATION.md)
 
@@ -84,6 +84,9 @@
 | UI-COLOR-01-v1 | (new) | Color Harmony & Palette Standards | HIGH | ACTIVE |
 | TEST-BDD-01-v1 | (new) | BDD Testing with Gherkin | HIGH | ACTIVE |
 | GAP-DOC-01-v1 | (new) | Gap Documentation Standard | HIGH | ACTIVE |
+| WORKFLOW-HOTRELOAD-01-v1 | (new) | Dashboard Hot-Reload via Watcher | HIGH | ACTIVE |
+| WORKFLOW-SFDC-01-v1 | (new) | SFDC Development Lifecycle Workflow | HIGH | ACTIVE |
+| WORKFLOW-ORCH-01-v1 | (new) | Orchestrator Continuous Workflow | CRITICAL | ACTIVE |
 
 ---
 
@@ -96,7 +99,7 @@
 | **GOV** | Governance & trust | 10 | TRUST-01/02, BICAM-01, PROP-01/02/03, RULE-01/02/03, MODE-01, BIND-01 |
 | **ARCH** | Architecture | 6 | BEST-01, MCP-01/02, INFRA-01/02, YAGNI-01 |
 | **UI** | User interface | 4 | TRAME-01, LOADER-01, TRACE-01, COLOR-01 |
-| **WORKFLOW** | Workflow & autonomy | 5 | AUTO-01/02, RD-01, SEQ-01, SHELL-01 |
+| **WORKFLOW** | Workflow & autonomy | 8 | AUTO-01/02, RD-01, SEQ-01, SHELL-01, HOTRELOAD-01, SFDC-01, ORCH-01 |
 | **RECOVER** | Recovery & resilience | 3 | MEM-01, AMNES-01, CRASH-01 |
 | **TEST** | Testing & validation | 7 | GUARD-01, COMP-01/02, FIX-01, EXEC-01, UI-VERIFY-01, BDD-01 |
 | **SAFETY** | Safety & prevention | 3 | HEALTH-01, INTEG-01, DESTR-01 |
