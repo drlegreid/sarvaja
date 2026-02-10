@@ -31,6 +31,10 @@ _TEST_PATTERNS = (
     "CHAT-CVP", "CHAT-FALLBACK", "CHAT-ORPHAN",
     "CHAT-STORE-", "CHAT-TYPEDB-", "CHAT-RESILIENT",
     "CHAT-DONE", "CHAT-AAA", "CHAT-BBB", "CHAT-CCC",
+    "CHAT-HEURISTIC", "CHAT-FULL-LIFECYCLE", "CHAT-REVIEWING",
+    "CHAT-HELLO", "CHAT-LINKING", "CHAT-VERIFY",
+    "CHAT-TESTING", "CHAT-SUMMARY", "CHAT--STATUS",
+    "CHAT-COMPLETE-SESSION", "CHAT-DELETE",
 )
 
 
@@ -58,7 +62,7 @@ def main():
 
     logger.info("Fetching sessions from %s...", API_BASE)
     try:
-        resp = httpx.get(f"{API_BASE}/api/sessions?limit=500", timeout=15.0)
+        resp = httpx.get(f"{API_BASE}/api/sessions?limit=200", timeout=15.0)
         resp.raise_for_status()
     except Exception as e:
         logger.error("Failed to fetch sessions: %s", e)
