@@ -66,6 +66,10 @@ def _is_backfilled_session(session: dict) -> bool:
             "CHAT-CVP", "CHAT-FALLBACK", "CHAT-ORPHAN",
             "CHAT-STORE-", "CHAT-TYPEDB-", "CHAT-RESILIENT",
             "CHAT-DONE", "CHAT-AAA", "CHAT-BBB", "CHAT-CCC",
+            "CHAT-HEURISTIC", "CHAT-FULL-LIFECYCLE", "CHAT-REVIEWING",
+            "CHAT-HELLO", "CHAT-LINKING", "CHAT-VERIFY",
+            "CHAT-TESTING", "CHAT-SUMMARY", "CHAT--STATUS",
+            "CHAT-COMPLETE-SESSION", "CHAT-DELETE",
         )
         for pattern in _TEST_PATTERNS:
             if pattern in sid:

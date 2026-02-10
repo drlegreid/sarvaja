@@ -235,3 +235,54 @@ class TestSessionChecksRegistry:
         """Total checks should now be at least 18 (14 + 4 new)."""
         from governance.routes.tests.heuristic_checks import HEURISTIC_CHECKS
         assert len(HEURISTIC_CHECKS) >= 18
+
+
+# ===== Backfill detection patterns =====
+
+
+class TestBackfillDetection:
+    """Verify _is_backfilled_session() catches test-artifact sessions."""
+
+    def test_classic_backfill_detected(self):
+        """Sessions with 'backfill' in description are detected."""
+        from governance.routes.tests.heuristic_checks_session import _is_backfilled_session
+        assert _is_backfilled_session({"description": "Backfilled from evidence file"})
+
+    def test_test_agent_detected(self):
+        """Sessions with agent_id ending in -test are detected."""
+        from governance.routes.tests.heuristic_checks_session import _is_backfilled_session
+        assert _is_backfilled_session({"agent_id": "agent-1-test"})
+
+    def test_chat_test_pattern_detected(self):
+        """CHAT-TEST sessions are detected as test artifacts."""
+        from governance.routes.tests.heuristic_checks_session import _is_backfilled_session
+        assert _is_backfilled_session({"session_id": "SESSION-2026-02-11-CHAT-TEST-FOO", "agent_id": "x"})
+
+    def test_chat_heuristic_pattern_detected(self):
+        """CHAT-HEURISTIC sessions are detected as test artifacts."""
+        from governance.routes.tests.heuristic_checks_session import _is_backfilled_session
+        assert _is_backfilled_session({"session_id": "SESSION-2026-02-11-CHAT-HEURISTIC-INTEGRITY-CHECK-(ALL)", "agent_id": "x"})
+
+    def test_chat_full_lifecycle_detected(self):
+        """CHAT-FULL-LIFECYCLE sessions are detected as test artifacts."""
+        from governance.routes.tests.heuristic_checks_session import _is_backfilled_session
+        assert _is_backfilled_session({"session_id": "SESSION-2026-02-11-CHAT-FULL-LIFECYCLE", "agent_id": "x"})
+
+    def test_chat_reviewing_detected(self):
+        """CHAT-REVIEWING sessions are detected as test artifacts."""
+        from governance.routes.tests.heuristic_checks_session import _is_backfilled_session
+        assert _is_backfilled_session({"session_id": "SESSION-2026-02-11-CHAT-REVIEWING-RULES", "agent_id": "x"})
+
+    def test_chat_cvp_detected(self):
+        """CHAT-CVP sessions are detected as test artifacts."""
+        from governance.routes.tests.heuristic_checks_session import _is_backfilled_session
+        assert _is_backfilled_session({"session_id": "SESSION-2026-02-11-CHAT-CVP-TEST", "agent_id": "x"})
+
+    def test_real_session_not_detected(self):
+        """Real work sessions should not be flagged as backfilled."""
+        from governance.routes.tests.heuristic_checks_session import _is_backfilled_session
+        assert not _is_backfilled_session({
+            "session_id": "SESSION-2026-02-11-IMPLEMENT-FEATURE",
+            "agent_id": "code-agent",
+            "description": "Implementing new feature",
+        })
