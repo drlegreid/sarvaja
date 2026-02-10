@@ -29,7 +29,7 @@ def build_metrics_header() -> None:
             density="compact",
             hide_details=True,
             style="max-width: 120px",
-            change="trigger('load_metrics_data')",
+            update_modelValue="trigger('load_metrics_data')",
             __properties=["data-testid"],
             **{"data-testid": "metrics-days-filter"}
         )

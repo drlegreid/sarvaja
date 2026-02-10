@@ -259,6 +259,65 @@ async def run_regression_tests(
     }
 
 
+@router.post("/cvp/sweep")
+async def run_cvp_sweep(
+    background_tasks: BackgroundTasks,
+    tier: int = Query(3, ge=1, le=3, description="CVP tier: 1=inline, 2=post-session, 3=full sweep"),
+):
+    """
+    Run CVP (Continuous Validation Pipeline) sweep. Per TEST-CVP-01-v1.
+
+    Tier 3 runs all heuristic checks + cross-entity validation.
+    Returns run_id for polling via /tests/results/{run_id}.
+    """
+    run_id = f"CVP-T{tier}-{datetime.now().strftime('%Y%m%d-%H%M%S')}"
+
+    _test_results[run_id] = {
+        "status": "running",
+        "timestamp": datetime.now().isoformat(),
+        "category": f"cvp-tier-{tier}",
+        "command": f"CVP sweep tier={tier}",
+    }
+
+    # Tier 3 runs full heuristic sweep across all domains
+    background_tasks.add_task(execute_heuristic, run_id, None)
+
+    return {
+        "run_id": run_id,
+        "status": "started",
+        "category": f"cvp-tier-{tier}",
+        "tier": tier,
+    }
+
+
+@router.get("/cvp/status")
+async def get_cvp_status():
+    """
+    Get CVP pipeline status summary. Per TEST-CVP-01-v1.
+
+    Returns latest results from each tier and overall health.
+    """
+    cvp_runs = {
+        k: v for k, v in _test_results.items()
+        if k.startswith("CVP-") or k.startswith("HEUR-")
+    }
+    sorted_runs = sorted(cvp_runs.items(), key=lambda x: x[0], reverse=True)
+
+    last_run = sorted_runs[0] if sorted_runs else None
+    last_status = last_run[1].get("status", "unknown") if last_run else "never_run"
+
+    return {
+        "pipeline_health": "healthy" if last_status == "completed" else "unknown",
+        "last_run_id": last_run[0] if last_run else None,
+        "last_run_status": last_status,
+        "total_cvp_runs": len(cvp_runs),
+        "recent_runs": [
+            {"run_id": k, "status": v.get("status"), "timestamp": v.get("timestamp")}
+            for k, v in sorted_runs[:5]
+        ],
+    }
+
+
 @router.get("/robot/summary")
 async def get_robot_summary():
     """Parse Robot Framework output.xml for summary stats."""

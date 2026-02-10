@@ -82,3 +82,64 @@ class TestHeuristicEndpoint:
         client = TestClient(app)
         response = client.post("/api/tests/heuristic/run")
         assert response.status_code in (200, 201, 422)
+
+
+class TestCVPEndpoints:
+    """Tests for CVP (Continuous Validation Pipeline) endpoints. Per TEST-CVP-01-v1."""
+
+    def _get_client(self):
+        from governance.routes.tests.runner import router
+        from fastapi import FastAPI
+        app = FastAPI()
+        app.include_router(router, prefix="/api")
+        return TestClient(app)
+
+    def test_cvp_sweep_endpoint_exists(self):
+        """POST /api/tests/cvp/sweep should exist."""
+        client = self._get_client()
+        response = client.post("/api/tests/cvp/sweep")
+        assert response.status_code == 200
+
+    def test_cvp_sweep_returns_run_id(self):
+        """CVP sweep should return a run_id starting with CVP-."""
+        client = self._get_client()
+        response = client.post("/api/tests/cvp/sweep")
+        data = response.json()
+        assert "run_id" in data
+        assert data["run_id"].startswith("CVP-T3-")
+        assert data["status"] == "started"
+
+    def test_cvp_sweep_with_tier_param(self):
+        """CVP sweep should accept tier parameter."""
+        client = self._get_client()
+        response = client.post("/api/tests/cvp/sweep?tier=2")
+        data = response.json()
+        assert data["tier"] == 2
+        assert data["category"] == "cvp-tier-2"
+
+    def test_cvp_status_endpoint_exists(self):
+        """GET /api/tests/cvp/status should exist."""
+        client = self._get_client()
+        response = client.get("/api/tests/cvp/status")
+        assert response.status_code == 200
+
+    def test_cvp_status_returns_structure(self):
+        """CVP status should return pipeline health and recent runs."""
+        client = self._get_client()
+        response = client.get("/api/tests/cvp/status")
+        data = response.json()
+        assert "pipeline_health" in data
+        assert "recent_runs" in data
+        assert isinstance(data["recent_runs"], list)
+
+    def test_cvp_sweep_tracked_in_results(self):
+        """After running a CVP sweep, it should be tracked in test results."""
+        from governance.routes.tests.runner_store import _test_results
+        client = self._get_client()
+        # Run a sweep
+        sweep_resp = client.post("/api/tests/cvp/sweep")
+        run_id = sweep_resp.json()["run_id"]
+        assert run_id.startswith("CVP-T3-")
+        # After BackgroundTasks runs inline, results should be populated
+        assert run_id in _test_results
+        assert "summary" in _test_results[run_id] or "status" in _test_results[run_id]

@@ -246,6 +246,16 @@ def end_session(
             if session:
                 updated = client.end_session(session_id)
                 if updated:
+                    # Also update _sessions_store for consistent fallback
+                    # (TypeDB derives tasks_completed from relations, but chat
+                    # sessions store tool_call count here for API visibility)
+                    if session_id in _sessions_store:
+                        _sessions_store[session_id]["status"] = "COMPLETED"
+                        _sessions_store[session_id]["end_time"] = datetime.now().isoformat()
+                        if tasks_completed is not None:
+                            _sessions_store[session_id]["tasks_completed"] = tasks_completed
+                        if evidence_files is not None:
+                            _sessions_store[session_id]["evidence_files"] = evidence_files
                     record_audit("UPDATE", "session", session_id,
                                  old_value="ACTIVE", new_value="COMPLETED",
                                  metadata={"action": "end_session", "source": source})

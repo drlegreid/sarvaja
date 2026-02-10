@@ -141,6 +141,42 @@ def mark_saved() -> None:
     save_state(state, add_history=True, event="CONTEXT_SAVED")
 
 
+def _extract_tool_name() -> Optional[str]:
+    """Extract tool name from stdin hook event JSON (G.3)."""
+    try:
+        if not sys.stdin.isatty():
+            data = json.loads(sys.stdin.read())
+            return data.get("tool_name") or data.get("toolName")
+    except Exception:
+        pass
+    return None
+
+
+def _detect_context_rot(recent_tools: list) -> float:
+    """Detect context rot via repetitive tool call patterns (G.3).
+
+    Returns rot_score 0.0-1.0 where higher = more repetitive.
+    """
+    if len(recent_tools) < 5:
+        return 0.0
+
+    last_10 = recent_tools[-10:]
+    unique = len(set(last_10))
+    total = len(last_10)
+
+    # If same tool called 3+ times in last 10 calls
+    from collections import Counter
+    counts = Counter(last_10)
+    max_repeat = max(counts.values()) if counts else 0
+
+    # Rot score: weighted combination of low uniqueness + high repetition
+    uniqueness = unique / total  # 1.0 = all different, 0.1 = all same
+    repetition = max_repeat / total  # 0.1 = no repeat, 1.0 = all same tool
+
+    rot_score = (1 - uniqueness) * 0.5 + repetition * 0.5
+    return round(rot_score, 2)
+
+
 def main():
     """Main entropy monitoring logic."""
     try:
@@ -169,12 +205,31 @@ def main():
         warnings_shown = state.get("warnings_shown", 0)
         last_warning_at = state.get("last_warning_at", 0)
 
+        # G.3: Track tool name for context rot detection
+        tool_name = _extract_tool_name()
+        recent_tools = state.get("recent_tools", [])
+        if tool_name:
+            recent_tools.append(tool_name)
+            recent_tools = recent_tools[-20:]  # Keep last 20
+            state["recent_tools"] = recent_tools
+
         # Determine if we should show a warning
         context = None
 
         # Track event for history
         event = None
         extra = None
+
+        # G.3: Context rot detection — check for repetitive patterns
+        rot_score = _detect_context_rot(recent_tools)
+        if rot_score > 0.7 and tool_count > 30:
+            context = (
+                f"[CONTEXT ROT DETECTED] Freshness: {int((1 - rot_score) * 100)}%. "
+                f"Repetitive tool call patterns detected.\n"
+                f"Save context and consider restarting session."
+            )
+            event = "CONTEXT_ROT"
+            extra = {"rot_score": rot_score, "freshness": 1 - rot_score}
 
         # Periodic checkpoint for audit trail (every CHECKPOINT_INTERVAL calls)
         should_checkpoint = (tool_count % CHECKPOINT_INTERVAL == 0)

@@ -1,6 +1,6 @@
 # Gap Index - Sarvaja
 
-**Last Updated:** 2026-01-29 | **Source of Truth:** TypeDB via `backlog_get()`
+**Last Updated:** 2026-02-11 | **Source of Truth:** TypeDB via `backlog_get()`
 
 | Status | Count |
 |--------|-------|
@@ -8,7 +8,7 @@
 | PARTIAL | 0 |
 | DEFERRED | 1 |
 | MITIGATED | 1 |
-| RESOLVED | 256+ |
+| RESOLVED | 262+ |
 
 > **Test Traceability:** Run `robot --include GAP-*` to execute all 60 gap regression tests.
 
@@ -28,10 +28,18 @@
 | GAP-SESSION-METRICS-PLATFORM | MEDIUM | RESOLVED | analytics | Per SESSION-METRICS-01-v1 | 18 pytest + 4 Robot |
 | GAP-SESSION-METRICS-TEMPORAL | LOW | RESOLVED | analytics | Per SESSION-METRICS-01-v1 | 15 pytest + 5 Robot |
 | GAP-SESSION-METRICS-UI | HIGH | RESOLVED | analytics | Per SESSION-METRICS-01-v1 | 14 pytest + 6 pytest |
+| GAP-GOVSESS-CAPTURE-001 | CRITICAL | RESOLVED | gov-sessions | [evidence](evidence/GAP-GOVSESS-CAPTURE-001.md) | 19+13 pytest |
+| GAP-GOVSESS-TIMESTAMP-001 | HIGH | RESOLVED | gov-sessions | [evidence](evidence/GAP-GOVSESS-CAPTURE-001.md) | 15 pytest |
+| GAP-GOVSESS-AGENT-001 | HIGH | RESOLVED | gov-sessions | [evidence](evidence/GAP-GOVSESS-CAPTURE-001.md) | 15 pytest |
+| GAP-GOVSESS-DURATION-001 | MEDIUM | RESOLVED | gov-sessions | [evidence](evidence/GAP-GOVSESS-CAPTURE-001.md) | 15 pytest |
 | GAP-LANGGRAPH-QUALITY-001 | MEDIUM | DEFERRED | enhancement | [evidence](evidence/GAP-LANGGRAPH-QUALITY-001.md) | - |
 | GAP-MCP-PAGING-001 | MEDIUM | MITIGATED | tooling | [evidence](evidence/GAP-MCP-PAGING-001.md) | - |
 
 > **Notes:**
+> - GAP-GOVSESS-CAPTURE-001: RESOLVED (2026-02-11) - MCP auto-session tracker (`auto_session.py`) captures non-chat tool calls. Chat bridge + MCP tracker = full coverage. 13 new tests.
+> - GAP-GOVSESS-TIMESTAMP-001: RESOLVED (2026-02-11) - `session_repair.py` parses dates from session IDs, generates reasonable timestamps. Repair script: `scripts/repair_backfill_sessions.py`. 15 tests.
+> - GAP-GOVSESS-AGENT-001: RESOLVED (2026-02-11) - `session_repair.py` assigns "code-agent" to backfilled sessions lacking agent_id. 15 tests.
+> - GAP-GOVSESS-DURATION-001: RESOLVED (2026-02-11) - `session_repair.py` detects and caps unrealistic durations (>24h). 15 tests.
 > - GAP-SESSION-METRICS-CORRELATION: RESOLVED (2026-01-29) - correlation.py with 19 pytest + 7 Robot tests
 > - GAP-SESSION-METRICS-CONTENT: RESOLVED (2026-01-29) - search.py + parse_log_file_extended with 19 pytest + 6 Robot tests
 > - GAP-SESSION-METRICS-ERRORS: RESOLVED (2026-01-29) - is_api_error detection, error_rate calculation with 7 pytest + 4 Robot tests
@@ -41,7 +49,16 @@
 > - GAP-MCP-PAGING-001: MITIGATED - External MCP tools, workarounds documented
 > - GAP-LANGGRAPH-QUALITY-001: DEFERRED (2026-01-26) - Option C selected, revisit when multi-agent active
 
-## Recently Resolved (2026-01-27)
+## Recently Resolved (2026-02-11)
+
+| ID | Resolution |
+|----|------------|
+| GAP-GOVSESS-CAPTURE-001 | RESOLVED - MCP auto-session tracker for non-chat tool calls + chat bridge |
+| GAP-GOVSESS-TIMESTAMP-001 | RESOLVED - Session repair service parses dates from session IDs |
+| GAP-GOVSESS-AGENT-001 | RESOLVED - Session repair assigns "code-agent" to backfilled sessions |
+| GAP-GOVSESS-DURATION-001 | RESOLVED - Duration capping and detection in session repair service |
+
+## Previously Resolved (2026-01-27)
 
 | ID | Resolution |
 |----|------------|

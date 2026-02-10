@@ -68,16 +68,21 @@ class TestSessionsViaRestAPI:
     def test_create_session(self):
         """MCP-001-A: Can create session via REST API."""
         timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
+        test_session_id = f"TEST-SESSION-{timestamp}"
         session_data = {
-            "session_id": f"TEST-SESSION-{timestamp}",
+            "session_id": test_session_id,
             "agent_id": "claude-code-test",
             "description": "Test session created via REST API"
         }
 
-        result = api_post("/api/sessions", session_data)
+        try:
+            result = api_post("/api/sessions", session_data)
 
-        assert result["status"] == 201, f"Session creation should return 201, got {result['status']}"
-        assert result["data"]["session_id"] == session_data["session_id"]
+            assert result["status"] == 201, f"Session creation should return 201, got {result['status']}"
+            assert result["data"]["session_id"] == test_session_id
+        finally:
+            # Cleanup: delete test session to prevent pollution
+            requests.delete(f"{API_BASE}/api/sessions/{test_session_id}", timeout=10)
 
     def test_get_tasks_with_sessions(self):
         """MCP-002-A: Tasks and sessions can be queried together."""

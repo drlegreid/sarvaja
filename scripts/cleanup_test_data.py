@@ -79,7 +79,7 @@ def cleanup(dry_run: bool = False) -> dict:
         except Exception as e:
             print(f"Task cleanup error: {e}")
 
-        # Sessions
+        # Sessions (TEST-* prefixed)
         try:
             resp = client.get("/api/sessions?limit=200")
             if resp.status_code == 200:
@@ -99,6 +99,39 @@ def cleanup(dry_run: bool = False) -> dict:
                         cleaned["sessions"] += 1
         except Exception as e:
             print(f"Session cleanup error: {e}")
+
+        # CHAT test-artifact sessions (E.3: test data pollution fix)
+        _CHAT_TEST_PATTERNS = (
+            "CHAT-TEST", "CHAT-NO-TOOLS", "CHAT-NO-THOUGHTS",
+            "CHAT-CVP", "CHAT-FALLBACK", "CHAT-ORPHAN",
+            "CHAT-STORE-", "CHAT-TYPEDB-", "CHAT-RESILIENT",
+            "CHAT-DONE", "CHAT-AAA", "CHAT-BBB", "CHAT-CCC",
+        )
+        try:
+            resp = client.get("/api/sessions?limit=500")
+            if resp.status_code == 200:
+                data = resp.json()
+                sessions = data.get("items", data) if isinstance(data, dict) else data
+                chat_test = []
+                for s in sessions:
+                    sid = s.get("session_id", "")
+                    agent = s.get("agent_id", "")
+                    if "CHAT-" not in sid:
+                        continue
+                    if agent == "agent-1" or any(p in sid for p in _CHAT_TEST_PATTERNS):
+                        chat_test.append(s)
+                print(f"Found {len(chat_test)} CHAT test-artifact sessions")
+                for s in chat_test:
+                    sid = s["session_id"]
+                    if dry_run:
+                        print(f"  [DRY] Would cleanup CHAT test session {sid}")
+                    else:
+                        if s.get("status") == "ACTIVE":
+                            client.put(f"/api/sessions/{sid}/end")
+                        client.delete(f"/api/sessions/{sid}")
+                        cleaned["sessions"] += 1
+        except Exception as e:
+            print(f"CHAT test session cleanup error: {e}")
 
         # Rules (requires TypeDB)
         if typedb_ok:

@@ -117,10 +117,12 @@ async def add_task_execution_event(
         "details": None
     }
 
-    # Store event
+    # Store event (cap at 100 per task to prevent unbounded growth)
     if task_id not in _execution_events_store:
         _execution_events_store[task_id] = []
     _execution_events_store[task_id].append(event)
+    if len(_execution_events_store[task_id]) > 100:
+        _execution_events_store[task_id] = _execution_events_store[task_id][-100:]
 
     record_audit(event_type.upper(), "task", task_id,
                  actor_id=agent_id or "system",

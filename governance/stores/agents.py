@@ -33,14 +33,14 @@ _YAML_KEY_TO_AGENT_ID = {
 
 # Base agent definitions (static config - fallback if TypeDB unavailable)
 # Per GAP-AGENT-004: Added capabilities field
-# Per user feedback: Only local Claude Code agent is active by default.
-# Other agents are STOPPED until explicitly started.
+# Per GAP-AGENT-PAUSE-001: All agents default to PAUSED until platform is stable.
+# Operators must explicitly activate agents.
 _AGENT_BASE_CONFIG = {
     "code-agent": {
         "name": "Claude Code Agent",
         "agent_type": "claude-code",
         "base_trust": 0.88,
-        "default_status": "ACTIVE",
+        "default_status": "PAUSED",
         "capabilities": [
             "code_generation", "refactoring", "test_writing",
             "task_management", "session_management", "rule_compliance",
@@ -50,28 +50,28 @@ _AGENT_BASE_CONFIG = {
         "name": "Task Orchestrator",
         "agent_type": "orchestrator",
         "base_trust": 0.95,
-        "default_status": "STOPPED",
+        "default_status": "PAUSED",
         "capabilities": ["task_management", "delegation", "priority_assignment"],
     },
     "rules-curator": {
         "name": "Rules Curator",
         "agent_type": "curator",
         "base_trust": 0.90,
-        "default_status": "STOPPED",
+        "default_status": "PAUSED",
         "capabilities": ["rule_creation", "rule_modification", "compliance_review"],
     },
     "research-agent": {
         "name": "Research Agent",
         "agent_type": "researcher",
         "base_trust": 0.85,
-        "default_status": "STOPPED",
+        "default_status": "PAUSED",
         "capabilities": ["web_search", "document_analysis", "knowledge_synthesis"],
     },
     "local-assistant": {
         "name": "Local Assistant",
         "agent_type": "assistant",
         "base_trust": 0.92,
-        "default_status": "STOPPED",
+        "default_status": "PAUSED",
         "capabilities": ["file_operations", "command_execution", "session_management"],
     },
 }

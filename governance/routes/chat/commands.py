@@ -99,12 +99,18 @@ def process_chat_command(content: str, agent_id: str) -> str:
 
     # Command recognition
     if content_lower.startswith("/status"):
+        # GAP-CHAT-COUNT-001: Use service layer for authoritative count
+        try:
+            result = list_sessions(limit=1)
+            total_sessions = result.get("pagination", {}).get("total", sessions_count)
+        except Exception:
+            total_sessions = sessions_count
         return (
             f"System Status:\n"
             f"- Rules: {rules_count} loaded\n"
             f"- Tasks: {tasks_count} total\n"
             f"- Agents: {agents_count} registered\n"
-            f"- Sessions: {sessions_count} active"
+            f"- Sessions: {total_sessions} total"
         )
 
     elif content_lower.startswith("/tasks"):

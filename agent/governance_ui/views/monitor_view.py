@@ -68,7 +68,7 @@ def build_monitor_stats() -> None:
             ):
                 with v3.VCardText(classes="text-center"):
                     html.Div(
-                        "{{ monitor_stats.total_events || 0 }}",
+                        "{{ monitor_feed.length || monitor_stats.total_events || 0 }}",
                         classes="text-h4 font-weight-bold"
                     )
                     html.Div("Total Events", classes="text-subtitle-2")

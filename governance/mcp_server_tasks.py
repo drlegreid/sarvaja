@@ -36,12 +36,21 @@ from governance.mcp_tools.workspace import register_workspace_tools
 from governance.mcp_tools.gaps import register_gap_tools
 from governance.mcp_tools.handoff import register_handoff_tools
 from governance.mcp_tools.audit import register_audit_tools
+from governance.mcp_tools.tasks_intent import register_tasks_intent_tools
+from governance.mcp_tools.task_metrics import register_task_metrics_tools
 
 register_task_tools(mcp)
 register_workspace_tools(mcp)
 register_gap_tools(mcp)
 register_handoff_tools(mcp)
 register_audit_tools(mcp)
+# Per EPIC-H: Gov-Tasks MCP Parity
+register_tasks_intent_tools(mcp)
+register_task_metrics_tools(mcp)
+
+# Per GAP-GOVSESS-CAPTURE-001: Auto-session tracking for non-chat MCP calls
+from governance.mcp_tools.auto_session import track_mcp_tool_call
+_SERVER_NAME = "gov-tasks"
 
 
 # =============================================================================

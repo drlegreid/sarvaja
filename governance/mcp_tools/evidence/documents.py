@@ -25,6 +25,7 @@ Updated: 2026-01-13 - Modularized into sub-modules per DOC-SIZE-01-v1
 from .documents_core import register_core_document_tools, FILE_TYPE_MAP
 from .documents_entity import register_entity_document_tools
 from .documents_links import register_link_document_tools
+from .documents_validate import register_validate_document_tools
 
 
 def register_document_tools(mcp) -> None:
@@ -34,10 +35,12 @@ def register_document_tools(mcp) -> None:
     - documents_core: get_document, list_documents
     - documents_entity: get_rule_document, get_task_document
     - documents_links: extract_links, resolve_link
+    - documents_validate: doc_validate (per RD-DOCUMENT-MCP-SERVICE quick win)
     """
     register_core_document_tools(mcp)
     register_entity_document_tools(mcp)
     register_link_document_tools(mcp)
+    register_validate_document_tools(mcp)
 
 
 # Re-export for backwards compatibility

@@ -1,0 +1,297 @@
+{
+  "status": "failed",
+  "timestamp": "2026-02-08T23:54:31.279650",
+  "duration_seconds": 1.465818,
+  "category": "heuristic",
+  "total": 27,
+  "passed": 11,
+  "failed": 5,
+  "skipped": 11,
+  "errors": 0,
+  "checks": [
+    {
+      "status": "PASS",
+      "message": "All tasks have descriptions",
+      "violations": [],
+      "id": "H-TASK-001",
+      "domain": "TASK",
+      "name": "Task descriptions",
+      "duration_ms": 63
+    },
+    {
+      "status": "FAIL",
+      "message": "3 IN_PROGRESS tasks without agent",
+      "violations": [
+        "EPIC-UI-VALUE-001",
+        "GAP-AGENT-PAUSE-001",
+        "RD-005"
+      ],
+      "id": "H-TASK-002",
+      "domain": "TASK",
+      "name": "IN_PROGRESS agent assignment",
+      "duration_ms": 53
+    },
+    {
+      "status": "PASS",
+      "message": "All DONE tasks have timestamps",
+      "violations": [],
+      "id": "H-TASK-003",
+      "domain": "TASK",
+      "name": "DONE completion timestamps",
+      "duration_ms": 56
+    },
+    {
+      "status": "PASS",
+      "message": "No TEST-* task artifacts",
+      "violations": [],
+      "id": "H-TASK-004",
+      "domain": "TASK",
+      "name": "No TEST-* task artifacts",
+      "duration_ms": 72
+    },
+    {
+      "status": "FAIL",
+      "message": "97/130 tasks have no linked sessions (orphans)",
+      "violations": [
+        "ATEST-002",
+        "ATEST-003",
+        "ATEST-004",
+        "ATEST-005",
+        "ATEST-006",
+        "ATEST-007",
+        "ATEST-008",
+        "DOCVIEW-001",
+        "DOCVIEW-002",
+        "DOCVIEW-003",
+        "DOCVIEW-004",
+        "DOCVIEW-005",
+        "EPIC-CLEANUP-001",
+        "EPIC-TEST-COMPRESS-001",
+        "EPIC-UI-VALUE-001",
+        "FIX-INFRA-001",
+        "FIX-SYNTAX-001",
+        "GAP-AGENT-PAUSE-001",
+        "GAP-AUDIT-EMPTY-001",
+        "GAP-CHAT-COUNT-001"
+      ],
+      "id": "H-TASK-005",
+      "domain": "TASK",
+      "name": "Task-session linkage (DATA-LINK-01)",
+      "duration_ms": 77
+    },
+    {
+      "status": "PASS",
+      "message": "All active sessions have agents",
+      "violations": [],
+      "id": "H-SESSION-001",
+      "domain": "SESSION",
+      "name": "Active session agent_id",
+      "duration_ms": 25
+    },
+    {
+      "status": "PASS",
+      "message": "No TEST-* session artifacts",
+      "violations": [],
+      "id": "H-SESSION-004",
+      "domain": "SESSION",
+      "name": "No TEST-* session artifacts",
+      "duration_ms": 23
+    },
+    {
+      "status": "PASS",
+      "message": "All rules have directives",
+      "violations": [],
+      "id": "H-RULE-003",
+      "domain": "RULE",
+      "name": "Rule directive content",
+      "duration_ms": 174
+    },
+    {
+      "status": "PASS",
+      "message": "No TEST-* rule artifacts",
+      "violations": [],
+      "id": "H-RULE-004",
+      "domain": "RULE",
+      "name": "No TEST-* rule artifacts",
+      "duration_ms": 171
+    },
+    {
+      "status": "PASS",
+      "message": "All agents have trust scores",
+      "violations": [],
+      "id": "H-AGENT-001",
+      "domain": "AGENT",
+      "name": "Agent trust scores",
+      "duration_ms": 84
+    },
+    {
+      "status": "PASS",
+      "message": "All agents recently active or new",
+      "violations": [],
+      "id": "H-AGENT-002",
+      "domain": "AGENT",
+      "name": "Agent last_active recency",
+      "duration_ms": 86
+    },
+    {
+      "status": "FAIL",
+      "message": "4/18 ended sessions lack evidence files",
+      "violations": [
+        "SESSION-2026-01-30-45A2EB",
+        "SESSION-2024-12-28-001",
+        "SESSION-2024-12-25-DSP-CYCLES",
+        "SESSION-2024-12-24-PHASE4-MCP-WRAPPER"
+      ],
+      "id": "H-SESSION-002",
+      "domain": "SESSION",
+      "name": "Ended session evidence files",
+      "duration_ms": 181
+    },
+    {
+      "status": "PASS",
+      "message": "No active sessions",
+      "violations": [],
+      "id": "H-SESSION-003",
+      "domain": "SESSION",
+      "name": "Stale active sessions (>24h)",
+      "duration_ms": 27
+    },
+    {
+      "status": "FAIL",
+      "message": "1/1 live sessions have NO tool call records (17 backfilled skipped)",
+      "violations": [
+        "SESSION-2026-01-30-45A2EB"
+      ],
+      "id": "H-SESSION-005",
+      "domain": "SESSION",
+      "name": "Session MCP tool call records",
+      "duration_ms": 43
+    },
+    {
+      "status": "FAIL",
+      "message": "1/1 live sessions have NO thought records (17 backfilled skipped)",
+      "violations": [
+        "SESSION-2026-01-30-45A2EB"
+      ],
+      "id": "H-SESSION-006",
+      "domain": "SESSION",
+      "name": "Session thought/reasoning records",
+      "duration_ms": 40
+    },
+    {
+      "status": "SKIP",
+      "message": "Self-referential: use REST MCP from host",
+      "violations": [],
+      "id": "H-CROSS-001",
+      "domain": "CROSS-ENTITY",
+      "name": "Service layer coverage",
+      "duration_ms": 0
+    },
+    {
+      "status": "SKIP",
+      "message": "Self-referential: use REST MCP",
+      "violations": [],
+      "id": "H-CROSS-003",
+      "domain": "CROSS-ENTITY",
+      "name": "Decisions link to rules",
+      "duration_ms": 0
+    },
+    {
+      "status": "SKIP",
+      "message": "Self-referential: use REST MCP",
+      "violations": [],
+      "id": "H-RULE-001",
+      "domain": "RULE",
+      "name": "Active rules have document_path",
+      "duration_ms": 0
+    },
+    {
+      "status": "SKIP",
+      "message": "Self-referential: use REST MCP from host",
+      "violations": [],
+      "id": "H-API-001",
+      "domain": "API",
+      "name": "Endpoint health",
+      "duration_ms": 0
+    },
+    {
+      "status": "SKIP",
+      "message": "Self-referential: use REST MCP from host",
+      "violations": [],
+      "id": "H-API-002",
+      "domain": "API",
+      "name": "Pagination contract",
+      "duration_ms": 0
+    },
+    {
+      "status": "PASS",
+      "message": "Key views have data-testid attributes",
+      "violations": [],
+      "id": "H-UI-003",
+      "domain": "UI",
+      "name": "data-testid coverage",
+      "duration_ms": 2
+    },
+    {
+      "status": "SKIP",
+      "message": "Self-referential",
+      "violations": [],
+      "id": "H-EXPLR-001",
+      "domain": "CROSS-ENTITY",
+      "name": "Chat/API session count consistency",
+      "duration_ms": 0
+    },
+    {
+      "status": "SKIP",
+      "message": "Self-referential",
+      "violations": [],
+      "id": "H-EXPLR-002",
+      "domain": "UI",
+      "name": "Monitor event count consistency",
+      "duration_ms": 0
+    },
+    {
+      "status": "SKIP",
+      "message": "Self-referential",
+      "violations": [],
+      "id": "H-EXPLR-003",
+      "domain": "CROSS-ENTITY",
+      "name": "Decision-rule linking persistence",
+      "duration_ms": 0
+    },
+    {
+      "status": "SKIP",
+      "message": "Self-referential",
+      "violations": [],
+      "id": "H-EXPLR-004",
+      "domain": "CROSS-ENTITY",
+      "name": "Audit trail populated",
+      "duration_ms": 0
+    },
+    {
+      "status": "SKIP",
+      "message": "Self-referential",
+      "violations": [],
+      "id": "H-EXPLR-005",
+      "domain": "RULE",
+      "name": "Active rules have document_path",
+      "duration_ms": 0
+    },
+    {
+      "status": "SKIP",
+      "message": "Self-referential",
+      "violations": [],
+      "id": "H-EXPLR-006",
+      "domain": "API",
+      "name": "MCP readiness vs health consistency",
+      "duration_ms": 0
+    }
+  ],
+  "summary": {
+    "total": 27,
+    "passed": 11,
+    "failed": 5,
+    "errors": 0,
+    "skipped": 11
+  }
+}

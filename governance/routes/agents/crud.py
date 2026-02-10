@@ -13,6 +13,7 @@ import logging
 
 from governance.models import AgentResponse, PaginatedAgentResponse, PaginationMeta
 from governance.services import agents as agent_service
+from governance.services import sessions as session_service
 
 logger = logging.getLogger(__name__)
 router = APIRouter(tags=["Agents"])
@@ -61,6 +62,15 @@ async def delete_agent(agent_id: str):
     return None
 
 
+@router.put("/agents/{agent_id}/status/toggle", response_model=AgentResponse)
+async def toggle_agent_status(agent_id: str):
+    """Toggle agent between PAUSED and ACTIVE. Per GAP-AGENT-PAUSE-001."""
+    result = agent_service.toggle_agent_status(agent_id, source="rest-api")
+    if result is None:
+        raise HTTPException(status_code=404, detail=f"Agent {agent_id} not found")
+    return AgentResponse(**result)
+
+
 @router.put("/agents/{agent_id}/task", response_model=AgentResponse)
 async def record_agent_task(agent_id: str):
     """Record that an agent executed a task. Per P11.9, GAP-STUB-005."""
@@ -68,3 +78,30 @@ async def record_agent_task(agent_id: str):
     if result is None:
         raise HTTPException(status_code=404, detail=f"Agent {agent_id} not found")
     return AgentResponse(**result)
+
+
+@router.get("/agents/{agent_id}/sessions")
+async def get_agent_sessions(
+    agent_id: str,
+    offset: int = Query(0, ge=0),
+    limit: int = Query(20, ge=1, le=100),
+):
+    """Get sessions linked to an agent. Per EPIC-A.4: Session-agent linking."""
+    # Verify agent exists
+    agent = agent_service.get_agent(agent_id, source="rest-api")
+    if agent is None:
+        raise HTTPException(status_code=404, detail=f"Agent {agent_id} not found")
+
+    result = session_service.list_sessions(
+        agent_id=agent_id, offset=offset, limit=limit,
+    )
+    return {
+        "agent_id": agent_id,
+        "sessions": result["items"],
+        "pagination": {
+            "total": result["total"],
+            "offset": result["offset"],
+            "limit": result["limit"],
+            "has_more": result["has_more"],
+        },
+    }

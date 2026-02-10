@@ -193,13 +193,33 @@ class TestDSPEdges:
 
         assert check_validation_result(state) == "dream"
 
-    def test_check_validation_failed(self):
-        """Test validation routing when failed."""
+    def test_check_validation_failed_loops_back(self):
+        """Test validation failure loops to hypothesize when retries remain."""
         state = create_initial_state()
         state["status"] = "running"
         state["validation_passed"] = False
+        state["retry_count"] = 0
+
+        assert check_validation_result(state) == "loop_to_hypothesize"
+
+    def test_check_validation_failed_retries_exhausted(self):
+        """Test validation failure goes to report when retries exhausted."""
+        from governance.dsm.langgraph.state import MAX_PHASE_RETRIES
+        state = create_initial_state()
+        state["status"] = "running"
+        state["validation_passed"] = False
+        state["retry_count"] = MAX_PHASE_RETRIES
 
         assert check_validation_result(state) == "report"
+
+    def test_check_validation_failed_mid_retry(self):
+        """Test validation failure loops at retry_count < MAX."""
+        state = create_initial_state()
+        state["status"] = "running"
+        state["validation_passed"] = False
+        state["retry_count"] = 2  # Still below MAX_PHASE_RETRIES=3
+
+        assert check_validation_result(state) == "loop_to_hypothesize"
 
 
 class TestDSPGraph:

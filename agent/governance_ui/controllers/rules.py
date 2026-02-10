@@ -44,6 +44,18 @@ def register_rules_controllers(state: Any, ctrl: Any, api_base_url: str) -> None
         state.rule_form_mode = mode
         state.show_rule_form = True
 
+    @ctrl.trigger("edit_rule")
+    def edit_rule():
+        """Populate form with selected rule's data for editing (GAP-RULE-EDIT-001)."""
+        if state.selected_rule:
+            state.form_rule_id = state.selected_rule.get('rule_id') or state.selected_rule.get('id') or ''
+            state.form_rule_title = state.selected_rule.get('name') or ''
+            state.form_rule_directive = state.selected_rule.get('directive') or ''
+            state.form_rule_category = state.selected_rule.get('category') or 'governance'
+            state.form_rule_priority = state.selected_rule.get('priority') or 'HIGH'
+            state.rule_form_mode = 'edit'
+            state.show_rule_form = True
+
     @ctrl.set("close_rule_form")
     def close_rule_form():
         """Close rule form."""

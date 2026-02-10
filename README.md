@@ -85,14 +85,28 @@ The platform exposes governance functionality via Model Context Protocol (MCP):
 
 ## Key Features
 
-### Governance Dashboard
-- **Rules View**: Browse 55+ governance rules with filtering and search
-- **Sessions View**: Track agent sessions with evidence and tool calls
-- **Tasks View**: Manage task backlog with phase/status filters
-- **Infrastructure View**: Monitor service health and MCP status
+### Governance Dashboard (15 Views)
+- **Chat**: Natural language interaction with `/status`, `/tasks`, `/sessions` commands
+- **Rules**: Browse 48+ governance rules with CRUD, filtering, and document linkage
+- **Agents**: Trust scores, status toggle (PAUSED/ACTIVE), linked sessions
+- **Tasks**: Full backlog with phase/status filters, create dialog, pagination
+- **Sessions**: Session tracking with evidence, tool calls, and agent linking
+- **Decisions**: Strategic decision log with rule linking
+- **Executive**: Period-based reports and analytics
+- **Impact**: Rule dependency analysis with Mermaid diagrams
+- **Trust**: Agent trust leaderboard and governance proposals
+- **Workflow**: Compliance checks and LangGraph DSP workflow
+- **Audit**: Full audit trail with entity/action/actor filters
+- **Monitor**: Real-time event feed with alerts
+- **Infrastructure**: Service health, MCP status, container logs
+- **Metrics**: Session analytics and tool usage statistics
+- **Tests**: Heuristic data integrity checks (27 checks across 6 domains)
 
-### Document Linkage
-Rules and tasks can link to source documents (markdown files in `docs/rules/`). Click "Source Document" in detail views to open the file viewer.
+### Data Integrity (Heuristic Checks)
+27 automated checks across TASK, SESSION, RULE, AGENT, CROSS-ENTITY, and EXPLORATORY domains. Run via `/api/tests/heuristic/run` or the Tests tab.
+
+### Audit Trail
+All CRUD operations generate audit entries with correlation IDs, actor attribution, and rule application tracking. Persisted to `data/audit_trail.json` with 7-day retention.
 
 ### CRUD Operations
 Full create, read, update, delete support for:
@@ -100,6 +114,7 @@ Full create, read, update, delete support for:
 - Tasks (`/api/tasks`)
 - Sessions (`/api/sessions`)
 - Decisions (`/api/decisions`)
+- Agents (`/api/agents`)
 
 ## Development
 
@@ -151,10 +166,11 @@ platform/
 │   ├── gaps/               # Gap tracking (GAP-INDEX.md)
 │   └── DEVOPS.md           # Infrastructure guide
 ├── tests/
-│   ├── unit/               # Python unit tests
+│   ├── unit/               # 1426 Python unit tests
 │   ├── robot/              # Robot Framework E2E tests
 │   └── e2e/                # End-to-end integration tests
-└── evidence/               # Session evidence files
+├── evidence/               # Session evidence files
+└── data/                   # Persistent data (audit trail, agent metrics)
 ```
 
 ## Documentation
@@ -167,16 +183,32 @@ platform/
 | [docs/RULES-DIRECTIVES.md](docs/RULES-DIRECTIVES.md) | All 55 governance rules |
 | [.claude/MCP.md](.claude/MCP.md) | MCP server configuration |
 
+## Test Suite
+
+```bash
+# Unit tests (1426 tests)
+.venv/bin/python3 -m pytest tests/unit/ -q
+
+# Heuristic integrity checks (27 checks)
+curl -X POST http://localhost:8082/api/tests/heuristic/run
+
+# E2E tests
+.venv/bin/python3 -m pytest tests/e2e/ -v
+```
+
 ## Current Status (2026-02-08)
 
-- [x] TypeDB integration with 55 governance rules
-- [x] Governance dashboard with Trame/Vue 3
+- [x] TypeDB integration with 48 governance rules
+- [x] Governance dashboard with 15 views (Trame/Vue 3)
 - [x] MCP servers for all domains (core, agents, sessions, tasks)
-- [x] REST API with full CRUD operations
+- [x] REST API with full CRUD + audit trail
 - [x] Document viewer for rule source files
 - [x] Session evidence attachment and viewing
-- [x] Heuristic data integrity checks
-- [x] Robot Framework E2E test suite
+- [x] 27 heuristic data integrity checks (6 domains)
+- [x] 1426 unit tests passing
+- [x] LangGraph DSP workflow with loop-back validation
+- [x] Agent trust scoring and governance proposals
+- [x] Chat with natural language + command interface
 
 ## Troubleshooting
 

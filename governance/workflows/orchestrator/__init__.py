@@ -33,6 +33,12 @@ from governance.workflows.orchestrator.graph import (
     run_orchestrator,
     run_single_cycle,
 )
+from governance.workflows.orchestrator.spec_tiers import (
+    generate_spec,
+    generate_specs_from_validation,
+    generate_batch_specs,
+    export_to_robot,
+)
 
 __all__ = [
     "create_initial_state",
@@ -54,4 +60,8 @@ __all__ = [
     "build_orchestrator_graph",
     "run_orchestrator",
     "run_single_cycle",
+    "generate_spec",
+    "generate_specs_from_validation",
+    "generate_batch_specs",
+    "export_to_robot",
 ]

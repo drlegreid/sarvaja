@@ -18,6 +18,9 @@ from agent.governance_ui.utils import (
     format_timestamps_in_list, compute_session_metrics,
     compute_session_duration, compute_timeline_data, compute_pivot_data,
 )
+from agent.governance_ui.views.sessions.timeline import (
+    compute_timeline_plotly_data, has_plotly,
+)
 
 
 def register_sessions_controllers(state: Any, ctrl: Any, api_base_url: str) -> None:
@@ -261,10 +264,12 @@ def register_sessions_controllers(state: Any, ctrl: Any, api_base_url: str) -> N
                     for item in items:
                         item["duration"] = compute_session_duration(
                             item.get("start_time", ""), item.get("end_time", ""))
-                    # F.3: Timeline data
+                    # F.3: Timeline data (Plotly + VSparkline fallback)
                     tl_values, tl_labels = compute_timeline_data(items)
                     state.sessions_timeline_data = tl_values
                     state.sessions_timeline_labels = tl_labels
+                    if has_plotly():
+                        state.sessions_plotly_timeline = compute_timeline_plotly_data(items)
                     # F.1: Extract unique agent options for filter dropdown
                     agents = sorted(set(
                         s.get("agent_id") for s in items

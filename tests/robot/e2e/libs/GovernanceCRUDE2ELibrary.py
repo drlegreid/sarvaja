@@ -369,6 +369,17 @@ class GovernanceCRUDE2ELibrary:
         except Exception as e:
             return {"status_code": 0, "error": str(e)}
 
+    @keyword("Post Session Raw")
+    def post_session_raw(self, session_data: Dict[str, Any]) -> Dict[str, Any]:
+        """POST a session and return raw status code + response."""
+        try:
+            client = self._get_client()
+            response = client.post("/api/sessions", json=session_data)
+            body = response.json() if response.headers.get("content-type", "").startswith("application/json") else {}
+            return {"status_code": response.status_code, "body": body}
+        except Exception as e:
+            return {"status_code": 0, "error": str(e)}
+
     @keyword("Get Resource Raw")
     def get_resource_raw(self, path: str) -> Dict[str, Any]:
         """GET a resource and return raw status code."""
@@ -376,6 +387,17 @@ class GovernanceCRUDE2ELibrary:
             client = self._get_client()
             response = client.get(f"/api/{path}")
             return {"status_code": response.status_code}
+        except Exception as e:
+            return {"status_code": 0, "error": str(e)}
+
+    @keyword("Get Resource With Body")
+    def get_resource_with_body(self, path: str) -> Dict[str, Any]:
+        """GET a resource and return status code + JSON body."""
+        try:
+            client = self._get_client()
+            response = client.get(f"/api/{path}")
+            body = response.json() if response.headers.get("content-type", "").startswith("application/json") else {}
+            return {"status_code": response.status_code, "body": body}
         except Exception as e:
             return {"status_code": 0, "error": str(e)}
 

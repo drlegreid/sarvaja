@@ -83,6 +83,110 @@ class TestThoughtsEndpoint:
             assert "thoughts" in data
 
 
+class TestToolCallsFallbackToSessionsStore:
+    """Tests for Lim 3 fix: fallback to _sessions_store when TypeDB has session
+    but no get_session_tool_calls method."""
+
+    def test_fallback_when_typedb_has_session_but_no_tool_call_method(self, client):
+        """When TypeDB client lacks get_session_tool_calls, should fall back to _sessions_store."""
+        from governance.stores import _sessions_store
+        _sessions_store["S-FALLBACK"] = {
+            "session_id": "S-FALLBACK",
+            "status": "COMPLETED",
+            "tool_calls": [
+                {"tool_name": "/status", "result": "ok"},
+                {"tool_name": "/tasks", "result": "3 tasks"},
+            ],
+        }
+        try:
+            with patch("governance.routes.sessions.relations.get_typedb_client") as mock:
+                mock_client = MagicMock()
+                mock_client.get_session.return_value = {"session_id": "S-FALLBACK"}
+                # Simulate: client has NO get_session_tool_calls method
+                del mock_client.get_session_tool_calls
+                mock.return_value = mock_client
+                response = client.get("/api/sessions/S-FALLBACK/tool_calls")
+                assert response.status_code == 200
+                data = response.json()
+                assert data["tool_call_count"] == 2
+                assert data["tool_calls"][0]["tool_name"] == "/status"
+        finally:
+            _sessions_store.pop("S-FALLBACK", None)
+
+    def test_fallback_when_typedb_tool_calls_empty(self, client):
+        """When TypeDB returns empty tool_calls, should fall back to _sessions_store."""
+        from governance.stores import _sessions_store
+        _sessions_store["S-EMPTY-TC"] = {
+            "session_id": "S-EMPTY-TC",
+            "status": "ACTIVE",
+            "tool_calls": [{"tool_name": "/health", "result": "ok"}],
+        }
+        try:
+            with patch("governance.routes.sessions.relations.get_typedb_client") as mock:
+                mock_client = MagicMock()
+                mock_client.get_session.return_value = {"session_id": "S-EMPTY-TC"}
+                mock_client.get_session_tool_calls.return_value = []
+                mock.return_value = mock_client
+                response = client.get("/api/sessions/S-EMPTY-TC/tool_calls")
+                assert response.status_code == 200
+                data = response.json()
+                assert data["tool_call_count"] == 1
+                assert data["tool_calls"][0]["tool_name"] == "/health"
+        finally:
+            _sessions_store.pop("S-EMPTY-TC", None)
+
+
+class TestThoughtsFallbackToSessionsStore:
+    """Tests for Lim 3 fix: fallback to _sessions_store when TypeDB has session
+    but no get_session_thoughts method."""
+
+    def test_fallback_when_typedb_has_session_but_no_thoughts_method(self, client):
+        """When TypeDB client lacks get_session_thoughts, should fall back to _sessions_store."""
+        from governance.stores import _sessions_store
+        _sessions_store["S-THOUGHTS-FB"] = {
+            "session_id": "S-THOUGHTS-FB",
+            "status": "COMPLETED",
+            "thoughts": [
+                {"thought": "Analyzing system health", "thought_type": "observation"},
+            ],
+        }
+        try:
+            with patch("governance.routes.sessions.relations.get_typedb_client") as mock:
+                mock_client = MagicMock()
+                mock_client.get_session.return_value = {"session_id": "S-THOUGHTS-FB"}
+                del mock_client.get_session_thoughts
+                mock.return_value = mock_client
+                response = client.get("/api/sessions/S-THOUGHTS-FB/thoughts")
+                assert response.status_code == 200
+                data = response.json()
+                assert data["thought_count"] == 1
+                assert data["thoughts"][0]["thought_type"] == "observation"
+        finally:
+            _sessions_store.pop("S-THOUGHTS-FB", None)
+
+    def test_fallback_when_typedb_thoughts_empty(self, client):
+        """When TypeDB returns empty thoughts, should fall back to _sessions_store."""
+        from governance.stores import _sessions_store
+        _sessions_store["S-EMPTY-TH"] = {
+            "session_id": "S-EMPTY-TH",
+            "status": "ACTIVE",
+            "thoughts": [{"thought": "Checking rules", "thought_type": "reasoning"}],
+        }
+        try:
+            with patch("governance.routes.sessions.relations.get_typedb_client") as mock:
+                mock_client = MagicMock()
+                mock_client.get_session.return_value = {"session_id": "S-EMPTY-TH"}
+                mock_client.get_session_thoughts.return_value = []
+                mock.return_value = mock_client
+                response = client.get("/api/sessions/S-EMPTY-TH/thoughts")
+                assert response.status_code == 200
+                data = response.json()
+                assert data["thought_count"] == 1
+                assert data["thoughts"][0]["thought"] == "Checking rules"
+        finally:
+            _sessions_store.pop("S-EMPTY-TH", None)
+
+
 class TestSessionControllerIntegration:
     """Tests for session controller loading tool calls/thoughts."""
 

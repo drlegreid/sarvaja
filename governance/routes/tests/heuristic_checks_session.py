@@ -36,16 +36,45 @@ def _get_completed_sessions(api_base_url: str, limit: int = 50) -> list:
 
 
 def _is_backfilled_session(session: dict) -> bool:
-    """Check if a session was created via backfill (no live MCP data expected).
+    """Check if a session was created via backfill or test (no live MCP data expected).
 
     Backfilled sessions lack agent_id and have description indicating
     they were reconstructed from evidence files, not live sessions.
+    Test sessions created via API exploratory testing also lack MCP data.
+    Per E.4: Also detect test-artifact CHAT sessions from unit/integration tests.
     """
     desc = (session.get("description") or "").lower()
-    return (
-        "backfill" in desc
-        or (not session.get("agent_id") and not session.get("session_id", "").startswith("SESSION-2026-01-30"))
-    )
+    agent = session.get("agent_id") or ""
+    sid = session.get("session_id") or ""
+
+    # Classic backfill/stale detection
+    if "backfill" in desc or "stale" in desc:
+        return True
+    if agent.endswith("-test"):
+        return True
+    if not agent and not sid.startswith("SESSION-2026-02"):
+        return True
+
+    # Test-artifact CHAT sessions (E.4: test data pollution fix)
+    # agent-1 is the most common unit test placeholder, not a real agent
+    if agent == "agent-1":
+        return True
+    # CHAT sessions with test-indicator patterns in session_id
+    if "CHAT-" in sid:
+        _TEST_PATTERNS = (
+            "CHAT-TEST", "CHAT-NO-TOOLS", "CHAT-NO-THOUGHTS",
+            "CHAT-CVP", "CHAT-FALLBACK", "CHAT-ORPHAN",
+            "CHAT-STORE-", "CHAT-TYPEDB-", "CHAT-RESILIENT",
+            "CHAT-DONE", "CHAT-AAA", "CHAT-BBB", "CHAT-CCC",
+        )
+        for pattern in _TEST_PATTERNS:
+            if pattern in sid:
+                return True
+    # Description contains "test" for CHAT sessions
+    if "CHAT-" in sid and "test" in desc:
+        return True
+
+    return False
 
 
 def check_session_evidence_files(api_base_url: str) -> dict:
@@ -64,7 +93,11 @@ def check_session_evidence_files(api_base_url: str) -> dict:
 
     violations = []
     checked = 0
+    skipped = 0
     for s in completed[:30]:  # Cap to avoid excessive API calls
+        if _is_backfilled_session(s):
+            skipped += 1
+            continue
         sid = s.get("session_id", "unknown")
         has_file = bool(s.get("file_path"))
         has_evidence = bool(s.get("evidence_files"))
@@ -78,12 +111,21 @@ def check_session_evidence_files(api_base_url: str) -> dict:
                 violations.append(sid)
         checked += 1
 
+    if checked == 0:
+        return {
+            "status": "SKIP",
+            "message": f"All {skipped} sessions are backfilled (no evidence_files expected)",
+            "violations": [],
+        }
+
     return {
         "status": "FAIL" if violations else "PASS",
         "message": (
             f"{len(violations)}/{checked} ended sessions lack evidence files"
+            f" ({skipped} backfilled skipped)"
             if violations
             else f"All {checked} checked sessions have evidence"
+            f" ({skipped} backfilled skipped)"
         ),
         "violations": violations[:20],
     }

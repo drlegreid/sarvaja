@@ -13,15 +13,16 @@ Module structure (RULE-032 compliant):
 - tasks/detail.py: Detail view (~165 lines)
 """
 
-from .tasks import build_tasks_list_view, build_task_detail_view
+from .tasks import build_tasks_list_view, build_task_detail_view, build_task_create_dialog
 
 
 def build_tasks_view() -> None:
     """
-    Build the complete Tasks view including list and detail.
+    Build the complete Tasks view including list, detail, and create dialog.
 
     This is the main entry point for the tasks view module.
     Per RULE-019: UI/UX Standards - consistent view patterns.
     """
     build_tasks_list_view()
     build_task_detail_view()
+    build_task_create_dialog()

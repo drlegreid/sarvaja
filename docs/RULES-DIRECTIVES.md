@@ -1,6 +1,6 @@
 # Rules Directives - Index
 
-**Status:** Active | **Updated:** 2026-02-10 | **Rules:** 58 (55 ACTIVE, 3 DRAFT/DISABLED)
+**Status:** Active | **Updated:** 2026-02-11 | **Rules:** 59 (56 ACTIVE, 3 DRAFT/DISABLED)
 
 > **Taxonomy:** [META-TAXON-01-v1](rules/leaf/META-TAXON-01-v1.md) | **Migration:** [RULE-MIGRATION.md](rules/RULE-MIGRATION.md)
 
@@ -87,6 +87,7 @@
 | WORKFLOW-HOTRELOAD-01-v1 | (new) | Dashboard Hot-Reload via Watcher | HIGH | ACTIVE |
 | WORKFLOW-SFDC-01-v1 | (new) | SFDC Development Lifecycle Workflow | HIGH | ACTIVE |
 | WORKFLOW-ORCH-01-v1 | (new) | Orchestrator Continuous Workflow | CRITICAL | ACTIVE |
+| TEST-SPEC-01-v1 | (new) | 3-Tier Validation Specifications | HIGH | ACTIVE |
 
 ---
 
@@ -101,7 +102,7 @@
 | **UI** | User interface | 4 | TRAME-01, LOADER-01, TRACE-01, COLOR-01 |
 | **WORKFLOW** | Workflow & autonomy | 8 | AUTO-01/02, RD-01, SEQ-01, SHELL-01, HOTRELOAD-01, SFDC-01, ORCH-01 |
 | **RECOVER** | Recovery & resilience | 3 | MEM-01, AMNES-01, CRASH-01 |
-| **TEST** | Testing & validation | 7 | GUARD-01, COMP-01/02, FIX-01, EXEC-01, UI-VERIFY-01, BDD-01 |
+| **TEST** | Testing & validation | 8 | GUARD-01, COMP-01/02, FIX-01, EXEC-01, UI-VERIFY-01, BDD-01, SPEC-01 |
 | **SAFETY** | Safety & prevention | 3 | HEALTH-01, INTEG-01, DESTR-01 |
 | **CONTAINER** | Container operations | 5 | DEV-01/02, RESTART-01, SHELL-01, TYPEDB-01, MGMT-01 |
 | **DOC** | Documentation | 4 | SIZE-01, PARTIAL-01, LINK-01, GAP-ARCHIVE-01 |
@@ -120,7 +121,7 @@
 | Level | Meaning | Count | Key Rules |
 |-------|---------|-------|-----------|
 | **CRITICAL** | Must enforce always | 16 | SESSION-EVID, GOV-BICAM, WORKFLOW-AUTO, RECOVER-AMNES, TEST-COMP-02, SAFETY-HEALTH |
-| **HIGH** | Enforce in normal ops | 25 | ARCH-*, GOV-BIND-01, TEST-COMP-01, CONTAINER-*, DOC-* |
+| **HIGH** | Enforce in normal ops | 26 | ARCH-*, GOV-BIND-01, TEST-COMP-01, CONTAINER-*, DOC-* |
 | **MEDIUM** | Advisory | 1 | GOV-TRUST-01 |
 
 ---

@@ -117,10 +117,19 @@ def register_infra_loader_controllers(
         except Exception:
             pass
 
-        # Count python processes
+        # Count python processes via /proc (pgrep/ps not in minimal containers)
         try:
-            result = subprocess.run(["pgrep", "-c", "python3"], capture_output=True, text=True, timeout=2)
-            stats["python_procs"] = int(result.stdout.strip() or "0")
+            count = 0
+            for pid_dir in Path("/proc").iterdir():
+                if not pid_dir.name.isdigit():
+                    continue
+                try:
+                    cmdline = (pid_dir / "cmdline").read_text()
+                    if "python" in cmdline.lower():
+                        count += 1
+                except (PermissionError, FileNotFoundError, OSError):
+                    continue
+            stats["python_procs"] = count
         except Exception:
             pass
 
@@ -249,27 +258,37 @@ def register_infra_loader_controllers(
 
     @ctrl.trigger("load_python_processes")
     def load_python_processes():
-        """Load detailed python process list. Per C.4: Process drill-down."""
+        """Load detailed python process list. Per C.4: Process drill-down via /proc."""
         try:
-            result = subprocess.run(
-                ["ps", "aux"],
-                capture_output=True, text=True, timeout=5
-            )
-            lines = result.stdout.strip().split("\n")
             infra_python_procs = []
-            for line in lines[1:]:  # Skip header
-                if "python3" in line.lower() or "python" in line.lower():
-                    parts = line.split(None, 10)
-                    if len(parts) >= 11:
-                        infra_python_procs.append({
-                            "pid": parts[1],
-                            "cpu": parts[2],
-                            "mem": parts[3],
-                            "command": parts[10][:120],
-                        })
+            for pid_dir in Path("/proc").iterdir():
+                if not pid_dir.name.isdigit():
+                    continue
+                try:
+                    cmdline = (pid_dir / "cmdline").read_text().replace("\x00", " ").strip()
+                    if "python" not in cmdline.lower():
+                        continue
+                    # Read memory from /proc/PID/status
+                    mem_kb = 0
+                    try:
+                        status = (pid_dir / "status").read_text()
+                        for line in status.split("\n"):
+                            if line.startswith("VmRSS:"):
+                                mem_kb = int(line.split()[1])
+                                break
+                    except Exception:
+                        pass
+                    infra_python_procs.append({
+                        "pid": pid_dir.name,
+                        "cpu": "-",
+                        "mem": f"{mem_kb / 1024:.1f}M" if mem_kb else "-",
+                        "command": cmdline[:120],
+                    })
+                except (PermissionError, FileNotFoundError, OSError):
+                    continue
             state.infra_python_procs = infra_python_procs
             state.python_process_list = infra_python_procs  # Alias
-        except Exception as e:
+        except Exception:
             state.infra_python_procs = []
             state.python_process_list = []
 

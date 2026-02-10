@@ -20,7 +20,12 @@ from agent.governance_ui.trace_bar.transforms import (
     add_api_trace,
     add_error_trace,
 )
-from agent.governance_ui.utils import format_timestamps_in_list
+from agent.governance_ui.utils import (
+    format_timestamps_in_list,
+    compute_session_duration,
+    compute_session_metrics,
+    compute_timeline_data,
+)
 from agent.governance_ui import (
     get_proposals,
     get_escalated_proposals,
@@ -251,6 +256,19 @@ def register_data_loader_controllers(
                     if response.status_code == 200:
                         data = response.json()
                         items = data.get("items", data) if isinstance(data, dict) else data
+                        # F.2: Compute duration + metrics before formatting
+                        metrics = compute_session_metrics(items)
+                        state.sessions_metrics_duration = metrics["duration"]
+                        state.sessions_metrics_avg_tasks = metrics["avg_tasks"]
+                        for item in items:
+                            item["duration"] = compute_session_duration(
+                                item.get("start_time", ""), item.get("end_time", ""))
+                        tl_vals, tl_labels = compute_timeline_data(items)
+                        state.sessions_timeline_data = tl_vals
+                        state.sessions_timeline_labels = tl_labels
+                        agents = sorted(set(
+                            s.get("agent_id") for s in items if s.get("agent_id")))
+                        state.sessions_agent_options = agents
                         state.sessions = format_timestamps_in_list(
                             items, ["start_time", "end_time"])
                 except Exception:
@@ -303,7 +321,13 @@ def register_data_loader_controllers(
                 response = client.get(f"{api_base_url}/api/sessions?limit=100")
                 if response.status_code == 200:
                     data = response.json()
-                    state.sessions = data.get("items", data) if isinstance(data, dict) else data
+                    items = data.get("items", data) if isinstance(data, dict) else data
+                    # F.2: Add duration to each session item
+                    for item in items:
+                        item["duration"] = compute_session_duration(
+                            item.get("start_time", ""), item.get("end_time", ""))
+                    state.sessions = format_timestamps_in_list(
+                        items, ["start_time", "end_time"])
         except Exception:
             if not state.sessions:
                 state.sessions = []

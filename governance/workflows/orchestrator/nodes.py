@@ -101,15 +101,24 @@ def validate_node(state: Dict[str, Any]) -> Dict[str, Any]:
     if state.get("_simulate_validation_failure"):
         passed = False
 
+    # Generate 3-tier validation specs (TEST-SPEC-01-v1)
+    from governance.workflows.orchestrator.spec_tiers import (
+        generate_specs_from_validation,
+    )
+    task = state["current_task"]
+    validation_results = {
+        "tests_passed": passed,
+        "heuristics_passed": passed,
+        "task_id": task["task_id"],
+    }
+    specs = generate_specs_from_validation(validation_results, task)
+
     return {
         "current_phase": "validated",
-        "validation_results": {
-            "tests_passed": passed,
-            "heuristics_passed": passed,
-            "task_id": state["current_task"]["task_id"],
-        },
+        "validation_results": validation_results,
         "validation_passed": passed,
         "gaps_discovered": gaps,
+        "validation_specs": specs,
     }
 
 

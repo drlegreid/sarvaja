@@ -14,11 +14,25 @@ from governance.stores import (
     get_typedb_client,
     get_all_tasks_from_typedb,
     _tasks_store,
+    _sessions_store,
     task_to_response,
 )
 from governance.stores.audit import record_audit
 
 logger = logging.getLogger(__name__)
+
+
+def _get_active_session_id() -> Optional[str]:
+    """Find the most recent active session for auto-linking (DATA-LINK-01-v1)."""
+    active = [
+        (sid, s) for sid, s in _sessions_store.items()
+        if s.get("status") == "ACTIVE"
+    ]
+    if not active:
+        return None
+    # Return most recent by start_time
+    active.sort(key=lambda x: x[1].get("start_time", ""), reverse=True)
+    return active[0][0]
 
 
 def _monitor(action: str, task_id: str, source: str = "service", **extra):
@@ -88,6 +102,13 @@ def create_task(
     Raises:
         ValueError: If task already exists.
     """
+    # Per DATA-LINK-01-v1: Auto-link to active session if none provided
+    if not linked_sessions:
+        active_sid = _get_active_session_id()
+        if active_sid:
+            linked_sessions = [active_sid]
+            logger.info(f"[DATA-LINK-01] Auto-linking task {task_id} to session {active_sid}")
+
     client = get_typedb_client()
     if client:
         try:
@@ -178,6 +199,13 @@ def update_task(
                     agent_id or task_obj.agent_id, evidence=evidence,
                 )
                 task_obj = updated or task_obj
+            # Persist linked_sessions to TypeDB via relations
+            if linked_sessions:
+                for sid in linked_sessions:
+                    try:
+                        client.link_task_to_session(task_id, sid)
+                    except Exception as le:
+                        logger.debug(f"TypeDB session link {task_id}->{sid}: {le}")
         except Exception as e:
             logger.warning(f"TypeDB task update failed, using fallback: {e}")
 

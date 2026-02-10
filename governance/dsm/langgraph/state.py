@@ -59,6 +59,9 @@ class DSPState(TypedDict):
     validation_passed: bool
     should_skip_dream: bool
 
+    # Loop control (GAP-WORKFLOW-LOOP-001)
+    retry_count: int
+
     # MCP availability
     available_mcps: List[str]
     missing_mcps: List[str]
@@ -145,6 +148,9 @@ def create_initial_state(
         "has_critical_gaps": False,
         "validation_passed": False,
         "should_skip_dream": False,
+
+        # Loop control (GAP-WORKFLOW-LOOP-001)
+        "retry_count": 0,
 
         # MCP availability
         "available_mcps": available_mcps or [],

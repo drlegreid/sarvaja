@@ -3,7 +3,10 @@ Governance UI Utilities.
 
 Per EPIC-DR-003: Pagination handling utilities.
 Per GAP-UI-TIMESTAMP: Timestamp formatting.
+Per GAP-SESSION-STATS-001: Session metrics computation.
 """
+
+from datetime import datetime
 
 
 def extract_items_from_response(data):
@@ -36,6 +39,148 @@ def extract_pagination_from_response(data):
     if isinstance(data, dict) and "pagination" in data:
         return data["pagination"]
     return {}
+
+
+def compute_session_metrics(sessions: list) -> dict:
+    """
+    Compute session summary metrics from raw session data.
+
+    Per GAP-SESSION-STATS-001: Must be called BEFORE format_timestamps_in_list
+    because formatting strips the T separator and seconds needed for parsing.
+
+    Args:
+        sessions: List of session dicts with raw ISO timestamps
+
+    Returns:
+        dict with 'duration' (str like '312h' or '45m') and 'avg_tasks' (float)
+    """
+    total_hours = 0
+    total_tasks = 0
+
+    for s in sessions:
+        start = s.get("start_time", "")
+        end = s.get("end_time", "")
+        if start and end:
+            try:
+                st = start[:19].replace("Z", "")
+                et = end[:19].replace("Z", "")
+                delta = datetime.strptime(et, "%Y-%m-%dT%H:%M:%S") - datetime.strptime(st, "%Y-%m-%dT%H:%M:%S")
+                total_hours += delta.total_seconds() / 3600
+            except Exception:
+                pass
+        tasks = s.get("tasks_completed", 0)
+        if isinstance(tasks, (int, float)):
+            total_tasks += tasks
+
+    if total_hours >= 1:
+        duration = f"{total_hours:.0f}h"
+    elif total_hours > 0:
+        duration = f"{total_hours * 60:.0f}m"
+    else:
+        duration = "0h"
+
+    session_count = len(sessions) or 1
+    avg_tasks = round(total_tasks / session_count, 1)
+
+    return {"duration": duration, "avg_tasks": avg_tasks}
+
+
+def compute_session_duration(start: str, end: str) -> str:
+    """Compute human-readable duration between two ISO timestamps.
+
+    Per F.2: Duration column in hours for session list view.
+
+    Returns:
+        "Xh Ym" format, "ongoing" for ACTIVE sessions, or "" if invalid.
+    """
+    if not start:
+        return ""
+    if not end:
+        return "ongoing"
+    try:
+        st = start[:19].replace("Z", "")
+        et = end[:19].replace("Z", "")
+        delta = datetime.strptime(et, "%Y-%m-%dT%H:%M:%S") - datetime.strptime(st, "%Y-%m-%dT%H:%M:%S")
+        total_minutes = max(0, int(delta.total_seconds() / 60))
+        if total_minutes < 1:
+            return "<1m"
+        hours, mins = divmod(total_minutes, 60)
+        if hours > 0:
+            return f"{hours}h {mins}m"
+        return f"{mins}m"
+    except Exception:
+        return ""
+
+
+def compute_timeline_data(sessions: list) -> tuple:
+    """Compute daily session counts for timeline histogram.
+
+    Per F.3: Timeline histogram grouped by date.
+
+    Returns:
+        (values, labels) - lists of counts and date labels for last 14 days.
+    """
+    from collections import Counter
+    date_counts = Counter()
+    for s in sessions:
+        start = s.get("start_time", "")
+        if start:
+            try:
+                date_str = start[:10]
+                date_counts[date_str] += 1
+            except Exception:
+                pass
+    # Get last 14 days
+    today = datetime.now()
+    labels = []
+    values = []
+    for i in range(13, -1, -1):
+        from datetime import timedelta
+        d = (today - timedelta(days=i)).strftime("%Y-%m-%d")
+        labels.append(d[5:])  # MM-DD format
+        values.append(date_counts.get(d, 0))
+    return values, labels
+
+
+def compute_pivot_data(sessions: list, group_by: str = "agent_id") -> list:
+    """Compute pivot aggregations from sessions.
+
+    Per F.4: Pivot table view grouped by agent or status.
+
+    Returns:
+        List of dicts with group_key, count, avg_duration_mins, completed, active.
+    """
+    from collections import defaultdict
+    groups = defaultdict(list)
+    for s in sessions:
+        key = s.get(group_by) or "(none)"
+        groups[key].append(s)
+
+    result = []
+    for key, items in sorted(groups.items()):
+        completed = sum(1 for s in items if s.get("status") == "COMPLETED")
+        active = sum(1 for s in items if s.get("status") == "ACTIVE")
+        durations = []
+        for s in items:
+            start = s.get("start_time", "")
+            end = s.get("end_time", "")
+            if start and end:
+                try:
+                    st = start[:19].replace("Z", "")
+                    et = end[:19].replace("Z", "")
+                    delta = datetime.strptime(et, "%Y-%m-%dT%H:%M:%S") - datetime.strptime(st, "%Y-%m-%dT%H:%M:%S")
+                    durations.append(max(0, delta.total_seconds() / 60))
+                except Exception:
+                    pass
+        avg_dur = round(sum(durations) / len(durations), 1) if durations else 0
+        result.append({
+            "group": key,
+            "count": len(items),
+            "completed": completed,
+            "active": active,
+            "avg_duration": f"{int(avg_dur // 60)}h {int(avg_dur % 60)}m" if avg_dur >= 60 else f"{int(avg_dur)}m",
+        })
+    return result
 
 
 def format_timestamp(iso_str: str) -> str:

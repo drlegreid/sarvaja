@@ -1,0 +1,265 @@
+{
+  "status": "failed",
+  "timestamp": "2026-02-01T22:48:28.731734",
+  "duration_seconds": 2.742373,
+  "category": "heuristic",
+  "total": 20,
+  "passed": 11,
+  "failed": 4,
+  "skipped": 5,
+  "errors": 0,
+  "checks": [
+    {
+      "status": "PASS",
+      "message": "All tasks have descriptions",
+      "violations": [],
+      "id": "H-TASK-001",
+      "domain": "TASK",
+      "name": "Task descriptions",
+      "duration_ms": 66
+    },
+    {
+      "status": "FAIL",
+      "message": "1 IN_PROGRESS tasks without agent",
+      "violations": [
+        "RD-005"
+      ],
+      "id": "H-TASK-002",
+      "domain": "TASK",
+      "name": "IN_PROGRESS agent assignment",
+      "duration_ms": 54
+    },
+    {
+      "status": "PASS",
+      "message": "All DONE tasks have timestamps",
+      "violations": [],
+      "id": "H-TASK-003",
+      "domain": "TASK",
+      "name": "DONE completion timestamps",
+      "duration_ms": 58
+    },
+    {
+      "status": "PASS",
+      "message": "No TEST-* task artifacts",
+      "violations": [],
+      "id": "H-TASK-004",
+      "domain": "TASK",
+      "name": "No TEST-* task artifacts",
+      "duration_ms": 65
+    },
+    {
+      "status": "PASS",
+      "message": "All active sessions have agents",
+      "violations": [],
+      "id": "H-SESSION-001",
+      "domain": "SESSION",
+      "name": "Active session agent_id",
+      "duration_ms": 61
+    },
+    {
+      "status": "PASS",
+      "message": "No TEST-* session artifacts",
+      "violations": [],
+      "id": "H-SESSION-004",
+      "domain": "SESSION",
+      "name": "No TEST-* session artifacts",
+      "duration_ms": 60
+    },
+    {
+      "status": "PASS",
+      "message": "All rules have directives",
+      "violations": [],
+      "id": "H-RULE-003",
+      "domain": "RULE",
+      "name": "Rule directive content",
+      "duration_ms": 172
+    },
+    {
+      "status": "PASS",
+      "message": "No TEST-* rule artifacts",
+      "violations": [],
+      "id": "H-RULE-004",
+      "domain": "RULE",
+      "name": "No TEST-* rule artifacts",
+      "duration_ms": 168
+    },
+    {
+      "status": "PASS",
+      "message": "All agents have trust scores",
+      "violations": [],
+      "id": "H-AGENT-001",
+      "domain": "AGENT",
+      "name": "Agent trust scores",
+      "duration_ms": 113
+    },
+    {
+      "status": "PASS",
+      "message": "All agents recently active or new",
+      "violations": [],
+      "id": "H-AGENT-002",
+      "domain": "AGENT",
+      "name": "Agent last_active recency",
+      "duration_ms": 113
+    },
+    {
+      "status": "FAIL",
+      "message": "30/30 ended sessions lack evidence files",
+      "violations": [
+        "SESSION-2026-02-01-F2D04B",
+        "SESSION-2026-02-01-38BB6C",
+        "SESSION-2026-02-01-30BA9E",
+        "SESSION-2026-02-01-6DEBCD",
+        "SESSION-2026-02-01-3B54E8",
+        "SESSION-2026-02-01-9407DA",
+        "SESSION-2026-02-01-988B8F",
+        "SESSION-2026-02-01-B28237",
+        "SESSION-2026-02-01-3D7D80",
+        "SESSION-2026-02-01-743612",
+        "SESSION-2026-02-01-FC9E02",
+        "SESSION-2026-02-01-6DA29F",
+        "SESSION-2026-01-31-D86E52",
+        "SESSION-2026-01-31-C227F9",
+        "SESSION-2026-01-31-23DD46",
+        "SESSION-2026-01-31-39B5B3",
+        "SESSION-2026-01-31-BA9D3C",
+        "SESSION-2026-01-31-11BC42",
+        "SESSION-2026-01-31-8EAC3F",
+        "SESSION-2026-01-31-2C5919"
+      ],
+      "id": "H-SESSION-002",
+      "domain": "SESSION",
+      "name": "Ended session evidence files",
+      "duration_ms": 623
+    },
+    {
+      "status": "PASS",
+      "message": "No active sessions",
+      "violations": [],
+      "id": "H-SESSION-003",
+      "domain": "SESSION",
+      "name": "Stale active sessions (>24h)",
+      "duration_ms": 61
+    },
+    {
+      "status": "FAIL",
+      "message": "20/20 ended sessions have NO tool call records",
+      "violations": [
+        "SESSION-2026-02-01-F2D04B",
+        "SESSION-2026-02-01-38BB6C",
+        "SESSION-2026-02-01-30BA9E",
+        "SESSION-2026-02-01-6DEBCD",
+        "SESSION-2026-02-01-3B54E8",
+        "SESSION-2026-02-01-9407DA",
+        "SESSION-2026-02-01-988B8F",
+        "SESSION-2026-02-01-B28237",
+        "SESSION-2026-02-01-3D7D80",
+        "SESSION-2026-02-01-743612",
+        "SESSION-2026-02-01-FC9E02",
+        "SESSION-2026-02-01-6DA29F",
+        "SESSION-2026-01-31-D86E52",
+        "SESSION-2026-01-31-C227F9",
+        "SESSION-2026-01-31-23DD46",
+        "SESSION-2026-01-31-39B5B3",
+        "SESSION-2026-01-31-BA9D3C",
+        "SESSION-2026-01-31-11BC42",
+        "SESSION-2026-01-31-8EAC3F",
+        "SESSION-2026-01-31-2C5919"
+      ],
+      "id": "H-SESSION-005",
+      "domain": "SESSION",
+      "name": "Session MCP tool call records",
+      "duration_ms": 400
+    },
+    {
+      "status": "FAIL",
+      "message": "20/20 ended sessions have NO thought records",
+      "violations": [
+        "SESSION-2026-02-01-F2D04B",
+        "SESSION-2026-02-01-38BB6C",
+        "SESSION-2026-02-01-30BA9E",
+        "SESSION-2026-02-01-6DEBCD",
+        "SESSION-2026-02-01-3B54E8",
+        "SESSION-2026-02-01-9407DA",
+        "SESSION-2026-02-01-988B8F",
+        "SESSION-2026-02-01-B28237",
+        "SESSION-2026-02-01-3D7D80",
+        "SESSION-2026-02-01-743612",
+        "SESSION-2026-02-01-FC9E02",
+        "SESSION-2026-02-01-6DA29F",
+        "SESSION-2026-01-31-D86E52",
+        "SESSION-2026-01-31-C227F9",
+        "SESSION-2026-01-31-23DD46",
+        "SESSION-2026-01-31-39B5B3",
+        "SESSION-2026-01-31-BA9D3C",
+        "SESSION-2026-01-31-11BC42",
+        "SESSION-2026-01-31-8EAC3F",
+        "SESSION-2026-01-31-2C5919"
+      ],
+      "id": "H-SESSION-006",
+      "domain": "SESSION",
+      "name": "Session thought/reasoning records",
+      "duration_ms": 434
+    },
+    {
+      "status": "SKIP",
+      "message": "Self-referential: use REST MCP from host",
+      "violations": [],
+      "id": "H-CROSS-001",
+      "domain": "CROSS-ENTITY",
+      "name": "Service layer coverage",
+      "duration_ms": 0
+    },
+    {
+      "status": "SKIP",
+      "message": "Self-referential: use REST MCP",
+      "violations": [],
+      "id": "H-CROSS-003",
+      "domain": "CROSS-ENTITY",
+      "name": "Decisions link to rules",
+      "duration_ms": 0
+    },
+    {
+      "status": "SKIP",
+      "message": "Self-referential: use REST MCP",
+      "violations": [],
+      "id": "H-RULE-001",
+      "domain": "RULE",
+      "name": "Active rules have document_path",
+      "duration_ms": 0
+    },
+    {
+      "status": "SKIP",
+      "message": "Self-referential: use REST MCP from host",
+      "violations": [],
+      "id": "H-API-001",
+      "domain": "API",
+      "name": "Endpoint health",
+      "duration_ms": 0
+    },
+    {
+      "status": "SKIP",
+      "message": "Self-referential: use REST MCP from host",
+      "violations": [],
+      "id": "H-API-002",
+      "domain": "API",
+      "name": "Pagination contract",
+      "duration_ms": 0
+    },
+    {
+      "status": "PASS",
+      "message": "Key views have data-testid attributes",
+      "violations": [],
+      "id": "H-UI-003",
+      "domain": "UI",
+      "name": "data-testid coverage",
+      "duration_ms": 2
+    }
+  ],
+  "summary": {
+    "total": 20,
+    "passed": 11,
+    "failed": 4,
+    "errors": 0,
+    "skipped": 5
+  }
+}

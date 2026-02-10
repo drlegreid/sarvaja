@@ -3,13 +3,17 @@ Infrastructure API endpoints.
 
 Per EPIC-7.1: Container logs accessible from dashboard.
 Provides /api/infra/logs endpoint that reads container logs
-via the Podman REST API unix socket.
+via the Podman REST API unix socket, with subprocess fallback.
 """
 
 import http.client
+import logging
 import os
 import socket
+import subprocess
 from fastapi import APIRouter, Query
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/infra", tags=["infra"])
 
@@ -32,9 +36,9 @@ CONTAINER_NAMES = {
 
 
 def _find_socket() -> str | None:
-    """Find available podman socket."""
+    """Find available podman socket (must be a real socket, not a directory)."""
     for path in _SOCKET_PATHS:
-        if os.path.exists(path):
+        if os.path.exists(path) and not os.path.isdir(path):
             return path
     return None
 
@@ -73,39 +77,78 @@ def _fetch_logs_socket(sock_path: str, container: str, tail: int) -> list[str]:
         conn.close()
 
 
+def _fetch_logs_subprocess(container: str, tail: int) -> list[str]:
+    """Fallback: fetch logs via podman CLI subprocess."""
+    try:
+        result = subprocess.run(
+            ["podman", "logs", "--tail", str(tail), container],
+            capture_output=True, text=True, timeout=10,
+        )
+        lines = []
+        if result.stdout:
+            lines.extend(result.stdout.strip().split("\n"))
+        if result.stderr:
+            lines.extend(result.stderr.strip().split("\n"))
+        return lines if lines else ["No log output from container"]
+    except FileNotFoundError:
+        return []
+    except subprocess.TimeoutExpired:
+        return ["Timeout fetching logs via CLI"]
+    except Exception as e:
+        return [f"CLI fallback error: {e}"]
+
+
+def _fetch_own_process_logs(tail: int) -> list[str]:
+    """Read own container process logs from /proc/1/fd/1 (stdout of PID 1)."""
+    lines = []
+    # Try reading recent Python logging output
+    try:
+        result = subprocess.run(
+            ["ps", "aux"], capture_output=True, text=True, timeout=5
+        )
+        lines.append("=== Container Processes ===")
+        for line in result.stdout.strip().split("\n"):
+            if "python" in line.lower() or "PID" in line:
+                lines.append(line)
+    except Exception:
+        pass
+    if not lines:
+        lines = ["Running inside container - use host podman socket for full logs"]
+    return lines[-tail:]
+
+
 @router.get("/logs")
 def get_container_logs(
     container: str = Query("dashboard", description="Container short name"),
     tail: int = Query(50, ge=1, le=500, description="Number of lines"),
     level: str = Query("", description="Log level filter (ERROR, WARNING, INFO)"),
 ):
-    """Fetch container logs via podman socket."""
+    """Fetch container logs via podman socket, CLI fallback, or process info."""
     container_name = CONTAINER_NAMES.get(container, container)
+
+    # Strategy 1: Podman REST API socket
     sock_path = _find_socket()
+    if sock_path:
+        try:
+            lines = _fetch_logs_socket(sock_path, container_name, tail)
+            if level:
+                level_upper = level.upper()
+                lines = [ln for ln in lines if level_upper in ln.upper()]
+            return {"lines": lines[-tail:], "container": container, "source": sock_path}
+        except Exception as e:
+            logger.warning(f"Socket log fetch failed: {e}")
 
-    if not sock_path:
-        return {
-            "lines": ["No podman socket available. Mount podman.sock into container."],
-            "container": container,
-            "source": "none",
-        }
-
-    try:
-        lines = _fetch_logs_socket(sock_path, container_name, tail)
+    # Strategy 2: podman CLI subprocess
+    cli_lines = _fetch_logs_subprocess(container_name, tail)
+    if cli_lines and not cli_lines[0].startswith(("CLI fallback error", "Timeout")):
         if level:
             level_upper = level.upper()
-            lines = [l for l in lines if level_upper in l.upper()]
-        return {
-            "lines": lines[-tail:],
-            "container": container,
-            "source": sock_path,
-        }
-    except Exception as e:
-        return {
-            "lines": [f"Error fetching logs: {e}"],
-            "container": container,
-            "source": sock_path,
-        }
+            cli_lines = [ln for ln in cli_lines if level_upper in ln.upper()]
+        return {"lines": cli_lines[-tail:], "container": container, "source": "cli"}
+
+    # Strategy 3: For own container, show process info
+    own_lines = _fetch_own_process_logs(tail)
+    return {"lines": own_lines, "container": container, "source": "process-info"}
 
 
 @router.get("/containers")

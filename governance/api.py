@@ -168,6 +168,42 @@ async def seed_data():
     seed_tasks_and_sessions(_tasks_store, _sessions_store, _agents_store)
 
 
+@app.on_event("startup")
+async def cleanup_orphaned_chat_sessions():
+    """End stale ACTIVE chat sessions from prior container runs.
+
+    Per GAP-GOVSESS-CAPTURE-001: _chat_gov_sessions is in-memory only,
+    so a container restart loses collector refs. This ends any CHAT-*
+    sessions that are still ACTIVE in TypeDB or _sessions_store.
+    """
+    ended = 0
+
+    # Clean _sessions_store (for sessions created this container run)
+    for sid, data in list(_sessions_store.items()):
+        if data.get("status") == "ACTIVE" and "CHAT-" in sid:
+            data["status"] = "COMPLETED"
+            data["end_time"] = "orphan-cleanup-on-startup"
+            ended += 1
+
+    # Clean TypeDB: end any ACTIVE CHAT-* sessions from prior runs
+    try:
+        from governance.services.sessions import list_sessions, end_session
+        result = list_sessions(status=None, limit=200)
+        for s in result.get("items", []):
+            sid = s.get("session_id", "")
+            if s.get("status") == "ACTIVE" and "CHAT-" in sid:
+                try:
+                    end_session(sid, source="orphan-cleanup")
+                    ended += 1
+                except Exception:
+                    pass
+    except Exception as e:
+        logger.debug(f"TypeDB orphan cleanup skipped: {e}")
+
+    if ended:
+        logger.info(f"Startup: ended {ended} orphaned CHAT sessions")
+
+
 # =============================================================================
 # HEALTH / STATUS
 # =============================================================================

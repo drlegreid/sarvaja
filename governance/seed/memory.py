@@ -25,13 +25,14 @@ def seed_to_memory_fallback(tasks_store: Dict[str, Any], sessions_store: Dict[st
             sessions_store[session["session_id"]] = session
 
     # Seed agents (P10.3)
+    # Per GAP-AGENT-PAUSE-001: preserve existing status, default to PAUSED
     if agents_store is not None and not agents_store:
         for agent in get_seed_agents():
             agents_store[agent["agent_id"]] = {
                 "agent_id": agent["agent_id"],
                 "name": agent["name"],
                 "agent_type": agent["agent_type"],
-                "status": "ACTIVE",
+                "status": "PAUSED",
                 "tasks_executed": 0,
                 "trust_score": agent["base_trust"],
                 "last_active": None

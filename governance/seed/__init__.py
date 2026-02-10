@@ -24,6 +24,7 @@ import logging
 from typing import Dict, Any
 
 from governance.seed.data import get_seed_tasks, get_seed_sessions, get_seed_agents
+from governance.stores.audit import record_audit
 from governance.seed.typedb import (
     get_typedb_client,
     seed_tasks_to_typedb,
@@ -60,6 +61,20 @@ def seed_tasks_and_sessions(tasks_store: Dict[str, Any], sessions_store: Dict[st
         # Fallback: Seed to in-memory only
         logger.warning("TypeDB unavailable, seeding to in-memory only")
         seed_to_memory_fallback(tasks_store, sessions_store, agents_store)
+
+    # GAP-AUDIT-EMPTY-001: Record bootstrap audit entry so trail is never empty
+    record_audit(
+        action_type="BOOTSTRAP",
+        entity_type="system",
+        entity_id="governance-platform",
+        actor_id="system",
+        metadata={
+            "tasks": len(tasks_store),
+            "sessions": len(sessions_store),
+            "agents": len(agents_store) if agents_store else 0,
+            "source": "typedb" if client else "memory-fallback",
+        },
+    )
 
 
 __all__ = [

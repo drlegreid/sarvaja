@@ -30,6 +30,8 @@ from .commands import process_chat_command
 from .session_bridge import (
     start_chat_session,
     record_chat_tool_call,
+    record_chat_thought,
+    end_chat_session,
 )
 
 
@@ -231,6 +233,18 @@ async def send_chat_message(request: ChatMessageRequest):
         except Exception as e:
             logger.debug(f"Failed to record chat tool call: {e}")
 
+    # Record LLM reasoning as thought (GAP-GOVSESS-CAPTURE-001)
+    if gov_collector and not response_content.startswith("__DELEGATE__:"):
+        try:
+            is_command = request.content.startswith("/") if request.content else False
+            record_chat_thought(
+                gov_collector,
+                thought=f"{'Command' if is_command else 'LLM'}: {response_content[:300]}",
+                thought_type="command_result" if is_command else "llm_response",
+            )
+        except Exception as e:
+            logger.debug(f"Failed to record chat thought: {e}")
+
     # Handle async delegation
     if response_content.startswith("__DELEGATE__:"):
         task_desc = response_content[13:]
@@ -284,9 +298,18 @@ async def list_chat_sessions():
 
 @router.delete("/chat/sessions/{session_id}")
 async def delete_chat_session(session_id: str):
-    """Delete a chat session."""
+    """Delete a chat session and end its governance session."""
     if session_id not in _chat_sessions:
         raise HTTPException(status_code=404, detail=f"Chat session {session_id} not found")
+
+    # Per GAP-GOVSESS-CAPTURE-001: End governance session before deleting chat
+    gov_collector = _chat_gov_sessions.pop(session_id, None)
+    if gov_collector:
+        try:
+            msg_count = len(_chat_sessions.get(session_id, {}).get("messages", []))
+            end_chat_session(gov_collector, summary=f"Chat ended ({msg_count} messages)")
+        except Exception as e:
+            logger.debug(f"Failed to end governance session: {e}")
 
     del _chat_sessions[session_id]
     return {"status": "deleted", "session_id": session_id}

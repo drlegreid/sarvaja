@@ -139,6 +139,7 @@ def get_initial_state() -> Dict[str, Any]:
         'escalated_proposals': [],
         'governance_stats': {},
         'show_agent_detail': False,
+        'agent_sessions': [],  # EPIC-A.4: Full session data for selected agent
 
         # Real-time Monitoring (P9.6)
         'monitor_feed': [],
@@ -154,6 +155,13 @@ def get_initial_state() -> Dict[str, Any]:
         'journey_patterns': [],
         'knowledge_gaps': [],
         'question_history': [],
+
+        # Task form state (GAP-TASK-CREATE-UI-001)
+        'show_task_form': False,
+        'form_task_id': '',
+        'form_task_description': '',
+        'form_task_phase': 'P10',
+        'form_task_agent': '',
 
         # Unified Tasks View (UI-AUDIT-2026-01-19: merged backlog)
         'available_tasks': [],
@@ -173,8 +181,18 @@ def get_initial_state() -> Dict[str, Any]:
         'backlog_per_page': 10,
         'backlog_per_page_options': [10, 25, 50],
 
-        # Sessions filter state
+        # Sessions filter state (F.1: dynamic column filters)
         'sessions_search_query': '',
+        'sessions_filter_status': None,
+        'sessions_filter_agent': None,
+        'sessions_agent_options': [],
+        # Sessions view mode (F.4: pivot table)
+        'sessions_view_mode': 'table',  # 'table' | 'pivot'
+        'sessions_pivot_data': [],
+        'sessions_pivot_group_by': 'agent_id',
+        # Sessions timeline (F.3: histogram)
+        'sessions_timeline_data': [],
+        'sessions_timeline_labels': [],
 
         # Tasks filter state (GAP-UI-EXP-004)
         'tasks_search_query': '',
@@ -207,6 +225,9 @@ def get_initial_state() -> Dict[str, Any]:
             'has_more': False,
             'returned': 0,
         },
+        # Sessions metrics summary (GAP-SESSION-STATS-001)
+        'sessions_metrics_duration': '0h',
+        'sessions_metrics_avg_tasks': 0,
 
         # Executive Reports (GAP-UI-044)
         'executive_report': None,

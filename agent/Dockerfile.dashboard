@@ -31,6 +31,7 @@ COPY shared /app/shared
 
 # Create entrypoint that runs both Dashboard + API
 # Task 0.2: API uses uvicorn --reload for hot-reload on code changes
+# Per GAP-WORKFLOW-RELOAD-001: Dashboard uses watchdog watcher for auto-restart
 RUN echo '#!/bin/sh\n\
 echo "=== Sarvaja Governance Stack ==="\n\
 echo "Dashboard Port: ${DASHBOARD_PORT:-8081}"\n\
@@ -47,9 +48,9 @@ API_PID=$!\n\
 # Give API time to start\n\
 sleep 2\n\
 \n\
-# Start Dashboard in foreground\n\
-echo "Starting Governance Dashboard on port ${DASHBOARD_PORT:-8081}..."\n\
-exec python -m agent.governance_dashboard --port ${DASHBOARD_PORT:-8081}\n\
+# Start Dashboard with file watcher for hot-reload (GAP-WORKFLOW-RELOAD-001)\n\
+echo "Starting Governance Dashboard on port ${DASHBOARD_PORT:-8081} (with file watcher)..."\n\
+exec python -m agent.dashboard_watcher\n\
 ' > /entrypoint.sh && chmod +x /entrypoint.sh
 
 EXPOSE 8081 8082

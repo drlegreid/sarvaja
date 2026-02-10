@@ -13,7 +13,10 @@ from ..data_access import (
     build_trust_leaderboard,
 )
 from ..trace_bar import clear_traces
-from ..utils import extract_items_from_response
+from ..utils import (
+    extract_items_from_response, format_timestamps_in_list,
+    compute_session_duration,
+)
 
 # Per GAP-UI-EXP-012: Use env var for container compatibility
 API_BASE_URL = os.environ.get("GOVERNANCE_API_URL", "http://localhost:8082")
@@ -73,7 +76,13 @@ def register_common_handlers(ctrl: Any, state: Any) -> None:
                     sessions_response = client.get(f"{API_BASE_URL}/api/sessions?limit=100")
                     if sessions_response.status_code == 200:
                         data = sessions_response.json()
-                        state.sessions = data.get("items", data) if isinstance(data, dict) else data
+                        items = data.get("items", data) if isinstance(data, dict) else data
+                        # F.2: Add duration column
+                        for item in items:
+                            item["duration"] = compute_session_duration(
+                                item.get("start_time", ""), item.get("end_time", ""))
+                        state.sessions = format_timestamps_in_list(
+                            items, ["start_time", "end_time"])
                 except Exception:
                     pass
 

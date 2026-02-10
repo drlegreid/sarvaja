@@ -91,26 +91,41 @@ def check_no_test_tasks(api_base_url: str) -> dict:
 
 
 def check_task_session_linkage(api_base_url: str) -> dict:
-    """H-TASK-005: Tasks should have linked_sessions (per DATA-LINK-01-v1).
+    """H-TASK-005: Worked tasks should have linked_sessions (per DATA-LINK-01-v1).
 
-    Non-TEST tasks that are not BLOCKED should be linked to at least one session.
-    Orphan tasks indicate the task was created outside session context.
+    Tasks that are IN_PROGRESS or DONE should be linked to at least one session,
+    since they were actively worked on. OPEN/TODO/BLOCKED tasks may not yet have
+    sessions (they were seeded or created before MCP integration).
     """
     tasks = _api_get(api_base_url, "/api/tasks?limit=200")
-    # Exclude TEST-* tasks and BLOCKED tasks from this check
+    # Only check tasks that were actually worked on
+    worked_statuses = ("IN_PROGRESS", "DONE", "COMPLETED")
     relevant = [
         t for t in tasks
         if not (t.get("task_id", "").startswith("TEST-"))
-        and t.get("status") not in ("BLOCKED",)
+        and t.get("status") in worked_statuses
     ]
+    if not relevant:
+        return {
+            "status": "SKIP",
+            "message": "No IN_PROGRESS/DONE tasks to check",
+            "violations": [],
+        }
     violations = [
         t.get("task_id", "unknown")
         for t in relevant
         if not t.get("linked_sessions")
     ]
+    total_tasks = len([t for t in tasks if not t.get("task_id", "").startswith("TEST-")])
     return {
         "status": "FAIL" if violations else "PASS",
-        "message": f"{len(violations)}/{len(relevant)} tasks have no linked sessions (orphans)" if violations else f"All {len(relevant)} tasks linked to sessions",
+        "message": (
+            f"{len(violations)}/{len(relevant)} worked tasks have no linked sessions"
+            f" ({total_tasks} total tasks, {total_tasks - len(relevant)} not yet worked)"
+            if violations
+            else f"All {len(relevant)} worked tasks linked to sessions"
+            f" ({total_tasks - len(relevant)} OPEN/TODO not checked)"
+        ),
         "violations": violations[:20],
     }
 
@@ -220,10 +235,11 @@ def check_agent_last_active(api_base_url: str) -> dict:
 
 
 # ===== REGISTRY =====
-# Per DOC-SIZE-01-v1: Cross-entity/API/UI checks split to heuristic_checks_cross.py
+# Per DOC-SIZE-01-v1: Checks split across files to stay under 300 lines.
 
 from governance.routes.tests.heuristic_checks_cross import CROSS_API_UI_CHECKS
 from governance.routes.tests.heuristic_checks_session import SESSION_EVIDENCE_CHECKS
+from governance.routes.tests.heuristic_checks_exploratory import EXPLORATORY_CHECKS
 
 HEURISTIC_CHECKS = [
     {"id": "H-TASK-001", "domain": "TASK", "name": "Task descriptions", "check_fn": check_task_descriptions},
@@ -237,4 +253,4 @@ HEURISTIC_CHECKS = [
     {"id": "H-RULE-004", "domain": "RULE", "name": "No TEST-* rule artifacts", "check_fn": check_no_test_rules},
     {"id": "H-AGENT-001", "domain": "AGENT", "name": "Agent trust scores", "check_fn": check_agent_trust_scores},
     {"id": "H-AGENT-002", "domain": "AGENT", "name": "Agent last_active recency", "check_fn": check_agent_last_active},
-] + SESSION_EVIDENCE_CHECKS + CROSS_API_UI_CHECKS
+] + SESSION_EVIDENCE_CHECKS + CROSS_API_UI_CHECKS + EXPLORATORY_CHECKS

@@ -69,6 +69,11 @@ def build_session_info_card() -> None:
                     prepend_icon="mdi-file-document",
                 )
                 v3.VListItem(
+                    title="Agent",
+                    subtitle=("selected_session.agent_id || 'No agent assigned'",),
+                    prepend_icon="mdi-robot",
+                )
+                v3.VListItem(
                     title="Description",
                     subtitle=("selected_session.description || 'No description'",),
                     prepend_icon="mdi-text",

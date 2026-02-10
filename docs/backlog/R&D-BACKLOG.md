@@ -1,6 +1,6 @@
 # R&D Backlog - Sarvaja
 
-**Last Updated:** 2026-01-25 | **Source of Truth:** TypeDB via MCP tools
+**Last Updated:** 2026-02-11 | **Source of Truth:** TypeDB via MCP tools
 
 ---
 
@@ -35,8 +35,12 @@ mcp__gov-tasks__backlog_get(limit=20)
 | **Robot Framework BDD** | [RD-ROBOT-FRAMEWORK.md](rd/RD-ROBOT-FRAMEWORK.md) | PARTIAL |
 | **Agent Testing** | [RD-AGENT-TESTING.md](rd/RD-AGENT-TESTING.md) | ✅ COMPLETE |
 | **Document Viewer** | [RD-DOCUMENT-VIEWER.md](rd/RD-DOCUMENT-VIEWER.md) | ✅ COMPLETE |
-| **Document MCP Service** | [RD-DOCUMENT-MCP-SERVICE.md](rd/RD-DOCUMENT-MCP-SERVICE.md) | DEFERRED |
+| **Document MCP Service** | [RD-DOCUMENT-MCP-SERVICE.md](rd/RD-DOCUMENT-MCP-SERVICE.md) | TRIGGER MET |
 | **Rule Applicability** | [RD-RULE-APPLICABILITY.md](rd/RD-RULE-APPLICABILITY.md) | ✅ COMPLETE |
+| **Memory Gaps** | [RD-RESEARCH-001](rd/RD-RESEARCH-001-MEMORY-GAPS.md) | ✅ COMPLETE |
+| **Context Engineering** | [RD-RESEARCH-002](rd/RD-RESEARCH-002-CONTEXT-ENGINEERING.md) | ✅ COMPLETE |
+| **Long-Running Harnesses** | [RD-RESEARCH-003](rd/RD-RESEARCH-003-LONG-RUNNING-HARNESSES.md) | ✅ COMPLETE |
+| **Lacmus Benchmark** | [RD-LACMUS.md](rd/RD-LACMUS.md) | PARTIAL (Phase 4 blocked) |
 
 ---
 
@@ -47,6 +51,7 @@ mcp__gov-tasks__backlog_get(limit=20)
 | **EPIC-CLEANUP-001** | [PLAN-REMAINING-WORK-2026-01-20.md](rd/PLAN-REMAINING-WORK-2026-01-20.md) | ✅ COMPLETE |
 | Dashboard Production Readiness | [EPIC-DR.md](rd/EPIC-DR.md) | ✅ COMPLETE |
 | Enterprise Architecture | [EPIC-EA.md](rd/EPIC-EA.md) | TODO |
+| Gov-Sessions Audit + Rich UI | [generic-soaring-flute.md](../../.claude/plans/generic-soaring-flute.md) | ✅ COMPLETE (18/18) |
 
 ---
 

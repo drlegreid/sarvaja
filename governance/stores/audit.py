@@ -129,14 +129,13 @@ def record_audit(
 def _apply_retention(days: int = 7):
     """Apply retention policy - keep only entries from last N days."""
     global _audit_store
-    cutoff = datetime.now()
-    cutoff_str = cutoff.strftime("%Y-%m-%d")
+    from datetime import timedelta
+    cutoff = (datetime.now() - timedelta(days=days)).strftime("%Y-%m-%d")
 
-    # Only run once per day
     original_count = len(_audit_store)
     _audit_store = [
         e for e in _audit_store
-        if e.get("timestamp", "")[:10] >= cutoff_str[:10-days]
+        if e.get("timestamp", "")[:10] >= cutoff
     ]
     removed = original_count - len(_audit_store)
     if removed > 0:

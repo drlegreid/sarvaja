@@ -227,20 +227,14 @@ class TestMCPReadinessEndpoint:
 class TestAgentDefaults:
     """Verify agent default status configuration."""
 
-    def test_only_code_agent_active(self):
-        """Only code-agent should be ACTIVE by default."""
+    def test_all_agents_paused_by_default(self):
+        """All agents should be PAUSED by default. Per GAP-AGENT-PAUSE-001."""
         from governance.stores.agents import get_all_agents
         agents = get_all_agents()
-        active = [a for a in agents if a["status"] == "ACTIVE"]
-        assert len(active) == 1
-        assert active[0]["agent_id"] == "code-agent"
-
-    def test_other_agents_stopped(self):
-        """Non-code agents should be STOPPED by default."""
-        from governance.stores.agents import get_all_agents
-        agents = get_all_agents()
-        stopped = [a for a in agents if a["status"] == "STOPPED"]
-        assert len(stopped) >= 4
+        paused = [a for a in agents if a["status"] == "PAUSED"]
+        assert len(paused) == len(agents), (
+            f"Expected all {len(agents)} agents PAUSED, got {len(paused)}"
+        )
 
     def test_code_agent_has_workflow_config(self):
         """code-agent should have description and model from agents.yaml."""

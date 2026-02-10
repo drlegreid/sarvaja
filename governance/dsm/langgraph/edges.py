@@ -9,7 +9,7 @@ Per RULE-012: DSP Semantic Code Structure
 Created: 2026-02-08
 """
 
-from .state import DSPState
+from .state import DSPState, MAX_PHASE_RETRIES
 
 
 def check_start_status(state: DSPState) -> str:
@@ -59,17 +59,22 @@ def check_validation_result(state: DSPState) -> str:
     """Route after VALIDATE based on test results.
 
     Per WORKFLOW-DSP-01-v1: Handle validation failures.
+    Per GAP-WORKFLOW-LOOP-001: Loop back to hypothesize if retries remain.
 
     Returns:
         "dream" if validation passed (normal flow)
-        "report" if validation failed (skip dream, generate report)
+        "loop_to_hypothesize" if failed but retries remain (loop-back)
+        "report" if validation failed and retries exhausted
         "abort" if phase execution failed
     """
     if state.get("status") == "failed":
         return "abort"
 
     if not state.get("validation_passed"):
-        # Validation tests failed - skip DREAM, go to REPORT
+        retry_count = state.get("retry_count", 0)
+        if retry_count < MAX_PHASE_RETRIES:
+            return "loop_to_hypothesize"
+        # Retries exhausted - skip DREAM, go to REPORT
         return "report"
 
     return "dream"

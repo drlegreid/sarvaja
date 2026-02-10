@@ -141,6 +141,13 @@ async def get_session_tool_calls(session_id: str):
         tool_calls = []
         if hasattr(client, 'get_session_tool_calls'):
             tool_calls = client.get_session_tool_calls(session_id)
+
+        # Fallback: TypeDB has session but no tool_call storage yet
+        if not tool_calls:
+            from governance.stores import _sessions_store
+            session_data = _sessions_store.get(session_id, {})
+            tool_calls = session_data.get("tool_calls", [])
+
         return {"session_id": session_id, "tool_call_count": len(tool_calls), "tool_calls": tool_calls}
     except Exception as e:
         logger.error(f"Error getting session tool calls: {e}")
@@ -174,6 +181,13 @@ async def get_session_thoughts(session_id: str):
         thoughts = []
         if hasattr(client, 'get_session_thoughts'):
             thoughts = client.get_session_thoughts(session_id)
+
+        # Fallback: TypeDB has session but no thought storage yet
+        if not thoughts:
+            from governance.stores import _sessions_store
+            session_data = _sessions_store.get(session_id, {})
+            thoughts = session_data.get("thoughts", [])
+
         return {"session_id": session_id, "thought_count": len(thoughts), "thoughts": thoughts}
     except Exception as e:
         logger.error(f"Error getting session thoughts: {e}")

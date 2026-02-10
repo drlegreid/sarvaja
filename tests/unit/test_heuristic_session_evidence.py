@@ -25,9 +25,9 @@ class TestSessionEvidenceFiles:
             status_code=200,
             json=lambda: [
                 {"session_id": "S-001", "status": "COMPLETED", "file_path": "evidence/S-001.md",
-                 "evidence_files": [], "end_time": "2026-01-01T00:00:00"},
+                 "evidence_files": [], "end_time": "2026-01-01T00:00:00", "agent_id": "code-agent"},
                 {"session_id": "S-002", "status": "COMPLETED", "file_path": None,
-                 "evidence_files": ["ev1.md"], "end_time": "2026-01-01T00:00:00"},
+                 "evidence_files": ["ev1.md"], "end_time": "2026-01-01T00:00:00", "agent_id": "code-agent"},
             ],
         )
         from governance.routes.tests.heuristic_checks_session import check_session_evidence_files
@@ -45,7 +45,7 @@ class TestSessionEvidenceFiles:
             else:
                 resp.json = lambda: [
                     {"session_id": "S-001", "status": "COMPLETED", "file_path": None,
-                     "evidence_files": None, "end_time": "2026-01-01T00:00:00"},
+                     "evidence_files": None, "end_time": "2026-01-01T00:00:00", "agent_id": "code-agent"},
                 ]
             return resp
 

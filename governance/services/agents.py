@@ -113,10 +113,12 @@ def list_agents(
                     tasks_executed = task_count or store_count or agent_metrics.get("tasks_executed", 0)
                     capabilities = _AGENT_BASE_CONFIG.get(agent.id, {}).get("capabilities", [])
 
+                    # Per GAP-AGENT-PAUSE-001: prefer in-memory status (tracks toggles)
+                    agent_status = _agents_store.get(agent.id, {}).get("status") or "PAUSED"
                     result.append(_agent_to_dict(
                         agent_id=agent.id, name=agent.name,
                         agent_type=agent.agent_type,
-                        status=agent.status or "ACTIVE",
+                        status=agent_status,
                         tasks_executed=tasks_executed,
                         trust_score=_calculate_trust_score(agent.id, tasks_executed, base_trust),
                         last_active=last_active, capabilities=capabilities,
@@ -182,10 +184,12 @@ def get_agent(agent_id: str, source: str = "rest") -> Optional[Dict[str, Any]]:
                 )
                 capabilities = _AGENT_BASE_CONFIG.get(agent_id, {}).get("capabilities", [])
 
+                # Per GAP-AGENT-PAUSE-001: prefer in-memory status (tracks toggles)
+                agent_status = _agents_store.get(agent_id, {}).get("status") or "PAUSED"
                 return _agent_to_dict(
                     agent_id=agent.id, name=agent.name,
                     agent_type=agent.agent_type,
-                    status=agent.status or "ACTIVE",
+                    status=agent_status,
                     tasks_executed=task_count,
                     trust_score=_calculate_trust_score(agent_id, task_count, base_trust),
                     last_active=last_active, capabilities=capabilities,
@@ -223,6 +227,31 @@ def delete_agent(agent_id: str, source: str = "rest") -> bool:
         record_audit("DELETE", "agent", agent_id, metadata={"source": source})
         _monitor("delete", agent_id, source=source)
     return deleted
+
+
+def toggle_agent_status(agent_id: str, source: str = "rest") -> Optional[Dict[str, Any]]:
+    """Toggle agent between PAUSED and ACTIVE.
+
+    Per GAP-AGENT-PAUSE-001: Agents default PAUSED, operators toggle via UI.
+    Status is in-memory only (not in TypeDB schema).
+
+    Returns:
+        Updated agent dict with new status, or None if not found.
+    """
+    if agent_id not in _agents_store:
+        return None
+
+    current_status = _agents_store[agent_id].get("status", "PAUSED")
+    new_status = "ACTIVE" if current_status == "PAUSED" else "PAUSED"
+    _agents_store[agent_id]["status"] = new_status
+
+    record_audit(
+        "UPDATE", "agent", agent_id,
+        metadata={"source": source, "field": "status", "old": current_status, "new": new_status},
+    )
+    _monitor("toggle_status", agent_id, source=source, old_status=current_status, new_status=new_status)
+
+    return get_agent(agent_id, source=source)
 
 
 def record_task_execution(agent_id: str, source: str = "rest") -> Optional[Dict[str, Any]]:
@@ -281,10 +310,11 @@ def record_task_execution(agent_id: str, source: str = "rest") -> Optional[Dict[
                     agent_id, sessions_by_agent, tasks_by_agent, task_count_by_agent
                 )
                 capabilities = _AGENT_BASE_CONFIG.get(agent_id, {}).get("capabilities", [])
+                agent_status = _agents_store.get(agent_id, {}).get("status") or "PAUSED"
                 return _agent_to_dict(
                     agent_id=agent.id, name=agent.name,
                     agent_type=agent.agent_type,
-                    status=agent.status or "ACTIVE",
+                    status=agent_status,
                     tasks_executed=tasks_executed,
                     trust_score=new_trust_score,
                     last_active=now, capabilities=capabilities,

@@ -12,7 +12,7 @@ Created: 2024-12-28
 import httpx
 from typing import Any
 
-from agent.governance_ui.utils import extract_items_from_response
+from agent.governance_ui.utils import extract_items_from_response, format_timestamps_in_list
 
 
 def register_tasks_controllers(state: Any, ctrl: Any, api_base_url: str) -> None:
@@ -347,6 +347,10 @@ def register_tasks_controllers(state: Any, ctrl: Any, api_base_url: str) -> None
                             "has_more": False,
                             "returned": len(data),
                         }
+                    # GAP-UI-TS-001: Format timestamps for display
+                    state.tasks = format_timestamps_in_list(
+                        state.tasks, ["created_at", "completed_at", "claimed_at"]
+                    )
                     state.status_message = f"Loaded {len(state.tasks)} tasks"
             state.is_loading = False
         except Exception as e:

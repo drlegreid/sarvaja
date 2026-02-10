@@ -1,0 +1,166 @@
+{
+  "status": "failed",
+  "timestamp": "2026-02-08T19:12:27.639286",
+  "duration_seconds": 47.673939,
+  "exit_code": 1,
+  "total": 1368,
+  "passed": 1335,
+  "failed": 30,
+  "skipped": 3,
+  "tests": [
+    {
+      "nodeid": "TestClaudeMemImports.test_mcp_server_imports",
+      "outcome": "failed",
+      "duration": 0.0
+    },
+    {
+      "nodeid": "TestClaudeMemImports.test_no_json_dumps_usage",
+      "outcome": "failed",
+      "duration": 0.0
+    },
+    {
+      "nodeid": "TestClaudeMemTOONOutput.test_chroma_health_toon_format",
+      "outcome": "failed",
+      "duration": 0.0
+    },
+    {
+      "nodeid": "TestClaudeMemTOONOutput.test_chroma_health_json_when_env_set",
+      "outcome": "failed",
+      "duration": 0.0
+    },
+    {
+      "nodeid": "TestClaudeMemTOONOutput.test_chroma_query_documents_toon_format",
+      "outcome": "failed",
+      "duration": 0.0
+    },
+    {
+      "nodeid": "TestClaudeMemTOONOutput.test_chroma_get_documents_toon_format",
+      "outcome": "failed",
+      "duration": 0.0
+    },
+    {
+      "nodeid": "TestClaudeMemTOONOutput.test_chroma_add_documents_toon_format",
+      "outcome": "failed",
+      "duration": 0.0
+    },
+    {
+      "nodeid": "TestClaudeMemTOONOutput.test_chroma_delete_documents_toon_format",
+      "outcome": "failed",
+      "duration": 0.0
+    },
+    {
+      "nodeid": "TestClaudeMemTOONOutput.test_error_response_toon_format",
+      "outcome": "failed",
+      "duration": 0.0
+    },
+    {
+      "nodeid": "TestDashboardReloader.test_import",
+      "outcome": "failed",
+      "duration": 0.0
+    },
+    {
+      "nodeid": "TestDashboardReloader.test_reloader_init",
+      "outcome": "failed",
+      "duration": 0.0
+    },
+    {
+      "nodeid": "TestDashboardReloader.test_start_process",
+      "outcome": "failed",
+      "duration": 0.0
+    },
+    {
+      "nodeid": "TestDashboardReloader.test_restart_kills_old_process",
+      "outcome": "failed",
+      "duration": 0.0
+    },
+    {
+      "nodeid": "TestDashboardReloader.test_ignores_non_python_files",
+      "outcome": "failed",
+      "duration": 0.0
+    },
+    {
+      "nodeid": "TestDashboardReloader.test_ignores_directories",
+      "outcome": "failed",
+      "duration": 0.0
+    },
+    {
+      "nodeid": "TestDashboardReloader.test_debounce",
+      "outcome": "failed",
+      "duration": 0.0
+    },
+    {
+      "nodeid": "TestDashboardReloader.test_python_file_triggers_restart",
+      "outcome": "failed",
+      "duration": 0.0
+    },
+    {
+      "nodeid": "TestDashboardReloader.test_on_created_also_triggers",
+      "outcome": "failed",
+      "duration": 0.0
+    },
+    {
+      "nodeid": "TestAgentDefaults.test_code_agent_has_workflow_config",
+      "outcome": "failed",
+      "duration": 0.0
+    },
+    {
+      "nodeid": "TestSessionToolLoggerInput.test_parse_tool_input_from_env",
+      "outcome": "failed",
+      "duration": 0.0
+    },
+    {
+      "nodeid": "TestSessionToolLoggerInput.test_parse_empty_tool_input",
+      "outcome": "failed",
+      "duration": 0.0
+    },
+    {
+      "nodeid": "TestSessionToolLoggerInput.test_parse_invalid_json",
+      "outcome": "failed",
+      "duration": 0.0
+    },
+    {
+      "nodeid": "TestSessionToolLoggerInput.test_get_tool_name_from_env",
+      "outcome": "failed",
+      "duration": 0.0
+    },
+    {
+      "nodeid": "TestSessionToolLoggerSession.test_get_active_session_from_state",
+      "outcome": "failed",
+      "duration": 0.0
+    },
+    {
+      "nodeid": "TestSessionToolLoggerSession.test_no_active_session_returns_none",
+      "outcome": "failed",
+      "duration": 0.0
+    },
+    {
+      "nodeid": "TestSessionToolLoggerWrite.test_log_tool_call_success",
+      "outcome": "failed",
+      "duration": 0.0
+    },
+    {
+      "nodeid": "TestSessionToolLoggerWrite.test_log_tool_call_silent_fail_no_session",
+      "outcome": "failed",
+      "duration": 0.0
+    },
+    {
+      "nodeid": "TestSessionToolLoggerWrite.test_log_tool_call_silent_fail_typedb_down",
+      "outcome": "failed",
+      "duration": 0.0
+    },
+    {
+      "nodeid": "TestSessionToolLoggerPerformance.test_hook_completes_under_500ms",
+      "outcome": "failed",
+      "duration": 0.0
+    },
+    {
+      "nodeid": "TestGenerateEvidenceFile.test_returns_none_on_error",
+      "outcome": "failed",
+      "duration": 0.0
+    }
+  ],
+  "output": "ance.router import DataRouter' instead.\n    from governance.data_router import DataRouter, create_data_router\n\ntests/unit/test_typedb3_driver.py:16\n  /app/tests/unit/test_typedb3_driver.py:16: PytestUnknownMarkWarning: Unknown pytest.mark.typedb3 - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html\n    pytest.mark.typedb3,\n\ntests/unit/test_chat_llm_context.py: 36 warnings\ntests/unit/test_task_completion_sync.py: 3 warnings\ntests/unit/ui/test_ui_data_access.py: 4 warnings\n  /usr/local/lib/python3.12/site-packages/typedb/common/datetime.py:67: DeprecationWarning: datetime.datetime.utcfromtimestamp() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.fromtimestamp(timestamp, datetime.UTC).\n    self._datetime_of_seconds = datetime.utcfromtimestamp(timestamp_seconds)\n\ntests/unit/test_mcp_enforcement.py::TestMCPReadinessEndpoint::test_endpoint_exists\n  /app/governance/api.py:157: DeprecationWarning: \n          on_event is deprecated, use lifespan event handlers instead.\n  \n          Read more about it in the\n          [FastAPI docs for Lifespan Events](https://fastapi.tiangolo.com/advanced/events/).\n          \n    @app.on_event(\"startup\")\n\ntests/unit/test_mcp_enforcement.py::TestMCPReadinessEndpoint::test_endpoint_exists\n  /usr/local/lib/python3.12/site-packages/fastapi/applications.py:4576: DeprecationWarning: \n          on_event is deprecated, use lifespan event handlers instead.\n  \n          Read more about it in the\n          [FastAPI docs for Lifespan Events](https://fastapi.tiangolo.com/advanced/events/).\n          \n    return self.router.on_event(event_type)\n\n-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html\n=========================== short test summary info ============================\nFAILED tests/unit/test_claude_mem_toon.py::TestClaudeMemImports::test_mcp_server_imports\nFAILED tests/unit/test_claude_mem_toon.py::TestClaudeMemImports::test_no_json_dumps_usage\nFAILED tests/unit/test_claude_mem_toon.py::TestClaudeMemTOONOutput::test_chroma_health_toon_format\nFAILED tests/unit/test_claude_mem_toon.py::TestClaudeMemTOONOutput::test_chroma_health_json_when_env_set\nFAILED tests/unit/test_claude_mem_toon.py::TestClaudeMemTOONOutput::test_chroma_query_documents_toon_format\nFAILED tests/unit/test_claude_mem_toon.py::TestClaudeMemTOONOutput::test_chroma_get_documents_toon_format\nFAILED tests/unit/test_claude_mem_toon.py::TestClaudeMemTOONOutput::test_chroma_add_documents_toon_format\nFAILED tests/unit/test_claude_mem_toon.py::TestClaudeMemTOONOutput::test_chroma_delete_documents_toon_format\nFAILED tests/unit/test_claude_mem_toon.py::TestClaudeMemTOONOutput::test_error_response_toon_format\nFAILED tests/unit/test_dashboard_watcher.py::TestDashboardReloader::test_import\nFAILED tests/unit/test_dashboard_watcher.py::TestDashboardReloader::test_reloader_init\nFAILED tests/unit/test_dashboard_watcher.py::TestDashboardReloader::test_start_process\nFAILED tests/unit/test_dashboard_watcher.py::TestDashboardReloader::test_restart_kills_old_process\nFAILED tests/unit/test_dashboard_watcher.py::TestDashboardReloader::test_ignores_non_python_files\nFAILED tests/unit/test_dashboard_watcher.py::TestDashboardReloader::test_ignores_directories\nFAILED tests/unit/test_dashboard_watcher.py::TestDashboardReloader::test_debounce\nFAILED tests/unit/test_dashboard_watcher.py::TestDashboardReloader::test_python_file_triggers_restart\nFAILED tests/unit/test_dashboard_watcher.py::TestDashboardReloader::test_on_created_also_triggers\nFAILED tests/unit/test_mcp_enforcement.py::TestAgentDefaults::test_code_agent_has_workflow_config\nFAILED tests/unit/test_session_tool_logger.py::TestSessionToolLoggerInput::test_parse_tool_input_from_env\nFAILED tests/unit/test_session_tool_logger.py::TestSessionToolLoggerInput::test_parse_empty_tool_input\nFAILED tests/unit/test_session_tool_logger.py::TestSessionToolLoggerInput::test_parse_invalid_json\nFAILED tests/unit/test_session_tool_logger.py::TestSessionToolLoggerInput::test_get_tool_name_from_env\nFAILED tests/unit/test_session_tool_logger.py::TestSessionToolLoggerSession::test_get_active_session_from_state\nFAILED tests/unit/test_session_tool_logger.py::TestSessionToolLoggerSession::test_no_active_session_returns_none\nFAILED tests/unit/test_session_tool_logger.py::TestSessionToolLoggerWrite::test_log_tool_call_success\nFAILED tests/unit/test_session_tool_logger.py::TestSessionToolLoggerWrite::test_log_tool_call_silent_fail_no_session\nFAILED tests/unit/test_session_tool_logger.py::TestSessionToolLoggerWrite::test_log_tool_call_silent_fail_typedb_down\nFAILED tests/unit/test_session_tool_logger.py::TestSessionToolLoggerPerformance::test_hook_completes_under_500ms\nFAILED tests/unit/test_test_parser.py::TestGenerateEvidenceFile::test_returns_none_on_error\n30 failed, 1335 passed, 3 skipped, 27 deselected, 52 warnings in 46.01s\n",
+  "command": "python3 -m pytest --tb=short -q tests/unit/ -k not Integration and not slow",
+  "category": "unit",
+  "evidence_file": "/app/evidence/TEST-RUN-2026-02-08-UNIT-20260208-191227.md"
+}

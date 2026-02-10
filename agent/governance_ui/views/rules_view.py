@@ -145,7 +145,7 @@ def build_rule_detail_view() -> None:
                 "Edit",
                 color="primary",
                 prepend_icon="mdi-pencil",
-                click="rule_form_mode = 'edit'; show_rule_form = true",
+                click="trigger('edit_rule')",
                 __properties=["data-testid"],
                 **{"data-testid": "rule-detail-edit-btn"}
             )

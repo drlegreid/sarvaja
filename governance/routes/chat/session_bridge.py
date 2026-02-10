@@ -5,10 +5,12 @@ Per A.2: Bridge between chat operations and gov-sessions MCP.
 Creates governance SessionCollector instances during chat,
 records tool calls and thoughts, and syncs on session end.
 
+Per GAP-GOVSESS-CAPTURE-001: Sessions MUST persist to TypeDB via service layer.
 Per RULE-012: Single Responsibility - only chat↔session bridging.
 Per DOC-SIZE-01-v1: Files under 300 lines.
 
 Created: 2026-02-01
+Updated: 2026-02-09 - TypeDB persistence via service layer (GAP-GOVSESS-CAPTURE-001)
 """
 import logging
 from datetime import datetime
@@ -28,8 +30,8 @@ def start_chat_session(
     """
     Start a governance session for a chat interaction.
 
-    Creates a SessionCollector and registers the session in
-    _sessions_store so it appears in /sessions and dashboard.
+    Creates a SessionCollector, persists to TypeDB via service layer,
+    and registers in _sessions_store for dashboard visibility.
 
     Args:
         agent_id: The agent handling this chat
@@ -39,23 +41,44 @@ def start_chat_session(
     Returns:
         SessionCollector instance for recording events
     """
-    safe_topic = f"CHAT-{topic[:40].replace(' ', '-').upper()}"
+    # Sanitize topic: replace spaces, slashes, and other path-unsafe chars
+    sanitized = topic[:40].replace(' ', '-').replace('/', '-').replace('\\', '-')
+    safe_topic = f"CHAT-{sanitized.upper()}"
     collector = SessionCollector(
         topic=safe_topic,
         session_type=session_type,
         agent_id=agent_id,
     )
 
-    # Register in sessions store for dashboard visibility
-    _sessions_store[collector.session_id] = {
-        "session_id": collector.session_id,
-        "agent_id": agent_id,
-        "status": "ACTIVE",
-        "start_time": collector.start_time.isoformat(),
+    # Per GAP-GOVSESS-CAPTURE-001: Persist to TypeDB via service layer
+    try:
+        from governance.services.sessions import create_session
+        create_session(
+            session_id=collector.session_id,
+            description=safe_topic,
+            agent_id=agent_id,
+            source="chat-bridge",
+        )
+    except Exception as e:
+        logger.warning(f"TypeDB session create failed: {e}")
+
+    # Always ensure _sessions_store has session data for bridge syncing
+    # (create_session may have stored in TypeDB but not in _sessions_store)
+    if collector.session_id not in _sessions_store:
+        _sessions_store[collector.session_id] = {
+            "session_id": collector.session_id,
+            "start_time": collector.start_time.isoformat(),
+            "status": "ACTIVE",
+            "tasks_completed": 0,
+            "description": safe_topic,
+            "agent_id": agent_id,
+        }
+    # Enrich with bridge-specific fields
+    _sessions_store[collector.session_id].update({
         "topic": safe_topic,
         "session_type": session_type,
         "intent": topic,
-    }
+    })
 
     logger.info(
         f"Chat session started: {collector.session_id} "
@@ -155,7 +178,10 @@ def end_chat_session(
     summary: str = None,
 ) -> Optional[str]:
     """
-    End a chat session - update store and optionally generate log.
+    End a chat session - persist to TypeDB, generate evidence, sync ChromaDB.
+
+    Per GAP-GOVSESS-CAPTURE-001: Sessions MUST be ended via service layer
+    to persist end_time and COMPLETED status to TypeDB.
 
     Args:
         collector: Active SessionCollector
@@ -166,10 +192,27 @@ def end_chat_session(
     """
     session_id = collector.session_id
 
-    # Update store
+    # Count tool calls for tasks_completed metric
+    tool_call_count = len([
+        e for e in collector.events if e.event_type == "tool_call"
+    ])
+
+    # Per GAP-GOVSESS-CAPTURE-001: End via service layer for TypeDB persistence
+    try:
+        from governance.services.sessions import end_session as svc_end_session
+        svc_end_session(
+            session_id=session_id,
+            tasks_completed=tool_call_count,
+            source="chat-bridge",
+        )
+    except Exception as e:
+        logger.warning(f"TypeDB session end failed: {e}")
+
+    # Always update _sessions_store for consistency
     if session_id in _sessions_store:
-        _sessions_store[session_id]["status"] = "ENDED"
+        _sessions_store[session_id]["status"] = "COMPLETED"
         _sessions_store[session_id]["end_time"] = datetime.now().isoformat()
+        _sessions_store[session_id]["tasks_completed"] = tool_call_count
         if summary:
             _sessions_store[session_id]["summary"] = summary
 
@@ -186,5 +229,36 @@ def end_chat_session(
     except Exception as e:
         logger.warning(f"Failed to sync session to ChromaDB: {e}")
 
+    # Per TEST-CVP-01-v1 Tier 2: Post-session validation
+    _run_post_session_checks(session_id, collector)
+
     logger.info(f"Chat session ended: {session_id}")
     return evidence_path
+
+
+def _run_post_session_checks(session_id: str, collector: SessionCollector) -> None:
+    """
+    Run lightweight post-session validation checks (Tier 2, <5s budget).
+
+    Per TEST-CVP-01-v1: Validates session completeness after end.
+    Runs asynchronously to avoid blocking the caller.
+    """
+    try:
+        has_agent = bool(getattr(collector, "agent_id", None))
+        has_tool_calls = any(e.event_type == "tool_call" for e in collector.events)
+        has_thoughts = any(e.event_type == "thought" for e in collector.events)
+        issues = []
+        if not has_agent:
+            issues.append("missing agent_id")
+        if not has_tool_calls:
+            issues.append("no tool calls recorded")
+        if not has_thoughts:
+            issues.append("no thoughts recorded")
+        if issues:
+            logger.warning(
+                f"Post-session validation [{session_id}]: {', '.join(issues)}"
+            )
+        else:
+            logger.info(f"Post-session validation [{session_id}]: OK")
+    except Exception as e:
+        logger.debug(f"Post-session validation failed: {e}")

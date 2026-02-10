@@ -65,15 +65,17 @@ def sync_typedb_to_memory(client, tasks_store: Dict[str, Any], sessions_store: D
         logger.warning(f"Failed to sync sessions from TypeDB: {e}")
 
     # Sync agents (P10.3)
+    # Per GAP-AGENT-PAUSE-001: preserve existing in-memory status (tracks toggles/defaults)
     if agents_store is not None:
         try:
             agents = client.get_all_agents()
             for agent in agents:
+                existing_status = agents_store.get(agent.id, {}).get("status")
                 agents_store[agent.id] = {
                     "agent_id": agent.id,
                     "name": agent.name,
                     "agent_type": agent.agent_type,
-                    "status": agent.status or "ACTIVE",
+                    "status": existing_status or "PAUSED",
                     "tasks_executed": agent.tasks_executed or 0,
                     "trust_score": agent.trust_score or 0.8,
                     "last_active": None  # Metrics loaded separately

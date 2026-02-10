@@ -12,8 +12,10 @@ Graph structure:
     [critical gaps] → skip_to_report → report → complete → END
                        ↓
                    hypothesize → measure → optimize → validate
-                                                        ↓
-                                    [failed] → report → complete → END
+                       ↑                                 ↓
+                       └── loop_to_hypothesize ──────── [failed, retries < MAX]
+                                                         ↓
+                                    [failed, no retries] → report → complete → END
                                         ↓
                                       dream → report → complete → END
 
@@ -165,11 +167,17 @@ def build_dsp_graph() -> StateGraph:
         {"continue": "validate", "abort": "abort"}
     )
 
-    # Validate → [dream | report | abort]
+    # Validate → [dream | loop_to_hypothesize | report | abort]
+    # Per GAP-WORKFLOW-LOOP-001: Loop back on validation failure if retries remain
     graph.add_conditional_edges(
         "validate",
         check_validation_result,
-        {"dream": "dream", "report": "report", "abort": "abort"}
+        {
+            "dream": "dream",
+            "loop_to_hypothesize": "hypothesize",
+            "report": "report",
+            "abort": "abort",
+        }
     )
 
     # Dream → report
@@ -258,7 +266,10 @@ def _run_fallback_workflow(graph: StateGraph, initial_state: DSPState) -> DSPSta
     """Run workflow in fallback mode without LangGraph.
 
     Executes nodes in linear sequence with basic routing.
+    Per GAP-WORKFLOW-LOOP-001: Supports retry loops (validate → hypothesize).
     """
+    from .state import MAX_PHASE_RETRIES
+
     state = initial_state.copy()
 
     # Define linear execution order
@@ -274,8 +285,12 @@ def _run_fallback_workflow(graph: StateGraph, initial_state: DSPState) -> DSPSta
         "complete",
     ]
 
-    for node_name in phase_sequence:
+    i = 0
+    while i < len(phase_sequence):
+        node_name = phase_sequence[i]
+
         if node_name not in graph.nodes:
+            i += 1
             continue
 
         # Check abort condition
@@ -288,6 +303,7 @@ def _run_fallback_workflow(graph: StateGraph, initial_state: DSPState) -> DSPSta
 
         # Check skip conditions
         if node_name == "dream" and state.get("should_skip_dream"):
+            i += 1
             continue
 
         # Execute node
@@ -300,13 +316,28 @@ def _run_fallback_workflow(graph: StateGraph, initial_state: DSPState) -> DSPSta
             state["error_message"] = str(e)
             break
 
+        # GAP-WORKFLOW-LOOP-001: Check for retry loop after validate
+        if node_name == "validate" and not state.get("validation_passed"):
+            retry_count = state.get("retry_count", 0)
+            if retry_count < MAX_PHASE_RETRIES:
+                state["retry_count"] = retry_count + 1
+                logger.info(
+                    f"[DSP] Validation failed, looping back to hypothesize "
+                    f"(retry {retry_count + 1}/{MAX_PHASE_RETRIES})"
+                )
+                # Jump back to hypothesize (index 2)
+                i = phase_sequence.index("hypothesize")
+                continue
+
+        i += 1
+
     return state
 
 
 def print_dsp_workflow_diagram():
     """Print ASCII visualization of DSP workflow."""
     print("""
-DSP LangGraph Workflow:
+DSP LangGraph Workflow (with loop-back per GAP-WORKFLOW-LOOP-001):
 
     START
       │
@@ -321,28 +352,28 @@ DSP LangGraph Workflow:
       │                              │
       │ normal                       │
       ▼                              │
-    [hypothesize]                    │
+    [hypothesize]◄───────────────┐   │
+      │                          │   │
+      ▼                          │   │
+    [measure]                    │   │
+      │                     loop │   │
+      ▼                (retry<3) │   │
+    [optimize]                   │   │
+      │                          │   │
+      ▼                          │   │
+    [validate]───failed──────────┘   │
       │                              │
-      ▼                              │
-    [measure]                        │
-      │                              │
-      ▼                              │
-    [optimize]                       │
-      │                              │
-      ▼                              │
-    [validate]                       │
-      │                              │
-      ├─failed────────►[report]◄─────┘
-      │                    │
-      │ passed             │
-      ▼                    │
-    [dream]                │
-      │                    │
-      └────────────────────┘
-                           │
-                           ▼
-                      [complete]
-                           │
-                           ▼
-                          END
+      ├─failed(retries=3)►[report]◄──┘
+      │                      │
+      │ passed               │
+      ▼                      │
+    [dream]                  │
+      │                      │
+      └──────────────────────┘
+                             │
+                             ▼
+                        [complete]
+                             │
+                             ▼
+                            END
     """)
