@@ -48,16 +48,12 @@ from agent.governance_ui import (
     get_sessions,
     get_tasks,
     NAVIGATION_ITEMS,
-    RULE_CATEGORIES,
-    RULE_STATUSES,
     get_initial_state,
-    # Pure transforms
-    TASK_STATUSES,  # GAP-UI-EXP-004
-    TASK_PHASES,  # GAP-UI-EXP-004
-    )
-from agent.governance_ui.utils import (
-    format_timestamps_in_list, compute_session_metrics,
-    compute_session_duration, compute_timeline_data,
+)
+from agent.governance_ui.dashboard_data_loader import load_initial_data
+from agent.governance_ui.dashboard_state_init import (
+    init_form_and_detail_states,
+    init_dialog_states,
 )
 
 # View modules (extracted per GAP-FILE-001)
@@ -179,87 +175,15 @@ class GovernanceDashboard:
             for key, value in get_initial_state().items():
                 setattr(self._state, key, value)
 
-            # Load initial data via REST API (not MCP) to get full data including document_path
+            # Load initial data via REST API with MCP fallback
             # Per GAP-UI-PAGING-001: Use pagination to prevent DOM explosion
-            import httpx
-            try:
-                with httpx.Client(timeout=10.0) as client:
-                    # Rules - REST API includes document_path, MCP function doesn't
-                    resp = client.get(f"{API_BASE_URL}/api/rules")
-                    if resp.status_code == 200:
-                        data = resp.json()
-                        self._state.rules = data.get("items", data) if isinstance(data, dict) else data
-                    else:
-                        self._state.rules = get_rules()
+            load_initial_data(
+                self._state, API_BASE_URL,
+                get_rules, get_decisions, get_sessions, get_tasks,
+            )
 
-                    # Decisions
-                    resp = client.get(f"{API_BASE_URL}/api/decisions")
-                    if resp.status_code == 200:
-                        data = resp.json()
-                        self._state.decisions = data.get("items", data) if isinstance(data, dict) else data
-                    else:
-                        self._state.decisions = get_decisions()
-
-                    # Sessions with pagination
-                    page_size = 20
-                    resp = client.get(f"{API_BASE_URL}/api/sessions", params={"limit": page_size, "offset": 0})
-                    if resp.status_code == 200:
-                        data = resp.json()
-                        if isinstance(data, dict) and "items" in data:
-                            items = data["items"]
-                            self._state.sessions_pagination = data.get("pagination", {})
-                        else:
-                            items = data[:page_size] if len(data) > page_size else data
-                        # GAP-SESSION-STATS-001: Compute metrics BEFORE formatting
-                        metrics = compute_session_metrics(items)
-                        self._state.sessions_metrics_duration = metrics["duration"]
-                        self._state.sessions_metrics_avg_tasks = metrics["avg_tasks"]
-                        # F.2: Add duration column before formatting
-                        for item in items:
-                            item["duration"] = compute_session_duration(
-                                item.get("start_time", ""), item.get("end_time", ""))
-                        tl_vals, tl_labels = compute_timeline_data(items)
-                        self._state.sessions_timeline_data = tl_vals
-                        self._state.sessions_timeline_labels = tl_labels
-                        agents = sorted(set(
-                            s.get("agent_id") for s in items if s.get("agent_id")))
-                        self._state.sessions_agent_options = agents
-                        self._state.sessions = format_timestamps_in_list(
-                            items, ["start_time", "end_time"])
-                    else:
-                        self._state.sessions = get_sessions(limit=100)
-
-                    # GAP-UI-EXP-012: Load agents at startup (not just on-demand)
-                    resp = client.get(f"{API_BASE_URL}/api/agents")
-                    if resp.status_code == 200:
-                        data = resp.json()
-                        self._state.agents = data.get("items", data) if isinstance(data, dict) else data
-                    else:
-                        self._state.agents = []
-
-                    # Tasks with pagination
-                    resp = client.get(f"{API_BASE_URL}/api/tasks", params={"limit": page_size, "offset": 0})
-                    if resp.status_code == 200:
-                        data = resp.json()
-                        if isinstance(data, dict) and "items" in data:
-                            self._state.tasks = data["items"]
-                            self._state.tasks_pagination = data.get("pagination", {})
-                        else:
-                            self._state.tasks = data[:page_size] if len(data) > page_size else data
-                            self._state.tasks_pagination = {"total": len(data), "offset": 0, "limit": page_size, "has_more": len(data) > page_size, "returned": min(len(data), page_size)}
-                    else:
-                        self._state.tasks = get_tasks()
-            except Exception:
-                # Fallback to MCP functions if REST API fails
-                self._state.rules = get_rules()
-                self._state.decisions = get_decisions()
-                self._state.sessions = get_sessions(limit=100)
-                self._state.tasks = get_tasks()
-
-            # Agent Task Backlog state (TODO-6)
-            self._state.available_tasks = []
-            self._state.claimed_tasks = []
-            self._state.backlog_agent_id = ""
+            # Initialize form fields, detail views, and filter options
+            init_form_and_detail_states(self._state)
 
             # Controller for handling UI events
             ctrl = self._server.controller
@@ -280,85 +204,6 @@ class GovernanceDashboard:
             load_tests_data = loaders['load_tests_data']
             load_sessions_list = loaders['load_sessions_list']
             load_metrics_data = loaders['load_metrics_data']
-
-            # Initialize additional state for forms and filters
-            self._state.show_rule_detail = False
-            self._state.show_rule_form = False
-            self._state.rule_form_mode = "create"
-            self._state.rules_status_filter = None
-            self._state.rules_category_filter = None
-            self._state.rules_search_query = ""
-            self._state.rules_sort_column = "rule_id"
-            self._state.rules_sort_asc = True
-
-            # GAP-UI-027 fix: Filter options as state for proper VSelect binding
-            self._state.status_options = RULE_STATUSES  # ['ACTIVE', 'DRAFT', 'DEPRECATED']
-            self._state.category_options = RULE_CATEGORIES  # ['governance', 'technical', 'operational']
-            # GAP-UI-EXP-004: Task filter options
-            self._state.task_status_options = TASK_STATUSES  # ['TODO', 'IN_PROGRESS', 'DONE', 'BLOCKED']
-            self._state.task_phase_options = TASK_PHASES  # ['P10', 'P11', 'P12', 'R&D', ...]
-
-            # Form field states - Rules
-            self._state.form_rule_id = ""
-            self._state.form_rule_title = ""
-            self._state.form_rule_directive = ""
-            self._state.form_rule_category = "governance"
-            self._state.form_rule_priority = "HIGH"
-
-            # Form field states - Tasks
-            self._state.show_task_form = False
-            self._state.form_task_id = ""
-            self._state.form_task_description = ""
-            self._state.form_task_phase = "P10"
-            self._state.form_task_agent = ""
-
-            # Detail view states - Tasks
-            self._state.selected_task = None
-            self._state.show_task_detail = False
-            self._state.edit_task_mode = False
-            self._state.edit_task_description = ""
-            self._state.edit_task_phase = "P10"
-            self._state.edit_task_status = "TODO"
-            self._state.edit_task_agent = ""
-
-            # Detail view states - Sessions
-            self._state.selected_session = None
-            self._state.show_session_detail = False
-
-            # Detail view states - Decisions
-            self._state.selected_decision = None
-            self._state.show_decision_detail = False
-
-            # Executive Reports state (GAP-UI-044)
-            self._state.executive_report = None
-            self._state.executive_loading = False
-            self._state.executive_period = "week"
-
-            # Agent Chat state (ORCH-006)
-            self._state.chat_messages = []
-            self._state.chat_input = ""
-            self._state.chat_loading = False
-            self._state.chat_selected_agent = None
-            self._state.chat_session_id = None
-            self._state.chat_task_id = None
-
-            # File Viewer state (GAP-DATA-003)
-            self._state.show_file_viewer = False
-            self._state.file_viewer_path = ""
-            self._state.file_viewer_content = ""
-            self._state.file_viewer_loading = False
-            self._state.file_viewer_error = ""
-
-            # Task Execution Viewer state (ORCH-007)
-            self._state.task_execution_log = []
-            self._state.task_execution_loading = False
-            self._state.show_task_execution = False
-
-            # Test Runner state (WORKFLOW-SHELL-01-v1)
-            self._state.tests_loading = False
-            self._state.tests_running = False
-            self._state.tests_current_run = None
-            self._state.tests_recent_runs = []
 
             # =================================================================
             # STATE CHANGE HANDLER - Auto-load data on view change (P11.1 fix)
@@ -606,10 +451,8 @@ class GovernanceDashboard:
                 # =================================================================
                 build_trace_bar()
 
-            # Initialize additional state for dialogs
-            self._state.has_error = False
-            self._state.show_confirm = False
-            self._state.confirm_message = ""
+            # Initialize dialog states (after layout build)
+            init_dialog_states(self._state)
 
             return self._server
 

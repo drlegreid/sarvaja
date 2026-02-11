@@ -22,9 +22,9 @@ class TestMCPStatusInInfraView:
     def test_mcp_panel_in_infra_view(self):
         """Verify build_mcp_status_panel is called in infra view."""
         import inspect
-        from agent.governance_ui.views import infra_view
+        from agent.governance_ui.views.infra import build_infra_view
 
-        source = inspect.getsource(infra_view)
+        source = inspect.getsource(build_infra_view)
 
         # MCP panel should be called
         assert "build_mcp_status_panel()" in source
@@ -38,9 +38,9 @@ class TestMCPStatusInInfraView:
     def test_mcp_testid_in_panel(self):
         """Verify MCP panel has testid for automation."""
         import inspect
-        from agent.governance_ui.views import infra_view
+        from agent.governance_ui.views.infra.mcp import build_mcp_status_panel
 
-        source = inspect.getsource(infra_view)
+        source = inspect.getsource(build_mcp_status_panel)
 
         assert "infra-mcp-status" in source
 
@@ -89,9 +89,9 @@ class TestMCPStatusUIBinding:
     def test_infra_stats_mcp_servers_used_in_view(self):
         """Verify infra_stats.mcp_servers is used in view template."""
         import inspect
-        from agent.governance_ui.views import infra_view
+        from agent.governance_ui.views.infra.mcp import build_mcp_status_panel
 
-        source = inspect.getsource(infra_view)
+        source = inspect.getsource(build_mcp_status_panel)
 
         # Should reference infra_stats.mcp_servers in view
         assert "mcp_servers" in source

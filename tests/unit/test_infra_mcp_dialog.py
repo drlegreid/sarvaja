@@ -16,17 +16,21 @@ import os
 import inspect
 
 
-# Path to the infra view source
-INFRA_VIEW_PATH = os.path.join(
+# Path to the infra view package (DOC-SIZE-01 split)
+INFRA_VIEW_DIR = os.path.normpath(os.path.join(
     os.path.dirname(__file__),
-    "..", "..", "agent", "governance_ui", "views", "infra_view.py",
-)
+    "..", "..", "agent", "governance_ui", "views", "infra",
+))
 
 
 def _read_infra_view_source() -> str:
-    """Read the infra view source for inspection."""
-    with open(os.path.normpath(INFRA_VIEW_PATH)) as f:
-        return f.read()
+    """Read all infra view package source for inspection."""
+    source_parts = []
+    for fname in sorted(os.listdir(INFRA_VIEW_DIR)):
+        if fname.endswith(".py"):
+            with open(os.path.join(INFRA_VIEW_DIR, fname)) as f:
+                source_parts.append(f.read())
+    return "\n".join(source_parts)
 
 
 class TestMcpDetailDialog:

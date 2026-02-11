@@ -91,9 +91,9 @@ class TestInfraViewReferences:
     def test_view_references_frankel_hash(self):
         """View source should reference infra_stats.frankel_hash. Per UI-AUDIT-008."""
         import inspect
-        from agent.governance_ui.views import infra_view
+        from agent.governance_ui.views.infra.stats import build_system_stats
 
-        source = inspect.getsource(infra_view)
+        source = inspect.getsource(build_system_stats)
         assert 'frankel_hash' in source, "View does not reference frankel_hash"
         assert 'infra_stats' in source, "View does not reference infra_stats"
 
