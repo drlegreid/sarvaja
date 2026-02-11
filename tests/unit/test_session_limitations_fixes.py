@@ -33,13 +33,13 @@ class TestEndSessionUpdatesSessionsStore:
         mock_updated = MagicMock()
 
         try:
-            with patch("governance.services.sessions.get_typedb_client") as mock_client_fn:
+            with patch("governance.services.sessions_lifecycle.get_typedb_client") as mock_client_fn:
                 client = MagicMock()
                 client.get_session.return_value = mock_session
                 client.end_session.return_value = mock_updated
                 mock_client_fn.return_value = client
 
-                with patch("governance.services.sessions.session_to_response") as mock_resp:
+                with patch("governance.services.sessions_lifecycle.session_to_response") as mock_resp:
                     mock_resp.return_value = {"session_id": sid, "status": "COMPLETED"}
                     end_session(sid, tasks_completed=5, source="test")
 
@@ -62,13 +62,13 @@ class TestEndSessionUpdatesSessionsStore:
         }
 
         try:
-            with patch("governance.services.sessions.get_typedb_client") as mock_client_fn:
+            with patch("governance.services.sessions_lifecycle.get_typedb_client") as mock_client_fn:
                 client = MagicMock()
                 client.get_session.return_value = MagicMock()
                 client.end_session.return_value = MagicMock()
                 mock_client_fn.return_value = client
 
-                with patch("governance.services.sessions.session_to_response") as mock_resp:
+                with patch("governance.services.sessions_lifecycle.session_to_response") as mock_resp:
                     mock_resp.return_value = {"session_id": sid, "status": "COMPLETED"}
                     end_session(
                         sid,
@@ -90,13 +90,13 @@ class TestEndSessionUpdatesSessionsStore:
         # Don't add to _sessions_store — only in TypeDB
 
         try:
-            with patch("governance.services.sessions.get_typedb_client") as mock_client_fn:
+            with patch("governance.services.sessions_lifecycle.get_typedb_client") as mock_client_fn:
                 client = MagicMock()
                 client.get_session.return_value = MagicMock()
                 client.end_session.return_value = MagicMock()
                 mock_client_fn.return_value = client
 
-                with patch("governance.services.sessions.session_to_response") as mock_resp:
+                with patch("governance.services.sessions_lifecycle.session_to_response") as mock_resp:
                     mock_resp.return_value = {"session_id": sid, "status": "COMPLETED"}
                     result = end_session(sid, tasks_completed=1, source="test")
 
@@ -118,13 +118,13 @@ class TestEndSessionUpdatesSessionsStore:
         }
 
         try:
-            with patch("governance.services.sessions.get_typedb_client") as mock_client_fn:
+            with patch("governance.services.sessions_lifecycle.get_typedb_client") as mock_client_fn:
                 client = MagicMock()
                 client.get_session.return_value = MagicMock()
                 client.end_session.return_value = MagicMock()
                 mock_client_fn.return_value = client
 
-                with patch("governance.services.sessions.session_to_response") as mock_resp:
+                with patch("governance.services.sessions_lifecycle.session_to_response") as mock_resp:
                     mock_resp.return_value = {"session_id": sid, "status": "COMPLETED"}
                     end_session(sid, tasks_completed=None, source="test")
 
