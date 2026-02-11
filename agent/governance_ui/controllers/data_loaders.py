@@ -6,7 +6,8 @@ Controller functions for loading/refreshing data.
 Per RULE-012: DSP Semantic Code Structure
 Per GAP-FILE-005: Extracted from governance_dashboard.py
 Per GAP-UI-048: Trace bar event capture
-Per DOC-SIZE-01-v1: Infra/workflow/audit extracted to separate modules
+Per DOC-SIZE-01-v1: Infra/workflow/audit extracted to separate modules.
+    Refresh + sessions-list in data_loaders_refresh.py.
 
 Created: 2024-12-28
 Updated: 2026-02-01 (split per DOC-SIZE-01-v1)
@@ -19,12 +20,6 @@ from typing import Any
 from agent.governance_ui.trace_bar.transforms import (
     add_api_trace,
     add_error_trace,
-)
-from agent.governance_ui.utils import (
-    format_timestamps_in_list,
-    compute_session_duration,
-    compute_session_metrics,
-    compute_timeline_data,
 )
 from agent.governance_ui import (
     get_proposals,
@@ -40,6 +35,7 @@ from agent.governance_ui import (
 from agent.governance_ui.controllers.infra_loaders import register_infra_loader_controllers
 from agent.governance_ui.controllers.workflow_loaders import register_workflow_loader_controllers
 from agent.governance_ui.controllers.audit_loaders import register_audit_loader_controllers
+from agent.governance_ui.controllers.data_loaders_refresh import register_refresh_controllers
 
 
 def register_data_loader_controllers(
@@ -63,6 +59,10 @@ def register_data_loader_controllers(
     infra_loaders = register_infra_loader_controllers(state, ctrl, api_base_url)
     workflow_loaders = register_workflow_loader_controllers(state, ctrl, api_base_url)
     audit_loaders = register_audit_loader_controllers(state, ctrl, api_base_url)
+
+    # Register refresh + sessions-list controllers
+    refresh_loaders = register_refresh_controllers(
+        state, ctrl, api_base_url, infra_loaders)
 
     def load_trust_data():
         """Load agent trust data from REST API."""
@@ -177,123 +177,6 @@ def register_data_loader_controllers(
         finally:
             state.executive_loading = False
 
-    def _traced_get(client: httpx.Client, endpoint: str) -> tuple:
-        """Make a traced GET request. Returns (response, duration_ms)."""
-        start = time.time()
-        try:
-            response = client.get(f"{api_base_url}{endpoint}")
-            duration_ms = int((time.time() - start) * 1000)
-
-            response_body = None
-            try:
-                response_body = response.json()
-            except Exception:
-                text = response.text[:500] if response.text else None
-                if text:
-                    response_body = {"_raw_text": text}
-
-            add_api_trace(
-                state, endpoint, "GET", response.status_code, duration_ms,
-                request_body=None,
-                response_body=response_body
-            )
-            return response, duration_ms
-        except Exception as e:
-            duration_ms = int((time.time() - start) * 1000)
-            add_error_trace(state, f"GET {endpoint} failed: {str(e)}", endpoint)
-            raise
-
-    @ctrl.trigger("refresh_data")
-    def refresh_data():
-        """Refresh all data from REST API."""
-        try:
-            state.is_loading = True
-            with httpx.Client(timeout=10.0) as client:
-                try:
-                    response, _ = _traced_get(client, "/api/rules")
-                    if response.status_code == 200:
-                        data = response.json()
-                        rules = data.get("items", data) if isinstance(data, dict) else data
-                        for r in rules:
-                            r.setdefault("linked_tasks_count", r.get("linked_tasks_count", 0))
-                            r.setdefault("linked_sessions_count", r.get("linked_sessions_count", 0))
-                        state.rules = rules
-                except Exception:
-                    pass
-
-                try:
-                    response, _ = _traced_get(client, "/api/decisions")
-                    if response.status_code == 200:
-                        data = response.json()
-                        state.decisions = data.get("items", data) if isinstance(data, dict) else data
-                except Exception:
-                    pass
-
-                try:
-                    page_size = getattr(state, 'tasks_per_page', 20)
-                    response, _ = _traced_get(client, f"/api/tasks?limit={page_size}&offset=0")
-                    if response.status_code == 200:
-                        data = response.json()
-                        if isinstance(data, dict) and "items" in data:
-                            state.tasks = format_timestamps_in_list(
-                                data["items"], ["created_at", "claimed_at", "completed_at"])
-                            state.tasks_pagination = data.get("pagination", {})
-                        else:
-                            state.tasks = data[:page_size] if len(data) > page_size else data
-                            state.tasks_pagination = {
-                                "total": len(data),
-                                "offset": 0,
-                                "limit": page_size,
-                                "has_more": len(data) > page_size,
-                                "returned": min(len(data), page_size),
-                            }
-                    state.tasks_page = 1
-                except Exception:
-                    pass
-
-                try:
-                    response, _ = _traced_get(client, "/api/sessions?limit=100")
-                    if response.status_code == 200:
-                        data = response.json()
-                        items = data.get("items", data) if isinstance(data, dict) else data
-                        # F.2: Compute duration + metrics before formatting
-                        metrics = compute_session_metrics(items)
-                        state.sessions_metrics_duration = metrics["duration"]
-                        state.sessions_metrics_avg_tasks = metrics["avg_tasks"]
-                        for item in items:
-                            item["duration"] = compute_session_duration(
-                                item.get("start_time", ""), item.get("end_time", ""))
-                        tl_vals, tl_labels = compute_timeline_data(items)
-                        state.sessions_timeline_data = tl_vals
-                        state.sessions_timeline_labels = tl_labels
-                        agents = sorted(set(
-                            s.get("agent_id") for s in items if s.get("agent_id")))
-                        state.sessions_agent_options = agents
-                        state.sessions = format_timestamps_in_list(
-                            items, ["start_time", "end_time"])
-                except Exception:
-                    pass
-
-                try:
-                    response, _ = _traced_get(client, "/api/agents")
-                    if response.status_code == 200:
-                        data = response.json()
-                        state.agents = data.get("items", data) if isinstance(data, dict) else data
-                except Exception:
-                    pass
-
-            # Also refresh infra health for toolbar indicator
-            try:
-                infra_loaders['load_infra_status']()
-            except Exception:
-                pass
-
-            state.is_loading = False
-            state.status_message = "Data refreshed from API"
-        except Exception as e:
-            state.is_loading = False
-            state.status_message = f"Using cached data (API unavailable: {str(e)})"
-
     @ctrl.trigger("load_trust_data")
     def trigger_load_trust_data():
         """Trigger for loading trust data."""
@@ -314,29 +197,6 @@ def register_data_loader_controllers(
         """Trigger to load executive report."""
         load_executive_report_data()
 
-    def load_sessions_list():
-        """Load sessions list for dropdowns. Per UI-AUDIT-007."""
-        try:
-            with httpx.Client(timeout=10.0) as client:
-                response = client.get(f"{api_base_url}/api/sessions?limit=100")
-                if response.status_code == 200:
-                    data = response.json()
-                    items = data.get("items", data) if isinstance(data, dict) else data
-                    # F.2: Add duration to each session item
-                    for item in items:
-                        item["duration"] = compute_session_duration(
-                            item.get("start_time", ""), item.get("end_time", ""))
-                    state.sessions = format_timestamps_in_list(
-                        items, ["start_time", "end_time"])
-        except Exception:
-            if not state.sessions:
-                state.sessions = []
-
-    @ctrl.trigger("load_sessions_list")
-    def trigger_load_sessions_list():
-        """Trigger for loading sessions list."""
-        load_sessions_list()
-
     # Return all loaders (including from extracted modules)
     return {
         'load_trust_data': load_trust_data,
@@ -346,5 +206,5 @@ def register_data_loader_controllers(
         'load_infra_status': infra_loaders['load_infra_status'],
         'load_workflow_status': workflow_loaders['load_workflow_status'],
         'load_audit_trail': audit_loaders['load_audit_trail'],
-        'load_sessions_list': load_sessions_list,
+        'load_sessions_list': refresh_loaders['load_sessions_list'],
     }

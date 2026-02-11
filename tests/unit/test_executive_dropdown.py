@@ -21,9 +21,9 @@ class TestSessionsListLoader:
     def test_load_sessions_list_in_loaders(self):
         """Verify load_sessions_list is exported from loaders."""
         import inspect
-        from agent.governance_ui.controllers import data_loaders
+        from agent.governance_ui.controllers import data_loaders_refresh
 
-        source = inspect.getsource(data_loaders)
+        source = inspect.getsource(data_loaders_refresh)
 
         # Function should be defined
         assert "def load_sessions_list" in source
@@ -33,9 +33,9 @@ class TestSessionsListLoader:
     def test_sessions_list_trigger_exists(self):
         """Verify load_sessions_list trigger is registered."""
         import inspect
-        from agent.governance_ui.controllers import data_loaders
+        from agent.governance_ui.controllers import data_loaders_refresh
 
-        source = inspect.getsource(data_loaders)
+        source = inspect.getsource(data_loaders_refresh)
 
         # Trigger should be registered
         assert '@ctrl.trigger("load_sessions_list")' in source
