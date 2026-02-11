@@ -7,7 +7,6 @@ Falls back to VSparkline if trame-plotly is not available.
 Uses trame-plotly for:
 - Interactive bar chart with hover tooltips
 - Color-coded status (green=COMPLETED, blue=ACTIVE)
-- Click to filter table by date
 - Stacked bars showing status breakdown per day
 
 Created: 2026-02-11
@@ -17,13 +16,15 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-# Check if trame-plotly is available
+# Check if both plotly and trame-plotly are available
 _HAS_PLOTLY = False
+_plotly_widget = None
 try:
     from trame.widgets import plotly as tw_plotly
+    import plotly.graph_objects as go
     _HAS_PLOTLY = True
 except ImportError:
-    logger.debug("trame-plotly not installed, using VSparkline fallback")
+    logger.debug("trame-plotly or plotly not installed, using VSparkline fallback")
 
 
 def compute_timeline_plotly_data(sessions: list) -> dict:
@@ -97,28 +98,55 @@ def compute_timeline_plotly_data(sessions: list) -> dict:
     return {"data": traces, "layout": layout}
 
 
-def build_plotly_timeline():
-    """Build the Plotly-based interactive timeline.
+def _create_plotly_figure(figure_data: dict = None):
+    """Create a plotly.graph_objects.Figure from timeline data dict."""
+    if not _HAS_PLOTLY:
+        return None
+    if figure_data:
+        return go.Figure(data=figure_data.get("data", []),
+                         layout=figure_data.get("layout", {}))
+    return go.Figure()
 
-    Only renders if trame-plotly is installed. Otherwise, does nothing
-    (caller should use VSparkline fallback).
+
+def build_plotly_timeline():
+    """Build the Plotly-based interactive timeline widget.
+
+    Creates an empty Plotly Figure widget at build time.
+    Use update_plotly_timeline() to push data into it after loading.
     """
+    global _plotly_widget
     if not _HAS_PLOTLY:
         return False
 
-    from trame.widgets import html
+    try:
+        from trame.widgets import html
+        with html.Div(classes="mb-2"):
+            html.Div("Session Activity (14 days)", classes="text-caption text-grey mb-1")
+            _plotly_widget = tw_plotly.Figure(
+                figure=go.Figure(),
+                display_mode_bar=False,
+            )
+        return True
+    except Exception as e:
+        logger.warning("Plotly timeline build failed: %s, using VSparkline fallback", e)
+        _plotly_widget = None
+        return False
 
-    with html.Div(
-        v_if="sessions_plotly_timeline && sessions_plotly_timeline.data",
-        classes="mb-2",
-    ):
-        html.Div("Session Activity (14 days)", classes="text-caption text-grey mb-1")
-        tw_plotly.Figure(
-            display_mode_bar=False,
-            data=("sessions_plotly_timeline.data",),
-            layout=("sessions_plotly_timeline.layout",),
-        )
-    return True
+
+def update_plotly_timeline(figure_data: dict):
+    """Update the Plotly timeline widget with new session data.
+
+    Called by the sessions controller after loading session data.
+    """
+    global _plotly_widget
+    if _plotly_widget is None or not _HAS_PLOTLY:
+        return
+    try:
+        fig = _create_plotly_figure(figure_data)
+        if fig:
+            _plotly_widget.update(fig)
+    except Exception as e:
+        logger.debug("Plotly timeline update failed: %s", e)
 
 
 def has_plotly() -> bool:

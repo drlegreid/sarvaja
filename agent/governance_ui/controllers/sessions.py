@@ -19,7 +19,7 @@ from agent.governance_ui.utils import (
     compute_session_duration, compute_timeline_data, compute_pivot_data,
 )
 from agent.governance_ui.views.sessions.timeline import (
-    compute_timeline_plotly_data, has_plotly,
+    compute_timeline_plotly_data, has_plotly, update_plotly_timeline,
 )
 
 
@@ -269,7 +269,8 @@ def register_sessions_controllers(state: Any, ctrl: Any, api_base_url: str) -> N
                     state.sessions_timeline_data = tl_values
                     state.sessions_timeline_labels = tl_labels
                     if has_plotly():
-                        state.sessions_plotly_timeline = compute_timeline_plotly_data(items)
+                        plotly_data = compute_timeline_plotly_data(items)
+                        update_plotly_timeline(plotly_data)
                     # F.1: Extract unique agent options for filter dropdown
                     agents = sorted(set(
                         s.get("agent_id") for s in items
