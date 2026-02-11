@@ -146,6 +146,8 @@ def update_session(
     status: Optional[str] = None,
     tasks_completed: Optional[int] = None,
     agent_id: Optional[str] = None,
+    start_time: Optional[str] = None,
+    end_time: Optional[str] = None,
     source: str = "rest",
 ) -> Optional[Dict[str, Any]]:
     """Update session fields in TypeDB with fallback.
@@ -166,6 +168,8 @@ def update_session(
                 status=status,
                 tasks_completed=tasks_completed,
                 agent_id=agent_id,
+                start_time=start_time,
+                end_time=end_time,
             )
             if updated:
                 old_status = getattr(existing, 'status', None) if hasattr(existing, 'status') else existing.get("status")
@@ -194,6 +198,10 @@ def update_session(
         session["tasks_completed"] = tasks_completed
     if agent_id is not None:
         session["agent_id"] = agent_id
+    if start_time is not None:
+        session["start_time"] = start_time
+    if end_time is not None:
+        session["end_time"] = end_time
 
     record_audit("UPDATE", "session", session_id,
                  actor_id=agent_id or "system",

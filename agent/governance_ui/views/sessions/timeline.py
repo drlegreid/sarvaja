@@ -44,6 +44,7 @@ def compute_timeline_plotly_data(sessions: list) -> dict:
 
     # Count sessions per day per status
     status_per_day = defaultdict(Counter)
+    earliest_date = None
     for s in sessions:
         start = s.get("start_time", "")
         status = s.get("status", "UNKNOWN")
@@ -51,13 +52,25 @@ def compute_timeline_plotly_data(sessions: list) -> dict:
             try:
                 date_str = start[:10]
                 status_per_day[date_str][status] += 1
+                if earliest_date is None or date_str < earliest_date:
+                    earliest_date = date_str
             except Exception:
                 pass
 
-    # Build last 14 days
+    # Adaptive date range: from earliest session to today, capped at 60 days
     today = datetime.now()
+    if earliest_date:
+        try:
+            first = datetime.strptime(earliest_date, "%Y-%m-%d")
+            span_days = (today - first).days
+        except ValueError:
+            span_days = 14
+    else:
+        span_days = 14
+    span_days = max(7, min(span_days, 60))  # clamp 7..60
+
     dates = []
-    for i in range(13, -1, -1):
+    for i in range(span_days, -1, -1):
         d = (today - timedelta(days=i)).strftime("%Y-%m-%d")
         dates.append(d)
 
@@ -121,7 +134,7 @@ def build_plotly_timeline():
     try:
         from trame.widgets import html
         with html.Div(classes="mb-3", style="height: 180px; overflow: hidden"):
-            html.Div("Session Activity (14 days)", classes="text-caption text-grey mb-1")
+            html.Div("Session Activity", classes="text-caption text-grey mb-1")
             _plotly_widget = tw_plotly.Figure(
                 figure=go.Figure(),
                 display_mode_bar=False,

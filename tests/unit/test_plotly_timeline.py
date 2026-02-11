@@ -54,11 +54,12 @@ class TestPlotlyTimelineData:
         idx = active_trace["x"].index(today_mm_dd)
         assert active_trace["y"][idx] == 1
 
-    def test_14_day_range(self):
-        """Timeline should cover exactly 14 days."""
+    def test_default_range_minimum_7_days(self):
+        """Empty sessions should produce at least 7+1 day range."""
         from agent.governance_ui.views.sessions.timeline import compute_timeline_plotly_data
         result = compute_timeline_plotly_data([])
-        assert len(result["data"][0]["x"]) == 14
+        # Default with no sessions: 14 days (clamped to min 7)
+        assert len(result["data"][0]["x"]) >= 8  # 7+1 (inclusive)
 
     def test_stacked_bar_layout(self):
         """Layout should specify stacked bar mode."""
@@ -73,14 +74,25 @@ class TestPlotlyTimelineData:
         assert all(v == 0 for v in result["data"][0]["y"])
         assert all(v == 0 for v in result["data"][1]["y"])
 
-    def test_sessions_outside_14_days_excluded(self):
-        """Sessions older than 14 days should not appear."""
+    def test_adaptive_range_includes_old_sessions(self):
+        """Old sessions should extend the timeline range to include them."""
         from agent.governance_ui.views.sessions.timeline import compute_timeline_plotly_data
         old_date = (datetime.now() - timedelta(days=30)).strftime("%Y-%m-%d")
         sessions = [{"start_time": f"{old_date}T10:00:00", "status": "COMPLETED"}]
         result = compute_timeline_plotly_data(sessions)
-        # All counts should be 0 since the session is outside the window
-        assert all(v == 0 for v in result["data"][0]["y"])
+        # Adaptive range should expand to include the old session
+        assert len(result["data"][0]["x"]) >= 31  # at least 30+1 days
+        # The old date should be in the range with count > 0
+        assert sum(result["data"][0]["y"]) == 1
+
+    def test_sessions_beyond_60_days_capped(self):
+        """Sessions older than 60 days should cap the range at 60."""
+        from agent.governance_ui.views.sessions.timeline import compute_timeline_plotly_data
+        old_date = (datetime.now() - timedelta(days=90)).strftime("%Y-%m-%d")
+        sessions = [{"start_time": f"{old_date}T10:00:00", "status": "COMPLETED"}]
+        result = compute_timeline_plotly_data(sessions)
+        # Capped at 60+1 days
+        assert len(result["data"][0]["x"]) == 61
 
 
 class TestPlotlyAvailability:

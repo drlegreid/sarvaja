@@ -172,6 +172,8 @@ class SessionUpdate(BaseModel):
     status: Optional[str] = None
     tasks_completed: Optional[int] = None
     agent_id: Optional[str] = None
+    start_time: Optional[str] = None
+    end_time: Optional[str] = None
 
 class EvidenceResponse(BaseModel):
     """Response model for evidence."""

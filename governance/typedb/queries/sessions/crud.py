@@ -112,7 +112,9 @@ class SessionCRUDOperations:
         description: Optional[str] = None,
         status: Optional[str] = None,
         tasks_completed: Optional[int] = None,
-        agent_id: Optional[str] = None
+        agent_id: Optional[str] = None,
+        start_time: Optional[str] = None,
+        end_time: Optional[str] = None,
     ) -> Optional[Session]:
         """
         Update a session's attributes in TypeDB.
@@ -130,6 +132,50 @@ class SessionCRUDOperations:
 
         try:
             with self._driver.transaction(self.database, TransactionType.WRITE) as tx:
+                    # Update started-at
+                    if start_time is not None:
+                        ts = start_time[:19]  # YYYY-MM-DDTHH:MM:SS
+                        delete_query = f"""
+                            match
+                                $s isa work-session, has session-id "{session_id}",
+                                    has started-at $sa;
+                            delete
+                                has $sa of $s;
+                        """
+                        try:
+                            tx.query(delete_query).resolve()
+                        except Exception:
+                            pass
+                        insert_query = f"""
+                            match
+                                $s isa work-session, has session-id "{session_id}";
+                            insert
+                                $s has started-at {ts};
+                        """
+                        tx.query(insert_query).resolve()
+
+                    # Update completed-at (end_time)
+                    if end_time is not None:
+                        ts = end_time[:19]
+                        delete_query = f"""
+                            match
+                                $s isa work-session, has session-id "{session_id}",
+                                    has completed-at $ca;
+                            delete
+                                has $ca of $s;
+                        """
+                        try:
+                            tx.query(delete_query).resolve()
+                        except Exception:
+                            pass
+                        insert_query = f"""
+                            match
+                                $s isa work-session, has session-id "{session_id}";
+                            insert
+                                $s has completed-at {ts};
+                        """
+                        tx.query(insert_query).resolve()
+
                     # Update description
                     if description is not None:
                         # Delete old description (TypeDB 3.x: has $var of $entity)
@@ -181,9 +227,22 @@ class SessionCRUDOperations:
                         tx.query(insert_query).resolve()
 
                     # Update status (complete session if COMPLETED)
-                    if status == "COMPLETED":
+                    # Skip if end_time already set completed-at above
+                    if status == "COMPLETED" and end_time is None:
                         now = datetime.now()
                         timestamp_str = now.strftime('%Y-%m-%dT%H:%M:%S')
+                        # Delete existing completed-at first
+                        del_q = f"""
+                            match
+                                $s isa work-session, has session-id "{session_id}",
+                                    has completed-at $ca;
+                            delete
+                                has $ca of $s;
+                        """
+                        try:
+                            tx.query(del_q).resolve()
+                        except Exception:
+                            pass
                         insert_query = f"""
                             match
                                 $s isa work-session, has session-id "{session_id}";

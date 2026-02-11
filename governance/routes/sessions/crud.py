@@ -104,6 +104,8 @@ async def update_session(session_id: str, data: SessionUpdate):
         status=data.status,
         tasks_completed=data.tasks_completed,
         agent_id=data.agent_id,
+        start_time=data.start_time,
+        end_time=data.end_time,
         source="rest-api",
     )
     if result is None:
