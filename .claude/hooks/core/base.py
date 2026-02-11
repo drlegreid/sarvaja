@@ -4,6 +4,7 @@ Base classes and configuration for Claude Code hooks.
 Per EPIC-006: Provides reusable foundation for healthcheck and entropy monitoring.
 """
 
+import os
 from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
@@ -65,12 +66,13 @@ class HookConfig:
         "claude_mem.mcp_server",  # RULE-024: AMNESIA recovery
     ])
 
-    # Service ports
+    # Service ports — env-configurable, matching shared/constants.py DEFAULT_PORTS
     service_ports: Dict[str, int] = field(default_factory=lambda: {
-        "typedb": 1729,
-        "chromadb": 8001,
-        "litellm": 4000,
-        "ollama": 11434
+        "api": int(os.getenv("API_PORT", "8082")),
+        "typedb": int(os.getenv("TYPEDB_PORT", "1729")),
+        "chromadb": int(os.getenv("CHROMADB_PORT", "8001")),
+        "litellm": int(os.getenv("LITELLM_PORT", "4000")),
+        "ollama": int(os.getenv("OLLAMA_PORT", "11434")),
     })
 
     # Container runtime (Linux: podman, Windows: docker)

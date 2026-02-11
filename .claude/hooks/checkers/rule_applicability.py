@@ -13,6 +13,7 @@ Created: 2026-01-24
 """
 
 import json
+import os
 import requests
 from dataclasses import dataclass, field
 from datetime import datetime
@@ -23,7 +24,7 @@ import re
 
 # Configuration
 PROJECT_ROOT = Path(__file__).parent.parent.parent.parent
-GOVERNANCE_API_URL = "http://localhost:8082"
+GOVERNANCE_API_URL = os.getenv("GOVERNANCE_API_URL", "http://localhost:8082")
 
 
 @dataclass

@@ -239,11 +239,12 @@ def build_sessions_list_view() -> None:
             _build_filters_row()
             _build_timeline()
 
+        v3.VDivider()
         v3.VProgressLinear(
             v_if="is_loading", indeterminate=True, color="primary",
         )
 
-        with v3.VCardText():
+        with v3.VCardText(classes="pt-1", style="overflow-y: auto"):
             _build_data_table()
             _build_pivot_table()
 

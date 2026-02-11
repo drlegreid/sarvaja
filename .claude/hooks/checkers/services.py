@@ -160,7 +160,7 @@ class ServiceChecker:
         )
 
         # Governance API (required) — calls /api/health for deep readiness
-        services["governance-api"] = self._check_api_health(8082)
+        services["governance-api"] = self._check_api_health(self.config.service_ports["api"])
 
         # LiteLLM (optional)
         services["litellm"] = self._check_service(

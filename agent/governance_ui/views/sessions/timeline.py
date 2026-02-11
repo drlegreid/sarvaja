@@ -85,11 +85,11 @@ def compute_timeline_plotly_data(sessions: list) -> dict:
 
     layout = {
         "barmode": "stack",
-        "height": 120,
-        "margin": {"l": 30, "r": 10, "t": 10, "b": 30},
+        "height": 140,
+        "margin": {"l": 30, "r": 10, "t": 24, "b": 30},
         "showlegend": True,
-        "legend": {"orientation": "h", "y": 1.15, "x": 0},
-        "xaxis": {"tickfont": {"size": 10}},
+        "legend": {"orientation": "h", "y": 1.02, "x": 0, "yanchor": "bottom"},
+        "xaxis": {"type": "category", "tickfont": {"size": 10}},
         "yaxis": {"tickfont": {"size": 10}, "dtick": 1},
         "paper_bgcolor": "rgba(0,0,0,0)",
         "plot_bgcolor": "rgba(0,0,0,0)",
@@ -120,11 +120,12 @@ def build_plotly_timeline():
 
     try:
         from trame.widgets import html
-        with html.Div(classes="mb-2"):
+        with html.Div(classes="mb-3", style="height: 180px; overflow: hidden"):
             html.Div("Session Activity (14 days)", classes="text-caption text-grey mb-1")
             _plotly_widget = tw_plotly.Figure(
                 figure=go.Figure(),
                 display_mode_bar=False,
+                style="height: 150px; width: 100%",
             )
         return True
     except Exception as e:

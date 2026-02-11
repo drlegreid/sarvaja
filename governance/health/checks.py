@@ -11,6 +11,8 @@ import subprocess
 from dataclasses import dataclass
 from typing import Dict, Optional
 
+from shared.constants import DEFAULT_PORTS, DEFAULT_HOSTS
+
 # Configuration
 SOCKET_TIMEOUT = 0.5
 SUBPROCESS_TIMEOUT = 2
@@ -64,7 +66,7 @@ def check_podman() -> ServiceStatus:
         )
 
 
-def check_typedb(host: str = "localhost", port: int = 1729) -> ServiceStatus:
+def check_typedb(host: str = DEFAULT_HOSTS["typedb"], port: int = DEFAULT_PORTS["typedb"]) -> ServiceStatus:
     """
     Check TypeDB health via port check.
 
@@ -79,7 +81,7 @@ def check_typedb(host: str = "localhost", port: int = 1729) -> ServiceStatus:
     )
 
 
-def check_chromadb(host: str = "localhost", port: int = 8001) -> ServiceStatus:
+def check_chromadb(host: str = DEFAULT_HOSTS["chromadb"], port: int = DEFAULT_PORTS["chromadb"]) -> ServiceStatus:
     """
     Check ChromaDB health via port check.
 
@@ -94,7 +96,7 @@ def check_chromadb(host: str = "localhost", port: int = 8001) -> ServiceStatus:
     )
 
 
-def check_governance_api(host: str = "localhost", port: int = 8082) -> ServiceStatus:
+def check_governance_api(host: str = DEFAULT_HOSTS["api"], port: int = DEFAULT_PORTS["api"]) -> ServiceStatus:
     """Check Governance API via /api/health endpoint.
 
     Goes beyond port check: verifies TypeDB connection + rule count.
@@ -122,10 +124,10 @@ def check_governance_api(host: str = "localhost", port: int = 8082) -> ServiceSt
 
 
 def check_all_services(
-    typedb_host: str = "localhost",
-    typedb_port: int = 1729,
-    chromadb_host: str = "localhost",
-    chromadb_port: int = 8001
+    typedb_host: str = DEFAULT_HOSTS["typedb"],
+    typedb_port: int = DEFAULT_PORTS["typedb"],
+    chromadb_host: str = DEFAULT_HOSTS["chromadb"],
+    chromadb_port: int = DEFAULT_PORTS["chromadb"],
 ) -> Dict[str, ServiceStatus]:
     """
     Check all CORE services.
