@@ -3,19 +3,21 @@ E2E Explorer - LLM-Driven Exploratory Testing via Playwright MCP
 =================================================================
 Uses LLM heuristics to explore UI, then generates deterministic Robot Framework tests.
 
-Architecture:
-1. LLM explores UI via Playwright MCP (heuristic-driven)
-2. Records interactions as deterministic test steps
-3. Generates Robot Framework test cases
-4. LLM only used for failure analysis (not runtime)
-
 Per Phase 7: E2E Testing with Exploratory Heuristics
+Per DOC-SIZE-01-v1: Heuristics & prompts in e2e_heuristics.py.
 """
 
 from datetime import datetime
 from dataclasses import dataclass, field
 from typing import Optional
 from enum import Enum
+
+# Re-export heuristics for backward compatibility
+from .e2e_heuristics import (  # noqa: F401
+    EXPLORATION_HEURISTICS,
+    EXPLORATION_SYSTEM_PROMPT,
+    FAILURE_ANALYSIS_PROMPT,
+)
 
 
 # =============================================================================
@@ -40,9 +42,9 @@ class ActionType(str, Enum):
 class ExplorationStep:
     """A single step in the exploration session."""
     action: ActionType
-    target: str  # Selector or URL
-    value: Optional[str] = None  # Value for type/select
-    description: str = ""  # LLM-generated description
+    target: str
+    value: Optional[str] = None
+    description: str = ""
     success: bool = True
     error: Optional[str] = None
     timestamp: str = field(default_factory=lambda: datetime.utcnow().isoformat())
@@ -102,61 +104,10 @@ class ExplorationSession:
             "    [Documentation]    Auto-generated from exploration session",
             "    [Tags]    generated    exploratory",
         ]
-
         for step in self.steps:
             if step.success:
                 lines.append(step.to_robot_keyword())
-
         return "\n".join(lines)
-
-
-# =============================================================================
-# EXPLORATION HEURISTICS
-# =============================================================================
-
-EXPLORATION_HEURISTICS = {
-    "page_structure": """
-Explore the page structure:
-1. Take a snapshot of the page
-2. Identify main sections (header, nav, main, footer)
-3. Count interactive elements (buttons, inputs, links)
-4. Record findings
-""",
-
-    "form_discovery": """
-Discover and test forms:
-1. Find all form elements
-2. Identify required fields
-3. Try submitting empty form (expect validation)
-4. Fill form with valid data
-5. Submit and verify response
-""",
-
-    "navigation_flow": """
-Explore navigation:
-1. Find all navigation links
-2. Click each major section
-3. Verify page loads
-4. Check for 404s or errors
-5. Return to starting page
-""",
-
-    "error_handling": """
-Test error handling:
-1. Submit invalid data
-2. Trigger edge cases
-3. Check for user-friendly error messages
-4. Verify recovery paths
-""",
-
-    "accessibility_quick": """
-Quick accessibility check:
-1. Tab through interactive elements
-2. Check focus visibility
-3. Look for ARIA labels
-4. Check color contrast
-""",
-}
 
 
 # =============================================================================
@@ -195,7 +146,6 @@ Initialize Browser
     def generate(self, output_path: str) -> str:
         """Generate Robot Framework test file."""
         test_cases = []
-
         for session in self.sessions:
             test_cases.append(session.to_robot_test())
 
@@ -204,61 +154,13 @@ Initialize Browser
             base_url=self.base_url,
             test_cases="\n\n".join(test_cases),
         )
-
         with open(output_path, "w") as f:
             f.write(content)
-
         return content
 
 
 # =============================================================================
-# LLM EXPLORATION PROMPTS
-# =============================================================================
-
-EXPLORATION_SYSTEM_PROMPT = """You are an E2E test explorer using Playwright MCP tools.
-
-Your goal: Explore the UI using heuristics and record deterministic test steps.
-
-Available tools:
-- mcp__playwright__browser_navigate: Navigate to URL
-- mcp__playwright__browser_snapshot: Get page accessibility tree
-- mcp__playwright__browser_click: Click element
-- mcp__playwright__browser_type: Type text
-- mcp__playwright__browser_evaluate: Run JS
-- mcp__playwright__browser_take_screenshot: Capture screenshot
-
-Exploration heuristics:
-1. Start with snapshot to understand page structure
-2. Identify interactive elements (buttons, inputs, forms)
-3. Test happy path first
-4. Then test edge cases
-5. Record every successful interaction
-
-Output format for each step:
-{
-    "action": "click|type|navigate|assert_visible|...",
-    "target": "selector or URL",
-    "value": "optional value",
-    "description": "what this step does"
-}
-"""
-
-FAILURE_ANALYSIS_PROMPT = """Analyze this test failure:
-
-Test: {test_name}
-Step: {failed_step}
-Error: {error_message}
-Screenshot: {screenshot_path}
-
-Provide:
-1. Root cause analysis
-2. Suggested fix
-3. Whether this is a test issue or app bug
-"""
-
-
-# =============================================================================
-# EXPLORATION RUNNER (for use with Agno agents)
+# EXPLORATION RUNNER
 # =============================================================================
 
 class ExplorationRunner:
@@ -277,26 +179,13 @@ class ExplorationRunner:
         )
         return self.current_session
 
-    def record_step(
-        self,
-        action: ActionType,
-        target: str,
-        value: str = None,
-        description: str = "",
-        success: bool = True,
-        error: str = None
-    ):
+    def record_step(self, action, target, value=None, description="", success=True, error=None):
         """Record an exploration step."""
         if not self.current_session:
             raise ValueError("No active session. Call start_session first.")
-
         step = ExplorationStep(
-            action=action,
-            target=target,
-            value=value,
-            description=description,
-            success=success,
-            error=error
+            action=action, target=target, value=value,
+            description=description, success=success, error=error
         )
         self.current_session.add_step(step)
         return step
@@ -305,10 +194,8 @@ class ExplorationRunner:
         """End current session and return it."""
         if not self.current_session:
             raise ValueError("No active session.")
-
         self.current_session.complete()
         self.generator.add_session(self.current_session)
-
         session = self.current_session
         self.current_session = None
         return session
@@ -324,62 +211,19 @@ class ExplorationRunner:
         return EXPLORATION_SYSTEM_PROMPT
 
 
-# =============================================================================
-# EXAMPLE USAGE
-# =============================================================================
-
 def example_exploration():
     """Example of how to use the exploration framework."""
     runner = ExplorationRunner("http://localhost:7777")
-
-    # Start session
     session = runner.start_session("Task Console Smoke Test", "/ui")
-
-    # Record steps (these would come from LLM + Playwright MCP)
-    runner.record_step(
-        ActionType.NAVIGATE,
-        "http://localhost:7777/ui",
-        description="Open Task Console"
-    )
-
-    runner.record_step(
-        ActionType.SNAPSHOT,
-        "",
-        description="Capture initial page state"
-    )
-
-    runner.record_step(
-        ActionType.ASSERT_VISIBLE,
-        "form, .task-form",
-        description="Verify task form is visible"
-    )
-
-    runner.record_step(
-        ActionType.TYPE,
-        "textarea#prompt",
-        value="Test task from exploration",
-        description="Fill in task prompt"
-    )
-
-    runner.record_step(
-        ActionType.CLICK,
-        "button:has-text('Submit')",
-        description="Submit the task"
-    )
-
-    runner.record_step(
-        ActionType.ASSERT_VISIBLE,
-        ".task-item",
-        description="Verify task appears in list"
-    )
-
-    # End session
+    runner.record_step(ActionType.NAVIGATE, "http://localhost:7777/ui", description="Open Task Console")
+    runner.record_step(ActionType.SNAPSHOT, "", description="Capture initial page state")
+    runner.record_step(ActionType.ASSERT_VISIBLE, "form, .task-form", description="Verify task form is visible")
+    runner.record_step(ActionType.TYPE, "textarea#prompt", value="Test task from exploration", description="Fill in task prompt")
+    runner.record_step(ActionType.CLICK, "button:has-text('Submit')", description="Submit the task")
+    runner.record_step(ActionType.ASSERT_VISIBLE, ".task-item", description="Verify task appears in list")
     runner.end_session()
-
-    # Generate Robot Framework test
     robot_test = runner.generate_tests("tests/e2e/generated/smoke_test.robot")
     print(robot_test)
-
     return runner
 
 

@@ -240,20 +240,20 @@ class TestViewIntegration:
     def test_controller_has_filter_trigger(self):
         """Controller should have sessions_apply_filters trigger."""
         import inspect
-        from agent.governance_ui.controllers.sessions import register_sessions_controllers
-        source = inspect.getsource(register_sessions_controllers)
+        from agent.governance_ui.controllers.sessions_pagination import register_sessions_pagination
+        source = inspect.getsource(register_sessions_pagination)
         assert "sessions_apply_filters" in source
 
     def test_controller_computes_duration(self):
         """Controller should compute duration for each session."""
         import inspect
-        from agent.governance_ui.controllers.sessions import register_sessions_controllers
-        source = inspect.getsource(register_sessions_controllers)
+        from agent.governance_ui.controllers.sessions_pagination import register_sessions_pagination
+        source = inspect.getsource(register_sessions_pagination)
         assert "compute_session_duration" in source
 
     def test_controller_computes_timeline(self):
         """Controller should compute timeline data."""
         import inspect
-        from agent.governance_ui.controllers.sessions import register_sessions_controllers
-        source = inspect.getsource(register_sessions_controllers)
+        from agent.governance_ui.controllers.sessions_pagination import register_sessions_pagination
+        source = inspect.getsource(register_sessions_pagination)
         assert "compute_timeline_data" in source
