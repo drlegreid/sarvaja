@@ -12,8 +12,10 @@ Updated: 2026-01-02 (GAP-UI-034)
 """
 
 import httpx
+import logging
 from typing import Any
 
+from governance.middleware.dashboard_log import log_action
 from agent.governance_ui.utils import (
     format_timestamps_in_list, compute_session_metrics,
     compute_session_duration, compute_timeline_data, compute_pivot_data,
@@ -41,6 +43,7 @@ def register_sessions_controllers(state: Any, ctrl: Any, api_base_url: str) -> N
         Uses @ctrl.trigger to match trigger() call from Vue click handler.
         Fetches full detail from API for evidence_files and linked relations.
         """
+        log_action("sessions", "select", session_id=session_id)
         # Start with list data for immediate display
         for session in state.sessions:
             if session.get('session_id') == session_id or session.get('id') == session_id:
@@ -148,6 +151,7 @@ def register_sessions_controllers(state: Any, ctrl: Any, api_base_url: str) -> N
     @ctrl.trigger("submit_session_form")
     def submit_session_form():
         """Submit session form (create/update) via REST API."""
+        log_action("sessions", state.session_form_mode, session_id=state.form_session_id)
         try:
             state.is_loading = True
             session_data = {
@@ -193,7 +197,7 @@ def register_sessions_controllers(state: Any, ctrl: Any, api_base_url: str) -> N
         """Delete selected session via REST API."""
         if not state.selected_session:
             return
-
+        log_action("sessions", "delete", session_id=state.selected_session.get("session_id"))
         try:
             state.is_loading = True
             session_id = state.selected_session.get('session_id') or state.selected_session.get('id')
@@ -309,6 +313,8 @@ def register_sessions_controllers(state: Any, ctrl: Any, api_base_url: str) -> N
     @ctrl.trigger("sessions_apply_filters")
     def sessions_apply_filters():
         """F.1: Apply column filters and reload sessions."""
+        log_action("sessions", "filter", status=getattr(state, "sessions_filter_status", None),
+                   agent=getattr(state, "sessions_filter_agent", None))
         state.sessions_page = 1
         load_sessions_page()
 

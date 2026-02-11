@@ -18,6 +18,7 @@ from governance.stores import (
     session_to_response,
 )
 from governance.stores.audit import record_audit
+from governance.middleware.event_log import log_event
 
 logger = logging.getLogger(__name__)
 
@@ -103,6 +104,7 @@ def create_session(
                              actor_id=agent_id or "system",
                              metadata={"description": description, "source": source})
                 _monitor("create", session_id, source=source)
+                log_event("session", "create", session_id=session_id, agent_id=agent_id, source=source)
                 return session_to_response(created)
         except Exception as e:
             logger.warning(f"TypeDB session insert failed, using fallback: {e}")
@@ -124,6 +126,7 @@ def create_session(
                  actor_id=agent_id or "system",
                  metadata={"description": description, "source": source})
     _monitor("create", session_id, source=source)
+    log_event("session", "create", session_id=session_id, agent_id=agent_id, source=source)
     return session_data
 
 
@@ -172,6 +175,7 @@ def update_session(
                              new_value=status or old_status,
                              metadata={"description": description, "source": source})
                 _monitor("update", session_id, source=source, status=status)
+                log_event("session", "update", session_id=session_id, status=status, source=source)
                 return session_to_response(updated)
         except Exception as e:
             logger.warning(f"TypeDB session update failed, using fallback: {e}")
@@ -196,6 +200,7 @@ def update_session(
                  old_value=old_status, new_value=status,
                  metadata={"source": source})
     _monitor("update", session_id, source=source, status=status)
+    log_event("session", "update", session_id=session_id, status=status, source=source)
     return dict(session)
 
 
@@ -222,6 +227,7 @@ def delete_session(session_id: str, source: str = "rest") -> bool:
     if deleted:
         record_audit("DELETE", "session", session_id, metadata={"source": source})
         _monitor("delete", session_id, source=source)
+        log_event("session", "delete", session_id=session_id, source=source)
     return deleted
 
 
@@ -260,6 +266,7 @@ def end_session(
                                  old_value="ACTIVE", new_value="COMPLETED",
                                  metadata={"action": "end_session", "source": source})
                     _monitor("end", session_id, source=source)
+                    log_event("session", "end", session_id=session_id, source=source)
                     return session_to_response(updated)
                 return None
         except Exception as e:
@@ -284,4 +291,5 @@ def end_session(
                  old_value="ACTIVE", new_value="COMPLETED",
                  metadata={"action": "end_session", "source": source})
     _monitor("end", session_id, source=source)
+    log_event("session", "end", session_id=session_id, source=source)
     return dict(session)

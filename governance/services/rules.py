@@ -13,6 +13,7 @@ from typing import Optional, Dict, Any, List
 from governance.client import get_client
 from governance.rule_linker import LEGACY_TO_SEMANTIC, normalize_rule_id
 from governance.stores.audit import record_audit
+from governance.middleware.event_log import log_event
 from governance.services.rules_relations import (  # noqa: F401
     get_rule_document_paths,
     get_rule_linkage_counts,
@@ -196,6 +197,7 @@ def create_rule(
     record_audit("CREATE", "rule", rule_id,
                  metadata={"name": name, "category": category, "priority": priority, "source": source})
     _monitor("create", rule_id, source=source, category=category)
+    log_event("rule", "create", rule_id=rule_id, category=category, priority=priority, source=source)
     return rule_to_response_dict(created)
 
 
@@ -229,6 +231,7 @@ def update_rule(
     record_audit("UPDATE", "rule", actual_id,
                  metadata={"name": name, "status": status, "priority": priority, "source": source})
     _monitor("update", actual_id, source=source, status=status)
+    log_event("rule", "update", rule_id=actual_id, status=status, source=source)
     doc_paths = get_rule_document_paths(client, [updated.id])
     return rule_to_response_dict(updated, doc_paths.get(updated.id))
 
@@ -252,6 +255,7 @@ def delete_rule(rule_id: str, archive: bool = True, source: str = "rest") -> boo
     record_audit("DELETE", "rule", actual_id,
                  metadata={"archive": archive, "source": source})
     _monitor("delete", actual_id, source=source, archive=archive)
+    log_event("rule", "delete", rule_id=actual_id, archive=archive, source=source)
     return True
 
 

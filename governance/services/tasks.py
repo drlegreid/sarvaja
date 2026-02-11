@@ -18,6 +18,7 @@ from governance.stores import (
     task_to_response,
 )
 from governance.stores.audit import record_audit
+from governance.middleware.event_log import log_event
 
 logger = logging.getLogger(__name__)
 
@@ -125,6 +126,7 @@ def create_task(
                              actor_id=agent_id or "system",
                              metadata={"phase": phase, "status": status, "source": source})
                 _monitor("create", task_id, source=source, status=status, phase=phase)
+                log_event("task", "create", task_id=task_id, status=status, agent_id=agent_id, source=source)
                 return task_to_response(created)
         except ValueError:
             raise
@@ -146,6 +148,7 @@ def create_task(
                  actor_id=agent_id or "system",
                  metadata={"phase": phase, "status": status, "source": source})
     _monitor("create", task_id, source=source, status=status, phase=phase)
+    log_event("task", "create", task_id=task_id, status=status, agent_id=agent_id, source=source)
     return task_data
 
 
@@ -255,6 +258,7 @@ def update_task(
                  old_value=old_status, new_value=status,
                  metadata={"phase": phase, "source": source})
     _monitor("update", task_id, source=source, status=status, phase=phase)
+    log_event("task", "update", task_id=task_id, old_status=old_status, status=status, source=source)
     return dict(_tasks_store[task_id])
 
 
@@ -280,6 +284,7 @@ def delete_task(task_id: str, source: str = "rest") -> bool:
     if deleted:
         record_audit("DELETE", "task", task_id, metadata={"source": source})
         _monitor("delete", task_id, source=source)
+        log_event("task", "delete", task_id=task_id, source=source)
     return deleted
 
 

@@ -27,6 +27,7 @@ import os
 import logging
 
 from governance.client import get_client
+from governance.middleware import AccessLogMiddleware
 from governance.models import (
     APIStatus,
 )
@@ -50,8 +51,13 @@ _synthesize_execution_events = synthesize_execution_events
 
 # Models re-exports for backward compatibility
 
-# Configure logging
+# Configure logging — ensure governance.* loggers propagate to container stdout
+logging.basicConfig(level=logging.INFO, format="%(name)s: %(message)s")
 logger = logging.getLogger(__name__)
+# Structured logging channels
+logging.getLogger("governance.access").setLevel(logging.INFO)
+logging.getLogger("governance.events").setLevel(logging.INFO)
+logging.getLogger("governance.dashboard").setLevel(logging.INFO)
 
 
 # =============================================================================
@@ -119,6 +125,9 @@ app = FastAPI(
 
 # Add authentication middleware (GAP-SEC-001)
 app.add_middleware(AuthMiddleware)
+
+# Structured access logging (L1)
+app.add_middleware(AccessLogMiddleware)
 
 # CORS middleware - allow all origins for development
 app.add_middleware(
