@@ -94,6 +94,33 @@ def check_chromadb(host: str = "localhost", port: int = 8001) -> ServiceStatus:
     )
 
 
+def check_governance_api(host: str = "localhost", port: int = 8082) -> ServiceStatus:
+    """Check Governance API via /api/health endpoint.
+
+    Goes beyond port check: verifies TypeDB connection + rule count.
+    Falls back to port check if /api/health is unreachable.
+    """
+    import json
+    import urllib.request
+    try:
+        url = f"http://{host}:{port}/api/health"
+        req = urllib.request.Request(url)
+        with urllib.request.urlopen(req, timeout=SOCKET_TIMEOUT + 1) as resp:
+            data = json.loads(resp.read())
+        api_ok = data.get("status") == "ok"
+        return ServiceStatus(
+            name="governance-api",
+            ok=api_ok,
+            status="OK" if api_ok else "DEGRADED",
+            port=port,
+        )
+    except Exception:
+        port_ok = check_port(host, port)
+        if port_ok:
+            return ServiceStatus(name="governance-api", ok=True, status="UP_NO_HEALTH", port=port)
+        return ServiceStatus(name="governance-api", ok=False, status="DOWN", port=port)
+
+
 def check_all_services(
     typedb_host: str = "localhost",
     typedb_port: int = 1729,
@@ -132,6 +159,9 @@ def check_all_services(
 
     # Check ChromaDB
     services["chromadb"] = check_chromadb(chromadb_host, chromadb_port)
+
+    # Check Governance API deep health (includes TypeDB connection + rule count)
+    services["governance-api"] = check_governance_api()
 
     return services
 

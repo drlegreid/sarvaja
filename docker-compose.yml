@@ -191,6 +191,7 @@ services:
       - ./TODO.md:/app/TODO.md:ro       # RECOVER-AMNES-01-v1
       - ${HOME}/.claude/projects/-home-oderid-Documents-Vibe-sarvaja-platform:/app/claude-logs:ro
       - /tmp/podman-api.sock:/run/podman/podman.sock:ro  # EPIC-7.1: Container logs via podman API
+      - /home/oderid/Documents/Docker/chroma_onnx_cache:/root/.cache/chroma:rw  # Cache ONNX embedding model across rebuilds
     depends_on:
       - typedb
       - chromadb

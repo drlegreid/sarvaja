@@ -159,6 +159,9 @@ class ServiceChecker:
             "chromadb", self.config.service_ports["chromadb"], required=True
         )
 
+        # Governance API (required) — calls /api/health for deep readiness
+        services["governance-api"] = self._check_api_health(8082)
+
         # LiteLLM (optional)
         services["litellm"] = self._check_service(
             "litellm", self.config.service_ports["litellm"], required=False
@@ -170,6 +173,34 @@ class ServiceChecker:
         )
 
         return services
+
+    def _check_api_health(self, port: int = 8082) -> Dict[str, Any]:
+        """Call /api/health for deep API readiness (TypeDB connected, rules loaded)."""
+        import json
+        import urllib.request
+        try:
+            url = f"http://localhost:{port}/api/health"
+            req = urllib.request.Request(url)
+            with urllib.request.urlopen(req, timeout=self.config.socket_timeout + 1) as resp:
+                data = json.loads(resp.read())
+            api_ok = data.get("status") == "ok"
+            typedb_ok = data.get("typedb_connected", False)
+            rules = data.get("rules_count", 0)
+            detail = f"typedb={'OK' if typedb_ok else 'DOWN'}, {rules} rules"
+            return {
+                "status": ServiceStatus.OK.value if api_ok else "DEGRADED",
+                "ok": api_ok,
+                "port": port,
+                "optional": False,
+                "detail": detail,
+            }
+        except Exception:
+            # Port check fallback
+            port_ok = check_port("localhost", port, self.config.socket_timeout)
+            if port_ok:
+                return {"status": "UP_NO_HEALTH", "ok": True, "port": port, "optional": False,
+                        "detail": "port open but /api/health unreachable"}
+            return {"status": ServiceStatus.DOWN.value, "ok": False, "port": port, "optional": False}
 
     def _check_service(self, name: str, port: int, required: bool = True) -> Dict[str, Any]:
         """

@@ -164,6 +164,37 @@ app.include_router(infra_router)  # EPIC-7.1: Container logs via podman socket
 # =============================================================================
 
 @app.on_event("startup")
+async def warmup_chromadb_embeddings():
+    """Pre-download ChromaDB ONNX embedding model on startup.
+
+    The chromadb client downloads all-MiniLM-L6-v2 (79MB) on first use.
+    By triggering it at startup, we avoid blocking the first heuristic/search call.
+    Logs progress to console so operators see readiness state.
+    """
+    import asyncio
+    import concurrent.futures
+
+    def _warmup():
+        try:
+            import chromadb
+            logger.info("ChromaDB embeddings: checking ONNX model cache...")
+            # Creating a client with default embedding triggers the download
+            client = chromadb.Client()
+            # A trivial add triggers the model load (download if missing)
+            col = client.get_or_create_collection("sarvaja-warmup-probe")
+            col.add(documents=["startup probe"], ids=["probe-1"])
+            col.delete(ids=["probe-1"])
+            client.delete_collection("sarvaja-warmup-probe")
+            logger.info("ChromaDB embeddings: ONNX model ready")
+        except Exception as e:
+            logger.warning("ChromaDB embeddings: not ready (%s) - first search may be slow", str(e)[:80])
+
+    # Run in thread pool to not block startup
+    loop = asyncio.get_event_loop()
+    loop.run_in_executor(concurrent.futures.ThreadPoolExecutor(max_workers=1), _warmup)
+
+
+@app.on_event("startup")
 async def seed_data():
     """
     Seed in-memory stores with initial data.
