@@ -153,3 +153,109 @@ class TestTraceEventToDict:
         assert data["query_params"] is None
         assert data["action"] == "click"
         assert data["component"] == "submit-btn"
+
+
+class TestTraceEventFromDict:
+    """Tests for from_dict deserialization."""
+
+    def test_basic_roundtrip(self):
+        event = TraceEvent(
+            event_type=TraceType.API_CALL,
+            message="test",
+            endpoint="/api/test",
+            status_code=200,
+            duration_ms=50,
+        )
+        d = event.to_dict()
+        restored = TraceEvent.from_dict(d)
+        assert restored.event_type == TraceType.API_CALL
+        assert restored.message == "test"
+        assert restored.status_code == 200
+
+    def test_defaults(self):
+        restored = TraceEvent.from_dict({})
+        assert restored.event_type == TraceType.API_CALL
+        assert restored.message == ""
+        assert restored.method == "GET"
+
+    def test_invalid_timestamp_uses_now(self):
+        from datetime import datetime
+        restored = TraceEvent.from_dict({"timestamp": "not-a-date"})
+        assert isinstance(restored.timestamp, datetime)
+
+
+class TestTraceEventFormatDisplay:
+    """Tests for format_display()."""
+
+    def test_api_call_ok(self):
+        e = TraceEvent(
+            event_type=TraceType.API_CALL, message="",
+            endpoint="/api/rules", method="GET",
+            status_code=200, duration_ms=42,
+        )
+        display = e.format_display()
+        assert "GET" in display
+        assert "42ms" in display
+        assert "OK" in display
+
+    def test_api_call_error(self):
+        e = TraceEvent(
+            event_type=TraceType.API_CALL, message="",
+            endpoint="/api/bad", method="POST",
+            status_code=500, duration_ms=100,
+        )
+        assert "ERR" in e.format_display()
+
+    def test_ui_action(self):
+        e = TraceEvent(
+            event_type=TraceType.UI_ACTION, message="",
+            action="click", component="RuleCard",
+        )
+        display = e.format_display()
+        assert "UI:" in display
+        assert "click" in display
+
+    def test_error(self):
+        e = TraceEvent(
+            event_type=TraceType.ERROR, message="generic",
+            error_message="Connection refused",
+        )
+        assert "ERROR:" in e.format_display()
+        assert "Connection refused" in e.format_display()
+
+    def test_mcp_call(self):
+        e = TraceEvent(
+            event_type=TraceType.MCP_CALL, message="health_check",
+            duration_ms=150,
+        )
+        display = e.format_display()
+        assert "MCP:" in display
+        assert "150ms" in display
+
+
+class TestTraceEventProperties:
+    """Tests for is_error and css_class properties."""
+
+    def test_error_type_is_error(self):
+        e = TraceEvent(event_type=TraceType.ERROR, message="err")
+        assert e.is_error is True
+
+    def test_500_status_is_error(self):
+        e = TraceEvent(event_type=TraceType.API_CALL, message="", status_code=500)
+        assert e.is_error is True
+
+    def test_200_not_error(self):
+        e = TraceEvent(event_type=TraceType.API_CALL, message="", status_code=200)
+        assert e.is_error is False
+
+    def test_css_class_error(self):
+        e = TraceEvent(event_type=TraceType.ERROR, message="")
+        assert e.css_class == "trace-error"
+
+    def test_css_class_api(self):
+        e = TraceEvent(event_type=TraceType.API_CALL, message="", status_code=200)
+        assert e.css_class == "trace-api-call"
+
+    def test_css_class_mcp(self):
+        e = TraceEvent(event_type=TraceType.MCP_CALL, message="")
+        assert e.css_class == "trace-mcp-call"
