@@ -155,9 +155,10 @@ class TestRulesViewNavigation:
     def test_implementing_tasks_click_has_source_context(self):
         """Verify implementing tasks click includes navigation source."""
         import inspect
-        from agent.governance_ui.views import rules_view
+        # Per DOC-SIZE-01-v1: detail view extracted to rules_view_detail
+        from agent.governance_ui.views import rules_view_detail
 
-        source = inspect.getsource(rules_view)
+        source = inspect.getsource(rules_view_detail)
 
         # Should pass source_view='rules'
         assert "'rules'" in source

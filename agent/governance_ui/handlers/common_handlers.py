@@ -3,6 +3,8 @@ Common handlers for Governance Dashboard.
 
 Per RULE-012: Single Responsibility - shared/cross-cutting operations.
 Per RULE-019: UI/UX Standards - consistent handler patterns.
+Per DOC-SIZE-01-v1: Chat handlers in common_handlers_chat.py,
+    rule detail/audit handlers in common_handlers_audit.py.
 """
 
 import os
@@ -17,6 +19,10 @@ from ..utils import (
     extract_items_from_response, format_timestamps_in_list,
     compute_session_duration,
 )
+
+# Re-export extracted handlers for backward compatibility
+from .common_handlers_chat import register_chat_handlers  # noqa: F401
+from .common_handlers_audit import register_rule_detail_handlers  # noqa: F401
 
 # Per GAP-UI-EXP-012: Use env var for container compatibility
 API_BASE_URL = os.environ.get("GOVERNANCE_API_URL", "http://localhost:8082")
@@ -233,89 +239,6 @@ def register_executive_handlers(ctrl: Any, state: Any) -> None:
         load_executive_report_data()
 
 
-def register_chat_handlers(ctrl: Any, state: Any) -> None:
-    """Register chat/agent interaction handlers."""
-
-    @ctrl.trigger("send_chat_message")
-    def send_chat_message() -> None:
-        """Send a chat message to the selected agent."""
-        if not state.chat_input or not state.chat_input.strip():
-            return
-
-        message = state.chat_input.strip()
-        state.chat_input = ""
-
-        # Add user message to history
-        user_msg = {
-            "role": "user",
-            "content": message,
-            "timestamp": __import__("datetime").datetime.now().isoformat()
-        }
-        state.chat_messages = state.chat_messages + [user_msg]
-
-        # Process command or send to agent
-        if message.startswith("/"):
-            _process_chat_command(state, message)
-        else:
-            _send_to_agent(state, message)
-
-    @ctrl.trigger("clear_chat")
-    def clear_chat() -> None:
-        """Clear chat history."""
-        state.chat_messages = []
-
-
-def _process_chat_command(state: Any, command: str) -> None:
-    """Process a slash command."""
-    cmd = command.lower().split()[0]
-    responses = {
-        "/help": "Available commands: /help, /status, /tasks, /rules, /agents",
-        "/status": f"System status: {len(state.rules)} rules, {len(state.tasks)} tasks, {len(state.agents)} agents",
-        "/tasks": f"Tasks: {len([t for t in state.tasks if t.get('status') == 'TODO'])} pending",
-        "/rules": f"Rules: {len([r for r in state.rules if r.get('status') == 'ACTIVE'])} active",
-        "/agents": f"Agents: {len(state.agents)} registered",
-    }
-
-    response = responses.get(cmd, f"Unknown command: {cmd}")
-    bot_msg = {
-        "role": "assistant",
-        "content": response,
-        "timestamp": __import__("datetime").datetime.now().isoformat()
-    }
-    state.chat_messages = state.chat_messages + [bot_msg]
-
-
-def _send_to_agent(state: Any, message: str) -> None:
-    """Send message to selected agent via API."""
-    try:
-        with httpx.Client(timeout=30.0) as client:
-            response = client.post(
-                f"{API_BASE_URL}/api/agents/{state.selected_chat_agent or 'claude-code'}/chat",
-                json={"message": message}
-            )
-            if response.status_code == 200:
-                result = response.json()
-                bot_msg = {
-                    "role": "assistant",
-                    "content": result.get("response", "No response"),
-                    "timestamp": __import__("datetime").datetime.now().isoformat()
-                }
-            else:
-                bot_msg = {
-                    "role": "assistant",
-                    "content": f"Error: {response.status_code}",
-                    "timestamp": __import__("datetime").datetime.now().isoformat()
-                }
-    except Exception as e:
-        bot_msg = {
-            "role": "assistant",
-            "content": f"Connection error: {str(e)}",
-            "timestamp": __import__("datetime").datetime.now().isoformat()
-        }
-
-    state.chat_messages = state.chat_messages + [bot_msg]
-
-
 def register_trace_bar_handlers(ctrl: Any, state: Any) -> None:
     """Register trace bar handlers (GAP-UI-048)."""
 
@@ -323,82 +246,3 @@ def register_trace_bar_handlers(ctrl: Any, state: Any) -> None:
     def handle_clear_traces() -> None:
         """Clear all trace events."""
         clear_traces(state)
-
-
-def register_rule_detail_handlers(ctrl: Any, state: Any) -> None:
-    """Register rule detail handlers (UI-AUDIT-003)."""
-
-    @ctrl.trigger("load_rule_implementing_tasks")
-    def load_rule_implementing_tasks() -> None:
-        """
-        Load tasks that implement the selected rule.
-
-        Per UI-AUDIT-003: Rule↔task traceability for dashboard.
-        Per GAP-UI-AUDIT-001: Rules view should show implementing tasks.
-        """
-        if not state.selected_rule:
-            state.rule_implementing_tasks = []
-            return
-
-        rule_id = state.selected_rule.get("id") or state.selected_rule.get("rule_id")
-        if not rule_id:
-            state.rule_implementing_tasks = []
-            return
-
-        try:
-            state.rule_implementing_tasks_loading = True
-            with httpx.Client(timeout=10.0) as client:
-                response = client.get(f"{API_BASE_URL}/api/rules/{rule_id}/tasks")
-                if response.status_code == 200:
-                    data = response.json()
-                    state.rule_implementing_tasks = data.get("implementing_tasks", [])
-                else:
-                    state.rule_implementing_tasks = []
-            state.rule_implementing_tasks_loading = False
-        except Exception as e:
-            print(f"Error loading implementing tasks for rule {rule_id}: {e}")
-            state.rule_implementing_tasks = []
-            state.rule_implementing_tasks_loading = False
-
-    # Auto-load implementing tasks when rule detail is shown
-    @state.change("show_rule_detail")
-    def on_show_rule_detail_change(show_rule_detail: bool, **kwargs) -> None:
-        """Load implementing tasks when rule detail view is opened."""
-        if show_rule_detail and state.selected_rule:
-            load_rule_implementing_tasks()
-
-    # Also trigger when selected_rule changes (handles state sync timing)
-    @state.change("selected_rule")
-    def on_selected_rule_change(selected_rule, **kwargs) -> None:
-        """Load implementing tasks when a rule is selected."""
-        if state.show_rule_detail and selected_rule:
-            load_rule_implementing_tasks()
-
-    # =========================================================================
-    # AUDIT FILTER REACTIVE HANDLERS (UI-AUDIT-004)
-    # Per GAP-UI-AUDIT-2026-01-18: Make audit trail filterable by entity
-    # =========================================================================
-
-    @state.change("audit_filter_entity_type")
-    def on_audit_filter_entity_type_change(audit_filter_entity_type, **kwargs):
-        """Reload audit trail when entity type filter changes."""
-        if state.active_view == "audit":
-            ctrl.trigger("load_audit_trail")
-
-    @state.change("audit_filter_action_type")
-    def on_audit_filter_action_type_change(audit_filter_action_type, **kwargs):
-        """Reload audit trail when action type filter changes."""
-        if state.active_view == "audit":
-            ctrl.trigger("load_audit_trail")
-
-    @state.change("audit_filter_entity_id")
-    def on_audit_filter_entity_id_change(audit_filter_entity_id, **kwargs):
-        """Reload audit trail when entity ID filter changes."""
-        if state.active_view == "audit":
-            ctrl.trigger("load_audit_trail")
-
-    @state.change("audit_filter_correlation_id")
-    def on_audit_filter_correlation_id_change(audit_filter_correlation_id, **kwargs):
-        """Reload audit trail when correlation ID filter changes."""
-        if state.active_view == "audit":
-            ctrl.trigger("load_audit_trail")

@@ -1,0 +1,92 @@
+"""
+Rule Detail & Audit Filter Handlers.
+
+Per DOC-SIZE-01-v1: Extracted from common_handlers.py (404 lines).
+Rule implementing tasks loader + audit trail reactive filters.
+"""
+
+import os
+from typing import Any
+
+import httpx
+
+API_BASE_URL = os.environ.get("GOVERNANCE_API_URL", "http://localhost:8082")
+
+
+def register_rule_detail_handlers(ctrl: Any, state: Any) -> None:
+    """Register rule detail handlers (UI-AUDIT-003)."""
+
+    @ctrl.trigger("load_rule_implementing_tasks")
+    def load_rule_implementing_tasks() -> None:
+        """
+        Load tasks that implement the selected rule.
+
+        Per UI-AUDIT-003: Rule-task traceability for dashboard.
+        Per GAP-UI-AUDIT-001: Rules view should show implementing tasks.
+        """
+        if not state.selected_rule:
+            state.rule_implementing_tasks = []
+            return
+
+        rule_id = state.selected_rule.get("id") or state.selected_rule.get("rule_id")
+        if not rule_id:
+            state.rule_implementing_tasks = []
+            return
+
+        try:
+            state.rule_implementing_tasks_loading = True
+            with httpx.Client(timeout=10.0) as client:
+                response = client.get(f"{API_BASE_URL}/api/rules/{rule_id}/tasks")
+                if response.status_code == 200:
+                    data = response.json()
+                    state.rule_implementing_tasks = data.get("implementing_tasks", [])
+                else:
+                    state.rule_implementing_tasks = []
+            state.rule_implementing_tasks_loading = False
+        except Exception as e:
+            print(f"Error loading implementing tasks for rule {rule_id}: {e}")
+            state.rule_implementing_tasks = []
+            state.rule_implementing_tasks_loading = False
+
+    # Auto-load implementing tasks when rule detail is shown
+    @state.change("show_rule_detail")
+    def on_show_rule_detail_change(show_rule_detail: bool, **kwargs) -> None:
+        """Load implementing tasks when rule detail view is opened."""
+        if show_rule_detail and state.selected_rule:
+            load_rule_implementing_tasks()
+
+    # Also trigger when selected_rule changes (handles state sync timing)
+    @state.change("selected_rule")
+    def on_selected_rule_change(selected_rule, **kwargs) -> None:
+        """Load implementing tasks when a rule is selected."""
+        if state.show_rule_detail and selected_rule:
+            load_rule_implementing_tasks()
+
+    # =========================================================================
+    # AUDIT FILTER REACTIVE HANDLERS (UI-AUDIT-004)
+    # Per GAP-UI-AUDIT-2026-01-18: Make audit trail filterable by entity
+    # =========================================================================
+
+    @state.change("audit_filter_entity_type")
+    def on_audit_filter_entity_type_change(audit_filter_entity_type, **kwargs):
+        """Reload audit trail when entity type filter changes."""
+        if state.active_view == "audit":
+            ctrl.trigger("load_audit_trail")
+
+    @state.change("audit_filter_action_type")
+    def on_audit_filter_action_type_change(audit_filter_action_type, **kwargs):
+        """Reload audit trail when action type filter changes."""
+        if state.active_view == "audit":
+            ctrl.trigger("load_audit_trail")
+
+    @state.change("audit_filter_entity_id")
+    def on_audit_filter_entity_id_change(audit_filter_entity_id, **kwargs):
+        """Reload audit trail when entity ID filter changes."""
+        if state.active_view == "audit":
+            ctrl.trigger("load_audit_trail")
+
+    @state.change("audit_filter_correlation_id")
+    def on_audit_filter_correlation_id_change(audit_filter_correlation_id, **kwargs):
+        """Reload audit trail when correlation ID filter changes."""
+        if state.active_view == "audit":
+            ctrl.trigger("load_audit_trail")

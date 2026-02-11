@@ -10,6 +10,7 @@ RULE-011 compliance metrics and agent trust tracking:
 
 Per RULE-011: Multi-Agent Governance
 Per RULE-013: Agent Permission Control
+Per DOC-SIZE-01-v1: Models in agent_trust_models.py, compliance in agent_trust_compliance.py.
 
 Usage:
     dashboard = AgentTrustDashboard()
@@ -21,34 +22,17 @@ import json
 from pathlib import Path
 from typing import Dict, Any, Optional, List
 from datetime import datetime
-from dataclasses import dataclass, asdict
+from dataclasses import asdict
 from collections import defaultdict
+
+from .agent_trust_models import ActionRecord, ComplianceStatus  # noqa: F401
+from .agent_trust_compliance import AgentTrustComplianceMixin  # noqa: F401 — re-export
 
 # Project paths
 PROJECT_ROOT = Path(__file__).parent.parent
 
 
-@dataclass
-class ActionRecord:
-    """Record of an agent action."""
-    agent_id: str
-    action: str
-    compliant: bool
-    timestamp: str
-    trust_delta: float
-
-
-@dataclass
-class ComplianceStatus:
-    """Compliance status for an agent."""
-    agent_id: str
-    compliant: bool
-    rules: List[str]
-    violations: List[str]
-    last_check: str
-
-
-class AgentTrustDashboard:
+class AgentTrustDashboard(AgentTrustComplianceMixin):
     """
     Agent Trust Dashboard.
 
@@ -63,11 +47,6 @@ class AgentTrustDashboard:
     - MEDIUM (50-79): Standard access
     - LOW (25-49): Restricted access
     - UNTRUSTED (0-24): No access
-
-    Example:
-        dashboard = AgentTrustDashboard()
-        score = dashboard.get_trust_score("agent-001")
-        dashboard.record_action("agent-001", "query_rules", compliant=True)
     """
 
     # Trust score constants
@@ -87,10 +66,10 @@ class AgentTrustDashboard:
 
     # Governance rules tracked
     GOVERNANCE_RULES = [
-        'RULE-011',  # Multi-Agent Governance
-        'RULE-013',  # Agent Permission Control
-        'RULE-001',  # Session Evidence Logging
-        'RULE-007',  # MCP Usage Protocol
+        'RULE-011',
+        'RULE-013',
+        'RULE-001',
+        'RULE-007',
     ]
 
     def __init__(self):
@@ -105,53 +84,23 @@ class AgentTrustDashboard:
     # =========================================================================
 
     def get_trust_score(self, agent_id: str) -> float:
-        """
-        Get trust score for an agent.
-
-        Args:
-            agent_id: Agent identifier
-
-        Returns:
-            Trust score (0-100)
-        """
+        """Get trust score for an agent (0-100)."""
         if agent_id not in self._trust_scores:
             self._trust_scores[agent_id] = self.DEFAULT_TRUST_SCORE
         return self._trust_scores[agent_id]
 
     def set_trust_score(self, agent_id: str, score: float) -> float:
-        """
-        Set trust score for an agent.
-
-        Args:
-            agent_id: Agent identifier
-            score: New trust score
-
-        Returns:
-            Clamped trust score
-        """
+        """Set trust score for an agent (clamped to 0-100)."""
         clamped = max(self.MIN_TRUST_SCORE, min(self.MAX_TRUST_SCORE, score))
         self._trust_scores[agent_id] = clamped
         return clamped
 
     def get_all_trust_scores(self) -> Dict[str, float]:
-        """
-        Get trust scores for all known agents.
-
-        Returns:
-            Dict of agent_id -> trust_score
-        """
+        """Get trust scores for all known agents."""
         return dict(self._trust_scores)
 
     def get_trust_level(self, agent_id: str) -> str:
-        """
-        Get trust level category for an agent.
-
-        Args:
-            agent_id: Agent identifier
-
-        Returns:
-            Trust level: HIGH, MEDIUM, LOW, or UNTRUSTED
-        """
+        """Get trust level category: HIGH, MEDIUM, LOW, or UNTRUSTED."""
         score = self.get_trust_score(agent_id)
 
         if score >= self.HIGH_THRESHOLD:
@@ -164,77 +113,8 @@ class AgentTrustDashboard:
             return 'UNTRUSTED'
 
     def is_trusted(self, agent_id: str) -> bool:
-        """
-        Check if agent meets trust threshold.
-
-        Args:
-            agent_id: Agent identifier
-
-        Returns:
-            True if trusted
-        """
+        """Check if agent meets trust threshold."""
         return self.get_trust_score(agent_id) >= self.TRUSTED_THRESHOLD
-
-    # =========================================================================
-    # COMPLIANCE TRACKING
-    # =========================================================================
-
-    def get_compliance_status(self, agent_id: str) -> Dict[str, Any]:
-        """
-        Get compliance status for an agent.
-
-        Args:
-            agent_id: Agent identifier
-
-        Returns:
-            Compliance status dict
-        """
-        # Check cached status
-        if agent_id in self._compliance_cache:
-            cached = self._compliance_cache[agent_id]
-            return asdict(cached)
-
-        # Calculate compliance from action history
-        history = self._action_history.get(agent_id, [])
-        violations = [a.action for a in history if not a.compliant]
-
-        status = ComplianceStatus(
-            agent_id=agent_id,
-            compliant=len(violations) == 0,
-            rules=self.GOVERNANCE_RULES,
-            violations=violations[-5:],  # Last 5 violations
-            last_check=datetime.now().isoformat()
-        )
-
-        self._compliance_cache[agent_id] = status
-        return asdict(status)
-
-    def get_compliance_summary(self) -> Dict[str, Any]:
-        """
-        Get system-wide compliance summary.
-
-        Returns:
-            Compliance summary dict
-        """
-        total_agents = len(self._trust_scores)
-        compliant_count = 0
-        violation_count = 0
-
-        for agent_id in self._trust_scores:
-            status = self.get_compliance_status(agent_id)
-            if status['compliant']:
-                compliant_count += 1
-            violation_count += len(status.get('violations', []))
-
-        return {
-            'total_agents': total_agents,
-            'compliant_agents': compliant_count,
-            'non_compliant_agents': total_agents - compliant_count,
-            'total_violations': violation_count,
-            'compliance_rate': compliant_count / max(total_agents, 1),
-            'tracked_rules': self.GOVERNANCE_RULES,
-            'timestamp': datetime.now().isoformat()
-        }
 
     # =========================================================================
     # ACTION RECORDING
@@ -245,21 +125,9 @@ class AgentTrustDashboard:
         agent_id: str,
         action: str,
         compliant: bool,
-        metadata: Optional[Dict] = None
+        metadata: Optional[Dict] = None,
     ) -> Dict[str, Any]:
-        """
-        Record an agent action.
-
-        Args:
-            agent_id: Agent identifier
-            action: Action taken
-            compliant: Whether action was compliant
-            metadata: Optional action metadata
-
-        Returns:
-            Recording result
-        """
-        # Calculate trust adjustment
+        """Record an agent action and adjust trust score."""
         current_score = self.get_trust_score(agent_id)
 
         if compliant:
@@ -269,13 +137,12 @@ class AgentTrustDashboard:
 
         new_score = self.set_trust_score(agent_id, current_score + trust_delta)
 
-        # Record action
         record = ActionRecord(
             agent_id=agent_id,
             action=action,
             compliant=compliant,
             timestamp=datetime.now().isoformat(),
-            trust_delta=trust_delta
+            trust_delta=trust_delta,
         )
 
         self._action_history[agent_id].append(record)
@@ -290,7 +157,7 @@ class AgentTrustDashboard:
             'action': action,
             'compliant': compliant,
             'trust_delta': trust_delta,
-            'new_trust_score': new_score
+            'new_trust_score': new_score,
         }
 
     # =========================================================================
@@ -300,76 +167,12 @@ class AgentTrustDashboard:
     def get_trust_history(
         self,
         agent_id: str,
-        limit: int = 50
+        limit: int = 50,
     ) -> List[Dict[str, Any]]:
-        """
-        Get trust history for an agent.
-
-        Args:
-            agent_id: Agent identifier
-            limit: Maximum records to return
-
-        Returns:
-            List of action records
-        """
+        """Get trust history for an agent."""
         history = self._action_history.get(agent_id, [])
         recent = history[-limit:]
         return [asdict(record) for record in recent]
-
-    # =========================================================================
-    # METRICS
-    # =========================================================================
-
-    def get_agent_metrics(self, agent_id: str) -> Dict[str, Any]:
-        """
-        Get metrics for an agent.
-
-        Args:
-            agent_id: Agent identifier
-
-        Returns:
-            Agent metrics dict
-        """
-        history = self._action_history.get(agent_id, [])
-        total_actions = len(history)
-        compliant_actions = sum(1 for a in history if a.compliant)
-
-        return {
-            'agent_id': agent_id,
-            'trust_score': self.get_trust_score(agent_id),
-            'trust_level': self.get_trust_level(agent_id),
-            'is_trusted': self.is_trusted(agent_id),
-            'total_actions': total_actions,
-            'compliant_actions': compliant_actions,
-            'compliance_rate': compliant_actions / max(total_actions, 1),
-            'last_action': asdict(history[-1]) if history else None
-        }
-
-    def get_system_metrics(self) -> Dict[str, Any]:
-        """
-        Get system-wide metrics.
-
-        Returns:
-            System metrics dict
-        """
-        scores = list(self._trust_scores.values())
-        avg_score = sum(scores) / max(len(scores), 1)
-
-        trust_levels = defaultdict(int)
-        for agent_id in self._trust_scores:
-            level = self.get_trust_level(agent_id)
-            trust_levels[level] += 1
-
-        total_actions = sum(len(h) for h in self._action_history.values())
-
-        return {
-            'total_agents': len(self._trust_scores),
-            'average_trust_score': avg_score,
-            'trust_levels': dict(trust_levels),
-            'total_actions_recorded': total_actions,
-            'compliance_summary': self.get_compliance_summary(),
-            'timestamp': datetime.now().isoformat()
-        }
 
 
 # =============================================================================
@@ -377,12 +180,7 @@ class AgentTrustDashboard:
 # =============================================================================
 
 def create_trust_dashboard() -> AgentTrustDashboard:
-    """
-    Factory function to create Agent Trust Dashboard.
-
-    Returns:
-        AgentTrustDashboard instance
-    """
+    """Factory function to create Agent Trust Dashboard."""
     return AgentTrustDashboard()
 
 
@@ -421,7 +219,7 @@ def main():
         result = dashboard.record_action(
             args.agent,
             args.action,
-            args.compliant
+            args.compliant,
         )
         print(json.dumps(result, indent=2))
 
