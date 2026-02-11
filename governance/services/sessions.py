@@ -79,6 +79,12 @@ def create_session(
     description: str = "",
     agent_id: Optional[str] = None,
     source: str = "rest",
+    cc_session_uuid: Optional[str] = None,
+    cc_project_slug: Optional[str] = None,
+    cc_git_branch: Optional[str] = None,
+    cc_tool_count: Optional[int] = None,
+    cc_thinking_chars: Optional[int] = None,
+    cc_compaction_count: Optional[int] = None,
 ) -> Dict[str, Any]:
     """Create a session in TypeDB with fallback to in-memory store.
 
@@ -98,6 +104,12 @@ def create_session(
                 session_id=session_id,
                 description=description,
                 agent_id=agent_id,
+                cc_session_uuid=cc_session_uuid,
+                cc_project_slug=cc_project_slug,
+                cc_git_branch=cc_git_branch,
+                cc_tool_count=cc_tool_count,
+                cc_thinking_chars=cc_thinking_chars,
+                cc_compaction_count=cc_compaction_count,
             )
             if created:
                 record_audit("CREATE", "session", session_id,
@@ -120,6 +132,12 @@ def create_session(
         "tasks_completed": 0,
         "description": description,
         "agent_id": agent_id,
+        "cc_session_uuid": cc_session_uuid,
+        "cc_project_slug": cc_project_slug,
+        "cc_git_branch": cc_git_branch,
+        "cc_tool_count": cc_tool_count,
+        "cc_thinking_chars": cc_thinking_chars,
+        "cc_compaction_count": cc_compaction_count,
     }
     _sessions_store[session_id] = session_data
     record_audit("CREATE", "session", session_id,

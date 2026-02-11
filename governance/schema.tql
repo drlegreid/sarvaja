@@ -83,7 +83,8 @@ task sub entity,
     plays task-blocks-task:blocked-dep-task,
     plays task-related:related-task-a,
     plays task-related:related-task-b,
-    plays task-commit:implemented-task;  # GAP-TASK-LINK-002
+    plays task-commit:implemented-task,  # GAP-TASK-LINK-002
+    plays epic-contains-task:epic-task;  # Project hierarchy (GOV-PROJECT-01-v1)
 
 gap sub entity,
     owns gap-id,
@@ -110,10 +111,17 @@ work-session sub entity,
     owns agent-id,                               # Agent that created the session (E2E tests)
     owns started-at,
     owns completed-at,
+    owns cc-session-uuid,                        # Claude Code internal UUID
+    owns cc-project-slug,                        # Project slug (e.g., "sarvaja-platform")
+    owns cc-git-branch,                          # Git branch at session time
+    owns cc-tool-count,                          # Total tool invocations
+    owns cc-thinking-chars,                      # Reasoning token volume
+    owns cc-compaction-count,                    # Context compressions
     plays completed-in:hosting-session,
     plays has-evidence:evidence-session,
     plays session-applied-rule:applying-session,
-    plays session-decision:deciding-session;
+    plays session-decision:deciding-session,
+    plays project-has-session:project-session;
 
 # Evidence file entity for session artifacts
 evidence-file sub entity,
@@ -124,6 +132,34 @@ evidence-file sub entity,
     owns evidence-created-at,
     plays has-evidence:session-evidence,
     plays evidence-supports:supporting-evidence;
+
+# =============================================================================
+# PROJECT HIERARCHY ENTITIES (GOV-PROJECT-01-v1)
+# =============================================================================
+
+# Project entity - top-level organizational unit
+project sub entity,
+    owns project-id,
+    owns project-name,
+    owns project-path,
+    plays project-contains-plan:parent-project,
+    plays project-has-session:session-project;
+
+# Plan entity - a planned body of work within a project
+plan sub entity,
+    owns plan-id,
+    owns plan-name,
+    owns session-description,
+    plays project-contains-plan:child-plan,
+    plays plan-contains-epic:parent-plan;
+
+# Epic entity - a large feature/initiative within a plan
+epic sub entity,
+    owns epic-id,
+    owns epic-name,
+    owns session-description,
+    plays plan-contains-epic:child-epic,
+    plays epic-contains-task:parent-epic;
 
 # Git commit entity (GAP-TASK-LINK-002)
 git-commit sub entity,
@@ -316,6 +352,23 @@ commit-message sub attribute, value string; # Commit message
 # Work Session attributes (P11.3)
 session-description sub attribute, value string;
 session-file-path sub attribute, value string;   # Path to session evidence file
+
+# Claude Code session attributes (SESSION-CC-01-v1)
+cc-session-uuid sub attribute, value string;       # CC internal UUID
+cc-project-slug sub attribute, value string;       # Project slug (e.g., "sarvaja-platform")
+cc-git-branch sub attribute, value string;         # Git branch at session time
+cc-tool-count sub attribute, value long;           # Total tool invocations
+cc-thinking-chars sub attribute, value long;       # Reasoning token volume
+cc-compaction-count sub attribute, value long;     # Context compressions
+
+# Project hierarchy attributes (GOV-PROJECT-01-v1)
+project-id sub attribute, value string;
+project-name sub attribute, value string;
+project-path sub attribute, value string;          # Project root directory path
+plan-id sub attribute, value string;
+plan-name sub attribute, value string;
+epic-id sub attribute, value string;
+epic-name sub attribute, value string;
 
 # Evidence file attributes (P11.3)
 evidence-id sub attribute, value string;
@@ -520,6 +573,30 @@ task-outcome sub relation,
     relates outcome-decision,
     relates source-task,
     owns has-authority;
+
+# =============================================================================
+# PROJECT HIERARCHY RELATIONS (GOV-PROJECT-01-v1)
+# =============================================================================
+
+# Project contains plans
+project-contains-plan sub relation,
+    relates parent-project,
+    relates child-plan;
+
+# Plan contains epics
+plan-contains-epic sub relation,
+    relates parent-plan,
+    relates child-epic;
+
+# Epic contains tasks
+epic-contains-task sub relation,
+    relates parent-epic,
+    relates epic-task;
+
+# Project has sessions (links CC sessions to their project)
+project-has-session sub relation,
+    relates session-project,
+    relates project-session;
 
 # =============================================================================
 # DOCUMENT CROSS-REFERENCING RELATIONS (RULE-013)

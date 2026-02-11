@@ -130,6 +130,8 @@ def _build_data_table():
         items=("sessions",),
         headers=("sessions_headers", [
             {"title": "Session ID", "key": "session_id", "width": "180px", "sortable": True},
+            {"title": "Source", "key": "source_type", "width": "70px", "sortable": True},
+            {"title": "Project", "key": "cc_project_slug", "width": "120px", "sortable": True},
             {"title": "Start", "key": "start_time", "width": "130px", "sortable": True},
             {"title": "Duration", "key": "duration", "width": "90px", "sortable": True},
             {"title": "Status", "key": "status", "width": "100px", "sortable": True},

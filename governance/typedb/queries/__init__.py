@@ -11,10 +11,12 @@ from .tasks import TaskQueries
 from .sessions import SessionQueries
 from .rules import RuleQueries
 from .agents import AgentQueries
+from .projects import ProjectQueries
 
 __all__ = [
     "TaskQueries",
     "SessionQueries",
     "RuleQueries",
     "AgentQueries",
+    "ProjectQueries",
 ]

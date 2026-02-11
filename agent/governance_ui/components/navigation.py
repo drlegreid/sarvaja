@@ -24,6 +24,7 @@ NAVIGATION_ITEMS = [
     {"icon": "mdi-check-decagram", "title": "Workflow", "value": "workflow"},
     {"icon": "mdi-server", "title": "Infrastructure", "value": "infra"},
     {"icon": "mdi-test-tube", "title": "Tests", "value": "tests"},  # WORKFLOW-SHELL-01-v1
+    {"icon": "mdi-folder-multiple", "title": "Projects", "value": "projects"},  # GOV-PROJECT-01-v1
     # Evidence Search removed - now integrated into Sessions tab (2026-02-08)
 ]
 

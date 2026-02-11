@@ -28,6 +28,7 @@ from .workflow_view import build_workflow_view
 from .audit_view import build_audit_view
 from .tests_view import build_tests_view
 from .metrics_view import build_metrics_view
+from .projects_view import build_projects_view
 from .trace_bar_view import build_trace_bar
 from .dialogs import build_all_dialogs, build_file_viewer_dialog
 
@@ -49,6 +50,7 @@ __all__ = [
     "build_audit_view",
     "build_tests_view",
     "build_metrics_view",
+    "build_projects_view",
     "build_trace_bar",
     "build_all_dialogs",
     "build_file_viewer_dialog",

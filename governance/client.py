@@ -21,6 +21,9 @@ from governance.typedb.entities import (
     Agent,
     Decision,
     InferenceResult,
+    Project,
+    Plan,
+    Epic,
 )
 
 # Re-export ARCHIVE_DIR for backward compatibility (used by tests)
@@ -32,6 +35,7 @@ from governance.typedb.queries import (
     SessionQueries,
     RuleQueries,
     AgentQueries,
+    ProjectQueries,
 )
 
 
@@ -40,7 +44,8 @@ class TypeDBClient(
     TaskQueries,
     SessionQueries,
     RuleQueries,
-    AgentQueries
+    AgentQueries,
+    ProjectQueries,
 ):
     """
     High-level TypeDB client for governance queries.

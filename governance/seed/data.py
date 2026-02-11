@@ -114,6 +114,17 @@ def get_seed_sessions():
     ]
 
 
+def get_seed_projects():
+    """Get seed project data. Per GOV-PROJECT-01-v1."""
+    return [
+        {
+            "project_id": "PROJ-SARVAJA",
+            "name": "Sarvaja Platform",
+            "path": "/home/oderid/Documents/Vibe/sarvaja/platform",
+        },
+    ]
+
+
 def get_seed_agents():
     """
     Get seed agent data. Shared between TypeDB and in-memory seeding.

@@ -79,6 +79,7 @@ from agent.governance_ui.views import (
     build_audit_view,  # RD-DEBUG-AUDIT Phase 4: Audit trail dashboard
     build_tests_view,  # WORKFLOW-SHELL-01-v1: Self-assessment test runner
     build_metrics_view,  # SESSION-METRICS-01-v1: Session analytics dashboard
+    build_projects_view,  # GOV-PROJECT-01-v1: Project hierarchy navigation
     build_trace_bar,  # GAP-UI-048: Bottom trace bar
     build_all_dialogs,  # GAP-UI-038: Shared dialogs
 )
@@ -532,6 +533,7 @@ class GovernanceDashboard:
                         build_audit_view()
                         build_tests_view()
                         build_metrics_view()
+                        build_projects_view()
 
                     # =============================================================
                     # SHARED DIALOGS (GAP-UI-038)

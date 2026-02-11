@@ -89,6 +89,44 @@ class Session:
     linked_rules_applied: Optional[List[str]] = None
     linked_decisions: Optional[List[str]] = None
     evidence_files: Optional[List[str]] = None
+    # Claude Code session attributes (SESSION-CC-01-v1)
+    cc_session_uuid: Optional[str] = None
+    cc_project_slug: Optional[str] = None
+    cc_git_branch: Optional[str] = None
+    cc_tool_count: Optional[int] = None
+    cc_thinking_chars: Optional[int] = None
+    cc_compaction_count: Optional[int] = None
+    project_id: Optional[str] = None
+
+
+@dataclass
+class Project:
+    """Project entity — top-level organizational unit. Per GOV-PROJECT-01-v1."""
+    id: str
+    name: str
+    path: Optional[str] = None
+    plan_ids: Optional[List[str]] = None
+    session_ids: Optional[List[str]] = None
+
+
+@dataclass
+class Plan:
+    """Plan entity — a planned body of work within a project. Per GOV-PROJECT-01-v1."""
+    id: str
+    name: str
+    description: Optional[str] = None
+    project_id: Optional[str] = None
+    epic_ids: Optional[List[str]] = None
+
+
+@dataclass
+class Epic:
+    """Epic entity — a large feature/initiative within a plan. Per GOV-PROJECT-01-v1."""
+    id: str
+    name: str
+    description: Optional[str] = None
+    plan_id: Optional[str] = None
+    task_ids: Optional[List[str]] = None
 
 
 @dataclass

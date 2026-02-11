@@ -154,12 +154,27 @@ class SessionResponse(BaseModel):
     evidence_files: Optional[List[str]] = None
     linked_rules_applied: Optional[List[str]] = None
     linked_decisions: Optional[List[str]] = None
+    # Claude Code session attributes (SESSION-CC-01-v1)
+    cc_session_uuid: Optional[str] = None
+    cc_project_slug: Optional[str] = None
+    cc_git_branch: Optional[str] = None
+    cc_tool_count: Optional[int] = None
+    cc_thinking_chars: Optional[int] = None
+    cc_compaction_count: Optional[int] = None
+    project_id: Optional[str] = None
 
 class SessionCreate(BaseModel):
     """Request model for creating a session."""
     session_id: Optional[str] = None  # Auto-generate if not provided
     description: str
     agent_id: Optional[str] = None
+    # Claude Code session attributes (SESSION-CC-01-v1)
+    cc_session_uuid: Optional[str] = None
+    cc_project_slug: Optional[str] = None
+    cc_git_branch: Optional[str] = None
+    cc_tool_count: Optional[int] = None
+    cc_thinking_chars: Optional[int] = None
+    cc_compaction_count: Optional[int] = None
 
 class SessionEnd(BaseModel):
     """Request model for ending a session."""
@@ -307,6 +322,57 @@ class PaginatedAgentResponse(BaseModel):
 class PaginatedDecisionResponse(BaseModel):
     """Paginated decision list response."""
     items: List[DecisionResponse]
+    pagination: PaginationMeta
+
+# PROJECT HIERARCHY (GOV-PROJECT-01-v1)
+
+class ProjectCreate(BaseModel):
+    """Request model for creating a project."""
+    project_id: Optional[str] = None  # Auto-generate if empty
+    name: str = Field(..., min_length=1)
+    path: Optional[str] = None
+
+class ProjectResponse(BaseModel):
+    """Response model for a project."""
+    project_id: str
+    name: str
+    path: Optional[str] = None
+    plan_count: int = 0
+    session_count: int = 0
+
+class PlanCreate(BaseModel):
+    """Request model for creating a plan."""
+    plan_id: Optional[str] = None
+    name: str = Field(..., min_length=1)
+    description: Optional[str] = None
+    project_id: str = Field(..., min_length=1)
+
+class PlanResponse(BaseModel):
+    """Response model for a plan."""
+    plan_id: str
+    name: str
+    description: Optional[str] = None
+    project_id: Optional[str] = None
+    epic_count: int = 0
+
+class EpicCreate(BaseModel):
+    """Request model for creating an epic."""
+    epic_id: Optional[str] = None
+    name: str = Field(..., min_length=1)
+    description: Optional[str] = None
+    plan_id: str = Field(..., min_length=1)
+
+class EpicResponse(BaseModel):
+    """Response model for an epic."""
+    epic_id: str
+    name: str
+    description: Optional[str] = None
+    plan_id: Optional[str] = None
+    task_count: int = 0
+
+class PaginatedProjectResponse(BaseModel):
+    """Paginated project list response."""
+    items: List[ProjectResponse]
     pagination: PaginationMeta
 
 # API STATUS
