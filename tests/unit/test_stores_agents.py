@@ -74,10 +74,18 @@ class TestAgentBaseConfig:
 class TestYamlKeyMapping:
     """Tests for _YAML_KEY_TO_AGENT_ID mapping."""
 
-    def test_five_mappings(self):
-        assert len(_YAML_KEY_TO_AGENT_ID) == 5
+    def test_ten_mappings(self):
+        """5 current identity keys + 5 legacy backward-compat keys."""
+        assert len(_YAML_KEY_TO_AGENT_ID) == 10
 
-    def test_orchestrator_mapping(self):
+    def test_current_identity_mappings(self):
+        assert _YAML_KEY_TO_AGENT_ID["task-orchestrator"] == "task-orchestrator"
+        assert _YAML_KEY_TO_AGENT_ID["code-agent"] == "code-agent"
+        assert _YAML_KEY_TO_AGENT_ID["rules-curator"] == "rules-curator"
+        assert _YAML_KEY_TO_AGENT_ID["research-agent"] == "research-agent"
+        assert _YAML_KEY_TO_AGENT_ID["simple-assistant"] == "simple-assistant"
+
+    def test_legacy_orchestrator_mapping(self):
         assert _YAML_KEY_TO_AGENT_ID["orchestrator"] == "task-orchestrator"
 
     def test_coder_mapping(self):

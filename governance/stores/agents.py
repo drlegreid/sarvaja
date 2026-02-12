@@ -23,12 +23,20 @@ _AGENT_METRICS_FILE = os.path.join(os.path.dirname(__file__), "..", "data", "age
 _AGENTS_YAML_FILE = os.path.join(os.path.dirname(__file__), "..", "..", "agents.yaml")
 
 # Map agents.yaml keys to agent store IDs
+# Supports both old (sim.ai era) and new (sarvaja) YAML key names
 _YAML_KEY_TO_AGENT_ID = {
+    # Current keys (match agent store IDs)
+    "task-orchestrator": "task-orchestrator",
+    "rules-curator": "rules-curator",
+    "research-agent": "research-agent",
+    "code-agent": "code-agent",
+    "simple-assistant": "simple-assistant",
+    # Legacy keys (sim.ai era, backward compat)
     "orchestrator": "task-orchestrator",
     "rules_curator": "rules-curator",
     "researcher": "research-agent",
     "coder": "code-agent",
-    "simple_assistant": "local-assistant",
+    "simple_assistant": "simple-assistant",
 }
 
 # Base agent definitions (static config - fallback if TypeDB unavailable)

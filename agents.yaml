@@ -1,59 +1,50 @@
-# Sim.ai PoC Agent Configuration
-# Multi-agent setup with task routing capabilities
+# Sarvaja Platform Agent Configuration
+# Per DECISION-008: Renamed from Sim.ai (2026-01-14)
+# Per GAP-AGENT-PAUSE-001: Default status is PAUSED for all agents
 
 agents:
 
-  orchestrator:
+  task-orchestrator:
     name: Task Orchestrator
     description: Routes tasks to appropriate agents based on complexity
     instructions: |
-      You are the Task Orchestrator for Sim.ai PoC. Your role:
+      You are the Task Orchestrator for Sarvaja. Your role:
       - Analyze incoming requests and determine complexity
-      - Route simple tasks to local models (gemma-local)
+      - Route simple tasks to local models
       - Route complex R&D tasks to Claude Opus
       - Coordinate multi-step workflows across agents
-      - Track task state and report progress
-      
-      Complexity heuristics:
-      - Simple: Summarization, formatting, basic Q&A → local model
-      - Medium: Code review, analysis → Claude Sonnet
-      - Complex: Research, reasoning, creative → Claude Opus
+      - Track task state and report progress via MCP tools
     model:
       name: ${MODEL_NAME}
       provider: litellm
+    default_status: PAUSED
     markdown: true
     use_knowledge: true
     chat: true
 
-  rules_curator:
+  rules-curator:
     name: Rules Curator
-    description: Manages and compresses agent rules in ChromaDB
+    description: Manages governance rules in TypeDB + ChromaDB
     instructions: |
       You are the Rules Curator. Your responsibilities:
-      - Index new rules and heuristics into ChromaDB
-      - Compress redundant rules via delta edits
+      - Index new rules and heuristics into TypeDB
+      - Manage rule lifecycle (DRAFT → ACTIVE → DEPRECATED)
       - Retrieve relevant rules for agent context
-      - Track rule effectiveness metrics
-      
-      Rule format:
-      - ID: Unique identifier
-      - Content: The rule text
-      - Tags: Categorization
-      - Score: Effectiveness (0-1)
-      
-      Always validate rules before indexing.
+      - Track rule effectiveness and compliance
+      - Use mcp__gov-core tools for all rule operations
     model:
       name: ${MODEL_NAME}
       provider: litellm
+    default_status: PAUSED
     markdown: true
     use_knowledge: true
     chat: true
 
-  researcher:
+  research-agent:
     name: Research Agent
     description: Deep research and analysis tasks
     instructions: |
-      You are a research specialist using Claude Opus for complex analysis.
+      You are a research specialist for complex analysis.
       - Gather and synthesize information
       - Provide well-reasoned conclusions
       - Cite sources and reasoning chains
@@ -61,28 +52,29 @@ agents:
     model:
       name: ${MODEL_NAME}
       provider: litellm
+    default_status: PAUSED
     markdown: true
     use_knowledge: true
     chat: true
 
-  coder:
-    name: Code Agent
-    description: Programming and code review tasks
+  code-agent:
+    name: Claude Code Agent
+    description: Programming, code review, and governance implementation
     instructions: |
-      You are a programming expert. Capabilities:
+      You are the primary programming agent. Capabilities:
       - Write clean, efficient code
       - Debug and fix issues
       - Code review with best practices
-      - Generate tests
-      
-      Always provide working code with proper error handling.
+      - Generate and run tests
+      - Manage tasks/sessions via MCP tools (GOV-MCP-FIRST-01-v1)
     model:
       name: ${MODEL_NAME}
       provider: litellm
+    default_status: PAUSED
     markdown: true
     chat: true
 
-  simple_assistant:
+  simple-assistant:
     name: Local Assistant
     description: Simple tasks using local Ollama model
     instructions: |
@@ -91,11 +83,12 @@ agents:
       - Text formatting
       - Summarization
       - Quick lookups
-      
+
       Keep responses concise and fast.
     model:
       name: ${LOCAL_MODEL_NAME}
       provider: litellm
+    default_status: PAUSED
     use_local_model: true
     markdown: true
     chat: true
