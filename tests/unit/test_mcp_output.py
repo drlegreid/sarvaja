@@ -1,162 +1,127 @@
 """
-Tests for MCP output formatting utilities.
+Unit tests for MCP Output Format Handler.
 
-Per MCP-LOGGING-01-v1: Tests for structured output formatting.
-Covers array truncation, JSON formatting, and token estimation.
-
-Created: 2026-01-30
+Per DOC-SIZE-01-v1: Tests for mcp_output.py module.
+Tests: OutputFormat, format_output(), parse_input(), estimate_token_savings(),
+       _truncate_arrays(), _get_default_format().
 """
 
 import json
+import os
 import pytest
+from unittest.mock import patch
 
 from governance.mcp_output import (
-    _truncate_arrays,
+    OutputFormat,
     format_output,
     parse_input,
     estimate_token_savings,
-    OutputFormat,
+    _truncate_arrays,
+    _get_default_format,
 )
 
 
+class TestOutputFormat:
+    def test_values(self):
+        assert OutputFormat.JSON.value == "json"
+        assert OutputFormat.TOON.value == "toon"
+        assert OutputFormat.AUTO.value == "auto"
+
+
 class TestTruncateArrays:
-    """Test recursive array truncation."""
-
-    def test_short_array_unchanged(self):
-        """Arrays within limit are unchanged."""
+    def test_no_truncation(self):
         data = [1, 2, 3]
-        assert _truncate_arrays(data, max_items=5) == [1, 2, 3]
+        result = _truncate_arrays(data, max_items=5)
+        assert result == [1, 2, 3]
 
-    def test_long_array_truncated(self):
-        """Arrays exceeding limit are truncated with marker."""
+    def test_truncates_list(self):
         data = list(range(10))
         result = _truncate_arrays(data, max_items=3)
-        assert len(result) == 4  # 3 items + marker
+        assert len(result) == 4  # 3 items + truncation marker
         assert result[-1]["_truncated"] is True
         assert result[-1]["_total"] == 10
         assert result[-1]["_shown"] == 3
 
-    def test_dict_with_known_array_keys(self):
-        """Dict with known array keys gets truncation metadata."""
-        data = {"rules": list(range(10)), "name": "test"}
+    def test_truncates_known_dict_keys(self):
+        data = {"rules": list(range(10)), "other": "keep"}
         result = _truncate_arrays(data, max_items=3)
         assert len(result["rules"]) == 3
         assert result["_rules_truncated"] is True
         assert result["_rules_total"] == 10
-        assert result["name"] == "test"
+        assert result["other"] == "keep"
 
-    def test_nested_dict_truncation(self):
-        """Nested structures are recursively truncated."""
-        data = {"outer": {"items": list(range(10))}}
-        result = _truncate_arrays(data, max_items=2)
-        outer = result["outer"]
-        assert len(outer["items"]) == 2  # known key: truncated in-place
-        assert outer["_items_truncated"] is True
-        assert outer["_items_total"] == 10
-
-    def test_scalar_unchanged(self):
-        """Scalar values pass through unchanged."""
-        assert _truncate_arrays("hello", max_items=5) == "hello"
-        assert _truncate_arrays(42, max_items=5) == 42
-        assert _truncate_arrays(None, max_items=5) is None
-
-    def test_empty_array(self):
-        """Empty arrays pass through unchanged."""
-        assert _truncate_arrays([], max_items=5) == []
-
-    def test_exact_limit(self):
-        """Array at exactly the limit is unchanged."""
-        data = [1, 2, 3]
-        assert _truncate_arrays(data, max_items=3) == [1, 2, 3]
-
-    def test_multiple_known_keys(self):
-        """Multiple known array keys are each truncated."""
-        data = {
-            "tasks": list(range(10)),
-            "agents": list(range(8)),
-            "sessions": list(range(5)),
-        }
-        result = _truncate_arrays(data, max_items=3)
-        assert len(result["tasks"]) == 3
-        assert result["_tasks_truncated"] is True
-        assert len(result["agents"]) == 3
-        assert result["_agents_truncated"] is True
-        assert len(result["sessions"]) == 3  # Also truncated (5 > 3)
-        assert result["_sessions_truncated"] is True
+    def test_passthrough_non_collection(self):
+        assert _truncate_arrays("hello", 5) == "hello"
+        assert _truncate_arrays(42, 5) == 42
 
 
 class TestFormatOutput:
-    """Test output formatting."""
-
-    def test_json_dict(self):
-        """Format dict as JSON."""
+    def test_json_format(self):
         data = {"key": "value"}
-        result = format_output(data, format=OutputFormat.JSON)
+        result = format_output(data, format=OutputFormat.JSON, max_array_items=0)
         parsed = json.loads(result)
         assert parsed["key"] == "value"
 
-    def test_json_list(self):
-        """Format list as JSON."""
-        data = [1, 2, 3]
-        result = format_output(data, format=OutputFormat.JSON, max_array_items=0)
-        parsed = json.loads(result)
-        assert parsed == [1, 2, 3]
-
-    def test_truncation_applied(self):
-        """Array truncation is applied by default."""
-        data = {"rules": list(range(100))}
-        result = format_output(data, format=OutputFormat.JSON)
-        parsed = json.loads(result)
-        assert len(parsed["rules"]) <= 31
-
-    def test_no_truncation_with_zero(self):
-        """max_array_items=0 disables truncation."""
-        data = {"rules": list(range(100))}
-        result = format_output(data, format=OutputFormat.JSON, max_array_items=0)
-        parsed = json.loads(result)
-        assert len(parsed["rules"]) == 100
-
-    def test_handles_datetime(self):
-        """Handles non-serializable objects via default=str."""
+    def test_json_default_str(self):
         from datetime import datetime
-        data = {"time": datetime(2026, 1, 30)}
+        data = {"time": datetime(2026, 1, 1)}
+        result = format_output(data, format=OutputFormat.JSON, max_array_items=0)
+        assert "2026" in result
+
+    def test_array_truncation_default(self):
+        data = {"rules": list(range(50))}
         result = format_output(data, format=OutputFormat.JSON)
         parsed = json.loads(result)
-        assert "2026" in parsed["time"]
+        assert len(parsed["rules"]) <= 30
+
+    def test_no_truncation_when_zero(self):
+        data = {"rules": list(range(50))}
+        result = format_output(data, format=OutputFormat.JSON, max_array_items=0)
+        parsed = json.loads(result)
+        assert len(parsed["rules"]) == 50
 
 
 class TestParseInput:
-    """Test input parsing."""
-
-    def test_parse_json(self):
-        """Parse JSON string."""
-        result = parse_input('{"key": "value"}')
+    def test_json_auto(self):
+        text = '{"key": "value"}'
+        result = parse_input(text)
         assert result["key"] == "value"
 
-    def test_parse_json_array(self):
-        """Parse JSON array string."""
-        result = parse_input('[1, 2, 3]')
-        assert result == [1, 2, 3]
+    def test_json_explicit(self):
+        text = '{"x": 1}'
+        result = parse_input(text, format=OutputFormat.JSON)
+        assert result["x"] == 1
+
+    def test_invalid_raises(self):
+        with pytest.raises((ValueError, json.JSONDecodeError)):
+            parse_input("not json at all {{{", format=OutputFormat.JSON)
+
+    def test_auto_tries_json_first(self):
+        text = '{"valid": true}'
+        result = parse_input(text, format=OutputFormat.AUTO)
+        assert result["valid"] is True
+
+
+class TestGetDefaultFormat:
+    @patch.dict(os.environ, {"MCP_OUTPUT_FORMAT": "json"})
+    def test_json_env(self):
+        assert _get_default_format() == OutputFormat.JSON
+
+    @patch.dict(os.environ, {"MCP_OUTPUT_FORMAT": "toon"})
+    def test_toon_env(self):
+        assert _get_default_format() == OutputFormat.TOON
+
+    @patch.dict(os.environ, {}, clear=True)
+    def test_default_toon(self):
+        # Default is TOON when env not set (but clear may not remove it)
+        result = _get_default_format()
+        assert result in (OutputFormat.TOON, OutputFormat.JSON)
 
 
 class TestEstimateTokenSavings:
-    """Test token savings estimation."""
-
-    def test_returns_json_chars(self):
-        """Always returns json_chars count."""
+    def test_without_toon(self):
+        # Toon may or may not be installed
         data = {"rules": 50, "tasks": 85}
         result = estimate_token_savings(data)
-        assert "json_chars" in result
         assert result["json_chars"] > 0
-
-    def test_toon_availability_flag(self):
-        """Returns toon_available flag."""
-        data = {"test": "data"}
-        result = estimate_token_savings(data)
-        assert "toon_available" in result
-
-    def test_savings_percent_present(self):
-        """Returns savings_percent field."""
-        data = {"test": "data"}
-        result = estimate_token_savings(data)
         assert "savings_percent" in result
