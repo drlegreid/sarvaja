@@ -81,6 +81,21 @@ class TaskResponse(BaseModel):
     evidence: Optional[str] = None  # May include [Verification: L1/L2/L3] prefix
     document_path: Optional[str] = None
 
+class TaskDetailsUpdate(BaseModel):
+    """Request model for updating task detail sections (TASK-TECH-01-v1)."""
+    business: Optional[str] = Field(default=None, description="Business context (Why)")
+    design: Optional[str] = Field(default=None, description="Design/requirements (What)")
+    architecture: Optional[str] = Field(default=None, description="Architecture (How)")
+    test_section: Optional[str] = Field(default=None, description="Test plan (Verification)")
+
+class TaskDetailsResponse(BaseModel):
+    """Response model for task detail sections (TASK-TECH-01-v1)."""
+    task_id: str
+    business: Optional[str] = None
+    design: Optional[str] = None
+    architecture: Optional[str] = None
+    test_section: Optional[str] = None
+
 class TaskExecutionEvent(BaseModel):
     """Task execution event for execution log (ORCH-007)."""
     event_id: str

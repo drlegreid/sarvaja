@@ -17,6 +17,48 @@ from .forms import (
 from .execution import build_task_execution_log
 
 
+def build_task_tech_docs() -> None:
+    """Build Technology Solution Documentation sections (TASK-TECH-01-v1).
+
+    Shows business, design, architecture, and test sections if populated.
+    """
+    _SECTIONS = [
+        ("business", "Business Context (Why)", "mdi-briefcase-outline", "primary"),
+        ("design", "Design (What)", "mdi-drawing", "info"),
+        ("architecture", "Architecture (How)", "mdi-sitemap", "warning"),
+        ("test_section", "Test Plan (Verification)", "mdi-test-tube", "success"),
+    ]
+    with html.Div(
+        v_if=(
+            "!edit_task_mode && ("
+            "selected_task.business || selected_task.design || "
+            "selected_task.architecture || selected_task.test_section)"
+        ),
+        classes="mt-4",
+    ):
+        html.H3("Solution Documentation", classes="text-subtitle-1 font-weight-bold mb-2")
+        for field, label, icon, color in _SECTIONS:
+            with v3.VCard(
+                v_if=f"selected_task.{field}",
+                variant="outlined",
+                classes="mb-3",
+                __properties=["data-testid"],
+                **{"data-testid": f"task-tech-{field}"},
+            ):
+                with v3.VCardTitle(density="compact"):
+                    v3.VIcon(icon, size="small", color=color, classes="mr-2")
+                    html.Span(label)
+                with v3.VCardText():
+                    html.Pre(
+                        "{{ selected_task." + field + " }}",
+                        style="white-space: pre-wrap; font-family: monospace; "
+                              "font-size: 0.85rem; padding: 8px; "
+                              "border-radius: 4px; max-height: 250px; "
+                              "overflow-y: auto;",
+                        classes="bg-surface-variant",
+                    )
+
+
 def build_task_info_cards() -> None:
     """Build task information cards (shown when not in edit mode)."""
     # Content preview first (GAP-UI-037)
@@ -242,6 +284,9 @@ def build_task_detail_view() -> None:
             # Task details section
             v3.VDivider(v_if="!edit_task_mode", classes="my-4")
             build_task_info_cards()
+
+            # Technology Solution Documentation (TASK-TECH-01-v1)
+            build_task_tech_docs()
 
             # Execution Log Section (ORCH-007)
             build_task_execution_log()

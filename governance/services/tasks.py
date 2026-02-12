@@ -177,3 +177,74 @@ def get_task(task_id: str) -> Optional[Dict[str, Any]]:
     if task_id in _tasks_store:
         return dict(_tasks_store[task_id])
     return None
+
+
+def get_task_details(task_id: str) -> Optional[Dict[str, Any]]:
+    """Get task detail sections from TypeDB or fallback store.
+
+    Per TASK-TECH-01-v1: business, design, architecture, test_section.
+
+    Returns:
+        Dict with detail sections or None if task not found.
+    """
+    client = get_typedb_client()
+    if client:
+        try:
+            details = client.get_task_details(task_id)
+            if details is not None:
+                return {"task_id": task_id, **details}
+        except Exception as e:
+            logger.warning(f"TypeDB task details get failed, using fallback: {e}")
+    # Fallback to in-memory store
+    if task_id in _tasks_store:
+        t = _tasks_store[task_id]
+        return {
+            "task_id": task_id,
+            "business": t.get("business"),
+            "design": t.get("design"),
+            "architecture": t.get("architecture"),
+            "test_section": t.get("test_section"),
+        }
+    return None
+
+
+def update_task_details(
+    task_id: str,
+    business: Optional[str] = None,
+    design: Optional[str] = None,
+    architecture: Optional[str] = None,
+    test_section: Optional[str] = None,
+) -> Optional[Dict[str, Any]]:
+    """Update task detail sections via TypeDB or fallback.
+
+    Per TASK-TECH-01-v1: Technology Solution Documentation.
+
+    Returns:
+        Updated detail sections or None if task not found.
+    """
+    client = get_typedb_client()
+    if client:
+        try:
+            success = client.update_task_details(
+                task_id, business=business, design=design,
+                architecture=architecture, test_section=test_section,
+            )
+            if success:
+                _monitor("update_details", task_id, source="service")
+                return get_task_details(task_id)
+        except Exception as e:
+            logger.warning(f"TypeDB task details update failed, using fallback: {e}")
+    # Fallback to in-memory store
+    if task_id in _tasks_store:
+        t = _tasks_store[task_id]
+        if business is not None:
+            t["business"] = business
+        if design is not None:
+            t["design"] = design
+        if architecture is not None:
+            t["architecture"] = architecture
+        if test_section is not None:
+            t["test_section"] = test_section
+        _monitor("update_details", task_id, source="service_fallback")
+        return get_task_details(task_id)
+    return None
