@@ -66,8 +66,8 @@ class TestCreateTrameApp:
 # UI CLASS TESTS
 # =============================================================================
 
-class TestSimAITrameUI:
-    """Tests for SimAITrameUI class."""
+class TestSarvajaTrameUI:
+    """Tests for SarvajaTrameUI class."""
 
     @pytest.fixture
     def mock_server(self):
@@ -81,9 +81,9 @@ class TestSimAITrameUI:
         """Initialization stores agents dict."""
         with patch('agent.trame_ui.get_server', return_value=mock_server):
             try:
-                from agent.trame_ui import SimAITrameUI
+                from agent.trame_ui import SarvajaTrameUI
                 agents = {"agent1": Mock(), "agent2": Mock()}
-                ui = SimAITrameUI(agents=agents)
+                ui = SarvajaTrameUI(agents=agents)
                 assert ui.agents == agents
             except ImportError:
                 pytest.skip("Trame not installed")
@@ -92,8 +92,8 @@ class TestSimAITrameUI:
         """Initialization stores API base URL."""
         with patch('agent.trame_ui.get_server', return_value=mock_server):
             try:
-                from agent.trame_ui import SimAITrameUI
-                ui = SimAITrameUI(agents={}, api_base="http://test:8080")
+                from agent.trame_ui import SarvajaTrameUI
+                ui = SarvajaTrameUI(agents={}, api_base="http://test:8080")
                 assert ui.api_base == "http://test:8080"
             except ImportError:
                 pytest.skip("Trame not installed")
@@ -102,9 +102,9 @@ class TestSimAITrameUI:
         """Initialization creates agent options for dropdown."""
         with patch('agent.trame_ui.get_server', return_value=mock_server):
             try:
-                from agent.trame_ui import SimAITrameUI
+                from agent.trame_ui import SarvajaTrameUI
                 agents = {"orchestrator": Mock(), "coder": Mock()}
-                ui = SimAITrameUI(agents=agents)
+                ui = SarvajaTrameUI(agents=agents)
 
                 # Check state was set
                 assert mock_server.state.agent_options is not None

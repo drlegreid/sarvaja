@@ -1,6 +1,6 @@
 """
-Trame UI for Sim.ai Agent Platform
-==================================
+Trame UI for Sarvaja Agent Platform
+====================================
 Functional Python-based UI using Trame framework.
 
 Per DECISION: Use Trame for Python-native web UI
@@ -22,9 +22,9 @@ from trame.widgets import vuetify3 as v3, html
 # TRAME APPLICATION
 # =============================================================================
 
-class SimAITrameUI:
+class SarvajaTrameUI:
     """
-    Trame-based UI for Sim.ai agent platform.
+    Trame-based UI for Sarvaja agent platform.
 
     Features:
     - Task submission form
@@ -68,7 +68,7 @@ class SimAITrameUI:
         with VAppLayout(self.server, full_height=True) as layout:
             # App bar
             with v3.VAppBar(color="primary", density="compact"):
-                v3.VAppBarTitle("Sim.ai Task Console")
+                v3.VAppBarTitle("Sarvaja Task Console")
                 v3.VSpacer()
                 v3.VChip(
                     "{{ status }}",
@@ -290,7 +290,7 @@ def create_trame_app(agents: dict = None, api_base: str = "http://localhost:7777
         api_base: API base URL
 
     Returns:
-        SimAITrameUI instance
+        SarvajaTrameUI instance
     """
     if agents is None:
         agents = {
@@ -301,23 +301,27 @@ def create_trame_app(agents: dict = None, api_base: str = "http://localhost:7777
             "simple_assistant": "Local Assistant",
         }
 
-    return SimAITrameUI(agents=agents, api_base=api_base)
+    return SarvajaTrameUI(agents=agents, api_base=api_base)
 
 
 def main():
     """Run Trame UI standalone."""
     import argparse
 
-    parser = argparse.ArgumentParser(description="Sim.ai Trame UI")
+    parser = argparse.ArgumentParser(description="Sarvaja Trame UI")
     parser.add_argument("--port", type=int, default=8080, help="UI port")
     parser.add_argument("--api", type=str, default="http://localhost:7777", help="API base URL")
     args = parser.parse_args()
 
-    print(f"Starting Sim.ai Trame UI on port {args.port}")
+    print(f"Starting Sarvaja Trame UI on port {args.port}")
     print(f"API endpoint: {args.api}")
 
     app = create_trame_app(api_base=args.api)
     app.run(port=args.port)
+
+
+# Backward compatibility alias (DECISION-008: Sim.ai → Sarvaja rename)
+SimAITrameUI = SarvajaTrameUI
 
 
 if __name__ == "__main__":

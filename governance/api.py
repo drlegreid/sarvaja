@@ -126,7 +126,7 @@ class AuthMiddleware(BaseHTTPMiddleware):
 # =============================================================================
 
 app = FastAPI(
-    title="Sim.ai Governance API",
+    title="Sarvaja Governance API",
     description="REST API for governance rules, tasks, sessions, and evidence",
     version="1.0.0",
     docs_url="/api/docs",

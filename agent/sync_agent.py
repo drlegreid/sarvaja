@@ -1,5 +1,5 @@
 """
-Sync Agent for Sim.ai PoC.
+Sync Agent for Sarvaja PoC.
 Synchronizes skills, sessions, rules, and memories across environments.
 
 MODULARIZED: 2026-01-04 per RULE-032 (File Size Limit < 300 lines)

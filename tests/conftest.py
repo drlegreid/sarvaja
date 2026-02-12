@@ -1,5 +1,5 @@
 """
-Pytest configuration and fixtures for Sim.ai PoC tests.
+Pytest configuration and fixtures for Sarvaja platform tests.
 
 GAP-TEST-002: Test Reporting Modes
 - MINIMAL: Dots only (. F S) - smallest context footprint

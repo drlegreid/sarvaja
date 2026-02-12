@@ -41,7 +41,7 @@ def run_dashboard(port: int = 8081, server_mode: bool = True):
 
 def main():
     """Run combined governance server."""
-    parser = argparse.ArgumentParser(description="Sim.ai Governance Server (API + Dashboard)")
+    parser = argparse.ArgumentParser(description="Sarvaja Governance Server (API + Dashboard)")
     parser.add_argument("--api-port", type=int, default=8082, help="API port (default: 8082)")
     parser.add_argument("--ui-port", type=int, default=8081, help="Dashboard port (default: 8081)")
     parser.add_argument("--api-only", action="store_true", help="Run only the API server")

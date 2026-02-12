@@ -1,1 +1,1 @@
-# Sim.ai PoC Test Suite
+# Sarvaja Platform Test Suite

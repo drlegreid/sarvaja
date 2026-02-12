@@ -1,5 +1,5 @@
 """
-Sim.ai PoC Agent with:
+Sarvaja PoC Agent with:
 - Claude models via Anthropic
 - Opik tracing for observability
 - ChromaDB for vector storage
@@ -114,7 +114,7 @@ def create_agents(config: dict) -> list[Agent]:
 def main():
     config_file = sys.argv[1] if len(sys.argv) > 1 else "/agents.yaml"
 
-    print("=== Sim.ai PoC Agent Server ===")
+    print("=== Sarvaja PoC Agent Server ===")
     print(f"Loading config: {config_file}")
 
     with open(config_file, "r") as f:

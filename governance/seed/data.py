@@ -35,10 +35,10 @@ def get_seed_tasks():
          "linked_rules": ["RULE-019", "RULE-011"], "created_at": "2024-12-25T08:00:00"},
 
         # Phase 10: Architecture Debt Resolution
-        {"task_id": "P10.1", "description": "Tasks -> TypeDB Migration", "phase": "P10", "status": "IN_PROGRESS",
+        {"task_id": "P10.1", "description": "Tasks -> TypeDB Migration", "phase": "P10", "status": "DONE",
          "body": "Migrate _tasks_store from in-memory dict to TypeDB.",
          "linked_rules": ["RULE-007"], "gap_id": "GAP-ARCH-001", "created_at": "2024-12-26T08:00:00"},
-        {"task_id": "P10.2", "description": "Sessions -> TypeDB Migration", "phase": "P10", "status": "IN_PROGRESS",
+        {"task_id": "P10.2", "description": "Sessions -> TypeDB Migration", "phase": "P10", "status": "DONE",
          "body": "Migrate _sessions_store to TypeDB.",
          "linked_rules": ["RULE-007"], "gap_id": "GAP-ARCH-002", "created_at": "2024-12-26T08:30:00"},
 
@@ -91,7 +91,8 @@ def get_seed_sessions():
         {
             "session_id": "SESSION-2024-12-26-001",
             "start_time": "2024-12-26T08:00:00",
-            "status": "ACTIVE",
+            "end_time": "2024-12-26T20:00:00",
+            "status": "COMPLETED",
             "tasks_completed": 8,
             "description": "Phase 10-11: REST API, CRUD fixes, Data Integrity Resolution",
             "linked_rules_applied": ["RULE-001", "RULE-007", "RULE-019"],
@@ -102,7 +103,8 @@ def get_seed_sessions():
         {
             "session_id": "SESSION-2024-12-28-001",
             "start_time": "2024-12-28T08:00:00",
-            "status": "ACTIVE",
+            "end_time": "2024-12-28T18:00:00",
+            "status": "COMPLETED",
             "tasks_completed": 5,
             "description": "Phase 10: TypeDB-First Migration + GAP-FILE Resolution",
             "linked_rules_applied": ["RULE-007", "RULE-012", "RULE-030"],

@@ -1,5 +1,5 @@
 """
-TypeDB Client Wrapper for Sim.ai Governance.
+TypeDB Client Wrapper for Sarvaja Governance.
 
 Provides high-level API for rule inference and knowledge queries.
 

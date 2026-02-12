@@ -1,4 +1,4 @@
-# Sim.ai Subagent Definitions
+# Sarvaja Subagent Definitions
 
 Multi-agent orchestration for Claude Code per MULTI-001-007 R&D.
 

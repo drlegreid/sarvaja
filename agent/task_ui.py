@@ -1,6 +1,6 @@
 """
-Task UI Module for Sim.ai Agent Platform
-=========================================
+Task UI Module for Sarvaja Agent Platform
+==========================================
 Implements AG-UI protocol for task submission, progress streaming, and results.
 
 Per RULE-019: UI/UX Design Standards
