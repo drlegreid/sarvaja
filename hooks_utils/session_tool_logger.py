@@ -156,6 +156,12 @@ def log_tool_call(
         return False
 
 
+# Tools to skip logging (avoid recursion + reduce noise)
+SKIP_TOOLS = frozenset({
+    "session_tool_call", "session_thought", "TodoWrite",
+})
+
+
 def main() -> int:
     """Main entry point for PostToolUse hook.
 
@@ -166,9 +172,7 @@ def main() -> int:
     tool_name = get_tool_name()
     arguments = parse_tool_input()
 
-    # Skip logging for certain tools to avoid recursion
-    skip_tools = {"session_tool_call", "session_thought", "TodoWrite"}
-    if tool_name in skip_tools:
+    if tool_name in SKIP_TOOLS:
         return 0
 
     # Log the tool call

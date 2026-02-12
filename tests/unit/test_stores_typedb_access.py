@@ -219,7 +219,8 @@ class TestCounts:
     def test_session_count(self):
         client = MagicMock()
         client.get_all_sessions.return_value = [_make_session()]
-        with patch(_P_CLIENT, return_value=client):
+        with patch(_P_CLIENT, return_value=client), \
+             patch(_P_SESSIONS, {}):
             assert get_session_count() == 1
 
     def test_count_zero_on_unavailable(self):

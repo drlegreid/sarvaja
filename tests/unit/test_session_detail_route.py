@@ -40,7 +40,7 @@ class TestSessionDetailRoute:
         data = resp.json()
         assert data["zoom"] == 0
         assert data["summary"]["cc_tool_count"] == 42
-        mock_detail.assert_called_once_with("S-1", zoom=0)
+        mock_detail.assert_called_once_with("S-1", zoom=0, page=1, per_page=20)
 
     @patch("governance.routes.sessions.detail.get_session_detail")
     def test_zoom_1_with_breakdown(self, mock_detail, client):
@@ -65,7 +65,7 @@ class TestSessionDetailRoute:
         }
         resp = client.get("/api/sessions/S-3/detail")
         assert resp.status_code == 200
-        mock_detail.assert_called_once_with("S-3", zoom=1)
+        mock_detail.assert_called_once_with("S-3", zoom=1, page=1, per_page=20)
 
     @patch("governance.routes.sessions.detail.get_session_detail")
     def test_session_not_found(self, mock_detail, client):
@@ -90,7 +90,7 @@ class TestSessionDetailRoute:
         }
         resp = client.get("/api/sessions/S-4/detail?zoom=2")
         assert resp.status_code == 200
-        mock_detail.assert_called_once_with("S-4", zoom=2)
+        mock_detail.assert_called_once_with("S-4", zoom=2, page=1, per_page=20)
 
     @patch("governance.routes.sessions.detail.get_session_detail")
     def test_zoom_3_max(self, mock_detail, client):
@@ -99,4 +99,4 @@ class TestSessionDetailRoute:
         }
         resp = client.get("/api/sessions/S-5/detail?zoom=3")
         assert resp.status_code == 200
-        mock_detail.assert_called_once_with("S-5", zoom=3)
+        mock_detail.assert_called_once_with("S-5", zoom=3, page=1, per_page=20)

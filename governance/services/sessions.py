@@ -124,7 +124,9 @@ def create_session(
                              metadata={"description": description, "source": source})
                 _monitor("create", session_id, source=source)
                 log_event("session", "create", session_id=session_id, agent_id=agent_id, source=source)
-                return session_to_response(created)
+                result = session_to_response(created)
+                result["persistence_status"] = "persisted"
+                return result
         except Exception as e:
             logger.warning(f"TypeDB session insert failed, using fallback: {e}")
 
@@ -145,6 +147,7 @@ def create_session(
         "cc_tool_count": cc_tool_count,
         "cc_thinking_chars": cc_thinking_chars,
         "cc_compaction_count": cc_compaction_count,
+        "persistence_status": "memory_only",
     }
     _sessions_store[session_id] = session_data
     record_audit("CREATE", "session", session_id,
@@ -235,3 +238,44 @@ def update_session(
     _monitor("update", session_id, source=source, status=status)
     log_event("session", "update", session_id=session_id, status=status, source=source)
     return dict(session)
+
+
+def sync_pending_sessions() -> Dict[str, Any]:
+    """Push memory-only sessions to TypeDB.
+
+    Per Phase-1 Data Integrity: Retries sessions that failed initial
+    TypeDB persistence. Called on-demand via API or at session end.
+
+    Returns:
+        Dict with synced/failed/already_persisted/error counts.
+    """
+    client = get_typedb_client()
+    if not client:
+        return {"error": "TypeDB unavailable", "synced": 0, "failed": 0}
+
+    synced = 0
+    failed = 0
+    already_persisted = 0
+
+    for session_id, session_data in list(_sessions_store.items()):
+        try:
+            existing = client.get_session(session_id)
+            if existing:
+                already_persisted += 1
+                continue
+            client.insert_session(
+                session_id=session_id,
+                description=session_data.get("description", ""),
+                agent_id=session_data.get("agent_id"),
+            )
+            synced += 1
+            logger.info(f"Synced orphan session to TypeDB: {session_id}")
+        except Exception as e:
+            failed += 1
+            logger.warning(f"Failed to sync session {session_id}: {e}")
+
+    return {
+        "synced": synced,
+        "failed": failed,
+        "already_persisted": already_persisted,
+    }

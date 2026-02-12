@@ -17,9 +17,46 @@ from datetime import datetime
 from typing import Optional
 
 from governance.session_collector.collector import SessionCollector
+from governance.services.sessions import create_session
+from governance.services.sessions_lifecycle import end_session
 from governance.stores import _sessions_store
 
 logger = logging.getLogger(__name__)
+
+# Claude Code built-in tools (not MCP)
+_CC_BUILTIN_TOOLS = frozenset({
+    "Read", "Write", "Edit", "Bash", "Glob", "Grep",
+    "TodoWrite", "Task", "WebSearch", "WebFetch",
+    "NotebookEdit", "AskUserQuestion", "EnterPlanMode",
+    "ExitPlanMode", "ToolSearch", "Skill",
+})
+
+# MCP governance server prefixes
+_GOV_MCP_PREFIXES = ("mcp__gov-core__", "mcp__gov-sessions__",
+                      "mcp__gov-tasks__", "mcp__gov-agents__")
+
+
+def is_chat_command(text: str) -> bool:
+    """Check if text is a slash command (local skill, not an MCP tool)."""
+    return bool(text) and text.startswith("/")
+
+
+def classify_tool(tool_name: str) -> str:
+    """Classify a tool by category for session analytics.
+
+    Returns one of: mcp_governance, mcp_other, cc_builtin, chat_command, unknown.
+    """
+    if not tool_name:
+        return "unknown"
+    if tool_name.startswith("/"):
+        return "chat_command"
+    if tool_name in _CC_BUILTIN_TOOLS:
+        return "cc_builtin"
+    if any(tool_name.startswith(p) for p in _GOV_MCP_PREFIXES):
+        return "mcp_governance"
+    if tool_name.startswith("mcp__"):
+        return "mcp_other"
+    return "unknown"
 
 
 def start_chat_session(
@@ -52,15 +89,20 @@ def start_chat_session(
 
     # Per GAP-GOVSESS-CAPTURE-001: Persist to TypeDB via service layer
     try:
-        from governance.services.sessions import create_session
-        create_session(
+        result = create_session(
             session_id=collector.session_id,
             description=safe_topic,
             agent_id=agent_id,
             source="chat-bridge",
         )
+        p_status = result.get("persistence_status", "unknown")
+        if p_status != "persisted":
+            logger.error(
+                f"Session {collector.session_id} NOT persisted to TypeDB "
+                f"(status={p_status}) — will appear as orphan until sync"
+            )
     except Exception as e:
-        logger.warning(f"TypeDB session create failed: {e}")
+        logger.error(f"TypeDB session create failed: {e}")
 
     # Always ensure _sessions_store has session data for bridge syncing
     # (create_session may have stored in TypeDB but not in _sessions_store)
@@ -124,6 +166,7 @@ def record_chat_tool_call(
             _sessions_store[session_id]["tool_calls"] = []
         _sessions_store[session_id]["tool_calls"].append({
             "tool_name": tool_name,
+            "tool_category": classify_tool(tool_name),
             "arguments": arguments or {},
             "result": (result[:200] + "...") if result and len(result) > 200 else result,
             "duration_ms": duration_ms,
@@ -199,14 +242,13 @@ def end_chat_session(
 
     # Per GAP-GOVSESS-CAPTURE-001: End via service layer for TypeDB persistence
     try:
-        from governance.services.sessions import end_session as svc_end_session
-        svc_end_session(
+        end_session(
             session_id=session_id,
             tasks_completed=tool_call_count,
             source="chat-bridge",
         )
     except Exception as e:
-        logger.warning(f"TypeDB session end failed: {e}")
+        logger.error(f"TypeDB session end failed: {e}")
 
     # Always update _sessions_store for consistency
     if session_id in _sessions_store:

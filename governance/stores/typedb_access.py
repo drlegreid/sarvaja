@@ -112,13 +112,27 @@ def get_all_sessions_from_typedb(allow_fallback: bool = False) -> List[Dict[str,
     Get all sessions from TypeDB (source of truth).
 
     Per GAP-STUB-003/004: TypeDB is the primary data source for sessions.
+    Per Phase-1 Data Integrity: Merges in-memory orphan sessions that
+    failed to persist to TypeDB, tagged with persistence_status.
     """
     client = get_typedb_client()
 
     if client:
         try:
             sessions = client.get_all_sessions()
-            return [_session_to_dict(s) for s in sessions]
+            result = [_session_to_dict(s) for s in sessions]
+            for s in result:
+                s["persistence_status"] = "persisted"
+            # Merge orphan sessions from _sessions_store (memory-only)
+            if allow_fallback:
+                typedb_ids = {s["session_id"] for s in result}
+                for mem_session in _sessions_store.values():
+                    sid = mem_session.get("session_id")
+                    if sid and sid not in typedb_ids:
+                        orphan = dict(mem_session)
+                        orphan["persistence_status"] = "memory_only"
+                        result.append(orphan)
+            return result
         except Exception as e:
             logger.warning(f"TypeDB session query failed: {e}")
             if not allow_fallback:
@@ -126,7 +140,12 @@ def get_all_sessions_from_typedb(allow_fallback: bool = False) -> List[Dict[str,
 
     if allow_fallback:
         logger.warning("Using deprecated in-memory fallback for sessions")
-        return list(_sessions_store.values())
+        result = []
+        for s in _sessions_store.values():
+            entry = dict(s)
+            entry["persistence_status"] = "memory_only"
+            result.append(entry)
+        return result
 
     raise TypeDBUnavailable("TypeDB client not available")
 
