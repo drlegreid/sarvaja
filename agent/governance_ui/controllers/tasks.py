@@ -99,6 +99,44 @@ def register_tasks_controllers(state: Any, ctrl: Any, api_base_url: str) -> None
             state.has_error = True
             state.error_message = f"Failed to delete task: {str(e)}"
 
+    @ctrl.trigger("claim_task")
+    def claim_task():
+        """Claim selected task via REST API (EPIC-UI-VALUE-001)."""
+        if not state.selected_task:
+            return
+        try:
+            task_id = state.selected_task.get('id') or state.selected_task.get('task_id')
+            with httpx.Client(timeout=10.0) as client:
+                response = client.post(f"{api_base_url}/api/tasks/{task_id}/claim")
+                if response.status_code == 200:
+                    state.status_message = f"Task {task_id} claimed"
+                    state.selected_task = response.json()
+                else:
+                    state.has_error = True
+                    state.error_message = f"Claim failed: {response.status_code}"
+        except Exception as e:
+            state.has_error = True
+            state.error_message = f"Claim failed: {str(e)}"
+
+    @ctrl.trigger("complete_task")
+    def complete_task():
+        """Complete selected task via REST API (EPIC-UI-VALUE-001)."""
+        if not state.selected_task:
+            return
+        try:
+            task_id = state.selected_task.get('id') or state.selected_task.get('task_id')
+            with httpx.Client(timeout=10.0) as client:
+                response = client.post(f"{api_base_url}/api/tasks/{task_id}/complete")
+                if response.status_code == 200:
+                    state.status_message = f"Task {task_id} completed"
+                    state.selected_task = response.json()
+                else:
+                    state.has_error = True
+                    state.error_message = f"Complete failed: {response.status_code}"
+        except Exception as e:
+            state.has_error = True
+            state.error_message = f"Complete failed: {str(e)}"
+
     @ctrl.set("edit_task")
     def edit_task():
         """Enter task edit mode."""

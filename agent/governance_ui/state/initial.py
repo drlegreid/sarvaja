@@ -108,6 +108,7 @@ def get_initial_state() -> Dict[str, Any]:
         'form_rule_directive': '',
         'form_rule_category': 'governance',
         'form_rule_priority': 'HIGH',
+        'form_rule_applicability': 'MANDATORY',
 
         # UI state
         'is_loading': False,

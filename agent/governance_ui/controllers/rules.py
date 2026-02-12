@@ -53,6 +53,7 @@ def register_rules_controllers(state: Any, ctrl: Any, api_base_url: str) -> None
             state.form_rule_directive = state.selected_rule.get('directive') or ''
             state.form_rule_category = state.selected_rule.get('category') or 'governance'
             state.form_rule_priority = state.selected_rule.get('priority') or 'HIGH'
+            state.form_rule_applicability = state.selected_rule.get('applicability') or 'MANDATORY'
             state.rule_form_mode = 'edit'
             state.show_rule_form = True
 
@@ -72,6 +73,7 @@ def register_rules_controllers(state: Any, ctrl: Any, api_base_url: str) -> None
                 "directive": state.form_rule_directive,
                 "category": state.form_rule_category,
                 "priority": state.form_rule_priority,
+                "applicability": getattr(state, 'form_rule_applicability', 'MANDATORY'),
                 "status": "DRAFT"
             }
 

@@ -123,3 +123,72 @@ def build_session_info_card() -> None:
                     ),
                     prepend_icon="mdi-tools",
                 )
+                # Duration (EPIC-UI-VALUE-001)
+                v3.VListItem(
+                    v_if="selected_session.duration_minutes",
+                    title="Duration",
+                    subtitle=(
+                        "String(selected_session.duration_minutes) + ' minutes'",
+                    ),
+                    prepend_icon="mdi-timer-outline",
+                )
+
+    # Linked rules applied (EPIC-UI-VALUE-001)
+    with v3.VCard(
+        v_if=(
+            "selected_session.linked_rules_applied?.length > 0"
+        ),
+        variant="outlined",
+        classes="mt-4",
+        __properties=["data-testid"],
+        **{"data-testid": "session-linked-rules"},
+    ):
+        with v3.VCardTitle(classes="d-flex align-center", density="compact"):
+            v3.VIcon("mdi-gavel", size="small", classes="mr-2")
+            html.Span("Rules Applied")
+            v3.VSpacer()
+            v3.VChip(
+                v_text="selected_session.linked_rules_applied.length",
+                size="x-small",
+                color="primary",
+            )
+        with v3.VCardText():
+            v3.VChip(
+                v_for="rule in selected_session.linked_rules_applied",
+                v_text="rule",
+                size="small",
+                color="primary",
+                variant="outlined",
+                classes="mr-1 mb-1",
+                prepend_icon="mdi-gavel",
+            )
+
+    # Linked decisions (EPIC-UI-VALUE-001)
+    with v3.VCard(
+        v_if=(
+            "selected_session.linked_decisions?.length > 0"
+        ),
+        variant="outlined",
+        classes="mt-4",
+        __properties=["data-testid"],
+        **{"data-testid": "session-linked-decisions"},
+    ):
+        with v3.VCardTitle(classes="d-flex align-center", density="compact"):
+            v3.VIcon("mdi-scale-balance", size="small", classes="mr-2")
+            html.Span("Decisions Made")
+            v3.VSpacer()
+            v3.VChip(
+                v_text="selected_session.linked_decisions.length",
+                size="x-small",
+                color="warning",
+            )
+        with v3.VCardText():
+            v3.VChip(
+                v_for="dec in selected_session.linked_decisions",
+                v_text="dec",
+                size="small",
+                color="warning",
+                variant="outlined",
+                classes="mr-1 mb-1",
+                prepend_icon="mdi-scale-balance",
+            )

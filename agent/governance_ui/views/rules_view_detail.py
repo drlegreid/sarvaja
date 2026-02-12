@@ -70,19 +70,38 @@ def build_rule_detail_view() -> None:
                 with v3.VCol(cols="6"):
                     html.Div("Name", classes="text-caption text-grey")
                     html.Div("{{ selected_rule.name }}", classes="text-body-1")
-                with v3.VCol(cols="3"):
+                with v3.VCol(cols="2"):
                     html.Div("Category", classes="text-caption text-grey")
                     v3.VChip(
                         "{{ selected_rule.category }}",
                         size="small",
                         color="primary",
                     )
-                with v3.VCol(cols="3"):
+                with v3.VCol(cols="2"):
                     html.Div("Priority", classes="text-caption text-grey")
                     v3.VChip(
                         "{{ selected_rule.priority }}",
                         size="small",
                         v_bind_color="selected_rule.priority === 'CRITICAL' ? 'error' : selected_rule.priority === 'HIGH' ? 'warning' : 'info'",
+                    )
+                with v3.VCol(cols="2"):
+                    html.Div("Applicability", classes="text-caption text-grey")
+                    v3.VChip(
+                        "{{ selected_rule.applicability || 'MANDATORY' }}",
+                        size="small",
+                        v_bind_color=(
+                            "(selected_rule.applicability || 'MANDATORY') === 'MANDATORY' ? 'error' : "
+                            "(selected_rule.applicability || 'MANDATORY') === 'RECOMMENDED' ? 'info' : "
+                            "(selected_rule.applicability || 'MANDATORY') === 'FORBIDDEN' ? 'black' : 'warning'"
+                        ),
+                        prepend_icon=(
+                            "(selected_rule.applicability || 'MANDATORY') === 'MANDATORY' ? 'mdi-alert-circle' : "
+                            "(selected_rule.applicability || 'MANDATORY') === 'RECOMMENDED' ? 'mdi-thumb-up' : "
+                            "(selected_rule.applicability || 'MANDATORY') === 'FORBIDDEN' ? 'mdi-cancel' : "
+                            "'mdi-help-circle'"
+                        ),
+                        __properties=["data-testid"],
+                        **{"data-testid": "rule-applicability"},
                     )
 
             v3.VDivider(classes="my-4")

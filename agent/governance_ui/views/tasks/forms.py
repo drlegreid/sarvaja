@@ -272,6 +272,39 @@ def build_task_linked_items() -> None:
                     **{"data-testid": "task-involved-agent"}
                 )
 
+            # Linked Commits (EPIC-UI-VALUE-001)
+            with html.Div(
+                v_if="selected_task.linked_commits?.length > 0",
+                classes="mb-2"
+            ):
+                html.Span("Commits: ", classes="font-weight-bold")
+                v3.VChip(
+                    v_for="commit in selected_task.linked_commits",
+                    v_text="commit.substring(0, 7)",
+                    size="small",
+                    color="deep-purple",
+                    variant="outlined",
+                    classes="mr-1",
+                    prepend_icon="mdi-source-commit",
+                    __properties=["data-testid"],
+                    **{"data-testid": "task-commit-chip"},
+                )
+
+            # Timestamps (EPIC-UI-VALUE-001)
+            with html.Div(
+                v_if="selected_task.claimed_at || selected_task.completed_at",
+                classes="mb-2"
+            ):
+                with html.Span(
+                    v_if="selected_task.claimed_at",
+                    classes="mr-3"
+                ):
+                    html.Span("Claimed: ", classes="font-weight-bold")
+                    html.Span("{{ selected_task.claimed_at }}")
+                with html.Span(v_if="selected_task.completed_at"):
+                    html.Span("Completed: ", classes="font-weight-bold")
+                    html.Span("{{ selected_task.completed_at }}")
+
             # Evidence with verification info (GAP-UI-LINKED-SESSIONS-001)
             with html.Div(
                 v_if="selected_task.evidence",

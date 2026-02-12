@@ -138,6 +138,37 @@ def build_task_detail_view() -> None:
                 __properties=["data-testid"],
                 **{"data-testid": "task-detail-edit-btn"}
             )
+            # Claim button (EPIC-UI-VALUE-001)
+            v3.VBtn(
+                "Claim",
+                v_if=(
+                    "!edit_task_mode && "
+                    "(!selected_task.status || selected_task.status === 'OPEN' || "
+                    "selected_task.status === 'TODO')"
+                ),
+                color="success",
+                prepend_icon="mdi-hand-pointing-up",
+                variant="outlined",
+                click="trigger('claim_task')",
+                classes="mr-2",
+                __properties=["data-testid"],
+                **{"data-testid": "task-detail-claim-btn"}
+            )
+            # Complete button (EPIC-UI-VALUE-001)
+            v3.VBtn(
+                "Complete",
+                v_if=(
+                    "!edit_task_mode && "
+                    "selected_task.status === 'IN_PROGRESS'"
+                ),
+                color="success",
+                prepend_icon="mdi-check-circle",
+                variant="outlined",
+                click="trigger('complete_task')",
+                classes="mr-2",
+                __properties=["data-testid"],
+                **{"data-testid": "task-detail-complete-btn"}
+            )
             v3.VBtn(
                 "Delete",
                 v_if="!edit_task_mode",
