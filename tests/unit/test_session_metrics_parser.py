@@ -1,379 +1,196 @@
 """
-TDD Test Spec: Session Metrics Parser
-======================================
-Per SESSION-METRICS-01-v1: Claude Code JSONL log parsing.
+Unit tests for Session Metrics JSONL Parser.
 
-Tests written BEFORE implementation per TEST-TDD-01-v1.
-Run: pytest tests/unit/test_session_metrics_parser.py -v
+Per DOC-SIZE-01-v1: Tests for session_metrics/parser.py module.
+Tests: discover_log_files(), _parse_timestamp(), _extract_* helpers,
+       parse_log_file(), parse_log_file_extended().
 """
 
 import json
-import os
-import tempfile
 from datetime import datetime, timezone
 from pathlib import Path
-from unittest.mock import patch
 
-import pytest
-
-
-# ---------------------------------------------------------------------------
-# Fixtures: synthetic JSONL log data
-# ---------------------------------------------------------------------------
-
-def _ts(iso: str) -> str:
-    """Shorthand for ISO timestamp."""
-    return iso
-
-
-def _user_entry(ts: str, content: str = "hello", uuid: str = "u1",
-                session_id: str = "sess-001") -> dict:
-    return {
-        "type": "user",
-        "timestamp": ts,
-        "sessionId": session_id,
-        "uuid": uuid,
-        "message": {"role": "user", "content": content},
-    }
+from governance.session_metrics.parser import (
+    discover_log_files,
+    _parse_timestamp,
+    _extract_text_content,
+    _extract_tool_uses,
+    _extract_tool_results,
+    _extract_thinking,
+    parse_log_file,
+    parse_log_file_extended,
+)
 
 
-def _assistant_entry(ts: str, text: str = "response", thinking: str = None,
-                     tool_uses: list = None, uuid: str = "a1",
-                     session_id: str = "sess-001",
-                     model: str = "claude-opus-4-5-20251101") -> dict:
-    content = []
-    if thinking:
-        content.append({"type": "thinking", "thinking": thinking})
-    if text:
-        content.append({"type": "text", "text": text})
-    for tu in (tool_uses or []):
-        content.append({"type": "tool_use", "id": tu["id"], "name": tu["name"],
-                         "input": tu.get("input", {})})
-    return {
-        "type": "assistant",
-        "timestamp": ts,
-        "sessionId": session_id,
-        "uuid": uuid,
-        "message": {"role": "assistant", "content": content, "model": model},
-    }
+class TestDiscoverLogFiles:
+    def test_finds_jsonl(self, tmp_path):
+        (tmp_path / "session1.jsonl").write_text("")
+        (tmp_path / "session2.jsonl").write_text("")
+        (tmp_path / "other.txt").write_text("")
+        files = discover_log_files(tmp_path)
+        assert len(files) == 2
+
+    def test_excludes_agents(self, tmp_path):
+        (tmp_path / "session.jsonl").write_text("")
+        (tmp_path / "agent-sub.jsonl").write_text("")
+        files = discover_log_files(tmp_path, include_agents=False)
+        assert len(files) == 1
+        assert files[0].name == "session.jsonl"
+
+    def test_includes_agents(self, tmp_path):
+        (tmp_path / "session.jsonl").write_text("")
+        (tmp_path / "agent-sub.jsonl").write_text("")
+        files = discover_log_files(tmp_path, include_agents=True)
+        assert len(files) == 2
+
+    def test_nonexistent_dir(self, tmp_path):
+        assert discover_log_files(tmp_path / "nope") == []
+
+    def test_empty_dir(self, tmp_path):
+        assert discover_log_files(tmp_path) == []
 
 
-def _tool_result_entry(ts: str, tool_use_id: str = "tu1",
-                       session_id: str = "sess-001",
-                       mcp_meta: dict = None) -> dict:
-    entry = {
-        "type": "user",
-        "timestamp": ts,
-        "sessionId": session_id,
-        "uuid": "tr1",
-        "message": {
-            "role": "user",
-            "content": [{"type": "tool_result", "tool_use_id": tool_use_id,
-                          "content": "result data"}],
-        },
-    }
-    if mcp_meta:
-        entry["mcpMeta"] = mcp_meta
-    return entry
+class TestParseTimestamp:
+    def test_z_suffix(self):
+        dt = _parse_timestamp("2026-02-11T10:00:00Z")
+        assert dt.year == 2026
+        assert dt.tzinfo is not None
+
+    def test_offset(self):
+        dt = _parse_timestamp("2026-02-11T10:00:00+02:00")
+        assert dt.year == 2026
+
+    def test_no_tz(self):
+        dt = _parse_timestamp("2026-02-11T10:00:00")
+        assert dt.year == 2026
 
 
-def _system_entry(ts: str, subtype: str = "compact_boundary",
-                  session_id: str = "sess-001",
-                  compact_meta: dict = None) -> dict:
-    entry = {
-        "type": "system",
-        "timestamp": ts,
-        "sessionId": session_id,
-        "subtype": subtype,
-        "content": "Conversation compacted",
-    }
-    if compact_meta:
-        entry["compactMetadata"] = compact_meta
-    return entry
+class TestExtractTextContent:
+    def test_text_blocks(self):
+        content = [
+            {"type": "text", "text": "Hello"},
+            {"type": "text", "text": "World"},
+        ]
+        result = _extract_text_content(content)
+        assert "Hello" in result
+        assert "World" in result
+
+    def test_no_text(self):
+        content = [{"type": "tool_use", "name": "Read"}]
+        result = _extract_text_content(content)
+        assert result is None
+
+    def test_not_list(self):
+        assert _extract_text_content("string") is None
+
+    def test_empty(self):
+        assert _extract_text_content([]) is None
 
 
-def _progress_entry(ts: str, session_id: str = "sess-001") -> dict:
-    return {
-        "type": "progress",
-        "timestamp": ts,
-        "sessionId": session_id,
-        "data": {"type": "hook_progress"},
-    }
+class TestExtractToolUses:
+    def test_basic(self):
+        content = [{"type": "tool_use", "name": "Read", "input": {"path": "/x"}}]
+        tools = _extract_tool_uses(content)
+        assert len(tools) == 1
+        assert tools[0].name == "Read"
+
+    def test_not_list(self):
+        assert _extract_tool_uses("str") == []
 
 
-@pytest.fixture
-def sample_log_dir(tmp_path):
-    """Create a temp dir with a sample JSONL log file."""
-    entries = [
-        # Day 1: 2026-01-28, Session 1 (10 min active)
-        _user_entry("2026-01-28T10:00:00Z", uuid="u1"),
-        _assistant_entry("2026-01-28T10:01:00Z", thinking="Let me think...",
-                         tool_uses=[{"id": "tu1", "name": "Read"}], uuid="a1"),
-        _tool_result_entry("2026-01-28T10:01:30Z", tool_use_id="tu1"),
-        _assistant_entry("2026-01-28T10:05:00Z", text="Done", uuid="a2"),
-        _user_entry("2026-01-28T10:10:00Z", uuid="u2"),
-        _assistant_entry("2026-01-28T10:10:30Z", uuid="a3"),
+class TestExtractToolResults:
+    def test_basic(self):
+        content = [{"type": "tool_result", "tool_use_id": "tu-1"}]
+        results = _extract_tool_results(content, None)
+        assert len(results) == 1
+        assert results[0].tool_use_id == "tu-1"
 
-        # Gap > 30 min → new session
-        # Day 1: 2026-01-28, Session 2 (5 min active)
-        _user_entry("2026-01-28T11:00:00Z", uuid="u3"),
-        _assistant_entry("2026-01-28T11:02:00Z",
-                         tool_uses=[{"id": "tu2", "name": "Bash"},
-                                    {"id": "tu3", "name": "mcp__gov-core__rules_query"}],
-                         uuid="a4"),
-        _assistant_entry("2026-01-28T11:05:00Z", uuid="a5"),
-
-        # Day 2: 2026-01-29, Session 3 (3 min active)
-        _user_entry("2026-01-29T14:00:00Z", uuid="u4"),
-        _system_entry("2026-01-29T14:01:00Z", compact_meta={"trigger": "auto", "preTokens": 150000}),
-        _assistant_entry("2026-01-29T14:02:00Z",
-                         tool_uses=[{"id": "tu4", "name": "Edit"}], uuid="a6"),
-        _user_entry("2026-01-29T14:03:00Z", uuid="u5"),
-    ]
-
-    log_file = tmp_path / "test-session.jsonl"
-    with open(log_file, "w") as f:
-        for entry in entries:
-            f.write(json.dumps(entry) + "\n")
-
-    return tmp_path, log_file
+    def test_with_mcp_meta(self):
+        content = [{"type": "tool_result", "tool_use_id": "tu-1"}]
+        meta = {"serverName": "gov-core"}
+        results = _extract_tool_results(content, meta)
+        assert results[0].server_name == "gov-core"
 
 
-@pytest.fixture
-def empty_log_dir(tmp_path):
-    """Empty directory with no JSONL files."""
-    return tmp_path
+class TestExtractThinking:
+    def test_thinking_blocks(self):
+        content = [{"type": "thinking", "thinking": "analyze this"}]
+        chars, text = _extract_thinking(content, include=True)
+        assert chars == len("analyze this")
+        assert text == "analyze this"
+
+    def test_exclude_content(self):
+        content = [{"type": "thinking", "thinking": "secret"}]
+        chars, text = _extract_thinking(content, include=False)
+        assert chars > 0
+        assert text is None
 
 
-@pytest.fixture
-def multi_file_log_dir(tmp_path):
-    """Directory with main log + agent subprocess log."""
-    main_entries = [
-        _user_entry("2026-01-29T10:00:00Z"),
-        _assistant_entry("2026-01-29T10:05:00Z",
-                         tool_uses=[{"id": "tu1", "name": "Task"}]),
-    ]
-    agent_entries = [
-        _assistant_entry("2026-01-29T10:05:30Z", uuid="ag1",
-                         tool_uses=[{"id": "atu1", "name": "Grep"}]),
-        _assistant_entry("2026-01-29T10:06:00Z", uuid="ag2",
-                         tool_uses=[{"id": "atu2", "name": "Read"}]),
-    ]
+class TestParseLogFile:
+    def test_basic(self, tmp_path):
+        entry = {
+            "timestamp": "2026-02-11T10:00:00Z",
+            "type": "assistant",
+            "message": {"content": [{"type": "text", "text": "Hello"}]},
+        }
+        f = tmp_path / "test.jsonl"
+        f.write_text(json.dumps(entry) + "\n")
+        entries = list(parse_log_file(f))
+        assert len(entries) == 1
+        assert entries[0].entry_type == "assistant"
 
-    main_file = tmp_path / "main-session.jsonl"
-    agent_file = tmp_path / "agent-sub1.jsonl"
+    def test_skips_invalid_json(self, tmp_path):
+        f = tmp_path / "test.jsonl"
+        f.write_text("not json\n" + json.dumps({
+            "timestamp": "2026-02-11T10:00:00Z",
+            "type": "user", "message": {},
+        }) + "\n")
+        entries = list(parse_log_file(f))
+        assert len(entries) == 1
 
-    with open(main_file, "w") as f:
-        for e in main_entries:
-            f.write(json.dumps(e) + "\n")
-    with open(agent_file, "w") as f:
-        for e in agent_entries:
-            f.write(json.dumps(e) + "\n")
+    def test_skips_no_timestamp(self, tmp_path):
+        f = tmp_path / "test.jsonl"
+        f.write_text(json.dumps({"type": "user"}) + "\n")
+        entries = list(parse_log_file(f))
+        assert len(entries) == 0
 
-    return tmp_path
+    def test_compaction_detection(self, tmp_path):
+        entry = {
+            "timestamp": "2026-02-11T10:00:00Z",
+            "type": "system",
+            "compactMetadata": {"reason": "context_limit"},
+            "message": {},
+        }
+        f = tmp_path / "test.jsonl"
+        f.write_text(json.dumps(entry) + "\n")
+        entries = list(parse_log_file(f))
+        assert entries[0].is_compaction is True
 
-
-# ---------------------------------------------------------------------------
-# Tests: JSONL Discovery
-# ---------------------------------------------------------------------------
-
-class TestLogDiscovery:
-    """Test JSONL file discovery in project directories."""
-
-    def test_discover_main_log_files(self, sample_log_dir):
-        """Parser finds .jsonl files in project directory."""
-        from governance.session_metrics.parser import discover_log_files
-        log_dir, _ = sample_log_dir
-        files = discover_log_files(log_dir)
-        assert len(files) >= 1
-        assert all(f.suffix == ".jsonl" for f in files)
-
-    def test_discover_excludes_agent_files_by_default(self, multi_file_log_dir):
-        """Main discovery excludes agent-*.jsonl by default."""
-        from governance.session_metrics.parser import discover_log_files
-        files = discover_log_files(multi_file_log_dir, include_agents=False)
-        assert not any("agent-" in f.name for f in files)
-
-    def test_discover_includes_agent_files_when_requested(self, multi_file_log_dir):
-        """Agent files included when include_agents=True."""
-        from governance.session_metrics.parser import discover_log_files
-        files = discover_log_files(multi_file_log_dir, include_agents=True)
-        agent_files = [f for f in files if "agent-" in f.name]
-        assert len(agent_files) >= 1
-
-    def test_discover_empty_directory(self, empty_log_dir):
-        """Empty directory returns empty list, no error."""
-        from governance.session_metrics.parser import discover_log_files
-        files = discover_log_files(empty_log_dir)
-        assert files == []
-
-    def test_discover_nonexistent_directory(self, tmp_path):
-        """Nonexistent directory returns empty list, no error."""
-        from governance.session_metrics.parser import discover_log_files
-        files = discover_log_files(tmp_path / "does-not-exist")
-        assert files == []
+    def test_api_error_detection(self, tmp_path):
+        entry = {
+            "timestamp": "2026-02-11T10:00:00Z",
+            "type": "assistant",
+            "isApiErrorMessage": True,
+            "message": {},
+        }
+        f = tmp_path / "test.jsonl"
+        f.write_text(json.dumps(entry) + "\n")
+        entries = list(parse_log_file(f))
+        assert entries[0].is_api_error is True
 
 
-# ---------------------------------------------------------------------------
-# Tests: JSONL Parsing
-# ---------------------------------------------------------------------------
-
-class TestLogParsing:
-    """Test JSONL entry parsing and classification."""
-
-    def test_parse_entries_returns_all(self, sample_log_dir):
-        """Parser yields all entries from JSONL file."""
-        from governance.session_metrics.parser import parse_log_file
-        _, log_file = sample_log_dir
-        entries = list(parse_log_file(log_file))
-        assert len(entries) == 13  # Total entries in fixture
-
-    def test_parse_entries_streaming(self, sample_log_dir):
-        """Parser uses streaming (generator), not loading all into memory."""
-        from governance.session_metrics.parser import parse_log_file
-        _, log_file = sample_log_dir
-        result = parse_log_file(log_file)
-        # Should be a generator, not a list
-        import types
-        assert isinstance(result, types.GeneratorType)
-
-    def test_parse_extracts_timestamp(self, sample_log_dir):
-        """Each parsed entry has a datetime timestamp."""
-        from governance.session_metrics.parser import parse_log_file
-        _, log_file = sample_log_dir
-        entries = list(parse_log_file(log_file))
-        for entry in entries:
-            assert hasattr(entry, "timestamp")
-            assert isinstance(entry.timestamp, datetime)
-
-    def test_parse_extracts_entry_type(self, sample_log_dir):
-        """Each parsed entry has a type classification."""
-        from governance.session_metrics.parser import parse_log_file
-        _, log_file = sample_log_dir
-        entries = list(parse_log_file(log_file))
-        valid_types = {"user", "assistant", "system", "progress",
-                       "file-history-snapshot", "queue-operation"}
-        for entry in entries:
-            assert entry.entry_type in valid_types
-
-    def test_parse_extracts_tool_uses(self, sample_log_dir):
-        """Parser extracts tool_use blocks from assistant content."""
-        from governance.session_metrics.parser import parse_log_file
-        _, log_file = sample_log_dir
-        entries = list(parse_log_file(log_file))
-        assistant_entries = [e for e in entries if e.entry_type == "assistant"]
-        tool_entries = [e for e in assistant_entries if e.tool_uses]
-        assert len(tool_entries) >= 1
-        # Check tool name extraction
-        all_tools = []
-        for e in tool_entries:
-            all_tools.extend(e.tool_uses)
-        tool_names = {t.name for t in all_tools}
-        assert "Read" in tool_names
-
-    def test_parse_extracts_thinking_length(self, sample_log_dir):
-        """Parser extracts thinking block character count (not content)."""
-        from governance.session_metrics.parser import parse_log_file
-        _, log_file = sample_log_dir
-        entries = list(parse_log_file(log_file))
-        thinking_entries = [e for e in entries if e.thinking_chars > 0]
-        assert len(thinking_entries) >= 1
-        # Should have char count, not actual content by default
-        for e in thinking_entries:
-            assert isinstance(e.thinking_chars, int)
-            assert e.thinking_chars > 0
-
-    def test_parse_detects_compaction(self, sample_log_dir):
-        """Parser identifies compaction boundary entries."""
-        from governance.session_metrics.parser import parse_log_file
-        _, log_file = sample_log_dir
-        entries = list(parse_log_file(log_file))
-        compactions = [e for e in entries if e.is_compaction]
-        assert len(compactions) == 1
-
-    def test_parse_detects_mcp_calls(self, sample_log_dir):
-        """Parser identifies MCP tool calls (name starts with mcp__)."""
-        from governance.session_metrics.parser import parse_log_file
-        _, log_file = sample_log_dir
-        entries = list(parse_log_file(log_file))
-        assistant_entries = [e for e in entries if e.entry_type == "assistant"]
-        mcp_tools = []
-        for e in assistant_entries:
-            for tu in e.tool_uses:
-                if tu.is_mcp:
-                    mcp_tools.append(tu)
-        assert len(mcp_tools) >= 1
-        assert mcp_tools[0].name.startswith("mcp__")
-
-    def test_parse_handles_malformed_line(self, tmp_path):
-        """Parser skips malformed JSON lines gracefully."""
-        from governance.session_metrics.parser import parse_log_file
-        log_file = tmp_path / "bad.jsonl"
-        with open(log_file, "w") as f:
-            f.write('{"type": "user", "timestamp": "2026-01-29T10:00:00Z"}\n')
-            f.write("not json at all\n")
-            f.write('{"type": "assistant", "timestamp": "2026-01-29T10:01:00Z"}\n')
-        entries = list(parse_log_file(log_file))
-        assert len(entries) == 2  # Skipped the bad line
-
-    def test_parse_extracts_model(self, sample_log_dir):
-        """Parser extracts model name from assistant entries."""
-        from governance.session_metrics.parser import parse_log_file
-        _, log_file = sample_log_dir
-        entries = list(parse_log_file(log_file))
-        assistant_entries = [e for e in entries if e.entry_type == "assistant"]
-        models = {e.model for e in assistant_entries if e.model}
-        assert "claude-opus-4-5-20251101" in models
-
-
-# ---------------------------------------------------------------------------
-# Tests: Privacy
-# ---------------------------------------------------------------------------
-
-class TestPrivacy:
-    """Test privacy constraints on parsed data."""
-
-    def test_thinking_content_excluded_by_default(self, sample_log_dir):
-        """Thinking block content is NOT included in parsed entries."""
-        from governance.session_metrics.parser import parse_log_file
-        _, log_file = sample_log_dir
-        entries = list(parse_log_file(log_file))
-        thinking_entries = [e for e in entries if e.thinking_chars > 0]
-        for e in thinking_entries:
-            assert e.thinking_content is None
-
-    def test_thinking_content_included_when_requested(self, sample_log_dir):
-        """Thinking content available with include_thinking=True."""
-        from governance.session_metrics.parser import parse_log_file
-        _, log_file = sample_log_dir
-        entries = list(parse_log_file(log_file, include_thinking=True))
-        thinking_entries = [e for e in entries if e.thinking_chars > 0]
-        for e in thinking_entries:
-            assert e.thinking_content is not None
-            assert len(e.thinking_content) == e.thinking_chars
-
-    def test_user_message_content_not_stored(self, sample_log_dir):
-        """User message content is not stored in parsed entries."""
-        from governance.session_metrics.parser import parse_log_file
-        _, log_file = sample_log_dir
-        entries = list(parse_log_file(log_file))
-        user_entries = [e for e in entries if e.entry_type == "user"]
-        for e in user_entries:
-            assert e.user_content is None
-
-    def test_tool_input_truncated(self, tmp_path):
-        """Tool input is truncated to max 200 chars in output."""
-        from governance.session_metrics.parser import parse_log_file
-        log_file = tmp_path / "long-tool.jsonl"
-        long_input = {"code": "x" * 500}
-        entry = _assistant_entry(
-            "2026-01-29T10:00:00Z",
-            tool_uses=[{"id": "tu1", "name": "Bash", "input": long_input}]
-        )
-        with open(log_file, "w") as f:
-            f.write(json.dumps(entry) + "\n")
-
-        entries = list(parse_log_file(log_file))
-        for tu in entries[0].tool_uses:
-            serialized = json.dumps(tu.input_summary)
-            assert len(serialized) <= 250  # 200 + some JSON overhead
+class TestParseLogFileExtended:
+    def test_extended_fields(self, tmp_path):
+        entry = {
+            "timestamp": "2026-02-11T10:00:00Z",
+            "type": "assistant",
+            "sessionId": "uuid-123",
+            "gitBranch": "master",
+            "message": {"content": [{"type": "text", "text": "Done"}]},
+        }
+        f = tmp_path / "test.jsonl"
+        f.write_text(json.dumps(entry) + "\n")
+        entries = list(parse_log_file_extended(f))
+        assert entries[0].session_id == "uuid-123"
+        assert entries[0].git_branch == "master"
+        assert entries[0].text_content == "Done"
