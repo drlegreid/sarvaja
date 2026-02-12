@@ -89,3 +89,63 @@ def register_trust_controllers(state: Any, ctrl: Any, api_base_url: str) -> None
         except Exception as e:
             add_error_trace(state, f"Toggle agent pause failed: {e}", f"/api/agents/{agent_id}/status/toggle")
             state.status_message = f"Error toggling agent: {e}"
+
+    @ctrl.trigger("stop_agent_task")
+    def stop_agent_task(agent_id):
+        """Stop an agent's current task."""
+        if not agent_id:
+            return
+        state.status_message = f"Stop task for {agent_id} (not yet implemented — agents are PAUSED)"
+
+    @ctrl.trigger("end_agent_session")
+    def end_agent_session(agent_id):
+        """End an agent's active session."""
+        if not agent_id:
+            return
+        state.status_message = f"End session for {agent_id} (not yet implemented — agents are PAUSED)"
+
+    @ctrl.trigger("register_agent")
+    def register_agent(agent_id, name, agent_type, model, rules, instructions):
+        """Register a new agent."""
+        if not agent_id or not name:
+            state.status_message = "Agent ID and name are required"
+            return
+        try:
+            with httpx.Client(timeout=10.0) as client:
+                response = client.post(f"{api_base_url}/api/agents", json={
+                    "agent_id": agent_id,
+                    "name": name,
+                    "agent_type": agent_type or "custom",
+                    "model": model or "",
+                    "rules": rules or "",
+                    "instructions": instructions or "",
+                })
+                if response.status_code in (200, 201):
+                    state.status_message = f"Agent {agent_id} registered"
+                    state.show_agent_registration = False
+                else:
+                    state.status_message = f"Registration failed: {response.status_code}"
+        except Exception as e:
+            add_error_trace(state, f"Register agent failed: {e}", "/api/agents")
+            state.status_message = f"Error: {e}"
+
+    @ctrl.trigger("load_trust_history")
+    def load_trust_history(agent_id):
+        """Load trust score history for an agent."""
+        if not agent_id:
+            return
+        try:
+            with httpx.Client(timeout=10.0) as client:
+                response = client.get(f"{api_base_url}/api/agents/{agent_id}")
+                if response.status_code == 200:
+                    data = response.json()
+                    state.trust_history = [{
+                        "timestamp": data.get("last_active", "now"),
+                        "score": data.get("trust_score", 0),
+                        "tasks": data.get("tasks_executed", 0),
+                    }]
+                    state.status_message = f"Trust data loaded for {agent_id}"
+        except Exception as e:
+            add_error_trace(state, f"Load trust history failed: {e}",
+                            f"/api/agents/{agent_id}")
+            state.trust_history = []

@@ -35,6 +35,7 @@ from .backlog import register_backlog_controllers
 from .chat import register_chat_controllers
 from .tests import register_tests_controllers
 from .metrics import register_metrics_controllers
+from .projects import register_project_controllers
 from ..handlers import register_trace_bar_handlers, register_rule_detail_handlers
 
 __all__ = [
@@ -51,6 +52,7 @@ __all__ = [
     'register_chat_controllers',
     'register_tests_controllers',
     'register_metrics_controllers',
+    'register_project_controllers',
 ]
 
 
@@ -102,5 +104,8 @@ def register_all_controllers(state, ctrl, api_base_url: str) -> dict:
     # Session Metrics controller (SESSION-METRICS-01-v1)
     metrics_loaders = register_metrics_controllers(state, ctrl, api_base_url)
     loaders['load_metrics_data'] = metrics_loaders['load_metrics_data']
+
+    # Project controllers (GOV-PROJECT-01-v1)
+    register_project_controllers(state, ctrl, api_base_url)
 
     return loaders
