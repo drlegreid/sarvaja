@@ -109,6 +109,7 @@ def register_chat_controllers(state: Any, ctrl: Any, api_base_url: str) -> None:
         state.file_viewer_loading = True
         state.file_viewer_error = ""
         state.file_viewer_content = ""
+        state.file_viewer_html = ""
 
         try:
             with httpx.Client(base_url=api_base_url, timeout=10.0) as client:
@@ -119,6 +120,8 @@ def register_chat_controllers(state: Any, ctrl: Any, api_base_url: str) -> None:
                 if response.status_code == 200:
                     data = response.json()
                     state.file_viewer_content = data.get("content", "")
+                    # Use rendered HTML for markdown files
+                    state.file_viewer_html = data.get("rendered_html", "")
                 else:
                     try:
                         error_detail = response.json().get("detail", f"HTTP {response.status_code}")

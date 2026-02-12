@@ -96,40 +96,26 @@ class ProjectLinkingOperations:
 
     def get_project_sessions(self, project_id: str) -> list:
         """Get all session IDs linked to a project."""
-        from typedb.driver import TransactionType
-
         try:
-            with self._driver.transaction(self.database, TransactionType.READ) as tx:
-                query = f"""
-                    match
-                        $p isa project, has project-id "{project_id}";
-                        (session-project: $p, project-session: $s) isa project-has-session;
-                        $s has session-id $sid;
-                    fetch
-                        $sid;
-                """
-                results = list(tx.query(query).resolve())
-                return [r.get("sid", {}).get("value", "") for r in results]
+            results = self._execute_query(
+                f'match $p isa project, has project-id "{project_id}";'
+                f' (session-project: $p, project-session: $s) isa project-has-session;'
+                f' $s has session-id $sid; select $sid;'
+            )
+            return [r.get("sid", "") for r in results]
         except Exception as e:
             logger.error(f"Failed to get sessions for project {project_id}: {e}")
             return []
 
     def get_project_plans(self, project_id: str) -> list:
         """Get all plan IDs linked to a project."""
-        from typedb.driver import TransactionType
-
         try:
-            with self._driver.transaction(self.database, TransactionType.READ) as tx:
-                query = f"""
-                    match
-                        $p isa project, has project-id "{project_id}";
-                        (parent-project: $p, child-plan: $pl) isa project-contains-plan;
-                        $pl has plan-id $pid;
-                    fetch
-                        $pid;
-                """
-                results = list(tx.query(query).resolve())
-                return [r.get("pid", {}).get("value", "") for r in results]
+            results = self._execute_query(
+                f'match $p isa project, has project-id "{project_id}";'
+                f' (parent-project: $p, child-plan: $pl) isa project-contains-plan;'
+                f' $pl has plan-id $pid; select $pid;'
+            )
+            return [r.get("pid", "") for r in results]
         except Exception as e:
             logger.error(f"Failed to get plans for project {project_id}: {e}")
             return []

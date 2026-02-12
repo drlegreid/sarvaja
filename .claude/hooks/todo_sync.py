@@ -24,6 +24,16 @@ STATE_FILE = HOOKS_DIR / ".todo_sync_state.json"
 API_BASE = os.environ.get("SARVAJA_API_URL", "http://localhost:8082")
 
 
+def _warn(message: str) -> None:
+    """Write warning to stderr (visible to Claude Code model).
+
+    Per GOV-MCP-FIRST-01-v1: Make sync failures visible so model
+    is nudged toward direct MCP tool usage.
+    """
+    sys.stderr.write(f"[TODO-SYNC WARN] {message}\n")
+    sys.stderr.flush()
+
+
 def _load_state() -> dict:
     """Load last synced state."""
     if STATE_FILE.exists():
@@ -123,15 +133,25 @@ def main() -> int:
 
     state = _load_state()
     synced = 0
+    failed = 0
 
     for todo in todos:
         if _sync_todo_to_api(todo, state):
             synced += 1
+        else:
+            failed += 1
 
     state["last_sync"] = datetime.now().isoformat()
     state["last_count"] = len(todos)
     state["last_synced"] = synced
+    state["last_failed"] = failed
     _save_state(state)
+
+    if failed > 0:
+        _warn(
+            f"{failed}/{len(todos)} tasks failed to sync to TypeDB. "
+            f"Use mcp__gov-tasks__task_create() for reliable persistence."
+        )
 
     return 0
 
@@ -139,6 +159,7 @@ def main() -> int:
 if __name__ == "__main__":
     try:
         sys.exit(main())
-    except Exception:
-        # Never block workflow
+    except Exception as e:
+        # Never block workflow, but make failure visible
+        _warn(f"Hook error: {str(e)[:100]}. Tasks NOT synced to TypeDB.")
         sys.exit(0)

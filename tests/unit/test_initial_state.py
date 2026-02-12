@@ -173,6 +173,36 @@ class TestInfraState:
         assert state["infra_stats"]["status"] == "unknown"
 
 
+# ── Projects state (GOV-PROJECT-01-v1) ──────────────────────────
+
+
+class TestProjectsState:
+    def test_projects_empty_by_default(self, _mock_deps):
+        from agent.governance_ui.state.initial import get_initial_state
+        state = get_initial_state()
+        assert state["projects"] == []
+
+    def test_selected_project_none(self, _mock_deps):
+        from agent.governance_ui.state.initial import get_initial_state
+        state = get_initial_state()
+        assert state["selected_project"] is None
+
+    def test_project_sessions_empty(self, _mock_deps):
+        from agent.governance_ui.state.initial import get_initial_state
+        state = get_initial_state()
+        assert state["project_sessions"] == []
+
+    def test_projects_headers_shape(self, _mock_deps):
+        from agent.governance_ui.state.initial import get_initial_state
+        state = get_initial_state()
+        headers = state["projects_headers"]
+        assert len(headers) == 5
+        keys = [h["key"] for h in headers]
+        assert "project_id" in keys
+        assert "name" in keys
+        assert "session_count" in keys
+
+
 # ── Factory freshness ────────────────────────────────────────────
 
 

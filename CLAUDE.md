@@ -83,7 +83,35 @@ python3 -m venv .venv
 | ARCH, UI | Architecture, Infrastructure | [RULES-TECHNICAL.md](docs/rules/RULES-TECHNICAL.md) |
 | WORKFLOW, TEST, SAFETY, CONTAINER, DOC | Operations | [RULES-OPERATIONAL.md](docs/rules/RULES-OPERATIONAL.md) |
 
-**CRITICAL Rules:** SESSION-EVID-01, TEST-GUARD-01, CONTAINER-DEV-01, GOV-RULE-01, GOV-BICAM-01, WORKFLOW-AUTO-01, WORKFLOW-RD-01, ARCH-INFRA-01, SAFETY-HEALTH-01, TEST-COMP-02, RECOVER-AMNES-01, WORKFLOW-AUTO-02, DOC-LINK-01, TEST-FIX-01, RECOVER-CRASH-01, SAFETY-DESTR-01
+**CRITICAL Rules:** SESSION-EVID-01, TEST-GUARD-01, TEST-E2E-01, CONTAINER-DEV-01, GOV-RULE-01, GOV-BICAM-01, GOV-MCP-FIRST-01, WORKFLOW-AUTO-01, WORKFLOW-RD-01, ARCH-INFRA-01, SAFETY-HEALTH-01, TEST-COMP-02, RECOVER-AMNES-01, WORKFLOW-AUTO-02, DOC-LINK-01, TEST-FIX-01, RECOVER-CRASH-01, SAFETY-DESTR-01
+
+## Data Flow Verification (TEST-E2E-01-v1)
+
+**When changing controllers/routes/services, ALL 3 tiers are MANDATORY:**
+
+| Tier | Command | Proves |
+|------|---------|--------|
+| 1. Unit | `.venv/bin/python3 -m pytest tests/unit/ -q` | Code compiles, interfaces match |
+| 2. Integration | `curl http://localhost:8082/api/{endpoint}` | Real API returns correct data |
+| 3. Visual | Playwright navigate + screenshot | User sees the data in UI |
+
+**Unit tests with mocks are NOT sufficient for data flow changes.**
+Rebuild container → curl API → Playwright screenshot → then declare done.
+
+## Task Management (GOV-MCP-FIRST-01-v1)
+
+**MCP tools are PRIMARY for task/rule/session management:**
+
+| Action | Use This | NOT This |
+|--------|----------|----------|
+| Create task | `mcp__gov-tasks__task_create()` | Editing TODO.md |
+| Update status | `mcp__gov-tasks__task_update()` | Editing TODO.md |
+| Create rule | `mcp__gov-core__rule_create()` | Editing docs/rules/ |
+| Start session | `mcp__gov-sessions__session_start()` | Manual evidence files |
+
+**TodoWrite** = progress display only (auto-synced to TypeDB via hook).
+**TODO.md** = emergency fallback when MCP services are down.
+**TypeDB** = source of truth for all tasks, rules, sessions.
 
 ## Session Start Protocol
 

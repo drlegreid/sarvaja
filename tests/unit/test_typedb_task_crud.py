@@ -138,6 +138,52 @@ class TestUpdateTask:
         assert result is False
 
 
+class TestUpdateTaskLifecycleTimestamps:
+    """Tests for _set_lifecycle_timestamps via update_task()."""
+
+    def test_sets_completed_at_on_done(self, crud):
+        from governance.typedb.entities import Task
+        crud._mock_tasks["T-1"] = Task(id="T-1", name="Test", status="OPEN", phase="P1")
+        result = crud.update_task("T-1", status="DONE")
+        assert result is True
+        # Should have: delete status, insert status, insert completed-at = 3+ queries
+        calls = [str(c) for c in crud._tx.query.call_args_list]
+        completed_at_set = any("task-completed-at" in c for c in calls)
+        assert completed_at_set, "completed_at should be set when transitioning to DONE"
+
+    def test_sets_claimed_at_on_in_progress(self, crud):
+        from governance.typedb.entities import Task
+        crud._mock_tasks["T-1"] = Task(id="T-1", name="Test", status="OPEN", phase="P1")
+        result = crud.update_task("T-1", status="IN_PROGRESS")
+        assert result is True
+        calls = [str(c) for c in crud._tx.query.call_args_list]
+        claimed_at_set = any("task-claimed-at" in c for c in calls)
+        assert claimed_at_set, "claimed_at should be set when transitioning to IN_PROGRESS"
+
+    def test_skips_completed_at_if_already_set(self, crud):
+        from datetime import datetime
+        from governance.typedb.entities import Task
+        crud._mock_tasks["T-1"] = Task(
+            id="T-1", name="Test", status="OPEN", phase="P1",
+            completed_at=datetime(2026, 1, 1, 12, 0, 0),
+        )
+        result = crud.update_task("T-1", status="DONE")
+        assert result is True
+        calls = [str(c) for c in crud._tx.query.call_args_list]
+        completed_at_set = any("task-completed-at" in c for c in calls)
+        assert not completed_at_set, "Should not overwrite existing completed_at"
+
+    def test_repair_missing_completed_at_same_status(self, crud):
+        """When re-updating to same DONE status, should still set missing completed_at."""
+        from governance.typedb.entities import Task
+        crud._mock_tasks["T-1"] = Task(id="T-1", name="Test", status="DONE", phase="P1")
+        result = crud.update_task("T-1", status="DONE")
+        assert result is True
+        calls = [str(c) for c in crud._tx.query.call_args_list]
+        completed_at_set = any("task-completed-at" in c for c in calls)
+        assert completed_at_set, "Should repair missing completed_at even when status unchanged"
+
+
 class TestDeleteTask:
     def test_delete_success(self, crud):
         result = crud.delete_task("T-1")

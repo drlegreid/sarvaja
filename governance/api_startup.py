@@ -96,13 +96,17 @@ def mcp_readiness_handler(api_base_url_unused=None):
     and whether the service layer is properly integrated.
     """
     from agent.governance_ui.controllers.infra import (
-        MCP_SERVER_META, SERVICE_CONFIG, check_port,
+        MCP_SERVER_META, SERVICE_CONFIG, check_port, is_in_container,
     )
 
-    # Check backend service health
+    # Check backend service health (container-aware per GAP-MCP-READINESS-001)
     backends = {}
-    for svc_name, (_, _, host_port) in SERVICE_CONFIG.items():
-        backends[svc_name] = check_port("localhost", host_port)
+    in_container = is_in_container()
+    for svc_name, (container_host, container_port, host_port) in SERVICE_CONFIG.items():
+        if in_container:
+            backends[svc_name] = check_port(container_host, container_port)
+        else:
+            backends[svc_name] = check_port("localhost", host_port)
 
     # Check each MCP server readiness
     servers = {}

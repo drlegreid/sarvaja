@@ -276,3 +276,93 @@ class TestDeleteDecision:
             with pytest.raises(HTTPException) as exc_info:
                 await delete_decision("D-1")
             assert exc_info.value.status_code == 503
+
+
+class TestCreateDecisionWithRules:
+    """GAP-DECISION-RULES-001: rules_applied links rules at creation."""
+
+    @pytest.mark.asyncio
+    async def test_rules_applied_links_rules(self):
+        """Creating a decision with rules_applied should call link_decision_to_rule."""
+        client = MagicMock()
+        client.get_all_decisions.return_value = []
+        client.create_decision.return_value = _make_decision()
+        client.link_decision_to_rule.return_value = True
+
+        with patch(_P_CLIENT, return_value=client):
+            from governance.routes.rules.decisions import create_decision
+            from governance.models import DecisionCreate
+            data = DecisionCreate(
+                decision_id="DECISION-001", name="Test",
+                context="C", rationale="R",
+                rules_applied=["RULE-001", "RULE-002"],
+            )
+            result = await create_decision(data)
+
+        assert result.linked_rules == ["RULE-001", "RULE-002"]
+        assert client.link_decision_to_rule.call_count == 2
+        client.link_decision_to_rule.assert_any_call("DECISION-001", "RULE-001")
+        client.link_decision_to_rule.assert_any_call("DECISION-001", "RULE-002")
+
+    @pytest.mark.asyncio
+    async def test_empty_rules_applied_no_linking(self):
+        """No rules_applied means no link calls."""
+        client = MagicMock()
+        client.get_all_decisions.return_value = []
+        client.create_decision.return_value = _make_decision()
+
+        with patch(_P_CLIENT, return_value=client):
+            from governance.routes.rules.decisions import create_decision
+            from governance.models import DecisionCreate
+            data = DecisionCreate(
+                decision_id="DECISION-001", name="Test",
+                context="C", rationale="R",
+            )
+            result = await create_decision(data)
+
+        assert result.linked_rules == []
+        client.link_decision_to_rule.assert_not_called()
+
+    @pytest.mark.asyncio
+    async def test_partial_link_failure(self):
+        """If one rule link fails, others should still succeed."""
+        client = MagicMock()
+        client.get_all_decisions.return_value = []
+        client.create_decision.return_value = _make_decision()
+        # First link succeeds, second fails
+        client.link_decision_to_rule.side_effect = [True, False]
+
+        with patch(_P_CLIENT, return_value=client):
+            from governance.routes.rules.decisions import create_decision
+            from governance.models import DecisionCreate
+            data = DecisionCreate(
+                decision_id="DECISION-001", name="Test",
+                context="C", rationale="R",
+                rules_applied=["RULE-001", "RULE-002"],
+            )
+            result = await create_decision(data)
+
+        # Only first rule linked successfully
+        assert result.linked_rules == ["RULE-001"]
+
+    @pytest.mark.asyncio
+    async def test_link_exception_handled(self):
+        """Exceptions in link_decision_to_rule should be caught gracefully."""
+        client = MagicMock()
+        client.get_all_decisions.return_value = []
+        client.create_decision.return_value = _make_decision()
+        client.link_decision_to_rule.side_effect = Exception("TypeDB error")
+
+        with patch(_P_CLIENT, return_value=client):
+            from governance.routes.rules.decisions import create_decision
+            from governance.models import DecisionCreate
+            data = DecisionCreate(
+                decision_id="DECISION-001", name="Test",
+                context="C", rationale="R",
+                rules_applied=["RULE-001"],
+            )
+            result = await create_decision(data)
+
+        # Decision created but no rules linked due to error
+        assert result.id == "DECISION-001"
+        assert result.linked_rules == []

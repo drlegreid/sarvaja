@@ -82,7 +82,7 @@ def register_task_verify_tools(mcp) -> None:
         """
         Sync Claude Code todos to TypeDB as session tasks.
 
-        Per MCP-002-A: Enable TodoWrite persistence to TypeDB.
+        Per MCP-002-A / GOV-MCP-FIRST-01-v1: Enable TodoWrite persistence to TypeDB.
 
         Args:
             session_id: Session identifier (e.g., "SESSION-2026-01-19-TOPIC")

@@ -254,3 +254,74 @@ class TestLoadInfraStatus:
         loaders["load_infra_status"]()
 
         assert state.infra_stats["status"] == "down"
+
+
+# ── load_python_processes fallback ─────────────────────
+
+
+class TestLoadPythonProcessesFallback:
+    """GAP-INFRA-PROCS-002: ps aux fallback when /proc scan finds nothing."""
+
+    @patch("agent.governance_ui.controllers.infra_loaders.subprocess")
+    @patch("agent.governance_ui.controllers.infra_loaders.Path")
+    def test_falls_back_to_ps_aux(self, mock_path, mock_sub):
+        """When /proc scan finds nothing, should try ps aux."""
+        # /proc iterdir returns nothing useful
+        mock_proc = MagicMock()
+        mock_proc.iterdir.return_value = []
+        mock_path.return_value = mock_proc
+
+        # ps aux returns python processes (11 columns: USER PID %CPU %MEM VSZ RSS TTY STAT START TIME COMMAND)
+        mock_sub.run.return_value = MagicMock(
+            stdout=(
+                "USER       PID %CPU %MEM    VSZ   RSS TTY      STAT START   TIME COMMAND\n"
+                "root       123  1.0  2.5 100000 25600 ?        Ss   00:00   0:05 python3 -m governance.api\n"
+                "root       456  0.5  1.2  80000 12800 ?        S    00:01   0:02 python3 -m uvicorn\n"
+            ),
+            returncode=0,
+        )
+
+        state, ctrl, _ = _setup()
+        ctrl._triggers["load_python_processes"]()
+
+        procs = state.infra_python_procs
+        assert len(procs) == 2
+        assert procs[0]["pid"] == "123"
+        assert "python3" in procs[0]["command"]
+
+    @patch("agent.governance_ui.controllers.infra_loaders.subprocess")
+    @patch("agent.governance_ui.controllers.infra_loaders.Path")
+    def test_proc_scan_succeeds_no_fallback(self, mock_path, mock_sub):
+        """When /proc scan finds processes, should NOT call ps aux."""
+        # /proc has a python process
+        pid_dir = MagicMock()
+        pid_dir.name = "42"
+        cmdline_file = MagicMock()
+        cmdline_file.read_text.return_value = "python3\x00-m\x00uvicorn"
+        pid_dir.__truediv__ = lambda self, key: cmdline_file
+
+        mock_proc = MagicMock()
+        mock_proc.iterdir.return_value = [pid_dir]
+        mock_path.return_value = mock_proc
+
+        state, ctrl, _ = _setup()
+        ctrl._triggers["load_python_processes"]()
+
+        procs = state.infra_python_procs
+        assert len(procs) >= 1
+        # subprocess.run should NOT have been called for ps aux
+        mock_sub.run.assert_not_called()
+
+    @patch("agent.governance_ui.controllers.infra_loaders.subprocess")
+    @patch("agent.governance_ui.controllers.infra_loaders.Path")
+    def test_both_fail_returns_empty(self, mock_path, mock_sub):
+        """When both /proc and ps aux fail, should return empty list."""
+        mock_proc = MagicMock()
+        mock_proc.iterdir.return_value = []
+        mock_path.return_value = mock_proc
+        mock_sub.run.side_effect = FileNotFoundError("ps not found")
+
+        state, ctrl, _ = _setup()
+        ctrl._triggers["load_python_processes"]()
+
+        assert state.infra_python_procs == []

@@ -32,6 +32,22 @@ def register_sessions_pagination(
         state.sessions_metrics_duration = metrics["duration"]
         state.sessions_metrics_avg_tasks = metrics["avg_tasks"]
 
+    def _update_timeline(client, base_url):
+        """Fetch all sessions for timeline histogram (not just paginated page)."""
+        try:
+            resp = client.get(f"{base_url}/api/sessions", params={"limit": 500})
+            if resp.status_code == 200:
+                data = resp.json()
+                all_items = data.get("items", data) if isinstance(data, dict) else data
+                tl_values, tl_labels = compute_timeline_data(all_items)
+                state.sessions_timeline_data = tl_values
+                state.sessions_timeline_labels = tl_labels
+                if has_plotly():
+                    plotly_data = compute_timeline_plotly_data(all_items)
+                    update_plotly_timeline(plotly_data)
+        except Exception:
+            pass
+
     def load_sessions_page():
         """Load sessions with pagination and filters (GAP-UI-036, F.1)."""
         try:
@@ -72,13 +88,8 @@ def register_sessions_pagination(
                     for item in items:
                         item["duration"] = compute_session_duration(
                             item.get("start_time", ""), item.get("end_time", ""))
-                    # F.3: Timeline data (Plotly + VSparkline fallback)
-                    tl_values, tl_labels = compute_timeline_data(items)
-                    state.sessions_timeline_data = tl_values
-                    state.sessions_timeline_labels = tl_labels
-                    if has_plotly():
-                        plotly_data = compute_timeline_plotly_data(items)
-                        update_plotly_timeline(plotly_data)
+                    # F.3: Timeline data — fetch ALL sessions for proper histogram
+                    _update_timeline(client, api_base_url)
                     # F.1: Extract unique agent options for filter dropdown
                     agents = sorted(set(
                         s.get("agent_id") for s in items

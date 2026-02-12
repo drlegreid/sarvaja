@@ -117,6 +117,7 @@ class DecisionCreate(BaseModel):
     status: Literal["PENDING", "APPROVED", "REJECTED"] = Field(default="PENDING", description="Status")
     options: List[DecisionOption] = Field(default_factory=list, description="Options considered")
     selected_option: Optional[str] = Field(default=None, description="Label of chosen option")
+    rules_applied: List[str] = Field(default_factory=list, description="Rule IDs to link via decision-affects")
 
 class DecisionUpdate(BaseModel):
     """Request model for updating a decision."""
@@ -182,13 +183,20 @@ class SessionEnd(BaseModel):
     evidence_files: Optional[List[str]] = None
 
 class SessionUpdate(BaseModel):
-    """Request model for updating a session. Per GAP-UI-034."""
+    """Request model for updating a session. Per GAP-UI-034, SESSION-CC-01-v1."""
     description: Optional[str] = None
     status: Optional[str] = None
     tasks_completed: Optional[int] = None
     agent_id: Optional[str] = None
     start_time: Optional[str] = None
     end_time: Optional[str] = None
+    # Claude Code session attributes (SESSION-CC-01-v1)
+    cc_session_uuid: Optional[str] = None
+    cc_project_slug: Optional[str] = None
+    cc_git_branch: Optional[str] = None
+    cc_tool_count: Optional[int] = None
+    cc_thinking_chars: Optional[int] = None
+    cc_compaction_count: Optional[int] = None
 
 class EvidenceResponse(BaseModel):
     """Response model for evidence."""
@@ -219,6 +227,7 @@ class FileContentResponse(BaseModel):
     size: int
     modified_at: str
     exists: bool = True
+    rendered_html: Optional[str] = None
 
 class AgentResponse(BaseModel):
     """Response model for an agent."""

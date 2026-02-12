@@ -111,3 +111,100 @@ class TestTodoSyncSettings:
             if hook_group.get("matcher") == "TodoWrite":
                 timeout = hook_group["hooks"][0].get("timeout", 0)
                 assert timeout == 3
+
+
+def _load_hook_module():
+    """Helper to import the hook module."""
+    import importlib.util
+    spec = importlib.util.spec_from_file_location("todo_sync", str(HOOK_PATH))
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return mod
+
+
+class TestTodoSyncWarnings:
+    """Tests for GOV-MCP-FIRST-01-v1: sync failure warnings visible via stderr."""
+
+    def test_warn_helper_writes_to_stderr(self):
+        """_warn() writes to stderr with correct prefix."""
+        mod = _load_hook_module()
+        import io
+        buf = io.StringIO()
+        with patch.object(mod.sys, "stderr", buf):
+            mod._warn("test message")
+        output = buf.getvalue()
+        assert "[TODO-SYNC WARN]" in output
+        assert "test message" in output
+
+    def test_failed_sync_writes_warning_to_stderr(self):
+        """When sync fails, main() emits a warning to stderr."""
+        mod = _load_hook_module()
+        todos = {"todos": [
+            {"content": "Fix bug", "status": "pending", "activeForm": "Fixing"},
+        ]}
+        import io
+        buf = io.StringIO()
+        with patch.dict(os.environ, {"CLAUDE_TOOL_INPUT": json.dumps(todos)}):
+            with patch.object(mod, "_sync_todo_to_api", return_value=False):
+                with patch.object(mod, "_save_state"):
+                    with patch.object(mod.sys, "stderr", buf):
+                        result = mod.main()
+        assert result == 0
+        output = buf.getvalue()
+        assert "1/1 tasks failed" in output
+        assert "mcp__gov-tasks__task_create()" in output
+
+    def test_all_synced_no_warning(self):
+        """When all sync, no warning on stderr."""
+        mod = _load_hook_module()
+        todos = {"todos": [
+            {"content": "Fix bug", "status": "pending", "activeForm": "Fixing"},
+        ]}
+        import io
+        buf = io.StringIO()
+        with patch.dict(os.environ, {"CLAUDE_TOOL_INPUT": json.dumps(todos)}):
+            with patch.object(mod, "_sync_todo_to_api", return_value=True):
+                with patch.object(mod, "_save_state"):
+                    with patch.object(mod.sys, "stderr", buf):
+                        result = mod.main()
+        assert result == 0
+        assert buf.getvalue() == ""
+
+    def test_state_tracks_failed_count(self):
+        """State includes last_failed count after sync."""
+        mod = _load_hook_module()
+        todos = {"todos": [
+            {"content": "Task A", "status": "pending", "activeForm": "A"},
+            {"content": "Task B", "status": "pending", "activeForm": "B"},
+        ]}
+        saved_state = {}
+
+        def capture_state(s):
+            saved_state.update(s)
+
+        # First fails, second succeeds
+        with patch.dict(os.environ, {"CLAUDE_TOOL_INPUT": json.dumps(todos)}):
+            with patch.object(mod, "_sync_todo_to_api", side_effect=[False, True]):
+                with patch.object(mod, "_save_state", side_effect=capture_state):
+                    with patch.object(mod.sys, "stderr", MagicMock()):
+                        mod.main()
+
+        assert saved_state["last_failed"] == 1
+        assert saved_state["last_synced"] == 1
+        assert saved_state["last_count"] == 2
+
+    def test_exception_in_main_warns_stderr(self):
+        """Exception in __main__ block produces warning before exit 0."""
+        mod = _load_hook_module()
+        import io
+        buf = io.StringIO()
+        with patch.object(mod, "main", side_effect=RuntimeError("boom")):
+            with patch.object(mod.sys, "stderr", buf):
+                # Simulate __main__ except block
+                try:
+                    mod.main()
+                except RuntimeError as e:
+                    mod._warn(f"Hook error: {str(e)[:100]}. Tasks NOT synced to TypeDB.")
+        output = buf.getvalue()
+        assert "Hook error: boom" in output
+        assert "NOT synced" in output

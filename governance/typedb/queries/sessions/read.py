@@ -35,6 +35,16 @@ class SessionReadQueries:
             ("match $s isa work-session, has session-id $id, has session-file-path $v; select $id, $v;", "v", "file_path"),
             ("match $s isa work-session, has session-id $id, has started-at $v; select $id, $v;", "v", "started_at"),
             ("match $s isa work-session, has session-id $id, has agent-id $v; select $id, $v;", "v", "agent_id"),
+            # Claude Code session attributes (SESSION-CC-01-v1)
+            ("match $s isa work-session, has session-id $id, has cc-session-uuid $v; select $id, $v;", "v", "cc_session_uuid"),
+            ("match $s isa work-session, has session-id $id, has cc-project-slug $v; select $id, $v;", "v", "cc_project_slug"),
+            ("match $s isa work-session, has session-id $id, has cc-git-branch $v; select $id, $v;", "v", "cc_git_branch"),
+        ]
+        # CC integer attributes (separate to handle type)
+        cc_int_queries = [
+            ("match $s isa work-session, has session-id $id, has cc-tool-count $v; select $id, $v;", "v", "cc_tool_count"),
+            ("match $s isa work-session, has session-id $id, has cc-thinking-chars $v; select $id, $v;", "v", "cc_thinking_chars"),
+            ("match $s isa work-session, has session-id $id, has cc-compaction-count $v; select $id, $v;", "v", "cc_compaction_count"),
         ]
 
         for query, result_key, session_attr in attr_queries:
@@ -44,6 +54,16 @@ class SessionReadQueries:
                     session_id = r.get("id")
                     if session_id in session_map:
                         setattr(session_map[session_id], session_attr, r.get(result_key))
+            except Exception:
+                pass
+        for query, result_key, session_attr in cc_int_queries:
+            try:
+                results = self._execute_query(query)
+                for r in results:
+                    session_id = r.get("id")
+                    if session_id in session_map:
+                        val = r.get(result_key)
+                        setattr(session_map[session_id], session_attr, int(val) if val is not None else None)
             except Exception:
                 pass
         try:
@@ -151,6 +171,22 @@ class SessionReadQueries:
         agent_results = self._execute_query(f'match $s isa work-session, has session-id "{session_id}", has agent-id $agent; select $agent;')
         if agent_results:
             session.agent_id = agent_results[0].get("agent")
+        # Claude Code session attributes (SESSION-CC-01-v1)
+        for attr, field in [("cc-session-uuid", "cc_session_uuid"), ("cc-project-slug", "cc_project_slug"), ("cc-git-branch", "cc_git_branch")]:
+            try:
+                r = self._execute_query(f'match $s isa work-session, has session-id "{session_id}", has {attr} $v; select $v;')
+                if r:
+                    setattr(session, field, r[0].get("v"))
+            except Exception:
+                pass
+        for attr, field in [("cc-tool-count", "cc_tool_count"), ("cc-thinking-chars", "cc_thinking_chars"), ("cc-compaction-count", "cc_compaction_count")]:
+            try:
+                r = self._execute_query(f'match $s isa work-session, has session-id "{session_id}", has {attr} $v; select $v;')
+                if r:
+                    val = r[0].get("v")
+                    setattr(session, field, int(val) if val is not None else None)
+            except Exception:
+                pass
         rules_query = f"""
             match
                 $s isa work-session, has session-id "{session_id}";

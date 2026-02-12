@@ -132,6 +132,9 @@ def find_jsonl_for_session(session: Dict[str, Any]) -> Optional[Path]:
     parts = session_id.split("-CC-", 1)
     slug = parts[1].lower() if len(parts) == 2 else None
 
+    if not DEFAULT_CC_DIR.is_dir():
+        return None
+
     for d in DEFAULT_CC_DIR.iterdir():
         if not d.is_dir():
             continue

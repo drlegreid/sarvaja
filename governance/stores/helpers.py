@@ -137,7 +137,14 @@ def session_to_response(session: TypeDBSession):
         file_path=session.file_path,
         evidence_files=session.evidence_files,
         linked_rules_applied=session.linked_rules_applied,
-        linked_decisions=session.linked_decisions
+        linked_decisions=session.linked_decisions,
+        cc_session_uuid=getattr(session, 'cc_session_uuid', None),
+        cc_project_slug=getattr(session, 'cc_project_slug', None),
+        cc_git_branch=getattr(session, 'cc_git_branch', None),
+        cc_tool_count=getattr(session, 'cc_tool_count', None),
+        cc_thinking_chars=getattr(session, 'cc_thinking_chars', None),
+        cc_compaction_count=getattr(session, 'cc_compaction_count', None),
+        project_id=getattr(session, 'project_id', None),
     )
 
 

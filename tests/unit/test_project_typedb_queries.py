@@ -7,45 +7,20 @@ Per GOV-PROJECT-01-v1: Tests CRUD + linking query classes.
 import pytest
 from unittest.mock import MagicMock, patch
 
-from governance.typedb.queries.projects.crud import (
-    ProjectCRUDOperations,
-    _extract_attr,
-)
+from governance.typedb.queries.projects.crud import ProjectCRUDOperations
 from governance.typedb.queries.projects.linking import ProjectLinkingOperations
-
-
-class TestExtractAttr:
-    """Tests for _extract_attr() helper."""
-
-    def test_list_format(self):
-        data = {"project-id": [{"value": "PROJ-1"}]}
-        assert _extract_attr(data, "project-id") == "PROJ-1"
-
-    def test_dict_format(self):
-        data = {"project-id": {"value": "PROJ-2"}}
-        assert _extract_attr(data, "project-id") == "PROJ-2"
-
-    def test_none(self):
-        data = {}
-        assert _extract_attr(data, "project-id") is None
-
-    def test_empty_list(self):
-        data = {"project-id": []}
-        assert _extract_attr(data, "project-id") is None
-
-    def test_string_fallback(self):
-        data = {"project-id": "PROJ-3"}
-        assert _extract_attr(data, "project-id") == "PROJ-3"
 
 
 class TestProjectCRUDMixin:
     """Tests for ProjectCRUDOperations mixin methods."""
 
     def _make_mixin(self):
-        """Create a mixin instance with mocked TypeDB driver."""
+        """Create a mixin instance with mocked TypeDB driver and base methods."""
         obj = ProjectCRUDOperations.__new__(ProjectCRUDOperations)
         obj._driver = MagicMock()
         obj.database = "test_db"
+        obj._connected = True
+        obj._execute_query = MagicMock(return_value=[])
         return obj
 
     def test_insert_checks_existing(self):
@@ -56,13 +31,39 @@ class TestProjectCRUDMixin:
 
     def test_get_project_no_results(self):
         obj = self._make_mixin()
-        mock_tx = MagicMock()
-        mock_query_result = MagicMock()
-        mock_query_result.resolve.return_value = []
-        mock_tx.query.return_value = mock_query_result
-        obj._driver.transaction.return_value.__enter__ = MagicMock(return_value=mock_tx)
-        obj._driver.transaction.return_value.__exit__ = MagicMock(return_value=False)
+        obj._execute_query.return_value = []
         result = obj.get_project("PROJ-NOPE")
+        assert result is None
+
+    def test_get_project_with_results(self):
+        obj = self._make_mixin()
+        obj._execute_query.side_effect = [
+            [{"p": "iid-123"}],  # existence
+            [{"v": "My Project"}],  # name
+            [{"v": "/some/path"}],  # path
+        ]
+        result = obj.get_project("PROJ-1")
+        assert result == {
+            "project_id": "PROJ-1",
+            "name": "My Project",
+            "path": "/some/path",
+        }
+
+    def test_get_project_partial_attrs(self):
+        obj = self._make_mixin()
+        obj._execute_query.side_effect = [
+            [{"p": "iid-123"}],  # existence
+            [{"v": "Project X"}],  # name
+            [],  # no path
+        ]
+        result = obj.get_project("PROJ-2")
+        assert result["name"] == "Project X"
+        assert result["path"] is None
+
+    def test_get_project_error(self):
+        obj = self._make_mixin()
+        obj._execute_query.side_effect = Exception("fail")
+        result = obj.get_project("PROJ-ERR")
         assert result is None
 
     def test_delete_nonexistent(self):
@@ -73,9 +74,23 @@ class TestProjectCRUDMixin:
 
     def test_list_projects_error_returns_empty(self):
         obj = self._make_mixin()
-        obj._driver.transaction.side_effect = Exception("connection refused")
+        obj._execute_query.side_effect = Exception("connection refused")
         result = obj.list_projects()
         assert result == []
+
+    def test_list_projects_returns_projects(self):
+        obj = self._make_mixin()
+        obj._execute_query.return_value = [
+            {"id": "PROJ-A"},
+            {"id": "PROJ-B"},
+        ]
+        with patch.object(obj, "get_project", side_effect=[
+            {"project_id": "PROJ-A", "name": "A", "path": None},
+            {"project_id": "PROJ-B", "name": "B", "path": None},
+        ]):
+            result = obj.list_projects()
+        assert len(result) == 2
+        assert result[0]["project_id"] == "PROJ-A"
 
 
 class TestProjectLinkingMixin:
@@ -85,6 +100,8 @@ class TestProjectLinkingMixin:
         obj = ProjectLinkingOperations.__new__(ProjectLinkingOperations)
         obj._driver = MagicMock()
         obj.database = "test_db"
+        obj._connected = True
+        obj._execute_query = MagicMock(return_value=[])
         return obj
 
     def test_link_project_to_plan_error(self):
@@ -113,12 +130,29 @@ class TestProjectLinkingMixin:
 
     def test_get_project_sessions_error(self):
         obj = self._make_mixin()
-        obj._driver.transaction.side_effect = Exception("fail")
+        obj._execute_query.side_effect = Exception("fail")
         result = obj.get_project_sessions("PROJ-1")
         assert result == []
 
+    def test_get_project_sessions_returns_ids(self):
+        obj = self._make_mixin()
+        obj._execute_query.return_value = [
+            {"sid": "SESSION-1"},
+            {"sid": "SESSION-2"},
+        ]
+        result = obj.get_project_sessions("PROJ-1")
+        assert result == ["SESSION-1", "SESSION-2"]
+
     def test_get_project_plans_error(self):
         obj = self._make_mixin()
-        obj._driver.transaction.side_effect = Exception("fail")
+        obj._execute_query.side_effect = Exception("fail")
         result = obj.get_project_plans("PROJ-1")
         assert result == []
+
+    def test_get_project_plans_returns_ids(self):
+        obj = self._make_mixin()
+        obj._execute_query.return_value = [
+            {"pid": "PLAN-1"},
+        ]
+        result = obj.get_project_plans("PROJ-1")
+        assert result == ["PLAN-1"]

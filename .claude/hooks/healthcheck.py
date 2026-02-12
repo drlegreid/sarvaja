@@ -556,6 +556,15 @@ def main():
             except Exception:
                 pass  # Non-critical, don't block healthcheck
 
+        # MCP Usage patterns (GOV-MCP-FIRST-01-v1)
+        mcp_usage = None
+        try:
+            mcp_usage_file = Path(__file__).parent / ".mcp_usage_state.json"
+            if mcp_usage_file.exists():
+                mcp_usage = json.loads(mcp_usage_file.read_text())
+        except Exception:
+            pass  # Non-critical
+
         # Format output based on state (retry ceiling affects verbosity only, not checking)
         # GAP-HEALTH-AGGRESSIVE-001: Always use detailed output in aggressive mode
         use_detailed = hash_changed or check_count == 1 or HEALTH_MODE == "aggressive"
@@ -566,7 +575,7 @@ def main():
                 entropy, zombies, intent, intent_amnesia, workflow,
                 core_services=CORE_SERVICES, stale_process_hours=STALE_PROCESS_HOURS,
                 recovery_hint=recovery_hint, auto_recovery_enabled=AUTO_RECOVERY_ENABLED,
-                applicability=applicability
+                applicability=applicability, mcp_usage=mcp_usage,
             )
         elif retry_ceiling_reached:
             # Brief output when unchanged for >30s (but we still checked current state!)

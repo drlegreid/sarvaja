@@ -10,7 +10,7 @@ from trame.widgets import vuetify3 as v3
 
 
 def build_session_metadata_chips() -> None:
-    """Build session metadata chips."""
+    """Build session metadata chips including CC fields (SESSION-CC-01-v1)."""
     with v3.VChipGroup(classes="mb-4"):
         v3.VChip(
             v_text="selected_session.start_time || selected_session.date || 'No date'",
@@ -24,6 +24,30 @@ def build_session_metadata_chips() -> None:
             prepend_icon="mdi-information",
             __properties=["data-testid"],
             **{"data-testid": "session-detail-status"}
+        )
+        # Source type badge
+        v3.VChip(
+            v_if="selected_session.source_type",
+            v_text="selected_session.source_type",
+            prepend_icon="mdi-source-branch",
+            color="info",
+            size="small",
+        )
+        # CC Git Branch (SESSION-CC-01-v1)
+        v3.VChip(
+            v_if="selected_session.cc_git_branch",
+            v_text="selected_session.cc_git_branch",
+            prepend_icon="mdi-source-branch",
+            color="purple",
+            size="small",
+        )
+        # CC Project Slug (SESSION-CC-01-v1)
+        v3.VChip(
+            v_if="selected_session.cc_project_slug",
+            v_text="selected_session.cc_project_slug",
+            prepend_icon="mdi-folder",
+            color="teal",
+            size="small",
         )
 
 
@@ -77,4 +101,25 @@ def build_session_info_card() -> None:
                     title="Description",
                     subtitle=("selected_session.description || 'No description'",),
                     prepend_icon="mdi-text",
+                )
+                # CC Session UUID (SESSION-CC-01-v1)
+                v3.VListItem(
+                    v_if="selected_session.cc_session_uuid",
+                    title="CC UUID",
+                    subtitle=("selected_session.cc_session_uuid",),
+                    prepend_icon="mdi-fingerprint",
+                )
+                # CC Metrics row (SESSION-CC-01-v1)
+                v3.VListItem(
+                    v_if="selected_session.cc_tool_count",
+                    title="Tool Calls",
+                    subtitle=(
+                        "String(selected_session.cc_tool_count || 0)"
+                        " + ' tools, '"
+                        " + String(selected_session.cc_thinking_chars || 0)"
+                        " + ' thinking chars, '"
+                        " + String(selected_session.cc_compaction_count || 0)"
+                        " + ' compactions'",
+                    ),
+                    prepend_icon="mdi-tools",
                 )

@@ -3,188 +3,167 @@ Tests for session tool calls and thoughts API endpoints.
 
 Per B.3: Load session tool calls + thoughts in detail view.
 Verifies:
-- GET /sessions/{id}/tool_calls endpoint exists
-- GET /sessions/{id}/thoughts endpoint exists
+- GET /sessions/{id}/tools endpoint exists (detail.py)
+- GET /sessions/{id}/thoughts endpoint exists (detail.py)
 - Session controller loads tool calls on select
 - Session controller loads thoughts on select
 
-Created: 2026-02-01
+Updated: 2026-02-12 — endpoints moved from relations.py to detail.py
 """
 import pytest
 from unittest.mock import patch, MagicMock
-from fastapi.testclient import TestClient
 
 
-@pytest.fixture
-def client():
-    """Create test client for session relations API."""
-    from governance.routes.sessions.relations import router
-    from fastapi import FastAPI
-    app = FastAPI()
-    app.include_router(router, prefix="/api")
-    return TestClient(app)
+_DETAIL = "governance.routes.sessions.detail"
 
 
 class TestToolCallsEndpoint:
-    """Tests for GET /sessions/{id}/tool_calls."""
+    """Tests for GET /sessions/{id}/tools (now in detail.py)."""
 
-    def test_endpoint_exists(self, client):
-        """Tool calls endpoint should exist and return a response."""
-        with patch("governance.routes.sessions.relations.get_typedb_client") as mock:
-            mock_client = MagicMock()
-            mock_client.get_session.return_value = {"session_id": "S-1"}
-            mock.return_value = mock_client
-            # The method may not exist yet but the endpoint should
-            mock_client.get_session_tool_calls = MagicMock(return_value=[])
-            response = client.get("/api/sessions/S-1/tool_calls")
-            assert response.status_code in (200, 503)
+    def test_endpoint_exists(self):
+        """Tools endpoint should exist in detail.py router."""
+        from governance.routes.sessions.detail import router
+        paths = [route.path for route in router.routes]
+        assert "/sessions/{session_id}/tools" in paths
 
-    def test_returns_tool_calls_list(self, client):
+    def test_returns_tool_calls_list(self):
         """Endpoint should return tool calls as a list."""
-        with patch("governance.routes.sessions.relations.get_typedb_client") as mock:
-            mock_client = MagicMock()
-            mock_client.get_session.return_value = {"session_id": "S-1"}
-            mock_client.get_session_tool_calls.return_value = [
-                {"tool_name": "health_check", "duration_ms": 100}
-            ]
-            mock.return_value = mock_client
-            response = client.get("/api/sessions/S-1/tool_calls")
+        from fastapi.testclient import TestClient
+        from fastapi import FastAPI
+        from governance.routes.sessions.detail import router
+        app = FastAPI()
+        app.include_router(router, prefix="/api")
+        client = TestClient(app)
+
+        mock_result = {
+            "session_id": "S-1",
+            "zoom": 2,
+            "tool_calls": [
+                {"name": "health_check", "is_mcp": True, "input_summary": "{}"}
+            ],
+            "tool_calls_total": 1,
+        }
+        with patch(f"{_DETAIL}.get_session_detail", return_value=mock_result):
+            response = client.get("/api/sessions/S-1/tools")
             assert response.status_code == 200
             data = response.json()
             assert "tool_calls" in data
-            assert len(data["tool_calls"]) == 1
+            assert data["total"] == 1
 
 
 class TestThoughtsEndpoint:
-    """Tests for GET /sessions/{id}/thoughts."""
+    """Tests for GET /sessions/{id}/thoughts (now in detail.py)."""
 
-    def test_endpoint_exists(self, client):
-        """Thoughts endpoint should exist and return a response."""
-        with patch("governance.routes.sessions.relations.get_typedb_client") as mock:
-            mock_client = MagicMock()
-            mock_client.get_session.return_value = {"session_id": "S-1"}
-            mock.return_value = mock_client
-            mock_client.get_session_thoughts = MagicMock(return_value=[])
-            response = client.get("/api/sessions/S-1/thoughts")
-            assert response.status_code in (200, 503)
+    def test_endpoint_exists(self):
+        """Thoughts endpoint should exist in detail.py router."""
+        from governance.routes.sessions.detail import router
+        paths = [route.path for route in router.routes]
+        assert "/sessions/{session_id}/thoughts" in paths
 
-    def test_returns_thoughts_list(self, client):
-        """Endpoint should return thoughts as a list."""
-        with patch("governance.routes.sessions.relations.get_typedb_client") as mock:
-            mock_client = MagicMock()
-            mock_client.get_session.return_value = {"session_id": "S-1"}
-            mock_client.get_session_thoughts.return_value = [
-                {"thought": "Analyzing rules...", "thought_type": "reasoning"}
-            ]
-            mock.return_value = mock_client
+    def test_returns_thinking_blocks_list(self):
+        """Endpoint should return thinking blocks as a list."""
+        from fastapi.testclient import TestClient
+        from fastapi import FastAPI
+        from governance.routes.sessions.detail import router
+        app = FastAPI()
+        app.include_router(router, prefix="/api")
+        client = TestClient(app)
+
+        mock_result = {
+            "session_id": "S-1",
+            "zoom": 3,
+            "thinking_blocks": [
+                {"content": "Analyzing...", "chars": 120}
+            ],
+            "thinking_blocks_total": 1,
+        }
+        with patch(f"{_DETAIL}.get_session_detail", return_value=mock_result):
             response = client.get("/api/sessions/S-1/thoughts")
             assert response.status_code == 200
             data = response.json()
-            assert "thoughts" in data
+            assert "thinking_blocks" in data
+            assert data["total"] == 1
 
 
 class TestToolCallsFallbackToSessionsStore:
-    """Tests for Lim 3 fix: fallback to _sessions_store when TypeDB has session
-    but no get_session_tool_calls method."""
+    """Tests for fallback: detail.py's get_session_detail uses _sessions_store
+    when JSONL not available for chat-bridge sessions."""
 
-    def test_fallback_when_typedb_has_session_but_no_tool_call_method(self, client):
-        """When TypeDB client lacks get_session_tool_calls, should fall back to _sessions_store."""
-        from governance.stores import _sessions_store
-        _sessions_store["S-FALLBACK"] = {
-            "session_id": "S-FALLBACK",
-            "status": "COMPLETED",
-            "tool_calls": [
-                {"tool_name": "/status", "result": "ok"},
-                {"tool_name": "/tasks", "result": "3 tasks"},
-            ],
-        }
-        try:
-            with patch("governance.routes.sessions.relations.get_typedb_client") as mock:
-                mock_client = MagicMock()
-                mock_client.get_session.return_value = {"session_id": "S-FALLBACK"}
-                # Simulate: client has NO get_session_tool_calls method
-                del mock_client.get_session_tool_calls
-                mock.return_value = mock_client
-                response = client.get("/api/sessions/S-FALLBACK/tool_calls")
-                assert response.status_code == 200
-                data = response.json()
-                assert data["tool_call_count"] == 2
-                assert data["tool_calls"][0]["tool_name"] == "/status"
-        finally:
-            _sessions_store.pop("S-FALLBACK", None)
+    def test_fallback_uses_sessions_store(self):
+        """When no JSONL exists, get_session_detail falls back to _sessions_store."""
+        from governance.services.cc_session_ingestion import get_session_detail
 
-    def test_fallback_when_typedb_tool_calls_empty(self, client):
-        """When TypeDB returns empty tool_calls, should fall back to _sessions_store."""
-        from governance.stores import _sessions_store
-        _sessions_store["S-EMPTY-TC"] = {
-            "session_id": "S-EMPTY-TC",
-            "status": "ACTIVE",
-            "tool_calls": [{"tool_name": "/health", "result": "ok"}],
+        session = {"session_id": "S-CHAT", "status": "COMPLETED"}
+        store_data = {
+            "S-CHAT": {
+                "tool_calls": [
+                    {"tool_name": "/status", "arguments": {}, "timestamp": "2026-02-12T10:00:00"},
+                ],
+                "thoughts": [],
+            }
         }
-        try:
-            with patch("governance.routes.sessions.relations.get_typedb_client") as mock:
-                mock_client = MagicMock()
-                mock_client.get_session.return_value = {"session_id": "S-EMPTY-TC"}
-                mock_client.get_session_tool_calls.return_value = []
-                mock.return_value = mock_client
-                response = client.get("/api/sessions/S-EMPTY-TC/tool_calls")
-                assert response.status_code == 200
-                data = response.json()
-                assert data["tool_call_count"] == 1
-                assert data["tool_calls"][0]["tool_name"] == "/health"
-        finally:
-            _sessions_store.pop("S-EMPTY-TC", None)
+        with patch("governance.services.cc_session_ingestion.session_service") as mock_svc, \
+             patch("governance.services.cc_session_ingestion._sessions_store", store_data), \
+             patch("governance.services.cc_session_ingestion._find_jsonl_for_session", return_value=None):
+            mock_svc.get_session.return_value = session
+            result = get_session_detail("S-CHAT", zoom=2)
+
+        assert result is not None
+        assert result["tool_calls_total"] == 1
+
+    def test_fallback_when_no_store_data(self):
+        """When no JSONL and no _sessions_store data, returns empty tool calls."""
+        from governance.services.cc_session_ingestion import get_session_detail
+
+        session = {"session_id": "S-EMPTY", "status": "COMPLETED"}
+        with patch("governance.services.cc_session_ingestion.session_service") as mock_svc, \
+             patch("governance.services.cc_session_ingestion._sessions_store", {}), \
+             patch("governance.services.cc_session_ingestion._find_jsonl_for_session", return_value=None):
+            mock_svc.get_session.return_value = session
+            result = get_session_detail("S-EMPTY", zoom=2)
+
+        assert result is not None
+        assert result["tool_calls_total"] == 0
 
 
 class TestThoughtsFallbackToSessionsStore:
-    """Tests for Lim 3 fix: fallback to _sessions_store when TypeDB has session
-    but no get_session_thoughts method."""
+    """Tests for fallback: thinking blocks from _sessions_store."""
 
-    def test_fallback_when_typedb_has_session_but_no_thoughts_method(self, client):
-        """When TypeDB client lacks get_session_thoughts, should fall back to _sessions_store."""
-        from governance.stores import _sessions_store
-        _sessions_store["S-THOUGHTS-FB"] = {
-            "session_id": "S-THOUGHTS-FB",
-            "status": "COMPLETED",
-            "thoughts": [
-                {"thought": "Analyzing system health", "thought_type": "observation"},
-            ],
-        }
-        try:
-            with patch("governance.routes.sessions.relations.get_typedb_client") as mock:
-                mock_client = MagicMock()
-                mock_client.get_session.return_value = {"session_id": "S-THOUGHTS-FB"}
-                del mock_client.get_session_thoughts
-                mock.return_value = mock_client
-                response = client.get("/api/sessions/S-THOUGHTS-FB/thoughts")
-                assert response.status_code == 200
-                data = response.json()
-                assert data["thought_count"] == 1
-                assert data["thoughts"][0]["thought_type"] == "observation"
-        finally:
-            _sessions_store.pop("S-THOUGHTS-FB", None)
+    def test_fallback_uses_sessions_store_thoughts(self):
+        """When no JSONL, get_session_detail returns thoughts from _sessions_store."""
+        from governance.services.cc_session_ingestion import get_session_detail
 
-    def test_fallback_when_typedb_thoughts_empty(self, client):
-        """When TypeDB returns empty thoughts, should fall back to _sessions_store."""
-        from governance.stores import _sessions_store
-        _sessions_store["S-EMPTY-TH"] = {
-            "session_id": "S-EMPTY-TH",
-            "status": "ACTIVE",
-            "thoughts": [{"thought": "Checking rules", "thought_type": "reasoning"}],
+        session = {"session_id": "S-TH", "status": "COMPLETED"}
+        store_data = {
+            "S-TH": {
+                "tool_calls": [],
+                "thoughts": [
+                    {"thought": "Analyzing rules", "timestamp": "2026-02-12T10:00:00"},
+                ],
+            }
         }
-        try:
-            with patch("governance.routes.sessions.relations.get_typedb_client") as mock:
-                mock_client = MagicMock()
-                mock_client.get_session.return_value = {"session_id": "S-EMPTY-TH"}
-                mock_client.get_session_thoughts.return_value = []
-                mock.return_value = mock_client
-                response = client.get("/api/sessions/S-EMPTY-TH/thoughts")
-                assert response.status_code == 200
-                data = response.json()
-                assert data["thought_count"] == 1
-                assert data["thoughts"][0]["thought"] == "Checking rules"
-        finally:
-            _sessions_store.pop("S-EMPTY-TH", None)
+        with patch("governance.services.cc_session_ingestion.session_service") as mock_svc, \
+             patch("governance.services.cc_session_ingestion._sessions_store", store_data), \
+             patch("governance.services.cc_session_ingestion._find_jsonl_for_session", return_value=None):
+            mock_svc.get_session.return_value = session
+            result = get_session_detail("S-TH", zoom=3)
+
+        assert result is not None
+        assert result["thinking_blocks_total"] == 1
+
+    def test_fallback_empty_thoughts(self):
+        """When no JSONL and no thoughts in store, returns empty."""
+        from governance.services.cc_session_ingestion import get_session_detail
+
+        session = {"session_id": "S-NO-TH", "status": "COMPLETED"}
+        with patch("governance.services.cc_session_ingestion.session_service") as mock_svc, \
+             patch("governance.services.cc_session_ingestion._sessions_store", {}), \
+             patch("governance.services.cc_session_ingestion._find_jsonl_for_session", return_value=None):
+            mock_svc.get_session.return_value = session
+            result = get_session_detail("S-NO-TH", zoom=3)
+
+        assert result is not None
+        assert result.get("thinking_blocks_total", 0) == 0
 
 
 class TestSessionControllerIntegration:

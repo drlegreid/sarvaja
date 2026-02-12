@@ -232,9 +232,12 @@ def get_mcp_server_details(project_root: Path | None = None) -> dict[str, dict]:
 
     # Check backend service readiness for dependency resolution
     backend_status = {}
-    for svc_name in SERVICE_CONFIG:
-        _, _, host_port = SERVICE_CONFIG[svc_name]
-        backend_status[svc_name] = check_port("localhost", host_port)
+    in_container = is_in_container()
+    for svc_name, (container_host, container_port, host_port) in SERVICE_CONFIG.items():
+        if in_container:
+            backend_status[svc_name] = check_port(container_host, container_port)
+        else:
+            backend_status[svc_name] = check_port("localhost", host_port)
 
     try:
         if mcp_config_path.exists():
@@ -259,6 +262,23 @@ def get_mcp_server_details(project_root: Path | None = None) -> dict[str, dict]:
                 }
     except Exception:
         pass
+
+    # GAP-INFRA-MCP-001: Fallback to MCP_SERVER_META when .mcp.json not mounted
+    if not result:
+        for name, meta in MCP_SERVER_META.items():
+            deps = meta.get("depends_on", [])
+            deps_ok = all(backend_status.get(d, False) for d in deps)
+            ready = "READY" if (not deps or deps_ok) else "DEPS-DOWN"
+            result[name] = {
+                "type": "stdio",
+                "command": "",
+                "comment": "",
+                "tools": meta.get("tools", 0),
+                "depends_on": deps,
+                "desc": meta.get("desc", ""),
+                "ready": ready,
+            }
+
     return result
 
 

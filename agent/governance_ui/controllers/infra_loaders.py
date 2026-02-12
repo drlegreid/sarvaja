@@ -286,6 +286,24 @@ def register_infra_loader_controllers(
                     })
                 except (PermissionError, FileNotFoundError, OSError):
                     continue
+            # GAP-INFRA-PROCS-002: Fallback to ps aux if /proc scan finds nothing
+            if not infra_python_procs:
+                try:
+                    result = subprocess.run(
+                        ["ps", "aux"], capture_output=True, text=True, timeout=3
+                    )
+                    for line in result.stdout.split("\n"):
+                        if "python" in line.lower() and "ps aux" not in line:
+                            parts = line.split(None, 10)
+                            if len(parts) >= 11:
+                                infra_python_procs.append({
+                                    "pid": parts[1],
+                                    "cpu": parts[2] + "%",
+                                    "mem": parts[3] + "%",
+                                    "command": parts[10][:120],
+                                })
+                except Exception:
+                    pass
             state.infra_python_procs = infra_python_procs
             state.python_process_list = infra_python_procs  # Alias
         except Exception:

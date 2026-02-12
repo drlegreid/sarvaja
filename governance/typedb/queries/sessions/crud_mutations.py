@@ -30,6 +30,12 @@ class SessionMutationOperations:
         agent_id: Optional[str] = None,
         start_time: Optional[str] = None,
         end_time: Optional[str] = None,
+        cc_session_uuid: Optional[str] = None,
+        cc_project_slug: Optional[str] = None,
+        cc_git_branch: Optional[str] = None,
+        cc_tool_count: Optional[int] = None,
+        cc_thinking_chars: Optional[int] = None,
+        cc_compaction_count: Optional[int] = None,
     ) -> Optional[Session]:
         """
         Update a session's attributes in TypeDB.
@@ -168,6 +174,48 @@ class SessionMutationOperations:
                             tx.query(insert_query).resolve()
                         except Exception:
                             pass  # May already have completed-at
+
+                    # CC session metadata (SESSION-CC-01-v1)
+                    cc_str_fields = {
+                        "cc-session-uuid": cc_session_uuid,
+                        "cc-project-slug": cc_project_slug,
+                        "cc-git-branch": cc_git_branch,
+                    }
+                    for attr, val in cc_str_fields.items():
+                        if val is not None:
+                            val_esc = val.replace('"', '\\"')
+                            try:
+                                tx.query(f'''
+                                    match $s isa work-session, has session-id "{session_id}",
+                                        has {attr} $v;
+                                    delete has $v of $s;
+                                ''').resolve()
+                            except Exception:
+                                pass
+                            tx.query(f'''
+                                match $s isa work-session, has session-id "{session_id}";
+                                insert $s has {attr} "{val_esc}";
+                            ''').resolve()
+
+                    cc_int_fields = {
+                        "cc-tool-count": cc_tool_count,
+                        "cc-thinking-chars": cc_thinking_chars,
+                        "cc-compaction-count": cc_compaction_count,
+                    }
+                    for attr, val in cc_int_fields.items():
+                        if val is not None:
+                            try:
+                                tx.query(f'''
+                                    match $s isa work-session, has session-id "{session_id}",
+                                        has {attr} $v;
+                                    delete has $v of $s;
+                                ''').resolve()
+                            except Exception:
+                                pass
+                            tx.query(f'''
+                                match $s isa work-session, has session-id "{session_id}";
+                                insert $s has {attr} {val};
+                            ''').resolve()
 
                     tx.commit()
 

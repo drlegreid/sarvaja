@@ -1,10 +1,10 @@
 """
-Tests for MCP-002-B: Auto-mark tasks DONE when completed.
+Tests for MCP-002-B / GOV-MCP-FIRST-01-v1: Auto-mark tasks DONE when completed.
 
-Per MCP-002-B: TodoWrite completions should sync to TypeDB automatically.
+Per MCP-002-B / GOV-MCP-FIRST-01-v1: TodoWrite completions should sync to TypeDB automatically.
 
 Current State (2026-01-19):
-- session_sync_todos MCP tool exists (MCP-002-A - DONE)
+- session_sync_todos MCP tool exists (MCP-002-A / GOV-MCP-FIRST-01-v1 - DONE)
 - Manual sync works when tool is explicitly called
 - NO automatic hook to sync on TodoWrite completion
 

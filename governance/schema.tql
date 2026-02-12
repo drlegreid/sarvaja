@@ -1,5 +1,5 @@
 # Sim.ai Governance Schema
-# TypeDB schema for rules, decisions, and inference
+# TypeDB 3.x syntax schema for rules, decisions, and inference
 # Created: 2024-12-24 (DECISION-003)
 # Updated: 2024-12-24 (RULE-011) - Added multi-agent governance entities
 # Updated: 2024-12-24 (RULE-013) - Added document entity and gap-rule cross-referencing
@@ -12,7 +12,7 @@ define
 # ENTITY TYPES
 # =============================================================================
 
-rule-entity sub entity,
+entity rule-entity,
     owns rule-id,
     owns semantic-id,            # META-TAXON-01-v1: Semantic ID (e.g., SESSION-EVID-01-v1)
     owns rule-name,
@@ -36,7 +36,7 @@ rule-entity sub entity,
     plays implements-rule:implemented-rule,  # P11.3: tasks implement rules
     plays session-applied-rule:applied-rule; # P11.3: sessions apply rules
 
-decision sub entity,
+entity decision,
     owns decision-id,
     owns decision-name,
     owns context,
@@ -51,7 +51,7 @@ decision sub entity,
     plays session-decision:session-made-decision, # P11.3: sessions make decisions
     plays task-outcome:outcome-decision;   # P10.7: Decision as task outcome with authority
 
-task sub entity,
+entity task,
     owns task-id,
     owns task-name,
     owns task-status,
@@ -86,7 +86,7 @@ task sub entity,
     plays task-commit:implemented-task,  # GAP-TASK-LINK-002
     plays epic-contains-task:epic-task;  # Project hierarchy (GOV-PROJECT-01-v1)
 
-gap sub entity,
+entity gap,
     owns gap-id,
     owns gap-name,
     owns gap-status,
@@ -103,7 +103,7 @@ gap sub entity,
 # =============================================================================
 
 # Work session entity for tracking development sessions
-work-session sub entity,
+entity work-session,
     owns session-id,
     owns session-name,
     owns session-description,
@@ -124,7 +124,7 @@ work-session sub entity,
     plays project-has-session:project-session;
 
 # Evidence file entity for session artifacts
-evidence-file sub entity,
+entity evidence-file,
     owns evidence-id,
     owns evidence-source,
     owns evidence-type,
@@ -138,7 +138,7 @@ evidence-file sub entity,
 # =============================================================================
 
 # Project entity - top-level organizational unit
-project sub entity,
+entity project,
     owns project-id,
     owns project-name,
     owns project-path,
@@ -146,7 +146,7 @@ project sub entity,
     plays project-has-session:session-project;
 
 # Plan entity - a planned body of work within a project
-plan sub entity,
+entity plan,
     owns plan-id,
     owns plan-name,
     owns session-description,
@@ -154,7 +154,7 @@ plan sub entity,
     plays plan-contains-epic:parent-plan;
 
 # Epic entity - a large feature/initiative within a plan
-epic sub entity,
+entity epic,
     owns epic-id,
     owns epic-name,
     owns session-description,
@@ -162,7 +162,7 @@ epic sub entity,
     plays epic-contains-task:parent-epic;
 
 # Git commit entity (GAP-TASK-LINK-002)
-git-commit sub entity,
+entity git-commit,
     owns commit-sha,
     owns commit-message,
     plays task-commit:implementing-commit;
@@ -180,7 +180,7 @@ git-commit sub entity,
 # See DECISION-003: TypeDB-First Strategy for migration plan.
 
 # Vector document entity - stores text with embedding
-vector-document sub entity,
+entity vector-document,
     owns vector-id,
     owns vector-content,
     owns vector-embedding,       # JSON-encoded float array
@@ -195,13 +195,13 @@ vector-document sub entity,
 
 # Similarity relation (precomputed top-k neighbors)
 # This allows TypeDB to store and query precomputed similarities
-vector-similarity sub relation,
+relation vector-similarity,
     relates source-vector,
     relates similar-vector,
     owns similarity-score;       # Cosine similarity 0.0-1.0
 
 # Link vector to source entity (rule, decision, etc.)
-entity-vector sub relation,
+relation entity-vector,
     relates embedded-entity,
     relates entity-embedding;
 
@@ -210,7 +210,7 @@ entity-vector sub relation,
 # =============================================================================
 
 # Exploration session for LLM-driven E2E testing
-exploration-session sub entity,
+entity exploration-session,
     owns session-id,
     owns session-name,
     owns session-url,
@@ -221,7 +221,7 @@ exploration-session sub entity,
     plays generates:generating-session;
 
 # Exploration step within a session
-exploration-step sub entity,
+entity exploration-step,
     owns step-id,
     owns action-type,
     owns target-selector,
@@ -232,7 +232,7 @@ exploration-step sub entity,
     plays session-step:step;
 
 # Generated test case from exploration
-test-case sub entity,
+entity test-case,
     owns test-id,
     owns test-name,
     owns generated-from,
@@ -242,7 +242,7 @@ test-case sub entity,
     plays test-failed:generated-test;
 
 # Test failure for LLM analysis
-test-failure sub entity,
+entity test-failure,
     owns failure-id,
     owns failure-test-name,
     owns failure-step,
@@ -255,7 +255,7 @@ test-failure sub entity,
     plays test-failed:failure;
 
 # Document entity for cross-referencing
-document sub entity,
+entity document,
     owns document-id,
     owns document-title,
     owns document-path,         # Local path: docs/RULES.md
@@ -273,7 +273,7 @@ document sub entity,
 # =============================================================================
 
 # Agent entity for trust tracking
-agent sub entity,
+entity agent,
     owns agent-id,
     owns agent-name,
     owns agent-type,        # "claude-code", "docker-agent", "sync-agent"
@@ -288,7 +288,7 @@ agent sub entity,
     plays agent-action:acting-agent;
 
 # Proposal for rule changes
-proposal sub entity,
+entity proposal,
     owns proposal-id,
     owns proposal-type,     # "create", "modify", "deprecate"
     owns proposal-status,   # "pending", "approved", "rejected", "disputed"
@@ -306,193 +306,193 @@ proposal sub entity,
 # =============================================================================
 
 # Rule attributes
-rule-id sub attribute, value string;
-semantic-id sub attribute, value string;  # META-TAXON-01-v1: Semantic ID (e.g., SESSION-EVID-01-v1)
-rule-name sub attribute, value string;
-category sub attribute, value string;  # governance, architecture, testing, etc.
-priority sub attribute, value string;  # CRITICAL, HIGH, MEDIUM, LOW
-status sub attribute, value string;    # ACTIVE, PROPOSED, DISABLED (DEPRECATED maps to DISABLED)
-rule-type sub attribute, value string; # FOUNDATIONAL, OPERATIONAL, TECHNICAL, META, LEAF
-directive sub attribute, value string;
-rule-tags sub attribute, value string;        # RD-WORKSPACE: Comma-separated skill tags
-applicable-roles sub attribute, value string; # RD-WORKSPACE: Comma-separated agent roles
-created-date sub attribute, value datetime;
+attribute rule-id, value string;
+attribute semantic-id, value string;  # META-TAXON-01-v1: Semantic ID (e.g., SESSION-EVID-01-v1)
+attribute rule-name, value string;
+attribute category, value string;  # governance, architecture, testing, etc.
+attribute priority, value string;  # CRITICAL, HIGH, MEDIUM, LOW
+attribute status, value string;    # ACTIVE, PROPOSED, DISABLED (DEPRECATED maps to DISABLED)
+attribute rule-type, value string; # FOUNDATIONAL, OPERATIONAL, TECHNICAL, META, LEAF
+attribute directive, value string;
+attribute rule-tags, value string;        # RD-WORKSPACE: Comma-separated skill tags
+attribute applicable-roles, value string; # RD-WORKSPACE: Comma-separated agent roles
+attribute created-date, value datetime;
 
 # Decision attributes
-decision-id sub attribute, value string;
-decision-name sub attribute, value string;
-context sub attribute, value string;
-rationale sub attribute, value string;
-decision-status sub attribute, value string;  # APPROVED, PENDING, SUPERSEDED
-decision-date sub attribute, value datetime;
+attribute decision-id, value string;
+attribute decision-name, value string;
+attribute context, value string;
+attribute rationale, value string;
+attribute decision-status, value string;  # APPROVED, PENDING, SUPERSEDED
+attribute decision-date, value datetime;
 
 # Task attributes
-task-id sub attribute, value string;
-task-name sub attribute, value string;
-task-status sub attribute, value string;  # GAP-UI-046: OPEN, IN_PROGRESS, CLOSED (lifecycle)
-task-resolution sub attribute, value string;  # GAP-UI-046: NONE, DEFERRED, IMPLEMENTED, VALIDATED, CERTIFIED (outcome)
-task-body sub attribute, value string;    # P11.3: detailed task description
-task-evidence sub attribute, value string; # Completion evidence/notes (E2E tests)
-task-completed-at sub attribute, value datetime; # Completion timestamp (E2E tests)
-task-created-at sub attribute, value datetime;   # Creation timestamp (GAP-UI-035)
-task-claimed-at sub attribute, value datetime;   # Claim timestamp (GAP-UI-035)
-phase sub attribute, value string;
-gap-reference sub attribute, value string; # P11.3: linked gap ID
+attribute task-id, value string;
+attribute task-name, value string;
+attribute task-status, value string;  # GAP-UI-046: OPEN, IN_PROGRESS, CLOSED (lifecycle)
+attribute task-resolution, value string;  # GAP-UI-046: NONE, DEFERRED, IMPLEMENTED, VALIDATED, CERTIFIED (outcome)
+attribute task-body, value string;    # P11.3: detailed task description
+attribute task-evidence, value string; # Completion evidence/notes (E2E tests)
+attribute task-completed-at, value datetime; # Completion timestamp (E2E tests)
+attribute task-created-at, value datetime;   # Creation timestamp (GAP-UI-035)
+attribute task-claimed-at, value datetime;   # Claim timestamp (GAP-UI-035)
+attribute phase, value string;
+attribute gap-reference, value string; # P11.3: linked gap ID
 
 # Task detail section attributes (GAP-TASK-LINK-004, TASK-TECH-01-v1)
-task-business sub attribute, value string;      # Why - User problem, business value
-task-design sub attribute, value string;        # What - Functional requirements
-task-architecture sub attribute, value string;  # How - Technical approach
-task-test sub attribute, value string;          # Verification - Test plan, evidence
+attribute task-business, value string;      # Why - User problem, business value
+attribute task-design, value string;        # What - Functional requirements
+attribute task-architecture, value string;  # How - Technical approach
+attribute task-test, value string;          # Verification - Test plan, evidence
 
 # Git commit attributes (GAP-TASK-LINK-002)
-commit-sha sub attribute, value string;    # Short (7) or full (40) SHA
-commit-message sub attribute, value string; # Commit message
+attribute commit-sha, value string;    # Short (7) or full (40) SHA
+attribute commit-message, value string; # Commit message
 
 # Work Session attributes (P11.3)
-session-description sub attribute, value string;
-session-file-path sub attribute, value string;   # Path to session evidence file
+attribute session-description, value string;
+attribute session-file-path, value string;   # Path to session evidence file
 
 # Claude Code session attributes (SESSION-CC-01-v1)
-cc-session-uuid sub attribute, value string;       # CC internal UUID
-cc-project-slug sub attribute, value string;       # Project slug (e.g., "sarvaja-platform")
-cc-git-branch sub attribute, value string;         # Git branch at session time
-cc-tool-count sub attribute, value long;           # Total tool invocations
-cc-thinking-chars sub attribute, value long;       # Reasoning token volume
-cc-compaction-count sub attribute, value long;     # Context compressions
+attribute cc-session-uuid, value string;       # CC internal UUID
+attribute cc-project-slug, value string;       # Project slug (e.g., "sarvaja-platform")
+attribute cc-git-branch, value string;         # Git branch at session time
+attribute cc-tool-count, value integer;           # Total tool invocations
+attribute cc-thinking-chars, value integer;       # Reasoning token volume
+attribute cc-compaction-count, value integer;     # Context compressions
 
 # Project hierarchy attributes (GOV-PROJECT-01-v1)
-project-id sub attribute, value string;
-project-name sub attribute, value string;
-project-path sub attribute, value string;          # Project root directory path
-plan-id sub attribute, value string;
-plan-name sub attribute, value string;
-epic-id sub attribute, value string;
-epic-name sub attribute, value string;
+attribute project-id, value string;
+attribute project-name, value string;
+attribute project-path, value string;          # Project root directory path
+attribute plan-id, value string;
+attribute plan-name, value string;
+attribute epic-id, value string;
+attribute epic-name, value string;
 
 # Evidence file attributes (P11.3)
-evidence-id sub attribute, value string;
-evidence-source sub attribute, value string;      # File path
-evidence-type sub attribute, value string;        # markdown, screenshot, log
-evidence-content-preview sub attribute, value string;  # First 500 chars
-evidence-created-at sub attribute, value datetime;
+attribute evidence-id, value string;
+attribute evidence-source, value string;      # File path
+attribute evidence-type, value string;        # markdown, screenshot, log
+attribute evidence-content-preview, value string;  # First 500 chars
+attribute evidence-created-at, value datetime;
 
 # Gap attributes
-gap-id sub attribute, value string;
-gap-name sub attribute, value string;
-gap-status sub attribute, value string;  # OPEN, RESOLVED, DEFERRED
-severity sub attribute, value string;
-location sub attribute, value string;    # file:line or doc:section (RULE-013)
+attribute gap-id, value string;
+attribute gap-name, value string;
+attribute gap-status, value string;  # OPEN, RESOLVED, DEFERRED
+attribute severity, value string;
+attribute location, value string;    # file:line or doc:section (RULE-013)
 
 # Document attributes (RULE-013)
-document-id sub attribute, value string;
-document-title sub attribute, value string;
-document-path sub attribute, value string;   # Local path: docs/RULES.md
-document-url sub attribute, value string;    # Remote: webdav://... or github://...
-document-type sub attribute, value string;   # markdown, yaml, json, code
-document-storage sub attribute, value string; # local, webdav, github
-last-modified sub attribute, value datetime;
-content-hash sub attribute, value string;
+attribute document-id, value string;
+attribute document-title, value string;
+attribute document-path, value string;   # Local path: docs/RULES.md
+attribute document-url, value string;    # Remote: webdav://... or github://...
+attribute document-type, value string;   # markdown, yaml, json, code
+attribute document-storage, value string; # local, webdav, github
+attribute last-modified, value datetime;
+attribute content-hash, value string;
 
 # Vector embedding attributes (P7.1 - TypeDB 2.x Bridge)
-vector-id sub attribute, value string;           # Unique vector ID (uuid)
-vector-content sub attribute, value string;      # Original text content
-vector-embedding sub attribute, value string;    # JSON-encoded float[] (e.g., "[0.1, 0.2, ...]")
-vector-model sub attribute, value string;        # Embedding model (e.g., "text-embedding-3-small")
-vector-dimension sub attribute, value long;      # Embedding dimensions (e.g., 1536, 768)
-vector-source sub attribute, value string;       # Source ID (rule-id, decision-id, etc.)
-vector-source-type sub attribute, value string;  # Source type (rule, decision, session)
-vector-created-at sub attribute, value datetime;
-similarity-score sub attribute, value double;    # Cosine similarity 0.0-1.0
+attribute vector-id, value string;           # Unique vector ID (uuid)
+attribute vector-content, value string;      # Original text content
+attribute vector-embedding, value string;    # JSON-encoded float[] (e.g., "[0.1, 0.2, ...]")
+attribute vector-model, value string;        # Embedding model (e.g., "text-embedding-3-small")
+attribute vector-dimension, value integer;      # Embedding dimensions (e.g., 1536, 768)
+attribute vector-source, value string;       # Source ID (rule-id, decision-id, etc.)
+attribute vector-source-type, value string;  # Source type (rule, decision, session)
+attribute vector-created-at, value datetime;
+attribute similarity-score, value double;    # Cosine similarity 0.0-1.0
 
 # E2E Exploration attributes (RULE-020)
-session-id sub attribute, value string;
-session-name sub attribute, value string;
-session-url sub attribute, value string;
-started-at sub attribute, value datetime;
-completed-at sub attribute, value datetime;
-heuristics-applied sub attribute, value string;  # Comma-separated list
-target-selector sub attribute, value string;     # CSS/XPath selector
-step-id sub attribute, value string;
-step-value sub attribute, value string;          # Input value for type actions
-step-description sub attribute, value string;
-step-success sub attribute, value boolean;
-step-error sub attribute, value string;
-test-id sub attribute, value string;
-test-name sub attribute, value string;
-generated-from sub attribute, value string;      # session-id reference
-robot-code sub attribute, value string;          # Generated Robot Framework code
-test-tags sub attribute, value string;           # Comma-separated tags
-failure-id sub attribute, value string;
-failure-test-name sub attribute, value string;
-failure-step sub attribute, value string;
-failure-error sub attribute, value string;
-failure-screenshot sub attribute, value string;  # Path to screenshot
-analysis-classification sub attribute, value string; # app_bug, test_issue, environment
-analysis-root-cause sub attribute, value string;
-analysis-fix sub attribute, value string;
-analysis-confidence sub attribute, value double; # 0.0 to 1.0
+attribute session-id, value string;
+attribute session-name, value string;
+attribute session-url, value string;
+attribute started-at, value datetime;
+attribute completed-at, value datetime;
+attribute heuristics-applied, value string;  # Comma-separated list
+attribute target-selector, value string;     # CSS/XPath selector
+attribute step-id, value string;
+attribute step-value, value string;          # Input value for type actions
+attribute step-description, value string;
+attribute step-success, value boolean;
+attribute step-error, value string;
+attribute test-id, value string;
+attribute test-name, value string;
+attribute generated-from, value string;      # session-id reference
+attribute robot-code, value string;          # Generated Robot Framework code
+attribute test-tags, value string;           # Comma-separated tags
+attribute failure-id, value string;
+attribute failure-test-name, value string;
+attribute failure-step, value string;
+attribute failure-error, value string;
+attribute failure-screenshot, value string;  # Path to screenshot
+attribute analysis-classification, value string; # app_bug, test_issue, environment
+attribute analysis-root-cause, value string;
+attribute analysis-fix, value string;
+attribute analysis-confidence, value double; # 0.0 to 1.0
 
 # Agent attributes (RULE-011)
-agent-id sub attribute, value string;
-agent-name sub attribute, value string;
-agent-type sub attribute, value string;    # "claude-code", "docker-agent", "sync-agent"
-agent-capabilities sub attribute, value string; # Per GAP-AGENT-004: comma-separated list
-trust-score sub attribute, value double;   # 0.0 to 1.0
-compliance-rate sub attribute, value double;
-accuracy-rate sub attribute, value double;
-tenure-days sub attribute, value long;
+attribute agent-id, value string;
+attribute agent-name, value string;
+attribute agent-type, value string;    # "claude-code", "docker-agent", "sync-agent"
+attribute agent-capabilities, value string; # Per GAP-AGENT-004: comma-separated list
+attribute trust-score, value double;   # 0.0 to 1.0
+attribute compliance-rate, value double;
+attribute accuracy-rate, value double;
+attribute tenure-days, value integer;
 
 # Proposal attributes (RULE-011)
-proposal-id sub attribute, value string;
-proposal-type sub attribute, value string;    # "create", "modify", "deprecate"
-proposal-status sub attribute, value string;  # "pending", "approved", "rejected", "disputed", "escalated"
-evidence sub attribute, value string;
-hypothesis sub attribute, value string;
-proposal-created-at sub attribute, value datetime;
+attribute proposal-id, value string;
+attribute proposal-type, value string;    # "create", "modify", "deprecate"
+attribute proposal-status, value string;  # "pending", "approved", "rejected", "disputed", "escalated"
+attribute evidence, value string;
+attribute hypothesis, value string;
+attribute proposal-created-at, value datetime;
 
 # Vote attributes (RULE-011)
-vote-value sub attribute, value string;       # "approve", "reject", "abstain"
-vote-reason sub attribute, value string;
-vote-timestamp sub attribute, value datetime;
-vote-weight sub attribute, value double;      # Trust-weighted vote
+attribute vote-value, value string;       # "approve", "reject", "abstain"
+attribute vote-reason, value string;
+attribute vote-timestamp, value datetime;
+attribute vote-weight, value double;      # Trust-weighted vote
 
 # Dispute attributes (RULE-011)
-dispute-id sub attribute, value string;
-dispute-reason sub attribute, value string;
-semantic-analysis sub attribute, value string;
-resolution-method sub attribute, value string; # "consensus", "evidence", "authority", "escalate"
-escalation-trigger sub attribute, value string; # "VETO", "STEER", "AMBIGUITY", "DEADLOCK", "CRITICAL"
+attribute dispute-id, value string;
+attribute dispute-reason, value string;
+attribute semantic-analysis, value string;
+attribute resolution-method, value string; # "consensus", "evidence", "authority", "escalate"
+attribute escalation-trigger, value string; # "VETO", "STEER", "AMBIGUITY", "DEADLOCK", "CRITICAL"
 
 # Agent action attributes (RULE-011)
-action-type sub attribute, value string;       # "propose", "vote", "dispute", "resolve"
-action-timestamp sub attribute, value datetime;
-action-outcome sub attribute, value string;    # "success", "failure", "pending"
+attribute action-type, value string;       # "propose", "vote", "dispute", "resolve"
+attribute action-timestamp, value datetime;
+attribute action-outcome, value string;    # "success", "failure", "pending"
 
 # Typed reference attributes (P10.7 - Option B)
-has-authority sub attribute, value boolean;    # Decision authority from task outcome
+attribute has-authority, value boolean;    # Decision authority from task outcome
 
 # =============================================================================
 # RELATION TYPES
 # =============================================================================
 
 # Rule A depends on Rule B
-rule-dependency sub relation,
+relation rule-dependency,
     relates dependent,
     relates dependency;
 
 # Decision affects Rule
-decision-affects sub relation,
+relation decision-affects,
     relates affecting-decision,
     relates affected-rule;
 
 # Decision supersedes another Decision
-decision-supersedes sub relation,
+relation decision-supersedes,
     relates superseding,
     relates superseded;
 
 # Task is blocked by Rule
-task-blocked sub relation,
+relation task-blocked,
     relates blocked-task,
     relates blocking-rule;
 
@@ -501,27 +501,27 @@ task-blocked sub relation,
 # =============================================================================
 
 # Task parent-child hierarchy (task decomposition)
-task-hierarchy sub relation,
+relation task-hierarchy,
     relates parent-task,
     relates child-task;
 
 # Task blocks another task (sequencing dependency)
-task-blocks-task sub relation,
+relation task-blocks-task,
     relates blocking-task,
     relates blocked-dep-task;
 
 # Task is related to another task (soft association)
-task-related sub relation,
+relation task-related,
     relates related-task-a,
     relates related-task-b;
 
 # Task implemented by git commit (GAP-TASK-LINK-002)
-task-commit sub relation,
+relation task-commit,
     relates implementing-commit,
     relates implemented-task;
 
 # Gap requires Rule to be resolved
-gap-requires sub relation,
+relation gap-requires,
     relates requiring-gap,
     relates required-rule;
 
@@ -530,32 +530,32 @@ gap-requires sub relation,
 # =============================================================================
 
 # Task implements a rule (shows which rule a task is implementing)
-implements-rule sub relation,
+relation implements-rule,
     relates implementing-task,
     relates implemented-rule;
 
 # Task completed in a session (tracks when/where work was done)
-completed-in sub relation,
+relation completed-in,
     relates completed-task,
     relates hosting-session;
 
 # Session has evidence files (links sessions to their artifacts)
-has-evidence sub relation,
+relation has-evidence,
     relates evidence-session,
     relates session-evidence;
 
 # Session applied a rule (rules used/followed during session)
-session-applied-rule sub relation,
+relation session-applied-rule,
     relates applying-session,
     relates applied-rule;
 
 # Session made a decision (decisions made during session)
-session-decision sub relation,
+relation session-decision,
     relates deciding-session,
     relates session-made-decision;
 
 # Evidence supports a task (evidence proving task completion)
-evidence-supports sub relation,
+relation evidence-supports,
     relates supporting-evidence,
     relates supported-task;
 
@@ -564,12 +564,12 @@ evidence-supports sub relation,
 # =============================================================================
 
 # Task references a gap (replaces gap-reference attribute)
-references-gap sub relation,
+relation references-gap,
     relates referencing-task,
     relates referenced-gap;
 
 # Decision is outcome of a task with authority
-task-outcome sub relation,
+relation task-outcome,
     relates outcome-decision,
     relates source-task,
     owns has-authority;
@@ -579,22 +579,22 @@ task-outcome sub relation,
 # =============================================================================
 
 # Project contains plans
-project-contains-plan sub relation,
+relation project-contains-plan,
     relates parent-project,
     relates child-plan;
 
 # Plan contains epics
-plan-contains-epic sub relation,
+relation plan-contains-epic,
     relates parent-plan,
     relates child-epic;
 
 # Epic contains tasks
-epic-contains-task sub relation,
+relation epic-contains-task,
     relates parent-epic,
     relates epic-task;
 
 # Project has sessions (links CC sessions to their project)
-project-has-session sub relation,
+relation project-has-session,
     relates session-project,
     relates project-session;
 
@@ -603,27 +603,27 @@ project-has-session sub relation,
 # =============================================================================
 
 # Gap references a governing rule (for meta-referencing per RULE-013)
-gap-rule-reference sub relation,
+relation gap-rule-reference,
     relates referencing-gap,
     relates governing-rule;
 
 # Document references a rule
-document-references-rule sub relation,
+relation document-references-rule,
     relates referencing-document,
     relates referenced-rule;
 
 # Document references a decision
-document-references-decision sub relation,
+relation document-references-decision,
     relates referencing-document,
     relates referenced-decision;
 
 # Document references a gap
-document-references-gap sub relation,
+relation document-references-gap,
     relates referencing-document,
     relates referenced-gap;
 
 # Rules that conflict with each other
-rule-conflict sub relation,
+relation rule-conflict,
     relates conflicting-rule;
 
 # =============================================================================
@@ -631,17 +631,17 @@ rule-conflict sub relation,
 # =============================================================================
 
 # Session contains steps
-session-step sub relation,
+relation session-step,
     relates session,
     relates step;
 
 # Session generates test cases
-generates sub relation,
+relation generates,
     relates generating-session,
     relates generated-test;
 
 # Test case failed (for analysis)
-test-failed sub relation,
+relation test-failed,
     relates generated-test,
     relates failure;
 
@@ -650,12 +650,12 @@ test-failed sub relation,
 # =============================================================================
 
 # Proposes relation (agent proposes a change)
-proposes sub relation,
+relation proposes,
     relates proposer,
     relates proposed-change;
 
 # Vote on a proposal
-vote sub relation,
+relation vote,
     relates voter,
     relates vote-target,
     owns vote-value,
@@ -664,7 +664,7 @@ vote sub relation,
     owns vote-weight;
 
 # Dispute a proposal
-dispute sub relation,
+relation dispute,
     relates disputer,
     relates disputed-proposal,
     owns dispute-id,
@@ -675,12 +675,12 @@ dispute sub relation,
     plays requires-escalation:escalation-reason;
 
 # Proposal affects a rule
-proposal-affects sub relation,
+relation proposal-affects,
     relates proposing,
     relates affected-rule;
 
 # Agent action tracking (for trust scoring)
-agent-action sub relation,
+relation agent-action,
     relates acting-agent,
     relates action-target,
     owns action-type,
@@ -688,7 +688,7 @@ agent-action sub relation,
     owns action-outcome;
 
 # Escalation indicator (inferred when human review required)
-requires-escalation sub relation,
+relation requires-escalation,
     relates escalated-proposal,
     relates escalation-reason;
 

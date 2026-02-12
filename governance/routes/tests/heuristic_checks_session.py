@@ -47,6 +47,10 @@ def _is_backfilled_session(session: dict) -> bool:
     agent = session.get("agent_id") or ""
     sid = session.get("session_id") or ""
 
+    # CC sessions use JSONL files, not evidence/MCP data — skip like backfilled
+    if "-CC-" in sid:
+        return True
+
     # Classic backfill/stale detection
     if "backfill" in desc or "stale" in desc:
         return True
@@ -69,7 +73,7 @@ def _is_backfilled_session(session: dict) -> bool:
             "CHAT-HEURISTIC", "CHAT-FULL-LIFECYCLE", "CHAT-REVIEWING",
             "CHAT-HELLO", "CHAT-LINKING", "CHAT-VERIFY",
             "CHAT-TESTING", "CHAT-SUMMARY", "CHAT--STATUS",
-            "CHAT-COMPLETE-SESSION", "CHAT-DELETE",
+            "CHAT-COMPLETE-SESSION", "CHAT-DELETE", "CHAT-/STATUS",
         )
         for pattern in _TEST_PATTERNS:
             if pattern in sid:

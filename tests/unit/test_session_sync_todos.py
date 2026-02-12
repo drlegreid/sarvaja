@@ -1,7 +1,7 @@
 """
 Tests for session_sync_todos MCP tool.
 
-Per MCP-002-A: Sync TodoWrite with TypeDB task creation.
+Per MCP-002-A / GOV-MCP-FIRST-01-v1: Sync TodoWrite with TypeDB task creation.
 """
 
 import pytest

@@ -177,6 +177,12 @@ def update_session(
     start_time: Optional[str] = None,
     end_time: Optional[str] = None,
     source: str = "rest",
+    cc_session_uuid: Optional[str] = None,
+    cc_project_slug: Optional[str] = None,
+    cc_git_branch: Optional[str] = None,
+    cc_tool_count: Optional[int] = None,
+    cc_thinking_chars: Optional[int] = None,
+    cc_compaction_count: Optional[int] = None,
 ) -> Optional[Dict[str, Any]]:
     """Update session fields in TypeDB with fallback.
 
@@ -198,6 +204,12 @@ def update_session(
                 agent_id=agent_id,
                 start_time=start_time,
                 end_time=end_time,
+                cc_session_uuid=cc_session_uuid,
+                cc_project_slug=cc_project_slug,
+                cc_git_branch=cc_git_branch,
+                cc_tool_count=cc_tool_count,
+                cc_thinking_chars=cc_thinking_chars,
+                cc_compaction_count=cc_compaction_count,
             )
             if updated:
                 old_status = getattr(existing, 'status', None) if hasattr(existing, 'status') else existing.get("status")

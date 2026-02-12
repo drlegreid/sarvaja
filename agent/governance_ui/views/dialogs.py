@@ -80,9 +80,26 @@ def build_file_viewer_dialog() -> None:
                 ):
                     html.Span("{{ file_viewer_error }}")
 
-                # File content
+                # Rendered markdown content (for .md files)
+                html.Div(
+                    v_if=(
+                        "file_viewer_html && !file_viewer_loading && "
+                        "!file_viewer_error"
+                    ),
+                    v_html="file_viewer_html",
+                    style="padding: 24px; color: #d4d4d4; background: #1e1e1e; "
+                          "min-height: 100%; line-height: 1.6; font-size: 15px;",
+                    classes="markdown-rendered",
+                    __properties=["data-testid"],
+                    **{"data-testid": "file-viewer-html"}
+                )
+
+                # Raw file content (for non-markdown files)
                 html.Pre(
-                    v_if="file_viewer_content && !file_viewer_loading && !file_viewer_error",
+                    v_if=(
+                        "file_viewer_content && !file_viewer_html && "
+                        "!file_viewer_loading && !file_viewer_error"
+                    ),
                     v_text="file_viewer_content",
                     style="white-space: pre-wrap; font-family: 'Consolas', "
                           "'Monaco', 'Courier New', monospace; font-size: 14px; "

@@ -2,8 +2,12 @@
 Unit tests for Session Relations Routes.
 
 Per DOC-SIZE-01-v1: Tests for routes/sessions/relations.py module.
-Tests: link_evidence, get_session_tasks, get_session_tool_calls,
-       get_session_thoughts, get_session_evidence, _scan_evidence_filesystem.
+Tests: link_evidence, get_session_tasks, get_session_evidence,
+       _scan_evidence_filesystem.
+
+Note: tool_calls and thoughts endpoints were removed from relations.py
+(they shadowed working endpoints in detail.py). Tests moved to
+test_data_pipeline_fixes.py.
 """
 
 import os
@@ -91,95 +95,6 @@ class TestGetSessionTasks:
             with pytest.raises(HTTPException) as exc:
                 await get_session_tasks("S-MISSING")
             assert exc.value.status_code == 404
-
-
-# ── get_session_tool_calls ──────────────────────────────────────
-
-
-class TestGetSessionToolCalls:
-    @pytest.mark.asyncio
-    async def test_no_client_fallback(self):
-        from governance.routes.sessions.relations import get_session_tool_calls
-        store = {"S-1": {"tool_calls": [{"name": "read"}]}}
-        with patch(f"{_P}.get_typedb_client", return_value=None), \
-             patch("governance.stores._sessions_store", store):
-            result = await get_session_tool_calls("S-1")
-        assert result["tool_call_count"] == 1
-
-    @pytest.mark.asyncio
-    async def test_typedb_with_tool_calls(self):
-        from governance.routes.sessions.relations import get_session_tool_calls
-        client = MagicMock()
-        client.get_session.return_value = MagicMock()
-        client.get_session_tool_calls.return_value = [{"name": "write"}]
-        with patch(f"{_P}.get_typedb_client", return_value=client):
-            result = await get_session_tool_calls("S-1")
-        assert result["tool_call_count"] == 1
-
-    @pytest.mark.asyncio
-    async def test_typedb_no_session_fallback(self):
-        from governance.routes.sessions.relations import get_session_tool_calls
-        client = MagicMock()
-        client.get_session.return_value = None
-        store = {"S-1": {"tool_calls": [{"name": "read"}]}}
-        with patch(f"{_P}.get_typedb_client", return_value=client), \
-             patch("governance.stores._sessions_store", store):
-            result = await get_session_tool_calls("S-1")
-        assert result["tool_call_count"] == 1
-
-    @pytest.mark.asyncio
-    async def test_typedb_empty_tool_calls_fallback(self):
-        from governance.routes.sessions.relations import get_session_tool_calls
-        client = MagicMock()
-        client.get_session.return_value = MagicMock()
-        client.get_session_tool_calls.return_value = []
-        store = {"S-1": {"tool_calls": [{"name": "read"}]}}
-        with patch(f"{_P}.get_typedb_client", return_value=client), \
-             patch("governance.stores._sessions_store", store):
-            result = await get_session_tool_calls("S-1")
-        assert result["tool_call_count"] == 1
-
-    @pytest.mark.asyncio
-    async def test_exception_returns_empty(self):
-        from governance.routes.sessions.relations import get_session_tool_calls
-        client = MagicMock()
-        client.get_session.side_effect = Exception("db error")
-        with patch(f"{_P}.get_typedb_client", return_value=client):
-            result = await get_session_tool_calls("S-1")
-        assert result["tool_call_count"] == 0
-
-
-# ── get_session_thoughts ────────────────────────────────────────
-
-
-class TestGetSessionThoughts:
-    @pytest.mark.asyncio
-    async def test_no_client_fallback(self):
-        from governance.routes.sessions.relations import get_session_thoughts
-        store = {"S-1": {"thoughts": [{"text": "thinking"}]}}
-        with patch(f"{_P}.get_typedb_client", return_value=None), \
-             patch("governance.stores._sessions_store", store):
-            result = await get_session_thoughts("S-1")
-        assert result["thought_count"] == 1
-
-    @pytest.mark.asyncio
-    async def test_typedb_with_thoughts(self):
-        from governance.routes.sessions.relations import get_session_thoughts
-        client = MagicMock()
-        client.get_session.return_value = MagicMock()
-        client.get_session_thoughts.return_value = [{"text": "idea"}]
-        with patch(f"{_P}.get_typedb_client", return_value=client):
-            result = await get_session_thoughts("S-1")
-        assert result["thought_count"] == 1
-
-    @pytest.mark.asyncio
-    async def test_exception_returns_empty(self):
-        from governance.routes.sessions.relations import get_session_thoughts
-        client = MagicMock()
-        client.get_session.side_effect = Exception("db error")
-        with patch(f"{_P}.get_typedb_client", return_value=client):
-            result = await get_session_thoughts("S-1")
-        assert result["thought_count"] == 0
 
 
 # ── get_session_evidence ────────────────────────────────────────

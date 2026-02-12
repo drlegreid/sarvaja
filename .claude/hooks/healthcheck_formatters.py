@@ -78,7 +78,8 @@ def format_detailed(
     dsp_info: Dict = None,
     recovery_hint: str = None,
     auto_recovery_enabled: bool = True,
-    applicability: Dict = None
+    applicability: Dict = None,
+    mcp_usage: Dict = None,
 ) -> str:
     """Format detailed output with component chain, hashes, AMNESIA detection, entropy, etc."""
     core_services = core_services or ["podman", "typedb", "chromadb"]
@@ -165,6 +166,18 @@ def format_detailed(
 
         if last_save:
             lines.append(f"  Last save: {last_save[:19]}")
+
+    # MCP Usage (GOV-MCP-FIRST-01-v1)
+    if mcp_usage:
+        cats = mcp_usage.get("mcp_categories", {})
+        tw = mcp_usage.get("todowrite_count", 0)
+        parts = [f"{k}={v}" for k, v in sorted(cats.items())]
+        parts.append(f"TodoWrite={tw}")
+        lines.append("")
+        lines.append(f"MCP Usage: {' | '.join(parts)}")
+        warns = mcp_usage.get("warnings_issued", 0)
+        if warns > 0:
+            lines.append(f"  ⚠️ {warns} MCP-first warning(s) issued this session")
 
     # AMNESIA Detection
     if amnesia and amnesia.get("detected"):

@@ -59,6 +59,11 @@
             "type": "command",
             "command": "python3 \"$CLAUDE_PROJECT_DIR/.claude/hooks/checkers/mcp_connection.py\" --quick",
             "timeout": 3
+          },
+          {
+            "type": "command",
+            "command": "python3 \"$CLAUDE_PROJECT_DIR/.claude/hooks/mcp_usage_check.py\" --reset",
+            "timeout": 1
           }
         ]
       }
@@ -108,6 +113,21 @@
             "type": "command",
             "command": "python3 \"$CLAUDE_PROJECT_DIR/.claude/hooks/session_tool_logger.py\"",
             "timeout": 1
+          },
+          {
+            "type": "command",
+            "command": "python3 \"$CLAUDE_PROJECT_DIR/.claude/hooks/mcp_usage_check.py\"",
+            "timeout": 1
+          }
+        ]
+      },
+      {
+        "matcher": "TodoWrite",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"$CLAUDE_PROJECT_DIR/.claude/hooks/todo_sync.py\"",
+            "timeout": 3
           }
         ]
       }

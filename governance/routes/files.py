@@ -64,12 +64,19 @@ async def get_file_content(path: str = Query(..., description="File path relativ
             content = f.read()
 
         stat = os.stat(full_path)
-        return FileContentResponse(
+        response = FileContentResponse(
             path=normalized_path,
             content=content,
             size=stat.st_size,
             modified_at=datetime.fromtimestamp(stat.st_mtime).isoformat(),
         )
+
+        # Render markdown to HTML for .md files
+        if normalized_path.endswith(".md"):
+            from governance.services.cc_session_ingestion import render_markdown
+            response.rendered_html = render_markdown(content)
+
+        return response
     except UnicodeDecodeError:
         raise HTTPException(status_code=400, detail="Cannot read binary files")
     except Exception as e:

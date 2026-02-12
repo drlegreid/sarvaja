@@ -85,7 +85,7 @@ class TestSessionsViaRestAPI:
             requests.delete(f"{API_BASE}/api/sessions/{test_session_id}", timeout=10)
 
     def test_get_tasks_with_sessions(self):
-        """MCP-002-A: Tasks and sessions can be queried together."""
+        """MCP-002-A / GOV-MCP-FIRST-01-v1: Tasks and sessions can be queried together."""
         # Get tasks
         tasks_result = api_get("/api/tasks")
         assert tasks_result["status"] == 200
@@ -128,7 +128,7 @@ class TestTasksViaRestAPI:
         assert isinstance(result["data"], list)
 
     def test_create_task(self):
-        """MCP-002-A: Can create task via REST API."""
+        """MCP-002-A / GOV-MCP-FIRST-01-v1: Can create task via REST API."""
         timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
         task_data = {
             "task_id": f"TEST-TASK-{timestamp}",

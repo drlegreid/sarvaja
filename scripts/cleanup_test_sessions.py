@@ -35,6 +35,12 @@ _TEST_PATTERNS = (
     "CHAT-HELLO", "CHAT-LINKING", "CHAT-VERIFY",
     "CHAT-TESTING", "CHAT-SUMMARY", "CHAT--STATUS",
     "CHAT-COMPLETE-SESSION", "CHAT-DELETE",
+    "CHAT-/STATUS",
+)
+
+# Sessions to NEVER delete (real governance sessions)
+_PROTECTED_PATTERNS = (
+    "CHAT-HEURISTIC-INTEGRITY",
 )
 
 
@@ -48,6 +54,10 @@ def _is_test_session(session: dict) -> bool:
         return True
 
     if "CHAT-" in sid:
+        # Never delete protected sessions
+        for protected in _PROTECTED_PATTERNS:
+            if protected in sid:
+                return False
         for pattern in _TEST_PATTERNS:
             if pattern in sid:
                 return True

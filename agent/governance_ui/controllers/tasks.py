@@ -32,6 +32,7 @@ def register_tasks_controllers(state: Any, ctrl: Any, api_base_url: str) -> None
                 if response.status_code == 200:
                     state.selected_task = response.json()
                     state.show_task_detail = True
+                    _auto_load_task_execution(task_id)
                     return
         except Exception:
             pass
@@ -41,6 +42,23 @@ def register_tasks_controllers(state: Any, ctrl: Any, api_base_url: str) -> None
                 state.selected_task = task
                 state.show_task_detail = True
                 break
+        _auto_load_task_execution(task_id)
+
+    def _auto_load_task_execution(task_id):
+        """Auto-load execution log when a task is selected."""
+        try:
+            state.task_execution_loading = True
+            state.task_execution_log = []
+            state.show_task_execution = True
+            with httpx.Client(timeout=10.0) as client:
+                response = client.get(f"{api_base_url}/api/tasks/{task_id}/execution")
+                if response.status_code == 200:
+                    data = response.json()
+                    state.task_execution_log = data.get("events", [])
+        except Exception:
+            state.task_execution_log = []
+        finally:
+            state.task_execution_loading = False
 
     @ctrl.set("close_task_detail")
     def close_task_detail():

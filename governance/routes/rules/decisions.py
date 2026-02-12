@@ -143,6 +143,14 @@ async def create_decision(decision: DecisionCreate):
         )
 
         if created:
+            # GAP-DECISION-RULES-001: Link rules atomically at creation
+            linked_rules = []
+            for rule_id in decision.rules_applied:
+                try:
+                    if client.link_decision_to_rule(decision.decision_id, rule_id):
+                        linked_rules.append(rule_id)
+                except Exception as e:
+                    logger.warning(f"Failed to link rule {rule_id} to {decision.decision_id}: {e}")
             return DecisionResponse(
                 id=created.id,
                 name=created.name,
@@ -150,7 +158,7 @@ async def create_decision(decision: DecisionCreate):
                 rationale=created.rationale,
                 status=created.status,
                 decision_date=created.decision_date.isoformat() if created.decision_date else None,
-                linked_rules=[]  # New decisions have no linked rules initially
+                linked_rules=linked_rules,
             )
         raise HTTPException(status_code=500, detail="Failed to create decision")
     except HTTPException:

@@ -214,6 +214,18 @@ def get_initial_state() -> Dict[str, Any]:
             'returned': 0,
         },
 
+        # Projects state (GOV-PROJECT-01-v1)
+        'projects': [],
+        'selected_project': None,
+        'project_sessions': [],
+        'projects_headers': [
+            {"title": "Project ID", "key": "project_id", "width": "180px", "sortable": True},
+            {"title": "Name", "key": "name", "sortable": True},
+            {"title": "Path", "key": "path", "width": "250px", "sortable": True},
+            {"title": "Plans", "key": "plan_count", "width": "80px", "sortable": True},
+            {"title": "Sessions", "key": "session_count", "width": "100px", "sortable": True},
+        ],
+
         # Sessions pagination state (GAP-UI-036)
         'sessions_page': 1,
         'sessions_per_page': 20,
@@ -247,6 +259,7 @@ def get_initial_state() -> Dict[str, Any]:
         'show_file_viewer': False,
         'file_viewer_path': '',
         'file_viewer_content': '',
+        'file_viewer_html': '',
         'file_viewer_loading': False,
         'file_viewer_error': '',
 

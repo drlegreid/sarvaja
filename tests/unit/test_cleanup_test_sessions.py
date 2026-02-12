@@ -77,3 +77,11 @@ class TestIsTestSession:
         for pattern in _TEST_PATTERNS:
             session = {"session_id": f"SESSION-2026-02-11-{pattern}", "agent_id": ""}
             assert _is_test_session(session) is True, f"Pattern not detected: {pattern}"
+
+    def test_heuristic_integrity_protected(self):
+        """Real heuristic integrity check sessions must NOT be cleaned."""
+        session = {
+            "session_id": "SESSION-2026-02-12-CHAT-HEURISTIC-INTEGRITY-CHECK-(ALL)",
+            "agent_id": "code-agent",
+        }
+        assert _is_test_session(session) is False

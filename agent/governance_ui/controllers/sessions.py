@@ -42,37 +42,71 @@ def register_sessions_controllers(state: Any, ctrl: Any, api_base_url: str) -> N
         except Exception:
             pass
 
+        load_session_evidence(session_id)
         load_session_tasks(session_id)
         load_session_tool_calls(session_id)
         load_session_thinking_items(session_id)
 
     def load_session_tool_calls(session_id):
-        """Load tool calls for a session. Per B.3."""
+        """Load tool calls via detail.py zoom endpoint (JSONL-backed)."""
         if not session_id:
             return
         try:
             state.session_tool_calls = []
             with httpx.Client(timeout=10.0) as client:
-                response = client.get(f"{api_base_url}/api/sessions/{session_id}/tool_calls")
+                response = client.get(
+                    f"{api_base_url}/api/sessions/{session_id}/tools",
+                    params={"per_page": 100},
+                )
                 if response.status_code == 200:
                     data = response.json()
-                    state.session_tool_calls = data.get('tool_calls', [])
+                    calls = data.get('tool_calls', [])
+                    # Transform: detail.py returns 'name', UI expects 'tool_name'
+                    for call in calls:
+                        if 'name' in call and 'tool_name' not in call:
+                            call['tool_name'] = call['name']
+                    state.session_tool_calls = calls
         except Exception:
             state.session_tool_calls = []
 
     def load_session_thinking_items(session_id):
-        """Load thinking/reasoning items for a session. Per B.3."""
+        """Load thinking items via detail.py zoom endpoint (JSONL-backed)."""
         if not session_id:
             return
         try:
             state.session_thinking_items = []
             with httpx.Client(timeout=10.0) as client:
-                response = client.get(f"{api_base_url}/api/sessions/{session_id}/thoughts")
+                response = client.get(
+                    f"{api_base_url}/api/sessions/{session_id}/thoughts",
+                    params={"per_page": 100},
+                )
                 if response.status_code == 200:
                     data = response.json()
-                    state.session_thinking_items = data.get('thoughts', [])
+                    items = data.get('thinking_blocks', [])
+                    # Transform: detail.py returns 'chars', UI expects 'char_count'
+                    for item in items:
+                        if 'chars' in item and 'char_count' not in item:
+                            item['char_count'] = item['chars']
+                    state.session_thinking_items = items
         except Exception:
             state.session_thinking_items = []
+
+    def load_session_evidence(session_id):
+        """Load evidence files for a session and merge into selected_session."""
+        if not session_id:
+            return
+        try:
+            with httpx.Client(timeout=10.0) as client:
+                response = client.get(f"{api_base_url}/api/sessions/{session_id}/evidence")
+                if response.status_code == 200:
+                    data = response.json()
+                    files = data.get('evidence_files', [])
+                    if state.selected_session and files:
+                        session = dict(state.selected_session)
+                        session['evidence_files'] = files
+                        state.selected_session = session
+        except Exception:
+            pass
 
     def load_session_tasks(session_id):
         """Load tasks linked to a session."""

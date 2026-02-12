@@ -41,6 +41,7 @@ def load_initial_data(
             _load_sessions(state, client, api_base_url, get_sessions, page_size)
             _load_agents(state, client, api_base_url)
             _load_tasks(state, client, api_base_url, get_tasks, page_size)
+            _load_projects(state, client, api_base_url)
     except Exception:
         state.rules = get_rules()
         state.decisions = get_decisions()
@@ -90,6 +91,15 @@ def _load_sessions(state, client, api_base_url, get_sessions, page_size) -> None
             item["duration"] = compute_session_duration(
                 item.get("start_time", ""), item.get("end_time", ""),
             )
+            # Derive source_type for Source column (SESSION-CC-01-v1)
+            if not item.get("source_type"):
+                sid = item.get("session_id", "")
+                if item.get("cc_session_uuid") or "-CC-" in sid:
+                    item["source_type"] = "CC"
+                elif "-CHAT-" in sid or "-MCP-AUTO-" in sid:
+                    item["source_type"] = "Chat"
+                else:
+                    item["source_type"] = "API"
 
         tl_vals, tl_labels = compute_timeline_data(items)
         state.sessions_timeline_data = tl_vals
@@ -114,6 +124,19 @@ def _load_agents(state, client, api_base_url) -> None:
         state.agents = data.get("items", data) if isinstance(data, dict) else data
     else:
         state.agents = []
+
+
+def _load_projects(state, client, api_base_url) -> None:
+    """Load projects from REST API (GOV-PROJECT-01-v1)."""
+    try:
+        resp = client.get(f"{api_base_url}/api/projects", params={"limit": 50})
+        if resp.status_code == 200:
+            data = resp.json()
+            state.projects = data.get("items", data) if isinstance(data, dict) else data
+        else:
+            state.projects = []
+    except Exception:
+        state.projects = []
 
 
 def _load_tasks(state, client, api_base_url, get_tasks, page_size) -> None:

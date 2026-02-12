@@ -35,6 +35,27 @@ def _update_attribute(tx, task_id: str, attr_name: str, old_value: str, new_valu
     ''').resolve()
 
 
+def _set_lifecycle_timestamps(tx, task_id: str, new_status: str, current):
+    """Set claimed_at / completed_at timestamps on status transitions.
+
+    Mirrors the logic from update_task_status() so that update_task()
+    also handles lifecycle timestamps correctly.
+    """
+    now_str = datetime.now().strftime('%Y-%m-%dT%H:%M:%S')
+
+    if new_status == "IN_PROGRESS" and not current.claimed_at:
+        tx.query(f'''
+            match $t isa task, has task-id "{task_id}";
+            insert $t has task-claimed-at {now_str};
+        ''').resolve()
+
+    if new_status in ("DONE", "CLOSED") and not current.completed_at:
+        tx.query(f'''
+            match $t isa task, has task-id "{task_id}";
+            insert $t has task-completed-at {now_str};
+        ''').resolve()
+
+
 class TaskCRUDOperations:
     """
     Task CRUD operations for TypeDB.
@@ -219,6 +240,11 @@ class TaskCRUDOperations:
             with self._driver.transaction(self.database, TransactionType.WRITE) as tx:
                 if status and status != current.status:
                     _update_attribute(tx, task_id, "task-status", current.status, status)
+                    # Lifecycle timestamps — mirror update_task_status() logic
+                    _set_lifecycle_timestamps(tx, task_id, status, current)
+                elif status and status == current.status:
+                    # Repair: set missing timestamps even when status unchanged
+                    _set_lifecycle_timestamps(tx, task_id, status, current)
                 if name and name != current.name:
                     _update_attribute(tx, task_id, "task-name", current.name, name)
                 if phase and phase != current.phase:

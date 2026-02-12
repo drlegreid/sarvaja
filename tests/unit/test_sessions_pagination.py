@@ -204,7 +204,8 @@ class TestLoadSessionsPage:
         )
         loader()
 
-        call_kwargs = mc.get.call_args[1]
+        # First .get() call is the filtered page; second is _update_timeline
+        call_kwargs = mc.get.call_args_list[0][1]
         assert call_kwargs["params"]["status"] == "COMPLETED"
         assert call_kwargs["params"]["agent_id"] == "code-agent"
 

@@ -43,6 +43,7 @@ def with_file_viewer(
         'show_file_viewer': show,
         'file_viewer_path': path,
         'file_viewer_content': content,
+        'file_viewer_html': '',
         'file_viewer_loading': loading,
         'file_viewer_error': error,
     }
@@ -55,6 +56,7 @@ def with_file_viewer_loading(state: Dict[str, Any], path: str) -> Dict[str, Any]
         'show_file_viewer': True,
         'file_viewer_path': path,
         'file_viewer_content': '',
+        'file_viewer_html': '',
         'file_viewer_loading': True,
         'file_viewer_error': '',
     }
@@ -87,6 +89,7 @@ def close_file_viewer(state: Dict[str, Any]) -> Dict[str, Any]:
         'show_file_viewer': False,
         'file_viewer_path': '',
         'file_viewer_content': '',
+        'file_viewer_html': '',
         'file_viewer_loading': False,
         'file_viewer_error': '',
     }

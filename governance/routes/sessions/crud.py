@@ -107,6 +107,12 @@ async def update_session(session_id: str, data: SessionUpdate):
         start_time=data.start_time,
         end_time=data.end_time,
         source="rest-api",
+        cc_session_uuid=data.cc_session_uuid,
+        cc_project_slug=data.cc_project_slug,
+        cc_git_branch=data.cc_git_branch,
+        cc_tool_count=data.cc_tool_count,
+        cc_thinking_chars=data.cc_thinking_chars,
+        cc_compaction_count=data.cc_compaction_count,
     )
     if result is None:
         raise HTTPException(status_code=404, detail=f"Session {session_id} not found")

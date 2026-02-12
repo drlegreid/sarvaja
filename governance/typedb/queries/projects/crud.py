@@ -50,57 +50,48 @@ class ProjectCRUDOperations:
 
     def get_project(self, project_id: str) -> Optional[Dict[str, Any]]:
         """Get a project by ID from TypeDB."""
-        from typedb.driver import TransactionType
-
         try:
-            with self._driver.transaction(self.database, TransactionType.READ) as tx:
-                query = f"""
-                    match
-                        $p isa project, has project-id "{project_id}";
-                    fetch
-                        $p: project-id, project-name, project-path;
-                """
-                results = list(tx.query(query).resolve())
-                if not results:
-                    return None
+            # Check existence via _execute_query (handles concept→value)
+            results = self._execute_query(
+                f'match $p isa project, has project-id "{project_id}"; select $p;'
+            )
+            if not results:
+                return None
 
-                row = results[0]
-                p = row.get("p", {})
-                return {
-                    "project_id": _extract_attr(p, "project-id"),
-                    "name": _extract_attr(p, "project-name"),
-                    "path": _extract_attr(p, "project-path"),
-                }
+            project = {"project_id": project_id, "name": "", "path": None}
+
+            for attr, field in [("project-name", "name"), ("project-path", "path")]:
+                try:
+                    r = self._execute_query(
+                        f'match $p isa project, has project-id "{project_id}", has {attr} $v; select $v;'
+                    )
+                    if r:
+                        project[field] = r[0].get("v")
+                except Exception:
+                    pass
+
+            return project
         except Exception as e:
             logger.error(f"Failed to get project {project_id}: {e}")
             return None
 
     def list_projects(self, limit: int = 50, offset: int = 0) -> List[Dict[str, Any]]:
         """List all projects from TypeDB."""
-        from typedb.driver import TransactionType
-
         try:
-            with self._driver.transaction(self.database, TransactionType.READ) as tx:
-                query = """
-                    match
-                        $p isa project;
-                    fetch
-                        $p: project-id, project-name, project-path;
-                """
-                results = list(tx.query(query).resolve())
+            results = self._execute_query(
+                "match $p isa project, has project-id $id; select $id;"
+            )
 
-                projects = []
-                for row in results:
-                    p = row.get("p", {})
-                    projects.append({
-                        "project_id": _extract_attr(p, "project-id"),
-                        "name": _extract_attr(p, "project-name"),
-                        "path": _extract_attr(p, "project-path"),
-                    })
+            project_ids = sorted(r.get("id", "") for r in results)
+            project_ids = project_ids[offset:offset + limit]
 
-                # Sort by project_id, apply pagination
-                projects.sort(key=lambda x: x.get("project_id", ""))
-                return projects[offset:offset + limit]
+            projects = []
+            for pid in project_ids:
+                proj = self.get_project(pid)
+                if proj:
+                    projects.append(proj)
+
+            return projects
         except Exception as e:
             logger.error(f"Failed to list projects: {e}")
             return []
@@ -135,15 +126,3 @@ class ProjectCRUDOperations:
         except Exception as e:
             logger.error(f"Failed to delete project {project_id}: {e}")
             return False
-
-
-def _extract_attr(entity_data: dict, attr_name: str) -> Optional[str]:
-    """Extract a single attribute value from TypeDB fetch result."""
-    attr = entity_data.get(attr_name)
-    if attr is None:
-        return None
-    if isinstance(attr, list):
-        return attr[0].get("value") if attr else None
-    if isinstance(attr, dict):
-        return attr.get("value")
-    return str(attr)

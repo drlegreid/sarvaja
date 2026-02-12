@@ -12,6 +12,7 @@ Updated: 2026-02-01 - Added sessions/rules/agents service layer tests
 """
 import pytest
 import inspect
+from unittest.mock import patch, MagicMock
 
 
 class TestTaskServiceLayer:
@@ -243,3 +244,48 @@ class TestAgentDefaults:
         assert agent is not None
         assert agent.get("description"), "code-agent missing description"
         assert agent.get("model"), "code-agent missing model"
+
+
+class TestMCPReadinessContainerAware:
+    """GAP-MCP-READINESS-001: Backend checks must be container-aware."""
+
+    def test_readiness_uses_container_host_in_container(self):
+        """In-container: should check container hostnames, not localhost."""
+        from governance.api_startup import mcp_readiness_handler
+
+        with patch("agent.governance_ui.controllers.infra.is_in_container", return_value=True), \
+             patch("agent.governance_ui.controllers.infra.check_port") as mock_port:
+            mock_port.return_value = True
+            result = mcp_readiness_handler()
+
+        # Should have checked container hostnames (typedb, chromadb, etc.)
+        hostnames_checked = [call[0][0] for call in mock_port.call_args_list]
+        assert "typedb" in hostnames_checked, f"Expected 'typedb' in {hostnames_checked}"
+        assert "chromadb" in hostnames_checked, f"Expected 'chromadb' in {hostnames_checked}"
+        assert result["status"] == "READY"
+
+    def test_readiness_uses_localhost_on_host(self):
+        """On host: should check localhost with host ports."""
+        from governance.api_startup import mcp_readiness_handler
+
+        with patch("agent.governance_ui.controllers.infra.is_in_container", return_value=False), \
+             patch("agent.governance_ui.controllers.infra.check_port") as mock_port:
+            mock_port.return_value = True
+            result = mcp_readiness_handler()
+
+        hostnames_checked = [call[0][0] for call in mock_port.call_args_list]
+        assert all(h == "localhost" for h in hostnames_checked), \
+            f"Expected all 'localhost', got {hostnames_checked}"
+        assert result["status"] == "READY"
+
+    def test_get_mcp_server_details_container_aware(self):
+        """get_mcp_server_details uses container hosts when in container."""
+        from agent.governance_ui.controllers.infra import get_mcp_server_details
+
+        with patch("agent.governance_ui.controllers.infra.is_in_container", return_value=True), \
+             patch("agent.governance_ui.controllers.infra.check_port", return_value=True) as mock_port:
+            get_mcp_server_details()
+
+        hostnames_checked = [call[0][0] for call in mock_port.call_args_list]
+        assert "typedb" in hostnames_checked
+        assert "chromadb" in hostnames_checked

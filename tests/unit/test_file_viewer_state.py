@@ -25,6 +25,7 @@ class TestWithFileViewer:
         assert result["show_file_viewer"] is True
         assert result["file_viewer_path"] == ""
         assert result["file_viewer_content"] == ""
+        assert result["file_viewer_html"] == ""
         assert result["file_viewer_loading"] is False
         assert result["file_viewer_error"] == ""
         assert result["existing"] == "value"
@@ -62,6 +63,7 @@ class TestWithFileViewerLoading:
         assert result["show_file_viewer"] is True
         assert result["file_viewer_path"] == "/tmp/f.py"
         assert result["file_viewer_content"] == ""
+        assert result["file_viewer_html"] == ""
         assert result["file_viewer_loading"] is True
         assert result["file_viewer_error"] == ""
 
@@ -128,6 +130,7 @@ class TestCloseFileViewer:
             "show_file_viewer": True,
             "file_viewer_path": "/tmp/f.py",
             "file_viewer_content": "code",
+            "file_viewer_html": "<p>rendered</p>",
             "file_viewer_loading": True,
             "file_viewer_error": "err",
         }
@@ -135,6 +138,7 @@ class TestCloseFileViewer:
         assert result["show_file_viewer"] is False
         assert result["file_viewer_path"] == ""
         assert result["file_viewer_content"] == ""
+        assert result["file_viewer_html"] == ""
         assert result["file_viewer_loading"] is False
         assert result["file_viewer_error"] == ""
 
