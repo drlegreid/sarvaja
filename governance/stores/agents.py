@@ -30,13 +30,15 @@ _YAML_KEY_TO_AGENT_ID = {
     "rules-curator": "rules-curator",
     "research-agent": "research-agent",
     "code-agent": "code-agent",
-    "simple-assistant": "simple-assistant",
+    "local-assistant": "local-assistant",
+    # YAML uses simple-assistant but base config uses local-assistant (same agent)
+    "simple-assistant": "local-assistant",
     # Legacy keys (sim.ai era, backward compat)
     "orchestrator": "task-orchestrator",
     "rules_curator": "rules-curator",
     "researcher": "research-agent",
     "coder": "code-agent",
-    "simple_assistant": "simple-assistant",
+    "simple_assistant": "local-assistant",
 }
 
 # Base agent definitions (static config - fallback if TypeDB unavailable)
