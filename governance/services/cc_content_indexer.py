@@ -224,6 +224,10 @@ def index_session_content(
                 ckpt.add_error(msg)
 
         result["chunks_indexed"] += len(batch_ids)
+        # Update lines_processed for the final partial batch
+        if batch_metas:
+            lines_seen = batch_metas[-1].get("line_end", lines_seen) + start_line
+            result["lines_processed"] = lines_seen
 
     # Final checkpoint
     ckpt.chunks_indexed = result["chunks_indexed"]
