@@ -25,6 +25,7 @@ Dependencies:
     pip install trame trame-vuetify trame-client
 """
 
+import logging
 import sys
 import os
 from pathlib import Path
@@ -65,6 +66,8 @@ from agent.governance_ui.controllers import register_all_controllers
 # Project paths
 EVIDENCE_DIR = PROJECT_ROOT / "evidence"
 DOCS_DIR = PROJECT_ROOT / "docs"
+
+logger = logging.getLogger(__name__)
 
 
 class GovernanceDashboard:
@@ -169,7 +172,7 @@ class GovernanceDashboard:
             return self._server
 
         except ImportError:
-            print("Trame not installed. Run: pip install trame trame-vuetify trame-client")
+            logger.error("Trame not installed. Run: pip install trame trame-vuetify trame-client")
             return None
 
     def run(self, port: int = None):
@@ -178,7 +181,7 @@ class GovernanceDashboard:
             self.port = port
         server = self.build_ui()
         if server:
-            print(f"Starting Governance Dashboard on port {self.port}")
+            logger.info("Starting Governance Dashboard on port %s", self.port)
             server.start(port=self.port, open_browser=True)
 
 
