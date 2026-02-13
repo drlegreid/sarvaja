@@ -177,7 +177,10 @@ class TestReporterOutputJson:
 
 # ===== Module 3: prompt_healthcheck.py =========================================
 
+# CRITICAL: This module starts a 3-second watchdog Timer at import time that
+# calls os._exit(0). We must cancel it immediately after loading.
 _prompt = _load_module("prompt_healthcheck", _HOOKS / "prompt_healthcheck.py")
+_prompt.watchdog.cancel()  # Cancel the force_exit timer
 _prompt_output_json = _prompt.output_json
 check_entropy = _prompt.check_entropy
 
