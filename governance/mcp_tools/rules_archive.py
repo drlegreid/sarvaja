@@ -116,8 +116,8 @@ def register_rule_archive_tools(mcp) -> None:
             else:
                 return format_mcp_result({"error": f"No archive found for rule {rule_id}"})
 
-        except ValueError as e:
-            return format_mcp_result({"error": str(e)})
+        except Exception as e:
+            return format_mcp_result({"error": f"rule_restore failed: {e}"})
 
         finally:
             client.close()

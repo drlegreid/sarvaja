@@ -36,8 +36,11 @@ def _extract_decision_refs(content: str) -> set[str]:
     return {m.upper() for m in _DECISION_PATTERN.findall(content)}
 
 
-def _get_typedb_client():
-    """Get TypeDB client via stores config."""
+def _get_typedb_client() -> Any:
+    """Get TypeDB client via stores config.
+
+    Returns a TypeDB client instance (typed as Any to avoid import dependency).
+    """
     from governance.stores.config import get_typedb_client
     return get_typedb_client()
 

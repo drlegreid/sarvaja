@@ -75,8 +75,8 @@ def register_rule_crud_tools(mcp) -> None:
             else:
                 return format_mcp_result({"error": f"Failed to create rule {rule_id}"})
 
-        except ValueError as e:
-            return format_mcp_result({"error": str(e)})
+        except Exception as e:
+            return format_mcp_result({"error": f"rule_create failed: {e}"})
 
         finally:
             client.close()
@@ -137,8 +137,8 @@ def register_rule_crud_tools(mcp) -> None:
             else:
                 return format_mcp_result({"error": f"Failed to update rule {rule_id}"})
 
-        except ValueError as e:
-            return format_mcp_result({"error": str(e)})
+        except Exception as e:
+            return format_mcp_result({"error": f"rule_update failed: {e}"})
 
         finally:
             client.close()
@@ -185,8 +185,8 @@ def register_rule_crud_tools(mcp) -> None:
             else:
                 return format_mcp_result({"error": f"Rule {rule_id} not found"})
 
-        except ValueError as e:
-            return format_mcp_result({"error": str(e)})
+        except Exception as e:
+            return format_mcp_result({"error": f"rule_deprecate failed: {e}"})
 
         finally:
             client.close()

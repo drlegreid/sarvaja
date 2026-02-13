@@ -67,7 +67,7 @@ def register_dsm_tools(mcp) -> None:
                 "started_at": cycle.start_time,
                 "message": f"DSM cycle started: {cycle.cycle_id}"
             })
-        except ValueError as e:
+        except Exception as e:
             return format_mcp_result({"error": str(e)})
 
     @mcp.tool()
@@ -99,7 +99,7 @@ def register_dsm_tools(mcp) -> None:
                 "required_mcps": new_phase.required_mcps,
                 "message": f"Advanced to phase: {new_phase.value}"
             })
-        except ValueError as e:
+        except Exception as e:
             return format_mcp_result({"error": str(e)})
 
     @mcp.tool()
@@ -159,7 +159,7 @@ def register_dsm_tools(mcp) -> None:
                 "evidence": checkpoint.evidence,
                 "message": "Checkpoint recorded"
             })
-        except ValueError as e:
+        except Exception as e:
             return format_mcp_result({"error": str(e)})
 
     @mcp.tool()
@@ -213,7 +213,7 @@ def register_dsm_tools(mcp) -> None:
                 "related_rules": rules or [],
                 "message": f"Finding recorded: {finding['id']}"
             })
-        except ValueError as e:
+        except Exception as e:
             return format_mcp_result({"error": str(e)})
 
     @mcp.tool()
@@ -260,7 +260,7 @@ def register_dsm_tools(mcp) -> None:
                 "completed_cycles": len(tracker.completed_cycles),
                 "message": f"Cycle completed. Evidence: {evidence_path}"
             })
-        except ValueError as e:
+        except Exception as e:
             return format_mcp_result({"error": str(e)})
 
     @mcp.tool()
@@ -294,5 +294,5 @@ def register_dsm_tools(mcp) -> None:
                 "metrics": tracker.current_cycle.metrics,
                 "message": "Metrics updated"
             })
-        except ValueError as e:
+        except Exception as e:
             return format_mcp_result({"error": str(e)})

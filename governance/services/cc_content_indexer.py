@@ -28,8 +28,11 @@ logger = logging.getLogger(__name__)
 CONTENT_COLLECTION = "sim_ai_session_content"
 
 
-def _get_chromadb_collection(collection_name: str = CONTENT_COLLECTION):
-    """Lazy-import ChromaDB and get/create collection."""
+def _get_chromadb_collection(collection_name: str = CONTENT_COLLECTION) -> Any:
+    """Lazy-import ChromaDB and get/create collection.
+
+    Returns a chromadb.Collection instance (typed as Any to avoid import dependency).
+    """
     import chromadb
 
     host = os.getenv("CHROMADB_HOST", "localhost")

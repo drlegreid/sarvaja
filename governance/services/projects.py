@@ -70,11 +70,13 @@ def get_project(project_id: str) -> Optional[Dict[str, Any]]:
                 # Enrich with counts from linking queries
                 try:
                     result["session_count"] = len(client.get_project_sessions(project_id))
-                except Exception:
+                except Exception as e:
+                    logger.debug(f"Session count enrichment failed for {project_id}: {e}")
                     result.setdefault("session_count", 0)
                 try:
                     result["plan_count"] = len(client.get_project_plans(project_id))
-                except Exception:
+                except Exception as e:
+                    logger.debug(f"Plan count enrichment failed for {project_id}: {e}")
                     result.setdefault("plan_count", 0)
                 return result
         except Exception as e:
@@ -98,11 +100,13 @@ def list_projects(
                 pid = p.get("project_id", "")
                 try:
                     p["session_count"] = len(client.get_project_sessions(pid))
-                except Exception:
+                except Exception as e:
+                    logger.debug(f"Session count enrichment failed for {pid}: {e}")
                     p.setdefault("session_count", 0)
                 try:
                     p["plan_count"] = len(client.get_project_plans(pid))
-                except Exception:
+                except Exception as e:
+                    logger.debug(f"Plan count enrichment failed for {pid}: {e}")
                     p.setdefault("plan_count", 0)
         except Exception as e:
             logger.warning(f"TypeDB list projects failed: {e}")
