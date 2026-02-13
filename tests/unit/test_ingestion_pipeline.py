@@ -588,6 +588,15 @@ class TestResolveJsonlPath(unittest.TestCase):
         result = _resolve_jsonl_path("S1", None)
         self.assertIsNone(result)
 
+    @patch("governance.services.cc_session_scanner.find_jsonl_for_session")
+    def test_auto_discover_passes_dict(self, mock_find):
+        """Verify find_jsonl_for_session is called with a dict, not a string."""
+        mock_find.return_value = Path("/tmp/test.jsonl")
+        from governance.mcp_tools.ingestion import _resolve_jsonl_path
+        with patch.object(Path, "exists", return_value=True):
+            _resolve_jsonl_path("SESSION-2026-CC-TEST", None)
+        mock_find.assert_called_once_with({"session_id": "SESSION-2026-CC-TEST"})
+
 
 # ---------------------------------------------------------------------------
 # D6: Parser start_line

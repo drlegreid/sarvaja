@@ -71,7 +71,7 @@ def main() -> int:
         # Auto-discover
         try:
             from governance.services.cc_session_scanner import find_jsonl_for_session
-            jsonl_path = find_jsonl_for_session(args.session_id)
+            jsonl_path = find_jsonl_for_session({"session_id": args.session_id})
         except Exception as e:
             print(f"Auto-discovery failed: {e}", file=sys.stderr)
 

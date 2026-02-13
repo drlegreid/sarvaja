@@ -142,7 +142,8 @@ def _resolve_jsonl_path(
 
     try:
         from governance.services.cc_session_scanner import find_jsonl_for_session
-        return find_jsonl_for_session(session_id)
+        # find_jsonl_for_session expects a dict with session_id key
+        return find_jsonl_for_session({"session_id": session_id})
     except (ImportError, Exception):
         return None
 
