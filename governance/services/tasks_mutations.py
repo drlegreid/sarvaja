@@ -16,6 +16,13 @@ from governance.middleware.event_log import log_event
 
 logger = logging.getLogger(__name__)
 
+__all__ = [
+    "update_task",
+    "delete_task",
+    "link_task_to_rule",
+    "link_task_to_session",
+]
+
 
 def _monitor(action: str, task_id: str, source: str = "service", **extra):
     """Log task monitoring event for MCP compliance."""

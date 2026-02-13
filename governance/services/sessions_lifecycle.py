@@ -16,6 +16,11 @@ from governance.middleware.event_log import log_event
 
 logger = logging.getLogger(__name__)
 
+__all__ = [
+    "delete_session",
+    "end_session",
+]
+
 
 def _monitor(action: str, session_id: str, source: str = "service", **extra):
     """Log session monitoring event for MCP compliance."""

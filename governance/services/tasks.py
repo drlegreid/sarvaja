@@ -30,6 +30,19 @@ from governance.services.tasks_mutations import (  # noqa: F401
 
 logger = logging.getLogger(__name__)
 
+__all__ = [
+    "list_tasks",
+    "create_task",
+    "get_task",
+    "get_task_details",
+    "update_task_details",
+    # Re-exports from tasks_mutations
+    "update_task",
+    "delete_task",
+    "link_task_to_rule",
+    "link_task_to_session",
+]
+
 
 def _get_active_session_id() -> Optional[str]:
     """Find the most recent active session for auto-linking (DATA-LINK-01-v1)."""

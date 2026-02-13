@@ -22,6 +22,15 @@ from governance.services.agents_metrics import record_task_execution  # noqa: F4
 
 logger = logging.getLogger(__name__)
 
+__all__ = [
+    "list_agents",
+    "get_agent",
+    "delete_agent",
+    "toggle_agent_status",
+    # Re-export from agents_metrics
+    "record_task_execution",
+]
+
 
 def _monitor(action: str, agent_id: str, source: str = "service", **extra):
     """Log agent monitoring event for MCP compliance."""

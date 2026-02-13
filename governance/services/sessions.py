@@ -29,6 +29,17 @@ from governance.services.sessions_lifecycle import (  # noqa: F401
 
 logger = logging.getLogger(__name__)
 
+__all__ = [
+    "list_sessions",
+    "create_session",
+    "get_session",
+    "update_session",
+    "sync_pending_sessions",
+    # Re-exports from sessions_lifecycle
+    "delete_session",
+    "end_session",
+]
+
 
 def _monitor(action: str, session_id: str, source: str = "service", **extra):
     """Log session monitoring event for MCP compliance."""

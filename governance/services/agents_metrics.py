@@ -17,6 +17,10 @@ from governance.stores import (
 
 logger = logging.getLogger(__name__)
 
+__all__ = [
+    "record_task_execution",
+]
+
 
 def _build_relations_lookup(client):
     """Build lookup dicts for agent relations in a single batch."""

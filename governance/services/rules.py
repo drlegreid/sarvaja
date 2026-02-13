@@ -25,6 +25,24 @@ from governance.services.rules_relations import (  # noqa: F401
 
 logger = logging.getLogger(__name__)
 
+__all__ = [
+    "get_semantic_id",
+    "resolve_rule",
+    "rule_to_response_dict",
+    "list_rules",
+    "get_rule",
+    "create_rule",
+    "update_rule",
+    "delete_rule",
+    # Re-exports from rules_relations
+    "get_rule_document_paths",
+    "get_rule_linkage_counts",
+    "get_rule_tasks",
+    "get_rule_dependencies",
+    "create_rule_dependency",
+    "dependency_overview",
+]
+
 
 def _get_client_or_raise():
     """Get TypeDB client or raise ConnectionError."""

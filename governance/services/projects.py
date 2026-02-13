@@ -11,6 +11,14 @@ from typing import Dict, Any, List, Optional
 
 logger = logging.getLogger(__name__)
 
+__all__ = [
+    "create_project",
+    "get_project",
+    "list_projects",
+    "delete_project",
+    "link_session_to_project",
+]
+
 # In-memory fallback store
 _projects_store: Dict[str, Dict[str, Any]] = {}
 

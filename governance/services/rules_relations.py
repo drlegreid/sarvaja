@@ -13,6 +13,15 @@ from governance.rule_linker import normalize_rule_id
 
 logger = logging.getLogger(__name__)
 
+__all__ = [
+    "get_rule_document_paths",
+    "get_rule_linkage_counts",
+    "get_rule_tasks",
+    "get_rule_dependencies",
+    "create_rule_dependency",
+    "dependency_overview",
+]
+
 
 def _get_client_or_raise():
     """Get TypeDB client or raise ConnectionError."""
