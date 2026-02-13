@@ -29,6 +29,12 @@ logs/
 # Test results (GAP-TEST-002)
 results/
 
+# Ingestion pipeline checkpoints (SESSION-METRICS-01-v1)
+.ingestion_checkpoints/
+
+# CVP test result artifacts
+evidence/test-results/
+
 # Test audit trails (EPIC-006)
 evidence/tests/claude/
 evidence/tests/platform/
@@ -36,15 +42,29 @@ evidence/tests/platform/
 # E2E test archive artifacts (prevent TEST-* pollution)
 evidence/archive/rules/TEST-*.json
 
+# Auto-generated session evidence (CVP/heuristic tests)
+evidence/SESSION-*-CHAT-*.md
+evidence/DSM-*.md
+
 # Robot Framework / Playwright test output
 log.html
 output.xml
 report.html
 playwright-log.txt
 
+# E2E screenshots and verification images
+*.png
+!agent/governance_ui/**/*.png
+
+# Playwright MCP artifacts
+.playwright-mcp/
+
 # OS
 .DS_Store
 Thumbs.db
+
+# Browser test artifacts
+browser/
 
 # Cloned repos (don't push submodules)
 opik/
