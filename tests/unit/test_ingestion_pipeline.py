@@ -487,8 +487,9 @@ class TestRunIngestionPipeline(unittest.TestCase):
         result = run_ingestion_pipeline(Path("/nope.jsonl"), "S1")
         self.assertEqual(result["status"], "error")
 
+    @patch("governance.services.ingestion_orchestrator._get_rss_mb", return_value=50.0)
     @patch("governance.services.cc_content_indexer._get_chromadb_collection")
-    def test_content_only_phase(self, mock_get_coll):
+    def test_content_only_phase(self, mock_get_coll, _mock_rss):
         from governance.services.ingestion_orchestrator import run_ingestion_pipeline
         mock_coll = MagicMock()
         mock_get_coll.return_value = mock_coll
@@ -512,7 +513,8 @@ class TestRunIngestionPipeline(unittest.TestCase):
             import shutil
             shutil.rmtree(tmpdir)
 
-    def test_dry_run_pipeline(self):
+    @patch("governance.services.ingestion_orchestrator._get_rss_mb", return_value=50.0)
+    def test_dry_run_pipeline(self, _mock_rss):
         from governance.services.ingestion_orchestrator import run_ingestion_pipeline
         tmpdir = Path(tempfile.mkdtemp())
         jsonl = tmpdir / "test.jsonl"
