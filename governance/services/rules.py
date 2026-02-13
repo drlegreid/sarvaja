@@ -8,7 +8,7 @@ Per DOC-SIZE-01-v1: Relation/dependency functions split to rules_relations.py.
 Created: 2026-02-01
 """
 import logging
-from typing import Optional, Dict, Any, List
+from typing import Optional, Dict, Any, List, Tuple
 
 from governance.client import get_client
 from governance.rule_linker import LEGACY_TO_SEMANTIC, normalize_rule_id
@@ -53,7 +53,7 @@ def get_semantic_id(legacy_id: str) -> Optional[str]:
     return LEGACY_TO_SEMANTIC.get(legacy_id)
 
 
-def resolve_rule(client, rule_id: str):
+def resolve_rule(client, rule_id: str) -> Tuple[str, Any]:
     """Resolve a rule by ID, trying semantic then legacy format.
 
     Returns:

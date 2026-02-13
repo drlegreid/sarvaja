@@ -6,7 +6,7 @@ import os
 import logging
 from contextlib import contextmanager
 from dataclasses import dataclass
-from typing import Any
+from typing import Any, Generator
 
 logger = logging.getLogger(__name__)
 
@@ -88,7 +88,7 @@ def calculate_vote_weight(trust_score: float) -> float:
     return 1.0 if trust_score >= 0.5 else trust_score
 
 
-def get_typedb_client():
+def get_typedb_client() -> "TypeDBClient":  # noqa: F821
     """
     Factory function to create TypeDB client.
 
@@ -100,7 +100,7 @@ def get_typedb_client():
 
 
 @contextmanager
-def typedb_client():
+def typedb_client() -> Generator[Any, None, None]:
     """Context manager for TypeDB client connect/close.
 
     Usage:
