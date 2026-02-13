@@ -14,8 +14,11 @@ Created: 2024-12-28
 """
 
 import glob
+import logging
 from pathlib import Path
 from typing import Optional
+
+logger = logging.getLogger(__name__)
 
 from .common import EVIDENCE_DIR, DOCS_DIR
 from governance.mcp_tools.common import format_mcp_result
@@ -75,8 +78,8 @@ def register_search_tools(mcp) -> None:
                         "count": len(semantic_results),
                         "search_method": "semantic_vector"
                     })
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug(f"Semantic search failed, falling back to keyword: {e}")
 
         # Fall back to keyword search
         results = []
@@ -98,7 +101,8 @@ def register_search_tools(mcp) -> None:
                             "path": str(filepath),
                             "content": content[:200] + "..."
                         })
-                except Exception:
+                except Exception as e:
+                    logger.debug(f"Failed to search evidence file {filepath}: {e}")
                     continue
 
         # Sort by score descending

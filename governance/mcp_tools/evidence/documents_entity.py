@@ -17,8 +17,11 @@ Created: 2026-01-13 (extracted from documents.py)
 Refactored: 2026-01-19 (removed deprecated functions per MCP-NAMING-01-v1)
 """
 
+import logging
 import re
 from pathlib import Path
+
+logger = logging.getLogger(__name__)
 
 from governance.mcp_tools.common import get_typedb_client, format_mcp_result
 from .common import (
@@ -113,8 +116,8 @@ def register_entity_document_tools(mcp) -> None:
                             "note": "Full markdown not found in docs/rules/, showing TypeDB summary"
                         })
                 client.close()
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug(f"TypeDB fallback for rule {rule_id} failed: {e}")
 
         return format_mcp_result({"error": f"Rule {rule_id} not found in docs/rules/ or TypeDB"})
 
@@ -178,8 +181,8 @@ def register_entity_document_tools(mcp) -> None:
                         "linked_sessions": task.linked_sessions
                     }
                 client.close()
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug(f"TypeDB fallback for task {task_id} failed: {e}")
 
         if not result["sources"] and "typedb" not in result:
             return format_mcp_result({"error": f"Task {task_id} not found in workspace documents or TypeDB"})

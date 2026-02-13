@@ -287,10 +287,8 @@ def register_workspace_sync_tools(mcp) -> None:
                 }
                 return format_mcp_result(result)
 
-        except ConnectionError as e:
-            return format_mcp_result({"error": str(e)})
         except Exception as e:
             logger.error(f"workspace_sync_gaps_to_typedb failed: {e}")
-            return format_mcp_result({"error": str(e)})
+            return format_mcp_result({"error": f"workspace_sync_gaps_to_typedb failed: {e}"})
 
     logger.info("Registered workspace sync status tools (3 tools)")

@@ -14,7 +14,10 @@ Created: 2024-12-28
 """
 
 import glob
+import logging
 from pathlib import Path
+
+logger = logging.getLogger(__name__)
 
 from governance.mcp_tools.common import get_typedb_client, format_mcp_result
 from .common import EVIDENCE_DIR
@@ -47,8 +50,8 @@ def register_decision_tools(mcp) -> None:
                         "source": "typedb"
                     })
                 client.close()
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug(f"TypeDB decisions list failed: {e}")
 
         # Also scan evidence directory for DECISION-*.md files
         pattern = EVIDENCE_DIR / "DECISION-*.md"
@@ -73,7 +76,8 @@ def register_decision_tools(mcp) -> None:
                         "date": None,
                         "source": "evidence_file"
                     })
-            except Exception:
+            except Exception as e:
+                logger.debug(f"Failed to parse decision file {filepath}: {e}")
                 continue
 
         return format_mcp_result({
@@ -114,8 +118,8 @@ def register_decision_tools(mcp) -> None:
                         break
 
                 client.close()
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug(f"TypeDB decision get for {decision_id} failed: {e}")
 
         # Check for evidence file
         evidence_file = EVIDENCE_DIR / f"{decision_id}.md"

@@ -117,8 +117,8 @@ def register_traceability_tools(mcp) -> None:
                     event_type="trace_event", source="mcp-trace-task-chain",
                     details={"task_id": task_id, "depth": depth})
                 return format_mcp_result(result)
-        except ConnectionError as e:
-            return format_mcp_result({"error": str(e)})
+        except Exception as e:
+            return format_mcp_result({"error": f"trace_task_chain failed: {e}"})
 
     @mcp.tool()
     def trace_session_chain(session_id: str, depth: int = 1) -> str:
@@ -145,8 +145,8 @@ def register_traceability_tools(mcp) -> None:
                     event_type="trace_event", source="mcp-trace-session-chain",
                     details={"session_id": session_id, "depth": depth})
                 return format_mcp_result(result)
-        except ConnectionError as e:
-            return format_mcp_result({"error": str(e)})
+        except Exception as e:
+            return format_mcp_result({"error": f"trace_session_chain failed: {e}"})
 
     @mcp.tool()
     def trace_rule_chain(rule_id: str, depth: int = 1) -> str:
@@ -186,8 +186,8 @@ def register_traceability_tools(mcp) -> None:
                     event_type="trace_event", source="mcp-trace-rule-chain",
                     details={"rule_id": rule_id, "depth": depth})
                 return format_mcp_result(result)
-        except ConnectionError as e:
-            return format_mcp_result({"error": str(e)})
+        except Exception as e:
+            return format_mcp_result({"error": f"trace_rule_chain failed: {e}"})
 
     @mcp.tool()
     def trace_gap_chain(gap_id: str) -> str:
@@ -239,8 +239,8 @@ def register_traceability_tools(mcp) -> None:
                     "rule_count": len(all_rules),
                     "evidence_count": len(all_evidence),
                 })
-        except ConnectionError as e:
-            return format_mcp_result({"error": str(e)})
+        except Exception as e:
+            return format_mcp_result({"error": f"trace_gap_chain failed: {e}"})
 
     @mcp.tool()
     def trace_evidence_chain(evidence_path: str) -> str:
@@ -299,5 +299,5 @@ def register_traceability_tools(mcp) -> None:
                     "task_count": len(tasks), "session_count": len(session_ids),
                     "rule_count": len(all_rules),
                 })
-        except ConnectionError as e:
-            return format_mcp_result({"error": str(e)})
+        except Exception as e:
+            return format_mcp_result({"error": f"trace_evidence_chain failed: {e}"})

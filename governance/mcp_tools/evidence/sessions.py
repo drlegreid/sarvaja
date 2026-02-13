@@ -14,8 +14,11 @@ Created: 2024-12-28
 """
 
 import glob
+import logging
 from pathlib import Path
 from typing import Optional
+
+logger = logging.getLogger(__name__)
 
 from governance.mcp_tools.common import format_mcp_result
 from .common import EVIDENCE_DIR
@@ -80,7 +83,8 @@ def register_session_tools(mcp) -> None:
                     "path": str(filepath)
                 })
 
-            except Exception:
+            except Exception as e:
+                logger.debug(f"Failed to parse session file {filepath}: {e}")
                 continue
 
         return format_mcp_result({

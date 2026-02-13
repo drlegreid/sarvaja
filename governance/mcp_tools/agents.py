@@ -1,6 +1,9 @@
 """Agents MCP Tools - Agent CRUD. Per RULE-011/012, DECISION-003."""
 
+import logging
 from typing import Optional
+
+logger = logging.getLogger(__name__)
 from dataclasses import asdict
 
 from governance.mcp_tools.common import get_typedb_client, format_mcp_result
@@ -155,7 +158,8 @@ def register_agent_tools(mcp) -> None:
             try:
                 handoffs = get_pending_handoffs()
                 pending_handoffs = len(handoffs)
-            except Exception:
+            except Exception as e:
+                logger.debug(f"Failed to get pending handoffs: {e}")
                 pending_handoffs = 0
 
             # Build dashboard
@@ -228,8 +232,8 @@ def register_agent_tools(mcp) -> None:
                 "count": len(activities),
                 "filter": agent_id or "all"
             })
-        except Exception:
-            # If relation doesn't exist, return empty
+        except Exception as e:
+            logger.debug(f"Agent activity query failed: {e}")
             return format_mcp_result({
                 "activities": [],
                 "count": 0,

@@ -13,8 +13,11 @@ Tools:
 Created: 2024-12-28
 """
 
+import logging
 import re
 from typing import Optional
+
+logger = logging.getLogger(__name__)
 
 from governance.mcp_tools.common import format_mcp_result
 from .common import BACKLOG_DIR
@@ -77,8 +80,8 @@ def register_task_tools(mcp) -> None:
                     })
                 finally:
                     client.close()
-        except Exception:
-            pass  # Fall through to markdown fallback
+        except Exception as e:
+            logger.debug(f"TypeDB task list failed, falling back to markdown: {e}")
 
         # Fallback: Parse R&D-BACKLOG.md (backward compatibility)
         tasks = []

@@ -123,8 +123,15 @@ def build_session_id(meta: Dict[str, Any], project_slug: str) -> str:
     return f"SESSION-{date_str}-CC-{name}"
 
 
-def find_jsonl_for_session(session: Dict[str, Any]) -> Optional[Path]:
-    """Find the JSONL file for a session by matching slug or UUID."""
+def find_jsonl_for_session(session) -> Optional[Path]:
+    """Find the JSONL file for a session by matching slug or UUID.
+
+    Args:
+        session: Dict with 'session_id' and optionally 'cc_session_uuid',
+                 or a bare session_id string (for convenience).
+    """
+    if isinstance(session, str):
+        session = {"session_id": session}
     cc_uuid = session.get("cc_session_uuid")
     session_id = session.get("session_id", "")
 

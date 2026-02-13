@@ -64,8 +64,8 @@ def register_task_crud_tools(mcp) -> None:
                         result["linked_sessions"] = [session_id]
                     return format_mcp_result(result)
                 return format_mcp_result({"error": f"Failed to create task {task_id}"})
-        except ConnectionError as e:
-            return format_mcp_result({"error": str(e)})
+        except Exception as e:
+            return format_mcp_result({"error": f"task_create failed: {e}"})
 
     @mcp.tool()
     def task_get(task_id: str) -> str:
@@ -85,8 +85,8 @@ def register_task_crud_tools(mcp) -> None:
                     _monitor_task("mcp-task-get", task_id, "query", found=True)
                     return format_mcp_result(asdict(task))
                 return format_mcp_result({"error": f"Task {task_id} not found"})
-        except ConnectionError as e:
-            return format_mcp_result({"error": str(e)})
+        except Exception as e:
+            return format_mcp_result({"error": f"task_get failed: {e}"})
 
     @mcp.tool()
     def task_update(task_id: str, status: Optional[str] = None, name: Optional[str] = None,
@@ -120,8 +120,8 @@ def register_task_crud_tools(mcp) -> None:
                         "task_id": task_id, "message": f"Task {task_id} updated successfully"
                     })
                 return format_mcp_result({"error": f"Failed to update task {task_id}"})
-        except ConnectionError as e:
-            return format_mcp_result({"error": str(e)})
+        except Exception as e:
+            return format_mcp_result({"error": f"task_update failed: {e}"})
 
     @mcp.tool()
     def task_delete(task_id: str) -> str:
@@ -144,8 +144,8 @@ def register_task_crud_tools(mcp) -> None:
                         "message": f"Task {task_id} deleted successfully"
                     })
                 return format_mcp_result({"error": f"Failed to delete task {task_id}"})
-        except ConnectionError as e:
-            return format_mcp_result({"error": str(e)})
+        except Exception as e:
+            return format_mcp_result({"error": f"task_delete failed: {e}"})
 
     @mcp.tool()
     def tasks_list(
@@ -195,5 +195,5 @@ def register_task_crud_tools(mcp) -> None:
                     "has_more": (offset + len(paginated)) < total,
                     "source": "typedb"
                 })
-        except ConnectionError as e:
-            return format_mcp_result({"error": str(e)})
+        except Exception as e:
+            return format_mcp_result({"error": f"tasks_list failed: {e}"})

@@ -74,8 +74,8 @@ def register_task_verify_tools(mcp) -> None:
                     "note": "Task not in TypeDB but verification recorded",
                     "message": f"Verification complete for {task_id}"
                 })
-        except ConnectionError as e:
-            return format_mcp_result({"error": str(e)})
+        except Exception as e:
+            return format_mcp_result({"error": f"task_verify failed: {e}"})
 
     @mcp.tool()
     def session_sync_todos(session_id: str, todos_json: str) -> str:
@@ -142,5 +142,5 @@ def register_task_verify_tools(mcp) -> None:
                     "tasks": synced_tasks,
                     "message": f"Synced {created + updated} tasks to TypeDB"
                 })
-        except ConnectionError as e:
-            return format_mcp_result({"error": str(e)})
+        except Exception as e:
+            return format_mcp_result({"error": f"session_sync_todos failed: {e}"})
