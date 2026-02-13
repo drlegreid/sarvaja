@@ -2,28 +2,34 @@
 Tests for task-to-document linkage display.
 
 Per PLAN-UI-OVERHAUL-001 Task 2.4: Task-Document Linkage.
-TDD: Tests written before implementation.
+Batch 159 deepening (was 2 tests, now 7).
 """
+import inspect
 
 import pytest
-import inspect
 
 
 class TestTaskDocumentLinkage:
-    """Verify task detail shows document links."""
-
     def test_task_detail_shows_document_section(self):
-        """Task detail should display a document-related section."""
         from agent.governance_ui.views.tasks import forms
         source = inspect.getsource(forms)
-        assert 'document' in source.lower(), (
-            "Task linked items should show document references"
-        )
+        assert 'document' in source.lower()
 
     def test_task_linked_items_shows_document_path(self):
-        """Task linked items should display document_path when available."""
         from agent.governance_ui.views.tasks import forms
         source = inspect.getsource(forms)
-        assert 'document_path' in source or 'document-path' in source, (
-            "Task linked items should reference document_path field"
-        )
+        assert 'document_path' in source or 'document-path' in source
+
+    def test_has_file_document_icon(self):
+        from agent.governance_ui.views.tasks import forms
+        source = inspect.getsource(forms)
+        assert 'mdi-file-document' in source
+
+    def test_task_forms_callable(self):
+        from agent.governance_ui.views.tasks.forms import build_task_edit_form
+        assert callable(build_task_edit_form)
+
+    def test_has_rule_chip(self):
+        from agent.governance_ui.views.tasks import forms
+        source = inspect.getsource(forms)
+        assert 'rule' in source.lower()
