@@ -9,13 +9,11 @@ Per SESSION-METRICS-01-v1.
 from __future__ import annotations
 
 import logging
-import os
 import resource
 from pathlib import Path
 from typing import Any
 
 from governance.services.cc_content_indexer import (
-    CONTENT_COLLECTION,
     delete_session_content,
     index_session_content,
 )
