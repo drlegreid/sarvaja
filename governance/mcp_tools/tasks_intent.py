@@ -26,8 +26,8 @@ def _store_task_section(task_id: str, section: str, data: dict) -> None:
         if client and hasattr(client, "update_task_details"):
             client.update_task_details(task_id, **{section: str(data)})
             return
-    except Exception:
-        pass
+    except Exception as e:
+        logger.debug(f"TypeDB task detail update failed for {task_id}: {e}")
     # Fallback: in-memory store
     from governance.stores import _tasks_store
     if task_id in _tasks_store:

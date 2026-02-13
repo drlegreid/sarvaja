@@ -43,8 +43,8 @@ def _get_session_data(session_id: str) -> dict:
                     "description": getattr(session, "description", ""),
                     "agent_id": getattr(session, "agent_id", ""),
                 }
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug(f"TypeDB session fetch failed for {session_id}: {e}")
     return {}
 
 
@@ -186,8 +186,8 @@ def register_context_compactor_tools(mcp) -> None:
             from governance.mcp_tools.common import log_monitor_event
             log_monitor_event("context_compile", "context-compactor",
                               {"session_id": session_id, "zoom": zoom})
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug(f"Monitor event logging failed: {e}")
 
         return format_mcp_result({
             "session_id": session_id,

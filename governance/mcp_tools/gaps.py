@@ -10,10 +10,13 @@ Prevents the anti-pattern of creating self-referential todo lists that
 ignore the actual project backlog.
 """
 
+import logging
 from typing import List
 from governance.utils.gap_parser import GapParser, get_gap_summary
 from governance.utils.work_item import WorkItem, WorkItemType, sort_by_priority
 from governance.mcp_tools.common import format_mcp_result
+
+logger = logging.getLogger(__name__)
 
 
 def register_gap_tools(mcp) -> None:
@@ -113,8 +116,8 @@ def register_gap_tools(mcp) -> None:
             gaps = parser.get_open_gaps()
             for gap in gaps:
                 work_items.append(gap.to_work_item())
-        except Exception:
-            pass  # Continue even if gaps fail
+        except Exception as e:
+            logger.debug(f"Gap parsing failed, continuing: {e}")
 
         # 2. Get tasks from TypeDB (if requested)
         if include_tasks:
@@ -128,8 +131,8 @@ def register_gap_tools(mcp) -> None:
                         if item.is_open:
                             work_items.append(item)
                     client.close()
-            except Exception:
-                pass  # Continue even if TypeDB fails
+            except Exception as e:
+                logger.debug(f"TypeDB task fetch failed, continuing: {e}")
 
         # 3. Sort by priority and limit
         sorted_items = sort_by_priority(work_items)[:limit]

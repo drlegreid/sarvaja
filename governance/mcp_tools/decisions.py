@@ -8,8 +8,11 @@ Per FP + Digital Twin Paradigm: Decision entity module
 Per GAP-MCP-002: Dependency health check with action_required pattern
 """
 
+import logging
 import os
 from datetime import datetime
+
+logger = logging.getLogger(__name__)
 
 from governance.mcp_tools.common import (
     get_typedb_client,
@@ -157,8 +160,8 @@ def register_decision_tools(mcp) -> None:
                     "active_rules": len([r for r in rules if r.status == "ACTIVE"])
                 }
                 client.close()
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug(f"Failed to get TypeDB statistics: {e}")
 
         # GAP-HEALTH-002: Document entropy detection for DSP trigger
         entropy_alerts = _detect_document_entropy()
@@ -228,8 +231,8 @@ def _detect_document_entropy() -> list:
             open_high = content.count("| OPEN |") + content.count("| PARTIAL |")
             if open_high > 50:
                 alerts.append(f"HIGH gap entropy: {open_high} open gaps (threshold: 50)")
-    except Exception:
-        pass
+    except Exception as e:
+        logger.debug(f"Gap entropy check failed: {e}")
 
     # 2. Check for large Python files (>300 lines per RULE-012)
     try:
@@ -242,8 +245,8 @@ def _detect_document_entropy() -> list:
                     large_files.append(f"{py_file.name}:{line_count}")
         if large_files:
             alerts.append(f"Large files detected (>300 lines): {', '.join(large_files[:3])}")
-    except Exception:
-        pass
+    except Exception as e:
+        logger.debug(f"Large file check failed: {e}")
 
     # 3. Check DSM state for last cycle
     try:
@@ -257,8 +260,8 @@ def _detect_document_entropy() -> list:
                 days_ago = (datetime.now() - last_dt).days
                 if days_ago > 7:
                     alerts.append(f"No DSP cycle in {days_ago} days (threshold: 7)")
-    except Exception:
-        pass
+    except Exception as e:
+        logger.debug(f"DSM state check failed: {e}")
 
     # 4. Check evidence file accumulation
     try:
@@ -267,7 +270,7 @@ def _detect_document_entropy() -> list:
             session_files = list(evidence_dir.glob("SESSION-*.md"))
             if len(session_files) > 20:
                 alerts.append(f"Evidence accumulation: {len(session_files)} session files")
-    except Exception:
-        pass
+    except Exception as e:
+        logger.debug(f"Evidence accumulation check failed: {e}")
 
     return alerts
