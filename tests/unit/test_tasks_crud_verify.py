@@ -166,3 +166,28 @@ class TestSessionSyncTodos:
         todos = json.dumps([{"content": "Task X", "status": "pending"}])
         result = json.loads(tools["session_sync_todos"]("S-1", todos))
         assert result["summary"]["skipped"] == 1
+
+    @patch("governance.mcp_tools.tasks_crud_verify.typedb_client")
+    def test_exception_returns_error(self, mock_ctx):
+        """Outer except block returns error when TypeDB connection fails."""
+        tools = _get_tools()
+        mock_ctx.return_value.__enter__ = MagicMock(
+            side_effect=RuntimeError("TypeDB connection refused"))
+        mock_ctx.return_value.__exit__ = MagicMock(return_value=False)
+
+        todos = json.dumps([{"content": "Fix bug", "status": "pending"}])
+        result = json.loads(tools["session_sync_todos"]("S-1", todos))
+        assert "error" in result
+        assert "session_sync_todos failed" in result["error"]
+
+    @patch("governance.mcp_tools.tasks_crud_verify.typedb_client")
+    def test_verify_exception_returns_error(self, mock_ctx):
+        """task_verify returns error on TypeDB exception."""
+        tools = _get_tools()
+        mock_ctx.return_value.__enter__ = MagicMock(
+            side_effect=RuntimeError("TypeDB timeout"))
+        mock_ctx.return_value.__exit__ = MagicMock(return_value=False)
+
+        result = json.loads(tools["task_verify"]("T-1", "pytest", "output"))
+        assert "error" in result
+        assert "task_verify failed" in result["error"]

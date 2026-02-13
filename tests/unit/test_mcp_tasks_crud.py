@@ -176,6 +176,18 @@ class TestTaskGet:
         result = json.loads(tools["task_get"](task_id="T-MISSING"))
         assert "error" in result
 
+    @patch(f"{_MOD}.format_mcp_result", side_effect=_json_fmt)
+    @patch(f"{_MOD}.typedb_client")
+    def test_exception_returns_error(self, mock_ctx, mock_fmt):
+        tools = _register_tools()
+        mock_ctx.return_value.__enter__ = MagicMock(
+            side_effect=RuntimeError("TypeDB timeout"))
+        mock_ctx.return_value.__exit__ = MagicMock(return_value=False)
+
+        result = json.loads(tools["task_get"](task_id="T-1"))
+        assert "error" in result
+        assert "task_get failed" in result["error"]
+
 
 # ── task_update ──────────────────────────────────────────
 

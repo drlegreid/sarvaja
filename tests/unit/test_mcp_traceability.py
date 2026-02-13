@@ -297,6 +297,30 @@ class TestTraceSessionChain:
         assert len(result["tasks_detail"]) == 1
         assert len(result["rules_detail"]) == 1
 
+    @patch(f"{_MOD}.format_mcp_result", side_effect=_json_fmt)
+    @patch(f"{_MOD}.typedb_client")
+    def test_not_found_returns_error(self, mock_ctx, mock_fmt):
+        tools = _register_tools()
+        client = MagicMock()
+        client.get_session.return_value = None
+        mock_ctx.return_value.__enter__ = MagicMock(return_value=client)
+        mock_ctx.return_value.__exit__ = MagicMock(return_value=False)
+
+        result = json.loads(tools["trace_session_chain"]("S-MISSING"))
+        assert result["error"] == "not found"
+
+    @patch(f"{_MOD}.format_mcp_result", side_effect=_json_fmt)
+    @patch(f"{_MOD}.typedb_client")
+    def test_exception_returns_error(self, mock_ctx, mock_fmt):
+        tools = _register_tools()
+        mock_ctx.return_value.__enter__ = MagicMock(
+            side_effect=RuntimeError("TypeDB timeout"))
+        mock_ctx.return_value.__exit__ = MagicMock(return_value=False)
+
+        result = json.loads(tools["trace_session_chain"]("S-1"))
+        assert "error" in result
+        assert "trace_session_chain failed" in result["error"]
+
 
 class TestTraceRuleChain:
 
