@@ -9,7 +9,7 @@ Created: 2026-02-11
 import json
 import logging
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, Union
 
 logger = logging.getLogger(__name__)
 
@@ -123,7 +123,7 @@ def build_session_id(meta: Dict[str, Any], project_slug: str) -> str:
     return f"SESSION-{date_str}-CC-{name}"
 
 
-def find_jsonl_for_session(session) -> Optional[Path]:
+def find_jsonl_for_session(session: Union[Dict[str, Any], str]) -> Optional[Path]:
     """Find the JSONL file for a session by matching slug or UUID.
 
     Args:

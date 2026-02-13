@@ -26,6 +26,14 @@ from governance.services.rules_relations import (  # noqa: F401
 logger = logging.getLogger(__name__)
 
 
+def _get_client_or_raise():
+    """Get TypeDB client or raise ConnectionError."""
+    client = get_client()
+    if not client:
+        raise ConnectionError("TypeDB not connected")
+    return client
+
+
 def _monitor(action: str, rule_id: str, source: str = "service", **extra):
     """Log rule monitoring event for MCP compliance."""
     try:
@@ -38,14 +46,6 @@ def _monitor(action: str, rule_id: str, source: str = "service", **extra):
         )
     except Exception:
         pass
-
-
-def _get_client_or_raise():
-    """Get TypeDB client or raise ConnectionError."""
-    client = get_client()
-    if not client:
-        raise ConnectionError("TypeDB not connected")
-    return client
 
 
 def get_semantic_id(legacy_id: str) -> Optional[str]:
