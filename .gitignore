@@ -26,6 +26,10 @@ venv/
 *.log
 logs/
 
+# Runtime state files
+.dsm_state.json
+.claude/hooks/.session_state.json
+
 # Test results (GAP-TEST-002)
 results/
 
@@ -58,6 +62,10 @@ playwright-log.txt
 
 # Playwright MCP artifacts
 .playwright-mcp/
+
+# Saved web pages (reference material)
+docs/rules/*.html
+docs/rules/*_files/
 
 # OS
 .DS_Store
