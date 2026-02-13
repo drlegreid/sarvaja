@@ -44,6 +44,7 @@ from .gaps import register_gap_tools
 from .workflow_compliance import register_workflow_compliance_tools
 from .traceability import register_traceability_tools
 from .session_metrics import register_session_metrics_tools
+from .ingestion import register_ingestion_tools
 
 
 def register_all_tools(mcp) -> None:
@@ -68,6 +69,7 @@ def register_all_tools(mcp) -> None:
     register_workflow_compliance_tools(mcp)
     register_traceability_tools(mcp)
     register_session_metrics_tools(mcp)
+    register_ingestion_tools(mcp)
 
 
 __all__ = [
@@ -87,4 +89,5 @@ __all__ = [
     'register_workflow_compliance_tools',
     'register_traceability_tools',
     'register_session_metrics_tools',
+    'register_ingestion_tools',
 ]

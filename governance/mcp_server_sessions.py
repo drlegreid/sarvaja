@@ -38,6 +38,7 @@ from governance.mcp_tools.session_metrics import register_session_metrics_tools
 from governance.mcp_tools.evidence_backfill import register_evidence_backfill_tools
 from governance.mcp_tools.context_compactor import register_context_compactor_tools
 from governance.mcp_tools.memory_tiers import register_memory_tier_tools
+from governance.mcp_tools.ingestion import register_ingestion_tools
 
 register_session_tools(mcp)
 register_dsm_tools(mcp)
@@ -48,6 +49,8 @@ register_evidence_backfill_tools(mcp)
 # Per EPIC-G: Holographic Memory Model
 register_context_compactor_tools(mcp)
 register_memory_tier_tools(mcp)
+# Per SESSION-METRICS-01-v1: Mega-session ingestion pipeline
+register_ingestion_tools(mcp)
 
 # Per GAP-GOVSESS-CAPTURE-001: Auto-session tracking for non-chat MCP calls
 from governance.mcp_tools.auto_session import track_mcp_tool_call

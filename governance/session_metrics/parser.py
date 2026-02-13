@@ -181,7 +181,7 @@ def parse_log_file(
 
 
 def parse_log_file_extended(
-    filepath: Path, include_thinking: bool = True
+    filepath: Path, include_thinking: bool = True, start_line: int = 0
 ) -> Generator[ParsedEntry, None, None]:
     """Extended parser that also extracts session_id, git_branch, text_content.
 
@@ -191,13 +191,16 @@ def parse_log_file_extended(
     Args:
         filepath: Path to the .jsonl file.
         include_thinking: If True, include thinking block content.
+        start_line: Skip lines before this offset (for resume support).
 
     Yields:
         ParsedEntry with extended fields populated.
     """
     filepath = Path(filepath)
     with open(filepath, "r") as f:
-        for line in f:
+        for line_num, line in enumerate(f):
+            if line_num < start_line:
+                continue
             line = line.strip()
             if not line:
                 continue
