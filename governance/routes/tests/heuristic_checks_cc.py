@@ -142,6 +142,57 @@ def check_project_has_content(api_base_url: str) -> dict:
     }
 
 
+def check_cc_ingestion_complete(api_base_url: str) -> dict:
+    """H-INGESTION-001: CC sessions should have completed content ingestion.
+
+    CC sessions with large JSONL files should have their content indexed
+    in ChromaDB and entity links mined into TypeDB. Validates that the
+    ingestion pipeline (SESSION-METRICS-01-v1) has been run.
+    """
+    sessions = _api_get(api_base_url, "/api/sessions?limit=200")
+    if not sessions:
+        return {
+            "status": "SKIP",
+            "message": "No sessions to check",
+            "violations": [],
+        }
+
+    cc_sessions = [
+        s for s in sessions
+        if s.get("session_id", "").startswith("SESSION-") and "-CC-" in s.get("session_id", "")
+    ]
+    if not cc_sessions:
+        return {
+            "status": "SKIP",
+            "message": "No CC-ingested sessions found",
+            "violations": [],
+        }
+
+    violations = []
+    checked = 0
+    for s in cc_sessions:
+        sid = s.get("session_id", "unknown")
+        # Check ingestion status via checkpoint API
+        status = _api_get(api_base_url, f"/api/ingestion/status/{sid}")
+        if isinstance(status, dict):
+            phase = status.get("status", "not_started")
+            if phase == "not_started":
+                violations.append(f"{sid} (not ingested)")
+            elif phase not in ("complete", "not_started"):
+                violations.append(f"{sid} (phase={phase})")
+            checked += 1
+
+    return {
+        "status": "FAIL" if violations else "PASS",
+        "message": (
+            f"{len(violations)}/{checked} CC sessions have incomplete ingestion"
+            if violations
+            else f"All {checked} CC sessions have completed ingestion"
+        ),
+        "violations": violations[:20],
+    }
+
+
 # ===== REGISTRY =====
 
 CC_PROJECT_CHECKS = [
@@ -162,5 +213,11 @@ CC_PROJECT_CHECKS = [
         "domain": "PROJECT",
         "name": "Project content (sessions/plans)",
         "check_fn": check_project_has_content,
+    },
+    {
+        "id": "H-INGESTION-001",
+        "domain": "SESSION",
+        "name": "CC session ingestion completion",
+        "check_fn": check_cc_ingestion_complete,
     },
 ]

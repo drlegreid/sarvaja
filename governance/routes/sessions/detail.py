@@ -94,3 +94,14 @@ def session_evidence_rendered(session_id: str):
 
     content = p.read_text(encoding="utf-8", errors="replace")
     return {"session_id": session_id, "html": render_markdown(content), "raw": content}
+
+
+@router.get("/ingestion/status/{session_id}")
+def ingestion_status(session_id: str):
+    """Get ingestion pipeline status for a session.
+
+    Returns checkpoint data including phase, chunks indexed, and links created.
+    Per SESSION-METRICS-01-v1.
+    """
+    from governance.services.ingestion_orchestrator import get_ingestion_status
+    return get_ingestion_status(session_id)

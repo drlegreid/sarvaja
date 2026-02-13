@@ -10,6 +10,7 @@ from governance.routes.tests.heuristic_checks_cc import (
     check_cc_session_uuid,
     check_cc_session_project_link,
     check_project_has_content,
+    check_cc_ingestion_complete,
     CC_PROJECT_CHECKS,
 )
 
@@ -156,17 +157,74 @@ class TestCheckProjectHasContent:
         assert "1/3" in result["message"]
 
 
+class TestCheckCCIngestionComplete:
+    """H-INGESTION-001: CC sessions should have completed ingestion."""
+
+    @patch("governance.routes.tests.heuristic_checks_cc._api_get")
+    def test_no_sessions_skips(self, mock_get):
+        mock_get.return_value = []
+        result = check_cc_ingestion_complete("http://test:8082")
+        assert result["status"] == "SKIP"
+
+    @patch("governance.routes.tests.heuristic_checks_cc._api_get")
+    def test_no_cc_sessions_skips(self, mock_get):
+        mock_get.return_value = [
+            {"session_id": "SESSION-2026-02-13-CHAT-HELLO"},
+        ]
+        result = check_cc_ingestion_complete("http://test:8082")
+        assert result["status"] == "SKIP"
+
+    @patch("governance.routes.tests.heuristic_checks_cc._api_get")
+    def test_ingested_session_passes(self, mock_get):
+        def side_effect(url, endpoint):
+            if "/api/sessions" in endpoint:
+                return [{"session_id": "SESSION-2026-02-13-CC-WORK"}]
+            if "/api/ingestion/status/" in endpoint:
+                return {"status": "complete", "chunks_indexed": 42, "links_created": 5}
+            return []
+        mock_get.side_effect = side_effect
+        result = check_cc_ingestion_complete("http://test:8082")
+        assert result["status"] == "PASS"
+
+    @patch("governance.routes.tests.heuristic_checks_cc._api_get")
+    def test_not_ingested_session_fails(self, mock_get):
+        def side_effect(url, endpoint):
+            if "/api/sessions" in endpoint:
+                return [{"session_id": "SESSION-2026-02-13-CC-WORK"}]
+            if "/api/ingestion/status/" in endpoint:
+                return {"status": "not_started"}
+            return []
+        mock_get.side_effect = side_effect
+        result = check_cc_ingestion_complete("http://test:8082")
+        assert result["status"] == "FAIL"
+        assert "not ingested" in result["violations"][0]
+
+    @patch("governance.routes.tests.heuristic_checks_cc._api_get")
+    def test_partial_ingestion_fails(self, mock_get):
+        def side_effect(url, endpoint):
+            if "/api/sessions" in endpoint:
+                return [{"session_id": "SESSION-2026-02-13-CC-PARTIAL"}]
+            if "/api/ingestion/status/" in endpoint:
+                return {"status": "content", "chunks_indexed": 10, "links_created": 0}
+            return []
+        mock_get.side_effect = side_effect
+        result = check_cc_ingestion_complete("http://test:8082")
+        assert result["status"] == "FAIL"
+        assert "phase=content" in result["violations"][0]
+
+
 class TestCCProjectChecksRegistry:
     """Verify registry structure."""
 
-    def test_registry_has_3_checks(self):
-        assert len(CC_PROJECT_CHECKS) == 3
+    def test_registry_has_4_checks(self):
+        assert len(CC_PROJECT_CHECKS) == 4
 
     def test_check_ids(self):
         ids = [c["id"] for c in CC_PROJECT_CHECKS]
         assert "H-SESSION-CC-001" in ids
         assert "H-SESSION-CC-002" in ids
         assert "H-PROJECT-001" in ids
+        assert "H-INGESTION-001" in ids
 
     def test_all_checks_callable(self):
         for check in CC_PROJECT_CHECKS:
