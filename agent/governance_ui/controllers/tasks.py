@@ -17,6 +17,14 @@ from agent.governance_ui.utils import extract_items_from_response, format_timest
 from .tasks_navigation import register_tasks_navigation  # noqa: F401
 
 
+def _enrich_doc_count(tasks):
+    """Add doc_count field to each task for the Docs column."""
+    for t in tasks:
+        docs = t.get("linked_documents") or []
+        t["doc_count"] = len(docs)
+    return tasks
+
+
 def register_tasks_controllers(state: Any, ctrl: Any, api_base_url: str) -> None:
     """Register task-related controllers with Trame."""
 
@@ -60,7 +68,7 @@ def register_tasks_controllers(state: Any, ctrl: Any, api_base_url: str) -> None
         finally:
             state.task_execution_loading = False
 
-    @ctrl.set("close_task_detail")
+    @ctrl.trigger("close_task_detail")
     def close_task_detail():
         """Close task detail view."""
         state.show_task_detail = False
@@ -88,6 +96,9 @@ def register_tasks_controllers(state: Any, ctrl: Any, api_base_url: str) -> None
                             state.tasks_pagination = data.get("pagination", {})
                         else:
                             state.tasks = extract_items_from_response(data)
+                    state.tasks = _enrich_doc_count(format_timestamps_in_list(
+                        state.tasks, ["created_at", "completed_at", "claimed_at"]
+                    ))
                     state.show_task_detail = False
                     state.selected_task = None
                 else:
@@ -137,7 +148,7 @@ def register_tasks_controllers(state: Any, ctrl: Any, api_base_url: str) -> None
             state.has_error = True
             state.error_message = f"Complete failed: {str(e)}"
 
-    @ctrl.set("edit_task")
+    @ctrl.trigger("edit_task")
     def edit_task():
         """Enter task edit mode."""
         if state.selected_task:
@@ -146,8 +157,9 @@ def register_tasks_controllers(state: Any, ctrl: Any, api_base_url: str) -> None
             state.edit_task_phase = state.selected_task.get('phase') or 'P10'
             state.edit_task_status = state.selected_task.get('status') or 'TODO'
             state.edit_task_agent = state.selected_task.get('agent_id') or ''
+            state.edit_task_body = state.selected_task.get('body') or ''
 
-    @ctrl.set("cancel_task_edit")
+    @ctrl.trigger("cancel_task_edit")
     def cancel_task_edit():
         """Cancel task edit mode."""
         state.edit_task_mode = False
@@ -164,7 +176,8 @@ def register_tasks_controllers(state: Any, ctrl: Any, api_base_url: str) -> None
                 "description": state.edit_task_description,
                 "phase": state.edit_task_phase,
                 "status": state.edit_task_status,
-                "agent_id": state.edit_task_agent or None
+                "agent_id": state.edit_task_agent or None,
+                "body": getattr(state, 'edit_task_body', '') or None,
             }
             with httpx.Client(timeout=10.0) as client:
                 response = client.put(
@@ -183,6 +196,9 @@ def register_tasks_controllers(state: Any, ctrl: Any, api_base_url: str) -> None
                             state.tasks_pagination = data.get("pagination", {})
                         else:
                             state.tasks = extract_items_from_response(data)
+                    state.tasks = _enrich_doc_count(format_timestamps_in_list(
+                        state.tasks, ["created_at", "completed_at", "claimed_at"]
+                    ))
                     updated_task = response.json()
                     state.selected_task = updated_task
                     state.edit_task_mode = False
@@ -195,18 +211,38 @@ def register_tasks_controllers(state: Any, ctrl: Any, api_base_url: str) -> None
             state.has_error = True
             state.error_message = f"Failed to update task: {str(e)}"
 
-    @ctrl.set("create_task")
+    @ctrl.trigger("create_task")
     def create_task():
-        """Create a new task via REST API."""
+        """Create a new task via REST API. BUG-UI-TASKS-001: validate before submit."""
         try:
+            # BUG-UI-TASKS-001: Validate required fields before API call
+            task_id = getattr(state, 'form_task_id', '') or ''
+            description = getattr(state, 'form_task_description', '') or ''
+            phase = getattr(state, 'form_task_phase', '') or ''
+            task_type = getattr(state, 'form_task_type', None)
+            # META-TAXON-01-v1: Allow empty task_id if task_type is set (auto-generate)
+            if not task_id.strip() and not task_type:
+                state.has_error = True
+                state.error_message = "Task ID or Task Type is required"
+                return
+            if not description.strip():
+                state.has_error = True
+                state.error_message = "Description is required"
+                return
+
             state.is_loading = True
             task_data = {
-                "task_id": state.form_task_id,
-                "description": state.form_task_description,
-                "phase": state.form_task_phase,
+                "description": description.strip(),
+                "phase": phase.strip() or "P10",
                 "status": "TODO",
-                "agent_id": state.form_task_agent
+                "agent_id": getattr(state, 'form_task_agent', '') or None,
+                "body": getattr(state, 'form_task_body', '') or None,
+                "priority": getattr(state, 'form_task_priority', None),
+                "task_type": task_type,
             }
+            # Only include task_id if user provided one
+            if task_id.strip():
+                task_data["task_id"] = task_id.strip()
 
             with httpx.Client(timeout=10.0) as client:
                 response = client.post(f"{api_base_url}/api/tasks", json=task_data)
@@ -223,23 +259,92 @@ def register_tasks_controllers(state: Any, ctrl: Any, api_base_url: str) -> None
                             state.tasks_pagination = data.get("pagination", {})
                         else:
                             state.tasks = extract_items_from_response(data)
+                    state.tasks = _enrich_doc_count(format_timestamps_in_list(
+                        state.tasks, ["created_at", "completed_at", "claimed_at"]
+                    ))
                 else:
                     state.has_error = True
                     state.error_message = f"Failed to create task: {response.status_code}"
 
             state.show_task_form = False
+            state.form_task_id = ""
+            state.form_task_description = ""
+            state.form_task_body = ""
+            state.form_task_phase = "P10"
+            state.form_task_agent = ""
+            state.form_task_priority = None
+            state.form_task_type = None
             state.is_loading = False
         except Exception as e:
             state.is_loading = False
             state.has_error = True
-            state.status_message = f"Task creation failed: {str(e)}"
-            state.show_task_form = False
+            state.error_message = f"Task creation failed: {str(e)}"
+
+    @ctrl.trigger("attach_document")
+    def attach_document():
+        """Attach a document to the selected task via REST API."""
+        if not state.selected_task:
+            return
+        doc_path = getattr(state, 'attach_document_path', '')
+        if not doc_path:
+            state.has_error = True
+            state.error_message = "Document path is required"
+            return
+        try:
+            task_id = state.selected_task.get('id') or state.selected_task.get('task_id')
+            with httpx.Client(timeout=10.0) as client:
+                response = client.post(
+                    f"{api_base_url}/api/tasks/{task_id}/documents",
+                    json={"document_path": doc_path}
+                )
+                if response.status_code == 201:
+                    state.status_message = f"Document attached to {task_id}"
+                    # Refresh task detail
+                    detail_resp = client.get(f"{api_base_url}/api/tasks/{task_id}")
+                    if detail_resp.status_code == 200:
+                        state.selected_task = detail_resp.json()
+                else:
+                    state.has_error = True
+                    state.error_message = f"Attach failed: {response.status_code}"
+        except Exception as e:
+            state.has_error = True
+            state.error_message = f"Attach failed: {str(e)}"
+        finally:
+            state.show_attach_document_dialog = False
+            state.attach_document_path = ""
 
     @ctrl.trigger("tasks_apply_filters")
     def tasks_apply_filters():
         """Apply task filters and reload page 1."""
         state.tasks_page = 1
         load_tasks_page()
+
+    # Reactive filter handlers — @state.change pattern (BUG-UI-TASKS-002 fix)
+    @state.change("tasks_status_filter")
+    def _on_tasks_status_filter(tasks_status_filter, **kwargs):
+        if state.active_view == "tasks":
+            state.tasks_page = 1
+            load_tasks_page()
+
+    @state.change("tasks_phase_filter")
+    def _on_tasks_phase_filter(tasks_phase_filter, **kwargs):
+        if state.active_view == "tasks":
+            state.tasks_page = 1
+            load_tasks_page()
+
+    @state.change("tasks_filter_type")
+    def _on_tasks_filter_type(tasks_filter_type, **kwargs):
+        """Map tab selection to status filter (cascades to _on_tasks_status_filter)."""
+        if state.active_view != "tasks":
+            return
+        tab_to_status = {
+            "all": None,
+            "available": "TODO",
+            "mine": "IN_PROGRESS",
+            "completed": "DONE",
+        }
+        new_status = tab_to_status.get(tasks_filter_type)
+        state.tasks_status_filter = new_status
 
     def load_tasks_page():
         """Load tasks with pagination and filters."""
@@ -274,9 +379,9 @@ def register_tasks_controllers(state: Any, ctrl: Any, api_base_url: str) -> None
                             "limit": len(data), "has_more": False,
                             "returned": len(data),
                         }
-                    state.tasks = format_timestamps_in_list(
+                    state.tasks = _enrich_doc_count(format_timestamps_in_list(
                         state.tasks, ["created_at", "completed_at", "claimed_at"]
-                    )
+                    ))
                     state.status_message = f"Loaded {len(state.tasks)} tasks"
             state.is_loading = False
         except Exception as e:

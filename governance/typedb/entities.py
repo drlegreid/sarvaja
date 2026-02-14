@@ -46,6 +46,8 @@ class Task:
     status: str  # GAP-UI-046: OPEN, IN_PROGRESS, CLOSED (lifecycle)
     phase: str
     resolution: str = "NONE"  # GAP-UI-046: NONE, DEFERRED, IMPLEMENTED, VALIDATED, CERTIFIED
+    priority: Optional[str] = None  # BUG-TASK-TAXONOMY-001: LOW, MEDIUM, HIGH, CRITICAL
+    task_type: Optional[str] = None  # BUG-TASK-TAXONOMY-001: bug, feature, chore, research
     description: Optional[str] = None
     body: Optional[str] = None
     agent_id: Optional[str] = None
@@ -72,6 +74,8 @@ class Task:
     # GAP-GAPS-TASKS-001: Unified work item attributes
     item_type: Optional[str] = None  # "gap", "task", or "rd"
     document_path: Optional[str] = None  # Path to source document
+    # Task document management: multiple linked documents
+    linked_documents: Optional[List[str]] = None
 
 
 @dataclass

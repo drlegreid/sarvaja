@@ -165,6 +165,58 @@ def register_task_linking_tools(mcp) -> None:
             client.close()
 
     @mcp.tool()
+    def task_link_document(task_id: str, document_path: str) -> str:
+        """Link a document to a task (document-references-task relation). Task document management."""
+        client = get_typedb_client()
+        try:
+            if not client.connect():
+                return format_mcp_result({"error": "Failed to connect to TypeDB"})
+
+            success = client.link_task_to_document(task_id, document_path)
+
+            if success:
+                if MONITORING_AVAILABLE:
+                    log_monitor_event(event_type="link_event", source="mcp-task-link-document",
+                        details={"task_id": task_id, "document_path": document_path, "action": "link"})
+                return format_mcp_result({
+                    "task_id": task_id,
+                    "document_path": document_path,
+                    "relation": "document-references-task",
+                    "message": f"Successfully linked document {document_path} to task {task_id}"
+                })
+            else:
+                return format_mcp_result({
+                    "error": f"Failed to link document {document_path} to task {task_id}"
+                })
+        except Exception as e:
+            return format_mcp_result({"error": str(e)})
+        finally:
+            client.close()
+
+    @mcp.tool()
+    def task_get_documents(task_id: str) -> str:
+        """Get all documents linked to a task. Task document management."""
+        client = get_typedb_client()
+        try:
+            if not client.connect():
+                return format_mcp_result({"error": "Failed to connect to TypeDB"})
+
+            documents = client.get_task_documents(task_id)
+
+            if MONITORING_AVAILABLE:
+                log_monitor_event(event_type="link_event", source="mcp-task-get-documents",
+                    details={"task_id": task_id, "action": "query_documents", "count": len(documents)})
+            return format_mcp_result({
+                "task_id": task_id,
+                "documents": documents,
+                "count": len(documents)
+            })
+        except Exception as e:
+            return format_mcp_result({"error": str(e)})
+        finally:
+            client.close()
+
+    @mcp.tool()
     def task_update_details(task_id: str, business: str = None, design: str = None,
                             architecture: str = None, test_section: str = None) -> str:
         """Update task detail sections. Per GAP-TASK-LINK-004, TASK-TECH-01-v1."""

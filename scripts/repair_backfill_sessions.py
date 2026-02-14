@@ -33,7 +33,7 @@ def main():
 
     logger.info("Fetching sessions from %s...", API_BASE)
     try:
-        resp = httpx.get(f"{API_BASE}/api/sessions?limit=500", timeout=15.0)
+        resp = httpx.get(f"{API_BASE}/api/sessions?limit=200", timeout=15.0)
         resp.raise_for_status()
     except Exception as e:
         logger.error("Failed to fetch sessions: %s", e)

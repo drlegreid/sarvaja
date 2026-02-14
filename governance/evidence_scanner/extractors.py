@@ -16,7 +16,7 @@ from typing import Dict, List, Set
 
 
 # Workspace root
-WORKSPACE_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+WORKSPACE_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 EVIDENCE_DIR = os.path.join(WORKSPACE_ROOT, "evidence")
 
 

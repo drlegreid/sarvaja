@@ -87,6 +87,15 @@ def register_common_handlers(ctrl: Any, state: Any) -> None:
                         for item in items:
                             item["duration"] = compute_session_duration(
                                 item.get("start_time", ""), item.get("end_time", ""))
+                            # BUG-UI-SESSIONS-003: Derive source_type
+                            if not item.get("source_type"):
+                                sid = item.get("session_id", "")
+                                if item.get("cc_session_uuid") or "-CC-" in sid:
+                                    item["source_type"] = "CC"
+                                elif "-CHAT-" in sid or "-MCP-AUTO-" in sid:
+                                    item["source_type"] = "Chat"
+                                else:
+                                    item["source_type"] = "API"
                         state.sessions = format_timestamps_in_list(
                             items, ["start_time", "end_time"])
                 except Exception:

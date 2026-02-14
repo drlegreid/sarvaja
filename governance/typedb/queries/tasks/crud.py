@@ -77,7 +77,9 @@ class TaskCRUDOperations:
         resolution: str = "NONE",
         item_type: str = None,
         document_path: str = None,
-        agent_id: str = None
+        agent_id: str = None,
+        priority: str = None,
+        task_type: str = None
     ) -> Optional[Task]:
         """
         Insert a new task into TypeDB.
@@ -138,6 +140,12 @@ class TaskCRUDOperations:
                 if agent_id:
                     agent_id_escaped = agent_id.replace('"', '\\"')
                     insert_parts.append(f'has agent-id "{agent_id_escaped}"')
+                # BUG-TASK-TAXONOMY-001: Task classification
+                if priority:
+                    insert_parts.append(f'has task-priority "{priority}"')
+                if task_type:
+                    task_type_escaped = task_type.replace('"', '\\"')
+                    insert_parts.append(f'has task-type "{task_type_escaped}"')
 
                 insert_query = f"""
                     insert $t isa task,
@@ -210,7 +218,9 @@ class TaskCRUDOperations:
         name: str = None,
         phase: str = None,
         item_type: str = None,
-        document_path: str = None
+        document_path: str = None,
+        priority: str = None,
+        task_type: str = None
     ) -> bool:
         """
         Update a task's attributes in TypeDB.
@@ -257,6 +267,15 @@ class TaskCRUDOperations:
                     current_doc_path = getattr(current, 'document_path', None)
                     if current_doc_path != document_path:
                         _update_attribute(tx, task_id, "document-path", current_doc_path, document_path)
+                # BUG-TASK-TAXONOMY-001: Task classification
+                if priority:
+                    current_priority = getattr(current, 'priority', None)
+                    if current_priority != priority:
+                        _update_attribute(tx, task_id, "task-priority", current_priority, priority)
+                if task_type:
+                    current_task_type = getattr(current, 'task_type', None)
+                    if current_task_type != task_type:
+                        _update_attribute(tx, task_id, "task-type", current_task_type, task_type)
                 tx.commit()
             return True
         except Exception as e:

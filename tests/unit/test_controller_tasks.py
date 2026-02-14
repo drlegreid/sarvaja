@@ -42,8 +42,8 @@ class TestRegisterTasksControllers:
         assert "select_task" in triggers
 
     def test_registers_close_task_detail(self):
-        _, _, _, setters = _make_state_ctrl()
-        assert "close_task_detail" in setters
+        _, _, triggers, _ = _make_state_ctrl()
+        assert "close_task_detail" in triggers
 
     def test_registers_delete_task(self):
         _, _, triggers, _ = _make_state_ctrl()
@@ -54,16 +54,16 @@ class TestRegisterTasksControllers:
         assert "submit_task_edit" in triggers
 
     def test_registers_create_task(self):
-        _, _, _, setters = _make_state_ctrl()
-        assert "create_task" in setters
+        _, _, triggers, _ = _make_state_ctrl()
+        assert "create_task" in triggers
 
     def test_registers_edit_task(self):
-        _, _, _, setters = _make_state_ctrl()
-        assert "edit_task" in setters
+        _, _, triggers, _ = _make_state_ctrl()
+        assert "edit_task" in triggers
 
     def test_registers_cancel_task_edit(self):
-        _, _, _, setters = _make_state_ctrl()
-        assert "cancel_task_edit" in setters
+        _, _, triggers, _ = _make_state_ctrl()
+        assert "cancel_task_edit" in triggers
 
 
 class TestSelectTask:
@@ -94,8 +94,8 @@ class TestSelectTask:
 
 class TestCloseTaskDetail:
     def test_clears_state(self):
-        state, _, _, setters = _make_state_ctrl()
-        setters["close_task_detail"]()
+        state, _, triggers, _ = _make_state_ctrl()
+        triggers["close_task_detail"]()
         assert state.show_task_detail is False
         assert state.selected_task is None
 

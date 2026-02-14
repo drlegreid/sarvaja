@@ -23,12 +23,37 @@ def build_task_create_dialog() -> None:
         with v3.VCard():
             v3.VCardTitle("Create New Task")
             with v3.VCardText():
+                with v3.VRow():
+                    with v3.VCol(cols=12, sm=6):
+                        v3.VSelect(
+                            v_model="form_task_type",
+                            label="Task Type",
+                            items=("task_type_options",),
+                            variant="outlined",
+                            density="compact",
+                            clearable=True,
+                            __properties=["data-testid"],
+                            **{"data-testid": "task-create-type"}
+                        )
+                    with v3.VCol(cols=12, sm=6):
+                        v3.VSelect(
+                            v_model="form_task_priority",
+                            label="Priority",
+                            items=("task_priority_options",),
+                            variant="outlined",
+                            density="compact",
+                            clearable=True,
+                            __properties=["data-testid"],
+                            **{"data-testid": "task-create-priority"}
+                        )
                 v3.VTextField(
                     v_model="form_task_id",
-                    label="Task ID (e.g., GAP-XXX-001)",
+                    label="Task ID (auto-generated if empty)",
                     variant="outlined",
                     density="compact",
                     classes="mb-3",
+                    hint="Leave blank to auto-generate from Task Type",
+                    persistent_hint=True,
                     __properties=["data-testid"],
                     **{"data-testid": "task-create-id"}
                 )
@@ -40,6 +65,17 @@ def build_task_create_dialog() -> None:
                     classes="mb-3",
                     __properties=["data-testid"],
                     **{"data-testid": "task-create-description"}
+                )
+                v3.VTextarea(
+                    v_model="form_task_body",
+                    label="Body / Extended Content (optional)",
+                    variant="outlined",
+                    density="compact",
+                    rows=4,
+                    auto_grow=True,
+                    classes="mb-3",
+                    __properties=["data-testid"],
+                    **{"data-testid": "task-create-body"}
                 )
                 with v3.VRow():
                     with v3.VCol(cols=12, sm=6):
@@ -76,7 +112,7 @@ def build_task_create_dialog() -> None:
                 v3.VBtn(
                     "Create",
                     color="primary",
-                    click="create_task(); show_task_form = false",
+                    click="trigger('create_task')",
                     __properties=["data-testid"],
                     **{"data-testid": "task-create-submit-btn"}
                 )
@@ -176,6 +212,7 @@ def build_task_linked_items() -> None:
             "!edit_task_mode && "
             "(selected_task.linked_rules?.length > 0 || "
             "selected_task.linked_sessions?.length > 0 || "
+            "selected_task.linked_documents?.length > 0 || "
             "selected_task.gap_id)"
         ),
         variant="outlined",
@@ -222,9 +259,38 @@ def build_task_linked_items() -> None:
                     classes="mr-1",
                     prepend_icon="mdi-calendar-clock"
                 )
-            # Document linkage (PLAN-UI-OVERHAUL-001 Task 2.4)
+            # Linked Documents (task document management)
             with html.Div(
-                v_if="selected_task.document_path",
+                v_if="selected_task.linked_documents?.length > 0",
+                classes="mb-2"
+            ):
+                html.Span("Documents: ", classes="font-weight-bold")
+                v3.VChip(
+                    v_for="doc in selected_task.linked_documents",
+                    v_text="doc.split('/').pop()",
+                    size="small",
+                    color="secondary",
+                    classes="mr-1 mb-1",
+                    prepend_icon="mdi-file-document-outline",
+                    click="trigger('load_file_content', [doc])",
+                    __properties=["data-testid"],
+                    **{"data-testid": "task-document-chip"}
+                )
+            # Attach Document button
+            v3.VBtn(
+                "Attach Document",
+                prepend_icon="mdi-paperclip",
+                variant="outlined",
+                size="small",
+                click="show_attach_document_dialog = true",
+                v_if="!edit_task_mode",
+                classes="mb-2",
+                __properties=["data-testid"],
+                **{"data-testid": "task-attach-doc-btn"}
+            )
+            # Legacy single document_path (PLAN-UI-OVERHAUL-001 Task 2.4)
+            with html.Div(
+                v_if="selected_task.document_path && !selected_task.linked_documents?.length",
                 classes="mb-2"
             ):
                 html.Span("Document: ", classes="font-weight-bold")

@@ -84,6 +84,13 @@ def end_session(
             if session:
                 updated = client.end_session(session_id)
                 if updated:
+                    # BUG-SESSION-EVIDENCE-001: Link evidence to TypeDB
+                    if evidence_files:
+                        for ef in evidence_files:
+                            try:
+                                client.link_evidence_to_session(session_id, ef)
+                            except Exception as le:
+                                logger.debug(f"TypeDB evidence link {session_id}->{ef}: {le}")
                     # Also update _sessions_store for consistent fallback
                     # (TypeDB derives tasks_completed from relations, but chat
                     # sessions store tool_call count here for API visibility)

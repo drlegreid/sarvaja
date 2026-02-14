@@ -161,8 +161,16 @@ def get_initial_state() -> Dict[str, Any]:
         'show_task_form': False,
         'form_task_id': '',
         'form_task_description': '',
+        'form_task_body': '',
         'form_task_phase': 'P10',
         'form_task_agent': '',
+        'form_task_priority': None,
+        'form_task_type': None,
+
+        # Task document management
+        'show_attach_document_dialog': False,
+        'attach_document_path': '',
+        'edit_task_body': '',
 
         # Unified Tasks View (UI-AUDIT-2026-01-19: merged backlog)
         'available_tasks': [],
@@ -202,6 +210,9 @@ def get_initial_state() -> Dict[str, Any]:
         # Filter dropdown options (must match items= in tasks/list.py)
         'task_status_options': ['TODO', 'IN_PROGRESS', 'DONE', 'BLOCKED'],
         'task_phase_options': ['P10', 'P11', 'P12', 'R&D', 'FH', 'KAN', 'ORCH', 'DOCVIEW'],
+        # Task taxonomy dropdowns (META-TAXON-01-v1)
+        'task_type_options': ['bug', 'feature', 'chore', 'research', 'gap', 'epic', 'test'],
+        'task_priority_options': ['CRITICAL', 'HIGH', 'MEDIUM', 'LOW'],
 
         # Tasks pagination state (EPIC-DR-005)
         'tasks_page': 1,

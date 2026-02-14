@@ -72,7 +72,7 @@ def register_all_controllers(state, ctrl, api_base_url: str) -> dict:
         Dict of loader functions for view change handler
     """
     # Register all controller groups
-    register_rules_controllers(state, ctrl, api_base_url)
+    rules_loaders = register_rules_controllers(state, ctrl, api_base_url)
     register_search_controllers(state, ctrl, api_base_url)
     register_tasks_controllers(state, ctrl, api_base_url)
     register_sessions_controllers(state, ctrl, api_base_url)
@@ -104,6 +104,10 @@ def register_all_controllers(state, ctrl, api_base_url: str) -> dict:
     # Session Metrics controller (SESSION-METRICS-01-v1)
     metrics_loaders = register_metrics_controllers(state, ctrl, api_base_url)
     loaders['load_metrics_data'] = metrics_loaders['load_metrics_data']
+
+    # BUG-UI-RULES-001: Wire load_rules into loaders for on_view_change auto-load
+    if rules_loaders and isinstance(rules_loaders, dict):
+        loaders['load_rules'] = rules_loaders.get('load_rules')
 
     # Project controllers (GOV-PROJECT-01-v1)
     register_project_controllers(state, ctrl, api_base_url)

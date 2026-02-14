@@ -12,6 +12,16 @@
       "event": "WARNING_HIGH",
       "tool_count": 120,
       "session_hash": "HIGH"
+    },
+    {
+      "timestamp": "2026-02-14T21:03:16.124050",
+      "event": "COMPACTION",
+      "tool_count": 121
+    },
+    {
+      "timestamp": "2026-02-14T21:03:49.962061",
+      "event": "COMPACTION",
+      "tool_count": 121
     }
   ]
 }

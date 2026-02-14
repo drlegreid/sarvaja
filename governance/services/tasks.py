@@ -26,6 +26,8 @@ from governance.services.tasks_mutations import (  # noqa: F401
     delete_task,
     link_task_to_rule,
     link_task_to_session,
+    link_task_to_document,
+    unlink_task_from_document,
 )
 
 logger = logging.getLogger(__name__)
@@ -41,6 +43,8 @@ __all__ = [
     "delete_task",
     "link_task_to_rule",
     "link_task_to_session",
+    "link_task_to_document",
+    "unlink_task_from_document",
 ]
 
 
@@ -105,33 +109,52 @@ def list_tasks(
 
 
 def create_task(
-    task_id: str,
+    task_id: Optional[str] = None,
     description: str = "",
     status: str = "OPEN",
     phase: str = "P10",
     agent_id: Optional[str] = None,
     body: Optional[str] = None,
+    priority: Optional[str] = None,
+    task_type: Optional[str] = None,
     gap_id: Optional[str] = None,
     linked_rules: Optional[List[str]] = None,
     linked_sessions: Optional[List[str]] = None,
+    linked_documents: Optional[List[str]] = None,
     source: str = "rest",
 ) -> Dict[str, Any]:
     """Create a task in TypeDB with fallback to in-memory store.
+
+    Per META-TAXON-01-v1: If task_id is None/empty and task_type is provided,
+    auto-generates a sequential ID like BUG-001, FEAT-042, etc.
 
     Returns:
         Task dict on success.
 
     Raises:
-        ValueError: If task already exists.
+        ValueError: If task already exists, or no task_id and no task_type.
     """
+    # Auto-generate task_id from task_type if not provided (META-TAXON-01-v1)
+    client = get_typedb_client()
+    if not task_id:
+        if task_type:
+            from governance.services.task_id_gen import generate_task_id
+            task_id = generate_task_id(task_type, client)
+            logger.info(f"[META-TAXON-01] Auto-generated task ID: {task_id}")
+        else:
+            raise ValueError("Either task_id or task_type must be provided for ID generation")
+
+    # Auto-trim: if description > 200 chars and no body, split
+    if description and len(description) > 200 and not body:
+        body = description
+        description = description[:197] + "..."
+
     # Per DATA-LINK-01-v1: Auto-link to active session if none provided
     if not linked_sessions:
         active_sid = _get_active_session_id()
         if active_sid:
             linked_sessions = [active_sid]
             logger.info(f"[DATA-LINK-01] Auto-linking task {task_id} to session {active_sid}")
-
-    client = get_typedb_client()
     if client:
         try:
             if client.get_task(task_id):
@@ -140,9 +163,16 @@ def create_task(
                 task_id=task_id, name=description, status=status,
                 phase=phase, body=body, gap_id=gap_id,
                 linked_rules=linked_rules, linked_sessions=linked_sessions,
-                agent_id=agent_id,
+                agent_id=agent_id, priority=priority, task_type=task_type,
             )
             if created:
+                # Link documents after creation
+                if linked_documents:
+                    for doc_path in linked_documents:
+                        try:
+                            client.link_task_to_document(task_id, doc_path)
+                        except Exception as le:
+                            logger.debug(f"TypeDB document link {task_id}->{doc_path}: {le}")
                 record_audit("CREATE", "task", task_id,
                              actor_id=agent_id or "system",
                              metadata={"phase": phase, "status": status, "source": source})
@@ -160,9 +190,11 @@ def create_task(
 
     task_data = {
         "task_id": task_id, "description": description, "phase": phase,
-        "status": status, "agent_id": agent_id, "body": body,
+        "status": status, "priority": priority, "task_type": task_type,
+        "agent_id": agent_id, "body": body,
         "linked_rules": linked_rules, "linked_sessions": linked_sessions,
-        "gap_id": gap_id, "created_at": datetime.now().isoformat(),
+        "linked_documents": linked_documents, "gap_id": gap_id,
+        "created_at": datetime.now().isoformat(),
     }
     _tasks_store[task_id] = task_data
     record_audit("CREATE", "task", task_id,

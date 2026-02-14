@@ -113,7 +113,6 @@ def build_tasks_list_view() -> None:
                 hide_details=True,
                 clearable=True,
                 style="max-width: 150px",
-                update_modelValue="trigger('tasks_apply_filters')",
                 __properties=["data-testid"],
                 **{"data-testid": "tasks-filter-status"}
             )
@@ -126,7 +125,6 @@ def build_tasks_list_view() -> None:
                 hide_details=True,
                 clearable=True,
                 style="max-width: 150px; margin-left: 8px",
-                update_modelValue="trigger('tasks_apply_filters')",
                 __properties=["data-testid"],
                 **{"data-testid": "tasks-filter-phase"}
             )
@@ -138,12 +136,15 @@ def build_tasks_list_view() -> None:
                 headers=("tasks_headers", [
                     {"title": "Task ID", "key": "task_id", "width": "150px", "sortable": True},
                     {"title": "Description", "key": "description", "sortable": True},
+                    {"title": "Priority", "key": "priority", "width": "90px", "sortable": True},
+                    {"title": "Type", "key": "task_type", "width": "80px", "sortable": True},
                     {"title": "Status", "key": "status", "width": "100px", "sortable": True},
                     {"title": "Phase", "key": "phase", "width": "70px", "sortable": True},
                     {"title": "Agent", "key": "agent_id", "width": "130px", "sortable": True},
                     {"title": "Created", "key": "created_at", "width": "110px", "sortable": True},
                     {"title": "Completed", "key": "completed_at", "width": "110px", "sortable": True},
                     {"title": "Gap", "key": "gap_id", "width": "100px", "sortable": True},
+                    {"title": "Docs", "key": "doc_count", "width": "70px", "sortable": False},
                 ]),
                 item_value="task_id",
                 search=("tasks_search_query",),

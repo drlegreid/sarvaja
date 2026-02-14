@@ -279,9 +279,9 @@ class TestSessionLinkedRulesDecisions:
         assert "linked_decisions" in source
 
     def test_content_has_duration(self):
-        """Session content should show duration_minutes."""
+        """Session content should show duration."""
         import importlib
         import inspect
         mod = importlib.import_module("agent.governance_ui.views.sessions.content")
         source = inspect.getsource(mod.build_session_info_card)
-        assert "duration_minutes" in source
+        assert "duration" in source

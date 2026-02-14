@@ -1,6 +1,6 @@
 # Rules Directives - Index
 
-**Status:** Active | **Updated:** 2026-02-14 | **Rules:** 61 (58 ACTIVE, 3 DRAFT/DISABLED)
+**Status:** Active | **Updated:** 2026-02-14 | **Rules:** 62 (59 ACTIVE, 3 DRAFT/DISABLED)
 
 > **Taxonomy:** [META-TAXON-01-v1](rules/leaf/META-TAXON-01-v1.md) | **Migration:** [RULE-MIGRATION.md](rules/RULE-MIGRATION.md)
 
@@ -52,6 +52,7 @@
 | TEST-GUARD-01-v1 | RULE-008 | Rewrite Guardrails | CRITICAL | ACTIVE |
 | TEST-COMP-01-v1 | RULE-020 | Comprehensive Testing Protocol | HIGH | ACTIVE |
 | TEST-COMP-02-v1 | RULE-023 | Test Before Commit | CRITICAL | ACTIVE |
+| TEST-DISCOVERY-01-v1 | (new) | Test Discovery Bug Tracking | HIGH | ACTIVE |
 | TEST-E2E-01-v1 | (new) | Data Flow Verification Protocol | CRITICAL | ACTIVE |
 | TEST-FIX-01-v1 | RULE-037 | Fix Validation Protocol | CRITICAL | ACTIVE |
 | SAFETY-HEALTH-01-v1 | RULE-021 | MCP Healthcheck Protocol | CRITICAL | ACTIVE |
@@ -106,7 +107,7 @@
 | **UI** | User interface | 4 | TRAME-01, LOADER-01, TRACE-01, COLOR-01 |
 | **WORKFLOW** | Workflow & autonomy | 8 | AUTO-01/02, RD-01, SEQ-01, SHELL-01, HOTRELOAD-01, SFDC-01, ORCH-01 |
 | **RECOVER** | Recovery & resilience | 3 | MEM-01, AMNES-01, CRASH-01 |
-| **TEST** | Testing & validation | 9 | GUARD-01, COMP-01/02, E2E-01, FIX-01, EXEC-01, UI-VERIFY-01, BDD-01, SPEC-01 |
+| **TEST** | Testing & validation | 10 | GUARD-01, COMP-01/02, DISCOVERY-01, E2E-01, FIX-01, EXEC-01, UI-VERIFY-01, BDD-01, SPEC-01 |
 | **SAFETY** | Safety & prevention | 3 | HEALTH-01, INTEG-01, DESTR-01 |
 | **CONTAINER** | Container operations | 5 | DEV-01/02, RESTART-01, SHELL-01, TYPEDB-01, MGMT-01 |
 | **DOC** | Documentation | 4 | SIZE-01, PARTIAL-01, LINK-01, GAP-ARCHIVE-01 |
@@ -125,7 +126,7 @@
 | Level | Meaning | Count | Key Rules |
 |-------|---------|-------|-----------|
 | **CRITICAL** | Must enforce always | 17 | SESSION-EVID, GOV-BICAM, GOV-MCP-FIRST, WORKFLOW-AUTO, RECOVER-AMNES, TEST-COMP-02, SAFETY-HEALTH |
-| **HIGH** | Enforce in normal ops | 26 | ARCH-*, GOV-BIND-01, TEST-COMP-01, CONTAINER-*, DOC-* |
+| **HIGH** | Enforce in normal ops | 27 | ARCH-*, GOV-BIND-01, TEST-COMP-01, TEST-DISCOVERY-01, CONTAINER-*, DOC-* |
 | **MEDIUM** | Advisory | 1 | GOV-TRUST-01 |
 
 ---

@@ -115,4 +115,25 @@ def register_audit_loader_controllers(
                     return
             state.show_decision_detail = False
 
+    # Reactive filter handlers — call load_audit_trail() directly (not ctrl.trigger)
+    @state.change("audit_filter_entity_type")
+    def _on_audit_filter_entity_type(audit_filter_entity_type, **kwargs):
+        if state.active_view == "audit":
+            load_audit_trail()
+
+    @state.change("audit_filter_action_type")
+    def _on_audit_filter_action_type(audit_filter_action_type, **kwargs):
+        if state.active_view == "audit":
+            load_audit_trail()
+
+    @state.change("audit_filter_entity_id")
+    def _on_audit_filter_entity_id(audit_filter_entity_id, **kwargs):
+        if state.active_view == "audit":
+            load_audit_trail()
+
+    @state.change("audit_filter_correlation_id")
+    def _on_audit_filter_correlation_id(audit_filter_correlation_id, **kwargs):
+        if state.active_view == "audit":
+            load_audit_trail()
+
     return {'load_audit_trail': load_audit_trail}

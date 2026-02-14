@@ -206,6 +206,8 @@ def _task_to_dict(task) -> Dict[str, Any]:
         "description": task.body or task.description or task.name or "",  # Detailed content
         "phase": task.phase,
         "status": task.status,
+        "priority": task.priority,  # BUG-TASK-TAXONOMY-001
+        "task_type": task.task_type,  # BUG-TASK-TAXONOMY-001
         "agent_id": task.agent_id,
         "created_at": task.created_at.isoformat() if task.created_at else None,
         "claimed_at": task.claimed_at.isoformat() if task.claimed_at else None,
@@ -213,6 +215,7 @@ def _task_to_dict(task) -> Dict[str, Any]:
         "body": task.body,
         "linked_rules": task.linked_rules,
         "linked_sessions": task.linked_sessions,
+        "linked_documents": task.linked_documents,
         "gap_id": task.gap_id,
         "evidence": task.evidence,
         "document_path": task.document_path

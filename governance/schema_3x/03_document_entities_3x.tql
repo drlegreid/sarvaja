@@ -22,4 +22,5 @@ entity document,
     owns content-hash,
     plays document-references-rule:referencing-document,
     plays document-references-decision:referencing-document,
-    plays document-references-gap:referencing-document;
+    plays document-references-gap:referencing-document,
+    plays document-references-task:referencing-document;

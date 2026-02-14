@@ -14,9 +14,11 @@ This package splits the tasks_view.py (514 lines) into focused modules:
 from .list import build_tasks_list_view
 from .detail import build_task_detail_view
 from .forms import build_task_create_dialog
+from .attach_dialog import build_attach_document_dialog
 
 __all__ = [
     "build_tasks_list_view",
     "build_task_detail_view",
     "build_task_create_dialog",
+    "build_attach_document_dialog",
 ]

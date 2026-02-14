@@ -98,12 +98,15 @@ def compute_timeline_plotly_data(sessions: list) -> dict:
 
     layout = {
         "barmode": "stack",
-        "height": 140,
-        "margin": {"l": 30, "r": 10, "t": 24, "b": 30},
+        "height": 160,
+        "margin": {"l": 40, "r": 10, "t": 30, "b": 35},
+        "title": {"text": "Sessions per Day", "font": {"size": 12},
+                  "x": 0.01, "xanchor": "left"},
         "showlegend": True,
-        "legend": {"orientation": "h", "y": 1.02, "x": 0, "yanchor": "bottom"},
+        "legend": {"orientation": "h", "y": 1.15, "x": 0, "yanchor": "bottom"},
         "xaxis": {"type": "category", "tickfont": {"size": 10}},
-        "yaxis": {"tickfont": {"size": 10}, "dtick": 1},
+        "yaxis": {"tickfont": {"size": 10}, "dtick": 1,
+                  "title": {"text": "Count", "font": {"size": 10}}},
         "paper_bgcolor": "rgba(0,0,0,0)",
         "plot_bgcolor": "rgba(0,0,0,0)",
     }
@@ -133,12 +136,11 @@ def build_plotly_timeline():
 
     try:
         from trame.widgets import html
-        with html.Div(classes="mb-3", style="height: 180px; overflow: hidden"):
-            html.Div("Session Activity", classes="text-caption text-grey mb-1")
+        with html.Div(classes="mb-3", style="height: 200px; overflow: hidden"):
             _plotly_widget = tw_plotly.Figure(
                 figure=go.Figure(),
                 display_mode_bar=False,
-                style="height: 150px; width: 100%",
+                style="height: 190px; width: 100%",
             )
         return True
     except Exception as e:

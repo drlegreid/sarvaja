@@ -14,6 +14,7 @@ from governance.services.session_repair import (
     detect_identical_timestamps,
     detect_missing_agent,
     assign_default_agent,
+    detect_negative_durations,
     detect_unrealistic_durations,
     cap_duration,
     is_backfilled_session,
@@ -165,6 +166,36 @@ class TestAssignDefaultAgent:
         result = assign_default_agent(session)
         assert "agent_id" not in session
         assert result["agent_id"] == "code-agent"
+
+
+# ---------------------------------------------------------------------------
+# detect_negative_durations
+# ---------------------------------------------------------------------------
+class TestDetectNegativeDurations:
+    """Tests for detect_negative_durations()."""
+
+    def test_normal_sessions_not_flagged(self):
+        sessions = [
+            {"session_id": "S-1", "start_time": "2026-01-01T09:00:00", "end_time": "2026-01-01T13:00:00"},
+        ]
+        assert detect_negative_durations(sessions) == []
+
+    def test_detects_negative_duration(self):
+        sessions = [
+            {"session_id": "S-1", "start_time": "2026-02-14T00:07:18", "end_time": "2026-02-13T22:09:29"},
+        ]
+        flagged = detect_negative_durations(sessions)
+        assert "S-1" in flagged
+
+    def test_missing_timestamps_skipped(self):
+        sessions = [{"session_id": "S-1", "start_time": "2026-01-01T09:00:00"}]
+        assert detect_negative_durations(sessions) == []
+
+    def test_equal_timestamps_not_flagged(self):
+        sessions = [
+            {"session_id": "S-1", "start_time": "2026-01-01T09:00:00", "end_time": "2026-01-01T09:00:00"},
+        ]
+        assert detect_negative_durations(sessions) == []
 
 
 # ---------------------------------------------------------------------------
@@ -330,6 +361,7 @@ class TestBuildRepairPlan:
         assert "duration" in plan[0]["fixes"]
 
     def test_multiple_fixes_combined(self):
+        """Backfilled + missing agent: timestamp fix subsumes duration fix."""
         sessions = [
             {"session_id": "SESSION-2026-01-15-TOPIC",
              "start_time": "2026-01-01T09:00:00", "end_time": "2026-01-10T09:00:00",
@@ -340,7 +372,35 @@ class TestBuildRepairPlan:
         fixes = plan[0]["fixes"]
         assert "agent_id" in fixes
         assert "timestamp" in fixes
-        assert "duration" in fixes
+        # duration fix skipped because timestamp fix already regenerates end_time
+
+    def test_negative_duration_swaps_timestamps(self):
+        """Negative duration sessions get start/end swapped if reasonable."""
+        sessions = [
+            {"session_id": "SESSION-2026-02-14-CHAT-TEST", "agent_id": "code-agent",
+             "start_time": "2026-02-14T00:07:18", "end_time": "2026-02-13T22:09:29",
+             "description": "Test"},
+        ]
+        plan = build_repair_plan(sessions)
+        assert len(plan) == 1
+        assert "timestamp" in plan[0]["fixes"]
+        ts = plan[0]["fixes"]["timestamp"]
+        # Swapped: end becomes start, start becomes end
+        assert ts["start"] == "2026-02-13T22:09:29"
+        assert ts["end"] == "2026-02-14T00:07:18"
+
+    def test_negative_duration_regenerates_if_swap_absurd(self):
+        """If swapping produces >24h, regenerate from session ID date."""
+        sessions = [
+            {"session_id": "SESSION-2026-02-14-TOPIC", "agent_id": "code-agent",
+             "start_time": "2026-02-14T00:00:00", "end_time": "2026-01-01T00:00:00",
+             "description": "Very negative"},
+        ]
+        plan = build_repair_plan(sessions)
+        assert len(plan) == 1
+        ts = plan[0]["fixes"]["timestamp"]
+        # Should regenerate from date, not swap
+        assert ts["start"] == "2026-02-14T09:00:00"
 
 
 # ---------------------------------------------------------------------------

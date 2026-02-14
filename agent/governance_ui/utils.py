@@ -64,8 +64,12 @@ def compute_session_metrics(sessions: list) -> dict:
             try:
                 st = start[:19].replace("Z", "")
                 et = end[:19].replace("Z", "")
+                if _is_estimated_duration(st, et):
+                    continue  # Skip repair-generated artificial timestamps
                 delta = datetime.strptime(et, "%Y-%m-%dT%H:%M:%S") - datetime.strptime(st, "%Y-%m-%dT%H:%M:%S")
-                total_hours += delta.total_seconds() / 3600
+                hours = delta.total_seconds() / 3600
+                if 0 < hours <= 24:
+                    total_hours += hours
             except Exception:
                 pass
         tasks = s.get("tasks_completed", 0)
@@ -85,6 +89,19 @@ def compute_session_metrics(sessions: list) -> dict:
     return {"duration": duration, "avg_tasks": avg_tasks}
 
 
+def _is_estimated_duration(start: str, end: str) -> bool:
+    """Detect repair-generated artificial timestamps.
+
+    Sessions repaired by session_repair.generate_timestamps() always have
+    start at T09:00:00 and end at T13:00:00 (4h default duration).
+    These are estimates, not real session durations.
+    """
+    try:
+        return "T09:00:00" in start and "T13:00:00" in end
+    except (TypeError, AttributeError):
+        return False
+
+
 def compute_session_duration(start: str, end: str) -> str:
     """Compute human-readable duration between two ISO timestamps.
 
@@ -92,6 +109,7 @@ def compute_session_duration(start: str, end: str) -> str:
 
     Returns:
         "Xh Ym" format, "ongoing" for ACTIVE sessions, or "" if invalid.
+        Repair artifacts show "~4h (est)" suffix.
     """
     if not start:
         return ""
@@ -101,7 +119,15 @@ def compute_session_duration(start: str, end: str) -> str:
         st = start[:19].replace("Z", "")
         et = end[:19].replace("Z", "")
         delta = datetime.strptime(et, "%Y-%m-%dT%H:%M:%S") - datetime.strptime(st, "%Y-%m-%dT%H:%M:%S")
-        total_minutes = max(0, int(delta.total_seconds() / 60))
+        total_seconds = delta.total_seconds()
+        if total_seconds < 0:
+            return "invalid"
+        total_minutes = int(total_seconds / 60)
+        if total_minutes > 1440:  # >24h — likely repair artifact
+            return ">24h"
+        # Detect repair-generated artificial timestamps
+        if _is_estimated_duration(st, et):
+            return "~4h (est)"
         if total_minutes < 1:
             return "<1m"
         hours, mins = divmod(total_minutes, 60)
@@ -168,8 +194,12 @@ def compute_pivot_data(sessions: list, group_by: str = "agent_id") -> list:
                 try:
                     st = start[:19].replace("Z", "")
                     et = end[:19].replace("Z", "")
+                    if _is_estimated_duration(st, et):
+                        continue  # Skip repair-generated artificial timestamps
                     delta = datetime.strptime(et, "%Y-%m-%dT%H:%M:%S") - datetime.strptime(st, "%Y-%m-%dT%H:%M:%S")
-                    durations.append(max(0, delta.total_seconds() / 60))
+                    mins = delta.total_seconds() / 60
+                    if 0 < mins <= 1440:  # skip negative + >24h
+                        durations.append(mins)
                 except Exception:
                     pass
         avg_dur = round(sum(durations) / len(durations), 1) if durations else 0

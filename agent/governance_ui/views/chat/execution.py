@@ -96,9 +96,9 @@ def build_task_execution_viewer() -> None:
                             with v3.VCardTitle(
                                 classes="text-subtitle-2 py-1"
                             ):
-                                # Event type icon
+                                # Event type icon (BUG-UI-TASKS-004: use icon= not v_text=)
                                 v3.VIcon(
-                                    v_text=(
+                                    icon=(
                                         "event.event_type === 'completed' "
                                         "? 'mdi-check-circle' : "
                                         "event.event_type === 'failed' "

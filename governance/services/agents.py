@@ -250,8 +250,28 @@ def toggle_agent_status(agent_id: str, source: str = "rest") -> Optional[Dict[st
     Returns:
         Updated agent dict with new status, or None if not found.
     """
+    # BUG-UI-AGENTS-001: Check TypeDB if agent not in memory store
     if agent_id not in _agents_store:
-        return None
+        client = get_typedb_client()
+        if client:
+            try:
+                agent = client.get_agent(agent_id)
+                if agent:
+                    # Backfill to memory store so subsequent toggles are fast
+                    _agents_store[agent_id] = {
+                        "agent_id": agent_id,
+                        "name": agent.name,
+                        "agent_type": agent.agent_type,
+                        "status": "PAUSED",
+                        "trust_score": agent.trust_score or 0.8,
+                        "capabilities": _AGENT_BASE_CONFIG.get(agent_id, {}).get("capabilities", []),
+                    }
+                else:
+                    return None
+            except Exception:
+                return None
+        else:
+            return None
 
     current_status = _agents_store[agent_id].get("status", "PAUSED")
     new_status = "ACTIVE" if current_status == "PAUSED" else "PAUSED"

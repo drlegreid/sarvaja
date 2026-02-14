@@ -30,6 +30,8 @@ def task_to_response(task: TypeDBTask):
         phase=task.phase,
         status=task.status,
         resolution=task.resolution,  # NONE, DEFERRED, IMPLEMENTED, VALIDATED, CERTIFIED
+        priority=task.priority,  # BUG-TASK-TAXONOMY-001
+        task_type=task.task_type,  # BUG-TASK-TAXONOMY-001
         agent_id=task.agent_id,
         created_at=task.created_at.isoformat() if task.created_at else None,
         claimed_at=task.claimed_at.isoformat() if task.claimed_at else None,
@@ -38,6 +40,7 @@ def task_to_response(task: TypeDBTask):
         linked_rules=task.linked_rules,
         linked_sessions=task.linked_sessions,
         linked_commits=task.linked_commits,  # Per GAP-TASK-LINK-002
+        linked_documents=task.linked_documents,  # Task document management
         gap_id=task.gap_id,
         evidence=task.evidence,
         document_path=task.document_path

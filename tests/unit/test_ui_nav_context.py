@@ -55,6 +55,11 @@ class TestNavigationTriggers:
                     return []
                 return None
 
+            def change(self, var_name):
+                def decorator(fn):
+                    return fn
+                return decorator
+
         class MockCtrl:
             def set(self, name):
                 def decorator(func):
@@ -85,6 +90,11 @@ class TestNavigationTriggers:
                 if name == "tasks":
                     return []
                 return None
+
+            def change(self, var_name):
+                def decorator(fn):
+                    return fn
+                return decorator
 
         class MockCtrl:
             def set(self, name):

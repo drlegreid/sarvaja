@@ -79,71 +79,61 @@ class TestTaskCreate:
 
     @patch(f"{_MOD}.log_monitor_event")
     @patch(f"{_MOD}.format_mcp_result", side_effect=_json_fmt)
-    @patch(f"{_MOD}.typedb_client")
-    def test_successful_create(self, mock_ctx, mock_fmt, mock_log):
+    @patch("governance.services.tasks.create_task")
+    def test_successful_create(self, mock_svc, mock_fmt, mock_log):
         tools = _register_tools()
-        client = MagicMock()
-        client.insert_task.return_value = True
-        mock_ctx.return_value.__enter__ = MagicMock(return_value=client)
-        mock_ctx.return_value.__exit__ = MagicMock(return_value=False)
+        mock_svc.return_value = {"task_id": "T-1", "status": "OPEN"}
 
         result = json.loads(tools["task_create"](
             task_id="T-1", name="Test", description="Do stuff"))
         assert result["task_id"] == "T-1"
-        assert result["message"] == "Task T-1 created successfully"
+        assert "created successfully" in result["message"]
 
     @patch(f"{_MOD}.log_monitor_event")
     @patch(f"{_MOD}.format_mcp_result", side_effect=_json_fmt)
-    @patch(f"{_MOD}.typedb_client")
-    def test_with_session_linking(self, mock_ctx, mock_fmt, mock_log):
+    @patch("governance.services.tasks.create_task")
+    def test_with_session_linking(self, mock_svc, mock_fmt, mock_log):
         tools = _register_tools()
-        client = MagicMock()
-        client.insert_task.return_value = True
-        mock_ctx.return_value.__enter__ = MagicMock(return_value=client)
-        mock_ctx.return_value.__exit__ = MagicMock(return_value=False)
+        mock_svc.return_value = {"task_id": "T-1", "linked_sessions": ["S-1"]}
 
         result = json.loads(tools["task_create"](
             task_id="T-1", name="Test", session_id="S-1"))
         assert result["linked_sessions"] == ["S-1"]
-        call_kwargs = client.insert_task.call_args[1]
+        call_kwargs = mock_svc.call_args[1]
         assert call_kwargs["linked_sessions"] == ["S-1"]
 
     @patch(f"{_MOD}.format_mcp_result", side_effect=_json_fmt)
-    @patch(f"{_MOD}.typedb_client")
-    def test_insert_failure(self, mock_ctx, mock_fmt):
+    @patch("governance.services.tasks.create_task")
+    def test_insert_failure(self, mock_svc, mock_fmt):
         tools = _register_tools()
-        client = MagicMock()
-        client.insert_task.return_value = False
-        mock_ctx.return_value.__enter__ = MagicMock(return_value=client)
-        mock_ctx.return_value.__exit__ = MagicMock(return_value=False)
+        mock_svc.side_effect = Exception("insert failed")
 
         result = json.loads(tools["task_create"](task_id="T-1", name="Test"))
         assert "error" in result
 
     @patch(f"{_MOD}.format_mcp_result", side_effect=_json_fmt)
-    @patch(f"{_MOD}.typedb_client")
-    def test_connection_error(self, mock_ctx, mock_fmt):
+    @patch("governance.services.tasks.create_task")
+    def test_connection_error(self, mock_svc, mock_fmt):
         tools = _register_tools()
-        mock_ctx.return_value.__enter__ = MagicMock(side_effect=ConnectionError("fail"))
-        mock_ctx.return_value.__exit__ = MagicMock(return_value=False)
+        mock_svc.side_effect = ConnectionError("fail")
 
         result = json.loads(tools["task_create"](task_id="T-1", name="Test"))
         assert "error" in result
 
     @patch(f"{_MOD}.log_monitor_event")
     @patch(f"{_MOD}.format_mcp_result", side_effect=_json_fmt)
-    @patch(f"{_MOD}.typedb_client")
-    def test_body_format_with_description(self, mock_ctx, mock_fmt, mock_log):
+    @patch("governance.services.tasks.create_task")
+    def test_body_format_with_description(self, mock_svc, mock_fmt, mock_log):
+        """BUG-TASK-TAXONOMY-001: body should be description text, priority is a separate field."""
         tools = _register_tools()
-        client = MagicMock()
-        client.insert_task.return_value = True
-        mock_ctx.return_value.__enter__ = MagicMock(return_value=client)
-        mock_ctx.return_value.__exit__ = MagicMock(return_value=False)
+        mock_svc.return_value = {"task_id": "T-1", "status": "OPEN", "priority": "HIGH"}
 
         tools["task_create"](task_id="T-1", name="Test",
                              description="Fix bug", priority="HIGH")
-        call_kwargs = client.insert_task.call_args[1]
-        assert call_kwargs["body"] == "[Priority: HIGH] Fix bug"
+        call_kwargs = mock_svc.call_args[1]
+        # BUG-TASK-TAXONOMY-001: priority is now a first-class field
+        assert call_kwargs["body"] == "Fix bug"
+        assert call_kwargs["priority"] == "HIGH"
 
 
 # ── task_get ─────────────────────────────────────────────

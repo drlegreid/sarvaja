@@ -123,12 +123,12 @@ def build_session_info_card() -> None:
                     ),
                     prepend_icon="mdi-tools",
                 )
-                # Duration (EPIC-UI-VALUE-001)
+                # Duration (EPIC-UI-VALUE-001, BUG-SESSION-DURATION-001 fix)
                 v3.VListItem(
-                    v_if="selected_session.duration_minutes",
+                    v_if="selected_session.duration",
                     title="Duration",
                     subtitle=(
-                        "String(selected_session.duration_minutes) + ' minutes'",
+                        "selected_session.duration",
                     ),
                     prepend_icon="mdi-timer-outline",
                 )

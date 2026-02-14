@@ -85,6 +85,9 @@ class TaskReadQueries:
             # GAP-GAPS-TASKS-001: Unified work item attributes
             ("item-type", "match $t isa task, has task-id $id, has item-type $v; select $id, $v;", "v", "item_type"),
             ("document-path", "match $t isa task, has task-id $id, has document-path $v; select $id, $v;", "v", "document_path"),
+            # BUG-TASK-TAXONOMY-001: Task classification
+            ("task-priority", "match $t isa task, has task-id $id, has task-priority $v; select $id, $v;", "v", "priority"),
+            ("task-type", "match $t isa task, has task-id $id, has task-type $v; select $id, $v;", "v", "task_type"),
         ]
 
         for attr_name, query, result_key, task_attr in attr_queries:
@@ -147,6 +150,23 @@ class TaskReadQueries:
                     task_map[tid].linked_commits.append(r.get("sha"))
         except Exception:
             pass
+        # Task document management: linked documents
+        try:
+            docs_results = self._execute_query("""
+                match
+                    $t isa task, has task-id $tid;
+                    $d isa document, has document-path $dpath;
+                    (referencing-document: $d, referenced-task: $t) isa document-references-task;
+                select $tid, $dpath;
+            """)
+            for r in docs_results:
+                tid = r.get("tid")
+                if tid in task_map:
+                    if not task_map[tid].linked_documents:
+                        task_map[tid].linked_documents = []
+                    task_map[tid].linked_documents.append(r.get("dpath"))
+        except Exception:
+            pass
 
     def get_available_tasks(self) -> List[Task]:
         """Get tasks available for agents (status TODO/pending, no agent assigned)."""
@@ -192,6 +212,8 @@ class TaskReadQueries:
             ("task-test", "test", "test_section"),
             ("item-type", "itype", "item_type"),             # GAP-GAPS-TASKS-001
             ("document-path", "dpath", "document_path"),
+            ("task-priority", "pri", "priority"),              # BUG-TASK-TAXONOMY-001
+            ("task-type", "ttype", "task_type"),               # BUG-TASK-TAXONOMY-001
         ]
         for attr_name, var_name, task_attr in optional_attrs:
             value = self._fetch_task_attr(task_id, attr_name, var_name)
@@ -211,6 +233,10 @@ class TaskReadQueries:
             match $t isa task, has task-id "{task_id}";
                 (implementing-commit: $c, implemented-task: $t) isa task-commit;
                 $c has commit-sha $sha; select $sha;''', "sha")
+        task.linked_documents = self._fetch_task_relation(task_id, '''
+            match $t isa task, has task-id "{task_id}";
+                (referencing-document: $d, referenced-task: $t) isa document-references-task;
+                $d has document-path $dpath; select $dpath;''', "dpath")
 
         return task
 

@@ -20,49 +20,49 @@ class TestAuditFilterHandlersExist:
 
     def test_audit_filter_handler_function_exists(self):
         """Verify the audit filter change handler is defined."""
-        # Per DOC-SIZE-01-v1: audit handlers extracted to common_handlers_audit
-        from agent.governance_ui.handlers import common_handlers_audit
+        # Per BUG-UI-AUDIT-001: audit filter handlers moved to audit_loaders.py
+        from agent.governance_ui.controllers import audit_loaders
         import inspect
 
-        source = inspect.getsource(common_handlers_audit)
+        source = inspect.getsource(audit_loaders)
 
         # Should have state.change handler for audit filters
-        assert "audit_filter" in source, "audit_filter handlers missing from common_handlers_audit"
+        assert "audit_filter" in source, "audit_filter handlers missing from audit_loaders"
 
     def test_audit_filter_handler_watches_entity_type(self):
         """Verify handler watches audit_filter_entity_type."""
-        from agent.governance_ui.handlers import common_handlers_audit
+        from agent.governance_ui.controllers import audit_loaders
         import inspect
 
-        source = inspect.getsource(common_handlers_audit)
+        source = inspect.getsource(audit_loaders)
 
         # Should watch the entity_type filter
         assert "audit_filter_entity_type" in source
 
     def test_audit_filter_handler_watches_action_type(self):
         """Verify handler watches audit_filter_action_type."""
-        from agent.governance_ui.handlers import common_handlers_audit
+        from agent.governance_ui.controllers import audit_loaders
         import inspect
 
-        source = inspect.getsource(common_handlers_audit)
+        source = inspect.getsource(audit_loaders)
 
         assert "audit_filter_action_type" in source
 
     def test_audit_filter_handler_watches_entity_id(self):
         """Verify handler watches audit_filter_entity_id."""
-        from agent.governance_ui.handlers import common_handlers_audit
+        from agent.governance_ui.controllers import audit_loaders
         import inspect
 
-        source = inspect.getsource(common_handlers_audit)
+        source = inspect.getsource(audit_loaders)
 
         assert "audit_filter_entity_id" in source
 
     def test_audit_filter_handler_watches_correlation_id(self):
         """Verify handler watches audit_filter_correlation_id."""
-        from agent.governance_ui.handlers import common_handlers_audit
+        from agent.governance_ui.controllers import audit_loaders
         import inspect
 
-        source = inspect.getsource(common_handlers_audit)
+        source = inspect.getsource(audit_loaders)
 
         assert "audit_filter_correlation_id" in source
 

@@ -36,7 +36,7 @@ from governance.routes import (
     rules_router, tasks_router, sessions_router,
     evidence_router, files_router, agents_router,
     reports_router, chat_router, metrics_router,
-    projects_router,
+    projects_router, taxonomy_router,
 )
 from governance.routes.tests import tests_router
 from governance.routes.audit import router as audit_router  # RD-DEBUG-AUDIT
@@ -167,6 +167,7 @@ app.include_router(audit_router, prefix="/api")  # RD-DEBUG-AUDIT: Audit trail
 app.include_router(observability_router, prefix="/api/agents")  # GAP-MONITOR-IPC-001: Monitor events
 app.include_router(proposals_router, prefix="/api")  # GOV-BICAM-01-v1: LangGraph proposal workflow
 app.include_router(projects_router, prefix="/api")  # GOV-PROJECT-01-v1: Project hierarchy
+app.include_router(taxonomy_router, prefix="/api")  # META-TAXON-01-v1: Task/rule taxonomy
 app.include_router(infra_router)  # EPIC-7.1: Container logs via podman socket
 
 

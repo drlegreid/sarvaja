@@ -95,6 +95,27 @@ def assign_default_agent(session: Dict) -> Dict:
     return session
 
 
+def detect_negative_durations(sessions: List[Dict]) -> List[str]:
+    """Find sessions where end_time is before start_time.
+
+    Returns:
+        List of session_ids with negative durations.
+    """
+    flagged = []
+    for s in sessions:
+        start = s.get("start_time", "")
+        end = s.get("end_time", "")
+        if start and end:
+            try:
+                st = datetime.fromisoformat(start[:19])
+                et = datetime.fromisoformat(end[:19])
+                if (et - st).total_seconds() < 0:
+                    flagged.append(s["session_id"])
+            except (ValueError, TypeError):
+                pass
+    return flagged
+
+
 def detect_unrealistic_durations(
     sessions: List[Dict], max_hours: float = _MAX_DURATION_HOURS
 ) -> List[str]:
@@ -167,6 +188,7 @@ def build_repair_plan(sessions: List[Dict]) -> List[Dict]:
         List of dicts with session_id and fixes to apply.
     """
     identical = set(detect_identical_timestamps(sessions))
+    negative = set(detect_negative_durations(sessions))
     plan = []
 
     for s in sessions:
@@ -180,14 +202,35 @@ def build_repair_plan(sessions: List[Dict]) -> List[Dict]:
                 start, end = generate_timestamps(parsed_date)
                 fixes["timestamp"] = {"start": start, "end": end}
 
+        # Check negative duration (end before start)
+        if sid in negative and "timestamp" not in fixes:
+            # Try swapping start/end
+            start_t = s.get("start_time", "")
+            end_t = s.get("end_time", "")
+            try:
+                st = datetime.fromisoformat(start_t[:19])
+                et = datetime.fromisoformat(end_t[:19])
+                swapped_hours = (st - et).total_seconds() / 3600
+                if 0 < swapped_hours <= _MAX_DURATION_HOURS:
+                    # Swap produces reasonable duration
+                    fixes["timestamp"] = {"start": end_t, "end": start_t}
+                else:
+                    # Swap still unreasonable, regenerate from ID date
+                    parsed_date = parse_session_date(sid)
+                    if parsed_date:
+                        start, end = generate_timestamps(parsed_date)
+                        fixes["timestamp"] = {"start": start, "end": end}
+            except (ValueError, TypeError):
+                pass
+
         # Check agent_id
         if not s.get("agent_id"):
             fixes["agent_id"] = "code-agent"
 
-        # Check duration
+        # Check duration (>24h)
         start_t = s.get("start_time", "")
         end_t = s.get("end_time", "")
-        if start_t and end_t:
+        if start_t and end_t and "timestamp" not in fixes:
             try:
                 st = datetime.fromisoformat(start_t[:19])
                 et = datetime.fromisoformat(end_t[:19])

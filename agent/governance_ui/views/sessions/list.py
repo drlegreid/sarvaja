@@ -44,7 +44,6 @@ def _build_filters_row():
                 density="compact",
                 hide_details=True,
                 clearable=True,
-                update_modelValue="trigger('sessions_apply_filters')",
                 __properties=["data-testid"],
                 **{"data-testid": "sessions-filter-status"},
             )
@@ -57,7 +56,6 @@ def _build_filters_row():
                 density="compact",
                 hide_details=True,
                 clearable=True,
-                update_modelValue="trigger('sessions_apply_filters')",
                 __properties=["data-testid"],
                 **{"data-testid": "sessions-filter-agent"},
             )
@@ -87,7 +85,7 @@ def _build_filters_row():
                 mandatory=True,
                 density="compact",
                 variant="outlined",
-                update_modelValue="trigger('sessions_toggle_view')",
+                update_modelValue="(val) => trigger('sessions_toggle_view', [val])",
             ):
                 v3.VBtn(value="table", icon="mdi-table", size="small")
                 v3.VBtn(value="pivot", icon="mdi-chart-bar", size="small")
@@ -109,13 +107,35 @@ def _build_timeline():
         v_if="sessions_timeline_data && sessions_timeline_data.length > 0",
         classes="mb-2",
     ):
-        html.Div("Session Activity (14 days)", classes="text-caption text-grey mb-1")
+        with html.Div(classes="d-flex align-center mb-1"):
+            html.Span("Sessions per Day", classes="text-caption text-grey")
+            html.Span(
+                v_text=(
+                    "' (' + (sessions_timeline_labels[0] || '')"
+                    " + ' to '"
+                    " + (sessions_timeline_labels[sessions_timeline_labels.length - 1] || '')"
+                    " + ')'",
+                ),
+                classes="text-caption text-grey ml-1",
+            )
+            with v3.VTooltip(location="top"):
+                with html.Template(v_slot_activator="{ props }"):
+                    v3.VIcon(
+                        "mdi-information-outline",
+                        size="x-small",
+                        classes="ml-1 text-grey",
+                        v_bind="props",
+                    )
+                html.Span(
+                    "Number of sessions started each day. "
+                    "Bar height = session count for that date."
+                )
         v3.VSparkline(
             model_value=("sessions_timeline_data",),
             labels=("sessions_timeline_labels",),
             type="bar",
             color="primary",
-            height=40,
+            height=50,
             padding=4,
             line_width=2,
             show_labels=True,

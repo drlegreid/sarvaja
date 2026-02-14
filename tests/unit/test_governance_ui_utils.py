@@ -125,6 +125,108 @@ class TestComputeSessionDuration:
     def test_invalid_timestamps(self):
         assert compute_session_duration("bad", "data") == ""
 
+    def test_negative_duration_returns_invalid(self):
+        """End time before start time returns 'invalid'."""
+        result = compute_session_duration(
+            "2026-02-14T00:07:18", "2026-02-13T22:09:29")
+        assert result == "invalid"
+
+    def test_absurd_duration_capped(self):
+        """>24h duration returns '>24h'."""
+        result = compute_session_duration(
+            "2026-01-19T02:07:03", "2026-02-01T20:37:30")
+        assert result == ">24h"
+
+    def test_exactly_24h(self):
+        """24h exactly is still valid (not capped)."""
+        result = compute_session_duration(
+            "2026-02-11T00:00:00", "2026-02-12T00:00:00")
+        assert result == "24h 0m"
+
+    def test_estimated_duration_detected(self):
+        """Repair-generated 09:00→13:00 shows '~4h (est)'."""
+        result = compute_session_duration(
+            "2026-02-11T09:00:00", "2026-02-11T13:00:00")
+        assert result == "~4h (est)"
+
+    def test_real_09_start_not_flagged(self):
+        """Real session starting at 09:00 but NOT ending at 13:00 is normal."""
+        result = compute_session_duration(
+            "2026-02-11T09:00:00", "2026-02-11T11:30:00")
+        assert result == "2h 30m"
+
+    def test_real_13_end_not_flagged(self):
+        """Real session ending at 13:00 but NOT starting at 09:00 is normal."""
+        result = compute_session_duration(
+            "2026-02-11T10:00:00", "2026-02-11T13:00:00")
+        assert result == "3h 0m"
+
+
+class TestComputeSessionMetricsOutliers:
+    """Tests for outlier exclusion in compute_session_metrics()."""
+
+    def test_negative_duration_excluded(self):
+        """Negative duration sessions don't inflate total."""
+        sessions = [
+            {"start_time": "2026-02-14T00:07:18", "end_time": "2026-02-13T22:09:29"},
+            {"start_time": "2026-02-11T10:00:00", "end_time": "2026-02-11T12:00:00"},
+        ]
+        result = compute_session_metrics(sessions)
+        assert result["duration"] == "2h"
+
+    def test_absurd_duration_excluded(self):
+        """>24h sessions don't inflate total."""
+        sessions = [
+            {"start_time": "2026-01-19T02:07:03", "end_time": "2026-02-01T20:37:30"},
+            {"start_time": "2026-02-11T10:00:00", "end_time": "2026-02-11T11:00:00"},
+        ]
+        result = compute_session_metrics(sessions)
+        assert result["duration"] == "1h"
+
+    def test_estimated_duration_excluded(self):
+        """Repair-generated 09:00→13:00 sessions excluded from total."""
+        sessions = [
+            {"start_time": "2026-02-11T09:00:00", "end_time": "2026-02-11T13:00:00"},
+            {"start_time": "2026-02-11T10:00:00", "end_time": "2026-02-11T12:00:00"},
+        ]
+        result = compute_session_metrics(sessions)
+        assert result["duration"] == "2h"  # only the real session counted
+
+
+class TestComputePivotDataOutliers:
+    """Tests for outlier exclusion in compute_pivot_data()."""
+
+    def test_negative_duration_excluded_from_avg(self):
+        sessions = [
+            {"agent_id": "a", "status": "COMPLETED",
+             "start_time": "2026-02-14T00:07:18", "end_time": "2026-02-13T22:09:29"},
+            {"agent_id": "a", "status": "COMPLETED",
+             "start_time": "2026-02-11T10:00:00", "end_time": "2026-02-11T10:30:00"},
+        ]
+        result = compute_pivot_data(sessions, "agent_id")
+        assert "30m" in result[0]["avg_duration"]
+
+    def test_absurd_duration_excluded_from_avg(self):
+        sessions = [
+            {"agent_id": "a", "status": "COMPLETED",
+             "start_time": "2026-01-01T00:00:00", "end_time": "2026-01-15T00:00:00"},
+            {"agent_id": "a", "status": "COMPLETED",
+             "start_time": "2026-02-11T10:00:00", "end_time": "2026-02-11T11:00:00"},
+        ]
+        result = compute_pivot_data(sessions, "agent_id")
+        assert result[0]["avg_duration"] == "1h 0m"
+
+    def test_estimated_duration_excluded_from_avg(self):
+        """Repair-generated 09:00→13:00 excluded from pivot avg."""
+        sessions = [
+            {"agent_id": "a", "status": "COMPLETED",
+             "start_time": "2026-02-11T09:00:00", "end_time": "2026-02-11T13:00:00"},
+            {"agent_id": "a", "status": "COMPLETED",
+             "start_time": "2026-02-11T10:00:00", "end_time": "2026-02-11T10:30:00"},
+        ]
+        result = compute_pivot_data(sessions, "agent_id")
+        assert "30m" in result[0]["avg_duration"]
+
 
 # ── compute_timeline_data ─────────────────────────────────────
 
@@ -148,6 +250,19 @@ class TestComputeTimelineData:
         _, labels = compute_timeline_data([])
         for label in labels:
             assert len(label) == 5  # MM-DD
+
+    def test_plotly_layout_has_axis_titles(self):
+        """Plotly timeline layout includes chart title and Y-axis label."""
+        from agent.governance_ui.views.sessions.timeline import (
+            compute_timeline_plotly_data,
+        )
+        sessions = [{"start_time": "2026-02-11T10:00:00", "status": "COMPLETED"}]
+        result = compute_timeline_plotly_data(sessions)
+        layout = result["layout"]
+        assert "title" in layout
+        assert layout["title"]["text"] == "Sessions per Day"
+        assert "title" in layout["yaxis"]
+        assert layout["yaxis"]["title"]["text"] == "Count"
 
 
 # ── compute_pivot_data ────────────────────────────────────────

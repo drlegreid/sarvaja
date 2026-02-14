@@ -265,6 +265,25 @@ def end_chat_session(
     except Exception as e:
         logger.warning(f"Failed to generate session log: {e}")
 
+    # BUG-SESSION-EVIDENCE-001: Auto-link evidence to TypeDB after generation
+    if evidence_path:
+        try:
+            from governance.stores import get_typedb_client
+            client = get_typedb_client()
+            if client:
+                client.link_evidence_to_session(session_id, evidence_path)
+                logger.info(f"Evidence linked: {session_id} -> {evidence_path}")
+            else:
+                logger.warning(f"TypeDB unavailable; evidence not linked: {session_id} -> {evidence_path}")
+        except Exception as e:
+            logger.error(f"Evidence linking failed for {session_id}: {e}")
+        # Also store in _sessions_store for fallback
+        if session_id in _sessions_store:
+            existing = _sessions_store[session_id].get("evidence_files") or []
+            if evidence_path not in existing:
+                existing.append(evidence_path)
+                _sessions_store[session_id]["evidence_files"] = existing
+
     # Sync to ChromaDB for semantic search
     try:
         collector.sync_to_chromadb()

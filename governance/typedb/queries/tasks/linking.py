@@ -235,4 +235,95 @@ class TaskLinkingOperations:
         results = self._execute_query(query)
         return [r.get("sha") for r in results if r.get("sha")]
 
+    def link_task_to_document(self, task_id: str, document_path: str) -> bool:
+        """Link a task to a document via document-references-task relation.
+
+        Args:
+            task_id: Task ID
+            document_path: Document path (e.g., "docs/rules/leaf/TEST-E2E-01-v1.md")
+
+        Returns:
+            True if link created successfully, False otherwise
+        """
+        from typedb.driver import TransactionType
+
+        try:
+            with self._driver.transaction(self.database, TransactionType.WRITE) as tx:
+                # Ensure document entity exists
+                doc_id = document_path.replace("/", "-").replace(".", "-").replace("\\", "-").upper()
+                insert_doc = f"""
+                    insert $d isa document,
+                        has document-id "{doc_id}",
+                        has document-path "{document_path}",
+                        has document-type "markdown",
+                        has document-storage "filesystem";
+                """
+                try:
+                    tx.query(insert_doc).resolve()
+                except Exception:
+                    pass  # Document might already exist
+
+                # Create document-references-task relation
+                link_query = f"""
+                    match
+                        $t isa task, has task-id "{task_id}";
+                        $d isa document, has document-path "{document_path}";
+                    insert
+                        (referencing-document: $d, referenced-task: $t) isa document-references-task;
+                """
+                tx.query(link_query).resolve()
+                tx.commit()
+
+            return True
+        except Exception as e:
+            logger.error(f"Failed to link task {task_id} to document {document_path}: {e}")
+            return False
+
+    def unlink_task_from_document(self, task_id: str, document_path: str) -> bool:
+        """Unlink a document from a task.
+
+        Args:
+            task_id: Task ID
+            document_path: Document path to unlink
+
+        Returns:
+            True if unlinked successfully, False otherwise
+        """
+        from typedb.driver import TransactionType
+
+        try:
+            with self._driver.transaction(self.database, TransactionType.WRITE) as tx:
+                delete_query = f"""
+                    match
+                        $t isa task, has task-id "{task_id}";
+                        $d isa document, has document-path "{document_path}";
+                        $rel (referencing-document: $d, referenced-task: $t) isa document-references-task;
+                    delete $rel isa document-references-task;
+                """
+                tx.query(delete_query).resolve()
+                tx.commit()
+            return True
+        except Exception as e:
+            logger.error(f"Failed to unlink document {document_path} from task {task_id}: {e}")
+            return False
+
+    def get_task_documents(self, task_id: str) -> List[str]:
+        """Get all document paths linked to a task.
+
+        Args:
+            task_id: Task ID
+
+        Returns:
+            List of document paths
+        """
+        query = f"""
+            match
+                $t isa task, has task-id "{task_id}";
+                (referencing-document: $d, referenced-task: $t) isa document-references-task;
+                $d has document-path $dpath;
+            select $dpath;
+        """
+        results = self._execute_query(query)
+        return [r.get("dpath") for r in results if r.get("dpath")]
+
     # Task relationship operations moved to relationships.py per DOC-SIZE-01-v1

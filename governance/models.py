@@ -40,14 +40,17 @@ class RuleResponse(BaseModel):
 
 class TaskCreate(BaseModel):
     """Request model for creating a task."""
-    task_id: str = Field(..., min_length=1)
+    task_id: Optional[str] = Field(default=None, description="Task ID (auto-generated from task_type if omitted)")
     description: str = Field(..., min_length=1)
     phase: str = Field(..., min_length=1)
     status: str = "TODO"
+    priority: Optional[Literal["LOW", "MEDIUM", "HIGH", "CRITICAL"]] = None  # BUG-TASK-TAXONOMY-001
+    task_type: Optional[Literal["bug", "feature", "chore", "research", "gap", "epic", "test"]] = None  # META-TAXON-01-v1
     agent_id: Optional[str] = None
     body: Optional[str] = None
     linked_rules: Optional[List[str]] = None
     linked_sessions: Optional[List[str]] = None
+    linked_documents: Optional[List[str]] = None  # Task document management
     gap_id: Optional[str] = None
 
 class TaskUpdate(BaseModel):
@@ -55,10 +58,13 @@ class TaskUpdate(BaseModel):
     description: Optional[str] = None
     phase: Optional[str] = None
     status: Optional[str] = None
+    priority: Optional[Literal["LOW", "MEDIUM", "HIGH", "CRITICAL"]] = None  # BUG-TASK-TAXONOMY-001
+    task_type: Optional[Literal["bug", "feature", "chore", "research", "gap", "epic", "test"]] = None  # META-TAXON-01-v1
     agent_id: Optional[str] = None
     body: Optional[str] = None
     linked_rules: Optional[List[str]] = None
     linked_sessions: Optional[List[str]] = None
+    linked_documents: Optional[List[str]] = None  # Task document management
     gap_id: Optional[str] = None
     evidence: Optional[str] = None  # Per EPIC-DR-008
 
@@ -69,6 +75,8 @@ class TaskResponse(BaseModel):
     phase: str
     status: str  # OPEN, IN_PROGRESS, CLOSED (or legacy: TODO, IN_PROGRESS, DONE)
     resolution: Optional[str] = None  # NONE, DEFERRED, IMPLEMENTED, VALIDATED, CERTIFIED
+    priority: Optional[str] = None  # BUG-TASK-TAXONOMY-001: LOW, MEDIUM, HIGH, CRITICAL
+    task_type: Optional[str] = None  # BUG-TASK-TAXONOMY-001: bug, feature, chore, research
     agent_id: Optional[str] = None
     created_at: Optional[str] = None
     claimed_at: Optional[str] = None
@@ -77,6 +85,7 @@ class TaskResponse(BaseModel):
     linked_rules: Optional[List[str]] = None
     linked_sessions: Optional[List[str]] = None
     linked_commits: Optional[List[str]] = None  # Per GAP-TASK-LINK-002: Git commit linkage
+    linked_documents: Optional[List[str]] = None  # Task document management
     gap_id: Optional[str] = None
     evidence: Optional[str] = None  # May include [Verification: L1/L2/L3] prefix
     document_path: Optional[str] = None

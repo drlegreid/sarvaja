@@ -13,7 +13,10 @@ Module structure (RULE-032 compliant):
 - tasks/detail.py: Detail view (~165 lines)
 """
 
-from .tasks import build_tasks_list_view, build_task_detail_view, build_task_create_dialog
+from .tasks import (
+    build_tasks_list_view, build_task_detail_view,
+    build_task_create_dialog, build_attach_document_dialog,
+)
 
 
 def build_tasks_view() -> None:
@@ -26,3 +29,4 @@ def build_tasks_view() -> None:
     build_tasks_list_view()
     build_task_detail_view()
     build_task_create_dialog()
+    build_attach_document_dialog()

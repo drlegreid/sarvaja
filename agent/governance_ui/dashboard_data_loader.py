@@ -91,6 +91,13 @@ def _load_sessions(state, client, api_base_url, get_sessions, page_size) -> None
             item["duration"] = compute_session_duration(
                 item.get("start_time", ""), item.get("end_time", ""),
             )
+            # BUG-SESSION-END-001: Show meaningful text for missing end_time
+            if not item.get("end_time"):
+                status = (item.get("status") or "").upper()
+                if status in ("COMPLETED", "CLOSED"):
+                    item["end_time"] = "(completed)"
+                elif status == "ACTIVE":
+                    item["end_time"] = "ongoing"
             # Derive source_type for Source column (SESSION-CC-01-v1)
             if not item.get("source_type"):
                 sid = item.get("session_id", "")
@@ -157,5 +164,9 @@ def _load_tasks(state, client, api_base_url, get_tasks, page_size) -> None:
                 "has_more": len(data) > page_size,
                 "returned": min(len(data), page_size),
             }
+        # BUG-UI-TASKS-003: Format timestamps on initial load
+        state.tasks = format_timestamps_in_list(
+            state.tasks, ["created_at", "completed_at", "claimed_at"]
+        )
     else:
         state.tasks = get_tasks()

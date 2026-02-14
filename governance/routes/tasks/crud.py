@@ -58,9 +58,11 @@ async def create_task(task: TaskCreate):
         result = task_service.create_task(
             task_id=task.task_id, description=task.description,
             status=task.status, phase=task.phase,
+            priority=task.priority, task_type=task.task_type,
             agent_id=task.agent_id, body=task.body,
             gap_id=task.gap_id, linked_rules=task.linked_rules,
-            linked_sessions=task.linked_sessions, source="rest-api",
+            linked_sessions=task.linked_sessions,
+            linked_documents=task.linked_documents, source="rest-api",
         )
         # Service returns TaskResponse directly (via task_to_response)
         if isinstance(result, TaskResponse):
@@ -90,11 +92,14 @@ async def update_task(task_id: str, update: TaskUpdate):
         description=update.description,
         status=update.status,
         phase=update.phase,
+        priority=update.priority,
+        task_type=update.task_type,
         agent_id=update.agent_id,
         body=update.body,
         evidence=update.evidence,
         linked_rules=update.linked_rules,
         linked_sessions=update.linked_sessions,
+        linked_documents=update.linked_documents,
         gap_id=update.gap_id,
         source="rest-api",
     )
@@ -128,3 +133,38 @@ async def link_task_to_session(task_id: str, session_id: str):
     if not task_service.link_task_to_session(task_id, session_id, source="rest-api"):
         raise HTTPException(status_code=400, detail="Failed to create link (task not found or TypeDB unavailable)")
     return {"task_id": task_id, "session_id": session_id, "linked": True}
+
+
+# Task Document Management endpoints
+
+@router.post("/tasks/{task_id}/documents", status_code=201)
+async def link_task_to_document(task_id: str, body: dict):
+    """Link a document to a task via document-references-task relation."""
+    document_path = body.get("document_path")
+    if not document_path:
+        raise HTTPException(status_code=422, detail="document_path is required")
+    if not task_service.link_task_to_document(task_id, document_path, source="rest-api"):
+        raise HTTPException(status_code=400, detail="Failed to link document (task not found or TypeDB unavailable)")
+    return {"task_id": task_id, "document_path": document_path, "linked": True}
+
+
+@router.get("/tasks/{task_id}/documents")
+async def get_task_documents(task_id: str):
+    """Get all documents linked to a task."""
+    result = task_service.get_task(task_id)
+    if result is None:
+        raise HTTPException(status_code=404, detail=f"Task {task_id} not found")
+    docs = []
+    if isinstance(result, TaskResponse):
+        docs = result.linked_documents or []
+    elif isinstance(result, dict):
+        docs = result.get("linked_documents") or []
+    return {"task_id": task_id, "documents": docs, "count": len(docs)}
+
+
+@router.delete("/tasks/{task_id}/documents/{doc_id:path}", status_code=204)
+async def unlink_task_document(task_id: str, doc_id: str):
+    """Unlink a document from a task."""
+    if not task_service.unlink_task_from_document(task_id, doc_id, source="rest-api"):
+        raise HTTPException(status_code=400, detail="Failed to unlink document")
+    return None

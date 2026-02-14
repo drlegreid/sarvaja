@@ -248,10 +248,15 @@ class TestTaskCreateValidation:
         assert task.task_id == "T-001"
         assert task.status == "TODO"
 
-    def test_empty_task_id_rejected(self):
-        """Reject empty task_id."""
-        with pytest.raises(ValidationError):
-            TaskCreate(task_id="", description="D", phase="P")
+    def test_empty_task_id_accepted_for_auto_gen(self):
+        """Empty task_id is valid (auto-generated at service level per META-TAXON-01-v1)."""
+        task = TaskCreate(task_id="", description="D", phase="P")
+        assert task.task_id == ""
+
+    def test_none_task_id_accepted(self):
+        """None task_id is valid (auto-generated from task_type at service level)."""
+        task = TaskCreate(description="D", phase="P", task_type="bug")
+        assert task.task_id is None
 
     def test_empty_description_rejected(self):
         """Reject empty description."""

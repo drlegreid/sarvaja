@@ -32,3 +32,9 @@ relation document-references-gap,
 
     relates referencing-document,
     relates referenced-gap;
+
+# Document references a task (task document management)
+relation document-references-task,
+
+    relates referencing-document,
+    relates referenced-task;

@@ -139,6 +139,37 @@ def register_rules_controllers(state: Any, ctrl: Any, api_base_url: str) -> None
             state.error_message = f"Failed to delete rule: {str(e)}"
             state.status_message = f"Delete failed (offline mode): {str(e)}"
 
+    def load_rules():
+        """Load rules from API with current filters (BUG-UI-RULES-001 fix)."""
+        try:
+            params = {}
+            rules_status_filter = getattr(state, 'rules_status_filter', None)
+            rules_category_filter = getattr(state, 'rules_category_filter', None)
+            if rules_status_filter:
+                params["status"] = rules_status_filter
+            if rules_category_filter:
+                params["category"] = rules_category_filter
+
+            with httpx.Client(timeout=10.0) as client:
+                response = client.get(f"{api_base_url}/api/rules", params=params)
+                if response.status_code == 200:
+                    data = response.json()
+                    state.rules = data.get("items", data) if isinstance(data, dict) else data
+        except Exception as e:
+            state.has_error = True
+            state.error_message = f"Failed to load rules: {str(e)}"
+
+    # Reactive filter handlers — @state.change pattern (BUG-UI-RULES-001 fix)
+    @state.change("rules_status_filter")
+    def _on_rules_status_filter(rules_status_filter, **kwargs):
+        if state.active_view == "rules":
+            load_rules()
+
+    @state.change("rules_category_filter")
+    def _on_rules_category_filter(rules_category_filter, **kwargs):
+        if state.active_view == "rules":
+            load_rules()
+
     @ctrl.set("filter_rules_by_status")
     def filter_rules_by_status(status):
         """Filter rules by status."""
@@ -163,3 +194,6 @@ def register_rules_controllers(state: Any, ctrl: Any, api_base_url: str) -> None
             state.rules_sort_asc = False
         else:
             state.rules_sort_asc = True
+
+    # BUG-UI-RULES-001: Return load_rules for auto-load wiring in on_view_change
+    return {"load_rules": load_rules}

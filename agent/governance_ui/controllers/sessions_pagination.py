@@ -32,13 +32,20 @@ def register_sessions_pagination(
         state.sessions_metrics_duration = metrics["duration"]
         state.sessions_metrics_avg_tasks = metrics["avg_tasks"]
 
-    def _update_timeline(client, base_url):
-        """Fetch all sessions for timeline histogram (not just paginated page)."""
+    def _update_timeline_and_metrics(client, base_url):
+        """Fetch all sessions for timeline + global metrics.
+
+        BUG-UI-SESSIONS-001 fix: Metrics must be computed from ALL sessions,
+        not just the current page (which may only have test sessions with 0s
+        durations, showing '0h' instead of the real 14000+ hours).
+        """
         try:
-            resp = client.get(f"{base_url}/api/sessions", params={"limit": 500})
+            resp = client.get(f"{base_url}/api/sessions", params={"limit": 200})
             if resp.status_code == 200:
                 data = resp.json()
                 all_items = data.get("items", data) if isinstance(data, dict) else data
+                # Compute metrics from ALL sessions (not just current page)
+                _apply_session_metrics(all_items)
                 tl_values, tl_labels = compute_timeline_data(all_items)
                 state.sessions_timeline_data = tl_values
                 state.sessions_timeline_labels = tl_labels
@@ -82,20 +89,28 @@ def register_sessions_pagination(
                     for item in items:
                         if not item.get("start_time") and item.get("date"):
                             item["start_time"] = item["date"]
-                    # Compute metrics BEFORE formatting (needs raw ISO timestamps)
-                    _apply_session_metrics(items)
                     # F.2: Add duration column to each item
                     for item in items:
                         item["duration"] = compute_session_duration(
                             item.get("start_time", ""), item.get("end_time", ""))
-                    # F.3: Timeline data — fetch ALL sessions for proper histogram
-                    _update_timeline(client, api_base_url)
+                    # F.3: Timeline + metrics from ALL sessions (BUG-UI-SESSIONS-001)
+                    _update_timeline_and_metrics(client, api_base_url)
                     # F.1: Extract unique agent options for filter dropdown
                     agents = sorted(set(
                         s.get("agent_id") for s in items
                         if s.get("agent_id")
                     ))
                     state.sessions_agent_options = agents
+                    # BUG-UI-SESSIONS-003: Derive source_type for display
+                    for item in items:
+                        if not item.get("source_type"):
+                            sid = item.get("session_id", "")
+                            if item.get("cc_session_uuid") or "-CC-" in sid:
+                                item["source_type"] = "CC"
+                            elif "-CHAT-" in sid or "-MCP-AUTO-" in sid:
+                                item["source_type"] = "Chat"
+                            else:
+                                item["source_type"] = "API"
                     # Format timestamps and set state
                     state.sessions = format_timestamps_in_list(
                         items, ["start_time", "end_time"])
@@ -146,8 +161,11 @@ def register_sessions_pagination(
         load_sessions_page()
 
     @ctrl.trigger("sessions_toggle_view")
-    def sessions_toggle_view():
-        """F.4: Toggle between table and pivot view."""
+    def sessions_toggle_view(new_value=None):
+        """F.4: Toggle between table and pivot view.
+        BUG-UI-SESSIONS-001: Accept new_value from VBtnToggle update event."""
+        if new_value:
+            state.sessions_view_mode = new_value
         if state.sessions_view_mode == "pivot":
             _compute_pivot()
 

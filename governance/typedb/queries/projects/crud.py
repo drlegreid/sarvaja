@@ -82,7 +82,9 @@ class ProjectCRUDOperations:
                 "match $p isa project, has project-id $id; select $id;"
             )
 
-            project_ids = sorted(r.get("id", "") for r in results)
+            # BUG-API-PROJECTS-001: Deduplicate project IDs (TypeDB can have
+            # multiple entities with same project-id from repeated inserts)
+            project_ids = sorted(set(r.get("id", "") for r in results))
             project_ids = project_ids[offset:offset + limit]
 
             projects = []

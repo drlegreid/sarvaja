@@ -23,20 +23,23 @@ def register_task_crud_tools(mcp) -> None:
     register_task_verify_tools(mcp)
 
     @mcp.tool()
-    def task_create(task_id: str, name: str, description: str = "", status: str = "OPEN",
-                    priority: str = "MEDIUM", phase: str = "P10",
+    def task_create(name: str, task_id: str = "", description: str = "", status: str = "OPEN",
+                    priority: str = "MEDIUM", task_type: str = "feature",
+                    phase: str = "P10",
                     session_id: Optional[str] = None) -> str:
         """
         Create a new task in TypeDB.
 
+        Per META-TAXON-01-v1: task_id is auto-generated from task_type if omitted.
         Per DATA-LINK-01-v1: Tasks can be linked to a session at creation time.
 
         Args:
-            task_id: Unique task identifier (e.g., "P12.1", "RD-001")
             name: Human-readable task name
+            task_id: Task ID (leave empty to auto-generate from task_type, e.g. BUG-001)
             description: Task description/details
             status: Task status per TASK-LIFE-01-v1 (OPEN, IN_PROGRESS, CLOSED)
             priority: Priority level (LOW, MEDIUM, HIGH, CRITICAL)
+            task_type: Task type (bug, feature, chore, research, gap, epic, test)
             phase: Phase identifier (e.g., "P10", "P11", "RD")
             session_id: Optional session ID to link this task to (per DATA-LINK-01-v1)
 
@@ -44,26 +47,24 @@ def register_task_crud_tools(mcp) -> None:
             JSON with created task details or error
         """
         try:
-            with typedb_client() as client:
-                body = f"[Priority: {priority}] {description}" if description else f"[Priority: {priority}]"
-                # Per DATA-LINK-01-v1: Pass session_id for auto-linking
-                linked_sessions = [session_id] if session_id else None
-                success = client.insert_task(
-                    task_id=task_id, name=name, status=status, phase=phase, body=body,
-                    linked_sessions=linked_sessions
-                )
-                if success:
-                    _monitor_task("mcp-task-create", task_id, "create", status=status,
-                                  priority=priority, session_id=session_id)
-                    result = {
-                        "task_id": task_id, "name": name, "status": status,
-                        "phase": phase, "priority": priority,
-                        "message": f"Task {task_id} created successfully"
-                    }
-                    if session_id:
-                        result["linked_sessions"] = [session_id]
-                    return format_mcp_result(result)
-                return format_mcp_result({"error": f"Failed to create task {task_id}"})
+            from governance.services.tasks import create_task as svc_create
+            linked_sessions = [session_id] if session_id else None
+            result = svc_create(
+                task_id=task_id or None,
+                description=name,
+                status=status,
+                phase=phase,
+                body=description or None,
+                priority=priority or "MEDIUM",
+                task_type=task_type or None,
+                linked_sessions=linked_sessions,
+                source="mcp",
+            )
+            actual_id = result.get("task_id") or task_id
+            _monitor_task("mcp-task-create", actual_id, "create", status=status,
+                          priority=priority, session_id=session_id)
+            result["message"] = f"Task {actual_id} created successfully"
+            return format_mcp_result(result)
         except Exception as e:
             return format_mcp_result({"error": f"task_create failed: {e}"})
 
@@ -90,25 +91,33 @@ def register_task_crud_tools(mcp) -> None:
 
     @mcp.tool()
     def task_update(task_id: str, status: Optional[str] = None, name: Optional[str] = None,
-                    phase: Optional[str] = None) -> str:
+                    phase: Optional[str] = None, priority: Optional[str] = None,
+                    task_type: Optional[str] = None) -> str:
         """
         Update an existing task in TypeDB.
 
+        Per BUG-TASK-TAXONOMY-001: priority and task_type are first-class fields.
+
         Args:
             task_id: Task identifier to update
-            status: New status (pending, in_progress, completed)
+            status: New status (OPEN, IN_PROGRESS, CLOSED)
             name: New task name
             phase: New phase identifier
+            priority: Priority level (LOW, MEDIUM, HIGH, CRITICAL)
+            task_type: Task type (bug, feature, chore, research)
 
         Returns:
             JSON with updated task details or error
         """
-        if not any([status, name, phase]):
+        if not any([status, name, phase, priority, task_type]):
             return format_mcp_result({"error": "No update fields provided"})
 
         try:
             with typedb_client() as client:
-                success = client.update_task(task_id=task_id, status=status, name=name, phase=phase)
+                success = client.update_task(
+                    task_id=task_id, status=status, name=name, phase=phase,
+                    priority=priority, task_type=task_type,
+                )
                 if success:
                     _monitor_task("mcp-task-update", task_id, "update", status=status, phase=phase)
                     task = client.get_task(task_id)
@@ -146,6 +155,33 @@ def register_task_crud_tools(mcp) -> None:
                 return format_mcp_result({"error": f"Failed to delete task {task_id}"})
         except Exception as e:
             return format_mcp_result({"error": f"task_delete failed: {e}"})
+
+    @mcp.tool()
+    def taxonomy_get() -> str:
+        """
+        Get task/rule taxonomy (types, priorities, statuses, prefixes).
+
+        Per META-TAXON-01-v1: Returns all enum values for validation and auto-ID.
+
+        Returns:
+            JSON with task_types, task_priorities, task_type_prefixes,
+            task_statuses, task_phases, rule_categories, rule_priorities, rule_statuses.
+        """
+        from agent.governance_ui.state.constants import (
+            TASK_TYPES, TASK_PRIORITIES, TASK_TYPE_PREFIX,
+            TASK_STATUSES, TASK_PHASES,
+            RULE_CATEGORIES, RULE_PRIORITIES, RULE_STATUSES,
+        )
+        return format_mcp_result({
+            "task_types": TASK_TYPES,
+            "task_priorities": TASK_PRIORITIES,
+            "task_type_prefixes": TASK_TYPE_PREFIX,
+            "task_statuses": TASK_STATUSES,
+            "task_phases": TASK_PHASES,
+            "rule_categories": RULE_CATEGORIES,
+            "rule_priorities": RULE_PRIORITIES,
+            "rule_statuses": RULE_STATUSES,
+        })
 
     @mcp.tool()
     def tasks_list(

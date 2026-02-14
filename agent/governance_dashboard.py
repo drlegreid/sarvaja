@@ -136,6 +136,8 @@ class GovernanceDashboard:
             load_tests_data = loaders['load_tests_data']
             load_sessions_list = loaders['load_sessions_list']
             load_metrics_data = loaders['load_metrics_data']
+            load_audit_trail = loaders['load_audit_trail']
+            load_rules = loaders.get('load_rules')
 
             # Auto-load data on view change (P11.1 fix / GAP-UI-035)
             @self._state.change("active_view")
@@ -163,6 +165,11 @@ class GovernanceDashboard:
                     load_tests_data()
                 elif active_view == 'metrics':
                     load_metrics_data()
+                elif active_view == 'audit':
+                    load_audit_trail()
+                elif active_view == 'rules':
+                    if load_rules:
+                        load_rules()
 
             # Build layout (extracted per DOC-SIZE-01-v1)
             build_dashboard_layout(self._server, NAVIGATION_ITEMS)

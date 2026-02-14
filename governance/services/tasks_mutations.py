@@ -21,6 +21,7 @@ __all__ = [
     "delete_task",
     "link_task_to_rule",
     "link_task_to_session",
+    "link_task_to_document",
 ]
 
 
@@ -45,9 +46,12 @@ def update_task(
     phase: Optional[str] = None,
     agent_id: Optional[str] = None,
     body: Optional[str] = None,
+    priority: Optional[str] = None,
+    task_type: Optional[str] = None,
     evidence: Optional[str] = None,
     linked_rules: Optional[List[str]] = None,
     linked_sessions: Optional[List[str]] = None,
+    linked_documents: Optional[List[str]] = None,
     gap_id: Optional[str] = None,
     source: str = "rest",
 ) -> Optional[Dict[str, Any]]:
@@ -61,14 +65,26 @@ def update_task(
     if client:
         try:
             task_obj = client.get_task(task_id)
-            if not task_obj:
+            if not task_obj and task_id not in _tasks_store:
                 return None
-            if status or evidence:
+            if task_obj and (status or evidence):
                 updated = client.update_task_status(
                     task_id, status or task_obj.status,
                     agent_id or task_obj.agent_id, evidence=evidence,
                 )
                 task_obj = updated or task_obj
+            # BUG-TASK-TAXONOMY-001: Persist priority/task_type/name/phase to TypeDB
+            if task_obj and (priority or task_type or phase or description):
+                try:
+                    client.update_task(
+                        task_id,
+                        priority=priority,
+                        task_type=task_type,
+                        name=description,
+                        phase=phase,
+                    )
+                except Exception as ue:
+                    logger.debug(f"TypeDB attribute update {task_id}: {ue}")
             # Persist linked_sessions to TypeDB via relations
             if linked_sessions:
                 for sid in linked_sessions:
@@ -76,6 +92,13 @@ def update_task(
                         client.link_task_to_session(task_id, sid)
                     except Exception as le:
                         logger.debug(f"TypeDB session link {task_id}->{sid}: {le}")
+            # Persist linked_documents to TypeDB via relations
+            if linked_documents:
+                for doc_path in linked_documents:
+                    try:
+                        client.link_task_to_document(task_id, doc_path)
+                    except Exception as le:
+                        logger.debug(f"TypeDB document link {task_id}->{doc_path}: {le}")
         except Exception as e:
             logger.warning(f"TypeDB task update failed, using fallback: {e}")
 
@@ -110,9 +133,10 @@ def update_task(
 
     updates = {
         "description": description, "phase": phase, "status": status,
+        "priority": priority, "task_type": task_type,
         "agent_id": agent_id, "body": body, "evidence": evidence,
         "linked_rules": linked_rules, "linked_sessions": linked_sessions,
-        "gap_id": gap_id,
+        "linked_documents": linked_documents, "gap_id": gap_id,
     }
     for field, val in updates.items():
         if val is not None:
@@ -186,4 +210,36 @@ def link_task_to_session(task_id: str, session_id: str, source: str = "rest") ->
         return bool(result)
     except Exception as e:
         logger.error(f"Failed to link task {task_id} to session {session_id}: {e}")
+        return False
+
+
+def link_task_to_document(task_id: str, document_path: str, source: str = "rest") -> bool:
+    """Link task to document via document-references-task relation."""
+    client = get_typedb_client()
+    if not client:
+        return False
+    try:
+        if not client.get_task(task_id):
+            return False
+        result = client.link_task_to_document(task_id, document_path)
+        if result:
+            _monitor("link_document", task_id, source=source, document_path=document_path)
+        return bool(result)
+    except Exception as e:
+        logger.error(f"Failed to link task {task_id} to document {document_path}: {e}")
+        return False
+
+
+def unlink_task_from_document(task_id: str, document_path: str, source: str = "rest") -> bool:
+    """Unlink document from task."""
+    client = get_typedb_client()
+    if not client:
+        return False
+    try:
+        result = client.unlink_task_from_document(task_id, document_path)
+        if result:
+            _monitor("unlink_document", task_id, source=source, document_path=document_path)
+        return bool(result)
+    except Exception as e:
+        logger.error(f"Failed to unlink document {document_path} from task {task_id}: {e}")
         return False
