@@ -2,13 +2,15 @@
 
 **Category:** `quality` | **Priority:** CRITICAL | **Status:** ACTIVE | **Type:** OPERATIONAL
 
-> **Tags:** `testing`, `e2e`, `data-flow`, `verification`, `ui`
+> **Tags:** `testing`, `e2e`, `data-flow`, `verification`, `ui`, `gherkin`
 
 ---
 
 ## Directive
 
 When modifying data flow (controller → API → UI), verification MUST include all three tiers. Unit tests with mocks prove interface contracts only — they do NOT prove the pipeline works end-to-end.
+
+**Tier 3 (Visual) MUST use the Gherkin-first workflow:** Author Gherkin specs → Generate EPIC tasks → Execute via Playwright. Passive screenshots without CRUD interaction are PROHIBITED.
 
 ---
 
@@ -18,9 +20,48 @@ When modifying data flow (controller → API → UI), verification MUST include 
 |------|------|-----|--------|
 | 1. Unit | Mock-based tests pass | `pytest tests/unit/ -q` | Code compiles, interfaces match |
 | 2. Integration | Real API returns correct data | `curl` against running API | Endpoint returns expected JSON |
-| 3. Visual | UI renders the data | Playwright screenshot | User actually sees the data |
+| 3. Visual CRUD | UI controls work end-to-end | Playwright CRUD per Gherkin specs | User can create, read, update, delete through UI |
 
 **ALL THREE TIERS ARE REQUIRED.** Skipping Tier 2 or 3 is a CRITICAL violation.
+
+---
+
+## Tier 3: Gherkin-First Workflow (MANDATORY)
+
+Tier 3 visual verification follows a strict 5-step process:
+
+```
+1. SPEC    → Author Gherkin scenarios in docs/backlog/specs/E2E-T3-*.gherkin.md
+             - Cover all CRUD operations (Create, Read, Update, Delete)
+             - Cover all filter/search controls
+             - Cover navigation and drill-down flows
+             - Include cleanup scenario for test data
+
+2. EPIC    → Generate EPIC task breakdown from specs
+             - Each feature → one EPIC task with scenario count
+             - Link to Gherkin spec file
+             - Include domain, priority, acceptance criteria
+
+3. EXECUTE → Run each scenario via Playwright MCP tools
+             - browser_navigate → browser_snapshot → browser_click/type/fill
+             - Assert state changes (list counts, row presence, field values)
+             - Use browser_wait_for for async Trame rendering
+
+4. EVIDENCE → Capture screenshot per scenario
+             - evidence/test-results/E2E-T3-{FEATURE}-{SCENARIO}.png
+             - Screenshot AFTER state change, not just page load
+
+5. CLOSE   → Mark EPIC task DONE, update TypeDB task status
+```
+
+### Anti-Pattern: Superficial Screenshots (PROHIBITED)
+
+| Don't | Do Instead |
+|-------|-----------|
+| Navigate to tab + take screenshot | Exercise CRUD controls: click Add, fill form, submit, verify result |
+| Screenshot proves page renders | CRUD interaction proves controls work end-to-end |
+| "Sessions list shows data" | "Created session via form, verified in list, edited, deleted, confirmed removal" |
+| Passive observation | Active interaction + state change verification |
 
 ---
 
@@ -43,8 +84,9 @@ This rule applies when ANY of these are modified:
 2. Container:      podman compose --profile dev build governance-dashboard-dev
                    podman compose --profile dev restart governance-dashboard-dev
 3. API smoke:      curl -s http://localhost:8082/api/{endpoint} | python3 -c "..."
-4. UI visual:      Playwright navigate → click → screenshot
-5. Evidence:       Save screenshots as e2e-{feature}.png
+4. Gherkin specs:  Author/update docs/backlog/specs/E2E-T3-*.gherkin.md
+5. UI CRUD:        Playwright → click controls → fill forms → assert state changes
+6. Evidence:       Save screenshots as evidence/test-results/E2E-T3-*.png
 ```
 
 ---
@@ -53,11 +95,12 @@ This rule applies when ANY of these are modified:
 
 | Don't | Do Instead |
 |-------|-----------|
-| "7617 unit tests pass, we're done" | Run integration + visual verification too |
+| "9731 unit tests pass, we're done" | Run integration + visual CRUD verification too |
 | Mock the function you just changed | Test the real function via real API call |
-| Trust that UI will render data because API returns it | Take a Playwright screenshot to confirm |
+| Trust that UI will render data because API returns it | Exercise UI controls via Playwright CRUD |
 | Skip container rebuild after code changes | Dashboard has NO hot-reload — MUST rebuild |
 | Declare victory on mocked test pass | The mock proves YOUR MOCK works, not the code |
+| Take passive screenshots as Tier 3 proof | CRUD interactions with state change assertions |
 
 ---
 
@@ -68,14 +111,15 @@ Six data pipelines were "fixed" with unit tests passing (7617/7617). But:
 - Evidence files never populated in UI (controller never called evidence endpoint)
 - File viewer had no markdown rendering (render_markdown existed but wasn't wired)
 
-All discoverable in <5 minutes with `curl` + Playwright. All invisible to unit tests.
+All discoverable in <5 minutes with `curl` + Playwright CRUD. All invisible to unit tests.
 
 ---
 
 ## Heuristic Check
 
-**H-TEST-E2E-001**: When files in `controllers/` or `routes/` are modified in a commit, verify that the session evidence includes at least one `curl` command output AND one Playwright screenshot.
+**H-TEST-E2E-001**: When files in `controllers/` or `routes/` are modified in a commit, verify that the session evidence includes at least one `curl` command output AND one Playwright CRUD interaction screenshot (showing state change, not just page load).
 
 ---
 
 *Per TEST-FIX-01-v1: Fix Validation Protocol*
+*Per TASK-EPIC-01-v1: EPIC-driven task comprehension*

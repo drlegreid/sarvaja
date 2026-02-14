@@ -93,10 +93,15 @@ python3 -m venv .venv
 |------|---------|--------|
 | 1. Unit | `.venv/bin/python3 -m pytest tests/unit/ -q` | Code compiles, interfaces match |
 | 2. Integration | `curl http://localhost:8082/api/{endpoint}` | Real API returns correct data |
-| 3. Visual | Playwright navigate + screenshot | User sees the data in UI |
+| 3. Visual CRUD | Playwright CRUD per Gherkin specs | User can create/read/update/delete via UI |
 
-**Unit tests with mocks are NOT sufficient for data flow changes.**
-Rebuild container → curl API → Playwright screenshot → then declare done.
+**Tier 3 Gherkin-First Workflow:**
+1. Author Gherkin specs → `docs/backlog/specs/E2E-T3-*.gherkin.md`
+2. Generate EPIC tasks → `docs/backlog/phases/EPIC-TESTING-E2E.md`
+3. Execute via Playwright MCP → click, fill, assert state changes
+4. Capture evidence → `evidence/test-results/E2E-T3-*.png`
+
+**Passive screenshots are NOT Tier 3.** CRUD interaction with state change verification is required.
 
 ## Task Management (GOV-MCP-FIRST-01-v1)
 
