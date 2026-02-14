@@ -27,6 +27,8 @@ Rules governing process, documentation, and agent collaboration.
 | **GOV-TRUST-02-v1** | Agent Trust Scoring | HIGH |
 | **GOV-RULE-02-v1** | Rule Compliance Verification | HIGH |
 | **GOV-RULE-03-v1** | Rule Deprecation Protocol | HIGH |
+| **GOV-MCP-FIRST-01-v1** | MCP-First Data Management | CRITICAL |
+| **TASK-EPIC-01-v1** | EPIC-Driven Task Comprehension | CRITICAL |
 
 ### Multi-Agent Rules (RULES-MULTI-AGENT.md)
 

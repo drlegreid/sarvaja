@@ -29,6 +29,7 @@ Rules governing testing, stability, maintenance, and task execution.
 | **RECOVER-AMNES-01-v1** | AMNESIA Protocol | CRITICAL |
 | **WORKFLOW-AUTO-02-v1** | Autonomous Task Continuation | CRITICAL |
 | **WORKFLOW-SEQ-01-v1** | Multi-Session Task Continuity | HIGH |
+| **COMM-PROGRESS-01-v1** | Communication & Progress Reporting | MANDATORY |
 
 ### Testing Rules (RULES-TESTING.md)
 
@@ -38,6 +39,7 @@ Rules governing testing, stability, maintenance, and task execution.
 | **TEST-COMP-01-v1** | Comprehensive Testing Protocol | HIGH |
 | **TEST-COMP-02-v1** | Test Before Commit | CRITICAL |
 | **TEST-FIX-01-v1** | Fix Validation Protocol | CRITICAL |
+| **TEST-E2E-01-v1** | Data Flow Verification Protocol | CRITICAL |
 
 ### Stability Rules (RULES-STABILITY.md)
 

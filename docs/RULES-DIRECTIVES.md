@@ -1,6 +1,6 @@
 # Rules Directives - Index
 
-**Status:** Active | **Updated:** 2026-02-11 | **Rules:** 59 (56 ACTIVE, 3 DRAFT/DISABLED)
+**Status:** Active | **Updated:** 2026-02-14 | **Rules:** 61 (58 ACTIVE, 3 DRAFT/DISABLED)
 
 > **Taxonomy:** [META-TAXON-01-v1](rules/leaf/META-TAXON-01-v1.md) | **Migration:** [RULE-MIGRATION.md](rules/RULE-MIGRATION.md)
 
@@ -90,6 +90,8 @@
 | WORKFLOW-SFDC-01-v1 | (new) | SFDC Development Lifecycle Workflow | HIGH | ACTIVE |
 | WORKFLOW-ORCH-01-v1 | (new) | Orchestrator Continuous Workflow | CRITICAL | ACTIVE |
 | TEST-SPEC-01-v1 | (new) | 3-Tier Validation Specifications | HIGH | ACTIVE |
+| COMM-PROGRESS-01-v1 | (new) | Communication & Progress Reporting | MANDATORY | ACTIVE |
+| TASK-EPIC-01-v1 | (new) | EPIC-Driven Task Comprehension | CRITICAL | ACTIVE |
 
 ---
 

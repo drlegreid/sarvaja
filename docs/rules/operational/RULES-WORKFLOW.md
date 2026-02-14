@@ -18,6 +18,7 @@ Rules governing task sequencing, autonomy, and context recovery.
 | **RECOVER-AMNES-01-v1** | AMNESIA Protocol | CRITICAL | ACTIVE | TECHNICAL | [View](../leaf/RECOVER-AMNES-01-v1.md) |
 | **WORKFLOW-AUTO-02-v1** | Autonomous Task Continuation | CRITICAL | ACTIVE | OPERATIONAL | [View](../leaf/WORKFLOW-AUTO-02-v1.md) |
 | **WORKFLOW-SEQ-01-v1** | Multi-Session Task Continuity | HIGH | ACTIVE | OPERATIONAL | [View](../leaf/WORKFLOW-SEQ-01-v1.md) |
+| **COMM-PROGRESS-01-v1** | Communication & Progress Reporting | MANDATORY | ACTIVE | OPERATIONAL | [View](../leaf/COMM-PROGRESS-01-v1.md) |
 
 ---
 
@@ -30,6 +31,7 @@ Rules governing task sequencing, autonomy, and context recovery.
 - **RECOVER-AMNES-01-v1**: Recover context autonomously using hierarchical sources
 - **WORKFLOW-AUTO-02-v1**: Continue until ALL tasks complete or explicit halt
 - **WORKFLOW-SEQ-01-v1**: Multi-session tasks MUST have continuity evidence
+- **COMM-PROGRESS-01-v1**: Batch stats MUST include impact + next steps; never implicitly stop
 
 ---
 

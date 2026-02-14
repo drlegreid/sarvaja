@@ -15,6 +15,7 @@ Rules governing testing strategies, quality gates, and validation protocols.
 | **TEST-COMP-01-v1** | Comprehensive Testing Protocol | HIGH | ACTIVE | TECHNICAL | [View](../leaf/TEST-COMP-01-v1.md) |
 | **TEST-COMP-02-v1** | Test Before Commit | CRITICAL | ACTIVE | OPERATIONAL | [View](../leaf/TEST-COMP-02-v1.md) |
 | **TEST-FIX-01-v1** | Fix Validation Protocol | CRITICAL | ACTIVE | OPERATIONAL | [View](../leaf/TEST-FIX-01-v1.md) |
+| **TEST-E2E-01-v1** | Data Flow Verification Protocol | CRITICAL | ACTIVE | OPERATIONAL | [View](../leaf/TEST-E2E-01-v1.md) |
 
 ---
 
@@ -24,6 +25,7 @@ Rules governing testing strategies, quality gates, and validation protocols.
 - **TEST-COMP-01-v1**: All features MUST have comprehensive test coverage
 - **TEST-COMP-02-v1**: Run tests BEFORE commit; no untested code in main
 - **TEST-FIX-01-v1**: Fixes MUST include verification test and evidence
+- **TEST-E2E-01-v1**: Data flow changes require 3-tier verification: Unit → Integration → Visual
 
 ---
 
