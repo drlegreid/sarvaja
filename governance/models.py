@@ -373,12 +373,14 @@ class ProjectCreate(BaseModel):
     project_id: Optional[str] = None  # Auto-generate if empty
     name: str = Field(..., min_length=1)
     path: Optional[str] = None
+    project_type: str = "generic"  # Workspace type from registry
 
 class ProjectResponse(BaseModel):
     """Response model for a project."""
     project_id: str
     name: str
     path: Optional[str] = None
+    project_type: str = "generic"
     plan_count: int = 0
     session_count: int = 0
 

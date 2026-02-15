@@ -4,19 +4,29 @@ Agent Registration Form Component.
 Per RULE-012: Single Responsibility - only agent registration UI.
 Per RULE-032: File size limit (<300 lines).
 Per PLAN-UI-OVERHAUL-001 Task 3.3: Agent Configuration & New Types.
+Per ASSESS-PLATFORM-GAPS-2026-02-15: Workspace-aware agent templates.
 """
 
 from trame.widgets import vuetify3 as v3, html
 
+from governance.services.workspace_registry import (
+    get_workspace_type,
+    list_workspace_types,
+)
 
-# Agent type templates with pre-configured rule bundles
-AGENT_TYPE_TEMPLATES = [
-    {"value": "RESEARCH", "title": "Research Agent", "rules": ["SESSION-EVID-01", "GOV-RULE-01"]},
-    {"value": "CODING", "title": "Coding Agent", "rules": ["TEST-GUARD-01", "TEST-COMP-02", "DOC-SIZE-01"]},
-    {"value": "CURATOR", "title": "Curator Agent", "rules": ["GOV-RULE-01", "GOV-BICAM-01", "DOC-LINK-01"]},
-    {"value": "SECURITY", "title": "Security Agent", "rules": ["SAFETY-HEALTH-01", "SAFETY-DESTR-01"]},
-    {"value": "CUSTOM", "title": "Custom Agent", "rules": []},
-]
+
+def _get_agent_templates_for_current_workspace(workspace_type_id: str = "governance"):
+    """Get agent templates for the given workspace type."""
+    wt = get_workspace_type(workspace_type_id)
+    if wt and wt.agent_templates:
+        return wt.agent_templates
+    # Fallback to governance defaults
+    wt = get_workspace_type("governance")
+    return wt.agent_templates if wt else []
+
+
+# Default templates (governance workspace) — used at module load
+AGENT_TYPE_TEMPLATES = _get_agent_templates_for_current_workspace("governance")
 
 
 def build_agent_registration_form() -> None:

@@ -153,25 +153,29 @@ def _load_projects(state, client, api_base_url) -> None:
     # Auto-discover CC projects and create missing ones
     try:
         from governance.services.cc_session_scanner import discover_cc_projects
+        from governance.services.workspace_registry import detect_project_type
         cc_projects = discover_cc_projects()
         existing_ids = {p.get("project_id") for p in existing}
 
         for cc_proj in cc_projects:
             if cc_proj["project_id"] not in existing_ids:
                 try:
+                    # Auto-detect project type from filesystem
+                    proj_type = detect_project_type(cc_proj.get("path", ""))
                     create_resp = client.post(
                         f"{api_base_url}/api/projects",
                         json={
                             "project_id": cc_proj["project_id"],
                             "name": cc_proj["name"],
                             "path": cc_proj["path"],
+                            "project_type": proj_type,
                         },
                     )
                     if create_resp.status_code in (200, 201):
                         created = create_resp.json()
                         created["session_count"] = cc_proj["session_count"]
                         existing.append(created)
-                        logger.info(f"Auto-created project: {cc_proj['project_id']}")
+                        logger.info(f"Auto-created project: {cc_proj['project_id']} (type={proj_type})")
                 except Exception as e:
                     logger.debug(f"Auto-create project failed for {cc_proj['project_id']}: {e}")
     except Exception as e:

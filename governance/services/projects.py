@@ -39,6 +39,7 @@ def create_project(
     project_id: Optional[str] = None,
     name: str = "",
     path: Optional[str] = None,
+    project_type: str = "generic",
 ) -> Optional[Dict[str, Any]]:
     """Create a new project."""
     if not project_id:
@@ -52,6 +53,7 @@ def create_project(
                 project_id=project_id, name=name, path=path,
             )
             if result:
+                result["project_type"] = project_type
                 return result
         except Exception as e:
             logger.warning(f"TypeDB insert project failed: {e}")
@@ -61,6 +63,7 @@ def create_project(
         "project_id": project_id,
         "name": name,
         "path": path,
+        "project_type": project_type,
         "plan_count": 0,
         "session_count": 0,
     }
