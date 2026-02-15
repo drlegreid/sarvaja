@@ -135,16 +135,49 @@ def _load_agents(state, client, api_base_url) -> None:
 
 
 def _load_projects(state, client, api_base_url) -> None:
-    """Load projects from REST API (GOV-PROJECT-01-v1)."""
+    """Load projects from REST API + auto-discover CC projects.
+
+    Per ASSESS-PLATFORM-GAPS-2026-02-15 Fix D: Scans CC directories and
+    auto-creates missing projects so they appear in the UI without manual backfill.
+    """
     try:
         resp = client.get(f"{api_base_url}/api/projects", params={"limit": 50})
         if resp.status_code == 200:
             data = resp.json()
-            state.projects = data.get("items", data) if isinstance(data, dict) else data
+            existing = data.get("items", data) if isinstance(data, dict) else data
         else:
-            state.projects = []
+            existing = []
     except Exception:
-        state.projects = []
+        existing = []
+
+    # Auto-discover CC projects and create missing ones
+    try:
+        from governance.services.cc_session_scanner import discover_cc_projects
+        cc_projects = discover_cc_projects()
+        existing_ids = {p.get("project_id") for p in existing}
+
+        for cc_proj in cc_projects:
+            if cc_proj["project_id"] not in existing_ids:
+                try:
+                    create_resp = client.post(
+                        f"{api_base_url}/api/projects",
+                        json={
+                            "project_id": cc_proj["project_id"],
+                            "name": cc_proj["name"],
+                            "path": cc_proj["path"],
+                        },
+                    )
+                    if create_resp.status_code in (200, 201):
+                        created = create_resp.json()
+                        created["session_count"] = cc_proj["session_count"]
+                        existing.append(created)
+                        logger.info(f"Auto-created project: {cc_proj['project_id']}")
+                except Exception as e:
+                    logger.debug(f"Auto-create project failed for {cc_proj['project_id']}: {e}")
+    except Exception as e:
+        logger.debug(f"CC project discovery failed: {e}")
+
+    state.projects = existing
 
 
 def _load_tests(state, client, api_base_url) -> None:

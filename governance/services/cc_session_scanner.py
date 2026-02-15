@@ -123,6 +123,44 @@ def build_session_id(meta: Dict[str, Any], project_slug: str) -> str:
     return f"SESSION-{date_str}-CC-{name}"
 
 
+def discover_cc_projects() -> list[Dict[str, Any]]:
+    """Discover projects from CC directory structure.
+
+    Scans ~/.claude/projects/ for subdirectories and derives project metadata.
+    Returns list of dicts with project_id, name, path, session_count.
+    """
+    if not DEFAULT_CC_DIR.is_dir():
+        return []
+
+    projects = []
+    for d in DEFAULT_CC_DIR.iterdir():
+        if not d.is_dir() or d.name.startswith("."):
+            continue
+
+        slug = derive_project_slug(d)
+        # Decode directory name back to filesystem path
+        decoded_path = "/" + d.name.lstrip("-").replace("-", "/")
+
+        # Count JSONL files as proxy for session count
+        jsonl_count = len(list(d.glob("*.jsonl")))
+        if jsonl_count == 0:
+            continue
+
+        # Build a human-readable name from slug
+        name_parts = slug.split("-")
+        name = " ".join(p.capitalize() for p in name_parts)
+
+        projects.append({
+            "project_id": f"PROJ-{slug.upper()}",
+            "name": name,
+            "path": decoded_path,
+            "cc_directory": str(d),
+            "session_count": jsonl_count,
+        })
+
+    return projects
+
+
 def find_jsonl_for_session(session: Union[Dict[str, Any], str]) -> Optional[Path]:
     """Find the JSONL file for a session by matching slug or UUID.
 
