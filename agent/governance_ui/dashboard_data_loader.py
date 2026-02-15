@@ -134,6 +134,30 @@ def _load_agents(state, client, api_base_url) -> None:
         state.agents = []
 
 
+def _auto_ingest_cc_sessions(cc_proj: dict) -> None:
+    """Auto-ingest CC sessions for a discovered project (idempotent).
+
+    Per ASSESS-PLATFORM-GAPS-2026-02-15 Fix F: Bridges CC discovery → governance
+    sessions so they appear on dashboard without manual backfill.
+    """
+    try:
+        from pathlib import Path
+        from governance.services.cc_session_ingestion import ingest_all
+        cc_dir = cc_proj.get("cc_directory")
+        if not cc_dir:
+            return
+        results = ingest_all(
+            directory=Path(cc_dir),
+            project_slug=cc_proj.get("project_id", "").replace("PROJ-", "").lower(),
+            project_id=cc_proj.get("project_id"),
+            dry_run=False,
+        )
+        if results:
+            logger.info(f"Auto-ingested {len(results)} CC sessions for {cc_proj['project_id']}")
+    except Exception as e:
+        logger.debug(f"Auto-ingest sessions failed for {cc_proj.get('project_id', '?')}: {e}")
+
+
 def _load_projects(state, client, api_base_url) -> None:
     """Load projects from REST API + auto-discover CC projects.
 
@@ -178,6 +202,9 @@ def _load_projects(state, client, api_base_url) -> None:
                         logger.info(f"Auto-created project: {cc_proj['project_id']} (type={proj_type})")
                 except Exception as e:
                     logger.debug(f"Auto-create project failed for {cc_proj['project_id']}: {e}")
+
+            # Auto-ingest CC sessions for this project (idempotent)
+            _auto_ingest_cc_sessions(cc_proj)
     except Exception as e:
         logger.debug(f"CC project discovery failed: {e}")
 
