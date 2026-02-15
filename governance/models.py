@@ -253,6 +253,15 @@ class FileContentResponse(BaseModel):
     exists: bool = True
     rendered_html: Optional[str] = None
 
+class AgentCreate(BaseModel):
+    """Request model for creating a new agent."""
+    agent_id: str
+    name: str
+    agent_type: str = "custom"
+    trust_score: float = 0.8
+    capabilities: List[str] = []
+    rules: List[str] = []
+
 class AgentResponse(BaseModel):
     """Response model for an agent."""
     agent_id: str

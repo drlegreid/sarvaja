@@ -11,12 +11,29 @@ from fastapi import APIRouter, HTTPException, Query
 from typing import Optional
 import logging
 
-from governance.models import AgentResponse, PaginatedAgentResponse, PaginationMeta
+from governance.models import AgentCreate, AgentResponse, PaginatedAgentResponse, PaginationMeta
 from governance.services import agents as agent_service
 from governance.services import sessions as session_service
 
 logger = logging.getLogger(__name__)
 router = APIRouter(tags=["Agents"])
+
+
+@router.post("/agents", response_model=AgentResponse, status_code=201)
+async def create_agent(body: AgentCreate):
+    """Create a new agent. Per ASSESS-PLATFORM-GAPS-2026-02-15 Fix B."""
+    result = agent_service.create_agent(
+        agent_id=body.agent_id,
+        name=body.name,
+        agent_type=body.agent_type,
+        trust_score=body.trust_score,
+        capabilities=body.capabilities,
+        rules=body.rules,
+        source="rest-api",
+    )
+    if result is None:
+        raise HTTPException(status_code=409, detail=f"Agent {body.agent_id} already exists")
+    return AgentResponse(**result)
 
 
 @router.get("/agents", response_model=PaginatedAgentResponse)

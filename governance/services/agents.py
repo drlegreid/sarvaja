@@ -23,6 +23,7 @@ from governance.services.agents_metrics import record_task_execution  # noqa: F4
 logger = logging.getLogger(__name__)
 
 __all__ = [
+    "create_agent",
     "list_agents",
     "get_agent",
     "delete_agent",
@@ -87,6 +88,56 @@ def _agent_to_dict(
         "recent_sessions": recent_sessions or [],
         "active_tasks": active_tasks or [],
     }
+
+
+def create_agent(
+    agent_id: str,
+    name: str,
+    agent_type: str = "custom",
+    trust_score: float = 0.8,
+    capabilities: Optional[List[str]] = None,
+    rules: Optional[List[str]] = None,
+    source: str = "rest",
+) -> Optional[Dict[str, Any]]:
+    """Create a new agent in TypeDB and in-memory store.
+
+    Returns:
+        Agent dict or None if creation failed.
+    """
+    # Check for duplicates
+    if agent_id in _agents_store:
+        return None
+
+    client = get_typedb_client()
+    if client:
+        try:
+            existing = client.get_agent(agent_id)
+            if existing:
+                return None
+            client.insert_agent(agent_id, name, agent_type, trust_score)
+        except Exception as e:
+            logger.warning(f"TypeDB agent create failed for {agent_id}: {e}")
+
+    # Always populate in-memory store
+    _agents_store[agent_id] = {
+        "agent_id": agent_id,
+        "name": name,
+        "agent_type": agent_type,
+        "status": "PAUSED",
+        "trust_score": trust_score,
+        "tasks_executed": 0,
+        "capabilities": capabilities or [],
+        "recent_sessions": [],
+        "active_tasks": [],
+    }
+
+    record_audit("CREATE", "agent", agent_id, metadata={
+        "source": source, "agent_type": agent_type, "trust_score": trust_score,
+        "capabilities": capabilities or [], "rules": rules or [],
+    })
+    _monitor("create", agent_id, source=source, agent_type=agent_type)
+
+    return get_agent(agent_id, source=source)
 
 
 def list_agents(

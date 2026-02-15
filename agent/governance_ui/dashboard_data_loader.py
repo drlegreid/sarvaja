@@ -42,6 +42,7 @@ def load_initial_data(
             _load_agents(state, client, api_base_url)
             _load_tasks(state, client, api_base_url, get_tasks, page_size)
             _load_projects(state, client, api_base_url)
+            _load_tests(state, client, api_base_url)
     except Exception:
         state.rules = get_rules()
         state.decisions = get_decisions()
@@ -144,6 +145,24 @@ def _load_projects(state, client, api_base_url) -> None:
             state.projects = []
     except Exception:
         state.projects = []
+
+
+def _load_tests(state, client, api_base_url) -> None:
+    """Load recent test runs and CVP status on startup."""
+    try:
+        resp = client.get(f"{api_base_url}/api/tests/results", params={"limit": 10})
+        if resp.status_code == 200:
+            data = resp.json()
+            state.tests_recent_runs = data.get("runs", [])
+        else:
+            state.tests_recent_runs = []
+
+        # Also load CVP pipeline status
+        cvp_resp = client.get(f"{api_base_url}/api/tests/cvp/status")
+        if cvp_resp.status_code == 200:
+            state.tests_cvp_status = cvp_resp.json()
+    except Exception:
+        state.tests_recent_runs = []
 
 
 def _load_tasks(state, client, api_base_url, get_tasks, page_size) -> None:
