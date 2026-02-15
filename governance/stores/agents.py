@@ -159,13 +159,15 @@ def _build_agents_store() -> Dict[str, Dict[str, Any]]:
         agent_metrics = metrics.get(agent_id, {})
         tasks_executed = agent_metrics.get("tasks_executed", 0)
         last_active = agent_metrics.get("last_active", None)
+        # Per Fix G: Restore persisted status (survives restarts)
+        persisted_status = agent_metrics.get("status")
         wf = workflow_configs.get(agent_id, {})
 
         agents[agent_id] = {
             "agent_id": agent_id,
             "name": config["name"],
             "agent_type": config["agent_type"],
-            "status": config.get("default_status", "STOPPED"),
+            "status": persisted_status or config.get("default_status", "STOPPED"),
             "tasks_executed": tasks_executed,
             "trust_score": _calculate_trust_score(agent_id, tasks_executed, config["base_trust"]),
             "last_active": last_active,

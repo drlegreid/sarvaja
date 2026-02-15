@@ -12,7 +12,7 @@ from typing import Optional, Dict, Any, List, Tuple
 from governance.stores import (
     get_typedb_client,
     _agents_store, _AGENT_BASE_CONFIG,
-    _load_agent_metrics,
+    _load_agent_metrics, _save_agent_metrics,
     _calculate_trust_score,
 )
 from governance.stores.audit import record_audit
@@ -31,6 +31,22 @@ __all__ = [
     # Re-export from agents_metrics
     "record_task_execution",
 ]
+
+
+def _persist_agent_status(agent_id: str, status: str) -> None:
+    """Persist agent status to metrics file (survives container restarts).
+
+    Per ASSESS-PLATFORM-GAPS-2026-02-15 Fix G: Agent status was in-memory only.
+    Now persists to the same agent_metrics.json file used for task counts.
+    """
+    try:
+        metrics = _load_agent_metrics()
+        if agent_id not in metrics:
+            metrics[agent_id] = {}
+        metrics[agent_id]["status"] = status
+        _save_agent_metrics(metrics)
+    except Exception as e:
+        logger.warning(f"Failed to persist agent status for {agent_id}: {e}")
 
 
 def _monitor(action: str, agent_id: str, source: str = "service", **extra):
@@ -327,6 +343,9 @@ def toggle_agent_status(agent_id: str, source: str = "rest") -> Optional[Dict[st
     current_status = _agents_store[agent_id].get("status", "PAUSED")
     new_status = "ACTIVE" if current_status == "PAUSED" else "PAUSED"
     _agents_store[agent_id]["status"] = new_status
+
+    # Per Fix G: Persist status to metrics file (survives restarts)
+    _persist_agent_status(agent_id, new_status)
 
     record_audit(
         "UPDATE", "agent", agent_id,
