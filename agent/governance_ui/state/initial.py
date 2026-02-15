@@ -337,6 +337,7 @@ def get_initial_state() -> Dict[str, Any]:
         'tests_current_run': None,
         'tests_recent_runs': [],
         'tests_cvp_status': None,
+        'tests_category_filter': '',  # '' = all, else filter by category
         'robot_summary': None,
 
         # Reactive Loader States (GAP-UI-047)

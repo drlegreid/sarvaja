@@ -100,7 +100,7 @@ def build_current_run_panel() -> None:
 
 
 def build_recent_runs_panel() -> None:
-    """Build recent test runs panel."""
+    """Build recent test runs panel with category filter chips."""
     with v3.VRow(classes="mt-4"):
         with v3.VCol(cols=12):
             with v3.VCard(
@@ -108,14 +108,42 @@ def build_recent_runs_panel() -> None:
                 __properties=["data-testid"],
                 **{"data-testid": "tests-recent-runs"},
             ):
-                v3.VCardTitle("Recent Test Runs")
+                with v3.VCardTitle(classes="d-flex align-center flex-wrap"):
+                    html.Span("Recent Test Runs")
+                    v3.VSpacer()
+                    # Category filter chips
+                    with v3.VChipGroup(
+                        v_model=("tests_category_filter", ""),
+                        selected_class="text-primary",
+                        mandatory=False,
+                    ):
+                        for chip_val, chip_label in [
+                            ("", "All"),
+                            ("unit", "Unit"),
+                            ("governance", "Gov"),
+                            ("regression", "Reg"),
+                            ("heuristic", "Heur"),
+                            ("api", "API"),
+                        ]:
+                            v3.VChip(
+                                chip_label,
+                                value=chip_val,
+                                size="small",
+                                variant="outlined",
+                                filter=True,
+                            )
                 with v3.VCardText():
                     with v3.VList(
                         v_if="tests_recent_runs && tests_recent_runs.length > 0",
                         dense=True,
                     ):
                         with v3.VListItem(
-                            v_for="run in tests_recent_runs",
+                            v_for=(
+                                "run in tests_recent_runs.filter("
+                                "r => !tests_category_filter || "
+                                "(r.category || '').toLowerCase() === tests_category_filter"
+                                ")"
+                            ),
                             key="run.run_id",
                             click="trigger('view_test_run', run.run_id)",
                         ):
@@ -132,17 +160,25 @@ def build_recent_runs_panel() -> None:
                                 )
                             v3.VListItemTitle("{{ run.run_id }}")
                             v3.VListItemSubtitle(
-                                "{{ run.passed || 0 }} passed, "
-                                "{{ run.failed || 0 }} failed"
+                                "{{ run.passed || 0 }}/{{ (run.passed || 0) + (run.failed || 0) }}"
+                                " passed | {{ (run.duration_seconds || 0).toFixed(1) }}s"
                             )
                             with html.Template(v_slot_append=True):
-                                v3.VChip(
-                                    v_text="run.status",
-                                    size="x-small",
-                                    color=(
-                                        "run.status === 'completed' ? 'success' : 'error'"
-                                    ),
-                                )
+                                with html.Div(classes="d-flex ga-1 align-center"):
+                                    v3.VChip(
+                                        v_if="run.category",
+                                        v_text="run.category",
+                                        size="x-small",
+                                        variant="outlined",
+                                        color="info",
+                                    )
+                                    v3.VChip(
+                                        v_text="run.status",
+                                        size="x-small",
+                                        color=(
+                                            "run.status === 'completed' ? 'success' : 'error'"
+                                        ),
+                                    )
                     v3.VAlert(
                         v_if="!tests_recent_runs || tests_recent_runs.length === 0",
                         text="No test runs yet. Select a category above to run tests.",
