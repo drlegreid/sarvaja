@@ -15,6 +15,7 @@ from ..data_access import (
     build_trust_leaderboard,
 )
 from ..trace_bar import clear_traces
+from ..trace_bar.transforms import add_error_trace
 from ..utils import (
     extract_items_from_response, format_timestamps_in_list,
     compute_session_duration,
@@ -43,8 +44,8 @@ def register_common_handlers(ctrl: Any, state: Any) -> None:
                     if rules_response.status_code == 200:
                         data = rules_response.json()
                         state.rules = data.get("items", data) if isinstance(data, dict) else data
-                except Exception:
-                    pass
+                except Exception as e:
+                    add_error_trace(state, f"Refresh rules failed: {e}", "/api/rules")
 
                 # Load decisions
                 try:
@@ -52,8 +53,8 @@ def register_common_handlers(ctrl: Any, state: Any) -> None:
                     if decisions_response.status_code == 200:
                         data = decisions_response.json()
                         state.decisions = data.get("items", data) if isinstance(data, dict) else data
-                except Exception:
-                    pass
+                except Exception as e:
+                    add_error_trace(state, f"Refresh decisions failed: {e}", "/api/decisions")
 
                 # Load tasks with pagination
                 try:
@@ -74,8 +75,8 @@ def register_common_handlers(ctrl: Any, state: Any) -> None:
                                 "returned": min(len(all_items), page_size),
                             }
                     state.tasks_page = 1
-                except Exception:
-                    pass
+                except Exception as e:
+                    add_error_trace(state, f"Refresh tasks failed: {e}", "/api/tasks")
 
                 # Load sessions (per GAP-EXPLOR-API-001: now returns paginated response)
                 try:
@@ -98,8 +99,8 @@ def register_common_handlers(ctrl: Any, state: Any) -> None:
                                     item["source_type"] = "API"
                         state.sessions = format_timestamps_in_list(
                             items, ["start_time", "end_time"])
-                except Exception:
-                    pass
+                except Exception as e:
+                    add_error_trace(state, f"Refresh sessions failed: {e}", "/api/sessions")
 
                 # Load agents
                 try:
@@ -107,14 +108,16 @@ def register_common_handlers(ctrl: Any, state: Any) -> None:
                     if agents_response.status_code == 200:
                         data = agents_response.json()
                         state.agents = data.get("items", data) if isinstance(data, dict) else data
-                except Exception:
-                    pass
+                except Exception as e:
+                    add_error_trace(state, f"Refresh agents failed: {e}", "/api/agents")
 
             state.is_loading = False
             state.status_message = "Data refreshed from API"
         except Exception as e:
             state.is_loading = False
-            state.status_message = f"Using cached data (API unavailable: {str(e)})"
+            # BUG-UI-SILENT-FAIL-001: Use error_message not status_message for failures
+            state.has_error = True
+            state.error_message = f"API unavailable: {str(e)}"
 
     @ctrl.set("toggle_graph_view")
     def toggle_graph_view() -> None:
@@ -133,20 +136,18 @@ def register_common_handlers(ctrl: Any, state: Any) -> None:
                 else:
                     state.agents = []
         except Exception as e:
-            print(f"Error loading agents: {e}")
+            add_error_trace(state, f"Load trust agents failed: {e}", "/api/agents")
             state.agents = []
 
         state.trust_leaderboard = build_trust_leaderboard(state.agents)
 
         try:
             state.proposals = get_proposals()
-        except Exception:
+        except Exception as e:
+            add_error_trace(state, f"Load proposals failed: {e}", "get_proposals()")
             state.proposals = []
 
-        try:
-            state.escalated_proposals = []
-        except Exception:
-            state.escalated_proposals = []
+        state.escalated_proposals = []
 
 
 def register_view_handlers(ctrl: Any, state: Any, load_view_data_fn: Any) -> None:

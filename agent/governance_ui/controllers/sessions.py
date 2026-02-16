@@ -6,17 +6,20 @@ Controller functions for session CRUD operations.
 Per RULE-012: DSP Semantic Code Structure
 Per GAP-FILE-005: Extracted from governance_dashboard.py
 Per GAP-UI-034: Session CRUD operations
-Per DOC-SIZE-01-v1: Pagination in sessions_pagination.py.
+Per DOC-SIZE-01-v1: Pagination in sessions_pagination.py,
+    detail loaders in sessions_detail_loaders.py.
 
 Created: 2024-12-28
-Updated: 2026-01-02 (GAP-UI-034)
+Updated: 2026-02-15 (DOC-SIZE-01-v1 split)
 """
 
 import httpx
 from typing import Any
 
 from governance.middleware.dashboard_log import log_action
+from agent.governance_ui.trace_bar.transforms import add_error_trace
 from .sessions_pagination import register_sessions_pagination  # noqa: F401
+from .sessions_detail_loaders import register_session_detail_loaders
 
 
 def register_sessions_controllers(state: Any, ctrl: Any, api_base_url: str) -> None:
@@ -25,10 +28,22 @@ def register_sessions_controllers(state: Any, ctrl: Any, api_base_url: str) -> N
     # Register pagination + filters; get load_sessions_page reference
     load_sessions_page = register_sessions_pagination(state, ctrl, api_base_url)
 
+    # Register detail data loaders
+    loaders = register_session_detail_loaders(state, api_base_url)
+
     @ctrl.trigger("select_session")
     def select_session(session_id):
         """Handle session selection for detail view."""
         log_action("sessions", "select", session_id=session_id)
+        # BUG-UI-STALE-DETAIL-003: Clear prior session detail state
+        state.session_tool_calls = []
+        state.session_thinking_items = []
+        state.session_timeline = []
+        state.session_tasks = []
+        state.session_evidence_html = ''
+        state.evidence_search = ''
+        state.session_transcript = []
+        state.session_transcript_page = 1
         for session in state.sessions:
             if session.get('session_id') == session_id or session.get('id') == session_id:
                 state.selected_session = session
@@ -39,110 +54,128 @@ def register_sessions_controllers(state: Any, ctrl: Any, api_base_url: str) -> N
             resp = httpx.get(f"{api_base_url}/api/sessions/{session_id}", timeout=10.0)
             if resp.status_code == 200:
                 session_data = resp.json()
-                # BUG-SESSION-DURATION-001: Compute duration for detail view
                 from agent.governance_ui.utils import compute_session_duration
                 session_data["duration"] = compute_session_duration(
                     session_data.get("start_time", ""),
                     session_data.get("end_time", ""),
                 )
+                # BUG-UI-SESSIONS-DETAIL-001: Derive source_type for detail view
+                if not session_data.get("source_type"):
+                    sid = session_data.get("session_id", "")
+                    if session_data.get("cc_session_uuid") or "-CC-" in sid:
+                        session_data["source_type"] = "CC"
+                    elif "-CHAT-" in sid or "-MCP-AUTO-" in sid:
+                        session_data["source_type"] = "Chat"
+                    else:
+                        session_data["source_type"] = "API"
                 state.selected_session = session_data
-        except Exception:
-            pass
-
-        load_session_evidence(session_id)
-        load_session_tasks(session_id)
-        load_session_tool_calls(session_id)
-        load_session_thinking_items(session_id)
-
-    def load_session_tool_calls(session_id):
-        """Load tool calls via detail.py zoom endpoint (JSONL-backed)."""
-        if not session_id:
-            return
-        try:
-            state.session_tool_calls = []
-            with httpx.Client(timeout=10.0) as client:
-                response = client.get(
-                    f"{api_base_url}/api/sessions/{session_id}/tools",
-                    params={"per_page": 100},
-                )
-                if response.status_code == 200:
-                    data = response.json()
-                    calls = data.get('tool_calls', [])
-                    # Transform: detail.py returns 'name', UI expects 'tool_name'
-                    for call in calls:
-                        if 'name' in call and 'tool_name' not in call:
-                            call['tool_name'] = call['name']
-                    state.session_tool_calls = calls
-        except Exception:
-            state.session_tool_calls = []
-
-    def load_session_thinking_items(session_id):
-        """Load thinking items via detail.py zoom endpoint (JSONL-backed)."""
-        if not session_id:
-            return
-        try:
-            state.session_thinking_items = []
-            with httpx.Client(timeout=10.0) as client:
-                response = client.get(
-                    f"{api_base_url}/api/sessions/{session_id}/thoughts",
-                    params={"per_page": 100},
-                )
-                if response.status_code == 200:
-                    data = response.json()
-                    items = data.get('thinking_blocks', [])
-                    # Transform: detail.py returns 'chars', UI expects 'char_count'
-                    for item in items:
-                        if 'chars' in item and 'char_count' not in item:
-                            item['char_count'] = item['chars']
-                    state.session_thinking_items = items
-        except Exception:
-            state.session_thinking_items = []
-
-    def load_session_evidence(session_id):
-        """Load evidence files for a session and merge into selected_session."""
-        if not session_id:
-            return
-        try:
-            with httpx.Client(timeout=10.0) as client:
-                response = client.get(f"{api_base_url}/api/sessions/{session_id}/evidence")
-                if response.status_code == 200:
-                    data = response.json()
-                    files = data.get('evidence_files', [])
-                    if state.selected_session and files:
-                        session = dict(state.selected_session)
-                        session['evidence_files'] = files
-                        state.selected_session = session
-        except Exception:
-            pass
-
-    def load_session_tasks(session_id):
-        """Load tasks linked to a session."""
-        if not session_id:
-            return
-        try:
-            state.session_tasks_loading = True
-            state.session_tasks = []
-            with httpx.Client(timeout=10.0) as client:
-                response = client.get(f"{api_base_url}/api/sessions/{session_id}/tasks")
-                if response.status_code == 200:
-                    data = response.json()
-                    state.session_tasks = data.get('tasks', [])
-                else:
-                    state.session_tasks = []
-            state.session_tasks_loading = False
+                state.show_session_detail = True
         except Exception as e:
-            state.session_tasks_loading = False
-            state.session_tasks = []
-            state.error_message = f"Failed to load session tasks: {str(e)}"
+            add_error_trace(state, f"Load session detail failed: {e}", f"/api/sessions/{session_id}")
 
-    @ctrl.set("close_session_detail")
+        loaders["load_evidence"](session_id)
+        loaders["load_tasks"](session_id)
+        loaders["load_tool_calls"](session_id)
+        loaders["load_thinking_items"](session_id)
+        loaders["build_timeline"]()
+        loaders["load_evidence_rendered"](session_id)
+        loaders["load_transcript"](session_id)
+
+    @ctrl.trigger("navigate_to_rule_from_session")
+    def navigate_to_rule_from_session(rule_id):
+        """Navigate to a linked rule from session detail view."""
+        if not rule_id:
+            return
+        session_id = None
+        if state.selected_session:
+            session_id = state.selected_session.get('session_id') or state.selected_session.get('id')
+        state.nav_source_view = 'sessions'
+        state.nav_source_id = session_id
+        state.nav_source_label = f'Session {session_id}' if session_id else 'Sessions'
+        state.active_view = 'rules'
+        state.show_session_detail = False
+        for rule in state.rules:
+            if rule.get('rule_id') == rule_id:
+                state.selected_rule = rule
+                state.show_rule_detail = True
+                break
+
+    @ctrl.trigger("navigate_to_decision_from_session")
+    def navigate_to_decision_from_session(decision_id):
+        """Navigate to a linked decision from session detail view."""
+        if not decision_id:
+            return
+        session_id = None
+        if state.selected_session:
+            session_id = state.selected_session.get('session_id') or state.selected_session.get('id')
+        state.nav_source_view = 'sessions'
+        state.nav_source_id = session_id
+        state.nav_source_label = f'Session {session_id}' if session_id else 'Sessions'
+        state.active_view = 'decisions'
+        state.show_session_detail = False
+        for dec in state.decisions:
+            if dec.get('decision_id') == decision_id or dec.get('id') == decision_id:
+                state.selected_decision = dec
+                state.show_decision_detail = True
+                break
+
+    @ctrl.trigger("close_session_detail")
     def close_session_detail():
-        """Close session detail view."""
+        """Close session detail view and reset detail state."""
         state.show_session_detail = False
         state.selected_session = None
+        state.session_tool_calls = []
+        state.session_thinking_items = []
+        state.session_timeline = []
+        state.session_tasks = []
+        state.session_evidence_html = ''
+        state.evidence_search = ''
+        state.session_transcript = []
+        state.session_transcript_page = 1
+        state.session_transcript_total = 0
+        state.session_transcript_has_more = False
+        state.session_transcript_expanded_entry = None
 
-    @ctrl.set("show_session_form")
-    def show_session_form(mode="create"):
+    @ctrl.trigger("load_transcript_page")
+    def load_transcript_page(page):
+        """Load a specific page of the transcript."""
+        session_id = None
+        if state.selected_session:
+            session_id = state.selected_session.get('session_id') or state.selected_session.get('id')
+        if session_id:
+            loaders["load_transcript"](session_id, page=page)
+
+    @ctrl.trigger("expand_transcript_entry")
+    def expand_transcript_entry(entry_index):
+        """Expand a truncated transcript entry to show full content."""
+        session_id = None
+        if state.selected_session:
+            session_id = state.selected_session.get('session_id') or state.selected_session.get('id')
+        if session_id:
+            loaders["load_transcript_entry"](session_id, entry_index)
+
+    @ctrl.trigger("toggle_transcript_thinking")
+    def toggle_transcript_thinking():
+        """Toggle thinking inclusion and reload transcript."""
+        state.session_transcript_include_thinking = not state.session_transcript_include_thinking
+        session_id = None
+        if state.selected_session:
+            session_id = state.selected_session.get('session_id') or state.selected_session.get('id')
+        if session_id:
+            loaders["load_transcript"](session_id)
+
+    @ctrl.trigger("toggle_transcript_user")
+    def toggle_transcript_user():
+        """Toggle user prompts inclusion and reload transcript."""
+        state.session_transcript_include_user = not state.session_transcript_include_user
+        session_id = None
+        if state.selected_session:
+            session_id = state.selected_session.get('session_id') or state.selected_session.get('id')
+        if session_id:
+            loaders["load_transcript"](session_id)
+
+    @ctrl.trigger("open_session_form")
+    def open_session_form(mode="create"):
         """Show session create/edit form."""
         state.session_form_mode = mode
         if mode == "edit" and state.selected_session:
@@ -157,7 +190,7 @@ def register_sessions_controllers(state: Any, ctrl: Any, api_base_url: str) -> N
             state.form_session_agent_id = ''
         state.show_session_form = True
 
-    @ctrl.set("close_session_form")
+    @ctrl.trigger("close_session_form")
     def close_session_form():
         """Close session form."""
         state.show_session_form = False
@@ -165,19 +198,35 @@ def register_sessions_controllers(state: Any, ctrl: Any, api_base_url: str) -> N
     @ctrl.trigger("submit_session_form")
     def submit_session_form():
         """Submit session form (create/update) via REST API."""
+        # BUG-UI-DOUBLECLICK-001: Prevent double-click race condition
+        if state.is_loading:
+            return
+        state.has_error = False
         log_action("sessions", state.session_form_mode, session_id=state.form_session_id)
+        # BUG-UI-VALIDATION-001: Validate on create
+        if state.session_form_mode == "create":
+            sid = (state.form_session_id or "").strip()
+            if not sid:
+                state.has_error = True
+                state.error_message = "Session ID is required"
+                return
         try:
             state.is_loading = True
             session_data = {
-                "session_id": state.form_session_id or None,
-                "description": state.form_session_description,
-                "agent_id": state.form_session_agent_id or None
+                "session_id": (state.form_session_id or "").strip() or None,
+                "description": (state.form_session_description or "").strip(),
+                "agent_id": (state.form_session_agent_id or "").strip() or None
             }
 
             with httpx.Client(timeout=10.0) as client:
                 if state.session_form_mode == "create":
                     response = client.post(f"{api_base_url}/api/sessions", json=session_data)
                 else:
+                    # BUG-UI-SESSION-GUARD-001: Guard against None selected_session
+                    if not state.selected_session:
+                        state.has_error = True
+                        state.error_message = "No session selected for editing"
+                        return
                     session_id = state.selected_session.get('session_id') or state.selected_session.get('id')
                     update_data = {
                         "description": state.form_session_description,
@@ -189,27 +238,33 @@ def register_sessions_controllers(state: Any, ctrl: Any, api_base_url: str) -> N
                 if response.status_code in (200, 201):
                     state.status_message = f"Session {'created' if state.session_form_mode == 'create' else 'updated'} successfully"
                     load_sessions_page()
+                    # BUG-UI-FORMCLOSE-001: Only close form on success
+                    state.show_session_form = False
+                    state.show_session_detail = False
+                    state.selected_session = None
                 else:
                     state.has_error = True
                     state.error_message = f"API Error: {response.status_code} - {response.text}"
 
-            state.show_session_form = False
-            state.show_session_detail = False
-            state.selected_session = None
             state.is_loading = False
         except Exception as e:
+            add_error_trace(state, f"Save session failed: {e}", "/api/sessions")
             state.is_loading = False
             state.has_error = True
             state.error_message = f"Failed to save session: {str(e)}"
-            state.show_session_form = False
-            state.status_message = f"Session saved (offline mode - API unavailable: {str(e)})"
 
     @ctrl.trigger("delete_session")
     def delete_session():
         """Delete selected session via REST API."""
         if not state.selected_session:
             return
+        # BUG-UI-DOUBLECLICK-001: Prevent double-click race condition
+        if state.is_loading:
+            return
+        state.has_error = False
         log_action("sessions", "delete", session_id=state.selected_session.get("session_id"))
+        # BUG-UI-UNDEF-001: Pre-initialize to avoid NameError in except handler
+        session_id = state.selected_session.get('session_id', 'unknown')
         try:
             state.is_loading = True
             session_id = state.selected_session.get('session_id') or state.selected_session.get('id')
@@ -228,10 +283,10 @@ def register_sessions_controllers(state: Any, ctrl: Any, api_base_url: str) -> N
 
             state.is_loading = False
         except Exception as e:
+            add_error_trace(state, f"Delete session failed: {e}", f"/api/sessions/{session_id}")
             state.is_loading = False
             state.has_error = True
             state.error_message = f"Failed to delete session: {str(e)}"
-            state.status_message = f"Delete failed (offline mode): {str(e)}"
 
     @ctrl.trigger("attach_evidence")
     def attach_evidence(session_id: str, evidence_path: str):
@@ -252,11 +307,15 @@ def register_sessions_controllers(state: Any, ctrl: Any, api_base_url: str) -> N
                     state.show_evidence_attach = False
                     state.evidence_attach_path = ""
                     load_sessions_page()
+                    # Refresh detail view evidence (BUG-EVIDENCE-STALE-001)
+                    loaders["load_evidence"](session_id)
+                    loaders["load_evidence_rendered"](session_id)
                 else:
                     state.has_error = True
                     state.error_message = f"Failed to attach evidence: {response.status_code}"
             state.evidence_attach_loading = False
         except Exception as e:
+            add_error_trace(state, f"Attach evidence failed: {e}", f"/api/sessions/{session_id}/evidence")
             state.evidence_attach_loading = False
             state.has_error = True
             state.error_message = f"Failed to attach evidence: {str(e)}"

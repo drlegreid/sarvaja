@@ -11,6 +11,7 @@ from unittest.mock import MagicMock, patch
 def _make_state_ctrl(api_base="http://localhost:8082"):
     """Build mock state/ctrl and register controllers."""
     state = MagicMock()
+    state.is_loading = False
     ctrl = MagicMock()
     triggers = {}
     setters = {}
@@ -37,20 +38,20 @@ def _make_state_ctrl(api_base="http://localhost:8082"):
 
 class TestRegisterDecisionsControllers:
     def test_registers_select_decision(self):
-        _, _, _, setters = _make_state_ctrl()
-        assert "select_decision" in setters
+        _, _, triggers, _ = _make_state_ctrl()
+        assert "select_decision" in triggers
 
     def test_registers_close_detail(self):
-        _, _, _, setters = _make_state_ctrl()
-        assert "close_decision_detail" in setters
+        _, _, triggers, _ = _make_state_ctrl()
+        assert "close_decision_detail" in triggers
 
-    def test_registers_show_form(self):
-        _, _, _, setters = _make_state_ctrl()
-        assert "show_decision_form" in setters
+    def test_registers_open_form(self):
+        _, _, triggers, _ = _make_state_ctrl()
+        assert "open_decision_form" in triggers
 
     def test_registers_close_form(self):
-        _, _, _, setters = _make_state_ctrl()
-        assert "close_decision_form" in setters
+        _, _, triggers, _ = _make_state_ctrl()
+        assert "close_decision_form" in triggers
 
     def test_registers_submit_trigger(self):
         _, _, triggers, _ = _make_state_ctrl()
@@ -63,48 +64,48 @@ class TestRegisterDecisionsControllers:
 
 class TestSelectDecision:
     def test_select_by_decision_id(self):
-        state, _, _, setters = _make_state_ctrl()
+        state, _, triggers, _ = _make_state_ctrl()
         state.decisions = [
             {"decision_id": "DEC-001", "name": "Test"},
         ]
-        setters["select_decision"]("DEC-001")
+        triggers["select_decision"]("DEC-001")
         assert state.selected_decision == {"decision_id": "DEC-001", "name": "Test"}
         assert state.show_decision_detail is True
 
     def test_select_by_id_field(self):
-        state, _, _, setters = _make_state_ctrl()
+        state, _, triggers, _ = _make_state_ctrl()
         state.decisions = [{"id": "DEC-002", "name": "Alt"}]
-        setters["select_decision"]("DEC-002")
+        triggers["select_decision"]("DEC-002")
         assert state.selected_decision["name"] == "Alt"
 
     def test_no_match_does_nothing(self):
-        state, _, _, setters = _make_state_ctrl()
+        state, _, triggers, _ = _make_state_ctrl()
         state.decisions = [{"decision_id": "DEC-001"}]
         state.selected_decision = None
         state.show_decision_detail = False
-        setters["select_decision"]("NONEXIST")
+        triggers["select_decision"]("NONEXIST")
         # show_decision_detail should not be set to True (still mock)
 
 
 class TestCloseDecisionDetail:
     def test_closes_detail(self):
-        state, _, _, setters = _make_state_ctrl()
-        setters["close_decision_detail"]()
+        state, _, triggers, _ = _make_state_ctrl()
+        triggers["close_decision_detail"]()
         assert state.show_decision_detail is False
         assert state.selected_decision is None
 
 
-class TestShowDecisionForm:
+class TestOpenDecisionForm:
     def test_create_mode_clears_fields(self):
-        state, _, _, setters = _make_state_ctrl()
-        setters["show_decision_form"]("create")
+        state, _, triggers, _ = _make_state_ctrl()
+        triggers["open_decision_form"]("create")
         assert state.form_decision_id == ""
         assert state.form_decision_name == ""
         assert state.form_decision_status == "PENDING"
         assert state.show_decision_form is True
 
     def test_edit_mode_populates_fields(self):
-        state, _, _, setters = _make_state_ctrl()
+        state, _, triggers, _ = _make_state_ctrl()
         state.selected_decision = {
             "decision_id": "DEC-001",
             "name": "Test Decision",
@@ -112,7 +113,7 @@ class TestShowDecisionForm:
             "rationale": "Because",
             "status": "APPROVED",
         }
-        setters["show_decision_form"]("edit")
+        triggers["open_decision_form"]("edit")
         assert state.form_decision_id == "DEC-001"
         assert state.form_decision_name == "Test Decision"
         assert state.form_decision_context == "Some context"
@@ -138,7 +139,7 @@ class TestSubmitDecisionForm:
         state.decision_form_mode = "create"
         state.form_decision_id = "DEC-NEW"
         state.form_decision_name = "New"
-        state.form_decision_context = ""
+        state.form_decision_context = "Some context"
         state.form_decision_rationale = ""
         state.form_decision_status = "PENDING"
         triggers["submit_decision_form"]()
@@ -164,7 +165,7 @@ class TestSubmitDecisionForm:
         state.selected_decision = {"id": "DEC-001"}
         state.form_decision_id = "DEC-001"
         state.form_decision_name = "Updated"
-        state.form_decision_context = ""
+        state.form_decision_context = "Updated context"
         state.form_decision_rationale = ""
         state.form_decision_status = "APPROVED"
         triggers["submit_decision_form"]()
@@ -176,8 +177,8 @@ class TestSubmitDecisionForm:
         state, _, triggers, _ = _make_state_ctrl()
         state.decision_form_mode = "create"
         state.form_decision_id = ""
-        state.form_decision_name = ""
-        state.form_decision_context = ""
+        state.form_decision_name = "Exception Test"
+        state.form_decision_context = "Some context"
         state.form_decision_rationale = ""
         state.form_decision_status = "PENDING"
         triggers["submit_decision_form"]()

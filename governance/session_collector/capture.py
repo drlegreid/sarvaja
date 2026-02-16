@@ -213,6 +213,7 @@ class SessionCaptureMixin:
                 "intent": intent,
                 "linked_rules": linked_rules or [],
                 "linked_gaps": linked_gaps or [],
-                "error_message": error_message[:500] if error_message and len(error_message) > 500 else error_message
+                # BUG-CAPTURE-TRUNCATION-001: Add "..." indicator consistent with result_summary (line 96)
+                "error_message": error_message[:500] + "..." if error_message and len(error_message) > 500 else error_message
             }
         ))

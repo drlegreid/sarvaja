@@ -47,11 +47,16 @@ class TaskLinkingOperations:
                 now = datetime.now()
                 timestamp_str = now.strftime('%Y-%m-%dT%H:%M:%S')
 
+                # BUG-LINK-ESCAPE-001: Escape all fields before TypeQL interpolation
+                evidence_id_escaped = evidence_id.replace('"', '\\"')
+                evidence_source_escaped = evidence_source.replace('"', '\\"')
+                task_id_escaped = task_id.replace('"', '\\"')
+
                 # Insert evidence if not exists
                 insert_evidence = f"""
                     insert $e isa evidence-file,
-                        has evidence-id "{evidence_id}",
-                        has evidence-source "{evidence_source}",
+                        has evidence-id "{evidence_id_escaped}",
+                        has evidence-source "{evidence_source_escaped}",
                         has evidence-type "markdown",
                         has evidence-created-at {timestamp_str};
                 """
@@ -63,8 +68,8 @@ class TaskLinkingOperations:
                 # Create the evidence-supports relation
                 link_query = f"""
                     match
-                        $t isa task, has task-id "{task_id}";
-                        $e isa evidence-file, has evidence-source "{evidence_source}";
+                        $t isa task, has task-id "{task_id_escaped}";
+                        $e isa evidence-file, has evidence-source "{evidence_source_escaped}";
                     insert
                         (supporting-evidence: $e, supported-task: $t) isa evidence-supports;
                 """
@@ -94,11 +99,14 @@ class TaskLinkingOperations:
 
         try:
             with self._driver.transaction(self.database, TransactionType.WRITE) as tx:
+                # BUG-LINK-ESCAPE-001: Escape all fields
+                task_id_escaped = task_id.replace('"', '\\"')
+                session_id_escaped = session_id.replace('"', '\\"')
                 # Create the completed-in relation
                 link_query = f"""
                     match
-                        $t isa task, has task-id "{task_id}";
-                        $s isa work-session, has session-id "{session_id}";
+                        $t isa task, has task-id "{task_id_escaped}";
+                        $s isa work-session, has session-id "{session_id_escaped}";
                     insert
                         (completed-task: $t, hosting-session: $s) isa completed-in;
                 """
@@ -128,11 +136,14 @@ class TaskLinkingOperations:
 
         try:
             with self._driver.transaction(self.database, TransactionType.WRITE) as tx:
+                # BUG-LINK-ESCAPE-001: Escape all fields
+                task_id_escaped = task_id.replace('"', '\\"')
+                rule_id_escaped = rule_id.replace('"', '\\"')
                 # Create the implements-rule relation
                 link_query = f"""
                     match
-                        $t isa task, has task-id "{task_id}";
-                        $r isa rule-entity, has rule-id "{rule_id}";
+                        $t isa task, has task-id "{task_id_escaped}";
+                        $r isa rule-entity, has rule-id "{rule_id_escaped}";
                     insert
                         (implementing-task: $t, implemented-rule: $r) isa implements-rule;
                 """
@@ -154,9 +165,11 @@ class TaskLinkingOperations:
         Returns:
             List of evidence file paths
         """
+        # BUG-LINK-ESCAPE-001: Escape for consistency
+        task_id_escaped = task_id.replace('"', '\\"')
         query = f"""
             match
-                $t isa task, has task-id "{task_id}";
+                $t isa task, has task-id "{task_id_escaped}";
                 (supporting-evidence: $e, supported-task: $t) isa evidence-supports;
                 $e has evidence-source $src;
             select $src;
@@ -183,8 +196,11 @@ class TaskLinkingOperations:
         try:
             with self._driver.transaction(self.database, TransactionType.WRITE) as tx:
                 # Insert git-commit entity
+                # BUG-LINK-ESCAPE-001: Escape all fields
+                commit_sha_escaped = commit_sha.replace('"', '\\"')
+                task_id_escaped = task_id.replace('"', '\\"')
                 msg_escaped = commit_message.replace('"', '\\"') if commit_message else ""
-                commit_parts = [f'has commit-sha "{commit_sha}"']
+                commit_parts = [f'has commit-sha "{commit_sha_escaped}"']
                 if commit_message:
                     commit_parts.append(f'has commit-message "{msg_escaped}"')
 
@@ -200,8 +216,8 @@ class TaskLinkingOperations:
                 # Create the task-commit relation
                 link_query = f"""
                     match
-                        $t isa task, has task-id "{task_id}";
-                        $c isa git-commit, has commit-sha "{commit_sha}";
+                        $t isa task, has task-id "{task_id_escaped}";
+                        $c isa git-commit, has commit-sha "{commit_sha_escaped}";
                     insert
                         (implementing-commit: $c, implemented-task: $t) isa task-commit;
                 """
@@ -225,9 +241,11 @@ class TaskLinkingOperations:
         Returns:
             List of commit SHAs
         """
+        # BUG-LINK-ESCAPE-001: Escape for consistency
+        task_id_escaped = task_id.replace('"', '\\"')
         query = f"""
             match
-                $t isa task, has task-id "{task_id}";
+                $t isa task, has task-id "{task_id_escaped}";
                 (implementing-commit: $c, implemented-task: $t) isa task-commit;
                 $c has commit-sha $sha;
             select $sha;
@@ -251,10 +269,14 @@ class TaskLinkingOperations:
             with self._driver.transaction(self.database, TransactionType.WRITE) as tx:
                 # Ensure document entity exists
                 doc_id = document_path.replace("/", "-").replace(".", "-").replace("\\", "-").upper()
+                # BUG-LINK-ESCAPE-002: Escape all fields
+                doc_id_escaped = doc_id.replace('"', '\\"')
+                document_path_escaped = document_path.replace('"', '\\"')
+                task_id_escaped = task_id.replace('"', '\\"')
                 insert_doc = f"""
                     insert $d isa document,
-                        has document-id "{doc_id}",
-                        has document-path "{document_path}",
+                        has document-id "{doc_id_escaped}",
+                        has document-path "{document_path_escaped}",
                         has document-type "markdown",
                         has document-storage "filesystem";
                 """
@@ -266,8 +288,8 @@ class TaskLinkingOperations:
                 # Create document-references-task relation
                 link_query = f"""
                     match
-                        $t isa task, has task-id "{task_id}";
-                        $d isa document, has document-path "{document_path}";
+                        $t isa task, has task-id "{task_id_escaped}";
+                        $d isa document, has document-path "{document_path_escaped}";
                     insert
                         (referencing-document: $d, referenced-task: $t) isa document-references-task;
                 """
@@ -293,10 +315,13 @@ class TaskLinkingOperations:
 
         try:
             with self._driver.transaction(self.database, TransactionType.WRITE) as tx:
+                # BUG-LINK-ESCAPE-002: Escape all fields
+                task_id_escaped = task_id.replace('"', '\\"')
+                document_path_escaped = document_path.replace('"', '\\"')
                 delete_query = f"""
                     match
-                        $t isa task, has task-id "{task_id}";
-                        $d isa document, has document-path "{document_path}";
+                        $t isa task, has task-id "{task_id_escaped}";
+                        $d isa document, has document-path "{document_path_escaped}";
                         $rel (referencing-document: $d, referenced-task: $t) isa document-references-task;
                     delete $rel isa document-references-task;
                 """
@@ -316,9 +341,11 @@ class TaskLinkingOperations:
         Returns:
             List of document paths
         """
+        # BUG-LINK-ESCAPE-001: Escape for consistency
+        task_id_escaped = task_id.replace('"', '\\"')
         query = f"""
             match
-                $t isa task, has task-id "{task_id}";
+                $t isa task, has task-id "{task_id_escaped}";
                 (referencing-document: $d, referenced-task: $t) isa document-references-task;
                 $d has document-path $dpath;
             select $dpath;

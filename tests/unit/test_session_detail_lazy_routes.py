@@ -164,18 +164,29 @@ class TestSessionEvidenceRendered:
 
     @patch("governance.services.sessions.get_session")
     def test_evidence_rendered_success(self, mock_get, client, tmp_path):
-        md_file = tmp_path / "evidence.md"
-        md_file.write_text("# Session Report\n\nAll tasks completed.")
-        mock_get.return_value = {
-            "session_id": "SESSION-1",
-            "file_path": str(md_file),
-        }
-        resp = client.get("/api/sessions/SESSION-1/evidence/rendered")
-        assert resp.status_code == 200
-        data = resp.json()
-        assert data["session_id"] == "SESSION-1"
-        assert "<h1>" in data["html"] or "Session Report" in data["html"]
-        assert "All tasks completed" in data["raw"]
+        import os
+        # BUG-ROUTE-PATH-001: Evidence must be in project evidence/ directory
+        # Create test file inside the project's evidence directory
+        project_root = os.path.realpath(os.path.join(os.path.dirname(__file__), "..", ".."))
+        evidence_dir = os.path.join(project_root, "evidence")
+        os.makedirs(evidence_dir, exist_ok=True)
+        test_file = os.path.join(evidence_dir, "_test_evidence_rendered.md")
+        try:
+            with open(test_file, "w") as f:
+                f.write("# Session Report\n\nAll tasks completed.")
+            mock_get.return_value = {
+                "session_id": "SESSION-1",
+                "file_path": test_file,
+            }
+            resp = client.get("/api/sessions/SESSION-1/evidence/rendered")
+            assert resp.status_code == 200
+            data = resp.json()
+            assert data["session_id"] == "SESSION-1"
+            assert "<h1>" in data["html"] or "Session Report" in data["html"]
+            assert "All tasks completed" in data["raw"]
+        finally:
+            if os.path.exists(test_file):
+                os.remove(test_file)
 
     @patch("governance.services.sessions.get_session")
     def test_evidence_rendered_no_session(self, mock_get, client):
@@ -192,9 +203,14 @@ class TestSessionEvidenceRendered:
 
     @patch("governance.services.sessions.get_session")
     def test_evidence_rendered_file_missing(self, mock_get, client):
+        import os
+        # BUG-ROUTE-PATH-001: Path must be within evidence dir to reach 404
+        project_root = os.path.realpath(os.path.join(os.path.dirname(__file__), "..", ".."))
+        evidence_dir = os.path.join(project_root, "evidence")
+        missing_file = os.path.join(evidence_dir, "nonexistent_evidence_file_xyz.md")
         mock_get.return_value = {
             "session_id": "SESSION-1",
-            "file_path": "/tmp/nonexistent_evidence_file_xyz.md",
+            "file_path": missing_file,
         }
         resp = client.get("/api/sessions/SESSION-1/evidence/rendered")
         assert resp.status_code == 404

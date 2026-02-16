@@ -124,16 +124,23 @@ def list_projects(
 
     if not projects:
         all_projects = sorted(_projects_store.values(), key=lambda p: p.get("project_id", ""))
+        # BUG-PROJECTS-TOTAL-001: Capture total BEFORE slicing
+        total = len(all_projects)
         projects = all_projects[offset:offset + limit]
+    else:
+        # BUG-PROJECT-PAGINATION-001: TypeDB returns paginated results,
+        # infer total from whether a full page was returned
+        total = offset + len(projects)
+        if len(projects) >= limit:
+            total = offset + limit + 1  # At least one more exists
 
-    total = len(projects)
     return {
         "items": projects,
         "pagination": {
             "total": total,
             "offset": offset,
             "limit": limit,
-            "has_more": total >= limit,
+            "has_more": (offset + limit) < total,
             "returned": len(projects),
         },
     }

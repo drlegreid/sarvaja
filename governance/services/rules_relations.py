@@ -41,8 +41,9 @@ def _monitor(action: str, rule_id: str, source: str = "service", **extra):
             details={"rule_id": rule_id, "action": action, **extra},
             severity="INFO",
         )
-    except Exception:
-        pass
+    except Exception as e:
+        # BUG-MONITOR-SILENT-001: Log instead of silently swallowing
+        logger.warning(f"Monitor event failed for rule {rule_id}: {e}")
 
 
 def get_rule_document_paths(client, rule_ids: List[str]) -> Dict[str, str]:
@@ -112,6 +113,8 @@ def get_rule_tasks(rule_id: str, source: str = "rest") -> Dict[str, Any]:
         legacy_id = normalize_rule_id(rule_id)
         if legacy_id != rule_id:
             tasks = client.get_tasks_for_rule(legacy_id)
+    # BUG-RULES-001: Guard against None from TypeDB before len()
+    tasks = tasks or []
     return {"rule_id": rule_id, "implementing_tasks": tasks, "count": len(tasks)}
 
 

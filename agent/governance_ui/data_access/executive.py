@@ -13,14 +13,12 @@ Created: 2024-12-28
 import os
 from typing import Dict, Any, Optional
 
-# API base URL - configurable via environment
-_API_BASE_URL = os.environ.get("GOVERNANCE_API_URL", "http://localhost:8082")
-
 
 def get_executive_report(
     session_id: Optional[str] = None,
     start_date: Optional[str] = None,
-    end_date: Optional[str] = None
+    end_date: Optional[str] = None,
+    api_base_url: Optional[str] = None,
 ) -> Dict[str, Any]:
     """
     Fetch executive report from API.
@@ -47,7 +45,8 @@ def get_executive_report(
         if end_date:
             params["end_date"] = end_date
 
-        with httpx.Client(base_url=_API_BASE_URL, timeout=15.0) as client:
+        base_url = api_base_url or os.environ.get("GOVERNANCE_API_URL", "http://localhost:8082")
+        with httpx.Client(base_url=base_url, timeout=15.0) as client:
             response = client.get("/api/reports/executive", params=params)
             if response.status_code == 200:
                 return response.json()

@@ -152,7 +152,7 @@ class TestProjectLinkingMixin:
     def test_get_project_plans_returns_ids(self):
         obj = self._make_mixin()
         obj._execute_query.return_value = [
-            {"pid": "PLAN-1"},
+            {"plid": "PLAN-1"},
         ]
         result = obj.get_project_plans("PROJ-1")
         assert result == ["PLAN-1"]

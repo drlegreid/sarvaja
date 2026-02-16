@@ -27,8 +27,12 @@ def log_event(entity: str, action: str, **details):
     """
     entry = {
         "ts": time.strftime("%Y-%m-%dT%H:%M:%S"),
-        "entity": entity,
-        "action": action,
+        "entity": entity or "unknown",
+        "action": action or "unknown",
         **details,
     }
-    logger.info(json.dumps(entry, separators=(",", ":")))
+    # BUG-MCP-002: Use default=str to prevent crash on non-serializable values
+    try:
+        logger.info(json.dumps(entry, separators=(",", ":"), default=str))
+    except Exception:
+        logger.warning(f"Failed to serialize event: entity={entity} action={action}")

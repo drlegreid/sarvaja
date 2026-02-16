@@ -58,9 +58,12 @@ class SessionCRUDOperations(SessionMutationOperations):
             logger.info(f"Session {session_id} already exists, skipping insert")
             return None
 
+        # BUG-TYPEQL-ESCAPE-SESSION-004: Escape session_id for TypeQL safety
+        session_id_escaped = session_id.replace('"', '\\"')
+
         try:
             with self._driver.transaction(self.database, TransactionType.WRITE) as tx:
-                    insert_parts = [f'has session-id "{session_id}"']
+                    insert_parts = [f'has session-id "{session_id_escaped}"']
 
                     if name:
                         name_escaped = name.replace('"', '\\"')
@@ -77,7 +80,8 @@ class SessionCRUDOperations(SessionMutationOperations):
 
                     # CC session metadata (SESSION-CC-01-v1)
                     if cc_session_uuid:
-                        insert_parts.append(f'has cc-session-uuid "{cc_session_uuid}"')
+                        uuid_esc = cc_session_uuid.replace('"', '\\"')
+                        insert_parts.append(f'has cc-session-uuid "{uuid_esc}"')
                     if cc_project_slug:
                         slug_esc = cc_project_slug.replace('"', '\\"')
                         insert_parts.append(f'has cc-project-slug "{slug_esc}"')
@@ -111,6 +115,9 @@ class SessionCRUDOperations(SessionMutationOperations):
         """End a session by setting completed-at timestamp."""
         from typedb.driver import TransactionType
 
+        # BUG-TYPEQL-ESCAPE-SESSION-004: Escape session_id for TypeQL safety
+        sid = session_id.replace('"', '\\"')
+
         try:
             with self._driver.transaction(self.database, TransactionType.WRITE) as tx:
                     # TypeDB datetime format: YYYY-MM-DDTHH:MM:SS (no microseconds, no trailing T)
@@ -118,7 +125,7 @@ class SessionCRUDOperations(SessionMutationOperations):
                     timestamp_str = now.strftime('%Y-%m-%dT%H:%M:%S')
                     insert_query = f"""
                         match
-                            $s isa work-session, has session-id "{session_id}";
+                            $s isa work-session, has session-id "{sid}";
                         insert
                             $s has completed-at {timestamp_str};
                     """

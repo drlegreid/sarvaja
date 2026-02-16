@@ -33,6 +33,9 @@ def create_initial_state(
         "retry_count": 0,
         "gate_decision": None,
         "dry_run": dry_run,
+        # BUG-STATE-001: Initialize budget tracking fields
+        "value_delivered": 0,
+        "tokens_used": 0,
     }
 
 

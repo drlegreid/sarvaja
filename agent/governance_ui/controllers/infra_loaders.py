@@ -19,6 +19,8 @@ from pathlib import Path
 from datetime import datetime
 from typing import Any
 
+from agent.governance_ui.trace_bar.transforms import add_error_trace
+
 
 def register_infra_loader_controllers(
     state: Any,
@@ -104,8 +106,9 @@ def register_infra_loader_controllers(
                         stats["mcp_servers"][name] = components[name]
                     else:
                         stats["mcp_servers"][name] = "ON-DEMAND"
-        except Exception:
-            pass
+        except Exception as e:
+            # BUG-UI-SILENT-JSON-001: Log healthcheck state parse failures
+            add_error_trace(state, f"Healthcheck state parse failed: {e}", ".healthcheck_state.json")
 
         # Get memory usage
         try:
@@ -231,10 +234,9 @@ def register_infra_loader_controllers(
     def load_container_logs(container: str = "dashboard", lines: int = 50, level: str = ""):
         """Load container logs via API endpoint (uses podman socket)."""
         import httpx
-        api_url = os.environ.get("GOVERNANCE_API_URL", "http://localhost:8082")
         try:
             resp = httpx.get(
-                f"{api_url}/api/infra/logs",
+                f"{api_base_url}/api/infra/logs",
                 params={"container": container, "tail": lines, "level": level or ""},
                 timeout=10,
             )

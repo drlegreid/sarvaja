@@ -53,8 +53,9 @@ def register_metrics_controllers(
                 response_body = None
                 try:
                     response_body = response.json()
-                except Exception:
-                    pass
+                except Exception as e:
+                    # BUG-UI-SILENT-JSON-001: Log JSON parse failures
+                    add_error_trace(state, f"Metrics JSON parse failed: {e}", "/api/metrics/summary")
 
                 add_api_trace(
                     state, "/api/metrics/summary", "GET",
@@ -62,7 +63,7 @@ def register_metrics_controllers(
                     response_body=response_body,
                 )
 
-                if response.status_code == 200:
+                if response.status_code == 200 and response_body is not None:
                     state.metrics_data = response_body
                 else:
                     state.metrics_data = None
@@ -97,8 +98,9 @@ def register_metrics_controllers(
                 response_body = None
                 try:
                     response_body = response.json()
-                except Exception:
-                    pass
+                except Exception as e:
+                    # BUG-UI-SILENT-JSON-001: Log JSON parse failures
+                    add_error_trace(state, f"Search metrics JSON parse failed: {e}", "/api/metrics/search")
 
                 add_api_trace(
                     state, "/api/metrics/search", "GET",
@@ -136,8 +138,9 @@ def register_metrics_controllers(
                 response_body = None
                 try:
                     response_body = response.json()
-                except Exception:
-                    pass
+                except Exception as e:
+                    # BUG-UI-SILENT-JSON-001: Log JSON parse failures
+                    add_error_trace(state, f"Timeline JSON parse failed: {e}", "/api/metrics/timeline")
 
                 add_api_trace(
                     state, "/api/metrics/timeline", "GET",

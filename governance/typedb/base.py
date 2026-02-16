@@ -148,8 +148,9 @@ class TypeDBBaseClient:
         if hasattr(concept, 'get_value'):
             try:
                 return concept.get_value()
-            except Exception:
-                pass
+            except Exception as e:
+                # BUG-TYPEDB-SILENT-001: Log instead of silently swallowing
+                logger.debug(f"get_value() failed for concept: {e}")
 
         # Fallback: Check for .value property (older API)
         if hasattr(concept, 'value'):
@@ -159,8 +160,9 @@ class TypeDBBaseClient:
         if hasattr(concept, 'get_iid'):
             try:
                 return str(concept.get_iid())
-            except Exception:
-                pass
+            except Exception as e:
+                # BUG-TYPEDB-SILENT-001: Log instead of silently swallowing
+                logger.debug(f"get_iid() failed for concept: {e}")
 
         if hasattr(concept, 'iid'):
             return str(concept.iid)

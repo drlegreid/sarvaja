@@ -24,17 +24,23 @@ class DecisionQueries:
     """
 
     def _update_decision_attr(self, decision_id: str, attr_name: str, new_value: str) -> None:
-        """Delete old attribute and insert new value for a decision. DRY helper for TypeDB 3.x."""
+        """Delete old attribute and insert new value for a decision.
+
+        BUG-DECISION-DOUBLE-TRANSACTION: Single transaction for atomicity.
+        """
         from typedb.driver import TransactionType
+        # BUG-TYPEQL-ESCAPE-DECISION-001: Escape decision_id for TypeQL safety
+        did = decision_id.replace('"', '\\"')
         with self._driver.transaction(self.database, TransactionType.WRITE) as tx:
+            try:
+                tx.query(f'''
+                    match $d isa decision, has decision-id "{did}", has {attr_name} $old;
+                    delete has $old of $d;
+                ''').resolve()
+            except Exception:
+                pass  # Attribute may not exist yet
             tx.query(f'''
-                match $d isa decision, has decision-id "{decision_id}", has {attr_name} $old;
-                delete has $old of $d;
-            ''').resolve()
-            tx.commit()
-        with self._driver.transaction(self.database, TransactionType.WRITE) as tx:
-            tx.query(f'''
-                match $d isa decision, has decision-id "{decision_id}";
+                match $d isa decision, has decision-id "{did}";
                 insert $d has {attr_name} "{new_value}";
             ''').resolve()
             tx.commit()
@@ -62,10 +68,12 @@ class DecisionQueries:
             decision_id = r.get("id")
 
             # Try to get optional decision-date
+            # BUG-TYPEQL-ESCAPE-DECISION-001: Escape decision_id from TypeDB result
+            did_escaped = (decision_id or "").replace('"', '\\"')
             decision_date = None
             date_query = f"""
                 match $d isa decision,
-                    has decision-id "{decision_id}",
+                    has decision-id "{did_escaped}",
                     has decision-date $date;
             """
             try:
@@ -138,10 +146,12 @@ class DecisionQueries:
         name_escaped = name.replace('"', '\\"')
         context_escaped = context.replace('"', '\\"')
         rationale_escaped = rationale.replace('"', '\\"')
+        # BUG-TYPEQL-ESCAPE-DECISION-001: Escape decision_id too
+        decision_id_escaped = decision_id.replace('"', '\\"')
 
         query = f'''
             insert $d isa decision,
-                has decision-id "{decision_id}",
+                has decision-id "{decision_id_escaped}",
                 has decision-name "{name_escaped}",
                 has context "{context_escaped}",
                 has rationale "{rationale_escaped}",
@@ -208,21 +218,20 @@ class DecisionQueries:
         # Handle decision_date (datetime type — no quotes in TypeQL)
         if decision_date is not None:
             from typedb.driver import TransactionType
-            # Delete old date if exists
+            # BUG-TYPEQL-ESCAPE-DECISION-001: Escape decision_id
+            did = decision_id.replace('"', '\\"')
+            # BUG-DECISION-DATE-NONATOMIC: Single transaction for atomicity
+            date_str = decision_date[:19]
             with self._driver.transaction(self.database, TransactionType.WRITE) as tx:
                 try:
                     tx.query(f'''
-                        match $d isa decision, has decision-id "{decision_id}", has decision-date $old;
+                        match $d isa decision, has decision-id "{did}", has decision-date $old;
                         delete has $old of $d;
                     ''').resolve()
-                    tx.commit()
                 except Exception:
                     pass  # May not have existing date
-            # Insert new date (TypeDB datetime: no quotes, trim to YYYY-MM-DDTHH:MM:SS)
-            date_str = decision_date[:19]
-            with self._driver.transaction(self.database, TransactionType.WRITE) as tx:
                 tx.query(f'''
-                    match $d isa decision, has decision-id "{decision_id}";
+                    match $d isa decision, has decision-id "{did}";
                     insert $d has decision-date {date_str};
                 ''').resolve()
                 tx.commit()
@@ -251,8 +260,10 @@ class DecisionQueries:
         if not exists:
             return False
 
+        # BUG-TYPEQL-ESCAPE-DECISION-001: Escape decision_id
+        did = decision_id.replace('"', '\\"')
         query = f'''
-            match $d isa decision, has decision-id "{decision_id}";
+            match $d isa decision, has decision-id "{did}";
             delete $d;
         '''
 
@@ -273,12 +284,16 @@ class DecisionQueries:
         from typedb.driver import TransactionType
 
         try:
+            # BUG-TYPEQL-ESCAPE-DECISION-001: Escape IDs before TypeQL interpolation
+            did = decision_id.replace('"', '\\"')
+            rid = rule_id.replace('"', '\\"')
+
             # Verify both entities exist before linking
             with self._driver.transaction(self.database, TransactionType.READ) as tx:
                 check_query = f"""
                     match
-                        $d isa decision, has decision-id "{decision_id}";
-                        $r isa rule-entity, has rule-id "{rule_id}";
+                        $d isa decision, has decision-id "{did}";
+                        $r isa rule-entity, has rule-id "{rid}";
                 """
                 results = list(tx.query(check_query).resolve())
                 if not results:
@@ -287,8 +302,8 @@ class DecisionQueries:
             with self._driver.transaction(self.database, TransactionType.WRITE) as tx:
                 link_query = f"""
                     match
-                        $d isa decision, has decision-id "{decision_id}";
-                        $r isa rule-entity, has rule-id "{rule_id}";
+                        $d isa decision, has decision-id "{did}";
+                        $r isa rule-entity, has rule-id "{rid}";
                     insert
                         (affecting-decision: $d, affected-rule: $r) isa decision-affects;
                 """

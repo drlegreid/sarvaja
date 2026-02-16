@@ -118,7 +118,7 @@ class TestClaimComplete:
         hc.return_value = mc
         from agent.governance_ui.controllers.tasks import register_tasks_controllers
         register_tasks_controllers(state, ctrl, "http://test:8082")
-        ctrl._triggers["claim_task"]()
+        ctrl._triggers["claim_selected_task"]()
         assert state.status_message == "Task T1 claimed"
 
     @patch("httpx.Client")
@@ -129,7 +129,7 @@ class TestClaimComplete:
         hc.return_value = mc
         from agent.governance_ui.controllers.tasks import register_tasks_controllers
         register_tasks_controllers(state, ctrl, "http://test:8082")
-        ctrl._triggers["complete_task"]()
+        ctrl._triggers["complete_selected_task"]()
         assert state.has_error is True
 
 

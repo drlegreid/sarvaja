@@ -32,43 +32,73 @@ def list_projects(
     offset: int = Query(default=0, ge=0),
 ):
     """List all projects with pagination."""
-    result = project_service.list_projects(limit=limit, offset=offset)
-    items = [ProjectResponse(**p) if isinstance(p, dict) else p for p in result["items"]]
-    return PaginatedProjectResponse(
-        items=items,
-        pagination=PaginationMeta(**result["pagination"]),
-    )
+    try:
+        result = project_service.list_projects(limit=limit, offset=offset)
+        items = [ProjectResponse(**p) if isinstance(p, dict) else p for p in result["items"]]
+        return PaginatedProjectResponse(
+            items=items,
+            pagination=PaginationMeta(**result["pagination"]),
+        )
+    except ConnectionError:
+        raise HTTPException(status_code=503, detail="Database service unavailable")
+    except Exception as e:
+        logger.error(f"Failed to list projects: {e}")
+        raise HTTPException(status_code=500, detail="Internal server error")
 
 
 @router.post("/projects", response_model=ProjectResponse, status_code=201)
 def create_project(data: ProjectCreate):
     """Create a new project."""
-    result = project_service.create_project(
-        project_id=data.project_id,
-        name=data.name,
-        path=data.path,
-        project_type=data.project_type,
-    )
-    if not result:
-        raise HTTPException(status_code=409, detail="Project already exists")
-    return ProjectResponse(**result) if isinstance(result, dict) else result
+    try:
+        result = project_service.create_project(
+            project_id=data.project_id,
+            name=data.name,
+            path=data.path,
+            project_type=data.project_type,
+        )
+        if not result:
+            raise HTTPException(status_code=409, detail="Project already exists")
+        return ProjectResponse(**result) if isinstance(result, dict) else result
+    except HTTPException:
+        raise
+    except ConnectionError:
+        raise HTTPException(status_code=503, detail="Database service unavailable")
+    except Exception as e:
+        logger.error(f"Failed to create project: {e}")
+        raise HTTPException(status_code=500, detail="Internal server error")
 
 
 @router.get("/projects/{project_id}", response_model=ProjectResponse)
 def get_project(project_id: str):
     """Get a single project by ID."""
-    result = project_service.get_project(project_id)
-    if not result:
-        raise HTTPException(status_code=404, detail=f"Project {project_id} not found")
-    return ProjectResponse(**result) if isinstance(result, dict) else result
+    try:
+        result = project_service.get_project(project_id)
+        if not result:
+            raise HTTPException(status_code=404, detail=f"Project {project_id} not found")
+        return ProjectResponse(**result) if isinstance(result, dict) else result
+    except HTTPException:
+        raise
+    except ConnectionError:
+        raise HTTPException(status_code=503, detail="Database service unavailable")
+    except Exception as e:
+        logger.error(f"Failed to get project {project_id}: {e}")
+        raise HTTPException(status_code=500, detail="Internal server error")
 
 
 @router.delete("/projects/{project_id}", status_code=204)
 def delete_project(project_id: str):
     """Delete a project."""
-    deleted = project_service.delete_project(project_id)
-    if not deleted:
-        raise HTTPException(status_code=404, detail=f"Project {project_id} not found")
+    try:
+        deleted = project_service.delete_project(project_id)
+        if not deleted:
+            raise HTTPException(status_code=404, detail=f"Project {project_id} not found")
+    except HTTPException:
+        raise
+    except ConnectionError:
+        raise HTTPException(status_code=503, detail="Database service unavailable")
+    except Exception as e:
+        logger.error(f"Failed to delete project {project_id}: {e}")
+        raise HTTPException(status_code=500, detail="Internal server error")
 
 
 @router.post("/projects/{project_id}/sessions/{session_id}", status_code=201)
@@ -108,6 +138,14 @@ def get_agent_templates_endpoint(type_id: str):
 @router.post("/workspace-types/detect")
 def detect_workspace_type(path: str = Query(..., description="Filesystem path to scan")):
     """Auto-detect workspace type from filesystem indicators."""
+    import os
+    resolved = os.path.realpath(path)
+    blocked_prefixes = ("/etc", "/proc", "/sys", "/dev", "/boot", "/var/run")
+    if resolved == "/" or any(resolved.startswith(p) for p in blocked_prefixes):
+        raise HTTPException(
+            status_code=400,
+            detail=f"Scanning path '{path}' is not allowed for security reasons"
+        )
     detected = detect_project_type(path)
     wt = get_workspace_type(detected)
     return {

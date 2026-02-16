@@ -40,13 +40,13 @@ def register_ingestion_tools(mcp) -> None:
         path = _resolve_jsonl_path(session_id, jsonl_path)
         if path is None:
             return format_mcp_result(
-                "error", {"error": "JSONL file not found", "session_id": session_id}
+                {"error": "JSONL file not found", "session_id": session_id}
             )
 
         result = index_session_content(
             path, session_id, dry_run=dry_run, resume=resume
         )
-        return format_mcp_result("ok", result)
+        return format_mcp_result(result)
 
     @mcp.tool()
     def mine_session_links(
@@ -69,11 +69,11 @@ def register_ingestion_tools(mcp) -> None:
         path = _resolve_jsonl_path(session_id, jsonl_path)
         if path is None:
             return format_mcp_result(
-                "error", {"error": "JSONL file not found", "session_id": session_id}
+                {"error": "JSONL file not found", "session_id": session_id}
             )
 
         result = _mine(path, session_id, dry_run=dry_run)
-        return format_mcp_result("ok", result)
+        return format_mcp_result(result)
 
     @mcp.tool()
     def ingest_session_full(
@@ -96,11 +96,11 @@ def register_ingestion_tools(mcp) -> None:
         path = _resolve_jsonl_path(session_id, jsonl_path)
         if path is None:
             return format_mcp_result(
-                "error", {"error": "JSONL file not found", "session_id": session_id}
+                {"error": "JSONL file not found", "session_id": session_id}
             )
 
         result = run_ingestion_pipeline(path, session_id, dry_run=dry_run)
-        return format_mcp_result("ok", result)
+        return format_mcp_result(result)
 
     @mcp.tool()
     def ingestion_status(session_id: str = "") -> str:
@@ -115,7 +115,7 @@ def register_ingestion_tools(mcp) -> None:
             return _list_all_checkpoints()
 
         result = get_ingestion_status(session_id)
-        return format_mcp_result("ok", result)
+        return format_mcp_result(result)
 
     @mcp.tool()
     def ingestion_estimate(jsonl_path: str) -> str:
@@ -129,7 +129,7 @@ def register_ingestion_tools(mcp) -> None:
         from governance.services.ingestion_orchestrator import estimate_ingestion
 
         result = estimate_ingestion(Path(jsonl_path))
-        return format_mcp_result("ok", result)
+        return format_mcp_result(result)
 
 
 def _resolve_jsonl_path(
@@ -154,7 +154,7 @@ def _list_all_checkpoints() -> str:
 
     cdir = _DEFAULT_CHECKPOINT_DIR
     if not cdir.exists():
-        return format_mcp_result("ok", {"checkpoints": [], "count": 0})
+        return format_mcp_result({"checkpoints": [], "count": 0})
 
     checkpoints = []
     for f in sorted(cdir.glob("*.json")):
@@ -170,4 +170,4 @@ def _list_all_checkpoints() -> str:
         except (json.JSONDecodeError, OSError):
             continue
 
-    return format_mcp_result("ok", {"checkpoints": checkpoints, "count": len(checkpoints)})
+    return format_mcp_result({"checkpoints": checkpoints, "count": len(checkpoints)})

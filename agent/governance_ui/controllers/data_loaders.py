@@ -14,6 +14,8 @@ Updated: 2026-02-01 (split per DOC-SIZE-01-v1)
 """
 
 import time
+from datetime import datetime
+
 import httpx
 from typing import Any
 
@@ -75,15 +77,16 @@ def register_data_loader_controllers(
                 response_body = None
                 try:
                     response_body = response.json()
-                except Exception:
-                    pass
+                except Exception as e:
+                    # BUG-UI-SILENT-JSON-001: Log JSON parse failures
+                    add_error_trace(state, f"Agents JSON parse failed: {e}", "/api/agents")
 
                 add_api_trace(
                     state, "/api/agents", "GET", response.status_code, duration_ms,
                     response_body=response_body
                 )
-                if response.status_code == 200:
-                    data = response_body or []
+                if response.status_code == 200 and response_body is not None:
+                    data = response_body
                     state.agents = data.get("items", data) if isinstance(data, dict) else data
                 else:
                     state.agents = []
@@ -95,12 +98,14 @@ def register_data_loader_controllers(
 
         try:
             state.proposals = get_proposals()
-        except Exception:
+        except Exception as e:
+            add_error_trace(state, f"Load proposals failed: {e}", "get_proposals()")
             state.proposals = []
 
         try:
             state.escalated_proposals = get_escalated_proposals()
-        except Exception:
+        except Exception as e:
+            add_error_trace(state, f"Load escalated proposals failed: {e}", "get_escalated_proposals()")
             state.escalated_proposals = []
 
         state.governance_stats = get_governance_stats(
@@ -110,11 +115,16 @@ def register_data_loader_controllers(
 
     def load_monitor_data():
         """Load monitoring data from RuleMonitor."""
-        state.monitor_feed = get_monitor_feed(limit=50)
-        state.monitor_alerts = get_monitor_alerts(acknowledged=False)
-        state.monitor_stats = get_monitor_stats()
-        state.top_rules = get_top_monitored_rules(limit=10)
-        state.hourly_stats = get_hourly_monitor_stats()
+        try:
+            state.monitor_feed = get_monitor_feed(limit=50)
+            state.monitor_alerts = get_monitor_alerts(acknowledged=False)
+            state.monitor_stats = get_monitor_stats()
+            state.top_rules = get_top_monitored_rules(limit=10)
+            state.hourly_stats = get_hourly_monitor_stats()
+        except Exception as e:
+            # BUG-UI-LOAD-002: Add error handling to monitor data loading
+            add_error_trace(state, f"Load monitor data failed: {e}", "monitor_data")
+        state.monitor_last_updated = datetime.now().isoformat(timespec="seconds")
 
     def load_backlog_data():
         """Load available tasks and agent's claimed tasks from REST API."""
@@ -143,7 +153,11 @@ def register_data_loader_controllers(
                         state.claimed_tasks = []
                 else:
                     state.claimed_tasks = []
-        except Exception:
+        except Exception as e:
+            add_error_trace(state, f"Load backlog failed: {e}", "/api/tasks/available")
+            # BUG-UI-LOAD-004: Set error state on backlog load failure
+            state.has_error = True
+            state.error_message = f"Failed to load backlog: {str(e)}"
             state.available_tasks = []
             state.claimed_tasks = []
 
@@ -161,6 +175,9 @@ def register_data_loader_controllers(
                 if response.status_code == 200:
                     state.executive_report = response.json()
                 else:
+                    # BUG-UI-EXEC-001: Set error state on non-200 response
+                    state.has_error = True
+                    state.error_message = f"Executive report API error: {response.status_code}"
                     state.executive_report = {
                         "error": f"Failed to load report: {response.status_code}",
                         "sections": [],
@@ -168,6 +185,7 @@ def register_data_loader_controllers(
                         "metrics_summary": {},
                     }
         except Exception as e:
+            add_error_trace(state, f"Load executive report failed: {e}", "/api/reports/executive")
             state.executive_report = {
                 "error": str(e),
                 "sections": [],
@@ -182,10 +200,9 @@ def register_data_loader_controllers(
         """Trigger for loading trust data."""
         load_trust_data()
 
-    @ctrl.trigger("load_monitor_data")
-    def trigger_load_monitor_data():
-        """Trigger for loading monitor data."""
-        load_monitor_data()
+    # NOTE: load_monitor_data trigger is registered in monitor.py
+    # (with error handling + monitor_filter support).
+    # The internal load_monitor_data() function above is used for initial load.
 
     @ctrl.trigger("refresh_backlog")
     def refresh_backlog():

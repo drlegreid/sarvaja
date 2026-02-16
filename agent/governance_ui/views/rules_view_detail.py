@@ -17,10 +17,25 @@ def build_rule_detail_view() -> None:
         **{"data-testid": "rule-detail"},
     ):
         with v3.VCardTitle(classes="d-flex align-center"):
+            # Back-to-source (UI-NAV-01-v1): show source label if navigated from another view
             v3.VBtn(
+                v_if="nav_source_view && nav_source_label",
+                v_text="'Back to ' + nav_source_label",
+                variant="text",
+                prepend_icon="mdi-arrow-left",
+                click=(
+                    "active_view = nav_source_view; "
+                    "show_rule_detail = false; selected_rule = null; "
+                    "nav_source_view = null; nav_source_id = null; nav_source_label = null"
+                ),
+                __properties=["data-testid"],
+                **{"data-testid": "rule-detail-back-source-btn"},
+            )
+            v3.VBtn(
+                v_if="!nav_source_view || !nav_source_label",
                 icon="mdi-arrow-left",
                 variant="text",
-                click="show_rule_detail = false; selected_rule = null",
+                click="trigger('close_rule_detail')",
                 __properties=["data-testid"],
                 **{"data-testid": "rule-detail-back-btn"},
             )
@@ -42,7 +57,7 @@ def build_rule_detail_view() -> None:
                 "Delete",
                 color="error",
                 prepend_icon="mdi-delete",
-                click="delete_rule",
+                click="trigger('delete_rule')",
                 classes="ml-2",
                 __properties=["data-testid"],
                 **{"data-testid": "rule-detail-delete-btn"},

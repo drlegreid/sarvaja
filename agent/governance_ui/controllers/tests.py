@@ -75,7 +75,8 @@ def register_tests_controllers(
 
     def poll_for_results(run_id: str):
         """Background polling for test results."""
-        max_polls = 30  # Max 1 minute of polling
+        max_polls = 150  # Up to 5 minutes to match runner timeout (300s)
+        consecutive_errors = 0
         for _ in range(max_polls):
             time.sleep(2)
             try:
@@ -85,13 +86,18 @@ def register_tests_controllers(
                         data = response.json()
                         state.tests_current_run = data
                         state.dirty("tests_current_run")
+                        consecutive_errors = 0
                         if data.get("status") != "running":
                             load_tests_data()
                             state.tests_running = False
                             state.dirty("tests_running")
                             return
-            except Exception:
-                pass
+            except Exception as e:
+                # BUG-UI-TESTS-POLL-001: Log errors, stop after 5 consecutive
+                consecutive_errors += 1
+                if consecutive_errors >= 5:
+                    add_error_trace(state, f"Poll stopped after 5 errors: {e}", f"/api/tests/results/{run_id}")
+                    break
         state.tests_running = False
         state.dirty("tests_running")
 
@@ -140,6 +146,9 @@ def register_tests_controllers(
                         daemon=True
                     )
                     thread.start()
+                else:
+                    # BUG-UI-TESTS-001: No thread started — reset spinner
+                    state.tests_running = False
         except Exception as e:
             add_error_trace(state, f"Run tests failed: {str(e)}", "/api/tests/run")
             state.tests_running = False
@@ -197,6 +206,9 @@ def register_tests_controllers(
                         daemon=True,
                     )
                     thread.start()
+                else:
+                    # BUG-UI-TESTS-001: No thread started — reset spinner
+                    state.tests_running = False
         except Exception as e:
             add_error_trace(
                 state, f"Regression failed: {str(e)}",
@@ -207,6 +219,7 @@ def register_tests_controllers(
     def poll_for_regression(run_id: str):
         """Background polling for regression results (longer timeout)."""
         max_polls = 90  # Up to 3 minutes
+        consecutive_errors = 0
         for _ in range(max_polls):
             time.sleep(2)
             try:
@@ -218,13 +231,18 @@ def register_tests_controllers(
                         data = response.json()
                         state.tests_current_run = data
                         state.dirty("tests_current_run")
+                        consecutive_errors = 0
                         if data.get("status") != "running":
                             load_tests_data()
                             state.tests_running = False
                             state.dirty("tests_running")
                             return
-            except Exception:
-                pass
+            except Exception as e:
+                # BUG-UI-TESTS-POLL-001: Log errors, stop after 5 consecutive
+                consecutive_errors += 1
+                if consecutive_errors >= 5:
+                    add_error_trace(state, f"Regression poll stopped: {e}", f"/api/tests/results/{run_id}")
+                    break
         state.tests_running = False
         state.dirty("tests_running")
 
@@ -247,6 +265,10 @@ def register_tests_controllers(
                 if response.status_code == 200:
                     state.robot_summary = response.json()
         except Exception as e:
+            add_error_trace(
+                state, f"Load robot summary failed: {str(e)}",
+                "/api/tests/robot/summary",
+            )
             state.robot_summary = {"available": False, "message": str(e)}
 
     return {

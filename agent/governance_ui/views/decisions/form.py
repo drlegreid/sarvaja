@@ -25,7 +25,7 @@ def build_decision_form_view() -> None:
             v3.VBtn(
                 icon="mdi-arrow-left",
                 variant="text",
-                click="show_decision_form = false",
+                click="trigger('close_decision_form')",
                 __properties=["data-testid"],
                 **{"data-testid": "decision-form-back-btn"}
             )
@@ -158,14 +158,14 @@ def build_decision_form_view() -> None:
             v3.VBtn(
                 "Cancel",
                 variant="text",
-                click="show_decision_form = false",
+                click="trigger('close_decision_form')",
                 __properties=["data-testid"],
                 **{"data-testid": "decision-form-cancel-btn"}
             )
             v3.VBtn(
                 "Save",
                 color="primary",
-                click="submit_decision_form",
+                click="trigger('submit_decision_form')",
                 __properties=["data-testid"],
                 **{"data-testid": "decision-form-save-btn"}
             )

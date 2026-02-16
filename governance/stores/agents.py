@@ -97,6 +97,10 @@ def _load_workflow_configs() -> Dict[str, Dict[str, Any]]:
         with open(_AGENTS_YAML_FILE, "r") as f:
             data = yaml.safe_load(f)
         for yaml_key, agent_conf in (data or {}).get("agents", {}).items():
+            # BUG-AGENTS-YAML-FILE-NO-ERROR-HANDLING-001: Guard against non-dict values
+            if not isinstance(agent_conf, dict):
+                logger.warning(f"agents.yaml: {yaml_key} value is not a dict, skipping")
+                continue
             agent_id = _YAML_KEY_TO_AGENT_ID.get(yaml_key)
             if agent_id:
                 configs[agent_id] = {
@@ -127,9 +131,13 @@ def _load_agent_metrics() -> Dict[str, Dict[str, Any]]:
 
 def _save_agent_metrics(metrics: Dict[str, Any]) -> None:
     """Save agent metrics to JSON file. Per P11.9."""
-    os.makedirs(os.path.dirname(_AGENT_METRICS_FILE), exist_ok=True)
-    with open(_AGENT_METRICS_FILE, "w") as f:
-        json.dump(metrics, f, indent=2)
+    try:
+        os.makedirs(os.path.dirname(_AGENT_METRICS_FILE), exist_ok=True)
+        with open(_AGENT_METRICS_FILE, "w") as f:
+            json.dump(metrics, f, indent=2)
+    except Exception as e:
+        # BUG-METRICS-001: Log instead of crash on filesystem errors
+        logger.warning(f"Failed to save agent metrics: {e}")
 
 
 def _calculate_trust_score(agent_id: str, tasks_executed: int, base_trust: float) -> float:

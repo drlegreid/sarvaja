@@ -37,6 +37,10 @@ def register_project_controllers(state: Any, ctrl: Any, api_base_url: str) -> No
                     sess_resp = client.get(
                         f"{api_base_url}/api/projects/{project_id}/sessions"
                     )
+                    add_api_trace(
+                        state, f"/api/projects/{project_id}/sessions",
+                        "GET", sess_resp.status_code, 0,
+                    )
                     if sess_resp.status_code == 200:
                         data = sess_resp.json()
                         state.project_sessions = (
@@ -45,6 +49,11 @@ def register_project_controllers(state: Any, ctrl: Any, api_base_url: str) -> No
                         )
                     else:
                         state.project_sessions = []
+                        if sess_resp.status_code != 404:
+                            logger.warning(
+                                "Failed to load sessions for project %s: %s",
+                                project_id, sess_resp.status_code,
+                            )
                 else:
                     state.status_message = f"Project {project_id} not found"
         except Exception as e:

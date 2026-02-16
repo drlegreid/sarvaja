@@ -51,6 +51,7 @@ def detect_identical_timestamps(sessions: List[Dict]) -> List[str]:
     """Find sessions that share identical start+end timestamp pairs.
 
     Sessions with the same (start, end) pair indicate bulk backfill artifacts.
+    BUG-REPAIR-001: Uses .get() for null-safe session_id access.
 
     Returns:
         List of session_ids with duplicated timestamp pairs.
@@ -63,7 +64,7 @@ def detect_identical_timestamps(sessions: List[Dict]) -> List[str]:
         if start and end:
             pair = (start, end)
             pairs[pair] += 1
-            session_pairs.setdefault(pair, []).append(s["session_id"])
+            session_pairs.setdefault(pair, []).append(s.get("session_id", "unknown"))
 
     flagged = []
     for pair, count in pairs.items():
@@ -79,7 +80,7 @@ def detect_missing_agent(sessions: List[Dict]) -> List[str]:
         List of session_ids missing agent_id.
     """
     return [
-        s["session_id"] for s in sessions
+        s.get("session_id", "unknown") for s in sessions
         if not s.get("agent_id")
     ]
 
@@ -110,7 +111,7 @@ def detect_negative_durations(sessions: List[Dict]) -> List[str]:
                 st = datetime.fromisoformat(start[:19])
                 et = datetime.fromisoformat(end[:19])
                 if (et - st).total_seconds() < 0:
-                    flagged.append(s["session_id"])
+                    flagged.append(s.get("session_id", "unknown"))
             except (ValueError, TypeError):
                 pass
     return flagged
@@ -134,7 +135,7 @@ def detect_unrealistic_durations(
                 et = datetime.fromisoformat(end[:19])
                 hours = (et - st).total_seconds() / 3600
                 if hours > max_hours:
-                    flagged.append(s["session_id"])
+                    flagged.append(s.get("session_id", "unknown"))
             except (ValueError, TypeError):
                 pass
     return flagged
@@ -192,7 +193,7 @@ def build_repair_plan(sessions: List[Dict]) -> List[Dict]:
     plan = []
 
     for s in sessions:
-        sid = s["session_id"]
+        sid = s.get("session_id", "unknown")
         fixes = {}
 
         # Check timestamps
@@ -259,8 +260,9 @@ def apply_repair(plan_item: Dict, dry_run: bool = True) -> Dict[str, Any]:
     """
     from governance.services.sessions import update_session
 
-    sid = plan_item["session_id"]
-    fixes = plan_item["fixes"]
+    sid = plan_item.get("session_id", "unknown")
+    # BUG-REPAIR-002: Use .get() to avoid KeyError on missing fixes
+    fixes = plan_item.get("fixes", {})
 
     if dry_run:
         return {"session_id": sid, "applied": False, "dry_run": True, "fixes": fixes}
@@ -268,7 +270,25 @@ def apply_repair(plan_item: Dict, dry_run: bool = True) -> Dict[str, Any]:
     kwargs = {}
     if "agent_id" in fixes:
         kwargs["agent_id"] = fixes["agent_id"]
+    # BUG-REPAIR-INCOMPLETE-001: Also apply timestamp and duration fixes
+    if "timestamp" in fixes:
+        ts = fixes["timestamp"]
+        if ts.get("start"):
+            kwargs["start_time"] = ts["start"]
+        if ts.get("end"):
+            kwargs["end_time"] = ts["end"]
+    if "duration" in fixes:
+        dur = fixes["duration"]
+        if dur.get("end_time"):
+            kwargs["end_time"] = dur["end_time"]
 
-    update_session(sid, **kwargs)
+    if not kwargs:
+        return {"session_id": sid, "applied": False, "no_changes": True, "fixes": fixes}
+
+    try:
+        update_session(sid, **kwargs)
+    except Exception as e:
+        logger.error(f"Failed to apply repair for {sid}: {e}")
+        return {"session_id": sid, "applied": False, "error": str(e), "fixes": fixes}
 
     return {"session_id": sid, "applied": True, "fixes": fixes}

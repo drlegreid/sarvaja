@@ -99,7 +99,8 @@ def write_handoff_evidence(
     if evidence_dir is None:
         evidence_dir = Path(__file__).parent.parent.parent.parent / "evidence"
 
-    evidence_dir.mkdir(exist_ok=True)
+    # BUG-HANDOFF-001: Use parents=True so intermediate dirs are created
+    evidence_dir.mkdir(parents=True, exist_ok=True)
 
     # Generate filename: HANDOFF-{task_id}-{from}-{to}.md
     filename = f"HANDOFF-{handoff.task_id}-{handoff.from_agent}-{handoff.to_agent}.md"

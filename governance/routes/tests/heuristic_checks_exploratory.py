@@ -47,26 +47,26 @@ def check_chat_session_count_accuracy(api_base_url: str) -> dict:
     """
     if _is_self_referential(api_base_url):
         return {"status": "SKIP", "message": "Self-referential", "violations": []}
-    sessions = _api_get(api_base_url, "/api/sessions?limit=1")
-    if isinstance(sessions, list):
-        return {"status": "SKIP", "message": "No pagination data", "violations": []}
-    # sessions is actually the raw response since _api_get extracts items
-    # Need direct call for pagination
+    # BUG-HEURISTIC-EXPLR-SKIP-001: Use direct httpx call for pagination data.
+    # _api_get() extracts "items" from dicts, losing pagination metadata.
     try:
         resp = httpx.get(f"{api_base_url}/api/sessions?limit=1", timeout=10.0)
-        if resp.status_code == 200:
-            data = resp.json()
-            api_total = data.get("pagination", {}).get("total", 0)
-            active = [s for s in _api_get(api_base_url, "/api/sessions?limit=200")
-                      if s.get("status") == "ACTIVE"]
-            violations = []
-            if len(active) > 0:
-                violations.append(f"API shows {len(active)} active, total={api_total}")
-            return {
-                "status": "PASS" if api_total > 0 else "FAIL",
-                "message": f"API reports {api_total} sessions, {len(active)} active",
-                "violations": violations,
-            }
+        if resp.status_code != 200:
+            return {"status": "SKIP", "message": "Sessions API unavailable", "violations": []}
+        data = resp.json()
+        if not isinstance(data, dict) or "pagination" not in data:
+            return {"status": "SKIP", "message": "No pagination data", "violations": []}
+        api_total = data.get("pagination", {}).get("total", 0)
+        active = [s for s in _api_get(api_base_url, "/api/sessions?limit=200")
+                  if s.get("status") == "ACTIVE"]
+        violations = []
+        if len(active) > 0:
+            violations.append(f"API shows {len(active)} active, total={api_total}")
+        return {
+            "status": "PASS" if api_total > 0 else "FAIL",
+            "message": f"API reports {api_total} sessions, {len(active)} active",
+            "violations": violations,
+        }
     except Exception:
         pass
     return {"status": "SKIP", "message": "Could not check", "violations": []}

@@ -121,7 +121,7 @@ def compute_session_duration(start: str, end: str) -> str:
         delta = datetime.strptime(et, "%Y-%m-%dT%H:%M:%S") - datetime.strptime(st, "%Y-%m-%dT%H:%M:%S")
         total_seconds = delta.total_seconds()
         if total_seconds < 0:
-            return "invalid"
+            total_seconds = abs(total_seconds)
         total_minutes = int(total_seconds / 60)
         if total_minutes > 1440:  # >24h — likely repair artifact
             return ">24h"
@@ -225,8 +225,9 @@ def format_timestamp(iso_str: str) -> str:
     Returns:
         Formatted string or original if parsing fails
     """
+    # BUG-UI-FORMAT-001: Ensure return type is always string
     if not iso_str or not isinstance(iso_str, str):
-        return iso_str or ""
+        return ""
     try:
         # Strip nanoseconds TypeDB adds (beyond microseconds)
         clean = iso_str.split(".")[0] if "." in iso_str else iso_str.replace("Z", "")

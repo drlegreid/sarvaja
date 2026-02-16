@@ -90,13 +90,17 @@ def _sync_todo_to_api(todo: dict, state: dict) -> bool:
             resp = client.get(f"{API_BASE}/api/tasks/{task_id}")
             if resp.status_code == 200:
                 # Task exists, update status
-                client.patch(
+                # BUG-SYNC-001: Check response to avoid recording failed syncs
+                patch_resp = client.patch(
                     f"{API_BASE}/api/tasks/{task_id}",
                     json={"status": gov_status, "description": content},
                 )
+                if not patch_resp.is_success:
+                    return False
             elif resp.status_code == 404:
                 # Create new task
-                client.post(
+                # BUG-SYNC-001: Check response to avoid recording failed syncs
+                post_resp = client.post(
                     f"{API_BASE}/api/tasks",
                     json={
                         "task_id": task_id,
@@ -106,6 +110,8 @@ def _sync_todo_to_api(todo: dict, state: dict) -> bool:
                         "agent_id": "code-agent",
                     },
                 )
+                if not post_resp.is_success:
+                    return False
 
         # Record sync
         state.setdefault("synced_todos", {})[task_id] = {

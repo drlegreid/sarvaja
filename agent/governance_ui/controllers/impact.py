@@ -49,7 +49,7 @@ def register_impact_controllers(state: Any, ctrl: Any, api_base_url: str) -> Non
         mermaid = generate_mermaid_graph(graph)
         state.mermaid_diagram = mermaid
 
-    @ctrl.set("toggle_graph_view")
+    @ctrl.trigger("toggle_graph_view")
     def toggle_graph_view():
         """Toggle between graph and list view."""
         state.show_graph_view = not state.show_graph_view

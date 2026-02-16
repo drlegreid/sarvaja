@@ -10,6 +10,8 @@ from typing import Any
 
 import httpx
 
+from ..trace_bar.transforms import add_error_trace
+
 API_BASE_URL = os.environ.get("GOVERNANCE_API_URL", "http://localhost:8082")
 
 
@@ -44,7 +46,7 @@ def register_rule_detail_handlers(ctrl: Any, state: Any) -> None:
                     state.rule_implementing_tasks = []
             state.rule_implementing_tasks_loading = False
         except Exception as e:
-            print(f"Error loading implementing tasks for rule {rule_id}: {e}")
+            add_error_trace(state, f"Load implementing tasks failed: {e}", f"/api/rules/{rule_id}/tasks")
             state.rule_implementing_tasks = []
             state.rule_implementing_tasks_loading = False
 

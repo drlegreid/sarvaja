@@ -56,6 +56,7 @@ from governance.api_startup import (  # noqa: F401
     warmup_chromadb_embeddings as _warmup_chromadb,
     seed_data as _seed_data,
     cleanup_orphaned_chat_sessions as _cleanup_orphaned,
+    discover_cc_sessions as _discover_cc_sessions,
     mcp_readiness_handler,
     _module_exists,
     _check_service_integration,
@@ -188,6 +189,18 @@ async def seed_data():
 @app.on_event("startup")
 async def cleanup_orphaned_chat_sessions():
     await _cleanup_orphaned(_sessions_store)
+
+
+@app.on_event("startup")
+async def reload_persisted_sessions():
+    from governance.stores.session_persistence import load_persisted_sessions
+    load_persisted_sessions(_sessions_store)
+
+
+@app.on_event("startup")
+async def auto_discover_cc_sessions():
+    """GAP-SESSION-CC-AUTO-DISCOVERY: Ingest CC sessions on API startup."""
+    await _discover_cc_sessions()
 
 
 # =============================================================================

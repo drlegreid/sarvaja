@@ -3,9 +3,12 @@
 from __future__ import annotations
 
 import json
+import logging
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Generator
+
+logger = logging.getLogger(__name__)
 
 from governance.session_metrics.models import ParsedEntry, ToolResultInfo, ToolUseInfo
 
@@ -123,6 +126,8 @@ def parse_log_file(
             try:
                 obj = json.loads(line)
             except json.JSONDecodeError:
+                # BUG-PARSER-SILENT-001: Log skipped lines for observability
+                logger.debug(f"Skipping malformed JSON line in {filepath}")
                 continue
 
             ts_raw = obj.get("timestamp")
@@ -207,6 +212,8 @@ def parse_log_file_extended(
             try:
                 obj = json.loads(line)
             except json.JSONDecodeError:
+                # BUG-PARSER-SILENT-001: Log skipped lines for observability
+                logger.debug(f"Skipping malformed JSON line in {filepath}")
                 continue
 
             ts_raw = obj.get("timestamp")

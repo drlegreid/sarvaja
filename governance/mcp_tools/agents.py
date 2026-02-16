@@ -209,7 +209,9 @@ def register_agent_tools(mcp) -> None:
                 (executor: $agent, executed: $task) isa task-execution;
             """
             if agent_id:
-                query += f'$agent has agent-id "{agent_id}";'
+                # BUG-AGENT-ACTIVITY-ESCAPE-001: Escape agent_id before TypeQL interpolation
+                agent_id_escaped = agent_id.replace('"', '\\"')
+                query += f'$agent has agent-id "{agent_id_escaped}";'
 
             query += """
                 fetch
@@ -219,7 +221,8 @@ def register_agent_tools(mcp) -> None:
             results = client.execute_fetch(query)
 
             activities = []
-            for r in results[:limit]:
+            # BUG-MCP-001: Null-safe — execute_fetch may return None
+            for r in (results or [])[:limit]:
                 activities.append({
                     "task_id": r.get("tid", {}).get("value", ""),
                     "task_name": r.get("name", {}).get("value", ""),

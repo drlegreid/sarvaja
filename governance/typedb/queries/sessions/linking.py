@@ -51,11 +51,15 @@ class SessionLinkingOperations:
                 now = datetime.now()
                 timestamp_str = now.strftime('%Y-%m-%dT%H:%M:%S')
 
+                # BUG-TYPEDB-INJECTION-001: Escape file paths before TypeQL interpolation
+                evidence_source_escaped = evidence_source.replace('"', '\\"')
+                evidence_id_escaped = evidence_id.replace('"', '\\"')
+
                 # Insert evidence if not exists (TypeDB allows duplicates to be ignored)
                 insert_evidence = f"""
                     insert $e isa evidence-file,
-                        has evidence-id "{evidence_id}",
-                        has evidence-source "{evidence_source}",
+                        has evidence-id "{evidence_id_escaped}",
+                        has evidence-source "{evidence_source_escaped}",
                         has evidence-type "markdown",
                         has evidence-created-at {timestamp_str};
                 """
@@ -64,11 +68,14 @@ class SessionLinkingOperations:
                 except Exception:
                     pass  # Might already exist
 
+                # BUG-TYPEQL-ESCAPE-SESSION-002: Escape session_id
+                session_id_escaped = session_id.replace('"', '\\"')
+
                 # Create the has-evidence relation
                 link_query = f"""
                     match
-                        $s isa work-session, has session-id "{session_id}";
-                        $e isa evidence-file, has evidence-source "{evidence_source}";
+                        $s isa work-session, has session-id "{session_id_escaped}";
+                        $e isa evidence-file, has evidence-source "{evidence_source_escaped}";
                     insert
                         (evidence-session: $s, session-evidence: $e) isa has-evidence;
                 """
@@ -90,9 +97,11 @@ class SessionLinkingOperations:
         Returns:
             List of evidence file paths
         """
+        # BUG-TYPEQL-ESCAPE-SESSION-002: Escape session_id for read query defense
+        session_id_escaped = session_id.replace('"', '\\"')
         query = f"""
             match
-                $s isa work-session, has session-id "{session_id}";
+                $s isa work-session, has session-id "{session_id_escaped}";
                 (evidence-session: $s, session-evidence: $e) isa has-evidence;
                 $e has evidence-source $src;
             select $src;
@@ -118,11 +127,14 @@ class SessionLinkingOperations:
 
         try:
             with self._driver.transaction(self.database, TransactionType.WRITE) as tx:
+                # BUG-TYPEQL-ESCAPE-SESSION-002: Escape IDs before TypeQL interpolation
+                session_id_escaped = session_id.replace('"', '\\"')
+                rule_id_escaped = rule_id.replace('"', '\\"')
                 # Create the session-applied-rule relation
                 link_query = f"""
                     match
-                        $s isa work-session, has session-id "{session_id}";
-                        $r isa rule-entity, has rule-id "{rule_id}";
+                        $s isa work-session, has session-id "{session_id_escaped}";
+                        $r isa rule-entity, has rule-id "{rule_id_escaped}";
                     insert
                         (applying-session: $s, applied-rule: $r) isa session-applied-rule;
                 """
@@ -152,11 +164,14 @@ class SessionLinkingOperations:
 
         try:
             with self._driver.transaction(self.database, TransactionType.WRITE) as tx:
+                # BUG-TYPEQL-ESCAPE-SESSION-002: Escape IDs before TypeQL interpolation
+                session_id_escaped = session_id.replace('"', '\\"')
+                decision_id_escaped = decision_id.replace('"', '\\"')
                 # Create the session-decision relation
                 link_query = f"""
                     match
-                        $s isa work-session, has session-id "{session_id}";
-                        $d isa decision, has decision-id "{decision_id}";
+                        $s isa work-session, has session-id "{session_id_escaped}";
+                        $d isa decision, has decision-id "{decision_id_escaped}";
                     insert
                         (deciding-session: $s, session-made-decision: $d) isa session-decision;
                 """
@@ -178,9 +193,10 @@ class SessionLinkingOperations:
         Returns:
             List of rule IDs
         """
+        session_id_escaped = session_id.replace('"', '\\"')
         query = f"""
             match
-                $s isa work-session, has session-id "{session_id}";
+                $s isa work-session, has session-id "{session_id_escaped}";
                 (applying-session: $s, applied-rule: $r) isa session-applied-rule;
                 $r has rule-id $rid;
             select $rid;
@@ -198,9 +214,10 @@ class SessionLinkingOperations:
         Returns:
             List of decision IDs
         """
+        session_id_escaped = session_id.replace('"', '\\"')
         query = f"""
             match
-                $s isa work-session, has session-id "{session_id}";
+                $s isa work-session, has session-id "{session_id_escaped}";
                 (deciding-session: $s, session-made-decision: $d) isa session-decision;
                 $d has decision-id $did;
             select $did;

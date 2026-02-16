@@ -62,7 +62,7 @@ def parse_pytest_output(output: str) -> list:
 
     # If no tests found (quiet mode), parse FAILURES section for failed test names
     if not tests:
-        failure_pattern = re.compile(r"_+\s+([\w.:\[\]]+)\s+_+")
+        failure_pattern = re.compile(r"_+\s+([\w.:\[\]/\-]+)\s+_+")
         for match in failure_pattern.finditer(output):
             tests.append({"nodeid": match.group(1), "outcome": "failed", "duration": 0.0})
 

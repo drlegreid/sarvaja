@@ -17,23 +17,31 @@ class TaskReadQueries:
 
     def _fetch_task_attr(self, task_id: str, attr_name: str, var_name: str) -> Optional[str]:
         """Fetch a single optional attribute for a task. DRY helper for _build_task_from_id."""
+        # BUG-TYPEQL-ESCAPE-TASK-002: Escape task_id for TypeQL safety
+        tid = task_id.replace('"', '\\"')
         results = self._safe_query(
-            f'match $t isa task, has task-id "{task_id}", has {attr_name} ${var_name}; select ${var_name};'
+            f'match $t isa task, has task-id "{tid}", has {attr_name} ${var_name}; select ${var_name};'
         )
         return results[0].get(var_name) if results else None
 
     def _fetch_task_relation(self, task_id: str, query: str, var_name: str) -> List[str]:
         """Fetch a list of related IDs for a task. DRY helper for relationship queries."""
-        results = self._safe_query(query.format(task_id=task_id))
-        return [r.get(var_name) for r in results] if results else None
+        # BUG-TYPEQL-ESCAPE-TASK-002: Escape task_id for TypeQL safety
+        tid = task_id.replace('"', '\\"')
+        results = self._safe_query(query.format(task_id=tid))
+        # BUG-TASK-EXTRACT-002: Return [] not None when no results (matches List[str] return type)
+        return [r.get(var_name) for r in results] if results else []
 
     def get_all_tasks(self, status: str = None, phase: str = None, agent_id: str = None) -> List[Task]:
         """Get all tasks with optional filters. Per EPIC-DR-001: batch queries optimization."""
         filters = []
         if status:
-            filters.append(f'has task-status "{status}"')
+            # BUG-TYPEQL-ESCAPE-TASK-002: Escape filter values for TypeQL safety
+            status_esc = status.replace('"', '\\"')
+            filters.append(f'has task-status "{status_esc}"')
         if phase:
-            filters.append(f'has phase "{phase}"')
+            phase_esc = phase.replace('"', '\\"')
+            filters.append(f'has phase "{phase_esc}"')
 
         filter_clause = ", ".join(filters) if filters else ""
         query = f"""
@@ -177,8 +185,10 @@ class TaskReadQueries:
 
     def _build_task_from_id(self, task_id: str) -> Optional[Task]:
         """Build a full Task object from TypeDB by ID."""
+        # BUG-TYPEQL-ESCAPE-TASK-002: Escape task_id for TypeQL safety
+        tid = task_id.replace('"', '\\"')
         query = f"""
-            match $t isa task, has task-id "{task_id}";
+            match $t isa task, has task-id "{tid}";
             $t has task-name $name,
                has task-status $status,
                has phase $phase;

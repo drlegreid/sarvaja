@@ -117,6 +117,10 @@ def ingest_all(
 ) -> List[Dict[str, Any]]:
     """Batch ingest all JSONL sessions from a CC project directory."""
     if directory is None:
+        # BUG-INGEST-001: Guard against missing CC directory
+        if not _DEFAULT_CC_DIR.is_dir():
+            logger.warning(f"CC directory not found: {_DEFAULT_CC_DIR}")
+            return []
         # Auto-discover: find the sarvaja project directory
         for d in _DEFAULT_CC_DIR.iterdir():
             if d.is_dir() and "sarvaja" in d.name.lower():
@@ -133,7 +137,11 @@ def ingest_all(
     results = []
 
     for f in files:
-        if f.stat().st_size == 0:
+        # BUG-INGEST-STAT-001: Guard against file deleted between discovery and stat
+        try:
+            if f.stat().st_size == 0:
+                continue
+        except (FileNotFoundError, OSError):
             continue
         result = ingest_session(
             f, project_slug=project_slug,
@@ -192,24 +200,55 @@ def get_session_detail(
         thinking_total = 0
         all_tool_calls = []
         all_thinking = []
+        # Correlation maps for latency + server_name (BUG-TOOL-META-001)
+        pending_uses = {}  # tool_use_id → index in all_tool_calls
 
         for entry in parse_log_file(jsonl_path, include_thinking=include_thinking):
+            # Correlate tool_results with pending tool_uses
+            for tr in entry.tool_results:
+                # BUG-INGEST-001: Skip empty tool_use_id to avoid dict key collision
+                if not tr.tool_use_id:
+                    continue
+                idx = pending_uses.pop(tr.tool_use_id, None)
+                if idx is not None and idx < len(all_tool_calls):
+                    call = all_tool_calls[idx]
+                    if tr.server_name:
+                        call["server_name"] = tr.server_name
+                    # Compute latency: result timestamp - use timestamp
+                    use_ts = call.get("_use_ts")
+                    # BUG-INGEST-004: Guard against None entry.timestamp
+                    if use_ts and entry.timestamp:
+                        latency = int((entry.timestamp - use_ts).total_seconds() * 1000)
+                        if latency >= 0:
+                            call["latency_ms"] = latency
+
             for tu in entry.tool_uses:
                 tool_breakdown[tu.name] += 1
                 if zoom >= 2:
-                    all_tool_calls.append({
+                    call_entry = {
                         "name": tu.name,
                         "input_summary": tu.input_summary,
                         "is_mcp": tu.is_mcp,
-                        "timestamp": entry.timestamp.isoformat(),
-                    })
+                        # BUG-INGEST-002: Guard against None timestamp
+                        "timestamp": entry.timestamp.isoformat() if entry.timestamp else None,
+                        "tool_category": _classify_tool(tu.name),
+                    }
+                    if tu.tool_use_id:
+                        call_entry["_use_ts"] = entry.timestamp
+                        pending_uses[tu.tool_use_id] = len(all_tool_calls)
+                    all_tool_calls.append(call_entry)
             thinking_total += entry.thinking_chars
             if zoom >= 3 and entry.thinking_content:
                 all_thinking.append({
                     "content": entry.thinking_content,
                     "chars": entry.thinking_chars,
-                    "timestamp": entry.timestamp.isoformat(),
+                    # BUG-INGEST-003: Guard against None timestamp (matches line 224)
+                    "timestamp": entry.timestamp.isoformat() if entry.timestamp else None,
                 })
+
+        # Strip internal _use_ts from output
+        for call in all_tool_calls:
+            call.pop("_use_ts", None)
 
         result["tool_breakdown"] = dict(tool_breakdown.most_common(20))
         result["thinking_summary"] = {
@@ -251,15 +290,40 @@ def get_session_detail(
     return result
 
 
+def _classify_tool(tool_name: str) -> str:
+    """Classify tool by category. Inline version to avoid cross-layer import."""
+    if not tool_name:
+        return "unknown"
+    if tool_name.startswith("/"):
+        return "chat_command"
+    _builtins = {"Read", "Write", "Edit", "Bash", "Glob", "Grep",
+                 "TodoWrite", "Task", "WebSearch", "WebFetch",
+                 "NotebookEdit", "AskUserQuestion", "EnterPlanMode",
+                 "ExitPlanMode", "ToolSearch", "Skill"}
+    if tool_name in _builtins:
+        return "cc_builtin"
+    if any(tool_name.startswith(p) for p in
+           ("mcp__gov-core__", "mcp__gov-sessions__",
+            "mcp__gov-tasks__", "mcp__gov-agents__")):
+        return "mcp_governance"
+    if tool_name.startswith("mcp__"):
+        return "mcp_other"
+    return "unknown"
+
+
 def _collect_tool_calls_from_store(store_data: Dict) -> List[Dict[str, Any]]:
     """Extract tool calls from _sessions_store for chat-bridge sessions."""
     calls = []
     for tc in store_data.get("tool_calls", []):
+        name = tc.get("tool_name", "")
         calls.append({
-            "name": tc.get("tool_name", ""),
+            "name": name,
             "input_summary": str(tc.get("arguments", {}))[:200],
-            "is_mcp": tc.get("tool_name", "").startswith("mcp__"),
+            "is_mcp": name.startswith("mcp__"),
             "timestamp": tc.get("timestamp", ""),
+            "tool_category": _classify_tool(name),
+            "server_name": tc.get("server_name"),
+            "latency_ms": tc.get("duration_ms"),
         })
     return calls
 
@@ -281,11 +345,15 @@ def render_markdown(text: str) -> str:
 
     Uses a lightweight regex-based approach to avoid heavy dependencies.
     Handles: headers, bold, italic, code blocks, inline code, lists, links.
+
+    BUG-UI-XSS-001: HTML entities are escaped FIRST to prevent XSS via
+    evidence files containing <script> or other HTML tags.
     """
     if not text:
         return ""
 
-    html = text
+    import html as html_mod
+    html = html_mod.escape(text)
 
     # Code blocks (``` ... ```)
     html = re.sub(

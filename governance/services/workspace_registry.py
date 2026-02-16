@@ -214,7 +214,9 @@ def get_agent_templates_for_type(type_id: str) -> List[Dict[str, Any]]:
     wt = get_workspace_type(type_id)
     if wt:
         return wt.agent_templates
-    return get_workspace_type("generic").agent_templates
+    # BUG-REGISTRY-001: Guard against missing generic type
+    generic = get_workspace_type("generic")
+    return generic.agent_templates if generic else []
 
 
 def detect_project_type(path: str) -> str:

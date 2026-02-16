@@ -28,7 +28,7 @@ def build_agent_detail_view() -> None:
             v3.VBtn(
                 icon="mdi-arrow-left",
                 variant="text",
-                click="show_agent_detail = false; selected_agent = null",
+                click="trigger('close_agent_detail')",
                 __properties=["data-testid"],
                 **{"data-testid": "agent-detail-back-btn"}
             )

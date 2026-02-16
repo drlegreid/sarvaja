@@ -29,7 +29,7 @@ def register_trust_controllers(state: Any, ctrl: Any, api_base_url: str) -> None
         api_base_url: Base URL for API calls
     """
 
-    @ctrl.set("select_agent")
+    @ctrl.trigger("select_agent")
     def select_agent(agent_id):
         """Select agent for detail view. Per EPIC-A.4: Fetch linked sessions."""
         for agent in state.agents:
@@ -42,6 +42,7 @@ def register_trust_controllers(state: Any, ctrl: Any, api_base_url: str) -> None
         try:
             with httpx.Client(timeout=10.0) as client:
                 resp = client.get(f"{api_base_url}/api/agents/{agent_id}/sessions")
+                add_api_trace(state, f"/api/agents/{agent_id}/sessions", "GET", resp.status_code, 0)
                 if resp.status_code == 200:
                     data = resp.json()
                     sessions = data.get("sessions", [])
@@ -50,14 +51,16 @@ def register_trust_controllers(state: Any, ctrl: Any, api_base_url: str) -> None
                         updated = dict(state.selected_agent)
                         updated["sessions_count"] = data.get("pagination", {}).get("total", len(sessions))
                         state.selected_agent = updated
-        except Exception:
+        except Exception as e:
+            add_error_trace(state, f"Load agent sessions failed: {e}", f"/api/agents/{agent_id}/sessions")
             state.agent_sessions = []
 
-    @ctrl.set("close_agent_detail")
+    @ctrl.trigger("close_agent_detail")
     def close_agent_detail():
-        """Close agent detail view."""
+        """Close agent detail view and reset associated state."""
         state.selected_agent = None
         state.show_agent_detail = False
+        state.agent_sessions = []
 
     @ctrl.trigger("toggle_agent_pause")
     def toggle_agent_pause(agent_id):
@@ -110,6 +113,7 @@ def register_trust_controllers(state: Any, ctrl: Any, api_base_url: str) -> None
         if not agent_id or not name:
             state.status_message = "Agent ID and name are required"
             return
+        state.has_error = False
         try:
             with httpx.Client(timeout=10.0) as client:
                 response = client.post(f"{api_base_url}/api/agents", json={

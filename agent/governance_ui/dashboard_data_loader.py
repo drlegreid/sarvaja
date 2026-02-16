@@ -6,6 +6,8 @@ Handles REST API loading at dashboard startup with MCP fallback.
 """
 
 import logging
+import threading
+from pathlib import Path
 from typing import Any
 
 from agent.governance_ui.utils import (
@@ -43,7 +45,9 @@ def load_initial_data(
             _load_tasks(state, client, api_base_url, get_tasks, page_size)
             _load_projects(state, client, api_base_url)
             _load_tests(state, client, api_base_url)
-    except Exception:
+    except Exception as e:
+        # BUG-LOG-002: Log fallback instead of silently swallowing
+        logger.warning(f"REST API loading failed, falling back to MCP: {e}")
         state.rules = get_rules()
         state.decisions = get_decisions()
         state.sessions = get_sessions(limit=100)
@@ -141,7 +145,6 @@ def _auto_ingest_cc_sessions(cc_proj: dict) -> None:
     sessions so they appear on dashboard without manual backfill.
     """
     try:
-        from pathlib import Path
         from governance.services.cc_session_ingestion import ingest_all
         cc_dir = cc_proj.get("cc_directory")
         if not cc_dir:
@@ -171,12 +174,16 @@ def _load_projects(state, client, api_base_url) -> None:
             existing = data.get("items", data) if isinstance(data, dict) else data
         else:
             existing = []
-    except Exception:
+    except Exception as e:
+        logger.debug(f"Failed to load projects from API: {e}")
         existing = []
 
     # Auto-discover CC projects and create missing ones
     try:
-        from governance.services.cc_session_scanner import discover_cc_projects
+        from governance.services.cc_session_scanner import (
+            discover_cc_projects,
+            discover_filesystem_projects,
+        )
         from governance.services.workspace_registry import detect_project_type
         cc_projects = discover_cc_projects()
         existing_ids = {p.get("project_id") for p in existing}
@@ -199,14 +206,66 @@ def _load_projects(state, client, api_base_url) -> None:
                         created = create_resp.json()
                         created["session_count"] = cc_proj["session_count"]
                         existing.append(created)
+                        existing_ids.add(cc_proj["project_id"])
                         logger.info(f"Auto-created project: {cc_proj['project_id']} (type={proj_type})")
                 except Exception as e:
                     logger.debug(f"Auto-create project failed for {cc_proj['project_id']}: {e}")
 
-            # Auto-ingest CC sessions for this project (idempotent)
-            _auto_ingest_cc_sessions(cc_proj)
+            # Auto-ingest CC sessions in background (P3 fix: non-blocking startup)
+            thread = threading.Thread(
+                target=_auto_ingest_cc_sessions,
+                args=(cc_proj,),
+                daemon=True,
+            )
+            thread.start()
     except Exception as e:
         logger.debug(f"CC project discovery failed: {e}")
+
+    # Filesystem-based discovery for projects without CC directories (P2 fix)
+    try:
+        from governance.services.cc_session_scanner import discover_filesystem_projects
+        existing_paths = {p.get("path", "") for p in existing}
+        existing_ids = {p.get("project_id") for p in existing}
+
+        # Scan parent directories of known projects for siblings
+        scan_dirs = set()
+        for proj in existing:
+            proj_path = proj.get("path", "")
+            if proj_path:
+                parent = str(Path(proj_path).parent)
+                scan_dirs.add(parent)
+                # Also scan sibling directories (e.g., ~/Documents/Vibe/)
+                grandparent = str(Path(proj_path).parent.parent)
+                scan_dirs.add(grandparent)
+
+        fs_projects = discover_filesystem_projects(
+            scan_dirs=list(scan_dirs),
+            existing_paths=existing_paths,
+            existing_ids=existing_ids,
+        )
+
+        for fs_proj in fs_projects:
+            try:
+                create_resp = client.post(
+                    f"{api_base_url}/api/projects",
+                    json={
+                        "project_id": fs_proj["project_id"],
+                        "name": fs_proj["name"],
+                        "path": fs_proj["path"],
+                        "project_type": fs_proj.get("project_type", "generic"),
+                    },
+                )
+                if create_resp.status_code in (200, 201):
+                    created = create_resp.json()
+                    existing.append(created)
+                    logger.info(f"Auto-created FS project: {fs_proj['project_id']} (type={fs_proj.get('project_type')})")
+                else:
+                    existing.append(fs_proj)
+            except Exception as e:
+                logger.debug(f"Auto-create FS project failed for {fs_proj['project_id']}: {e}")
+                existing.append(fs_proj)
+    except Exception as e:
+        logger.debug(f"Filesystem project discovery failed: {e}")
 
     state.projects = existing
 
@@ -225,7 +284,8 @@ def _load_tests(state, client, api_base_url) -> None:
         cvp_resp = client.get(f"{api_base_url}/api/tests/cvp/status")
         if cvp_resp.status_code == 200:
             state.tests_cvp_status = cvp_resp.json()
-    except Exception:
+    except Exception as e:
+        logger.debug(f"Failed to load test results: {e}")
         state.tests_recent_runs = []
 
 
@@ -251,5 +311,8 @@ def _load_tasks(state, client, api_base_url, get_tasks, page_size) -> None:
         state.tasks = format_timestamps_in_list(
             state.tasks, ["created_at", "completed_at", "claimed_at"]
         )
+        # BUG-UI-TASKS-004: Enrich doc_count for Docs column
+        from agent.governance_ui.controllers.tasks import _enrich_doc_count
+        state.tasks = _enrich_doc_count(state.tasks)
     else:
         state.tasks = get_tasks()

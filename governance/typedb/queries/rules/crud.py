@@ -70,15 +70,18 @@ class RuleCRUDOperations:
         if existing:
             raise ValueError(f"Rule {rule_id} already exists")
 
-        # Escape quotes in directive
+        # BUG-RULE-CREATE-NAME-001: Escape all user-provided string fields
+        name_escaped = name.replace('"', '\\"')
         directive_escaped = directive.replace('"', '\\"')
+        # BUG-TYPEQL-ESCAPE-RULE-001: Escape rule_id for defense-in-depth
+        rule_id_escaped = rule_id.replace('"', '\\"')
 
         # Build query with optional rule_type
         type_clause = f',\n                has rule-type "{rule_type}"' if rule_type else ''
         query = f'''
             insert $r isa rule-entity,
-                has rule-id "{rule_id}",
-                has rule-name "{name}",
+                has rule-id "{rule_id_escaped}",
+                has rule-name "{name_escaped}",
                 has category "{category}",
                 has priority "{priority}",
                 has status "{status}",
@@ -132,15 +135,21 @@ class RuleCRUDOperations:
         updates = []
         new_attrs = []  # For attributes that don't exist yet
         if name is not None and name != existing.name:
-            updates.append(('rule-name', existing.name.replace('"', '\\"'), name.replace('"', '\\"')))
+            # BUG-RULE-NULL-001: Guard against None from corrupted TypeDB data
+            old_name = (existing.name or "").replace('"', '\\"')
+            updates.append(('rule-name', old_name, name.replace('"', '\\"')))
         if category is not None and category != existing.category:
-            updates.append(('category', existing.category.replace('"', '\\"'), category.replace('"', '\\"')))
+            old_cat = (existing.category or "").replace('"', '\\"')
+            updates.append(('category', old_cat, category.replace('"', '\\"')))
         if priority is not None and priority != existing.priority:
-            updates.append(('priority', existing.priority.replace('"', '\\"'), priority.replace('"', '\\"')))
+            old_pri = (existing.priority or "").replace('"', '\\"')
+            updates.append(('priority', old_pri, priority.replace('"', '\\"')))
         if status is not None and status != existing.status:
-            updates.append(('status', existing.status.replace('"', '\\"'), status.replace('"', '\\"')))
+            old_status = (existing.status or "").replace('"', '\\"')
+            updates.append(('status', old_status, status.replace('"', '\\"')))
         if directive is not None and directive != existing.directive:
-            updates.append(('directive', existing.directive.replace('"', '\\"'), directive.replace('"', '\\"')))
+            old_dir = (existing.directive or "").replace('"', '\\"')
+            updates.append(('directive', old_dir, directive.replace('"', '\\"')))
         if rule_type is not None:
             if existing.rule_type is None:
                 new_attrs.append(('rule-type', rule_type.replace('"', '\\"')))
@@ -164,13 +173,16 @@ class RuleCRUDOperations:
         if not updates and not new_attrs:
             return existing  # Nothing to update
 
+        # BUG-TYPEQL-ESCAPE-RULE-001: Escape rule_id for TypeQL safety
+        rule_id_escaped = rule_id.replace('"', '\\"')
+
         # Execute updates - TypeDB 3.x: driver.transaction() directly
         with self._driver.transaction(self.database, TransactionType.WRITE) as tx:
             for attr_type, old_val, new_val in updates:
                 # Delete old attribute and insert new one (TypeDB 3.x: has $var of $entity)
                 delete_query = f'''
                     match
-                        $r isa rule-entity, has rule-id "{rule_id}", has {attr_type} $a;
+                        $r isa rule-entity, has rule-id "{rule_id_escaped}", has {attr_type} $a;
                         $a == "{old_val}";
                     delete
                         has $a of $r;
@@ -179,7 +191,7 @@ class RuleCRUDOperations:
 
                 insert_query = f'''
                     match
-                        $r isa rule-entity, has rule-id "{rule_id}";
+                        $r isa rule-entity, has rule-id "{rule_id_escaped}";
                     insert
                         $r has {attr_type} "{new_val}";
                 '''
@@ -189,7 +201,7 @@ class RuleCRUDOperations:
             for attr_type, new_val in new_attrs:
                 insert_query = f'''
                     match
-                        $r isa rule-entity, has rule-id "{rule_id}";
+                        $r isa rule-entity, has rule-id "{rule_id_escaped}";
                     insert
                         $r has {attr_type} "{new_val}";
                 '''
@@ -238,13 +250,16 @@ class RuleCRUDOperations:
 
         from typedb.driver import TransactionType
 
+        # BUG-TYPEQL-ESCAPE-RULE-001: Escape rule_id for TypeQL safety
+        rule_id_escaped = rule_id.replace('"', '\\"')
+
         # TypeDB 3.x: driver.transaction() directly
         with self._driver.transaction(self.database, TransactionType.WRITE) as tx:
             # Delete the rule entity and all its attributes
             # TypeDB 3.x syntax: delete $r; (not delete $r isa rule-entity;)
             delete_query = f'''
                 match
-                    $r isa rule-entity, has rule-id "{rule_id}";
+                    $r isa rule-entity, has rule-id "{rule_id_escaped}";
                 delete
                     $r;
             '''

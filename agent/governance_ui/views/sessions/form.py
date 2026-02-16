@@ -25,7 +25,7 @@ def build_session_form_view() -> None:
             v3.VBtn(
                 icon="mdi-arrow-left",
                 variant="text",
-                click="show_session_form = false",
+                click="trigger('close_session_form')",
                 __properties=["data-testid"],
                 **{"data-testid": "session-form-back-btn"}
             )
@@ -84,14 +84,14 @@ def build_session_form_view() -> None:
             v3.VBtn(
                 "Cancel",
                 variant="text",
-                click="show_session_form = false",
+                click="trigger('close_session_form')",
                 __properties=["data-testid"],
                 **{"data-testid": "session-form-cancel-btn"}
             )
             v3.VBtn(
                 "Save",
                 color="primary",
-                click="submit_session_form",
+                click="trigger('submit_session_form')",
                 __properties=["data-testid"],
                 **{"data-testid": "session-form-save-btn"}
             )

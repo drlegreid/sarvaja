@@ -10,8 +10,11 @@ from trame.widgets import vuetify3 as v3, html
 
 from .content import build_session_metadata_chips, build_session_info_card
 from .evidence import build_evidence_files_card
+from .evidence_preview import build_evidence_preview_card
 from .tasks import build_completed_tasks_card
 from .tool_calls import build_tool_calls_card
+from .session_timeline import build_session_timeline_card
+from .session_transcript import build_session_transcript_card
 
 
 def build_session_detail_view() -> None:
@@ -22,15 +25,15 @@ def build_session_detail_view() -> None:
     """
     with v3.VCard(
         v_if="active_view === 'sessions' && show_session_detail && selected_session",
-        classes="fill-height",
+        classes="fill-height d-flex flex-column",
         __properties=["data-testid"],
         **{"data-testid": "session-detail"}
     ):
-        with v3.VCardTitle(classes="d-flex align-center"):
+        with v3.VCardTitle(classes="d-flex align-center flex-shrink-0"):
             v3.VBtn(
                 icon="mdi-arrow-left",
                 variant="text",
-                click="show_session_detail = false; selected_session = null",
+                click="trigger('close_session_detail')",
                 __properties=["data-testid"],
                 **{"data-testid": "session-detail-back-btn"}
             )
@@ -45,7 +48,7 @@ def build_session_detail_view() -> None:
                 "Edit",
                 color="primary",
                 prepend_icon="mdi-pencil",
-                click="session_form_mode = 'edit'; show_session_form = true",
+                click="trigger('open_session_form', ['edit'])",
                 __properties=["data-testid"],
                 **{"data-testid": "session-detail-edit-btn"}
             )
@@ -53,24 +56,36 @@ def build_session_detail_view() -> None:
                 "Delete",
                 color="error",
                 prepend_icon="mdi-delete",
-                click="delete_session",
+                click="trigger('delete_session')",
                 classes="ml-2",
                 __properties=["data-testid"],
                 **{"data-testid": "session-detail-delete-btn"}
             )
 
-        with v3.VCardText():
+        with v3.VCardText(
+            classes="flex-grow-1",
+            style="overflow-y: auto; min-height: 0",
+        ):
             # Session metadata
             build_session_metadata_chips()
 
             # Session details
             build_session_info_card()
 
+            # Conversation Transcript (GAP-SESSION-TRANSCRIPT-001)
+            build_session_transcript_card()
+
             # Evidence Files section (GAP-DATA-003)
             build_evidence_files_card()
 
+            # Rendered Evidence Preview (GAP-SESSION-DETAIL-002)
+            build_evidence_preview_card()
+
             # Completed Tasks section (GAP-DATA-INTEGRITY-001 Phase 3)
             build_completed_tasks_card()
+
+            # Activity Timeline — merged chronological view (GAP-SESSION-DETAIL-001)
+            build_session_timeline_card()
 
             # Tool Calls drill-down (PLAN-UI-OVERHAUL-001 Task 5.2)
             build_tool_calls_card()

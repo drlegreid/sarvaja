@@ -290,8 +290,10 @@ def register_dsm_tools(mcp) -> None:
 
         try:
             tracker.update_metrics(metrics)
+            # BUG-DSM-METRICS-001: Guard current_cycle access after update
+            cycle_metrics = tracker.current_cycle.metrics if tracker.current_cycle else metrics
             return format_mcp_result({
-                "metrics": tracker.current_cycle.metrics,
+                "metrics": cycle_metrics,
                 "message": "Metrics updated"
             })
         except Exception as e:

@@ -9,9 +9,13 @@ Provides:
 - submit_proposal: Governance proposal via LangGraph
 """
 
-import os
 import httpx
 from typing import Any
+
+from agent.governance_ui.trace_bar.transforms import (
+    add_api_trace,
+    add_error_trace,
+)
 
 
 def register_workflow_loader_controllers(
@@ -66,25 +70,25 @@ def register_workflow_loader_controllers(
         state.workflow_loading = True
         load_workflow_status()
         # Also load proposal workflow info and history
-        api_url = os.getenv('GOVERNANCE_API_URL', 'http://localhost:8082')
         try:
-            resp = httpx.get(f"{api_url}/api/proposals/workflow-info", timeout=10.0)
+            resp = httpx.get(f"{api_base_url}/api/proposals/workflow-info", timeout=10.0)
+            add_api_trace(state, "/api/proposals/workflow-info", "GET", resp.status_code, 0)
             if resp.status_code == 200:
                 state.workflow_info = resp.json()
-        except Exception:
-            pass
+        except Exception as e:
+            add_error_trace(state, f"Load workflow info failed: {e}", "/api/proposals/workflow-info")
         try:
-            resp = httpx.get(f"{api_url}/api/proposals/history", timeout=10.0)
+            resp = httpx.get(f"{api_base_url}/api/proposals/history", timeout=10.0)
+            add_api_trace(state, "/api/proposals/history", "GET", resp.status_code, 0)
             if resp.status_code == 200:
                 state.proposal_history = resp.json().get("items", [])
-        except Exception:
-            pass
+        except Exception as e:
+            add_error_trace(state, f"Load proposal history failed: {e}", "/api/proposals/history")
 
     @ctrl.trigger("submit_proposal")
     def trigger_submit_proposal():
         """Submit a governance proposal through LangGraph workflow."""
         state.proposal_submitting = True
-        api_url = os.getenv('GOVERNANCE_API_URL', 'http://localhost:8082')
         try:
             evidence = [e.strip() for e in (state.proposal_evidence or "").split(",") if e.strip()]
             body = {
@@ -95,15 +99,17 @@ def register_workflow_loader_controllers(
                 "directive": state.proposal_directive or None,
                 "dry_run": state.proposal_dry_run if hasattr(state, 'proposal_dry_run') else True,
             }
-            resp = httpx.post(f"{api_url}/api/proposals/submit", json=body, timeout=30.0)
+            resp = httpx.post(f"{api_base_url}/api/proposals/submit", json=body, timeout=30.0)
+            add_api_trace(state, "/api/proposals/submit", "POST", resp.status_code, 0, request_body=body)
             if resp.status_code == 200:
                 state.proposal_result = resp.json()
-                hist = httpx.get(f"{api_url}/api/proposals/history", timeout=10.0)
+                hist = httpx.get(f"{api_base_url}/api/proposals/history", timeout=10.0)
                 if hist.status_code == 200:
                     state.proposal_history = hist.json().get("items", [])
             else:
                 state.proposal_result = {"decision": "error", "decision_reasoning": resp.text}
         except Exception as e:
+            add_error_trace(state, f"Submit proposal failed: {e}", "/api/proposals/submit")
             state.proposal_result = {"decision": "error", "decision_reasoning": str(e)}
         state.proposal_submitting = False
 

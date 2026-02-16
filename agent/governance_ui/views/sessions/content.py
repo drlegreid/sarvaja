@@ -159,8 +159,9 @@ def build_session_info_card() -> None:
                 size="small",
                 color="primary",
                 variant="outlined",
-                classes="mr-1 mb-1",
+                classes="mr-1 mb-1 cursor-pointer",
                 prepend_icon="mdi-gavel",
+                click="trigger('navigate_to_rule_from_session', [rule])",
             )
 
     # Linked decisions (EPIC-UI-VALUE-001)
@@ -189,6 +190,7 @@ def build_session_info_card() -> None:
                 size="small",
                 color="warning",
                 variant="outlined",
-                classes="mr-1 mb-1",
+                classes="mr-1 mb-1 cursor-pointer",
                 prepend_icon="mdi-scale-balance",
+                click="trigger('navigate_to_decision_from_session', [dec])",
             )

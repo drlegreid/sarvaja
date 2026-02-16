@@ -65,7 +65,7 @@ def _build_project_detail():
         with v3.VCardTitle(classes="d-flex align-center"):
             v3.VBtn(
                 icon="mdi-arrow-left", variant="text",
-                click="selected_project = null",
+                click="selected_project = null; project_sessions = []",
             )
             html.Span("{{ selected_project.name || selected_project.project_id }}")
             v3.VSpacer()

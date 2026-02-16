@@ -141,7 +141,8 @@ class TaskDetailOperations:
             logger.warning(f"Task {task_id} not found")
             return False
 
-        # Escape content for TypeQL
+        # BUG-TASK-DETAIL-MISSING-ESCAPE: Escape task_id and content for TypeQL
+        task_id_escaped = task_id.replace('"', '\\"')
         content_escaped = content.replace('\\', '\\\\').replace('"', '\\"')
 
         try:
@@ -149,7 +150,7 @@ class TaskDetailOperations:
                 # Delete existing attribute if present (TypeDB 3.x: has $var of $entity)
                 delete_query = f"""
                     match
-                        $t isa task, has task-id "{task_id}", has {attribute} $old;
+                        $t isa task, has task-id "{task_id_escaped}", has {attribute} $old;
                     delete
                         has $old of $t;
                 """
@@ -161,7 +162,7 @@ class TaskDetailOperations:
                 # Insert new attribute
                 insert_query = f"""
                     match
-                        $t isa task, has task-id "{task_id}";
+                        $t isa task, has task-id "{task_id_escaped}";
                     insert
                         $t has {attribute} "{content_escaped}";
                 """

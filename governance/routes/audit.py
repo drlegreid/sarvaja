@@ -53,6 +53,8 @@ async def list_audit_entries(
     correlation_id: Optional[str] = Query(None, description="Filter by correlation ID"),
     action_type: Optional[str] = Query(None, description="Filter by action type"),
     actor_id: Optional[str] = Query(None, description="Filter by actor ID"),
+    date_from: Optional[str] = Query(None, description="Include entries on/after (YYYY-MM-DD)"),
+    date_to: Optional[str] = Query(None, description="Include entries on/before (YYYY-MM-DD)"),
     limit: int = Query(50, ge=1, le=500, description="Max results"),
     offset: int = Query(0, ge=0, description="Skip first N results")
 ):
@@ -60,6 +62,7 @@ async def list_audit_entries(
     List audit trail entries with optional filters.
 
     Per RD-DEBUG-AUDIT: Audit trail queryable by entity_id.
+    Per GAP-AUDIT-RANGE-001: date_from/date_to timestamp range filter.
     """
     entries = query_audit_trail(
         entity_id=entity_id,
@@ -67,6 +70,8 @@ async def list_audit_entries(
         correlation_id=correlation_id,
         action_type=action_type,
         actor_id=actor_id,
+        date_from=date_from,
+        date_to=date_to,
         limit=limit,
         offset=offset
     )

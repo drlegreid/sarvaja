@@ -90,7 +90,7 @@ class TestTaskClaimCompleteButtons:
         mod = importlib.import_module("agent.governance_ui.views.tasks.detail")
         source = inspect.getsource(mod.build_task_detail_view)
         assert "task-detail-claim-btn" in source
-        assert "claim_task" in source
+        assert "claim_selected_task" in source
 
     def test_detail_has_complete_button(self):
         """Task detail should have Complete button for IN_PROGRESS tasks."""
@@ -99,7 +99,7 @@ class TestTaskClaimCompleteButtons:
         mod = importlib.import_module("agent.governance_ui.views.tasks.detail")
         source = inspect.getsource(mod.build_task_detail_view)
         assert "task-detail-complete-btn" in source
-        assert "complete_task" in source
+        assert "complete_selected_task" in source
 
 
 # ── Task Controller: Claim/Complete ──────────────────────────
@@ -129,7 +129,7 @@ class TestTaskClaimController:
         state.tasks_pagination = {}
 
         register_tasks_controllers(state, ctrl, "http://test:8082")
-        assert "claim_task" in triggers
+        assert "claim_selected_task" in triggers
 
         mock_resp = MagicMock()
         mock_resp.status_code = 200
@@ -141,7 +141,7 @@ class TestTaskClaimController:
             mock_client.return_value.__exit__ = MagicMock(return_value=False)
             client_inst.post.return_value = mock_resp
 
-            triggers["claim_task"]()
+            triggers["claim_selected_task"]()
             client_inst.post.assert_called_once_with("http://test:8082/api/tasks/TASK-001/claim")
 
     def test_complete_task_posts_to_api(self):
@@ -168,7 +168,7 @@ class TestTaskClaimController:
         state.tasks_pagination = {}
 
         register_tasks_controllers(state, ctrl, "http://test:8082")
-        assert "complete_task" in triggers
+        assert "complete_selected_task" in triggers
 
         mock_resp = MagicMock()
         mock_resp.status_code = 200
@@ -180,7 +180,7 @@ class TestTaskClaimController:
             mock_client.return_value.__exit__ = MagicMock(return_value=False)
             client_inst.post.return_value = mock_resp
 
-            triggers["complete_task"]()
+            triggers["complete_selected_task"]()
             client_inst.post.assert_called_once_with("http://test:8082/api/tasks/TASK-002/complete")
 
     def test_claim_no_selected_task(self):
@@ -208,7 +208,7 @@ class TestTaskClaimController:
 
         register_tasks_controllers(state, ctrl, "http://test:8082")
         # Should not raise
-        triggers["claim_task"]()
+        triggers["claim_selected_task"]()
 
 
 # ── Rules Controller: Applicability in Form ──────────────────

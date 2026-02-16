@@ -13,7 +13,7 @@ def _make_state_ctrl(api_base="http://localhost:8082"):
     state = MagicMock()
     ctrl = MagicMock()
     state_watchers = {}
-    setters = {}
+    triggers = {}
 
     def _change(*names):
         def decorator(fn):
@@ -22,14 +22,15 @@ def _make_state_ctrl(api_base="http://localhost:8082"):
             return fn
         return decorator
 
-    def _set(name):
+    def _trigger(name):
         def decorator(fn):
-            setters[name] = fn
+            triggers[name] = fn
             return fn
         return decorator
 
     state.change = _change
-    ctrl.set = _set
+    ctrl.trigger = _trigger
+    ctrl.set = _trigger  # legacy compat
 
     with patch("agent.governance_ui.controllers.impact.calculate_rule_impact") as mock_calc, \
          patch("agent.governance_ui.controllers.impact.build_dependency_graph") as mock_graph, \
@@ -41,7 +42,7 @@ def _make_state_ctrl(api_base="http://localhost:8082"):
         from agent.governance_ui.controllers.impact import register_impact_controllers
         register_impact_controllers(state, ctrl, api_base)
 
-    return state, ctrl, state_watchers, setters
+    return state, ctrl, state_watchers, triggers
 
 
 class TestRegisterImpactControllers:
@@ -50,8 +51,8 @@ class TestRegisterImpactControllers:
         assert "impact_selected_rule" in watchers
 
     def test_registers_toggle_graph_view(self):
-        _, _, _, setters = _make_state_ctrl()
-        assert "toggle_graph_view" in setters
+        _, _, _, triggers = _make_state_ctrl()
+        assert "toggle_graph_view" in triggers
 
 
 class TestImpactRuleChange:
@@ -77,14 +78,14 @@ class TestImpactRuleChange:
 
 class TestToggleGraphView:
     def test_toggles_show_graph(self):
-        state, _, _, setters = _make_state_ctrl()
+        state, _, _, triggers = _make_state_ctrl()
         state.show_graph_view = False
-        setters["toggle_graph_view"]()
+        triggers["toggle_graph_view"]()
         assert state.show_graph_view is True
 
     def test_toggles_back(self):
-        state, _, _, setters = _make_state_ctrl()
+        state, _, _, triggers = _make_state_ctrl()
         state.show_graph_view = True
-        setters["toggle_graph_view"]()
+        triggers["toggle_graph_view"]()
         # MagicMock doesn't actually toggle, but we verify the assignment happened
         assert state.show_graph_view == (not True) or True  # just verify no crash

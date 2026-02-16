@@ -59,8 +59,9 @@ def _monitor(action: str, agent_id: str, source: str = "service", **extra):
             details={"agent_id": agent_id, "action": action, **extra},
             severity="INFO",
         )
-    except Exception:
-        pass
+    except Exception as e:
+        # BUG-MONITOR-SILENT-001: Log instead of silently swallowing
+        logger.warning(f"Monitor event failed for agent {agent_id}: {e}")
 
 
 def _build_relations_lookup(client) -> Tuple[dict, dict, dict]:

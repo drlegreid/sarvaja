@@ -13,6 +13,7 @@ from governance.stores import (
 )
 from governance.stores.audit import record_audit
 from governance.middleware.event_log import log_event
+from governance.services.session_evidence import generate_session_evidence
 
 logger = logging.getLogger(__name__)
 
@@ -32,8 +33,9 @@ def _monitor(action: str, session_id: str, source: str = "service", **extra):
             details={"session_id": session_id, "action": action, **extra},
             severity="INFO",
         )
-    except Exception:
-        pass
+    except Exception as e:
+        # BUG-MONITOR-SILENT-001: Log instead of silently swallowing
+        logger.warning(f"Monitor event failed for session {session_id}: {e}")
 
 
 def delete_session(session_id: str, source: str = "rest") -> bool:
@@ -84,6 +86,20 @@ def end_session(
             if session:
                 updated = client.end_session(session_id)
                 if updated:
+                    # Auto-generate evidence when none provided (P0 fix)
+                    if evidence_files is None:
+                        try:
+                            session_dict = dict(session) if not isinstance(session, dict) else session
+                            session_dict["status"] = "COMPLETED"
+                            session_dict["end_time"] = datetime.now().isoformat()
+                            if session_id in _sessions_store:
+                                session_dict.update(_sessions_store[session_id])
+                            auto_path = generate_session_evidence(session_dict)
+                            if auto_path:
+                                evidence_files = [auto_path]
+                                logger.info(f"Auto-generated evidence: {auto_path}")
+                        except Exception as ae:
+                            logger.warning(f"Auto-evidence failed: {ae}")
                     # BUG-SESSION-EVIDENCE-001: Link evidence to TypeDB
                     if evidence_files:
                         for ef in evidence_files:
@@ -123,6 +139,17 @@ def end_session(
     session["end_time"] = datetime.now().isoformat()
     if tasks_completed is not None:
         session["tasks_completed"] = tasks_completed
+
+    # Auto-generate evidence when none provided (P0 architectural fix)
+    if evidence_files is None:
+        try:
+            auto_path = generate_session_evidence(session)
+            if auto_path:
+                evidence_files = [auto_path]
+                logger.info(f"Auto-generated evidence for {session_id}: {auto_path}")
+        except Exception as e:
+            logger.warning(f"Auto-evidence generation failed for {session_id}: {e}")
+
     if evidence_files is not None:
         session["evidence_files"] = evidence_files
 

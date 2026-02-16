@@ -73,7 +73,8 @@ class TestLoadAuditTrail:
 
         triggers["load_audit_trail"]()
         assert state.audit_summary == {"total_entries": 42}
-        assert state.audit_entries[0]["applied_rules"] == "R-1, R-2"
+        assert state.audit_entries[0]["applied_rules"] == ["R-1", "R-2"]
+        assert state.audit_entries[0]["applied_rules_display"] == "R-1, R-2"
         assert state.audit_loading is False
 
     @patch("agent.governance_ui.controllers.audit_loaders.httpx")
@@ -146,10 +147,12 @@ class TestNavigateToEntity:
 
     def test_session_found(self):
         sessions = [{"session_id": "S-001"}]
-        _, state, triggers, _ = _setup(sessions=sessions)
+        ctrl, state, triggers, _ = _setup(sessions=sessions)
         triggers["navigate_to_entity"]("session", "S-001")
         assert state.active_view == "sessions"
-        assert state.show_session_detail is True
+        # Session navigation now delegates to ctrl.select_session
+        # which loads full detail data (tool_calls, evidence, etc.)
+        ctrl.select_session.assert_called_once_with("S-001")
 
     def test_decision_found(self):
         decisions = [{"decision_id": "DEC-001"}]

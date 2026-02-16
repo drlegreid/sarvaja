@@ -12,11 +12,11 @@ class TestDarkThemeSupport:
     """Verify dark theme is properly wired across all views."""
 
     def test_initial_state_has_dark_mode(self):
-        """dark_mode state variable exists and defaults to False."""
+        """dark_mode state variable exists and defaults to True."""
         from agent.governance_ui.state.initial import get_initial_state
         state = get_initial_state()
         assert 'dark_mode' in state
-        assert state['dark_mode'] is False
+        assert state['dark_mode'] is True
 
     def test_mermaid_uses_dynamic_theme(self):
         """Mermaid component should use dark_mode-aware theme, not hardcoded 'default'."""

@@ -35,8 +35,9 @@ def _monitor(action: str, task_id: str, source: str = "service", **extra):
             details={"task_id": task_id, "action": action, **extra},
             severity="INFO",
         )
-    except Exception:
-        pass
+    except Exception as e:
+        # BUG-MONITOR-SILENT-001: Log instead of silently swallowing
+        logger.warning(f"Monitor event failed for task {task_id}: {e}")
 
 
 def update_task(
@@ -84,21 +85,24 @@ def update_task(
                         phase=phase,
                     )
                 except Exception as ue:
-                    logger.debug(f"TypeDB attribute update {task_id}: {ue}")
+                    # BUG-TASK-TAXONOMY-DEBUG-001: WARNING not DEBUG — data divergence
+                    logger.warning(f"TypeDB attribute update {task_id}: {ue}")
             # Persist linked_sessions to TypeDB via relations
             if linked_sessions:
                 for sid in linked_sessions:
                     try:
                         client.link_task_to_session(task_id, sid)
                     except Exception as le:
-                        logger.debug(f"TypeDB session link {task_id}->{sid}: {le}")
+                        # BUG-MUTATIONS-002: Link failures are data integrity issues
+                        logger.warning(f"TypeDB session link {task_id}->{sid}: {le}")
             # Persist linked_documents to TypeDB via relations
             if linked_documents:
                 for doc_path in linked_documents:
                     try:
                         client.link_task_to_document(task_id, doc_path)
                     except Exception as le:
-                        logger.debug(f"TypeDB document link {task_id}->{doc_path}: {le}")
+                        # BUG-MUTATIONS-002: Link failures are data integrity issues
+                        logger.warning(f"TypeDB document link {task_id}->{doc_path}: {le}")
         except Exception as e:
             logger.warning(f"TypeDB task update failed, using fallback: {e}")
 
@@ -106,6 +110,10 @@ def update_task(
     if task_id not in _tasks_store:
         if client and task_obj:
             created_at = task_obj.created_at.isoformat() if task_obj.created_at else datetime.now().isoformat()
+            # BUG-TASK-003: Include all fields in fallback task creation
+            # BUG-SERVICE-002: Include evidence, timestamps, resolution, commits
+            _claimed = getattr(task_obj, 'claimed_at', None)
+            _completed = getattr(task_obj, 'completed_at', None)
             _tasks_store[task_id] = {
                 "task_id": task_id,
                 "description": task_obj.name or getattr(task_obj, 'description', '') or "",
@@ -115,6 +123,17 @@ def update_task(
                 "created_at": created_at,
                 "body": getattr(task_obj, 'body', None),
                 "gap_id": getattr(task_obj, 'gap_id', None),
+                "priority": getattr(task_obj, 'priority', None),
+                "task_type": getattr(task_obj, 'task_type', None),
+                "evidence": getattr(task_obj, 'evidence', None),
+                "resolution": getattr(task_obj, 'resolution', None),
+                "claimed_at": _claimed.isoformat() if _claimed else None,
+                "completed_at": _completed.isoformat() if _completed else None,
+                "document_path": getattr(task_obj, 'document_path', None),
+                "linked_rules": getattr(task_obj, 'linked_rules', []) or [],
+                "linked_sessions": getattr(task_obj, 'linked_sessions', []) or [],
+                "linked_commits": getattr(task_obj, 'linked_commits', []) or [],
+                "linked_documents": getattr(task_obj, 'linked_documents', []) or [],
             }
         else:
             return None

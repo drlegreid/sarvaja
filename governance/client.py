@@ -117,10 +117,13 @@ def quick_health() -> bool:
     from governance.typedb.base import TYPEDB_HOST, TYPEDB_PORT
     try:
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        sock.settimeout(2)
-        result = sock.connect_ex((TYPEDB_HOST, TYPEDB_PORT))
-        sock.close()
-        return result == 0
+        # BUG-SOCKET-001: Use try/finally to ensure socket cleanup
+        try:
+            sock.settimeout(2)
+            result = sock.connect_ex((TYPEDB_HOST, TYPEDB_PORT))
+            return result == 0
+        finally:
+            sock.close()
     except Exception:
         return False
 

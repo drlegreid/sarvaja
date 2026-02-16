@@ -50,7 +50,7 @@ def build_decisions_list_view() -> None:
                 "Record Decision",
                 color="primary",
                 prepend_icon="mdi-plus",
-                click="decision_form_mode = 'create'; show_decision_form = true",
+                click="trigger('open_decision_form', ['create'])",
                 __properties=["data-testid"],
                 **{"data-testid": "decisions-add-btn"}
             )
@@ -82,7 +82,7 @@ def build_decisions_list_view() -> None:
                         "decision.session_id === decision_session_filter"
                     ),
                     **{":key": "decision.decision_id || decision.id"},
-                    click="selected_decision = decision; show_decision_detail = true",
+                    click="trigger('select_decision', [decision.decision_id || decision.id])",
                     __properties=["data-testid"],
                     **{"data-testid": "decision-log-item"}
                 ):

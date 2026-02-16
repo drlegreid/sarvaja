@@ -42,7 +42,8 @@ async def list_decisions(
         raise HTTPException(status_code=503, detail="TypeDB not connected")
 
     try:
-        decisions = client.get_all_decisions()
+        # BUG-ROUTE-003: Null-safe — get_all_decisions() may return None
+        decisions = client.get_all_decisions() or []
 
         # Apply status filter
         if status:
@@ -92,7 +93,8 @@ async def get_decision(decision_id: str):
         raise HTTPException(status_code=503, detail="TypeDB not connected")
 
     try:
-        decisions = client.get_all_decisions()
+        # BUG-ROUTE-003: Null-safe — get_all_decisions() may return None
+        decisions = client.get_all_decisions() or []
         for d in decisions:
             if d.id == decision_id:
                 # Get linked rules per GAP-DECISION-001
@@ -129,7 +131,8 @@ async def create_decision(decision: DecisionCreate):
 
     try:
         # Check if decision already exists
-        existing = client.get_all_decisions()
+        # BUG-ROUTE-003: Null-safe
+        existing = client.get_all_decisions() or []
         if any(d.id == decision.decision_id for d in existing):
             raise HTTPException(status_code=409, detail=f"Decision {decision.decision_id} already exists")
 

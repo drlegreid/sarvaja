@@ -14,6 +14,8 @@ Updated: 2026-01-02 (GAP-UI-033)
 import httpx
 from typing import Any
 
+from agent.governance_ui.trace_bar.transforms import add_error_trace
+
 
 def register_decisions_controllers(state: Any, ctrl: Any, api_base_url: str) -> None:
     """
@@ -25,7 +27,7 @@ def register_decisions_controllers(state: Any, ctrl: Any, api_base_url: str) -> 
         api_base_url: Base URL for API calls
     """
 
-    @ctrl.set("select_decision")
+    @ctrl.trigger("select_decision")
     def select_decision(decision_id):
         """Handle decision selection for detail view."""
         for decision in state.decisions:
@@ -34,14 +36,14 @@ def register_decisions_controllers(state: Any, ctrl: Any, api_base_url: str) -> 
                 state.show_decision_detail = True
                 break
 
-    @ctrl.set("close_decision_detail")
+    @ctrl.trigger("close_decision_detail")
     def close_decision_detail():
         """Close decision detail view."""
         state.show_decision_detail = False
         state.selected_decision = None
 
-    @ctrl.set("show_decision_form")
-    def show_decision_form(mode="create"):
+    @ctrl.trigger("open_decision_form")
+    def open_decision_form(mode="create"):
         """Show decision create/edit form."""
         state.decision_form_mode = mode
         if mode == "edit" and state.selected_decision:
@@ -51,6 +53,8 @@ def register_decisions_controllers(state: Any, ctrl: Any, api_base_url: str) -> 
             state.form_decision_context = state.selected_decision.get('context', '')
             state.form_decision_rationale = state.selected_decision.get('rationale', '')
             state.form_decision_status = state.selected_decision.get('status', 'PENDING')
+            state.form_decision_options = state.selected_decision.get('options', [])
+            state.form_decision_selected_option = state.selected_decision.get('selected_option', '')
         else:
             # Clear form for new decision
             state.form_decision_id = ''
@@ -58,9 +62,11 @@ def register_decisions_controllers(state: Any, ctrl: Any, api_base_url: str) -> 
             state.form_decision_context = ''
             state.form_decision_rationale = ''
             state.form_decision_status = 'PENDING'
+            state.form_decision_options = []
+            state.form_decision_selected_option = ''
         state.show_decision_form = True
 
-    @ctrl.set("close_decision_form")
+    @ctrl.trigger("close_decision_form")
     def close_decision_form():
         """Close decision form."""
         state.show_decision_form = False
@@ -68,14 +74,31 @@ def register_decisions_controllers(state: Any, ctrl: Any, api_base_url: str) -> 
     @ctrl.trigger("submit_decision_form")
     def submit_decision_form():
         """Submit decision form (create/update) via REST API."""
+        # BUG-UI-DOUBLECLICK-001: Prevent double-click race condition
+        if state.is_loading:
+            return
+        state.has_error = False
+        # BUG-UI-VALIDATION-001: Validate required fields
+        name = (state.form_decision_name or "").strip()
+        context = (state.form_decision_context or "").strip()
+        if not name:
+            state.has_error = True
+            state.error_message = "Decision name is required"
+            return
+        if not context:
+            state.has_error = True
+            state.error_message = "Decision context is required"
+            return
         try:
             state.is_loading = True
             decision_data = {
-                "decision_id": state.form_decision_id,
-                "name": state.form_decision_name,
-                "context": state.form_decision_context,
-                "rationale": state.form_decision_rationale,
-                "status": state.form_decision_status
+                "decision_id": (state.form_decision_id or "").strip(),
+                "name": name,
+                "context": context,
+                "rationale": (state.form_decision_rationale or "").strip(),
+                "status": state.form_decision_status,
+                "options": state.form_decision_options or [],
+                "selected_option": state.form_decision_selected_option or None,
             }
 
             with httpx.Client(timeout=10.0) as client:
@@ -83,6 +106,11 @@ def register_decisions_controllers(state: Any, ctrl: Any, api_base_url: str) -> 
                     response = client.post(f"{api_base_url}/api/decisions", json=decision_data)
                 else:
                     # Edit mode - update existing decision
+                    # BUG-UI-DECISION-GUARD-001: Guard against None selected_decision
+                    if not state.selected_decision:
+                        state.has_error = True
+                        state.error_message = "No decision selected for editing"
+                        return
                     decision_id = state.selected_decision.get('id') or state.selected_decision.get('decision_id')
                     response = client.put(f"{api_base_url}/api/decisions/{decision_id}", json=decision_data)
 
@@ -93,27 +121,33 @@ def register_decisions_controllers(state: Any, ctrl: Any, api_base_url: str) -> 
                     if decisions_response.status_code == 200:
                         data = decisions_response.json()
                         state.decisions = data.get("items", data) if isinstance(data, dict) else data
+                    # BUG-UI-FORMCLOSE-001: Only close form on success
+                    state.show_decision_form = False
+                    state.show_decision_detail = False
+                    state.selected_decision = None
                 else:
                     state.has_error = True
                     state.error_message = f"API Error: {response.status_code} - {response.text}"
 
-            state.show_decision_form = False
-            state.show_decision_detail = False
-            state.selected_decision = None
             state.is_loading = False
         except Exception as e:
+            add_error_trace(state, f"Save decision failed: {e}", "/api/decisions")
             state.is_loading = False
             state.has_error = True
             state.error_message = f"Failed to save decision: {str(e)}"
-            state.show_decision_form = False
-            state.status_message = f"Decision saved (offline mode - API unavailable: {str(e)})"
 
     @ctrl.trigger("delete_decision")
     def delete_decision():
         """Delete selected decision via REST API."""
         if not state.selected_decision:
             return
+        # BUG-UI-DOUBLECLICK-001: Prevent double-click race condition
+        if state.is_loading:
+            return
 
+        state.has_error = False
+        # BUG-UI-UNDEF-004: Pre-initialize to avoid NameError in except handler
+        decision_id = state.selected_decision.get('decision_id', 'unknown')
         try:
             state.is_loading = True
             decision_id = state.selected_decision.get('id') or state.selected_decision.get('decision_id')
@@ -136,7 +170,7 @@ def register_decisions_controllers(state: Any, ctrl: Any, api_base_url: str) -> 
 
             state.is_loading = False
         except Exception as e:
+            add_error_trace(state, f"Delete decision failed: {e}", f"/api/decisions/{decision_id}")
             state.is_loading = False
             state.has_error = True
             state.error_message = f"Failed to delete decision: {str(e)}"
-            state.status_message = f"Delete failed (offline mode): {str(e)}"

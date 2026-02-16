@@ -87,8 +87,18 @@ def session_evidence_rendered(session_id: str):
     if not file_path:
         raise HTTPException(status_code=404, detail="No evidence file for this session")
 
+    import os
     from pathlib import Path
-    p = Path(file_path)
+
+    # BUG-ROUTE-PATH-001: Validate file_path stays within project evidence directory
+    project_root = os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "..", ".."))
+    evidence_dir = os.path.join(project_root, "evidence")
+    real_path = os.path.realpath(file_path)
+    real_evidence = os.path.realpath(evidence_dir)
+    if not real_path.startswith(real_evidence + os.sep):
+        raise HTTPException(status_code=403, detail="Path traversal not allowed")
+
+    p = Path(real_path)
     if not p.exists():
         raise HTTPException(status_code=404, detail="Evidence file not found on disk")
 

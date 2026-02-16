@@ -47,13 +47,20 @@ def update_task_status(
 
     from typedb.driver import TransactionType
 
+    # BUG-TYPEQL-ESCAPE-TASK-003: Escape task_id for TypeQL safety
+    tid = task_id.replace('"', '\\"')
+
     try:
         with client._driver.transaction(client.database, TransactionType.WRITE) as tx:
+                # BUG-STATUS-ESCAPE-001: Escape all user-provided fields
+                status_escaped = status.replace('"', '\\"')
+                current_status_escaped = (current.status or "").replace('"', '\\"')
+
                 # Delete old status (TypeDB 3.x: has $var of $entity)
                 delete_query = f"""
                     match
-                        $t isa task, has task-id "{task_id}", has task-status $s;
-                        $s == "{current.status}";
+                        $t isa task, has task-id "{tid}", has task-status $s;
+                        $s == "{current_status_escaped}";
                     delete
                         has $s of $t;
                 """
@@ -62,21 +69,23 @@ def update_task_status(
                 # Insert new status
                 insert_query = f"""
                     match
-                        $t isa task, has task-id "{task_id}";
+                        $t isa task, has task-id "{tid}";
                     insert
-                        $t has task-status "{status}";
+                        $t has task-status "{status_escaped}";
                 """
                 tx.query(insert_query).resolve()
 
                 # Update agent_id if provided (per E2E test requirements)
                 if agent_id:
+                    agent_id_escaped = agent_id.replace('"', '\\"')
                     # First delete old agent-id if exists
                     if current.agent_id:
+                        current_agent_escaped = current.agent_id.replace('"', '\\"')
                         # TypeDB 3.x: has $var of $entity
                         delete_agent_query = f"""
                             match
-                                $t isa task, has task-id "{task_id}", has agent-id $a;
-                                $a == "{current.agent_id}";
+                                $t isa task, has task-id "{tid}", has agent-id $a;
+                                $a == "{current_agent_escaped}";
                             delete
                                 has $a of $t;
                         """
@@ -85,9 +94,9 @@ def update_task_status(
                     # Insert new agent-id
                     insert_agent_query = f"""
                         match
-                            $t isa task, has task-id "{task_id}";
+                            $t isa task, has task-id "{tid}";
                         insert
-                            $t has agent-id "{agent_id}";
+                            $t has agent-id "{agent_id_escaped}";
                     """
                     tx.query(insert_agent_query).resolve()
 
@@ -98,7 +107,7 @@ def update_task_status(
                     if current.evidence:
                         delete_evidence_query = f"""
                             match
-                                $t isa task, has task-id "{task_id}", has task-evidence $e;
+                                $t isa task, has task-id "{tid}", has task-evidence $e;
                             delete
                                 has $e of $t;
                         """
@@ -107,7 +116,7 @@ def update_task_status(
                     # Insert new evidence
                     insert_evidence_query = f"""
                         match
-                            $t isa task, has task-id "{task_id}";
+                            $t isa task, has task-id "{tid}";
                         insert
                             $t has task-evidence "{evidence_escaped}";
                     """
@@ -115,14 +124,16 @@ def update_task_status(
 
                 # Update resolution if provided (GAP-UI-046)
                 if resolution:
+                    resolution_escaped = resolution.replace('"', '\\"')
                     # First delete old resolution if exists
                     current_resolution = getattr(current, 'resolution', None)
                     if current_resolution:
+                        current_res_escaped = current_resolution.replace('"', '\\"')
                         # TypeDB 3.x: has $var of $entity
                         delete_res_query = f"""
                             match
-                                $t isa task, has task-id "{task_id}", has task-resolution $r;
-                                $r == "{current_resolution}";
+                                $t isa task, has task-id "{tid}", has task-resolution $r;
+                                $r == "{current_res_escaped}";
                             delete
                                 has $r of $t;
                         """
@@ -134,9 +145,9 @@ def update_task_status(
                     # Insert new resolution
                     insert_res_query = f"""
                         match
-                            $t isa task, has task-id "{task_id}";
+                            $t isa task, has task-id "{tid}";
                         insert
-                            $t has task-resolution "{resolution}";
+                            $t has task-resolution "{resolution_escaped}";
                     """
                     tx.query(insert_res_query).resolve()
 
@@ -147,7 +158,7 @@ def update_task_status(
                         # TypeDB 3.x: has $var of $entity
                         delete_res_query = f"""
                             match
-                                $t isa task, has task-id "{task_id}", has task-resolution $r;
+                                $t isa task, has task-id "{tid}", has task-resolution $r;
                             delete
                                 has $r of $t;
                         """
@@ -157,7 +168,7 @@ def update_task_status(
                             pass
                         insert_res_query = f"""
                             match
-                                $t isa task, has task-id "{task_id}";
+                                $t isa task, has task-id "{tid}";
                             insert
                                 $t has task-resolution "NONE";
                         """
@@ -167,9 +178,10 @@ def update_task_status(
                 if status == "IN_PROGRESS" and not current.claimed_at:
                     now = datetime.now()
                     timestamp_str = now.strftime('%Y-%m-%dT%H:%M:%S')
+                    # TypeDB datetime: no quotes (value datetime in schema)
                     insert_claimed_query = f"""
                         match
-                            $t isa task, has task-id "{task_id}";
+                            $t isa task, has task-id "{tid}";
                         insert
                             $t has task-claimed-at {timestamp_str};
                     """
@@ -179,9 +191,10 @@ def update_task_status(
                 if status in ["DONE", "CLOSED"] and not current.completed_at:
                     now = datetime.now()
                     timestamp_str = now.strftime('%Y-%m-%dT%H:%M:%S')
+                    # TypeDB datetime: no quotes (value datetime in schema)
                     insert_completed_query = f"""
                         match
-                            $t isa task, has task-id "{task_id}";
+                            $t isa task, has task-id "{tid}";
                         insert
                             $t has task-completed-at {timestamp_str};
                     """

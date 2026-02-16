@@ -15,8 +15,41 @@ from .data_stores import (
     _tasks_store,
     _sessions_store,
 )
+from .retry import retry_on_transient
 
 logger = logging.getLogger(__name__)
+
+
+def _typedb_query_tasks(client, **kwargs):
+    """Execute TypeDB task query with retry on transient failures."""
+    @retry_on_transient(max_attempts=2, base_delay=0.5)
+    def _inner():
+        return client.get_all_tasks(**kwargs)
+    return _inner()
+
+
+def _typedb_get_task(client, task_id):
+    """Execute TypeDB single task get with retry."""
+    @retry_on_transient(max_attempts=2, base_delay=0.5)
+    def _inner():
+        return client.get_task(task_id)
+    return _inner()
+
+
+def _typedb_query_sessions(client):
+    """Execute TypeDB session query with retry."""
+    @retry_on_transient(max_attempts=2, base_delay=0.5)
+    def _inner():
+        return client.get_all_sessions()
+    return _inner()
+
+
+def _typedb_get_session(client, session_id):
+    """Execute TypeDB single session get with retry."""
+    @retry_on_transient(max_attempts=2, base_delay=0.5)
+    def _inner():
+        return client.get_session(session_id)
+    return _inner()
 
 
 # =============================================================================
@@ -50,7 +83,7 @@ def get_all_tasks_from_typedb(
 
     if client:
         try:
-            tasks = client.get_all_tasks(status=status, phase=phase, agent_id=agent_id)
+            tasks = _typedb_query_tasks(client, status=status, phase=phase, agent_id=agent_id)
             # Convert to dict format for API compatibility
             result = [_task_to_dict(t) for t in tasks]
             # Merge evidence from in-memory store (EPIC-DR-008 workaround for Python 3.13)
@@ -91,7 +124,7 @@ def get_task_from_typedb(task_id: str, allow_fallback: bool = False) -> Optional
 
     if client:
         try:
-            task = client.get_task(task_id)
+            task = _typedb_get_task(client, task_id)
             if task:
                 return _task_to_dict(task)
             return None
@@ -119,7 +152,7 @@ def get_all_sessions_from_typedb(allow_fallback: bool = False) -> List[Dict[str,
 
     if client:
         try:
-            sessions = client.get_all_sessions()
+            sessions = _typedb_query_sessions(client)
             result = [_session_to_dict(s) for s in sessions]
             for s in result:
                 s["persistence_status"] = "persisted"
@@ -160,7 +193,7 @@ def get_session_from_typedb(session_id: str, allow_fallback: bool = False) -> Op
 
     if client:
         try:
-            session = client.get_session(session_id)
+            session = _typedb_get_session(client, session_id)
             if session:
                 return _session_to_dict(session)
             return None
@@ -213,9 +246,11 @@ def _task_to_dict(task) -> Dict[str, Any]:
         "claimed_at": task.claimed_at.isoformat() if task.claimed_at else None,
         "completed_at": task.completed_at.isoformat() if task.completed_at else None,
         "body": task.body,
-        "linked_rules": task.linked_rules,
-        "linked_sessions": task.linked_sessions,
-        "linked_documents": task.linked_documents,
+        "resolution": task.resolution,  # BUG-STORE-001: missing from _task_to_dict
+        "linked_rules": task.linked_rules or [],  # BUG-STORE-002: null-safe
+        "linked_sessions": task.linked_sessions or [],
+        "linked_commits": task.linked_commits or [],  # BUG-STORE-007: null-safe per GAP-TASK-LINK-002
+        "linked_documents": task.linked_documents or [],
         "gap_id": task.gap_id,
         "evidence": task.evidence,
         "document_path": task.document_path
@@ -233,9 +268,10 @@ def _session_to_dict(session) -> Dict[str, Any]:
         "agent_id": session.agent_id,
         "description": session.description,
         "file_path": session.file_path,
-        "evidence_files": session.evidence_files,
-        "linked_rules_applied": session.linked_rules_applied,
-        "linked_decisions": session.linked_decisions,
+        # BUG-STORE-008: Null-safe list fields for session relations
+        "evidence_files": session.evidence_files or [],
+        "linked_rules_applied": session.linked_rules_applied or [],
+        "linked_decisions": session.linked_decisions or [],
         # Claude Code session attributes (SESSION-CC-01-v1)
         "cc_session_uuid": getattr(session, 'cc_session_uuid', None),
         "cc_project_slug": getattr(session, 'cc_project_slug', None),

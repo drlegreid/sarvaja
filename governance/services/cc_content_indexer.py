@@ -202,7 +202,8 @@ def index_session_content(
                         ckpt.add_error(msg)
 
                 result["chunks_indexed"] += len(batch_ids)
-                lines_seen = meta.get("line_end", lines_seen) + start_line
+                # BUG-CONTENT-001: +1 so resume skips last-processed entry
+                lines_seen = meta.get("line_end", lines_seen) + start_line + 1
                 result["lines_processed"] = lines_seen
 
                 # Checkpoint after each batch
@@ -229,7 +230,8 @@ def index_session_content(
         result["chunks_indexed"] += len(batch_ids)
         # Update lines_processed for the final partial batch
         if batch_metas:
-            lines_seen = batch_metas[-1].get("line_end", lines_seen) + start_line
+            # BUG-CONTENT-001: +1 so resume skips last-processed entry
+            lines_seen = batch_metas[-1].get("line_end", lines_seen) + start_line + 1
             result["lines_processed"] = lines_seen
 
     # Final checkpoint

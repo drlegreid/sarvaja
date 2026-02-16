@@ -72,7 +72,8 @@ class TestRegistration:
 
     def test_registers_triggers(self):
         _, ctrl, _ = _setup()
-        expected_triggers = {"load_trust_data", "load_monitor_data",
+        # load_monitor_data trigger moved to monitor.py to avoid duplicate
+        expected_triggers = {"load_trust_data",
                              "refresh_backlog", "load_executive_report"}
         assert expected_triggers.issubset(set(ctrl._triggers.keys()))
 

@@ -125,11 +125,12 @@ class TestComputeSessionDuration:
     def test_invalid_timestamps(self):
         assert compute_session_duration("bad", "data") == ""
 
-    def test_negative_duration_returns_invalid(self):
-        """End time before start time returns 'invalid'."""
+    def test_negative_duration_uses_absolute(self):
+        """End time before start time uses abs() to compute valid duration."""
         result = compute_session_duration(
             "2026-02-14T00:07:18", "2026-02-13T22:09:29")
-        assert result == "invalid"
+        assert result != "invalid"
+        assert "m" in result  # Should be "1h 57m"
 
     def test_absurd_duration_capped(self):
         """>24h duration returns '>24h'."""
@@ -322,7 +323,8 @@ class TestFormatTimestamp:
         assert format_timestamp(None) == ""
 
     def test_non_string(self):
-        assert format_timestamp(42) == 42  # returns input as-is for non-strings
+        # BUG-UI-FORMAT-001: Non-string inputs now return "" to prevent AttributeError
+        assert format_timestamp(42) == ""
 
 
 # ── format_timestamps_in_list ─────────────────────────────────

@@ -29,7 +29,7 @@ class TestThemeState:
     def test_dark_mode_default(self, _mock_deps):
         from agent.governance_ui.state.initial import get_initial_state
         state = get_initial_state()
-        assert state["dark_mode"] is False
+        assert state["dark_mode"] is True
 
 
 # ── Navigation ───────────────────────────────────────────────────
@@ -212,8 +212,8 @@ class TestFactoryFreshness:
         state1 = get_initial_state()
         state2 = get_initial_state()
         assert state1 is not state2
-        state1["dark_mode"] = True
-        assert state2["dark_mode"] is False
+        state1["dark_mode"] = False
+        assert state2["dark_mode"] is True
 
     def test_includes_loader_states(self, _mock_deps):
         from agent.governance_ui.state.initial import get_initial_state

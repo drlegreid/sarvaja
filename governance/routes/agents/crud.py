@@ -46,20 +46,26 @@ async def list_agents(
     status: Optional[str] = Query(None, description="Filter by status: ACTIVE, INACTIVE")
 ):
     """List agents with pagination, sorting, and filtering. Per GAP-ARCH-003, GAP-UI-036."""
-    result = agent_service.list_agents(
-        agent_type=agent_type, status=status,
-        sort_by=sort_by, order=order, offset=offset, limit=limit,
-        source="rest-api",
-    )
-    items = [AgentResponse(**a) for a in result["items"]]
-    return PaginatedAgentResponse(
-        items=items,
-        pagination=PaginationMeta(
-            total=result["total"], offset=result["offset"],
-            limit=result["limit"], has_more=result["has_more"],
-            returned=len(items),
-        ),
-    )
+    # BUG-ROUTE-MISSING-EXCEPT-001: Add try-except matching other CRUD endpoints
+    try:
+        result = agent_service.list_agents(
+            agent_type=agent_type, status=status,
+            sort_by=sort_by, order=order, offset=offset, limit=limit,
+            source="rest-api",
+        )
+        items = [AgentResponse(**a) for a in result["items"]]
+        return PaginatedAgentResponse(
+            items=items,
+            pagination=PaginationMeta(
+                total=result["total"], offset=result["offset"],
+                limit=result["limit"], has_more=result["has_more"],
+                returned=len(items),
+            ),
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to list agents: {e}")
 
 
 @router.get("/agents/{agent_id}", response_model=AgentResponse)

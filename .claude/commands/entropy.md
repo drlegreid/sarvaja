@@ -1,3 +1,8 @@
+---
+description: /entropy - Check Session Entropy
+allowed-tools: Bash, Read, mcp__claude-mem__chroma_save_session_context
+---
+
 # /entropy - Check Session Entropy
 
 Check current session entropy and context usage. Per GAP-CONTEXT-EFFICIENCY-001.

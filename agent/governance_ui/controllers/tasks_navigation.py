@@ -8,6 +8,8 @@ Cross-view navigation for tasks (navigate_to_task, navigate_back_to_source).
 import httpx
 from typing import Any
 
+from agent.governance_ui.trace_bar.transforms import add_error_trace
+
 
 def register_tasks_navigation(state: Any, ctrl: Any, api_base_url: str) -> None:
     """Register task navigation controllers.
@@ -38,10 +40,13 @@ def register_tasks_navigation(state: Any, ctrl: Any, api_base_url: str) -> None:
             state.nav_source_id = None
             state.nav_source_label = None
 
-        # Switch to tasks view
+        # Switch to tasks view + clear prior task state (BUG-UI-STALE-DETAIL-004)
         state.active_view = 'tasks'
         state.show_session_detail = False
         state.show_decision_detail = False
+        state.edit_task_mode = False
+        state.task_execution_log = []
+        state.show_task_execution = False
 
         # Try to find task in existing list
         found = False
@@ -62,7 +67,8 @@ def register_tasks_navigation(state: Any, ctrl: Any, api_base_url: str) -> None:
                         state.show_task_detail = True
                     else:
                         state.error_message = f"Task {task_id} not found"
-            except Exception:
+            except Exception as e:
+                add_error_trace(state, f"Navigate to task failed: {e}", f"/api/tasks/{task_id}")
                 state.error_message = f"Failed to load task {task_id}"
 
     @ctrl.trigger("navigate_back_to_source")
@@ -94,8 +100,8 @@ def register_tasks_navigation(state: Any, ctrl: Any, api_base_url: str) -> None:
                     if response.status_code == 200:
                         state.selected_session = response.json()
                         state.show_session_detail = True
-            except Exception:
-                pass
+            except Exception as e:
+                add_error_trace(state, f"Navigate back to session failed: {e}", f"/api/sessions/{source_id}")
         elif source_view == 'rules' and source_id:
             state.active_view = 'rules'
             for rule in state.rules:

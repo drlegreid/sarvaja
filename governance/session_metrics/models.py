@@ -153,3 +153,49 @@ class MetricsResult:
             "totals": self.totals.to_dict(),
             "tool_breakdown": dict(self.tool_breakdown),
         }
+
+
+@dataclass
+class TranscriptEntry:
+    """A single entry in the conversation transcript (GAP-SESSION-TRANSCRIPT-001).
+
+    Represents one element of the conversation flow: a user prompt,
+    assistant response, tool invocation, tool result, thinking block,
+    or compaction marker.
+    """
+
+    index: int  # Sequential position in transcript
+    timestamp: str  # ISO 8601
+    entry_type: str  # user_prompt, assistant_text, tool_use, tool_result, thinking, compaction
+    content: str  # The actual text/content
+    content_length: int  # Character count of full content
+    is_truncated: bool = False
+    model: Optional[str] = None
+    tool_name: Optional[str] = None
+    tool_use_id: Optional[str] = None
+    is_mcp: bool = False
+    is_error: bool = False
+    server_name: Optional[str] = None
+
+    def to_dict(self) -> dict:
+        d = {
+            "index": self.index,
+            "timestamp": self.timestamp,
+            "entry_type": self.entry_type,
+            "content": self.content,
+            "content_length": self.content_length,
+            "is_truncated": self.is_truncated,
+        }
+        if self.model:
+            d["model"] = self.model
+        if self.tool_name:
+            d["tool_name"] = self.tool_name
+        if self.tool_use_id:
+            d["tool_use_id"] = self.tool_use_id
+        if self.is_mcp:
+            d["is_mcp"] = True
+        if self.is_error:
+            d["is_error"] = True
+        if self.server_name:
+            d["server_name"] = self.server_name
+        return d

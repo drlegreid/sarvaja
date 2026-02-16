@@ -11,6 +11,7 @@ from unittest.mock import MagicMock, patch
 def _make_state_ctrl(api_base="http://localhost:8082"):
     """Build mock state/ctrl and register session controllers."""
     state = MagicMock()
+    state.is_loading = False
     ctrl = MagicMock()
     triggers = {}
     setters = {}
@@ -44,16 +45,16 @@ class TestRegisterSessionsControllers:
         assert "select_session" in triggers
 
     def test_registers_close_session_detail(self):
-        _, _, _, setters = _make_state_ctrl()
-        assert "close_session_detail" in setters
+        _, _, triggers, _ = _make_state_ctrl()
+        assert "close_session_detail" in triggers
 
-    def test_registers_show_session_form(self):
-        _, _, _, setters = _make_state_ctrl()
-        assert "show_session_form" in setters
+    def test_registers_open_session_form(self):
+        _, _, triggers, _ = _make_state_ctrl()
+        assert "open_session_form" in triggers
 
     def test_registers_close_session_form(self):
-        _, _, _, setters = _make_state_ctrl()
-        assert "close_session_form" in setters
+        _, _, triggers, _ = _make_state_ctrl()
+        assert "close_session_form" in triggers
 
     def test_registers_submit_session_form(self):
         _, _, triggers, _ = _make_state_ctrl()
@@ -80,23 +81,23 @@ class TestSelectSession:
 
 class TestCloseSessionDetail:
     def test_clears_state(self):
-        state, _, _, setters = _make_state_ctrl()
-        setters["close_session_detail"]()
+        state, _, triggers, _ = _make_state_ctrl()
+        triggers["close_session_detail"]()
         assert state.show_session_detail is False
         assert state.selected_session is None
 
 
-class TestShowSessionForm:
+class TestOpenSessionForm:
     def test_sets_form_mode(self):
-        state, _, _, setters = _make_state_ctrl()
-        setters["show_session_form"]("create")
+        state, _, triggers, _ = _make_state_ctrl()
+        triggers["open_session_form"]("create")
         assert state.show_session_form is True
 
 
 class TestCloseSessionForm:
     def test_hides_form(self):
-        state, _, _, setters = _make_state_ctrl()
-        setters["close_session_form"]()
+        state, _, triggers, _ = _make_state_ctrl()
+        triggers["close_session_form"]()
         assert state.show_session_form is False
 
 

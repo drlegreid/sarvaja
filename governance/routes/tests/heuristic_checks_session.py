@@ -56,7 +56,10 @@ def _is_backfilled_session(session: dict) -> bool:
         return True
     if agent.endswith("-test"):
         return True
-    if not agent and not sid.startswith("SESSION-2026-02"):
+    # BUG-HEURISTIC-002: Use dynamic 30-day window instead of hardcoded date
+    from datetime import datetime, timedelta
+    cutoff = (datetime.now() - timedelta(days=30)).strftime("SESSION-%Y-%m")
+    if not agent and sid < cutoff:
         return True
 
     # Test-artifact CHAT sessions (E.4: test data pollution fix)

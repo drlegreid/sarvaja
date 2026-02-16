@@ -37,10 +37,10 @@ def task_to_response(task: TypeDBTask):
         claimed_at=task.claimed_at.isoformat() if task.claimed_at else None,
         completed_at=task.completed_at.isoformat() if task.completed_at else None,
         body=task.body,
-        linked_rules=task.linked_rules,
-        linked_sessions=task.linked_sessions,
-        linked_commits=task.linked_commits,  # Per GAP-TASK-LINK-002
-        linked_documents=task.linked_documents,  # Task document management
+        linked_rules=task.linked_rules or [],  # BUG-STORE-002: null-safe
+        linked_sessions=task.linked_sessions or [],
+        linked_commits=task.linked_commits or [],  # Per GAP-TASK-LINK-002
+        linked_documents=task.linked_documents or [],
         gap_id=task.gap_id,
         evidence=task.evidence,
         document_path=task.document_path
@@ -108,15 +108,17 @@ def synthesize_execution_events(task_id: str, task_data: Any) -> List[Dict[str, 
         })
 
     # Evidence event
+    # BUG-HELPERS-001: Coerce to str for safe slicing
     if evidence:
+        evidence_str = str(evidence)
         events.append({
             "event_id": f"EVT-{uuid.uuid4().hex[:8].upper()}",
             "task_id": task_id,
             "event_type": "evidence",
             "timestamp": completed_at or datetime.now().isoformat(),
             "agent_id": agent_id,
-            "message": evidence[:100] + ("..." if len(evidence) > 100 else ""),
-            "details": {"full_evidence": evidence}
+            "message": evidence_str[:100] + ("..." if len(evidence_str) > 100 else ""),
+            "details": {"full_evidence": evidence_str}
         })
 
     return events
@@ -138,9 +140,10 @@ def session_to_response(session: TypeDBSession):
         agent_id=session.agent_id,
         description=session.description,
         file_path=session.file_path,
-        evidence_files=session.evidence_files,
-        linked_rules_applied=session.linked_rules_applied,
-        linked_decisions=session.linked_decisions,
+        # BUG-STORE-LIST-NULL-001: Ensure list fields are [] not None (matches _session_to_dict)
+        evidence_files=session.evidence_files or [],
+        linked_rules_applied=session.linked_rules_applied or [],
+        linked_decisions=session.linked_decisions or [],
         cc_session_uuid=getattr(session, 'cc_session_uuid', None),
         cc_project_slug=getattr(session, 'cc_project_slug', None),
         cc_git_branch=getattr(session, 'cc_git_branch', None),
@@ -152,8 +155,11 @@ def session_to_response(session: TypeDBSession):
 
 
 def extract_session_id(filename: str) -> Optional[str]:
-    """Extract session ID from filename pattern SESSION-YYYY-MM-DD-NNN.md."""
-    match = re.match(r'(SESSION-\d{4}-\d{2}-\d{2}-\d+)', filename)
+    """Extract session ID from filename pattern SESSION-YYYY-MM-DD-TOPIC.md.
+
+    BUG-STORE-005: Updated regex to match topic-based IDs (not just numeric).
+    """
+    match = re.match(r'(SESSION-\d{4}-\d{2}-\d{2}[-\w]+)', filename)
     return match.group(1) if match else None
 
 

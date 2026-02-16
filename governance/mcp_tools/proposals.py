@@ -108,7 +108,8 @@ def register_proposal_tools(mcp) -> None:
         if "error" in trust_data:
             return format_mcp_result({"error": f"Cannot get trust score: {trust_data['error']}"})
 
-        vote_weight = trust_data["vote_weight"]
+        # BUG-PROPOSAL-KEYERROR-001: Use .get() to handle incomplete trust responses
+        vote_weight = trust_data.get("vote_weight", 0.5)
 
         vote_record = {
             "proposal_id": proposal_id,
@@ -201,7 +202,8 @@ def register_proposal_tools(mcp) -> None:
         if client:
             try:
                 # Query proposals from TypeDB
-                status_filter = f', has proposal-status "{status}"' if status else ""
+                # BUG-PROPOSAL-ESCAPE-001: Escape status before TypeQL interpolation
+                status_filter = f', has proposal-status "{status.replace(chr(34), chr(92)+chr(34))}"' if status else ""
                 query = f"""
                     match
                         $p isa proposal,
@@ -212,7 +214,8 @@ def register_proposal_tools(mcp) -> None:
                 """
                 results = client._execute_query(query)
 
-                for r in results:
+                # BUG-MCP-001: Null-safe — _execute_query may return None
+                for r in (results or []):
                     proposals.append({
                         "proposal_id": r.get("pid"),
                         "type": r.get("ptype"),
@@ -260,7 +263,8 @@ def register_proposal_tools(mcp) -> None:
                 """
                 results = client._execute_query(query, infer=True)
 
-                for r in results:
+                # BUG-MCP-001: Null-safe
+                for r in (results or []):
                     escalated.append({
                         "proposal_id": r.get("pid"),
                         "status": r.get("pstatus"),

@@ -10,9 +10,10 @@ Provides:
 - navigate_to_entity: Cross-view navigation from audit/monitor
 """
 
-import os
 import httpx
 from typing import Any
+
+from agent.governance_ui.trace_bar.transforms import add_error_trace
 
 
 def register_audit_loader_controllers(
@@ -29,10 +30,10 @@ def register_audit_loader_controllers(
 
     def load_audit_trail():
         """Load audit trail data from API. Per RD-DEBUG-AUDIT Phase 4."""
-        api_url = os.getenv('GOVERNANCE_API_URL', 'http://localhost:8082')
-
         try:
-            summary_response = httpx.get(f"{api_url}/api/audit/summary", timeout=10.0)
+            summary_response = httpx.get(
+                f"{api_base_url}/api/audit/summary", timeout=10.0
+            )
             if summary_response.status_code == 200:
                 state.audit_summary = summary_response.json()
 
@@ -45,16 +46,26 @@ def register_audit_loader_controllers(
                 params['entity_id'] = state.audit_filter_entity_id
             if state.audit_filter_correlation_id:
                 params['correlation_id'] = state.audit_filter_correlation_id
+            if getattr(state, 'audit_filter_date_from', None):
+                params['date_from'] = state.audit_filter_date_from
+            if getattr(state, 'audit_filter_date_to', None):
+                params['date_to'] = state.audit_filter_date_to
 
-            entries_response = httpx.get(f"{api_url}/api/audit", params=params, timeout=10.0)
+            entries_response = httpx.get(
+                f"{api_base_url}/api/audit", params=params, timeout=10.0
+            )
             if entries_response.status_code == 200:
                 entries = entries_response.json()
                 for entry in entries:
-                    if isinstance(entry.get('applied_rules'), list):
-                        entry['applied_rules'] = ', '.join(entry['applied_rules'])
+                    rules = entry.get('applied_rules', [])
+                    if isinstance(rules, list):
+                        entry['applied_rules_display'] = ', '.join(rules)
+                    else:
+                        entry['applied_rules_display'] = str(rules) if rules else ''
                 state.audit_entries = entries
 
         except Exception as e:
+            add_error_trace(state, f"Load audit trail failed: {e}", "/api/audit")
             state.audit_summary = {
                 'total_entries': 0, 'by_action_type': {},
                 'by_entity_type': {}, 'by_actor': {},
@@ -99,12 +110,11 @@ def register_audit_loader_controllers(
 
         elif entity_type_lower == "session":
             state.active_view = "sessions"
-            for session in (state.sessions or []):
-                if session.get("session_id") == entity_id or session.get("id") == entity_id:
-                    state.selected_session = session
-                    state.show_session_detail = True
-                    return
-            state.show_session_detail = False
+            # Use the session controller's select_session which loads
+            # all detail data (tool_calls, evidence, transcript, etc.)
+            ctrl.select_session(entity_id)
+            # BUG-UI-AUDIT-NAV-001: Was dead code (set False when already False).
+            # select_session sets show_session_detail=True on success.
 
         elif entity_type_lower == "decision":
             state.active_view = "decisions"
@@ -133,6 +143,16 @@ def register_audit_loader_controllers(
 
     @state.change("audit_filter_correlation_id")
     def _on_audit_filter_correlation_id(audit_filter_correlation_id, **kwargs):
+        if state.active_view == "audit":
+            load_audit_trail()
+
+    @state.change("audit_filter_date_from")
+    def _on_audit_filter_date_from(audit_filter_date_from, **kwargs):
+        if state.active_view == "audit":
+            load_audit_trail()
+
+    @state.change("audit_filter_date_to")
+    def _on_audit_filter_date_to(audit_filter_date_to, **kwargs):
         if state.active_view == "audit":
             load_audit_trail()
 

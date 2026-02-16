@@ -1,3 +1,8 @@
+---
+description: Context Statistics
+allowed-tools: Bash, Read
+---
+
 # Context Statistics
 
 Show actual context window usage (token counts, not estimates).

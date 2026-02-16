@@ -11,6 +11,7 @@ Created: 2024-12-28
 Updated: 2026-01-20 - Added load_monitor_data trigger
 """
 
+from datetime import datetime
 from typing import Any
 
 from agent.governance_ui import (
@@ -20,6 +21,7 @@ from agent.governance_ui import (
     get_monitor_stats,
     get_top_monitored_rules,
 )
+from agent.governance_ui.trace_bar.transforms import add_error_trace
 
 
 def register_monitor_controllers(state: Any, ctrl: Any, api_base_url: str) -> None:
@@ -32,13 +34,13 @@ def register_monitor_controllers(state: Any, ctrl: Any, api_base_url: str) -> No
         api_base_url: Base URL for API calls (unused but kept for consistency)
     """
 
-    @ctrl.set("filter_monitor_events")
+    @ctrl.trigger("filter_monitor_events")
     def filter_monitor_events(event_type):
         """Filter monitoring events by type."""
         state.monitor_filter = event_type
         state.monitor_feed = get_monitor_feed(limit=50, event_type=event_type)
 
-    @ctrl.set("acknowledge_alert")
+    @ctrl.trigger("acknowledge_alert")
     def acknowledge_alert(alert_id):
         """Acknowledge a monitoring alert."""
         result = acknowledge_monitor_alert(alert_id)
@@ -71,4 +73,9 @@ def register_monitor_controllers(state: Any, ctrl: Any, api_base_url: str) -> No
             # Load top monitored rules
             state.top_rules = get_top_monitored_rules(limit=10)
         except Exception as e:
-            state.status_message = f"Monitor load failed: {str(e)[:50]}"
+            # BUG-UI-LOAD-003: Use error_message + has_error, not status_message
+            add_error_trace(state, f"Monitor load failed: {e}", "monitor_data")
+            state.has_error = True
+            state.error_message = f"Monitor load failed: {str(e)[:50]}"
+        finally:
+            state.monitor_last_updated = datetime.now().isoformat(timespec="seconds")

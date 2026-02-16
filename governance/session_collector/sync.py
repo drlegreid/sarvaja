@@ -116,14 +116,21 @@ class SessionSyncMixin:
             if not client.connect():
                 return False
 
+            # BUG-TYPEDB-INJECTION-003: Escape all user-provided decision fields
+            id_escaped = decision.id.replace('"', '\\"')
+            name_escaped = decision.name.replace('"', '\\"')
+            context_escaped = decision.context.replace('"', '\\"')
+            rationale_escaped = decision.rationale.replace('"', '\\"')
+            status_escaped = decision.status.replace('"', '\\"')
+
             # Insert decision via TypeQL
             query = f'''
                 insert $d isa decision,
-                    has decision-id "{decision.id}",
-                    has decision-name "{decision.name}",
-                    has context "{decision.context}",
-                    has rationale "{decision.rationale}",
-                    has decision-status "{decision.status}";
+                    has decision-id "{id_escaped}",
+                    has decision-name "{name_escaped}",
+                    has context "{context_escaped}",
+                    has rationale "{rationale_escaped}",
+                    has decision-status "{status_escaped}";
             '''
 
             client.execute_query(query)
@@ -169,11 +176,14 @@ class SessionSyncMixin:
                 if getattr(self, "agent_id", None):
                     agent_escaped = self.agent_id.replace('"', '\\"')
                     agent_part = f',\n                        has agent-id "{agent_escaped}"'
+                # BUG-TYPEDB-INJECTION-002: Escape topic and session_type
+                topic_escaped = self.topic.replace('"', '\\"')
+                type_escaped = self.session_type.replace('"', '\\"')
                 create_session_query = f'''
                     insert $s isa work-session,
                         has session-id "{self.session_id}",
-                        has session-name "{self.topic}",
-                        has session-description "Session for {self.session_type}"{agent_part};
+                        has session-name "{topic_escaped}",
+                        has session-description "Session for {type_escaped}"{agent_part};
                 '''
                 client.execute_query(create_session_query)
 
@@ -190,11 +200,12 @@ class SessionSyncMixin:
 
             if not existing_task:
                 # Insert new task
+                task_status_escaped = task.status.replace('"', '\\"') if task.status else "pending"
                 insert_task_query = f'''
                     insert $t isa task,
                         has task-id "{task.id}",
                         has task-name "{task_name_escaped}",
-                        has task-status "{task.status}",
+                        has task-status "{task_status_escaped}",
                         has phase "SESSION";
                 '''
                 client.execute_query(insert_task_query)

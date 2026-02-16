@@ -108,7 +108,7 @@ def build_agents_list_view() -> None:
                 with v3.VListItem(
                     v_for="agent in agents",
                     **{":key": "agent.agent_id"},
-                    click="selected_agent = agent; show_agent_detail = true",
+                    click="trigger('select_agent', [agent.agent_id])",
                     __properties=["data-testid"],
                     **{"data-testid": "agent-item"}
                 ):

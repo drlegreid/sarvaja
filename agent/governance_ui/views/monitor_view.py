@@ -16,6 +16,18 @@ def build_monitor_header() -> None:
     with v3.VCardTitle(classes="d-flex align-center"):
         html.Span("Real-time Rule Monitoring")
         v3.VSpacer()
+        # Data freshness indicator (GAP-MONITOR-FRESH-001)
+        v3.VChip(
+            v_if="monitor_last_updated",
+            v_text="'Updated: ' + monitor_last_updated",
+            prepend_icon="mdi-clock-outline",
+            size="small",
+            variant="text",
+            color="grey",
+            classes="mr-2",
+            __properties=["data-testid"],
+            **{"data-testid": "monitor-freshness"}
+        )
         # Event type filter
         v3.VSelect(
             v_model="monitor_filter",
@@ -29,7 +41,7 @@ def build_monitor_header() -> None:
             hide_details=True,
             clearable=True,
             style="max-width: 180px; margin-right: 8px",
-            change="filter_monitor_events($event)",
+            change="trigger('filter_monitor_events', [$event])",
             __properties=["data-testid"],
             **{"data-testid": "monitor-filter"}
         )
@@ -181,7 +193,7 @@ def build_alerts_panel() -> None:
                                 size="x-small",
                                 variant="text",
                                 color="success",
-                                click="acknowledge_alert(alert.alert_id)",
+                                click="trigger('acknowledge_alert', [alert.alert_id])",
                                 title="Acknowledge",
                             )
                     # Empty state

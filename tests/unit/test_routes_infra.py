@@ -155,12 +155,12 @@ class TestGetContainerLogs(unittest.TestCase):
         self.assertIn("ERROR", result["lines"][0])
 
     def test_unknown_container(self):
-        """Unknown container name passes through as-is."""
-        with patch("governance.routes.infra._find_socket", return_value=None):
-            with patch("governance.routes.infra._fetch_logs_subprocess", return_value=[]):
-                with patch("governance.routes.infra._fetch_own_process_logs", return_value=["info"]):
-                    result = get_container_logs(container="unknown-container", tail=10)
-        self.assertEqual(result["container"], "unknown-container")
+        """Unknown container name must be rejected with 400."""
+        # BUG-ROUTE-LOGIC-010: Strict whitelist — no fallback to raw input
+        from fastapi.exceptions import HTTPException
+        with self.assertRaises(HTTPException) as ctx:
+            get_container_logs(container="unknown-container", tail=10)
+        self.assertEqual(ctx.exception.status_code, 400)
 
 
 if __name__ == "__main__":

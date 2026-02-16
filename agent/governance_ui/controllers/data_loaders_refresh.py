@@ -81,16 +81,16 @@ def register_refresh_controllers(
                             r.setdefault("linked_tasks_count", r.get("linked_tasks_count", 0))
                             r.setdefault("linked_sessions_count", r.get("linked_sessions_count", 0))
                         state.rules = rules
-                except Exception:
-                    pass
+                except Exception as e:
+                    add_error_trace(state, f"Refresh rules failed: {e}", "/api/rules")
 
                 try:
                     response, _ = _traced_get(client, "/api/decisions")
                     if response.status_code == 200:
                         data = response.json()
                         state.decisions = data.get("items", data) if isinstance(data, dict) else data
-                except Exception:
-                    pass
+                except Exception as e:
+                    add_error_trace(state, f"Refresh decisions failed: {e}", "/api/decisions")
 
                 try:
                     page_size = getattr(state, 'tasks_per_page', 20)
@@ -102,17 +102,22 @@ def register_refresh_controllers(
                                 data["items"], ["created_at", "claimed_at", "completed_at"])
                             state.tasks_pagination = data.get("pagination", {})
                         else:
-                            state.tasks = data[:page_size] if len(data) > page_size else data
+                            # BUG-REFRESH-001: Guard against non-list data (e.g. dict without "items")
+                            items_list = data if isinstance(data, list) else []
+                            state.tasks = items_list[:page_size] if len(items_list) > page_size else items_list
                             state.tasks_pagination = {
-                                "total": len(data),
+                                "total": len(items_list),
                                 "offset": 0,
                                 "limit": page_size,
-                                "has_more": len(data) > page_size,
-                                "returned": min(len(data), page_size),
+                                "has_more": len(items_list) > page_size,
+                                "returned": min(len(items_list), page_size),
                             }
+                        # BUG-UI-TASKS-004: Enrich doc_count for Docs column
+                        from agent.governance_ui.controllers.tasks import _enrich_doc_count
+                        state.tasks = _enrich_doc_count(state.tasks)
                     state.tasks_page = 1
-                except Exception:
-                    pass
+                except Exception as e:
+                    add_error_trace(state, f"Refresh tasks failed: {e}", "/api/tasks")
 
                 try:
                     response, _ = _traced_get(client, "/api/sessions?limit=100")
@@ -144,28 +149,30 @@ def register_refresh_controllers(
                                     item["source_type"] = "API"
                         state.sessions = format_timestamps_in_list(
                             items, ["start_time", "end_time"])
-                except Exception:
-                    pass
+                except Exception as e:
+                    add_error_trace(state, f"Refresh sessions failed: {e}", "/api/sessions")
 
                 try:
                     response, _ = _traced_get(client, "/api/agents")
                     if response.status_code == 200:
                         data = response.json()
                         state.agents = data.get("items", data) if isinstance(data, dict) else data
-                except Exception:
-                    pass
+                except Exception as e:
+                    add_error_trace(state, f"Refresh agents failed: {e}", "/api/agents")
 
             # Also refresh infra health for toolbar indicator
             try:
                 infra_loaders['load_infra_status']()
-            except Exception:
-                pass
+            except Exception as e:
+                add_error_trace(state, f"Refresh infra failed: {e}", "infra_status")
 
             state.is_loading = False
             state.status_message = "Data refreshed from API"
         except Exception as e:
             state.is_loading = False
-            state.status_message = f"Using cached data (API unavailable: {str(e)})"
+            # BUG-UI-SILENT-FAIL-001: Use error_message not status_message for failures
+            state.has_error = True
+            state.error_message = f"API unavailable: {str(e)}"
 
     def load_sessions_list():
         """Load sessions list for dropdowns. Per UI-AUDIT-007."""
@@ -190,7 +197,8 @@ def register_refresh_controllers(
                                 item["source_type"] = "API"
                     state.sessions = format_timestamps_in_list(
                         items, ["start_time", "end_time"])
-        except Exception:
+        except Exception as e:
+            add_error_trace(state, f"Load sessions list failed: {e}", "/api/sessions")
             if not state.sessions:
                 state.sessions = []
 

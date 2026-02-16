@@ -27,9 +27,12 @@ class ProjectCRUDOperations:
         if existing:
             return None
 
+        # BUG-TYPEQL-ESCAPE-PROJECT-001: Escape project_id for TypeQL safety
+        project_id_escaped = project_id.replace('"', '\\"')
+
         try:
             with self._driver.transaction(self.database, TransactionType.WRITE) as tx:
-                parts = [f'has project-id "{project_id}"']
+                parts = [f'has project-id "{project_id_escaped}"']
                 name_esc = name.replace('"', '\\"')
                 parts.append(f'has project-name "{name_esc}"')
                 if path:
@@ -50,10 +53,12 @@ class ProjectCRUDOperations:
 
     def get_project(self, project_id: str) -> Optional[Dict[str, Any]]:
         """Get a project by ID from TypeDB."""
+        # BUG-TYPEQL-ESCAPE-PROJECT-001: Escape project_id for TypeQL safety
+        pid = project_id.replace('"', '\\"')
         try:
             # Check existence via _execute_query (handles concept→value)
             results = self._execute_query(
-                f'match $p isa project, has project-id "{project_id}"; select $p;'
+                f'match $p isa project, has project-id "{pid}"; select $p;'
             )
             if not results:
                 return None
@@ -63,7 +68,7 @@ class ProjectCRUDOperations:
             for attr, field in [("project-name", "name"), ("project-path", "path")]:
                 try:
                     r = self._execute_query(
-                        f'match $p isa project, has project-id "{project_id}", has {attr} $v; select $v;'
+                        f'match $p isa project, has project-id "{pid}", has {attr} $v; select $v;'
                     )
                     if r:
                         project[field] = r[0].get("v")
@@ -106,11 +111,14 @@ class ProjectCRUDOperations:
         if not existing:
             return False
 
+        # BUG-TYPEQL-ESCAPE-PROJECT-001: Escape project_id for TypeQL safety
+        pid = project_id.replace('"', '\\"')
+
         try:
             # Delete relations first
             for rel_query in [
-                f'match $p isa project, has project-id "{project_id}"; $r (parent-project: $p) isa project-contains-plan; delete $r;',
-                f'match $p isa project, has project-id "{project_id}"; $r (session-project: $p) isa project-has-session; delete $r;',
+                f'match $p isa project, has project-id "{pid}"; $r (parent-project: $p) isa project-contains-plan; delete $r;',
+                f'match $p isa project, has project-id "{pid}"; $r (session-project: $p) isa project-has-session; delete $r;',
             ]:
                 try:
                     with self._driver.transaction(self.database, TransactionType.WRITE) as tx:
@@ -121,7 +129,7 @@ class ProjectCRUDOperations:
 
             # Delete entity
             with self._driver.transaction(self.database, TransactionType.WRITE) as tx:
-                tx.query(f'match $p isa project, has project-id "{project_id}"; delete $p;').resolve()
+                tx.query(f'match $p isa project, has project-id "{pid}"; delete $p;').resolve()
                 tx.commit()
 
             return True

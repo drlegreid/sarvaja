@@ -20,6 +20,7 @@ from governance.session_collector.collector import SessionCollector
 from governance.services.sessions import create_session
 from governance.services.sessions_lifecycle import end_session
 from governance.stores import _sessions_store
+from governance.stores.session_persistence import persist_session
 
 logger = logging.getLogger(__name__)
 
@@ -121,6 +122,7 @@ def start_chat_session(
         "session_type": session_type,
         "intent": topic,
     })
+    persist_session(collector.session_id, _sessions_store[collector.session_id])
 
     logger.info(
         f"Chat session started: {collector.session_id} "
@@ -168,11 +170,12 @@ def record_chat_tool_call(
             "tool_name": tool_name,
             "tool_category": classify_tool(tool_name),
             "arguments": arguments or {},
-            "result": (result[:200] + "...") if result and len(result) > 200 else result,
+            "result": result,
             "duration_ms": duration_ms,
             "success": success,
             "timestamp": datetime.now().isoformat(),
         })
+        persist_session(session_id, _sessions_store[session_id])
 
 
 def record_chat_thought(
@@ -208,12 +211,13 @@ def record_chat_thought(
         if "thoughts" not in _sessions_store[session_id]:
             _sessions_store[session_id]["thoughts"] = []
         _sessions_store[session_id]["thoughts"].append({
-            "thought": thought[:500] if len(thought) > 500 else thought,
+            "thought": thought,
             "thought_type": thought_type,
             "related_tools": related_tools,
             "confidence": confidence,
             "timestamp": datetime.now().isoformat(),
         })
+        persist_session(session_id, _sessions_store[session_id])
 
 
 def end_chat_session(

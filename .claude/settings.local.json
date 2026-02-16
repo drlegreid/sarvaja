@@ -64,6 +64,11 @@
             "type": "command",
             "command": "python3 \"$CLAUDE_PROJECT_DIR/.claude/hooks/mcp_usage_check.py\" --reset",
             "timeout": 1
+          },
+          {
+            "type": "command",
+            "command": "python3 \"$CLAUDE_PROJECT_DIR/.claude/hooks/context_preload_hook.py\"",
+            "timeout": 5
           }
         ]
       },

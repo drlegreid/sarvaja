@@ -140,18 +140,18 @@ class TestRecordToolCall:
         assert len(session_data["tool_calls"]) == 1
         assert session_data["tool_calls"][0]["tool_name"] == "/tasks"
 
-    def test_record_tool_call_truncates_result(self):
-        """Long results should be truncated to 200 chars in store."""
+    def test_record_tool_call_preserves_full_result(self):
+        """Full results stored for transcript support (GAP-SESSION-TRANSCRIPT-001)."""
         from governance.routes.chat.session_bridge import (
             start_chat_session,
             record_chat_tool_call,
         )
         from governance.stores import _sessions_store
-        collector = start_chat_session("agent-1", "Test truncate")
+        collector = start_chat_session("agent-1", "Test full result")
         long_result = "X" * 500
         record_chat_tool_call(collector, tool_name="/rules", result=long_result)
         stored = _sessions_store[collector.session_id]["tool_calls"][0]["result"]
-        assert len(stored) <= 204  # 200 + "..."
+        assert len(stored) == 500  # Full content preserved
 
 
 class TestRecordThought:

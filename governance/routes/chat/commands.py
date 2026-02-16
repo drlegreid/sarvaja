@@ -56,7 +56,12 @@ def query_llm(message: str, system_prompt: str = "") -> str:
         )
         if resp.status_code == 200:
             data = resp.json()
-            return data["choices"][0]["message"]["content"]
+            # BUG-CMD-001: Safe access to LLM response structure
+            choices = data.get("choices") or []
+            if choices and isinstance(choices[0], dict):
+                msg = choices[0].get("message") or {}
+                return msg.get("content", "No response content from LLM.")
+            return "LLM returned an empty response."
         logger.warning(f"LLM query failed: HTTP {resp.status_code} - {resp.text[:200]}")
         return (
             f"LLM returned an error (HTTP {resp.status_code}). "
@@ -214,7 +219,8 @@ You can also type natural language commands and I'll do my best to help!"""
             if client:
                 rules = client.get_all_rules() or []
                 for rule in rules:
-                    if query.lower() in (rule.name or "" + rule.directive or "").lower():
+                    # BUG-CMD-002: Fix operator precedence (+ binds tighter than or)
+                    if query.lower() in ((rule.name or "") + (rule.directive or "")).lower():
                         results.append(f"Rule: {rule.id} - {rule.name}")
         except Exception as e:
             logger.debug(f"Failed to search rules: {e}")
@@ -257,8 +263,9 @@ You can also type natural language commands and I'll do my best to help!"""
                     f"(agent: {s.get('agent_id', 'none')})"
                     for s in recent
                 )
-        except Exception:
-            pass
+        except Exception as e:
+            # BUG-CMD-003: Log instead of silently swallowing
+            logger.debug(f"Failed to load recent sessions for LLM context: {e}")
 
         context = (
             f"{GOVERNANCE_SYSTEM_PROMPT}\n\n"

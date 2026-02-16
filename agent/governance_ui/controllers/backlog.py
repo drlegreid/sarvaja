@@ -16,6 +16,7 @@ import httpx
 from typing import Any, Callable, Optional
 
 from agent.governance_ui.utils import extract_items_from_response
+from agent.governance_ui.trace_bar.transforms import add_error_trace
 
 # Module-level task reference for cancellation
 _polling_task: Optional[asyncio.Task] = None
@@ -48,6 +49,7 @@ def register_backlog_controllers(
             state.error_message = "Please enter an Agent ID to claim tasks"
             return
 
+        state.has_error = False
         try:
             state.is_loading = True
             with httpx.Client(timeout=10.0) as client:
@@ -63,6 +65,7 @@ def register_backlog_controllers(
                     state.error_message = f"Failed to claim task: {response.text}"
             state.is_loading = False
         except Exception as e:
+            add_error_trace(state, f"Claim backlog task failed: {e}", f"/api/tasks/{task_id}/claim")
             state.is_loading = False
             state.has_error = True
             state.error_message = f"Error claiming task: {str(e)}"
@@ -71,6 +74,7 @@ def register_backlog_controllers(
     @ctrl.trigger("complete_backlog_task")  # Backward compat
     def complete_task(task_id):
         """Mark a claimed task as complete. Per UI-AUDIT-2026-01-19."""
+        state.has_error = False
         try:
             state.is_loading = True
             with httpx.Client(timeout=10.0) as client:
@@ -89,11 +93,15 @@ def register_backlog_controllers(
                             state.tasks_pagination = data.get("pagination", {})
                         else:
                             state.tasks = extract_items_from_response(data)
+                        # BUG-UI-TASKS-004: Enrich doc_count for Docs column
+                        from agent.governance_ui.controllers.tasks import _enrich_doc_count
+                        state.tasks = _enrich_doc_count(state.tasks)
                 else:
                     state.has_error = True
                     state.error_message = f"Failed to complete task: {response.text}"
             state.is_loading = False
         except Exception as e:
+            add_error_trace(state, f"Complete backlog task failed: {e}", f"/api/tasks/{task_id}/complete")
             state.is_loading = False
             state.has_error = True
             state.error_message = f"Error completing task: {str(e)}"
@@ -126,6 +134,7 @@ def register_backlog_controllers(
                 _polling_task = loop.create_task(polling_loop())
                 state.status_message = f"Auto-refresh started ({state.backlog_refresh_interval}s interval)"
             except Exception as e:
+                add_error_trace(state, f"Start auto-refresh failed: {e}", "backlog/auto-refresh")
                 state.backlog_auto_refresh = False
                 state.error_message = f"Failed to start auto-refresh: {str(e)}"
         else:

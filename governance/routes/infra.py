@@ -47,10 +47,11 @@ def _fetch_logs_socket(sock_path: str, container: str, tail: int) -> list[str]:
     """Fetch logs via podman REST API unix socket."""
     conn = http.client.HTTPConnection("localhost")
     sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-    sock.settimeout(5)
-    sock.connect(sock_path)
-    conn.sock = sock
+    # BUG-INFRA-SOCKET-001: Use try/finally to ensure socket cleanup
     try:
+        sock.settimeout(5)
+        sock.connect(sock_path)
+        conn.sock = sock
         path = (
             f"/v4.0.0/containers/{container}/logs"
             f"?stdout=true&stderr=true&tail={tail}"
@@ -74,6 +75,7 @@ def _fetch_logs_socket(sock_path: str, container: str, tail: int) -> list[str]:
             return raw.decode(errors="replace").strip().split("\n")
         return lines
     finally:
+        sock.close()
         conn.close()
 
 
@@ -124,7 +126,11 @@ def get_container_logs(
     level: str = Query("", description="Log level filter (ERROR, WARNING, INFO)"),
 ):
     """Fetch container logs via podman socket, CLI fallback, or process info."""
-    container_name = CONTAINER_NAMES.get(container, container)
+    # BUG-ROUTE-LOGIC-010: Strict whitelist — reject unmapped container names
+    if container not in CONTAINER_NAMES:
+        from fastapi import HTTPException
+        raise HTTPException(status_code=400, detail=f"Unknown container: {container}. Valid: {list(CONTAINER_NAMES.keys())}")
+    container_name = CONTAINER_NAMES[container]
 
     # Strategy 1: Podman REST API socket
     sock_path = _find_socket()

@@ -54,20 +54,24 @@ def register_session_linking_tools(mcp) -> None:
             if not client.connect():
                 return format_mcp_result({"error": "Could not connect to TypeDB"})
 
-            # Query tasks linked to session via completed-in relation
-            # TypeDB 3.x: 'select' replaces 'get'
-            query = f'''
-                match
-                    $s isa work-session, has session-id "{session_id}";
-                    (completed-task: $t, hosting-session: $s) isa completed-in;
-                    $t has task-id $tid, has task-name $name, has task-status $status;
-                select $tid, $name, $status;
-            '''
-            results = client.execute_query(query)
-            client.close()
+            # BUG-LINK-LEAK-001: Use try/finally to ensure client.close()
+            try:
+                # Query tasks linked to session via completed-in relation
+                # TypeDB 3.x: 'select' replaces 'get'
+                query = f'''
+                    match
+                        $s isa work-session, has session-id "{session_id}";
+                        (completed-task: $t, hosting-session: $s) isa completed-in;
+                        $t has task-id $tid, has task-name $name, has task-status $status;
+                    select $tid, $name, $status;
+                '''
+                results = client.execute_query(query)
+            finally:
+                client.close()
 
             tasks = []
-            for r in results:
+            # BUG-MCP-001: Null-safe — execute_query may return None
+            for r in (results or []):
                 tasks.append({
                     "task_id": r.get("tid"),
                     "name": r.get("name"),
@@ -109,8 +113,11 @@ def register_session_linking_tools(mcp) -> None:
             if not client.connect():
                 return format_mcp_result({"error": "Could not connect to TypeDB"})
 
-            success = client.link_rule_to_session(session_id, rule_id)
-            client.close()
+            # BUG-LINK-LEAK-001: Use try/finally to ensure client.close()
+            try:
+                success = client.link_rule_to_session(session_id, rule_id)
+            finally:
+                client.close()
 
             if success:
                 if MONITORING_AVAILABLE:
@@ -153,8 +160,11 @@ def register_session_linking_tools(mcp) -> None:
             if not client.connect():
                 return format_mcp_result({"error": "Could not connect to TypeDB"})
 
-            success = client.link_decision_to_session(session_id, decision_id)
-            client.close()
+            # BUG-LINK-LEAK-001: Use try/finally to ensure client.close()
+            try:
+                success = client.link_decision_to_session(session_id, decision_id)
+            finally:
+                client.close()
 
             if success:
                 if MONITORING_AVAILABLE:
@@ -197,8 +207,11 @@ def register_session_linking_tools(mcp) -> None:
             if not client.connect():
                 return format_mcp_result({"error": "Could not connect to TypeDB"})
 
-            success = client.link_evidence_to_session(session_id, evidence_path)
-            client.close()
+            # BUG-LINK-LEAK-001: Use try/finally to ensure client.close()
+            try:
+                success = client.link_evidence_to_session(session_id, evidence_path)
+            finally:
+                client.close()
 
             if success:
                 if MONITORING_AVAILABLE:

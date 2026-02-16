@@ -50,7 +50,8 @@ async def get_file_content(path: str = Query(..., description="File path relativ
     # Prevent path traversal
     real_path = os.path.realpath(full_path)
     real_root = os.path.realpath(project_root)
-    if not real_path.startswith(real_root):
+    # BUG-ROUTE-002: Use os.sep to prevent prefix attacks (/home/user vs /home/username)
+    if not real_path.startswith(real_root + os.sep) and real_path != real_root:
         raise HTTPException(status_code=403, detail="Path traversal not allowed")
 
     if not os.path.exists(full_path):

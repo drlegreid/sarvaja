@@ -98,8 +98,9 @@ def run_heuristic_checks(
                         duration_ms=duration_ms,
                         success=result["status"] in ("PASS", "SKIP"),
                     )
-                except Exception:
-                    pass
+                except Exception as e:
+                    # BUG-HEURISTIC-001: Log instead of silently swallowing
+                    logger.debug(f"Failed to record heuristic tool call: {e}")
 
         except Exception as e:
             duration_ms = int((time.time() - start) * 1000)
@@ -122,8 +123,9 @@ def run_heuristic_checks(
                 f"{skipped} skip, {errors} error"
             )
             end_chat_session(collector, summary=summary_text)
-        except Exception:
-            pass
+        except Exception as e:
+            # BUG-HEURISTIC-001: Log instead of silently swallowing
+            logger.debug(f"Failed to end heuristic session: {e}")
 
     return {
         "timestamp": datetime.now().isoformat(),

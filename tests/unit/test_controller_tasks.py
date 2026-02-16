@@ -11,6 +11,7 @@ from unittest.mock import MagicMock, patch
 def _make_state_ctrl(api_base="http://localhost:8082"):
     """Build mock state/ctrl and register task controllers."""
     state = MagicMock()
+    state.is_loading = False
     ctrl = MagicMock()
     triggers = {}
     setters = {}

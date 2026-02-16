@@ -66,9 +66,11 @@ def generate_evidence(
             "|----|------|----------|-------------|",
         ])
         for f in cycle.findings:
-            desc = f['description'][:50] + "..." if len(f['description']) > 50 else f['description']
+            # BUG-DSM-001: Use .get() to avoid KeyError on malformed findings
+            raw_desc = f.get('description', 'N/A')
+            desc = raw_desc[:50] + "..." if len(raw_desc) > 50 else raw_desc
             lines.append(
-                f"| {f['id']} | {f['type']} | {f['severity']} | {desc} |"
+                f"| {f.get('id', 'N/A')} | {f.get('type', 'N/A')} | {f.get('severity', 'N/A')} | {desc} |"
             )
         lines.extend(["", "---", ""])
 
@@ -97,7 +99,13 @@ def generate_evidence(
         "*Generated per RULE-012: Deep Sleep Protocol*",
     ])
 
-    with open(filepath, "w", encoding="utf-8") as f:
-        f.write("\n".join(lines))
+    # BUG-DSM-002: Guard against write failures
+    try:
+        with open(filepath, "w", encoding="utf-8") as f:
+            f.write("\n".join(lines))
+    except (IOError, OSError) as e:
+        import logging as _log
+        _log.getLogger(__name__).error(f"Failed to write evidence {filepath}: {e}")
+        raise
 
     return str(filepath)

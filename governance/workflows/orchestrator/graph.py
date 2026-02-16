@@ -99,17 +99,26 @@ def build_orchestrator_graph() -> MockStateGraph:
 
 def _run_fallback_workflow(state: Dict[str, Any]) -> Dict[str, Any]:
     """Execute the orchestrator loop without LangGraph runtime."""
-    while True:
-        result = gate_node(state)
-        state.update(result)
+    # BUG-ORCH-LOOP-001: Hard safety cap prevents infinite loop if gate/budget logic fails
+    _MAX_ITERATIONS = state.get("max_cycles", 100) * 3  # 3x max_cycles as safety margin
+    _iteration = 0
+    _retrying = False
+    while _iteration < _MAX_ITERATIONS:
+        _iteration += 1
 
-        decision = check_gate_decision(state)
-        if decision == "complete":
-            state.update(certify_node(state))
-            state.update(complete_node(state))
-            break
+        if not _retrying:
+            result = gate_node(state)
+            state.update(result)
 
-        state.update(backlog_node(state))
+            decision = check_gate_decision(state)
+            if decision == "complete":
+                state.update(certify_node(state))
+                state.update(complete_node(state))
+                break
+
+            state.update(backlog_node(state))
+
+        _retrying = False
         state.update(spec_node(state))
         state.update(implement_node(state))
         state.update(validate_node(state))
@@ -122,10 +131,16 @@ def _run_fallback_workflow(state: Dict[str, Any]) -> Dict[str, Any]:
         elif route == "complete_cycle":
             state.update(complete_cycle_node(state))
         elif route == "loop_to_spec":
+            # BUG-ORCH-RETRY-001: Retry must re-spec same task, not pop new from backlog
             state["retry_count"] = state.get("retry_count", 0) + 1
+            _retrying = True
             continue
         elif route == "park_task":
             state.update(park_task_node(state))
+    else:
+        # Safety cap reached — force completion
+        state["gate_decision"] = "stop"
+        state["safety_cap_reached"] = True
 
     return state
 

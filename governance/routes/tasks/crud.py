@@ -75,48 +75,64 @@ async def create_task(task: TaskCreate):
 @router.get("/tasks/{task_id}", response_model=TaskResponse)
 async def get_task(task_id: str):
     """Get a specific task by ID. Per GAP-EXPLOR-API-001."""
-    result = task_service.get_task(task_id)
-    if result is None:
-        raise HTTPException(status_code=404, detail=f"Task {task_id} not found")
-    # Service returns TaskResponse directly (via task_to_response)
-    if isinstance(result, TaskResponse):
-        return result
-    return TaskResponse(**result)
+    # BUG-ROUTE-NOEXCEPT-001: Add try-except matching create_task pattern
+    try:
+        result = task_service.get_task(task_id)
+        if result is None:
+            raise HTTPException(status_code=404, detail=f"Task {task_id} not found")
+        if isinstance(result, TaskResponse):
+            return result
+        return TaskResponse(**result)
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to get task: {e}")
 
 
 @router.put("/tasks/{task_id}", response_model=TaskResponse)
 async def update_task(task_id: str, update: TaskUpdate):
     """Update task fields. Per GAP-UI-107, GAP-ARCH-001."""
-    result = task_service.update_task(
-        task_id=task_id,
-        description=update.description,
-        status=update.status,
-        phase=update.phase,
-        priority=update.priority,
-        task_type=update.task_type,
-        agent_id=update.agent_id,
-        body=update.body,
-        evidence=update.evidence,
-        linked_rules=update.linked_rules,
-        linked_sessions=update.linked_sessions,
-        linked_documents=update.linked_documents,
-        gap_id=update.gap_id,
-        source="rest-api",
-    )
-    if result is None:
-        raise HTTPException(status_code=404, detail=f"Task {task_id} not found")
-    # Service returns TaskResponse directly (via task_to_response)
-    if isinstance(result, TaskResponse):
-        return result
-    return TaskResponse(**result)
+    # BUG-ROUTE-NOEXCEPT-001: Add try-except matching create_task pattern
+    try:
+        result = task_service.update_task(
+            task_id=task_id,
+            description=update.description,
+            status=update.status,
+            phase=update.phase,
+            priority=update.priority,
+            task_type=update.task_type,
+            agent_id=update.agent_id,
+            body=update.body,
+            evidence=update.evidence,
+            linked_rules=update.linked_rules,
+            linked_sessions=update.linked_sessions,
+            linked_documents=update.linked_documents,
+            gap_id=update.gap_id,
+            source="rest-api",
+        )
+        if result is None:
+            raise HTTPException(status_code=404, detail=f"Task {task_id} not found")
+        if isinstance(result, TaskResponse):
+            return result
+        return TaskResponse(**result)
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to update task: {e}")
 
 
 @router.delete("/tasks/{task_id}", status_code=204)
 async def delete_task(task_id: str):
     """Delete a task. Per GAP-ARCH-001."""
-    if not task_service.delete_task(task_id, source="rest-api"):
-        raise HTTPException(status_code=404, detail=f"Task {task_id} not found")
-    return None
+    # BUG-ROUTE-NOEXCEPT-001: Add try-except matching create_task pattern
+    try:
+        if not task_service.delete_task(task_id, source="rest-api"):
+            raise HTTPException(status_code=404, detail=f"Task {task_id} not found")
+        return None
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to delete task: {e}")
 
 
 @router.post("/tasks/{task_id}/rules/{rule_id}", status_code=201)
@@ -133,6 +149,15 @@ async def link_task_to_session(task_id: str, session_id: str):
     if not task_service.link_task_to_session(task_id, session_id, source="rest-api"):
         raise HTTPException(status_code=400, detail="Failed to create link (task not found or TypeDB unavailable)")
     return {"task_id": task_id, "session_id": session_id, "linked": True}
+
+
+@router.get("/tasks/{task_id}/sessions")
+async def get_task_sessions(task_id: str):
+    """Get all sessions linked to a task. Reverse query for completed-in relations."""
+    sessions = task_service.get_sessions_for_task(task_id)
+    if sessions is None:
+        raise HTTPException(status_code=404, detail=f"Task {task_id} not found")
+    return {"task_id": task_id, "sessions": sessions, "count": len(sessions)}
 
 
 # Task Document Management endpoints

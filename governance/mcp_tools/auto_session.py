@@ -135,6 +135,7 @@ class MCPAutoSessionTracker:
         """Persist session start to _sessions_store."""
         try:
             from governance.stores import _sessions_store
+            from governance.stores.session_persistence import persist_session
             _sessions_store[self.active_session_id] = {
                 "session_id": self.active_session_id,
                 "start_time": self._session_start.isoformat(),
@@ -144,6 +145,7 @@ class MCPAutoSessionTracker:
                 "agent_id": "code-agent",
                 "tool_calls": [],
             }
+            persist_session(self.active_session_id, _sessions_store[self.active_session_id])
         except Exception as e:
             logger.warning(f"Failed to persist MCP session start: {e}")
 
@@ -151,11 +153,13 @@ class MCPAutoSessionTracker:
         """Persist a tool call to _sessions_store."""
         try:
             from governance.stores import _sessions_store
+            from governance.stores.session_persistence import persist_session
             sid = self.active_session_id
             if sid in _sessions_store:
                 if "tool_calls" not in _sessions_store[sid]:
                     _sessions_store[sid]["tool_calls"] = []
                 _sessions_store[sid]["tool_calls"].append(call_record)
+                persist_session(sid, _sessions_store[sid])
         except Exception as e:
             logger.warning(f"Failed to persist MCP tool call: {e}")
 
@@ -163,11 +167,14 @@ class MCPAutoSessionTracker:
         """Persist session end to _sessions_store."""
         try:
             from governance.stores import _sessions_store
+            from governance.stores.session_persistence import persist_session
             sid = self.active_session_id
             if sid in _sessions_store:
                 _sessions_store[sid]["status"] = "COMPLETED"
                 _sessions_store[sid]["end_time"] = datetime.now().isoformat()
                 _sessions_store[sid]["tasks_completed"] = len(self.tool_calls)
+                # BUG-AUTO-SESSION-PERSIST-001: Must persist after update (matches _persist_session_start/_persist_tool_call)
+                persist_session(sid, _sessions_store[sid])
         except Exception as e:
             logger.warning(f"Failed to persist MCP session end: {e}")
 

@@ -8,13 +8,15 @@ Created: 2026-02-11
 """
 import json
 import logging
+import os
 from pathlib import Path
 from typing import Any, Dict, Optional, Union
 
 logger = logging.getLogger(__name__)
 
-# Default CC project directory
-DEFAULT_CC_DIR = Path.home() / ".claude" / "projects"
+# Default CC project directory — check env var first (container use)
+_env_cc_dir = os.environ.get("CLAUDE_PROJECT_LOG_DIR")
+DEFAULT_CC_DIR = Path(_env_cc_dir) if _env_cc_dir else Path.home() / ".claude" / "projects"
 
 
 def derive_project_slug(directory: Path) -> str:
@@ -118,8 +120,9 @@ def scan_jsonl_metadata(filepath: Path) -> Optional[Dict[str, Any]]:
 
 def build_session_id(meta: Dict[str, Any], project_slug: str) -> str:
     """Build governance session ID from JSONL metadata."""
-    date_str = meta["first_ts"][:10]
-    name = meta["slug"].upper().replace(" ", "-")[:30]
+    # BUG-SCANNER-001: Defensive .get() for external callers
+    date_str = meta.get("first_ts", "1970-01-01")[:10]
+    name = meta.get("slug", "unknown").upper().replace(" ", "-")[:30]
     return f"SESSION-{date_str}-CC-{name}"
 
 
@@ -133,7 +136,13 @@ def discover_cc_projects() -> list[Dict[str, Any]]:
         return []
 
     projects = []
-    for d in DEFAULT_CC_DIR.iterdir():
+    try:
+        entries = list(DEFAULT_CC_DIR.iterdir())
+    except OSError as e:
+        # BUG-SCANNER-001: Guard against directory vanishing between check and iteration
+        logger.debug(f"CC directory iteration failed: {e}")
+        return []
+    for d in entries:
         if not d.is_dir() or d.name.startswith("."):
             continue
 
@@ -161,6 +170,90 @@ def discover_cc_projects() -> list[Dict[str, Any]]:
     return projects
 
 
+# Project markers that indicate a directory is a project
+_PROJECT_MARKERS = [
+    "project.godot",   # Godot engine
+    "CLAUDE.md",       # Claude Code project
+    "package.json",    # Node.js
+    "Cargo.toml",      # Rust
+    "go.mod",          # Go
+    "pyproject.toml",  # Python (modern)
+    "setup.py",        # Python (legacy)
+]
+
+
+def discover_filesystem_projects(
+    scan_dirs: list[str] = None,
+    existing_paths: set[str] = None,
+    existing_ids: set[str] = None,
+) -> list[Dict[str, Any]]:
+    """Discover projects from filesystem by scanning for project markers.
+
+    Complements discover_cc_projects() by finding projects that don't have
+    CC JSONL files (e.g., Godot games created via Claude Code sessions).
+
+    Args:
+        scan_dirs: List of parent directory paths to scan for subdirectories.
+        existing_paths: Paths to exclude (already-known projects).
+        existing_ids: Project IDs to exclude (already-known projects).
+
+    Returns:
+        List of dicts with project_id, name, path, project_type.
+    """
+    from governance.services.workspace_registry import detect_project_type
+
+    if not scan_dirs:
+        return []
+
+    existing_paths = existing_paths or set()
+    existing_ids = existing_ids or set()
+    projects = []
+
+    for scan_dir in scan_dirs:
+        parent = Path(scan_dir)
+        if not parent.is_dir():
+            continue
+
+        try:
+            dir_entries = list(parent.iterdir())
+        except OSError:
+            # BUG-SCANNER-002: Guard against directory vanishing during scan
+            continue
+        for d in dir_entries:
+            if not d.is_dir() or d.name.startswith("."):
+                continue
+
+            # Check for project markers
+            has_marker = any((d / marker).exists() for marker in _PROJECT_MARKERS)
+            if not has_marker:
+                continue
+
+            path_str = str(d)
+            if path_str in existing_paths:
+                continue
+
+            # Build project ID from directory name
+            slug = d.name.upper().replace(" ", "-")
+            project_id = f"PROJ-{slug}"
+            if project_id in existing_ids:
+                continue
+
+            # Auto-detect project type
+            proj_type = detect_project_type(path_str)
+
+            # Build human-readable name
+            name = d.name.replace("-", " ").replace("_", " ").title()
+
+            projects.append({
+                "project_id": project_id,
+                "name": name,
+                "path": path_str,
+                "project_type": proj_type,
+            })
+
+    return projects
+
+
 def find_jsonl_for_session(session: Union[Dict[str, Any], str]) -> Optional[Path]:
     """Find the JSONL file for a session by matching slug or UUID.
 
@@ -180,12 +273,24 @@ def find_jsonl_for_session(session: Union[Dict[str, Any], str]) -> Optional[Path
     if not DEFAULT_CC_DIR.is_dir():
         return None
 
-    for d in DEFAULT_CC_DIR.iterdir():
+    def _match(f: Path) -> bool:
+        return (slug and slug in f.stem.lower()) or (cc_uuid and cc_uuid in f.stem)
+
+    # Check JSONL files directly in DEFAULT_CC_DIR (container flat mount)
+    for f in DEFAULT_CC_DIR.glob("*.jsonl"):
+        if _match(f):
+            return f
+
+    # Check subdirectories (host: ~/.claude/projects/{project-dir}/*.jsonl)
+    # BUG-SCANNER-TOCTOU-001: Guard iterdir() like discover_cc_projects() does
+    try:
+        subdirs = list(DEFAULT_CC_DIR.iterdir())
+    except OSError:
+        return None
+    for d in subdirs:
         if not d.is_dir():
             continue
         for f in d.glob("*.jsonl"):
-            if slug and slug in f.stem.lower():
-                return f
-            if cc_uuid and cc_uuid in f.stem:
+            if _match(f):
                 return f
     return None

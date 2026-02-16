@@ -31,7 +31,7 @@ def get_initial_state() -> Dict[str, Any]:
     """
     return {
         # Theme
-        'dark_mode': False,
+        'dark_mode': True,
 
         # Navigation
         'active_view': 'rules',
@@ -67,6 +67,8 @@ def get_initial_state() -> Dict[str, Any]:
         'form_decision_context': '',
         'form_decision_rationale': '',
         'form_decision_status': 'PENDING',
+        'form_decision_options': [],          # Decision options list
+        'form_decision_selected_option': '',  # Currently selected option
 
         # Session form state (GAP-UI-034)
         'show_session_form': False,
@@ -86,6 +88,27 @@ def get_initial_state() -> Dict[str, Any]:
         'session_tasks': [],
         'session_tasks_loading': False,
 
+        # Session Detail: Tool Calls & Thoughts (GAP-SESSION-DETAIL-001)
+        'session_tool_calls': [],
+        'session_tool_calls_loading': False,
+        'session_thinking_items': [],
+        'session_thinking_items_loading': False,
+        'session_timeline': [],  # Merged chronological view of tools+thoughts
+
+        # Session Evidence Rendered HTML (GAP-SESSION-DETAIL-002)
+        'session_evidence_html': '',
+        'session_evidence_loading': False,
+
+        # Session Conversation Transcript (GAP-SESSION-TRANSCRIPT-001)
+        'session_transcript': [],
+        'session_transcript_loading': False,
+        'session_transcript_page': 1,
+        'session_transcript_total': 0,
+        'session_transcript_has_more': False,
+        'session_transcript_include_thinking': True,
+        'session_transcript_include_user': True,
+        'session_transcript_expanded_entry': None,
+
         # View state
         'show_rule_detail': False,
         'show_rule_form': False,
@@ -94,6 +117,19 @@ def get_initial_state() -> Dict[str, Any]:
         # Rule implementing tasks (UI-AUDIT-003)
         'rule_implementing_tasks': [],
         'rule_implementing_tasks_loading': False,
+
+        # Rules table headers (pattern: sessions_headers)
+        'rules_headers': [
+            {"title": "Rule ID", "key": "id", "width": "180px", "sortable": True},
+            {"title": "Name", "key": "name", "sortable": True},
+            {"title": "Status", "key": "status", "width": "100px", "sortable": True},
+            {"title": "Category", "key": "category", "width": "120px", "sortable": True},
+            {"title": "Priority", "key": "priority", "width": "100px", "sortable": True},
+            {"title": "Applicability", "key": "applicability", "width": "120px", "sortable": True},
+            {"title": "Tasks", "key": "linked_tasks_count", "width": "80px", "sortable": True},
+            {"title": "Sessions", "key": "linked_sessions_count", "width": "90px", "sortable": True},
+            {"title": "Created", "key": "created_date", "width": "120px", "sortable": True},
+        ],
 
         # Filter state
         'rules_status_filter': None,
@@ -129,6 +165,7 @@ def get_initial_state() -> Dict[str, Any]:
         'impact_selected_rule': None,
         'impact_analysis': None,
         'dependency_graph': None,
+        'dependency_overview': None,  # Overview stats for dependency graph
         'mermaid_diagram': '',
         'show_graph_view': True,
 
@@ -140,16 +177,34 @@ def get_initial_state() -> Dict[str, Any]:
         'escalated_proposals': [],
         'governance_stats': {},
         'show_agent_detail': False,
+        'show_agent_registration': False,
+        'reg_agent_name': '',         # Registration form fields
+        'reg_agent_id': '',
+        'reg_agent_type': '',
+        'reg_agent_model': '',
+        'reg_agent_rules': [],
+        'reg_agent_instructions': '',
+        'reg_agent_loading': False,
         'agent_sessions': [],  # EPIC-A.4: Full session data for selected agent
+        'trust_history': [],  # Trust score history for selected agent
 
         # Real-time Monitoring (P9.6)
         'monitor_feed': [],
         'monitor_alerts': [],
         'monitor_stats': {},
         'monitor_filter': None,
+        'monitor_event_type_filter': '',
+        'monitor_headers': [
+            {"title": "Type", "key": "event_type", "width": "130px", "sortable": True},
+            {"title": "Source", "key": "source", "sortable": True},
+            {"title": "Severity", "key": "severity", "width": "100px", "sortable": True},
+            {"title": "Timestamp", "key": "timestamp", "width": "160px", "sortable": True},
+            {"title": "Rule", "key": "rule_id", "width": "140px", "sortable": True},
+        ],
         'auto_refresh': False,
         'top_rules': [],
         'hourly_stats': {},
+        'monitor_last_updated': '',
 
         # Journey Pattern Analyzer (P9.7)
         'recurring_questions': [],
@@ -170,6 +225,13 @@ def get_initial_state() -> Dict[str, Any]:
         # Task document management
         'show_attach_document_dialog': False,
         'attach_document_path': '',
+
+        # Task edit mode (inline editing in detail view)
+        'edit_task_mode': False,
+        'edit_task_description': '',
+        'edit_task_phase': 'P10',
+        'edit_task_status': 'TODO',
+        'edit_task_agent': '',
         'edit_task_body': '',
 
         # Unified Tasks View (UI-AUDIT-2026-01-19: merged backlog)
@@ -202,6 +264,24 @@ def get_initial_state() -> Dict[str, Any]:
         # Sessions timeline (F.3: histogram)
         'sessions_timeline_data': [],
         'sessions_timeline_labels': [],
+        # Sessions date range filter (histogram click-to-filter)
+        'sessions_date_from': None,
+        'sessions_date_to': None,
+
+        # Tasks table headers (pattern: sessions_headers)
+        'tasks_headers': [
+            {"title": "Task ID", "key": "task_id", "width": "150px", "sortable": True},
+            {"title": "Description", "key": "description", "sortable": True},
+            {"title": "Priority", "key": "priority", "width": "90px", "sortable": True},
+            {"title": "Type", "key": "task_type", "width": "80px", "sortable": True},
+            {"title": "Status", "key": "status", "width": "100px", "sortable": True},
+            {"title": "Phase", "key": "phase", "width": "70px", "sortable": True},
+            {"title": "Agent", "key": "agent_id", "width": "130px", "sortable": True},
+            {"title": "Created", "key": "created_at", "width": "110px", "sortable": True},
+            {"title": "Completed", "key": "completed_at", "width": "110px", "sortable": True},
+            {"title": "Gap", "key": "gap_id", "width": "100px", "sortable": True},
+            {"title": "Docs", "key": "doc_count", "width": "70px", "sortable": False},
+        ],
 
         # Tasks filter state (GAP-UI-EXP-004)
         'tasks_search_query': '',
@@ -238,6 +318,26 @@ def get_initial_state() -> Dict[str, Any]:
             {"title": "Sessions", "key": "session_count", "width": "100px", "sortable": True},
         ],
 
+        # Sessions table headers (pattern: projects_headers)
+        'sessions_headers': [
+            {"title": "Session ID", "key": "session_id", "width": "180px", "sortable": True},
+            {"title": "Source", "key": "source_type", "width": "70px", "sortable": True},
+            {"title": "Project", "key": "cc_project_slug", "width": "120px", "sortable": True},
+            {"title": "Start", "key": "start_time", "width": "130px", "sortable": True},
+            {"title": "End", "key": "end_time", "width": "130px", "sortable": True},
+            {"title": "Duration", "key": "duration", "width": "90px", "sortable": True},
+            {"title": "Status", "key": "status", "width": "100px", "sortable": True},
+            {"title": "Agent", "key": "agent_id", "width": "130px", "sortable": True},
+            {"title": "Description", "key": "description"},
+        ],
+        'sessions_pivot_headers': [
+            {"title": "Group", "key": "group", "sortable": True},
+            {"title": "Count", "key": "count", "width": "80px", "sortable": True},
+            {"title": "Completed", "key": "completed", "width": "100px", "sortable": True},
+            {"title": "Active", "key": "active", "width": "80px", "sortable": True},
+            {"title": "Avg Duration", "key": "avg_duration", "width": "120px", "sortable": True},
+        ],
+
         # Sessions pagination state (GAP-UI-036)
         'sessions_page': 1,
         'sessions_per_page': 20,
@@ -258,6 +358,7 @@ def get_initial_state() -> Dict[str, Any]:
         'executive_loading': False,
         'executive_period': 'week',
         'executive_session_id': None,  # UI-AUDIT-007: Selected session for report
+        'executive_expanded_sections': [],  # Accordion state for executive sections
 
         # Agent Chat (ORCH-006)
         'chat_messages': [],
@@ -328,6 +429,8 @@ def get_initial_state() -> Dict[str, Any]:
         'audit_filter_action_type': None,
         'audit_filter_entity_id': '',
         'audit_filter_correlation_id': '',
+        'audit_filter_date_from': None,
+        'audit_filter_date_to': None,
         'audit_entity_types': ['task', 'session', 'rule', 'agent'],
         'audit_action_types': ['CREATE', 'UPDATE', 'CLAIM', 'COMPLETE', 'DELETE'],
 

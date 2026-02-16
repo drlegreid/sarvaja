@@ -104,7 +104,9 @@ class TestGetFileContentSuccess(unittest.TestCase):
             with open(fpath, "w") as f:
                 f.write("Hello test")
 
-            with patch("governance.routes.files.os.path.dirname", return_value=tmpdir):
+            # BUG-ROUTE-002: dirname must return a subpath such that join(.., ..) resolves to tmpdir
+            gov_routes_dir = _real_join(tmpdir, "governance", "routes")
+            with patch("governance.routes.files.os.path.dirname", return_value=gov_routes_dir):
                 with patch("governance.routes.files.os.path.join",
                            side_effect=lambda *a: _real_join(*a)):
                     with patch("governance.routes.files.os.path.realpath",

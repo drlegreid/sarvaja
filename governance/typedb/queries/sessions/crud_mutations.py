@@ -51,6 +51,9 @@ class SessionMutationOperations:
         if not existing:
             return None
 
+        # BUG-TYPEQL-ESCAPE-SESSION-001: Escape session_id once, reuse throughout
+        session_id_escaped = session_id.replace('"', '\\"')
+
         try:
             with self._driver.transaction(self.database, TransactionType.WRITE) as tx:
                     # Update started-at
@@ -58,7 +61,7 @@ class SessionMutationOperations:
                         ts = start_time[:19]  # YYYY-MM-DDTHH:MM:SS
                         delete_query = f"""
                             match
-                                $s isa work-session, has session-id "{session_id}",
+                                $s isa work-session, has session-id "{session_id_escaped}",
                                     has started-at $sa;
                             delete
                                 has $sa of $s;
@@ -69,7 +72,7 @@ class SessionMutationOperations:
                             pass
                         insert_query = f"""
                             match
-                                $s isa work-session, has session-id "{session_id}";
+                                $s isa work-session, has session-id "{session_id_escaped}";
                             insert
                                 $s has started-at {ts};
                         """
@@ -80,7 +83,7 @@ class SessionMutationOperations:
                         ts = end_time[:19]
                         delete_query = f"""
                             match
-                                $s isa work-session, has session-id "{session_id}",
+                                $s isa work-session, has session-id "{session_id_escaped}",
                                     has completed-at $ca;
                             delete
                                 has $ca of $s;
@@ -91,7 +94,7 @@ class SessionMutationOperations:
                             pass
                         insert_query = f"""
                             match
-                                $s isa work-session, has session-id "{session_id}";
+                                $s isa work-session, has session-id "{session_id_escaped}";
                             insert
                                 $s has completed-at {ts};
                         """
@@ -102,7 +105,7 @@ class SessionMutationOperations:
                         # Delete old description (TypeDB 3.x: has $var of $entity)
                         delete_query = f"""
                             match
-                                $s isa work-session, has session-id "{session_id}",
+                                $s isa work-session, has session-id "{session_id_escaped}",
                                     has session-description $desc;
                             delete
                                 has $desc of $s;
@@ -116,7 +119,7 @@ class SessionMutationOperations:
                         desc_escaped = description.replace('"', '\\"')
                         insert_query = f"""
                             match
-                                $s isa work-session, has session-id "{session_id}";
+                                $s isa work-session, has session-id "{session_id_escaped}";
                             insert
                                 $s has session-description "{desc_escaped}";
                         """
@@ -127,7 +130,7 @@ class SessionMutationOperations:
                         # Delete old agent_id (TypeDB 3.x: has $var of $entity)
                         delete_query = f"""
                             match
-                                $s isa work-session, has session-id "{session_id}",
+                                $s isa work-session, has session-id "{session_id_escaped}",
                                     has agent-id $aid;
                             delete
                                 has $aid of $s;
@@ -141,7 +144,7 @@ class SessionMutationOperations:
                         agent_escaped = agent_id.replace('"', '\\"')
                         insert_query = f"""
                             match
-                                $s isa work-session, has session-id "{session_id}";
+                                $s isa work-session, has session-id "{session_id_escaped}";
                             insert
                                 $s has agent-id "{agent_escaped}";
                         """
@@ -155,7 +158,7 @@ class SessionMutationOperations:
                         # Delete existing completed-at first
                         del_q = f"""
                             match
-                                $s isa work-session, has session-id "{session_id}",
+                                $s isa work-session, has session-id "{session_id_escaped}",
                                     has completed-at $ca;
                             delete
                                 has $ca of $s;
@@ -166,7 +169,7 @@ class SessionMutationOperations:
                             pass
                         insert_query = f"""
                             match
-                                $s isa work-session, has session-id "{session_id}";
+                                $s isa work-session, has session-id "{session_id_escaped}";
                             insert
                                 $s has completed-at {timestamp_str};
                         """
@@ -186,14 +189,14 @@ class SessionMutationOperations:
                             val_esc = val.replace('"', '\\"')
                             try:
                                 tx.query(f'''
-                                    match $s isa work-session, has session-id "{session_id}",
+                                    match $s isa work-session, has session-id "{session_id_escaped}",
                                         has {attr} $v;
                                     delete has $v of $s;
                                 ''').resolve()
                             except Exception:
                                 pass
                             tx.query(f'''
-                                match $s isa work-session, has session-id "{session_id}";
+                                match $s isa work-session, has session-id "{session_id_escaped}";
                                 insert $s has {attr} "{val_esc}";
                             ''').resolve()
 
@@ -206,14 +209,14 @@ class SessionMutationOperations:
                         if val is not None:
                             try:
                                 tx.query(f'''
-                                    match $s isa work-session, has session-id "{session_id}",
+                                    match $s isa work-session, has session-id "{session_id_escaped}",
                                         has {attr} $v;
                                     delete has $v of $s;
                                 ''').resolve()
                             except Exception:
                                 pass
                             tx.query(f'''
-                                match $s isa work-session, has session-id "{session_id}";
+                                match $s isa work-session, has session-id "{session_id_escaped}";
                                 insert $s has {attr} {val};
                             ''').resolve()
 
@@ -241,31 +244,34 @@ class SessionMutationOperations:
         if not existing:
             return False
 
+        # BUG-TYPEQL-ESCAPE-SESSION-001: Escape session_id for TypeQL safety
+        session_id_escaped = session_id.replace('"', '\\"')
+
         try:
             # Delete relations in separate transactions to avoid
             # TypeDB 3.x variable type conflict ($r reused across types)
             relation_queries = [
                 f"""
                     match
-                        $s isa work-session, has session-id "{session_id}";
+                        $s isa work-session, has session-id "{session_id_escaped}";
                         $r (evidence-session: $s) isa has-evidence;
                     delete $r;
                 """,
                 f"""
                     match
-                        $s isa work-session, has session-id "{session_id}";
+                        $s isa work-session, has session-id "{session_id_escaped}";
                         $r (applying-session: $s) isa session-applied-rule;
                     delete $r;
                 """,
                 f"""
                     match
-                        $s isa work-session, has session-id "{session_id}";
+                        $s isa work-session, has session-id "{session_id_escaped}";
                         $r (deciding-session: $s) isa session-decision;
                     delete $r;
                 """,
                 f"""
                     match
-                        $s isa work-session, has session-id "{session_id}";
+                        $s isa work-session, has session-id "{session_id_escaped}";
                         $r (hosting-session: $s) isa completed-in;
                     delete $r;
                 """,
@@ -283,7 +289,7 @@ class SessionMutationOperations:
             with self._driver.transaction(self.database, TransactionType.WRITE) as tx:
                 delete_query = f"""
                     match
-                        $s isa work-session, has session-id "{session_id}";
+                        $s isa work-session, has session-id "{session_id_escaped}";
                     delete $s;
                 """
                 tx.query(delete_query).resolve()

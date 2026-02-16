@@ -145,13 +145,7 @@ def build_task_detail_view() -> None:
                 v_if="!nav_source_view",
                 icon="mdi-arrow-left",
                 variant="text",
-                click=(
-                    "show_task_detail = false; "
-                    "selected_task = null; "
-                    "nav_source_view = null; "
-                    "nav_source_id = null; "
-                    "nav_source_label = null"
-                ),
+                click="trigger('close_task_detail')",
                 __properties=["data-testid"],
                 **{"data-testid": "task-detail-back-btn"}
             )
@@ -191,7 +185,7 @@ def build_task_detail_view() -> None:
                 color="success",
                 prepend_icon="mdi-hand-pointing-up",
                 variant="outlined",
-                click="trigger('claim_task')",
+                click="trigger('claim_selected_task')",
                 classes="mr-2",
                 __properties=["data-testid"],
                 **{"data-testid": "task-detail-claim-btn"}
@@ -206,7 +200,7 @@ def build_task_detail_view() -> None:
                 color="success",
                 prepend_icon="mdi-check-circle",
                 variant="outlined",
-                click="trigger('complete_task')",
+                click="trigger('complete_selected_task')",
                 classes="mr-2",
                 __properties=["data-testid"],
                 **{"data-testid": "task-detail-complete-btn"}

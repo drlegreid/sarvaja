@@ -42,9 +42,11 @@ def register_trust_tools(mcp) -> None:
                 return format_mcp_result({"error": "Failed to connect to TypeDB"})
 
             # Query agent data from TypeDB
+            # BUG-TRUST-ESCAPE-001: Escape agent_id before TypeQL interpolation
+            agent_id_escaped = agent_id.replace('"', '\\"')
             query = f'''
                 match
-                    $a isa agent, has agent-id "{agent_id}";
+                    $a isa agent, has agent-id "{agent_id_escaped}";
                     $a has agent-name $name;
                     $a has trust-score $trust;
                     $a has compliance-rate $compliance;

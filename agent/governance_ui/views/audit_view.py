@@ -147,6 +147,32 @@ def build_audit_filters() -> None:
                 __properties=["data-testid"],
                 **{"data-testid": "audit-filter-correlation-id"}
             )
+    # Date range row (GAP-AUDIT-RANGE-001)
+    with v3.VRow():
+        with v3.VCol(cols=12, md=3):
+            v3.VTextField(
+                v_model=("audit_filter_date_from",),
+                label="Date From",
+                type="date",
+                clearable=True,
+                density="compact",
+                variant="outlined",
+                prepend_inner_icon="mdi-calendar-start",
+                __properties=["data-testid"],
+                **{"data-testid": "audit-filter-date-from"}
+            )
+        with v3.VCol(cols=12, md=3):
+            v3.VTextField(
+                v_model=("audit_filter_date_to",),
+                label="Date To",
+                type="date",
+                clearable=True,
+                density="compact",
+                variant="outlined",
+                prepend_inner_icon="mdi-calendar-end",
+                __properties=["data-testid"],
+                **{"data-testid": "audit-filter-date-to"}
+            )
 
 
 def build_audit_table() -> None:
@@ -168,7 +194,7 @@ def build_audit_table() -> None:
                             {"title": "Entity", "key": "entity_type", "width": "80px"},
                             {"title": "Entity ID", "key": "entity_id", "width": "150px"},
                             {"title": "Actor", "key": "actor_id", "width": "120px"},
-                            {"title": "Rules Applied", "key": "applied_rules"},
+                            {"title": "Rules Applied", "key": "applied_rules_display"},
                             {"title": "Correlation", "key": "correlation_id", "width": "200px"},
                         ]),
                         density="compact",

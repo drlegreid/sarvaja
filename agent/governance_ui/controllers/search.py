@@ -12,6 +12,7 @@ Created: 2026-01-02
 from typing import Any
 
 from agent.governance_ui.data_access.core import search_evidence
+from agent.governance_ui.trace_bar.transforms import add_error_trace
 
 
 def register_search_controllers(state: Any, ctrl: Any, api_base_url: str) -> None:
@@ -43,6 +44,7 @@ def register_search_controllers(state: Any, ctrl: Any, api_base_url: str) -> Non
             state.search_results = results
             state.is_loading = False
         except Exception as e:
+            add_error_trace(state, f"Evidence search failed: {e}", "search_evidence()")
             state.is_loading = False
             state.has_error = True
             state.error_message = f"Search failed: {str(e)}"

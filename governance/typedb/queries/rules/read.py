@@ -22,9 +22,11 @@ class RuleReadQueries:
 
     def _fetch_optional_rule_attrs(self, rule_id: str) -> tuple:
         """Fetch optional rule_type, semantic_id, applicability for a rule. DRY helper."""
+        # BUG-TYPEQL-ESCAPE-RULE-002: Escape rule_id for TypeQL safety
+        rid = rule_id.replace('"', '\\"')
         attrs = {}
         for attr_name, var_name in [("rule-type", "type"), ("semantic-id", "sid"), ("applicability", "app")]:
-            query = f'match $r isa rule-entity, has rule-id "{rule_id}", has {attr_name} ${var_name};'
+            query = f'match $r isa rule-entity, has rule-id "{rid}", has {attr_name} ${var_name};'
             try:
                 results = self._execute_query(query)
                 if results:
@@ -100,10 +102,12 @@ class RuleReadQueries:
 
     def get_rule_by_id(self, rule_id: str) -> Optional[Rule]:
         """Get a specific rule by ID."""
+        # BUG-TYPEQL-ESCAPE-RULE-002: Escape rule_id for TypeQL safety
+        rid = rule_id.replace('"', '\\"')
         # First get core attributes
         query = f"""
             match $r isa rule-entity,
-                has rule-id "{rule_id}",
+                has rule-id "{rid}",
                 has rule-name $name,
                 has category $cat,
                 has priority $pri,
@@ -131,11 +135,13 @@ class RuleReadQueries:
 
     def get_rules_by_category(self, category: str) -> List[Rule]:
         """Get rules by category."""
+        # BUG-TYPEQL-ESCAPE-RULE-002: Escape category for TypeQL safety
+        cat = category.replace('"', '\\"')
         query = f"""
             match $r isa rule-entity,
                 has rule-id $id,
                 has rule-name $name,
-                has category "{category}",
+                has category "{cat}",
                 has priority $pri,
                 has status $stat,
                 has directive $dir;
@@ -166,9 +172,11 @@ class RuleReadQueries:
         Returns:
             List of task dicts with id, name, status, priority
         """
+        # BUG-TYPEQL-ESCAPE-RULE-002: Escape rule_id for TypeQL safety
+        rid = rule_id.replace('"', '\\"')
         query = f"""
             match
-                $r isa rule-entity, has rule-id "{rule_id}";
+                $r isa rule-entity, has rule-id "{rid}";
                 (implementing-task: $t, implemented-rule: $r) isa implements-rule;
                 $t has task-id $tid,
                    has task-name $tname,
@@ -182,8 +190,11 @@ class RuleReadQueries:
             # Get optional priority
             priority = "MEDIUM"
             try:
+                # BUG-TYPEQL-ESCAPE-RULE-002: Escape task_id from TypeDB result
+                tid_esc = (task_id or "").replace('"', '\\"')
+                # BUG-TASK-PRIORITY-WRONG-ATTR: Task uses task-priority, not priority (that's for rules)
                 pq = f'''
-                    match $t isa task, has task-id "{task_id}", has priority $p;
+                    match $t isa task, has task-id "{tid_esc}", has task-priority $p;
                 '''
                 pr = self._execute_query(pq)
                 if pr:

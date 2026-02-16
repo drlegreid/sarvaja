@@ -84,8 +84,9 @@ def execute_tests(run_id: str, cmd: list, category: str = None):
         _test_results[run_id] = timeout_result
         try:
             _persist_result(run_id, timeout_result)
-        except Exception:
-            pass
+        except Exception as pe:
+            # BUG-RUNNER-002: Log persistence failures instead of silently swallowing
+            logger.warning(f"Failed to persist timeout result {run_id}: {pe}")
     except Exception as e:
         error_result = {
             "status": "error",
@@ -96,8 +97,9 @@ def execute_tests(run_id: str, cmd: list, category: str = None):
         _test_results[run_id] = error_result
         try:
             _persist_result(run_id, error_result)
-        except Exception:
-            pass
+        except Exception as pe:
+            # BUG-RUNNER-002: Log persistence failures instead of silently swallowing
+            logger.warning(f"Failed to persist error result {run_id}: {pe}")
 
 
 def execute_regression(run_id: str, skip_dynamic: bool = False):
@@ -143,8 +145,9 @@ def execute_regression(run_id: str, skip_dynamic: bool = False):
         }
         try:
             _persist_result(run_id, _test_results[run_id])
-        except Exception:
-            pass
+        except Exception as pe:
+            # BUG-RUNNER-002: Log persistence failures instead of silently swallowing
+            logger.warning(f"Failed to persist regression error result {run_id}: {pe}")
 
 
 def execute_heuristic(run_id: str, domain: str = None):
@@ -188,8 +191,9 @@ def execute_heuristic(run_id: str, domain: str = None):
         }
         try:
             _persist_result(run_id, _test_results[run_id])
-        except Exception:
-            pass
+        except Exception as pe:
+            # BUG-RUNNER-002: Log persistence failures instead of silently swallowing
+            logger.warning(f"Failed to persist heuristic error result {run_id}: {pe}")
 
 
 def parse_robot_xml(test_root: str) -> dict:
@@ -232,3 +236,67 @@ def parse_robot_xml(test_root: str) -> dict:
         }
     except Exception as e:
         return {"available": False, "message": f"Error parsing output.xml: {e}"}
+
+
+# =============================================================================
+# CVP AUTO-REMEDIATION (RELIABILITY-PLAN-01-v1 Priority 3)
+# =============================================================================
+
+from governance.services.tasks_mutations import update_task
+
+# Map heuristic check IDs to remediation actions
+_REMEDIATION_MAP = {
+    "H-TASK-003": lambda task_id: update_task(task_id, status="DONE"),
+    "H-TASK-002": lambda task_id: update_task(task_id, agent_id="code-agent", status="IN_PROGRESS"),
+}
+
+
+def remediate_violations(run_id: str, dry_run: bool = False) -> dict:
+    """
+    Auto-fix violations from a completed CVP sweep.
+
+    Args:
+        run_id: CVP sweep run ID to remediate.
+        dry_run: If True, preview fixes without applying.
+
+    Returns:
+        Summary dict with fixes_applied, fixes_failed, etc.
+    """
+    result = _test_results.get(run_id)
+    if not result:
+        return {"error": f"Run {run_id} not found"}
+
+    fixes_applied = 0
+    fixes_failed = 0
+    fix_details = []
+
+    for check in result.get("checks", []):
+        check_id = check.get("id", "")
+        if check.get("status") != "FAIL":
+            continue
+        violations = check.get("violations", [])
+        if not violations or check_id not in _REMEDIATION_MAP:
+            continue
+
+        for entity_id in violations:
+            if dry_run:
+                fix_details.append({"check": check_id, "entity": entity_id, "action": "planned"})
+                fixes_applied += 1
+                continue
+            try:
+                _REMEDIATION_MAP[check_id](entity_id)
+                fix_details.append({"check": check_id, "entity": entity_id, "action": "fixed"})
+                fixes_applied += 1
+            except Exception as e:
+                fix_details.append({"check": check_id, "entity": entity_id, "action": "failed", "error": str(e)})
+                fixes_failed += 1
+                logger.warning(f"Remediation failed for {check_id}/{entity_id}: {e}")
+
+    return {
+        "run_id": run_id,
+        "dry_run": dry_run,
+        "fixes_applied": fixes_applied,
+        "fixes_failed": fixes_failed,
+        "planned_fixes": fixes_applied if dry_run else 0,
+        "details": fix_details,
+    }

@@ -11,6 +11,7 @@ from unittest.mock import MagicMock, patch
 def _make_state_ctrl(api_base="http://localhost:8082"):
     """Build mock state/ctrl and register rule controllers."""
     state = MagicMock()
+    state.is_loading = False
     ctrl = MagicMock()
     triggers = {}
     setters = {}
@@ -41,20 +42,20 @@ class TestRegisterRulesControllers:
         assert "select_rule" in triggers
 
     def test_registers_close_rule_detail(self):
-        _, _, _, setters = _make_state_ctrl()
-        assert "close_rule_detail" in setters
+        _, _, triggers, _ = _make_state_ctrl()
+        assert "close_rule_detail" in triggers
 
-    def test_registers_show_rule_form(self):
-        _, _, _, setters = _make_state_ctrl()
-        assert "show_rule_form" in setters
+    def test_registers_open_rule_form(self):
+        _, _, triggers, _ = _make_state_ctrl()
+        assert "open_rule_form" in triggers
 
     def test_registers_edit_rule(self):
         _, _, triggers, _ = _make_state_ctrl()
         assert "edit_rule" in triggers
 
     def test_registers_close_rule_form(self):
-        _, _, _, setters = _make_state_ctrl()
-        assert "close_rule_form" in setters
+        _, _, triggers, _ = _make_state_ctrl()
+        assert "close_rule_form" in triggers
 
     def test_registers_submit_rule_form(self):
         _, _, triggers, _ = _make_state_ctrl()
@@ -88,8 +89,8 @@ class TestSelectRule:
 
 class TestCloseRuleDetail:
     def test_clears_state(self):
-        state, _, _, setters = _make_state_ctrl()
-        setters["close_rule_detail"]()
+        state, _, triggers, _ = _make_state_ctrl()
+        triggers["close_rule_detail"]()
         assert state.show_rule_detail is False
         assert state.selected_rule is None
 

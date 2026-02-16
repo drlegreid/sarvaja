@@ -19,10 +19,29 @@ When modifying data flow (controller → API → UI), verification MUST include 
 | Tier | What | How | Proves |
 |------|------|-----|--------|
 | 1. Unit | Mock-based tests pass | `pytest tests/unit/ -q` | Code compiles, interfaces match |
-| 2. Integration | Real API returns correct data | `curl` against running API | Endpoint returns expected JSON |
-| 3. Visual CRUD | UI controls work end-to-end | Playwright CRUD per Gherkin specs | User can create, read, update, delete through UI |
+| 2. Integration | Real API returns correct data | `rest-api` MCP tool or `curl` against running API | Endpoint returns expected JSON |
+| 3. Visual CRUD | UI controls work end-to-end | `playwright` MCP tools per Gherkin specs | User can create, read, update, delete through UI |
 
 **ALL THREE TIERS ARE REQUIRED.** Skipping Tier 2 or 3 is a CRITICAL violation.
+
+### Exploratory Integration Testing (MANDATORY)
+
+After implementation, Tier 2 and Tier 3 MUST include **exploratory testing** — not just happy-path verification:
+
+**Tier 2 Exploratory (rest-api MCP):**
+- Hit the new/modified endpoint with valid data → verify 200 + correct response shape
+- Hit with edge cases: empty results, large offsets, non-existent IDs → verify graceful handling
+- Test related endpoints for regressions → verify existing features still work
+- Use `mcp__rest-api__test_request` for all API verification
+
+**Tier 3 Exploratory (playwright MCP):**
+- Navigate to the affected UI tab → verify data renders
+- Click into detail views → verify drill-down works
+- Exercise filters, pagination, sorting → verify controls respond
+- Test the full user journey: list → detail → back → next page
+- Use `mcp__playwright__browser_snapshot` + `browser_click` + `browser_take_screenshot`
+
+**Exploratory testing catches bugs that scripted tests miss** — e.g., Pydantic model vs dict type mismatches that only surface through real API calls (BUG-TASK-SESSION-500-001, 2026-02-15).
 
 ---
 
@@ -81,11 +100,12 @@ This rule applies when ANY of these are modified:
 
 ```
 1. Unit tests:     .venv/bin/python3 -m pytest tests/unit/ -q
-2. Container:      podman compose --profile dev build governance-dashboard-dev
-                   podman compose --profile dev restart governance-dashboard-dev
-3. API smoke:      curl -s http://localhost:8082/api/{endpoint} | python3 -c "..."
+2. Container:      podman restart sarvaja-dashboard (or rebuild if Dockerfile changed)
+3. API explore:    rest-api MCP → test_request(endpoint, method, params)
+                   - Test happy path + edge cases + error paths
 4. Gherkin specs:  Author/update docs/backlog/specs/E2E-T3-*.gherkin.md
-5. UI CRUD:        Playwright → click controls → fill forms → assert state changes
+5. UI explore:     playwright MCP → navigate → snapshot → click → verify state changes
+                   - Test list → detail → back → pagination → filters
 6. Evidence:       Save screenshots as evidence/test-results/E2E-T3-*.png
 ```
 
@@ -117,7 +137,7 @@ All discoverable in <5 minutes with `curl` + Playwright CRUD. All invisible to u
 
 ## Heuristic Check
 
-**H-TEST-E2E-001**: When files in `controllers/` or `routes/` are modified in a commit, verify that the session evidence includes at least one `curl` command output AND one Playwright CRUD interaction screenshot (showing state change, not just page load).
+**H-TEST-E2E-001**: When files in `controllers/` or `routes/` are modified in a commit, verify that the session evidence includes at least one `rest-api` MCP call or `curl` output AND one `playwright` MCP interaction screenshot (showing state change, not just page load).
 
 ---
 

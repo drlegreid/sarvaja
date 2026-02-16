@@ -1,3 +1,8 @@
+---
+description: /session-metrics - Claude Code Session Analytics
+allowed-tools: Bash, Read, mcp__gov-sessions__session_metrics
+---
+
 # /session-metrics - Claude Code Session Analytics
 
 Parse Claude Code JSONL session logs and display duration analytics. Per SESSION-METRICS-01-v1.

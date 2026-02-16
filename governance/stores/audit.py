@@ -50,7 +50,13 @@ def _load_audit_store():
     if AUDIT_STORE_PATH.exists():
         try:
             with open(AUDIT_STORE_PATH, "r") as f:
-                _audit_store = json.load(f)
+                data = json.load(f)
+            # BUG-STORE-004: Validate JSON structure
+            if isinstance(data, list):
+                _audit_store = [e for e in data if isinstance(e, dict)]
+            else:
+                logger.warning("Audit store JSON is not a list, resetting")
+                _audit_store = []
             logger.info(f"Loaded {len(_audit_store)} audit entries")
         except Exception as e:
             logger.warning(f"Failed to load audit store: {e}")
@@ -148,6 +154,8 @@ def query_audit_trail(
     correlation_id: str = None,
     action_type: str = None,
     actor_id: str = None,
+    date_from: str = None,
+    date_to: str = None,
     limit: int = 50,
     offset: int = 0
 ) -> List[Dict[str, Any]]:
@@ -155,6 +163,7 @@ def query_audit_trail(
     Query audit trail entries.
 
     Per RD-DEBUG-AUDIT Phase 4: Audit trail queryable by entity_id.
+    Per GAP-AUDIT-RANGE-001: date_from/date_to for timestamp filtering.
 
     Args:
         entity_id: Filter by entity ID
@@ -162,6 +171,8 @@ def query_audit_trail(
         correlation_id: Filter by correlation ID
         action_type: Filter by action type
         actor_id: Filter by actor ID
+        date_from: Include entries on or after this date (YYYY-MM-DD)
+        date_to: Include entries on or before this date (YYYY-MM-DD)
         limit: Maximum entries to return
         offset: Skip first N entries
 
@@ -181,6 +192,12 @@ def query_audit_trail(
         result = [e for e in result if e.get("action_type") == action_type]
     if actor_id:
         result = [e for e in result if e.get("actor_id") == actor_id]
+    if date_from:
+        result = [e for e in result if e.get("timestamp", "") >= date_from]
+    if date_to:
+        # Add end-of-day to include the full date_to day
+        date_to_end = date_to + "T23:59:59" if "T" not in date_to else date_to
+        result = [e for e in result if e.get("timestamp", "") <= date_to_end]
 
     # Sort by timestamp descending (most recent first)
     result.sort(key=lambda e: e.get("timestamp", ""), reverse=True)

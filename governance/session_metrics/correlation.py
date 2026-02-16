@@ -112,6 +112,9 @@ def summarize_correlation(correlated: list[CorrelatedToolCall]) -> dict:
 
     per_server = {}
     for server, latencies in server_groups.items():
+        # BUG-CORR-001: Guard against empty latency lists
+        if not latencies:
+            continue
         per_server[server] = {
             "count": len(latencies),
             "avg_latency_ms": sum(latencies) // len(latencies),
@@ -126,6 +129,9 @@ def summarize_correlation(correlated: list[CorrelatedToolCall]) -> dict:
 
     per_tool = {}
     for tool, latencies in tool_groups.items():
+        # BUG-CORR-001: Guard against empty latency lists
+        if not latencies:
+            continue
         per_tool[tool] = {
             "count": len(latencies),
             "avg_latency_ms": sum(latencies) // len(latencies),

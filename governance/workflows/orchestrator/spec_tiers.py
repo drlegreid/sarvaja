@@ -146,16 +146,24 @@ def export_to_robot(spec: Dict[str, Any]) -> str:
     test_name = f"{task_id} Validation"
     library = "Browser" if is_ui else "RequestsLibrary"
 
+    # BUG-SPEC-001: Guard against empty/None tier strings before splitlines()
+    tier_1_text = spec.get('tier_1') or ""
+    tier_1_lines = tier_1_text.splitlines()
+    tier_1_doc = tier_1_lines[0] if tier_1_lines else task_id
+    tier_2_text = spec.get('tier_2') or ""
+    tier_2_lines = tier_2_text.splitlines()
+    tier_2_doc = tier_2_lines[0] if tier_2_lines else task_id
+
     lines = [
         "*** Settings ***",
-        f"Documentation    {spec['tier_1'].splitlines()[0]}",
+        f"Documentation    {tier_1_doc}",
         f"Library          {library}",
         f"Test Tags        {task_id}    spec-tier    TEST-SPEC-01-v1",
         "",
         "*** Test Cases ***",
         "",
         test_name,
-        f"    [Documentation]    {spec['tier_2'].splitlines()[0]}",
+        f"    [Documentation]    {tier_2_doc}",
         f"    [Tags]    {task_id}    e2e",
     ]
 

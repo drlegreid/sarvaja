@@ -93,6 +93,14 @@ async def add_task_execution_event(
 
     Used by orchestrator agents to log execution progress.
     """
+    # Validate event_type
+    valid_event_types = {"claimed", "started", "progress", "delegated", "completed", "failed", "evidence"}
+    if not event_type or event_type not in valid_event_types:
+        raise HTTPException(
+            status_code=422,
+            detail=f"Invalid event_type '{event_type}'. Must be one of: {', '.join(sorted(valid_event_types))}"
+        )
+
     client = get_typedb_client()
     task_exists = False
 

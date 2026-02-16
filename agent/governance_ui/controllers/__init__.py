@@ -74,7 +74,7 @@ def register_all_controllers(state, ctrl, api_base_url: str) -> dict:
     # Register all controller groups
     rules_loaders = register_rules_controllers(state, ctrl, api_base_url)
     register_search_controllers(state, ctrl, api_base_url)
-    register_tasks_controllers(state, ctrl, api_base_url)
+    tasks_loaders = register_tasks_controllers(state, ctrl, api_base_url)
     register_sessions_controllers(state, ctrl, api_base_url)
     register_decisions_controllers(state, ctrl, api_base_url)
     register_impact_controllers(state, ctrl, api_base_url)
@@ -111,5 +111,9 @@ def register_all_controllers(state, ctrl, api_base_url: str) -> dict:
 
     # Project controllers (GOV-PROJECT-01-v1)
     register_project_controllers(state, ctrl, api_base_url)
+
+    # Wire tasks loader (GAP-UI-AUTOLOAD)
+    if tasks_loaders:
+        loaders['load_tasks_page'] = tasks_loaders.get('load_tasks_page')
 
     return loaders

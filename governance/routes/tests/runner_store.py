@@ -53,7 +53,9 @@ def _load_persisted_results(results_dir: str = None) -> dict:
                 data = json.loads(filepath.read_text())
                 run_id = filepath.stem
                 results[run_id] = data
-            except Exception:
+            except Exception as e:
+                # BUG-STORE-006: Log instead of silently skipping
+                logger.debug(f"Failed to load test result {filepath}: {e}")
                 continue
     return results
 
@@ -61,5 +63,6 @@ def _load_persisted_results(results_dir: str = None) -> dict:
 # Load persisted results on import (D.2: survive restarts)
 try:
     _test_results.update(_load_persisted_results())
-except Exception:
-    pass
+except Exception as e:
+    # BUG-STORE-006: Log instead of silently swallowing
+    logger.debug(f"Failed to load persisted test results on import: {e}")

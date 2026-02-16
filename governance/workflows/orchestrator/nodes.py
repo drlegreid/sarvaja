@@ -41,6 +41,9 @@ def gate_node(state: Dict[str, Any]) -> Dict[str, Any]:
 def backlog_node(state: Dict[str, Any]) -> Dict[str, Any]:
     """Pick the highest-priority task from the backlog."""
     backlog = list(state["backlog"])
+    # BUG-ORCH-001: Guard against empty backlog
+    if not backlog:
+        return {"current_phase": "backlog_empty", "gate_decision": "stop"}
     task = backlog.pop(0)
     return {
         "current_task": task,
@@ -52,7 +55,10 @@ def backlog_node(state: Dict[str, Any]) -> Dict[str, Any]:
 
 def spec_node(state: Dict[str, Any]) -> Dict[str, Any]:
     """Produce a specification for the current task."""
-    task = state["current_task"]
+    # BUG-ORCH-NULL-TASK-001: Guard against None current_task
+    task = state.get("current_task")
+    if not task:
+        return {"current_phase": "spec_error", "error_message": "No current task to specify"}
     return {
         "current_phase": "specified",
         "specification": {
@@ -72,7 +78,10 @@ def spec_node(state: Dict[str, Any]) -> Dict[str, Any]:
 
 def implement_node(state: Dict[str, Any]) -> Dict[str, Any]:
     """Record implementation changes (dry_run=True produces stubs)."""
-    task = state["current_task"]
+    # BUG-ORCH-NULL-TASK-001: Guard against None current_task
+    task = state.get("current_task")
+    if not task:
+        return {"current_phase": "impl_error", "error_message": "No current task to implement"}
     spec = state["specification"]
     return {
         "current_phase": "implemented",
@@ -87,13 +96,17 @@ def implement_node(state: Dict[str, Any]) -> Dict[str, Any]:
 
 def validate_node(state: Dict[str, Any]) -> Dict[str, Any]:
     """Run validation checks on the implementation."""
+    # BUG-ORCH-NULL-TASK-001: Guard against None current_task
+    task = state.get("current_task")
+    if not task:
+        return {"current_phase": "validate_error", "error_message": "No current task to validate"}
     gaps = []
     if state.get("_simulate_gap_discovery"):
         gaps = [
             {
-                "gap_id": f"GAP-DISC-{state['current_task']['task_id']}",
+                "gap_id": f"GAP-DISC-{task['task_id']}",
                 "priority": "MEDIUM",
-                "description": f"Gap discovered while validating {state['current_task']['task_id']}",
+                "description": f"Gap discovered while validating {task['task_id']}",
             },
         ]
 
@@ -105,7 +118,6 @@ def validate_node(state: Dict[str, Any]) -> Dict[str, Any]:
     from governance.workflows.orchestrator.spec_tiers import (
         generate_specs_from_validation,
     )
-    task = state["current_task"]
     validation_results = {
         "tests_passed": passed,
         "heuristics_passed": passed,
@@ -132,6 +144,9 @@ def inject_node(state: Dict[str, Any]) -> Dict[str, Any]:
     existing_ids = {t["task_id"] for t in backlog}
     for gap in gaps:
         gid = gap.get("gap_id", gap.get("task_id"))
+        # BUG-ORCH-002: Skip gaps without valid ID
+        if not gid:
+            continue
         if gid not in existing_ids:
             backlog.append({
                 "task_id": gid,
@@ -186,19 +201,27 @@ def complete_cycle_node(state: Dict[str, Any]) -> Dict[str, Any]:
 
 
 def park_task_node(state: Dict[str, Any]) -> Dict[str, Any]:
-    """Park a task that exhausted retries."""
+    """Park a task that exhausted retries.
+
+    BUG-ORCH-PARK-001: Also tracks tokens_used for budget consistency.
+    """
     history = list(state.get("cycle_history", []))
     history.append({
         "task_id": state["current_task"]["task_id"],
         "status": "parked",
         "reason": "exhausted_retries",
     })
-    return {
+    result = {
         "current_phase": "task_parked",
         "cycles_completed": state["cycles_completed"] + 1,
         "cycle_history": history,
         "current_task": None,
     }
+    # Track token cost even for parked tasks (budget consistency)
+    if "tokens_used" in state:
+        from governance.workflows.orchestrator.budget import TOKEN_COST_PER_CYCLE
+        result["tokens_used"] = state["tokens_used"] + TOKEN_COST_PER_CYCLE
+    return result
 
 
 def certify_node(state: Dict[str, Any]) -> Dict[str, Any]:
@@ -218,10 +241,10 @@ def certify_node(state: Dict[str, Any]) -> Dict[str, Any]:
         all_files.extend(impl.get("files_changed", []))
     unique_files = sorted(set(all_files))
 
-    # Impact summary by priority
+    # BUG-ORCH-003: Use .get() for null-safe task_id access
     impact_lines = []
     for h in completed:
-        tid = h["task_id"]
+        tid = h.get("task_id", "unknown")
         impl = h.get("implementation") or {}
         summary = impl.get("summary", f"Completed {tid}")
         impact_lines.append(f"- {tid}: {summary}")
@@ -229,8 +252,8 @@ def certify_node(state: Dict[str, Any]) -> Dict[str, Any]:
     certification = {
         "cycles_completed": len(completed),
         "cycles_parked": len(parked),
-        "tasks_completed": [h["task_id"] for h in completed],
-        "tasks_parked": [h["task_id"] for h in parked],
+        "tasks_completed": [h.get("task_id", "unknown") for h in completed],
+        "tasks_parked": [h.get("task_id", "unknown") for h in parked],
         "files_changed": unique_files,
         "impact_summary": "\n".join(impact_lines),
         "remaining_backlog": len(state.get("backlog", [])),

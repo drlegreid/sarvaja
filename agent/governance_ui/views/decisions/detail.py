@@ -24,10 +24,25 @@ def build_decision_detail_view() -> None:
         **{"data-testid": "decision-detail"}
     ):
         with v3.VCardTitle(classes="d-flex align-center"):
+            # Back-to-source (UI-NAV-01-v1): show source label if navigated from another view
             v3.VBtn(
+                v_if="nav_source_view && nav_source_label",
+                v_text="'Back to ' + nav_source_label",
+                variant="text",
+                prepend_icon="mdi-arrow-left",
+                click=(
+                    "active_view = nav_source_view; "
+                    "show_decision_detail = false; selected_decision = null; "
+                    "nav_source_view = null; nav_source_id = null; nav_source_label = null"
+                ),
+                __properties=["data-testid"],
+                **{"data-testid": "decision-detail-back-source-btn"},
+            )
+            v3.VBtn(
+                v_if="!nav_source_view || !nav_source_label",
                 icon="mdi-arrow-left",
                 variant="text",
-                click="show_decision_detail = false; selected_decision = null",
+                click="trigger('close_decision_detail')",
                 __properties=["data-testid"],
                 **{"data-testid": "decision-detail-back-btn"}
             )
@@ -42,7 +57,7 @@ def build_decision_detail_view() -> None:
                 "Edit",
                 color="primary",
                 prepend_icon="mdi-pencil",
-                click="decision_form_mode = 'edit'; show_decision_form = true",
+                click="trigger('open_decision_form', ['edit'])",
                 __properties=["data-testid"],
                 **{"data-testid": "decision-detail-edit-btn"}
             )
@@ -50,7 +65,7 @@ def build_decision_detail_view() -> None:
                 "Delete",
                 color="error",
                 prepend_icon="mdi-delete",
-                click="delete_decision",
+                click="trigger('delete_decision')",
                 classes="ml-2",
                 __properties=["data-testid"],
                 **{"data-testid": "decision-detail-delete-btn"}

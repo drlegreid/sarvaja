@@ -33,9 +33,9 @@ def _build_metrics_row():
 
 
 def _build_filters_row():
-    """F.1: Dynamic column filters for Status and Agent."""
+    """F.1: Dynamic column filters for Status, Agent, Date Range."""
     with v3.VRow(dense=True, classes="align-center mb-1"):
-        with v3.VCol(cols=12, sm=3):
+        with v3.VCol(cols=6, sm=2):
             v3.VSelect(
                 v_model="sessions_filter_status",
                 items=("['ACTIVE', 'COMPLETED']",),
@@ -47,7 +47,7 @@ def _build_filters_row():
                 __properties=["data-testid"],
                 **{"data-testid": "sessions-filter-status"},
             )
-        with v3.VCol(cols=12, sm=3):
+        with v3.VCol(cols=6, sm=2):
             v3.VSelect(
                 v_model="sessions_filter_agent",
                 items=("sessions_agent_options",),
@@ -59,10 +59,32 @@ def _build_filters_row():
                 __properties=["data-testid"],
                 **{"data-testid": "sessions-filter-agent"},
             )
-        with v3.VCol(cols=12, sm=4):
+        with v3.VCol(cols=6, sm=2):
+            v3.VTextField(
+                v_model="sessions_date_from",
+                label="From date",
+                placeholder="YYYY-MM-DD",
+                variant="outlined",
+                density="compact",
+                hide_details=True,
+                clearable=True,
+                type="date",
+            )
+        with v3.VCol(cols=6, sm=2):
+            v3.VTextField(
+                v_model="sessions_date_to",
+                label="To date",
+                placeholder="YYYY-MM-DD",
+                variant="outlined",
+                density="compact",
+                hide_details=True,
+                clearable=True,
+                type="date",
+            )
+        with v3.VCol(cols=12, sm=2):
             v3.VTextField(
                 v_model="sessions_search_query",
-                label="Search sessions...",
+                label="Search...",
                 prepend_inner_icon="mdi-magnify",
                 variant="outlined",
                 density="compact",
@@ -243,21 +265,21 @@ def build_sessions_list_view() -> None:
     """Build the Sessions list view with filters, timeline, pivot, and duration."""
     with v3.VCard(
         v_if="active_view === 'sessions' && !show_session_detail && !show_session_form",
-        classes="fill-height",
+        classes="fill-height d-flex flex-column",
         __properties=["data-testid"],
         **{"data-testid": "sessions-list"},
     ):
-        with v3.VCardTitle(classes="d-flex align-center"):
+        with v3.VCardTitle(classes="d-flex align-center flex-shrink-0"):
             html.Span("Session Evidence")
             v3.VSpacer()
             v3.VBtn(
                 "Add Session", color="primary", prepend_icon="mdi-plus",
-                click="session_form_mode = 'create'; show_session_form = true",
+                click="trigger('open_session_form', ['create'])",
                 __properties=["data-testid"],
                 **{"data-testid": "sessions-add-btn"},
             )
 
-        with v3.VCardText(classes="pb-0"):
+        with v3.VCardText(classes="pb-0 flex-shrink-0"):
             _build_metrics_row()
             _build_filters_row()
             _build_timeline()
@@ -267,7 +289,10 @@ def build_sessions_list_view() -> None:
             v_if="is_loading", indeterminate=True, color="primary",
         )
 
-        with v3.VCardText(classes="pt-1", style="overflow-y: auto"):
+        with v3.VCardText(
+            classes="pt-1 flex-grow-1",
+            style="overflow-y: auto; min-height: 0",
+        ):
             _build_data_table()
             _build_pivot_table()
 

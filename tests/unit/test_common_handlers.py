@@ -93,7 +93,9 @@ class TestRefreshData:
             ctrl._triggers["refresh_data"]()
 
         assert state.is_loading is False
-        assert "unavailable" in state.status_message.lower()
+        # BUG-UI-SILENT-FAIL-001: Now uses error_message + has_error
+        assert state.has_error is True
+        assert "unavailable" in state.error_message.lower()
 
 
 class TestToggleGraphView:

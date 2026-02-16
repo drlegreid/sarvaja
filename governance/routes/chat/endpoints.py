@@ -130,7 +130,8 @@ async def send_chat_message(request: ChatMessageRequest):
         try:
             record_chat_tool_call(
                 gov_collector,
-                tool_name=request.content.split()[0] if request.content else "chat",
+                # BUG-ROUTE-001: Guard against whitespace-only content
+                tool_name=(request.content.split()[0] if request.content and request.content.split() else "chat"),
                 arguments={"content": request.content[:200]},
                 result=response_content[:500],
                 duration_ms=_cmd_duration,
@@ -216,7 +217,8 @@ async def delete_chat_session(session_id: str):
         except Exception as e:
             logger.debug(f"Failed to end governance session: {e}")
 
-    del _chat_sessions[session_id]
+    # BUG-CHAT-001: Safe removal to avoid KeyError from race conditions
+    _chat_sessions.pop(session_id, None)
     return {"status": "deleted", "session_id": session_id}
 
 

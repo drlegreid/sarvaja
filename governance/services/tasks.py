@@ -71,8 +71,9 @@ def _monitor(action: str, task_id: str, source: str = "service", **extra):
             details={"task_id": task_id, "action": action, **extra},
             severity="INFO",
         )
-    except Exception:
-        pass
+    except Exception as e:
+        # BUG-MONITOR-SILENT-001: Log instead of silently swallowing
+        logger.warning(f"Monitor event failed for task {task_id}: {e}")
 
 
 def list_tasks(
@@ -293,3 +294,47 @@ def update_task_details(
         _monitor("update_details", task_id, source="service_fallback")
         return get_task_details(task_id)
     return None
+
+
+def get_sessions_for_task(task_id: str) -> List[Dict[str, Any]]:
+    """Get all sessions linked to a task via completed-in relation.
+
+    Returns full session details (not just IDs) by resolving each
+    linked session through the session service.
+
+    Returns:
+        List of session dicts. Empty list if task not found or no sessions.
+    """
+    from governance.services import sessions as session_service
+
+    # Get linked session IDs from task
+    task = get_task(task_id)
+    if not task:
+        return []
+
+    # Handle both dict and TaskResponse (Pydantic model)
+    if hasattr(task, "linked_sessions"):
+        session_ids = task.linked_sessions or []
+    else:
+        session_ids = task.get("linked_sessions") or []
+    if not session_ids:
+        return []
+
+    # Resolve each session ID to full details
+    sessions = []
+    for sid in session_ids:
+        session = session_service.get_session(sid)
+        if session:
+            # Normalize to dict for JSON serialization
+            if hasattr(session, "model_dump"):
+                sessions.append(session.model_dump())
+            elif hasattr(session, "dict"):
+                sessions.append(session.dict())
+            else:
+                sessions.append(session)
+        else:
+            # BUG-TASKS-002: Log unresolved session for debugging
+            logger.debug(f"Session {sid} not found for task {task_id}")
+            sessions.append({"session_id": sid, "status": "UNKNOWN"})
+
+    return sessions

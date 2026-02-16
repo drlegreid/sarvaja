@@ -124,7 +124,9 @@ class ContextPreloader:
                 if "IN PROGRESS" in pf.read_text(encoding="utf-8"):
                     if m := re.search(r"PHASE-(\d+)", pf.name):
                         return f"Phase {m.group(1)}"
-            except Exception:
+            except Exception as e:
+                # BUG-PRELOADER-001: Log instead of silently skipping
+                logger.debug(f"Failed to read phase file {pf}: {e}")
                 continue
         return None
 

@@ -45,10 +45,11 @@ class TestEndSessionEvidenceLinking:
         client.link_evidence_to_session.assert_any_call("S-1", "evidence/S-1.md")
         client.link_evidence_to_session.assert_any_call("S-1", "evidence/S-1-extra.md")
 
+    @patch("governance.services.sessions_lifecycle.generate_session_evidence")
     @patch("governance.services.sessions_lifecycle.session_to_response")
     @patch("governance.services.sessions_lifecycle.get_typedb_client")
-    def test_no_evidence_no_linking(self, mock_get_client, mock_resp):
-        """end_session() without evidence_files should not call linking."""
+    def test_no_evidence_auto_generates(self, mock_get_client, mock_resp, mock_gen):
+        """end_session() without evidence_files auto-generates evidence (P0 fix)."""
         from governance.services.sessions_lifecycle import end_session
 
         client = MagicMock()
@@ -56,9 +57,12 @@ class TestEndSessionEvidenceLinking:
         client.end_session.return_value = {"session_id": "S-1", "status": "COMPLETED"}
         mock_get_client.return_value = client
         mock_resp.return_value = {"session_id": "S-1"}
+        mock_gen.return_value = "/tmp/evidence/S-1.md"
 
         end_session("S-1", source="test")
-        client.link_evidence_to_session.assert_not_called()
+        # P0: Auto-evidence generates and links
+        mock_gen.assert_called_once()
+        client.link_evidence_to_session.assert_called_once_with("S-1", "/tmp/evidence/S-1.md")
 
     @patch("governance.services.sessions_lifecycle.session_to_response")
     @patch("governance.services.sessions_lifecycle.get_typedb_client")

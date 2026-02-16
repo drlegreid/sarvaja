@@ -51,8 +51,29 @@ def _monitor(action: str, session_id: str, source: str = "service", **extra):
             details={"session_id": session_id, "action": action, **extra},
             severity="INFO",
         )
-    except Exception:
-        pass
+    except Exception as e:
+        # BUG-MONITOR-SILENT-001: Log instead of silently swallowing
+        logger.warning(f"Monitor event failed for session {session_id}: {e}")
+
+
+def _is_test_artifact(session: dict) -> bool:
+    """Check if session was created by automated tests (not real work)."""
+    sid = session.get("session_id", "")
+    desc = session.get("description", "")
+    # Exact test session IDs from conftest and unit tests
+    if sid in ("SESSION-FAIL", "SESSION-TEST"):
+        return True
+    # Test patterns in session ID
+    test_patterns = [
+        "-CHAT-TEST", "-CHAT-FAIL", "-CHAT-BOOM", "-CHAT-NO-TOOLS",
+        "-CHAT-NO-THOUGHTS", "-CHAT-DELETE-TEST", "-CHAT-FALLBACK-TEST",
+        "-CHAT-FALLBACK-END-TEST", "-CHAT-COMPLETE-SESSION",
+        "-CHAT-TEST-STORE", "-CHAT-TEST-LINKING", "-CHAT-TEST-SESSION",
+        "-CHAT-TEST-COUNT", "-CHAT-TEST-SUMMARY", "-CHAT-TEST-TOOL-SYNC",
+        "-CHAT-TEST-THOUGHT-SYNC", "-CHAT-TEST-FULL-RESULT",
+        "-CHAT-AAAA",
+    ]
+    return any(p in sid for p in test_patterns)
 
 
 def list_sessions(
@@ -62,24 +83,57 @@ def list_sessions(
     order: str = "desc",
     offset: int = 0,
     limit: int = 50,
+    date_from: Optional[str] = None,
+    date_to: Optional[str] = None,
+    exclude_test: bool = False,
+    search: Optional[str] = None,
 ) -> Dict[str, Any]:
     """List sessions with pagination, sorting, filtering.
+
+    Args:
+        exclude_test: If True, filter out sessions created by automated tests.
+        search: Keyword search across session_id, description, agent_id.
 
     Returns:
         Dict with 'items' (list of session dicts) and pagination metadata.
     """
     sessions = get_all_sessions_from_typedb(allow_fallback=True)
 
+    if exclude_test:
+        sessions = [s for s in sessions if not _is_test_artifact(s)]
     if status:
         sessions = [s for s in sessions if s.get("status") == status]
     if agent_id:
         sessions = [s for s in sessions if s.get("agent_id") == agent_id]
+    if date_from:
+        sessions = [s for s in sessions if (s.get("start_time") or "")[:10] >= date_from]
+    if date_to:
+        sessions = [s for s in sessions if (s.get("start_time") or "")[:10] <= date_to]
+    if search:
+        q = search.lower()
+        sessions = [
+            s for s in sessions
+            if q in (s.get("session_id") or "").lower()
+            or q in (s.get("description") or "").lower()
+            or q in (s.get("agent_id") or "").lower()
+            or q in (s.get("cc_project_slug") or "").lower()
+            or q in (s.get("cc_git_branch") or "").lower()
+        ]
 
     valid_sort_fields = ["started_at", "session_id", "status", "start_time"]
     sort_field = sort_by if sort_by in valid_sort_fields else "started_at"
     if sort_field == "started_at":
         sort_field = "start_time"
-    sessions.sort(key=lambda s: s.get(sort_field) or "", reverse=order.lower() == "desc")
+    is_desc = order.lower() == "desc"
+    # Sort with nulls last (desc) or nulls first (asc):
+    # Key tuple: (has_value_flag, value). With reverse=True, 1 > 0 so real values come first.
+    sessions.sort(
+        key=lambda s: (
+            0 if (s.get(sort_field) is None or s.get(sort_field) == "") else 1,
+            s.get(sort_field) or "",
+        ),
+        reverse=is_desc,
+    )
 
     total = len(sessions)
     paginated = sessions[offset: offset + limit]
@@ -253,6 +307,19 @@ def update_session(
         session["start_time"] = start_time
     if end_time is not None:
         session["end_time"] = end_time
+    # BUG-SESSION-002: CC fields must also update in fallback path
+    if cc_session_uuid is not None:
+        session["cc_session_uuid"] = cc_session_uuid
+    if cc_project_slug is not None:
+        session["cc_project_slug"] = cc_project_slug
+    if cc_git_branch is not None:
+        session["cc_git_branch"] = cc_git_branch
+    if cc_tool_count is not None:
+        session["cc_tool_count"] = cc_tool_count
+    if cc_thinking_chars is not None:
+        session["cc_thinking_chars"] = cc_thinking_chars
+    if cc_compaction_count is not None:
+        session["cc_compaction_count"] = cc_compaction_count
 
     record_audit("UPDATE", "session", session_id,
                  actor_id=agent_id or "system",
@@ -286,11 +353,25 @@ def sync_pending_sessions() -> Dict[str, Any]:
             if existing:
                 already_persisted += 1
                 continue
+            # BUG-SYNC-FIELDS-001: Pass CC fields atomically to insert_session
             client.insert_session(
                 session_id=session_id,
                 description=session_data.get("description", ""),
                 agent_id=session_data.get("agent_id"),
+                cc_session_uuid=session_data.get("cc_session_uuid"),
+                cc_project_slug=session_data.get("cc_project_slug"),
+                cc_git_branch=session_data.get("cc_git_branch"),
+                cc_tool_count=session_data.get("cc_tool_count"),
+                cc_thinking_chars=session_data.get("cc_thinking_chars"),
+                cc_compaction_count=session_data.get("cc_compaction_count"),
             )
+            # Sync status if present (not accepted by insert_session)
+            status_val = session_data.get("status")
+            if status_val:
+                try:
+                    client.update_session(session_id, status=status_val)
+                except Exception:
+                    pass  # Best-effort; insert already succeeded
             synced += 1
             logger.info(f"Synced orphan session to TypeDB: {session_id}")
         except Exception as e:

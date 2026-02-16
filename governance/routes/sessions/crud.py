@@ -28,9 +28,14 @@ def _ensure_response(result) -> SessionResponse:
 
     Service layer may return a SessionResponse (from TypeDB path)
     or a dict (from in-memory fallback). Handle both.
+    Fills required defaults for malformed memory-only sessions.
     """
     if isinstance(result, SessionResponse):
         return result
+    if isinstance(result, dict):
+        from datetime import datetime
+        result.setdefault("start_time", datetime.now().isoformat())
+        result.setdefault("status", "COMPLETED")
     return SessionResponse(**result)
 
 
@@ -45,21 +50,36 @@ async def list_sessions(
     sort_by: str = Query("started_at", description="Sort by: started_at, session_id, status"),
     order: str = Query("desc", description="Sort order: asc or desc"),
     status: Optional[str] = Query(None, description="Filter by status: ACTIVE, COMPLETED"),
-    agent_id: Optional[str] = Query(None, description="Filter by agent ID")
+    agent_id: Optional[str] = Query(None, description="Filter by agent ID"),
+    date_from: Optional[str] = Query(None, description="Filter sessions starting from YYYY-MM-DD"),
+    date_to: Optional[str] = Query(None, description="Filter sessions up to YYYY-MM-DD"),
+    exclude_test: bool = Query(False, description="Exclude test artifact sessions"),
+    search: Optional[str] = Query(None, description="Keyword search across session_id, description, agent_id"),
 ):
     """List sessions with pagination, sorting, and filtering. Per GAP-UI-036."""
     try:
         result = session_service.list_sessions(
             status=status, agent_id=agent_id,
             sort_by=sort_by, order=order, offset=offset, limit=limit,
+            date_from=date_from, date_to=date_to,
+            exclude_test=exclude_test,
+            search=search,
         )
         pagination = PaginationMeta(
             total=result["total"], offset=result["offset"],
             limit=result["limit"], has_more=result["has_more"],
             returned=len(result["items"]),
         )
+        items = []
+        for s in result["items"]:
+            try:
+                items.append(_ensure_response(s))
+            except Exception as e:
+                sid = s.get("session_id", "?") if isinstance(s, dict) else "?"
+                logger.warning(f"Skipping malformed session {sid}: {e}")
+        pagination.returned = len(items)
         return PaginatedSessionResponse(
-            items=[_ensure_response(s) for s in result["items"]],
+            items=items,
             pagination=pagination,
         )
     except (TypeDBUnavailable, ConnectionError) as e:
@@ -98,25 +118,32 @@ async def get_session(session_id: str):
 @router.put("/sessions/{session_id}", response_model=SessionResponse)
 async def update_session(session_id: str, data: SessionUpdate):
     """Update a session. Per GAP-UI-034."""
-    result = session_service.update_session(
-        session_id=session_id,
-        description=data.description,
-        status=data.status,
-        tasks_completed=data.tasks_completed,
-        agent_id=data.agent_id,
-        start_time=data.start_time,
-        end_time=data.end_time,
-        source="rest-api",
-        cc_session_uuid=data.cc_session_uuid,
-        cc_project_slug=data.cc_project_slug,
-        cc_git_branch=data.cc_git_branch,
-        cc_tool_count=data.cc_tool_count,
-        cc_thinking_chars=data.cc_thinking_chars,
-        cc_compaction_count=data.cc_compaction_count,
-    )
-    if result is None:
-        raise HTTPException(status_code=404, detail=f"Session {session_id} not found")
-    return _ensure_response(result)
+    # BUG-ROUTE-MISSING-EXCEPT-002: Add try-except matching get_session pattern
+    try:
+        result = session_service.update_session(
+            session_id=session_id,
+            description=data.description,
+            status=data.status,
+            tasks_completed=data.tasks_completed,
+            agent_id=data.agent_id,
+            start_time=data.start_time,
+            end_time=data.end_time,
+            source="rest-api",
+            cc_session_uuid=data.cc_session_uuid,
+            cc_project_slug=data.cc_project_slug,
+            cc_git_branch=data.cc_git_branch,
+            cc_tool_count=data.cc_tool_count,
+            cc_thinking_chars=data.cc_thinking_chars,
+            cc_compaction_count=data.cc_compaction_count,
+        )
+        if result is None:
+            raise HTTPException(status_code=404, detail=f"Session {session_id} not found")
+        return _ensure_response(result)
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to update session {session_id}: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to update session: {e}")
 
 
 @router.delete("/sessions/{session_id}", status_code=204)

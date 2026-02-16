@@ -46,9 +46,11 @@ class AgentQueries:
 
     def get_agent(self, agent_id: str) -> Optional[Agent]:
         """Get a specific agent by ID."""
+        # BUG-AGENT-ESCAPE-001: Escape agent_id for TypeQL safety
+        aid = agent_id.replace('"', '\\"')
         query = f"""
             match $a isa agent,
-                has agent-id "{agent_id}",
+                has agent-id "{aid}",
                 has agent-name $name,
                 has agent-type $type,
                 has trust-score $trust;
@@ -75,9 +77,11 @@ class AgentQueries:
 
         name_escaped = name.replace('"', '\\"')
         type_escaped = agent_type.replace('"', '\\"')
+        # BUG-AGENT-ESCAPE-001: Escape agent_id for consistency
+        agent_id_escaped = agent_id.replace('"', '\\"')
         query = f"""
             insert $a isa agent,
-                has agent-id "{agent_id}",
+                has agent-id "{agent_id_escaped}",
                 has agent-name "{name_escaped}",
                 has agent-type "{type_escaped}",
                 has trust-score {trust_score};
@@ -90,8 +94,10 @@ class AgentQueries:
 
     def delete_agent(self, agent_id: str) -> bool:
         """Delete all agent entities with the given ID from TypeDB."""
+        # BUG-AGENT-ESCAPE-001: Escape agent_id for consistency
+        agent_id_escaped = agent_id.replace('"', '\\"')
         query = f"""
-            match $a isa agent, has agent-id "{agent_id}";
+            match $a isa agent, has agent-id "{agent_id_escaped}";
             delete $a;
         """
         try:
@@ -101,29 +107,32 @@ class AgentQueries:
             return False
 
     def update_agent_trust(self, agent_id: str, trust_score: float) -> bool:
-        """Update an agent's trust score."""
-        # Get current agent first
+        """Update an agent's trust score using atomic attribute update."""
+        from typedb.driver import TransactionType
+
         current = self.get_agent(agent_id)
         if not current:
             return False
 
-        # Delete and re-insert with updated trust score
-        delete_query = f"""
-            match $a isa agent, has agent-id "{agent_id}";
-            delete $a;
-        """
-        name_escaped = current.name.replace('"', '\\"')
-        type_escaped = current.agent_type.replace('"', '\\"')
-        insert_query = f"""
-            insert $a isa agent,
-                has agent-id "{agent_id}",
-                has agent-name "{name_escaped}",
-                has agent-type "{type_escaped}",
-                has trust-score {trust_score};
-        """
+        # BUG-AGENT-ESCAPE-001: Escape agent_id for consistency
+        agent_id_escaped = agent_id.replace('"', '\\"')
+        # BUG-AGENT-TRUST-NONATOMIC: Single transaction — update attribute, not delete+re-insert entity
         try:
-            self._execute_write(delete_query)
-            self._execute_write(insert_query)
+            with self._driver.transaction(self.database, TransactionType.WRITE) as tx:
+                # Delete old trust-score attribute
+                try:
+                    tx.query(f'''
+                        match $a isa agent, has agent-id "{agent_id_escaped}", has trust-score $old;
+                        delete has $old of $a;
+                    ''').resolve()
+                except Exception:
+                    pass  # May not have existing trust-score
+                # Insert new trust-score attribute
+                tx.query(f'''
+                    match $a isa agent, has agent-id "{agent_id_escaped}";
+                    insert $a has trust-score {trust_score};
+                ''').resolve()
+                tx.commit()
             return True
         except Exception:
             return False

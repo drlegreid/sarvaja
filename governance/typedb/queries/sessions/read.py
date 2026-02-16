@@ -128,7 +128,9 @@ class SessionReadQueries:
                 if sid in session_map:
                     if not session_map[sid].evidence_files:
                         session_map[sid].evidence_files = []
-                    session_map[sid].evidence_files.append(r.get("src"))
+                    src = r.get("src")
+                    if src and src not in session_map[sid].evidence_files:
+                        session_map[sid].evidence_files.append(src)
         except Exception:
             pass
         try:
@@ -150,38 +152,40 @@ class SessionReadQueries:
 
     def _build_session_from_id(self, session_id: str) -> Optional[Session]:
         """Build a full Session object from TypeDB by ID."""
+        # BUG-TYPEQL-ESCAPE-SESSION-003: Escape session_id once, reuse in all queries
+        sid = session_id.replace('"', '\\"')
         session = Session(id=session_id)
-        name_results = self._execute_query(f'match $s isa work-session, has session-id "{session_id}", has session-name $name; select $name;')
+        name_results = self._execute_query(f'match $s isa work-session, has session-id "{sid}", has session-name $name; select $name;')
         if name_results:
             session.name = name_results[0].get("name")
-        desc_results = self._execute_query(f'match $s isa work-session, has session-id "{session_id}", has session-description $desc; select $desc;')
+        desc_results = self._execute_query(f'match $s isa work-session, has session-id "{sid}", has session-description $desc; select $desc;')
         if desc_results:
             session.description = desc_results[0].get("desc")
-        path_results = self._execute_query(f'match $s isa work-session, has session-id "{session_id}", has session-file-path $path; select $path;')
+        path_results = self._execute_query(f'match $s isa work-session, has session-id "{sid}", has session-file-path $path; select $path;')
         if path_results:
             session.file_path = path_results[0].get("path")
-        start_results = self._execute_query(f'match $s isa work-session, has session-id "{session_id}", has started-at $start; select $start;')
+        start_results = self._execute_query(f'match $s isa work-session, has session-id "{sid}", has started-at $start; select $start;')
         if start_results:
             session.started_at = start_results[0].get("start")
-        end_results = self._execute_query(f'match $s isa work-session, has session-id "{session_id}", has completed-at $end; select $end;')
+        end_results = self._execute_query(f'match $s isa work-session, has session-id "{sid}", has completed-at $end; select $end;')
         if end_results:
             session.completed_at, session.status = end_results[0].get("end"), "COMPLETED"
         else:
             session.status = "ACTIVE"
-        agent_results = self._execute_query(f'match $s isa work-session, has session-id "{session_id}", has agent-id $agent; select $agent;')
+        agent_results = self._execute_query(f'match $s isa work-session, has session-id "{sid}", has agent-id $agent; select $agent;')
         if agent_results:
             session.agent_id = agent_results[0].get("agent")
         # Claude Code session attributes (SESSION-CC-01-v1)
         for attr, field in [("cc-session-uuid", "cc_session_uuid"), ("cc-project-slug", "cc_project_slug"), ("cc-git-branch", "cc_git_branch")]:
             try:
-                r = self._execute_query(f'match $s isa work-session, has session-id "{session_id}", has {attr} $v; select $v;')
+                r = self._execute_query(f'match $s isa work-session, has session-id "{sid}", has {attr} $v; select $v;')
                 if r:
                     setattr(session, field, r[0].get("v"))
             except Exception:
                 pass
         for attr, field in [("cc-tool-count", "cc_tool_count"), ("cc-thinking-chars", "cc_thinking_chars"), ("cc-compaction-count", "cc_compaction_count")]:
             try:
-                r = self._execute_query(f'match $s isa work-session, has session-id "{session_id}", has {attr} $v; select $v;')
+                r = self._execute_query(f'match $s isa work-session, has session-id "{sid}", has {attr} $v; select $v;')
                 if r:
                     val = r[0].get("v")
                     setattr(session, field, int(val) if val is not None else None)
@@ -189,7 +193,7 @@ class SessionReadQueries:
                 pass
         rules_query = f"""
             match
-                $s isa work-session, has session-id "{session_id}";
+                $s isa work-session, has session-id "{sid}";
                 (applying-session: $s, applied-rule: $r) isa session-applied-rule;
                 $r has rule-id $rid;
             select $rid;
@@ -199,7 +203,7 @@ class SessionReadQueries:
             session.linked_rules_applied = [r.get("rid") for r in rules_results]
         decisions_query = f"""
             match
-                $s isa work-session, has session-id "{session_id}";
+                $s isa work-session, has session-id "{sid}";
                 (deciding-session: $s, session-made-decision: $d) isa session-decision;
                 $d has decision-id $did;
             select $did;
@@ -209,17 +213,17 @@ class SessionReadQueries:
             session.linked_decisions = [r.get("did") for r in decisions_results]
         evidence_query = f"""
             match
-                $s isa work-session, has session-id "{session_id}";
+                $s isa work-session, has session-id "{sid}";
                 (evidence-session: $s, session-evidence: $e) isa has-evidence;
                 $e has evidence-source $src;
             select $src;
         """
         evidence_results = self._execute_query(evidence_query)
         if evidence_results:
-            session.evidence_files = [r.get("src") for r in evidence_results]
+            session.evidence_files = list(dict.fromkeys(r.get("src") for r in evidence_results if r.get("src")))
         tasks_query = f"""
             match
-                $s isa work-session, has session-id "{session_id}";
+                $s isa work-session, has session-id "{sid}";
                 (completed-task: $t, hosting-session: $s) isa completed-in;
             select $t;
         """
@@ -230,14 +234,16 @@ class SessionReadQueries:
 
     def get_session(self, session_id: str) -> Optional[Session]:
         """Get a specific session by ID with all attributes."""
-        results = self._execute_query(f'match $s isa work-session, has session-id "{session_id}"; select $s;')
+        sid = session_id.replace('"', '\\"')
+        results = self._execute_query(f'match $s isa work-session, has session-id "{sid}"; select $s;')
         return self._build_session_from_id(session_id) if results else None
 
     def get_tasks_for_session(self, session_id: str) -> list[dict]:
         """Get all tasks linked to a session via completed-in relation."""
+        sid = session_id.replace('"', '\\"')
         query = f"""
             match
-                $s isa work-session, has session-id "{session_id}";
+                $s isa work-session, has session-id "{sid}";
                 (completed-task: $t, hosting-session: $s) isa completed-in;
                 $t has task-id $tid, has task-name $name, has task-status $status;
             select $tid, $name, $status;

@@ -13,6 +13,7 @@ Created: 2024-12-28
 import httpx
 from typing import Any
 
+from agent.governance_ui.trace_bar.transforms import add_error_trace
 from agent.governance_ui.utils import extract_items_from_response, format_timestamps_in_list
 from .tasks_navigation import register_tasks_navigation  # noqa: F401
 
@@ -25,7 +26,7 @@ def _enrich_doc_count(tasks):
     return tasks
 
 
-def register_tasks_controllers(state: Any, ctrl: Any, api_base_url: str) -> None:
+def register_tasks_controllers(state: Any, ctrl: Any, api_base_url: str) -> dict:
     """Register task-related controllers with Trame."""
 
     # Register navigation handlers
@@ -34,6 +35,13 @@ def register_tasks_controllers(state: Any, ctrl: Any, api_base_url: str) -> None
     @ctrl.trigger("select_task")
     def select_task(task_id):
         """Handle task selection for detail view."""
+        # BUG-UI-STALE-DETAIL-004: Clear prior task detail state before loading
+        state.edit_task_mode = False
+        state.task_execution_log = []
+        state.show_task_execution = False
+        state.nav_source_view = None
+        state.nav_source_id = None
+        state.nav_source_label = None
         try:
             with httpx.Client(timeout=10.0) as client:
                 response = client.get(f"{api_base_url}/api/tasks/{task_id}")
@@ -42,8 +50,8 @@ def register_tasks_controllers(state: Any, ctrl: Any, api_base_url: str) -> None
                     state.show_task_detail = True
                     _auto_load_task_execution(task_id)
                     return
-        except Exception:
-            pass
+        except Exception as e:
+            add_error_trace(state, f"Load task detail failed: {e}", f"/api/tasks/{task_id}")
 
         for task in state.tasks:
             if task.get('task_id') == task_id or task.get('id') == task_id:
@@ -63,22 +71,40 @@ def register_tasks_controllers(state: Any, ctrl: Any, api_base_url: str) -> None
                 if response.status_code == 200:
                     data = response.json()
                     state.task_execution_log = data.get("events", [])
-        except Exception:
+        except Exception as e:
+            add_error_trace(state, f"Load task execution failed: {e}", f"/api/tasks/{task_id}/execution")
             state.task_execution_log = []
         finally:
             state.task_execution_loading = False
 
     @ctrl.trigger("close_task_detail")
     def close_task_detail():
-        """Close task detail view."""
+        """Close task detail view and reset all detail state."""
         state.show_task_detail = False
         state.selected_task = None
+        state.edit_task_mode = False
+        state.edit_task_description = ''
+        state.edit_task_phase = 'P10'
+        state.edit_task_status = 'TODO'
+        state.edit_task_agent = ''
+        state.edit_task_body = ''
+        state.task_execution_log = []
+        state.show_task_execution = False
+        state.nav_source_view = None
+        state.nav_source_id = None
+        state.nav_source_label = None
 
     @ctrl.trigger("delete_task")
     def delete_task():
         """Delete selected task via REST API."""
         if not state.selected_task:
             return
+        # BUG-UI-DOUBLECLICK-001: Prevent double-click race condition
+        if state.is_loading:
+            return
+        state.has_error = False
+        # BUG-UI-UNDEF-002: Pre-initialize to avoid NameError in except handler
+        task_id = state.selected_task.get('task_id', 'unknown')
         try:
             state.is_loading = True
             task_id = state.selected_task.get('id') or state.selected_task.get('task_id')
@@ -96,6 +122,16 @@ def register_tasks_controllers(state: Any, ctrl: Any, api_base_url: str) -> None
                             state.tasks_pagination = data.get("pagination", {})
                         else:
                             state.tasks = extract_items_from_response(data)
+                    # BUG-UI-PAGINATION-003: Reset page if current page is now empty
+                    if not state.tasks and getattr(state, 'tasks_page', 1) > 1:
+                        state.tasks_page = max(1, state.tasks_page - 1)
+                        offset = (state.tasks_page - 1) * page_size
+                        tasks_response = client.get(f"{api_base_url}/api/tasks", params={"limit": page_size, "offset": offset})
+                        if tasks_response.status_code == 200:
+                            data = tasks_response.json()
+                            if isinstance(data, dict) and "items" in data:
+                                state.tasks = data["items"]
+                                state.tasks_pagination = data.get("pagination", {})
                     state.tasks = _enrich_doc_count(format_timestamps_in_list(
                         state.tasks, ["created_at", "completed_at", "claimed_at"]
                     ))
@@ -106,16 +142,21 @@ def register_tasks_controllers(state: Any, ctrl: Any, api_base_url: str) -> None
                     state.error_message = f"Failed to delete: {response.status_code}"
             state.is_loading = False
         except Exception as e:
+            add_error_trace(state, f"Delete task failed: {e}", f"/api/tasks/{task_id}")
             state.is_loading = False
             state.has_error = True
             state.error_message = f"Failed to delete task: {str(e)}"
 
-    @ctrl.trigger("claim_task")
-    def claim_task():
+    @ctrl.trigger("claim_selected_task")
+    def claim_selected_task():
         """Claim selected task via REST API (EPIC-UI-VALUE-001)."""
         if not state.selected_task:
             return
+        state.has_error = False
+        # BUG-UI-UNDEF-005: Pre-initialize to avoid NameError in except handler
+        task_id = state.selected_task.get('task_id', 'unknown')
         try:
+            state.is_loading = True
             task_id = state.selected_task.get('id') or state.selected_task.get('task_id')
             with httpx.Client(timeout=10.0) as client:
                 response = client.post(f"{api_base_url}/api/tasks/{task_id}/claim")
@@ -125,16 +166,23 @@ def register_tasks_controllers(state: Any, ctrl: Any, api_base_url: str) -> None
                 else:
                     state.has_error = True
                     state.error_message = f"Claim failed: {response.status_code}"
+            state.is_loading = False
         except Exception as e:
+            add_error_trace(state, f"Claim task failed: {e}", f"/api/tasks/{task_id}/claim")
+            state.is_loading = False
             state.has_error = True
             state.error_message = f"Claim failed: {str(e)}"
 
-    @ctrl.trigger("complete_task")
-    def complete_task():
+    @ctrl.trigger("complete_selected_task")
+    def complete_selected_task():
         """Complete selected task via REST API (EPIC-UI-VALUE-001)."""
         if not state.selected_task:
             return
+        state.has_error = False
+        # BUG-UI-UNDEF-006: Pre-initialize to avoid NameError in except handler
+        task_id = state.selected_task.get('task_id', 'unknown')
         try:
+            state.is_loading = True
             task_id = state.selected_task.get('id') or state.selected_task.get('task_id')
             with httpx.Client(timeout=10.0) as client:
                 response = client.post(f"{api_base_url}/api/tasks/{task_id}/complete")
@@ -144,7 +192,10 @@ def register_tasks_controllers(state: Any, ctrl: Any, api_base_url: str) -> None
                 else:
                     state.has_error = True
                     state.error_message = f"Complete failed: {response.status_code}"
+            state.is_loading = False
         except Exception as e:
+            add_error_trace(state, f"Complete task failed: {e}", f"/api/tasks/{task_id}/complete")
+            state.is_loading = False
             state.has_error = True
             state.error_message = f"Complete failed: {str(e)}"
 
@@ -169,15 +220,27 @@ def register_tasks_controllers(state: Any, ctrl: Any, api_base_url: str) -> None
         """Submit task edit via REST API."""
         if not state.selected_task:
             return
+        # BUG-UI-DOUBLECLICK-001: Prevent double-click race condition
+        if state.is_loading:
+            return
+        state.has_error = False
+        # BUG-UI-VALIDATION-001: Validate required fields before API call
+        description = (state.edit_task_description or "").strip()
+        if not description:
+            state.has_error = True
+            state.error_message = "Description is required"
+            return
+        # BUG-UI-UNDEF-007: Pre-initialize to avoid NameError in except handler
+        task_id = state.selected_task.get('task_id', 'unknown')
         try:
             state.is_loading = True
             task_id = state.selected_task.get('id') or state.selected_task.get('task_id')
             update_data = {
-                "description": state.edit_task_description,
-                "phase": state.edit_task_phase,
-                "status": state.edit_task_status,
-                "agent_id": state.edit_task_agent or None,
-                "body": getattr(state, 'edit_task_body', '') or None,
+                "description": description,
+                "phase": (state.edit_task_phase or "P10").strip(),
+                "status": (state.edit_task_status or "TODO").strip(),
+                "agent_id": (state.edit_task_agent or "").strip() or None,
+                "body": (getattr(state, 'edit_task_body', '') or "").strip() or None,
             }
             with httpx.Client(timeout=10.0) as client:
                 response = client.put(
@@ -207,6 +270,7 @@ def register_tasks_controllers(state: Any, ctrl: Any, api_base_url: str) -> None
                     state.error_message = f"Failed to update: {response.status_code}"
             state.is_loading = False
         except Exception as e:
+            add_error_trace(state, f"Update task failed: {e}", f"/api/tasks/{task_id}")
             state.is_loading = False
             state.has_error = True
             state.error_message = f"Failed to update task: {str(e)}"
@@ -214,6 +278,10 @@ def register_tasks_controllers(state: Any, ctrl: Any, api_base_url: str) -> None
     @ctrl.trigger("create_task")
     def create_task():
         """Create a new task via REST API. BUG-UI-TASKS-001: validate before submit."""
+        # BUG-UI-DOUBLECLICK-001: Prevent double-click race condition
+        if state.is_loading:
+            return
+        state.has_error = False
         try:
             # BUG-UI-TASKS-001: Validate required fields before API call
             task_id = getattr(state, 'form_task_id', '') or ''
@@ -262,20 +330,22 @@ def register_tasks_controllers(state: Any, ctrl: Any, api_base_url: str) -> None
                     state.tasks = _enrich_doc_count(format_timestamps_in_list(
                         state.tasks, ["created_at", "completed_at", "claimed_at"]
                     ))
+                    # BUG-UI-FORMCLOSE-002: Only close form on success
+                    state.show_task_form = False
+                    state.form_task_id = ""
+                    state.form_task_description = ""
+                    state.form_task_body = ""
+                    state.form_task_phase = "P10"
+                    state.form_task_agent = ""
+                    state.form_task_priority = None
+                    state.form_task_type = None
                 else:
                     state.has_error = True
                     state.error_message = f"Failed to create task: {response.status_code}"
 
-            state.show_task_form = False
-            state.form_task_id = ""
-            state.form_task_description = ""
-            state.form_task_body = ""
-            state.form_task_phase = "P10"
-            state.form_task_agent = ""
-            state.form_task_priority = None
-            state.form_task_type = None
             state.is_loading = False
         except Exception as e:
+            add_error_trace(state, f"Create task failed: {e}", "/api/tasks")
             state.is_loading = False
             state.has_error = True
             state.error_message = f"Task creation failed: {str(e)}"
@@ -290,6 +360,8 @@ def register_tasks_controllers(state: Any, ctrl: Any, api_base_url: str) -> None
             state.has_error = True
             state.error_message = "Document path is required"
             return
+        # BUG-UI-UNDEF-008: Pre-initialize to avoid NameError in except handler
+        task_id = state.selected_task.get('task_id', 'unknown')
         try:
             task_id = state.selected_task.get('id') or state.selected_task.get('task_id')
             with httpx.Client(timeout=10.0) as client:
@@ -307,6 +379,7 @@ def register_tasks_controllers(state: Any, ctrl: Any, api_base_url: str) -> None
                     state.has_error = True
                     state.error_message = f"Attach failed: {response.status_code}"
         except Exception as e:
+            add_error_trace(state, f"Attach document failed: {e}", f"/api/tasks/{task_id}/documents")
             state.has_error = True
             state.error_message = f"Attach failed: {str(e)}"
         finally:
@@ -385,6 +458,7 @@ def register_tasks_controllers(state: Any, ctrl: Any, api_base_url: str) -> None
                     state.status_message = f"Loaded {len(state.tasks)} tasks"
             state.is_loading = False
         except Exception as e:
+            add_error_trace(state, f"Load tasks page failed: {e}", "/api/tasks")
             state.is_loading = False
             state.has_error = True
             state.error_message = f"Failed to load tasks: {str(e)}"
@@ -412,11 +486,15 @@ def register_tasks_controllers(state: Any, ctrl: Any, api_base_url: str) -> None
     @ctrl.trigger("tasks_go_to_page")
     def tasks_go_to_page(page: int):
         """Go to specific page."""
+        # BUG-UI-DIV-001: Guard against division by zero
+        per_page = state.tasks_per_page or 20
         total_pages = max(
             1,
-            (state.tasks_pagination.get("total", 0) + state.tasks_per_page - 1)
-            // state.tasks_per_page
+            (state.tasks_pagination.get("total", 0) + per_page - 1)
+            // per_page
         )
         if 1 <= page <= total_pages:
             state.tasks_page = page
             load_tasks_page()
+
+    return {'load_tasks_page': load_tasks_page}

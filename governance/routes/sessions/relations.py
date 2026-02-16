@@ -142,6 +142,9 @@ async def get_session_evidence(session_id: str):
     if not evidence:
         evidence = _scan_evidence_filesystem(session_id)
 
+    # Deduplicate while preserving order (BUG-EVIDENCE-DEDUP-001)
+    evidence = list(dict.fromkeys(evidence))
+
     return {
         "session_id": session_id,
         "evidence_count": len(evidence),

@@ -91,6 +91,8 @@ class TestListAuditEntries:
             correlation_id=None,
             action_type="CREATE",
             actor_id=None,
+            date_from=None,
+            date_to=None,
             limit=10,
             offset=0,
         )

@@ -88,7 +88,8 @@ class TestRecordChatToolCall:
         collector.capture_tool_call.assert_called_once()
         assert len(_reset_store["SESSION-TC"]["tool_calls"]) == 1
 
-    def test_truncates_long_result(self, _reset_store):
+    def test_preserves_full_result(self, _reset_store):
+        """Full results stored for transcript support (GAP-SESSION-TRANSCRIPT-001)."""
         from governance.routes.chat.session_bridge import record_chat_tool_call
         collector = MagicMock()
         collector.session_id = "SESSION-TC"
@@ -96,7 +97,7 @@ class TestRecordChatToolCall:
         long_result = "x" * 300
         record_chat_tool_call(collector, tool_name="/t", result=long_result)
         stored_result = _reset_store["SESSION-TC"]["tool_calls"][0]["result"]
-        assert len(stored_result) <= 203  # 200 + "..."
+        assert len(stored_result) == 300  # Full content preserved
 
     def test_no_store_entry(self, _reset_store):
         from governance.routes.chat.session_bridge import record_chat_tool_call
@@ -131,7 +132,8 @@ class TestRecordChatThought:
         assert len(_reset_store["SESSION-TH"]["thoughts"]) == 1
         assert _reset_store["SESSION-TH"]["thoughts"][0]["confidence"] == 0.9
 
-    def test_truncates_long_thought(self, _reset_store):
+    def test_preserves_full_thought(self, _reset_store):
+        """Full thoughts stored for transcript support (GAP-SESSION-TRANSCRIPT-001)."""
         from governance.routes.chat.session_bridge import record_chat_thought
         collector = MagicMock()
         collector.session_id = "SESSION-TH"
@@ -139,7 +141,7 @@ class TestRecordChatThought:
         long_thought = "x" * 600
         record_chat_thought(collector, thought=long_thought)
         stored = _reset_store["SESSION-TH"]["thoughts"][0]["thought"]
-        assert len(stored) == 500
+        assert len(stored) == 600  # Full content preserved
 
     def test_no_store_entry(self, _reset_store):
         from governance.routes.chat.session_bridge import record_chat_thought

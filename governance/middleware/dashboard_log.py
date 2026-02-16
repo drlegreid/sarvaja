@@ -31,4 +31,5 @@ def log_action(view: str, action: str, **details):
         "action": action,
         **details,
     }
-    logger.info(json.dumps(entry, separators=(",", ":")))
+    # BUG-LOG-001: Use default=str to handle non-serializable values (UUID, datetime, etc.)
+    logger.info(json.dumps(entry, separators=(",", ":"), default=str))

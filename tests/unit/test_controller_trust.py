@@ -37,12 +37,12 @@ def _make_state_ctrl(api_base="http://localhost:8082"):
 
 class TestRegisterTrustControllers:
     def test_registers_select_agent(self):
-        _, _, _, setters = _make_state_ctrl()
-        assert "select_agent" in setters
+        _, _, triggers, _ = _make_state_ctrl()
+        assert "select_agent" in triggers
 
     def test_registers_close_detail(self):
-        _, _, _, setters = _make_state_ctrl()
-        assert "close_agent_detail" in setters
+        _, _, triggers, _ = _make_state_ctrl()
+        assert "close_agent_detail" in triggers
 
     def test_registers_toggle_pause(self):
         _, _, triggers, _ = _make_state_ctrl()
@@ -77,16 +77,16 @@ class TestSelectAgent:
         mock_client.get.return_value = mock_resp
         mock_httpx.Client.return_value = mock_client
 
-        state, _, _, setters = _make_state_ctrl()
+        state, _, triggers, _ = _make_state_ctrl()
         state.agents = [{"agent_id": "code-agent", "name": "Code"}]
-        setters["select_agent"]("code-agent")
+        triggers["select_agent"]("code-agent")
         assert state.show_agent_detail is True
 
 
 class TestCloseAgentDetail:
     def test_closes_detail(self):
-        state, _, _, setters = _make_state_ctrl()
-        setters["close_agent_detail"]()
+        state, _, triggers, _ = _make_state_ctrl()
+        triggers["close_agent_detail"]()
         assert state.selected_agent is None
         assert state.show_agent_detail is False
 

@@ -37,7 +37,7 @@ def build_rules_list_view() -> None:
                 "Add Rule",
                 color="primary",
                 prepend_icon="mdi-plus",
-                click="rule_form_mode = 'create'; show_rule_form = true",
+                click="trigger('open_rule_form', ['create'])",
                 __properties=["data-testid"],
                 **{"data-testid": "rules-add-btn"},
             )
@@ -126,7 +126,7 @@ def build_rule_form_view() -> None:
             v3.VBtn(
                 icon="mdi-arrow-left",
                 variant="text",
-                click="show_rule_form = false",
+                click="trigger('close_rule_form')",
                 __properties=["data-testid"],
                 **{"data-testid": "rule-form-back-btn"},
             )
@@ -198,14 +198,14 @@ def build_rule_form_view() -> None:
             v3.VBtn(
                 "Cancel",
                 variant="text",
-                click="show_rule_form = false",
+                click="trigger('close_rule_form')",
                 __properties=["data-testid"],
                 **{"data-testid": "rule-form-cancel-btn"},
             )
             v3.VBtn(
                 "Save",
                 color="primary",
-                click="submit_rule_form",
+                click="trigger('submit_rule_form')",
                 __properties=["data-testid"],
                 **{"data-testid": "rule-form-save-btn"},
             )

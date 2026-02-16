@@ -89,6 +89,116 @@ async def cleanup_orphaned_chat_sessions(_sessions_store):
         logger.info(f"Startup: ended {ended} orphaned CHAT sessions")
 
 
+async def discover_cc_sessions():
+    """Auto-discover and ingest CC sessions on API startup.
+
+    Per GAP-SESSION-CC-AUTO-DISCOVERY: Scans ~/.claude/projects/ for JSONL
+    files, creates missing project entities, and ingests CC sessions so they
+    appear in the API without waiting for the dashboard to load.
+
+    Runs ingestion in a background thread to avoid blocking startup.
+    """
+    import asyncio
+    import concurrent.futures
+    import threading
+
+    def _discover_and_ingest():
+        try:
+            from governance.services.cc_session_scanner import (
+                discover_cc_projects,
+                discover_filesystem_projects,
+            )
+            from governance.services.cc_session_ingestion import ingest_all
+            from governance.services.projects import create_project, get_project
+            from governance.services.workspace_registry import detect_project_type
+            from pathlib import Path
+
+            cc_projects = discover_cc_projects()
+            if not cc_projects:
+                logger.info("CC auto-discovery: no CC projects found")
+                return
+
+            created_projects = 0
+            ingested_sessions = 0
+
+            for cc_proj in cc_projects:
+                pid = cc_proj["project_id"]
+
+                # Create project if missing
+                existing = get_project(pid)
+                if not existing:
+                    proj_path = cc_proj.get("path", "")
+                    proj_type = "generic"
+                    try:
+                        proj_type = detect_project_type(proj_path)
+                    except Exception:
+                        pass
+                    create_project(
+                        project_id=pid,
+                        name=cc_proj["name"],
+                        path=proj_path,
+                        project_type=proj_type,
+                    )
+                    created_projects += 1
+
+                # Ingest sessions
+                cc_dir = cc_proj.get("cc_directory")
+                if cc_dir:
+                    slug = pid.replace("PROJ-", "").lower()
+                    results = ingest_all(
+                        directory=Path(cc_dir),
+                        project_slug=slug,
+                        project_id=pid,
+                        dry_run=False,
+                    )
+                    ingested_sessions += len(results)
+
+            # Also discover filesystem projects (game projects etc.)
+            try:
+                existing_paths = {cc_proj.get("path", "") for cc_proj in cc_projects}
+                existing_ids = {cc_proj["project_id"] for cc_proj in cc_projects}
+                scan_dirs = set()
+                for cc_proj in cc_projects:
+                    p = cc_proj.get("path", "")
+                    if p:
+                        scan_dirs.add(str(Path(p).parent))
+
+                fs_projects = discover_filesystem_projects(
+                    scan_dirs=list(scan_dirs),
+                    existing_paths=existing_paths,
+                    existing_ids=existing_ids,
+                )
+                for fs_proj in fs_projects:
+                    existing = get_project(fs_proj["project_id"])
+                    if not existing:
+                        create_project(
+                            project_id=fs_proj["project_id"],
+                            name=fs_proj["name"],
+                            path=fs_proj["path"],
+                            project_type=fs_proj.get("project_type", "generic"),
+                        )
+                        created_projects += 1
+            except Exception as e:
+                logger.debug(f"FS project discovery failed: {e}")
+
+            if created_projects or ingested_sessions:
+                logger.info(
+                    f"CC auto-discovery: {created_projects} projects created, "
+                    f"{ingested_sessions} sessions ingested"
+                )
+            else:
+                logger.info("CC auto-discovery: all sessions already ingested")
+        except Exception as e:
+            logger.warning(f"CC auto-discovery failed: {e}")
+
+    # Run in thread pool to not block API startup
+    loop = asyncio.get_event_loop()
+    loop.run_in_executor(
+        concurrent.futures.ThreadPoolExecutor(max_workers=1),
+        _discover_and_ingest,
+    )
+
+
 def mcp_readiness_handler(api_base_url_unused=None):
     """MCP usage enforcement audit & readiness check.
 

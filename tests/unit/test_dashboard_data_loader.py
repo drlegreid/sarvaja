@@ -175,7 +175,8 @@ class TestLoadTasks:
         load_initial_data(state, "http://localhost:8082",
                           MagicMock(), MagicMock(), MagicMock(), MagicMock())
 
-        assert state.tasks == [{"task_id": "T-1"}, {"task_id": "T-2"}]
+        # BUG-UI-TASKS-004: doc_count enriched from linked_documents
+        assert state.tasks == [{"task_id": "T-1", "doc_count": 0}, {"task_id": "T-2", "doc_count": 0}]
         assert state.tasks_pagination == {"total": 2, "offset": 0, "limit": 20}
 
     @patch("httpx.Client")

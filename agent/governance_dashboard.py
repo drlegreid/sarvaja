@@ -138,11 +138,22 @@ class GovernanceDashboard:
             load_metrics_data = loaders['load_metrics_data']
             load_audit_trail = loaders['load_audit_trail']
             load_rules = loaders.get('load_rules')
+            load_tasks_page = loaders.get('load_tasks_page')
 
             # Auto-load data on view change (P11.1 fix / GAP-UI-035)
             @self._state.change("active_view")
             def on_view_change(active_view, **kwargs):
                 """Auto-load data when view changes."""
+                # BUG-UI-STALE-DETAIL-001: Close all detail views + forms on tab switch
+                self._state.show_session_detail = False
+                self._state.show_task_detail = False
+                self._state.show_rule_detail = False
+                self._state.show_decision_detail = False
+                self._state.show_session_form = False
+                self._state.show_rule_form = False
+                self._state.show_decision_form = False
+                self._state.has_error = False
+                self._state.error_message = ''
                 if active_view == 'trust':
                     load_trust_data()
                 elif active_view == 'monitor':
@@ -152,8 +163,11 @@ class GovernanceDashboard:
                 elif active_view == 'impact':
                     if not self._state.rules or len(self._state.rules) == 0:
                         self._state.rules = get_rules()
-                elif active_view == 'backlog':
-                    load_backlog_data()
+                elif active_view == 'sessions':
+                    load_sessions_list()
+                elif active_view == 'tasks':
+                    if load_tasks_page:
+                        load_tasks_page()
                 elif active_view == 'executive':
                     load_sessions_list()
                     load_executive_report_data()

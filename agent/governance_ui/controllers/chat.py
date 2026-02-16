@@ -14,6 +14,18 @@ from datetime import datetime
 import uuid
 from typing import Any
 
+from agent.governance_ui.trace_bar.transforms import add_api_trace, add_error_trace
+
+# Per antirot caps: prevent unbounded chat message growth
+_MAX_CHAT_MESSAGES = 500
+
+
+def _capped_messages(messages):
+    """Return last _MAX_CHAT_MESSAGES to prevent memory leak."""
+    if len(messages) > _MAX_CHAT_MESSAGES:
+        return messages[-_MAX_CHAT_MESSAGES:]
+    return messages
+
 
 def register_chat_controllers(state: Any, ctrl: Any, api_base_url: str) -> None:
     """
@@ -47,7 +59,7 @@ def register_chat_controllers(state: Any, ctrl: Any, api_base_url: str) -> None:
             }
             messages = list(state.chat_messages or [])
             messages.append(user_msg)
-            state.chat_messages = messages
+            state.chat_messages = _capped_messages(messages)
 
             # Send to API
             with httpx.Client(base_url=api_base_url, timeout=30.0) as client:
@@ -57,12 +69,13 @@ def register_chat_controllers(state: Any, ctrl: Any, api_base_url: str) -> None:
                     'session_id': state.chat_session_id,
                 }
                 response = client.post("/api/chat/send", json=payload)
+                add_api_trace(state, "/api/chat/send", "POST", response.status_code, 0)
                 if response.status_code == 200:
                     agent_msg = response.json()
                     agent_msg['timestamp'] = datetime.now().strftime("%H:%M:%S")
                     messages = list(state.chat_messages or [])
                     messages.append(agent_msg)
-                    state.chat_messages = messages
+                    state.chat_messages = _capped_messages(messages)
 
                     if not state.chat_session_id and agent_msg.get('task_id'):
                         state.chat_task_id = agent_msg.get('task_id')
@@ -76,8 +89,9 @@ def register_chat_controllers(state: Any, ctrl: Any, api_base_url: str) -> None:
                     }
                     messages = list(state.chat_messages or [])
                     messages.append(error_msg)
-                    state.chat_messages = messages
+                    state.chat_messages = _capped_messages(messages)
         except Exception as e:
+            add_error_trace(state, f"Chat send failed: {e}", "/api/chat/send")
             error_msg = {
                 'id': f"MSG-{uuid.uuid4().hex[:8].upper()}",
                 'role': 'system',
@@ -87,7 +101,7 @@ def register_chat_controllers(state: Any, ctrl: Any, api_base_url: str) -> None:
             }
             messages = list(state.chat_messages or [])
             messages.append(error_msg)
-            state.chat_messages = messages
+            state.chat_messages = _capped_messages(messages)
         finally:
             state.chat_loading = False
 
@@ -129,6 +143,7 @@ def register_chat_controllers(state: Any, ctrl: Any, api_base_url: str) -> None:
                         error_detail = f"HTTP {response.status_code}"
                     state.file_viewer_error = error_detail
         except Exception as e:
+            add_error_trace(state, f"Load file failed: {e}", "/api/files/content")
             state.file_viewer_error = str(e)
         finally:
             state.file_viewer_loading = False
@@ -151,7 +166,8 @@ def register_chat_controllers(state: Any, ctrl: Any, api_base_url: str) -> None:
                     state.task_execution_log = data.get("events", [])
                 else:
                     state.task_execution_log = []
-        except Exception:
+        except Exception as e:
+            add_error_trace(state, f"Load execution failed: {e}", f"/api/tasks/{task_id}/execution")
             state.task_execution_log = []
         finally:
             state.task_execution_loading = False

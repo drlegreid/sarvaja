@@ -62,8 +62,9 @@ def _monitor(action: str, rule_id: str, source: str = "service", **extra):
             details={"rule_id": rule_id, "action": action, **extra},
             severity="INFO",
         )
-    except Exception:
-        pass
+    except Exception as e:
+        # BUG-MONITOR-SILENT-001: Log instead of silently swallowing
+        logger.warning(f"Monitor event failed for rule {rule_id}: {e}")
 
 
 def get_semantic_id(legacy_id: str) -> Optional[str]:

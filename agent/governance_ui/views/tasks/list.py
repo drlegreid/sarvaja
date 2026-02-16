@@ -184,7 +184,7 @@ def build_tasks_list_view() -> None:
             html.Span(
                 v_text=(
                     "'Page ' + tasks_page + ' of ' + "
-                    "Math.ceil(tasks_pagination.total / tasks_per_page) + "
+                    "Math.max(1, Math.ceil(tasks_pagination.total / tasks_per_page)) + "
                     "' (' + tasks_pagination.total + ' total)'",
                 ),
                 classes="text-body-2 text-grey",
