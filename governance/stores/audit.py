@@ -198,7 +198,9 @@ def query_audit_trail(
         List of matching audit entries (most recent first)
     """
     # BUG-226-AUDIT-003: Validate offset/limit to prevent negative slice behavior
-    limit = max(1, limit)
+    # BUG-340-AUD-001: Cap limit to prevent unbounded query responses (DoS vector)
+    _MAX_QUERY_LIMIT = 1000
+    limit = max(1, min(limit, _MAX_QUERY_LIMIT))
     offset = max(0, offset)
 
     result = _audit_store.copy()

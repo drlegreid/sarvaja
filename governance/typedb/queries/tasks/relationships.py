@@ -36,14 +36,23 @@ class TaskRelationshipOperations:
         Returns:
             True if link created successfully, False otherwise
         """
+        # BUG-297-REL-001: Prevent self-linking (corrupts DAG, creates cycles)
+        if child_task_id == parent_task_id:
+            logger.error(f"Cannot link task {child_task_id} as its own parent")
+            return False
+
         from typedb.driver import TransactionType
+
+        # BUG-254-ESC-003: Escape backslash THEN quotes for TypeQL safety
+        child_esc = child_task_id.replace('\\', '\\\\').replace('"', '\\"')
+        parent_esc = parent_task_id.replace('\\', '\\\\').replace('"', '\\"')
 
         try:
             with self._driver.transaction(self.database, TransactionType.WRITE) as tx:
                 link_query = f"""
                     match
-                        $child isa task, has task-id "{child_task_id}";
-                        $parent isa task, has task-id "{parent_task_id}";
+                        $child isa task, has task-id "{child_esc}";
+                        $parent isa task, has task-id "{parent_esc}";
                     insert
                         (parent-task: $parent, child-task: $child) isa task-hierarchy;
                 """
@@ -67,14 +76,23 @@ class TaskRelationshipOperations:
         Returns:
             True if link created successfully, False otherwise
         """
+        # BUG-297-REL-001: Prevent self-blocking (creates unresolvable blocked state)
+        if blocking_task_id == blocked_task_id:
+            logger.error(f"Cannot link task {blocking_task_id} as blocking itself")
+            return False
+
         from typedb.driver import TransactionType
+
+        # BUG-254-ESC-003: Escape backslash THEN quotes for TypeQL safety
+        blocker_esc = blocking_task_id.replace('\\', '\\\\').replace('"', '\\"')
+        blocked_esc = blocked_task_id.replace('\\', '\\\\').replace('"', '\\"')
 
         try:
             with self._driver.transaction(self.database, TransactionType.WRITE) as tx:
                 link_query = f"""
                     match
-                        $blocker isa task, has task-id "{blocking_task_id}";
-                        $blocked isa task, has task-id "{blocked_task_id}";
+                        $blocker isa task, has task-id "{blocker_esc}";
+                        $blocked isa task, has task-id "{blocked_esc}";
                     insert
                         (blocking-task: $blocker, blocked-dep-task: $blocked) isa task-blocks-task;
                 """
@@ -98,14 +116,23 @@ class TaskRelationshipOperations:
         Returns:
             True if link created successfully, False otherwise
         """
+        # BUG-341-REL-001: Prevent self-linking (consistent with parent/blocking guards)
+        if task_id_a == task_id_b:
+            logger.error(f"Cannot link task {task_id_a} as related to itself")
+            return False
+
         from typedb.driver import TransactionType
+
+        # BUG-254-ESC-003: Escape backslash THEN quotes for TypeQL safety
+        a_esc = task_id_a.replace('\\', '\\\\').replace('"', '\\"')
+        b_esc = task_id_b.replace('\\', '\\\\').replace('"', '\\"')
 
         try:
             with self._driver.transaction(self.database, TransactionType.WRITE) as tx:
                 link_query = f"""
                     match
-                        $a isa task, has task-id "{task_id_a}";
-                        $b isa task, has task-id "{task_id_b}";
+                        $a isa task, has task-id "{a_esc}";
+                        $b isa task, has task-id "{b_esc}";
                     insert
                         (related-task-a: $a, related-task-b: $b) isa task-related;
                 """
@@ -118,9 +145,11 @@ class TaskRelationshipOperations:
 
     def get_task_children(self, task_id: str) -> List[str]:
         """Get child tasks of a parent task."""
+        # BUG-196-009: Escape task_id for TypeQL safety
+        tid = task_id.replace('\\', '\\\\').replace('"', '\\"')
         query = f"""
             match
-                $parent isa task, has task-id "{task_id}";
+                $parent isa task, has task-id "{tid}";
                 (parent-task: $parent, child-task: $child) isa task-hierarchy;
                 $child has task-id $cid;
             select $cid;
@@ -130,9 +159,11 @@ class TaskRelationshipOperations:
 
     def get_task_parent(self, task_id: str) -> Optional[str]:
         """Get parent task of a child task."""
+        # BUG-196-009: Escape task_id for TypeQL safety
+        tid = task_id.replace('\\', '\\\\').replace('"', '\\"')
         query = f"""
             match
-                $child isa task, has task-id "{task_id}";
+                $child isa task, has task-id "{tid}";
                 (parent-task: $parent, child-task: $child) isa task-hierarchy;
                 $parent has task-id $pid;
             select $pid;
@@ -142,9 +173,11 @@ class TaskRelationshipOperations:
 
     def get_tasks_blocking(self, task_id: str) -> List[str]:
         """Get tasks that block this task."""
+        # BUG-196-009: Escape task_id for TypeQL safety
+        tid = task_id.replace('\\', '\\\\').replace('"', '\\"')
         query = f"""
             match
-                $blocked isa task, has task-id "{task_id}";
+                $blocked isa task, has task-id "{tid}";
                 (blocking-task: $blocker, blocked-dep-task: $blocked) isa task-blocks-task;
                 $blocker has task-id $bid;
             select $bid;
@@ -154,9 +187,11 @@ class TaskRelationshipOperations:
 
     def get_tasks_blocked_by(self, task_id: str) -> List[str]:
         """Get tasks that this task blocks."""
+        # BUG-196-009: Escape task_id for TypeQL safety
+        tid = task_id.replace('\\', '\\\\').replace('"', '\\"')
         query = f"""
             match
-                $blocker isa task, has task-id "{task_id}";
+                $blocker isa task, has task-id "{tid}";
                 (blocking-task: $blocker, blocked-dep-task: $blocked) isa task-blocks-task;
                 $blocked has task-id $bid;
             select $bid;
@@ -166,9 +201,11 @@ class TaskRelationshipOperations:
 
     def get_related_tasks(self, task_id: str) -> List[str]:
         """Get tasks related to this task."""
+        # BUG-196-009: Escape task_id for TypeQL safety
+        tid = task_id.replace('\\', '\\\\').replace('"', '\\"')
         query = f"""
             match
-                $t isa task, has task-id "{task_id}";
+                $t isa task, has task-id "{tid}";
                 {{
                     (related-task-a: $t, related-task-b: $other) isa task-related;
                 }} or {{

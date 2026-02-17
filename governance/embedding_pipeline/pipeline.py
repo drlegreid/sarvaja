@@ -87,11 +87,12 @@ class EmbeddingPipeline:
         try:
             result = json.loads(governance_list_decisions())
 
-            if 'error' in result:
+            # BUG-201-EMBED-001: Guard against list result (no .get() on list)
+            if isinstance(result, dict) and 'error' in result:
                 logger.warning(f"Could not fetch decisions: {result['error']}")
                 return []
 
-            decisions = result.get('decisions', [])
+            decisions = result.get('decisions', []) if isinstance(result, dict) else result if isinstance(result, list) else []
 
             docs = []
             for decision in decisions:
@@ -131,17 +132,28 @@ class EmbeddingPipeline:
         try:
             result = json.loads(governance_list_sessions(limit=limit))
 
-            if 'error' in result:
+            # BUG-201-EMBED-002: Guard against list result (no .get() on list)
+            if isinstance(result, dict) and 'error' in result:
                 logger.warning(f"Could not fetch sessions: {result['error']}")
                 return []
 
-            sessions = result.get('sessions', [])
+            sessions = result.get('sessions', []) if isinstance(result, dict) else result if isinstance(result, list) else []
 
             docs = []
             for session in sessions:
                 session_id = session.get('session_id', 'UNKNOWN')
-                session_result = json.loads(governance_get_session(session_id))
-                content = session_result.get('content', '')
+                # BUG-250-PIP-001: Catch per-session errors to avoid aborting entire loop
+                # BUG-338-PIP-001: Separate exception catches; (JSONDecodeError, Exception)
+                # was tautological — Exception subsumes JSONDecodeError
+                try:
+                    session_result = json.loads(governance_get_session(session_id))
+                    content = session_result.get('content', '')
+                except json.JSONDecodeError as e:
+                    logger.warning(f"Failed to parse session {session_id} JSON: {e}")
+                    continue
+                except Exception as e:
+                    logger.warning(f"Failed to fetch session {session_id}: {e}")
+                    continue
 
                 if content:
                     doc = self.embed_session(session_id, content)
@@ -154,7 +166,15 @@ class EmbeddingPipeline:
             return []
 
     def store_embedding(self, doc: VectorDocument) -> bool:
-        """Store embedding in vector store."""
+        """Store embedding in vector store.
+
+        BUG-338-PIP-002: Use public insert() API when connected; fall back to
+        cache-only when TypeDB is unavailable. Previous code always wrote to
+        _cache directly, so embeddings were never persisted to TypeDB.
+        """
+        if self.store._connected:
+            return self.store.insert(doc)
+        # Fallback: cache-only when store is not connected
         self.store._cache[doc.id] = doc
         return True
 
@@ -175,7 +195,8 @@ class EmbeddingPipeline:
 
     def get_embedded_sources(self) -> List[str]:
         """Get list of already embedded sources."""
-        return [doc.source for doc in self.store._cache.values()]
+        # BUG-232-LOG-002: Deduplicate sources (chunked sessions produce N entries per source)
+        return list({doc.source for doc in self.store._cache.values()})
 
     def run_full_pipeline(self, dry_run: bool = False) -> Dict[str, Any]:
         """Run complete embedding pipeline."""

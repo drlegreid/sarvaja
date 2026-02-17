@@ -5,6 +5,7 @@ Persists _sessions_store tool_calls and thoughts to disk so they
 survive container restarts. Uses JSON sidecar files per session.
 """
 
+import itertools
 import json
 import logging
 import re
@@ -67,8 +68,10 @@ def load_persisted_sessions(sessions_store: Dict[str, Dict[str, Any]]) -> int:
     loaded = 0
     # BUG-329-PERSIST-001: Cap file count to prevent unbounded load on startup
     # (directory bomb protection — 10,000 files is well beyond normal operation)
+    # BUG-340-PERS-001: Use itertools.islice to avoid materializing all Path
+    # objects before slicing (OOM risk with 500k+ files in directory)
     _MAX_SESSION_FILES = 10000
-    for path in list(_STORE_DIR.glob("*.json"))[:_MAX_SESSION_FILES]:
+    for path in itertools.islice(_STORE_DIR.glob("*.json"), _MAX_SESSION_FILES):
         session_id = path.stem
         try:
             data = json.loads(path.read_text(encoding="utf-8"))

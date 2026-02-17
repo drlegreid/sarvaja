@@ -13,7 +13,36 @@ import time
 logger = logging.getLogger(__name__)
 
 # Exception types considered transient (worth retrying)
-TRANSIENT_EXCEPTIONS = (ConnectionError, TimeoutError, OSError)
+# BUG-196-021: Include RuntimeError — _execute_query raises it on disconnect
+# BUG-241-RET-001: Filter RuntimeError to connection-related messages only
+class _TransientRuntimeError(RuntimeError):
+    """Marker subclass — never raised directly; used for isinstance matching."""
+    pass
+
+
+def _is_transient(exc: Exception) -> bool:
+    """Check if exception is transient (worth retrying).
+
+    BUG-340-RETRY-001: Filter OSError by errno — PermissionError, FileNotFoundError,
+    and other non-transient OS errors should NOT be retried.
+    """
+    if isinstance(exc, (ConnectionError, TimeoutError)):
+        return True
+    if isinstance(exc, OSError):
+        # Only retry on connection-related errno codes
+        import errno
+        _TRANSIENT_ERRNOS = {
+            errno.ECONNREFUSED, errno.ECONNRESET, errno.ECONNABORTED,
+            errno.ETIMEDOUT, errno.EHOSTUNREACH, errno.ENETUNREACH,
+        }
+        return getattr(exc, 'errno', None) in _TRANSIENT_ERRNOS
+    if isinstance(exc, RuntimeError):
+        msg = str(exc).lower()
+        return any(kw in msg for kw in ("disconnect", "connection", "unavailable", "closed"))
+    return False
+
+
+TRANSIENT_EXCEPTIONS = (ConnectionError, TimeoutError, OSError, RuntimeError)
 
 
 def retry_on_transient(max_attempts: int = 2, base_delay: float = 0.5):
@@ -35,6 +64,9 @@ def retry_on_transient(max_attempts: int = 2, base_delay: float = 0.5):
                 try:
                     return fn(*args, **kwargs)
                 except TRANSIENT_EXCEPTIONS as e:
+                    # BUG-241-RET-001: Use _is_transient filter for RuntimeError
+                    if not _is_transient(e):
+                        raise
                     last_exc = e
                     if attempt < max_attempts:
                         delay = base_delay * (2 ** (attempt - 1))

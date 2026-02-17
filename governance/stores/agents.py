@@ -9,6 +9,7 @@ import os
 import json
 import math
 import logging
+import tempfile
 from datetime import datetime
 from typing import Dict, Any, List
 
@@ -94,7 +95,8 @@ def _load_workflow_configs() -> Dict[str, Dict[str, Any]]:
         return configs
     try:
         import yaml
-        with open(_AGENTS_YAML_FILE, "r") as f:
+        # BUG-203-AGENT-001: Specify encoding for container compatibility
+        with open(_AGENTS_YAML_FILE, "r", encoding="utf-8") as f:
             data = yaml.safe_load(f)
         for yaml_key, agent_conf in (data or {}).get("agents", {}).items():
             # BUG-AGENTS-YAML-FILE-NO-ERROR-HANDLING-001: Guard against non-dict values
@@ -122,7 +124,8 @@ def _load_agent_metrics() -> Dict[str, Dict[str, Any]]:
     metrics = {}
     if os.path.exists(_AGENT_METRICS_FILE):
         try:
-            with open(_AGENT_METRICS_FILE, "r") as f:
+            # BUG-340-AGT-001: Specify encoding for cross-platform safety
+            with open(_AGENT_METRICS_FILE, "r", encoding="utf-8") as f:
                 metrics = json.load(f)
         except Exception as e:
             logger.warning(f"Failed to load agent metrics: {e}")
@@ -132,9 +135,20 @@ def _load_agent_metrics() -> Dict[str, Dict[str, Any]]:
 def _save_agent_metrics(metrics: Dict[str, Any]) -> None:
     """Save agent metrics to JSON file. Per P11.9."""
     try:
-        os.makedirs(os.path.dirname(_AGENT_METRICS_FILE), exist_ok=True)
-        with open(_AGENT_METRICS_FILE, "w") as f:
-            json.dump(metrics, f, indent=2)
+        metrics_dir = os.path.dirname(_AGENT_METRICS_FILE)
+        os.makedirs(metrics_dir, exist_ok=True)
+        # BUG-274-AGENT-001: Atomic write via temp file + os.replace
+        fd, temp_path = tempfile.mkstemp(suffix=".tmp", prefix=".metrics_", dir=metrics_dir)
+        try:
+            with os.fdopen(fd, "w", encoding="utf-8") as f:
+                json.dump(metrics, f, indent=2)
+            os.replace(temp_path, _AGENT_METRICS_FILE)
+        except Exception:
+            try:
+                os.unlink(temp_path)
+            except OSError:
+                pass
+            raise
     except Exception as e:
         # BUG-METRICS-001: Log instead of crash on filesystem errors
         logger.warning(f"Failed to save agent metrics: {e}")
@@ -215,7 +229,9 @@ def _update_agent_metrics_on_claim(agent_id: str) -> None:
         metrics = _load_agent_metrics()
         metrics[agent_id] = {
             "tasks_executed": _agents_store[agent_id]["tasks_executed"],
-            "last_active": _agents_store[agent_id]["last_active"]
+            "last_active": _agents_store[agent_id]["last_active"],
+            # BUG-189-007: Persist status so it survives container restarts
+            "status": _agents_store[agent_id].get("status", "PAUSED"),
         }
         _save_agent_metrics(metrics)
 
