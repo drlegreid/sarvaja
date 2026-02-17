@@ -58,7 +58,10 @@ def register_rule_crud_tools(mcp) -> None:
             if rule:
                 # RD-RULE-APPLICABILITY: Set applicability after creation if specified
                 if applicability:
-                    rule = client.update_rule(rule_id=rule_id, applicability=applicability)
+                    # BUG-276-RCRUD-002: Guard against update_rule returning None
+                    updated = client.update_rule(rule_id=rule_id, applicability=applicability)
+                    if updated:
+                        rule = updated
 
                 # Instrument: log rule creation event (GAP-MONITOR-INSTRUMENT-001)
                 log_monitor_event(
@@ -103,6 +106,10 @@ def register_rule_crud_tools(mcp) -> None:
         Returns:
             JSON with updated rule or error
         """
+        # BUG-276-RCRUD-001: Guard against empty update (all params None)
+        if not any([name, category, priority, directive, status, rule_type, semantic_id, applicability]):
+            return format_mcp_result({"error": "No update fields provided"})
+
         client = get_typedb_client()
 
         try:
@@ -205,7 +212,9 @@ def register_rule_crud_tools(mcp) -> None:
         Returns:
             JSON with deletion status or error
         """
-        if not confirm:
+        # BUG-304-DEL-001: Use identity check (is not True) to prevent bypass
+        # via truthy non-True values (e.g., confirm=1, confirm="yes")
+        if confirm is not True:
             return format_mcp_result({
                 "error": "Deletion requires explicit confirmation. Set confirm=True to proceed.",
                 "warning": "This is a hard delete. Consider using rule_deprecate instead."
@@ -235,6 +244,10 @@ def register_rule_crud_tools(mcp) -> None:
                 })
             else:
                 return format_mcp_result({"error": f"Rule {rule_id} not found"})
+
+        # BUG-B185-005: Add except to match rule_create pattern
+        except Exception as e:
+            return format_mcp_result({"error": f"rule_delete failed: {e}"})
 
         finally:
             client.close()

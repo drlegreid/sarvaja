@@ -185,8 +185,8 @@ class TaskReadQueries:
 
     def _build_task_from_id(self, task_id: str) -> Optional[Task]:
         """Build a full Task object from TypeDB by ID."""
-        # BUG-TYPEQL-ESCAPE-TASK-002: Escape task_id for TypeQL safety
-        tid = task_id.replace('"', '\\"')
+        # BUG-302-READ-003: Escape backslash FIRST, then quotes (correct order)
+        tid = task_id.replace('\\', '\\\\').replace('"', '\\"')
         query = f"""
             match $t isa task, has task-id "{tid}";
             $t has task-name $name,

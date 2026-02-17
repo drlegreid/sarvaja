@@ -36,18 +36,32 @@ def register_infra_loader_controllers(
 
     def load_infra_status():
         """Load infrastructure health status. Per GAP-INFRA-004."""
+        # BUG-283-IL-001: Ensure infra_loading is always reset, even on exception
+        try:
+            _load_infra_status_inner()
+        except Exception as e:
+            add_error_trace(state, f"Load infra status failed: {e}", "load_infra_status")
+        finally:
+            state.infra_loading = False
+
+    def _load_infra_status_inner():
+        """Inner implementation for load_infra_status (BUG-283-IL-001)."""
         # Detect if running in container (GAP-UI-EXP-006 fix)
         in_container = os.path.exists("/.dockerenv") or os.path.exists("/run/.containerenv")
 
         def check_port(hostname: str, port: int) -> bool:
+            # BUG-305-INFRA-003: Use try/finally to prevent socket leak on exception
+            sock = None
             try:
                 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                 sock.settimeout(2)
                 result = sock.connect_ex((hostname, port))
-                sock.close()
                 return result == 0
             except Exception:
                 return False
+            finally:
+                if sock:
+                    sock.close()
 
         def check_podman() -> bool:
             if in_container:
@@ -96,7 +110,8 @@ def register_infra_loader_controllers(
                 with open(state_file) as f:
                     hc_state = json.load(f)
                 stats["frankel_hash"] = hc_state.get("master_hash", "--------")
-                stats["last_check"] = hc_state.get("last_check", "Never")[:19]
+                # BUG-222-HC-001: Guard against None value (key present with null)
+                stats["last_check"] = (hc_state.get("last_check") or "Never")[:19]
                 stats["component_hashes"] = hc_state.get("component_hashes", {})
                 stats["component_statuses"] = hc_state.get("components", {})
                 components = hc_state.get("components", {})
@@ -186,7 +201,6 @@ def register_infra_loader_controllers(
             stats["status"] = "healthy"
 
         state.infra_stats = stats
-        state.infra_loading = False
 
     @ctrl.trigger("load_infra_status")
     def trigger_load_infra_status():
@@ -197,6 +211,11 @@ def register_infra_loader_controllers(
     @ctrl.trigger("start_service")
     def start_service(service: str):
         """Start a specific service. Per GAP-INFRA-004."""
+        # BUG-305-INFRA-001: Allowlist validation to prevent command injection
+        _ALLOWED_SERVICES = {"typedb", "chromadb", "litellm", "ollama", "dashboard"}
+        if service not in _ALLOWED_SERVICES:
+            state.infra_last_action = f"Unknown service: {service}"
+            return
         try:
             subprocess.Popen(
                 ["podman", "compose", "--profile", "cpu", "up", "-d", service],
@@ -234,14 +253,25 @@ def register_infra_loader_controllers(
     def load_container_logs(container: str = "dashboard", lines: int = 50, level: str = ""):
         """Load container logs via API endpoint (uses podman socket)."""
         import httpx
+        # BUG-305-INFRA-002: Allowlist container names, clamp lines
+        _ALLOWED_CONTAINERS = {"dashboard", "typedb", "chromadb", "litellm", "ollama"}
+        if container not in _ALLOWED_CONTAINERS:
+            state.infra_log_lines = [f"Unknown container: {container}"]
+            state.infra_log_container = container
+            return
+        lines = max(1, min(int(lines), 500))
         try:
             resp = httpx.get(
                 f"{api_base_url}/api/infra/logs",
                 params={"container": container, "tail": lines, "level": level or ""},
                 timeout=10,
             )
-            data = resp.json()
-            state.infra_log_lines = data.get("lines", ["No logs returned"])
+            # BUG-283-IL-002: Check status before calling .json() to avoid JSONDecodeError on error pages
+            if resp.status_code == 200:
+                data = resp.json()
+                state.infra_log_lines = data.get("lines", ["No logs returned"])
+            else:
+                state.infra_log_lines = [f"API error {resp.status_code}"]
         except Exception as e:
             state.infra_log_lines = [f"Failed to fetch logs: {e}"]
         state.infra_log_container = container

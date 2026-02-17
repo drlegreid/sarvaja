@@ -8,10 +8,21 @@ for the session detail view.
 Created: 2026-02-15
 """
 
+import re
+
 import httpx
 from typing import Any
 
 from agent.governance_ui.trace_bar.transforms import add_error_trace
+
+# BUG-305-SDL-001: Validate session IDs before URL path interpolation
+_SESSION_ID_RE = re.compile(r'^[A-Za-z0-9_\-]+$')
+
+
+def _valid_session_id(session_id: str) -> bool:
+    """Check session_id is safe for URL path interpolation."""
+    return bool(session_id and isinstance(session_id, str)
+                and len(session_id) <= 200 and _SESSION_ID_RE.match(session_id))
 
 
 def register_session_detail_loaders(state: Any, api_base_url: str):
@@ -19,7 +30,7 @@ def register_session_detail_loaders(state: Any, api_base_url: str):
 
     def load_session_tool_calls(session_id):
         """Load tool calls via detail.py zoom endpoint (JSONL-backed)."""
-        if not session_id:
+        if not _valid_session_id(session_id):
             return
         state.session_tool_calls_loading = True
         try:
@@ -44,7 +55,7 @@ def register_session_detail_loaders(state: Any, api_base_url: str):
 
     def load_session_thinking_items(session_id):
         """Load thinking items via detail.py zoom endpoint (JSONL-backed)."""
-        if not session_id:
+        if not _valid_session_id(session_id):
             return
         state.session_thinking_items_loading = True
         try:
@@ -87,8 +98,8 @@ def register_session_detail_loaders(state: Any, api_base_url: str):
                 "timestamp": thought.get("timestamp", ""),
                 "icon": "mdi-head-lightbulb",
                 "title": thought.get("thought_type", "reasoning"),
-                "subtitle": f"{thought.get('char_count', thought.get('chars', 0))} chars",
-                "detail": thought.get("thought", "")[:200] if thought.get("thought") else "",
+                "subtitle": f"{thought.get('chars', thought.get('char_count', 0))} chars",
+                "detail": thought.get("content", "")[:200] if thought.get("content") else "",
                 "confidence": thought.get("confidence"),
             })
         # BUG-UI-TIMELINE-NULL-001: Guard against None timestamps crashing sort
@@ -97,7 +108,7 @@ def register_session_detail_loaders(state: Any, api_base_url: str):
 
     def load_session_evidence_rendered(session_id):
         """Load rendered HTML evidence for inline preview."""
-        if not session_id:
+        if not _valid_session_id(session_id):
             return
         state.session_evidence_loading = True
         try:
@@ -117,7 +128,7 @@ def register_session_detail_loaders(state: Any, api_base_url: str):
 
     def load_session_evidence(session_id):
         """Load evidence files for a session and merge into selected_session."""
-        if not session_id:
+        if not _valid_session_id(session_id):
             return
         try:
             with httpx.Client(timeout=10.0) as client:
@@ -134,7 +145,7 @@ def register_session_detail_loaders(state: Any, api_base_url: str):
 
     def load_session_tasks(session_id):
         """Load tasks linked to a session."""
-        if not session_id:
+        if not _valid_session_id(session_id):
             return
         state.session_tasks_loading = True
         try:
@@ -154,7 +165,7 @@ def register_session_detail_loaders(state: Any, api_base_url: str):
 
     def load_session_transcript(session_id, page=1):
         """Load paginated conversation transcript (GAP-SESSION-TRANSCRIPT-001)."""
-        if not session_id:
+        if not _valid_session_id(session_id):
             return
         state.session_transcript_loading = True
         try:
@@ -188,8 +199,9 @@ def register_session_detail_loaders(state: Any, api_base_url: str):
 
     def load_transcript_entry_expanded(session_id, entry_index):
         """Load a single transcript entry with full content (expand truncated)."""
-        if not session_id:
+        if not _valid_session_id(session_id):
             return
+        entry_index = int(entry_index)  # BUG-305-SDL-001: enforce integer
         try:
             with httpx.Client(timeout=10.0) as client:
                 response = client.get(

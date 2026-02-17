@@ -11,8 +11,13 @@ Created: 2024-12-28
 """
 
 import logging
+import re
+
 import httpx
 from typing import Any
+
+# BUG-303-TRUST-001: Validate agent_id before URL path interpolation
+_AGENT_ID_RE = re.compile(r'^[A-Za-z0-9_\-]{1,64}$')
 
 from agent.governance_ui.trace_bar.transforms import add_api_trace, add_error_trace
 
@@ -32,7 +37,11 @@ def register_trust_controllers(state: Any, ctrl: Any, api_base_url: str) -> None
     @ctrl.trigger("select_agent")
     def select_agent(agent_id):
         """Select agent for detail view. Per EPIC-A.4: Fetch linked sessions."""
-        for agent in state.agents:
+        # BUG-303-TRUST-001: Validate agent_id format before URL interpolation
+        if not agent_id or not isinstance(agent_id, str) or not _AGENT_ID_RE.match(agent_id):
+            return
+        # BUG-239-RULES-001: Guard against None state.agents
+        for agent in (state.agents or []):
             if agent.get('agent_id') == agent_id:
                 state.selected_agent = agent
                 state.show_agent_detail = True
@@ -51,6 +60,9 @@ def register_trust_controllers(state: Any, ctrl: Any, api_base_url: str) -> None
                         updated = dict(state.selected_agent)
                         updated["sessions_count"] = data.get("pagination", {}).get("total", len(sessions))
                         state.selected_agent = updated
+                else:
+                    # BUG-225-CTRL-009: Clear stale sessions from prior agent
+                    state.agent_sessions = []
         except Exception as e:
             add_error_trace(state, f"Load agent sessions failed: {e}", f"/api/agents/{agent_id}/sessions")
             state.agent_sessions = []
@@ -65,7 +77,8 @@ def register_trust_controllers(state: Any, ctrl: Any, api_base_url: str) -> None
     @ctrl.trigger("toggle_agent_pause")
     def toggle_agent_pause(agent_id):
         """Toggle agent between PAUSED and ACTIVE. Per GAP-AGENT-PAUSE-001."""
-        if not agent_id:
+        # BUG-303-TRUST-001: Validate agent_id format before URL interpolation
+        if not agent_id or not isinstance(agent_id, str) or not _AGENT_ID_RE.match(agent_id):
             return
         try:
             with httpx.Client(timeout=10.0) as client:
@@ -79,7 +92,8 @@ def register_trust_controllers(state: Any, ctrl: Any, api_base_url: str) -> None
                     # Update selected_agent in place
                     state.selected_agent = updated
                     # Update in agents list
-                    agents = list(state.agents)
+                    # BUG-260-TRUST-001: Guard against None state.agents
+                    agents = list(state.agents or [])
                     for i, a in enumerate(agents):
                         if a.get("agent_id") == agent_id:
                             agents[i] = updated
@@ -136,7 +150,8 @@ def register_trust_controllers(state: Any, ctrl: Any, api_base_url: str) -> None
     @ctrl.trigger("load_trust_history")
     def load_trust_history(agent_id):
         """Load trust score history for an agent."""
-        if not agent_id:
+        # BUG-303-TRUST-001: Validate agent_id format before URL interpolation
+        if not agent_id or not isinstance(agent_id, str) or not _AGENT_ID_RE.match(agent_id):
             return
         try:
             with httpx.Client(timeout=10.0) as client:
