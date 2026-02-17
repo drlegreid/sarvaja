@@ -13,10 +13,16 @@ Created: 2024-12-28
 Updated: 2026-02-15 (DOC-SIZE-01-v1 split)
 """
 
+import re
+
 import httpx
 from typing import Any
 
 from governance.middleware.dashboard_log import log_action
+
+# BUG-350-SES-001: Validate session_id before URL path interpolation
+# (mirrors _AGENT_ID_RE in trust.py for agent_id validation)
+_SESSION_ID_RE = re.compile(r'^[A-Za-z0-9_\-\.]{1,128}$')
 from agent.governance_ui.trace_bar.transforms import add_error_trace
 from .sessions_pagination import register_sessions_pagination  # noqa: F401
 from .sessions_detail_loaders import register_session_detail_loaders
@@ -34,6 +40,9 @@ def register_sessions_controllers(state: Any, ctrl: Any, api_base_url: str) -> N
     @ctrl.trigger("select_session")
     def select_session(session_id):
         """Handle session selection for detail view."""
+        # BUG-350-SES-001: Validate session_id format before URL interpolation
+        if not session_id or not isinstance(session_id, str) or not _SESSION_ID_RE.match(session_id):
+            return
         log_action("sessions", "select", session_id=session_id)
         # BUG-UI-STALE-DETAIL-003: Clear prior session detail state
         state.session_tool_calls = []
@@ -44,7 +53,8 @@ def register_sessions_controllers(state: Any, ctrl: Any, api_base_url: str) -> N
         state.evidence_search = ''
         state.session_transcript = []
         state.session_transcript_page = 1
-        for session in state.sessions:
+        # BUG-260-SESSION-001: Guard against None state.sessions
+        for session in (state.sessions or []):
             if session.get('session_id') == session_id or session.get('id') == session_id:
                 state.selected_session = session
                 state.show_session_detail = True
@@ -94,7 +104,8 @@ def register_sessions_controllers(state: Any, ctrl: Any, api_base_url: str) -> N
         state.nav_source_label = f'Session {session_id}' if session_id else 'Sessions'
         state.active_view = 'rules'
         state.show_session_detail = False
-        for rule in state.rules:
+        # BUG-260-SESSION-002: Guard against None state.rules
+        for rule in (state.rules or []):
             if rule.get('rule_id') == rule_id:
                 state.selected_rule = rule
                 state.show_rule_detail = True
@@ -113,7 +124,8 @@ def register_sessions_controllers(state: Any, ctrl: Any, api_base_url: str) -> N
         state.nav_source_label = f'Session {session_id}' if session_id else 'Sessions'
         state.active_view = 'decisions'
         state.show_session_detail = False
-        for dec in state.decisions:
+        # BUG-260-SESSION-003: Guard against None state.decisions
+        for dec in (state.decisions or []):
             if dec.get('decision_id') == decision_id or dec.get('id') == decision_id:
                 state.selected_decision = dec
                 state.show_decision_detail = True
@@ -226,8 +238,16 @@ def register_sessions_controllers(state: Any, ctrl: Any, api_base_url: str) -> N
                     if not state.selected_session:
                         state.has_error = True
                         state.error_message = "No session selected for editing"
+                        # BUG-S-03: Reset is_loading on early return
+                        state.is_loading = False
                         return
                     session_id = state.selected_session.get('session_id') or state.selected_session.get('id')
+                    # BUG-350-SES-001: Validate session_id before URL interpolation
+                    if not session_id or not _SESSION_ID_RE.match(str(session_id)):
+                        state.has_error = True
+                        state.error_message = "Invalid session ID format"
+                        state.is_loading = False
+                        return
                     update_data = {
                         "description": state.form_session_description,
                         "status": state.form_session_status,
@@ -268,6 +288,12 @@ def register_sessions_controllers(state: Any, ctrl: Any, api_base_url: str) -> N
         try:
             state.is_loading = True
             session_id = state.selected_session.get('session_id') or state.selected_session.get('id')
+            # BUG-350-SES-001: Validate session_id before URL interpolation
+            if not session_id or not _SESSION_ID_RE.match(str(session_id)):
+                state.has_error = True
+                state.error_message = "Invalid session ID format"
+                state.is_loading = False
+                return
 
             with httpx.Client(timeout=10.0) as client:
                 response = client.delete(f"{api_base_url}/api/sessions/{session_id}")
@@ -294,6 +320,17 @@ def register_sessions_controllers(state: Any, ctrl: Any, api_base_url: str) -> N
         if not session_id or not evidence_path:
             state.has_error = True
             state.error_message = "Session ID and evidence path are required"
+            return
+        # BUG-350-SES-001: Validate session_id before URL interpolation
+        if not _SESSION_ID_RE.match(str(session_id)):
+            state.has_error = True
+            state.error_message = "Invalid session ID format"
+            return
+        # BUG-351-EVP-001: Validate evidence_path to prevent path traversal
+        evidence_path = (evidence_path or "").strip()
+        if ".." in evidence_path or evidence_path.startswith("/") or len(evidence_path) > 500:
+            state.has_error = True
+            state.error_message = "Invalid evidence path"
             return
         try:
             state.evidence_attach_loading = True

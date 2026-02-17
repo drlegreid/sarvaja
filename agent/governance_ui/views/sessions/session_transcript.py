@@ -39,8 +39,9 @@ def build_session_transcript_card() -> None:
             v3.VSpacer()
 
             # Entry count chip
+            # BUG-269-TRANSCRIPT-001: Guard against null session_transcript
             v3.VChip(
-                "{{ session_transcript.length }} entries"
+                "{{ (session_transcript || []).length }} entries"
                 " ({{ session_transcript_total }} total)",
                 size="small",
                 color="primary",
@@ -80,7 +81,8 @@ def build_session_transcript_card() -> None:
         v3.VDivider()
 
         # Empty state
-        with v3.VCardText(v_if="!session_transcript_loading && session_transcript.length === 0"):
+        # BUG-269-TRANSCRIPT-001: Guard against null session_transcript
+        with v3.VCardText(v_if="!session_transcript_loading && (!session_transcript || session_transcript.length === 0)"):
             with v3.VAlert(type="info", variant="tonal", density="compact"):
                 html.Span(
                     "No transcript data available for this session. "
@@ -89,8 +91,9 @@ def build_session_transcript_card() -> None:
                 )
 
         # Transcript entries
+        # BUG-269-TRANSCRIPT-001: Guard against null session_transcript
         with v3.VCardText(
-            v_if="session_transcript.length > 0",
+            v_if="session_transcript && session_transcript.length > 0",
             style="max-height: 600px; overflow-y: auto;",
         ):
             _build_transcript_entries()
@@ -103,7 +106,8 @@ def _build_transcript_entries() -> None:
     """Render the list of transcript entries with type-specific styling."""
     with html.Div(
         v_for="(entry, idx) in session_transcript",
-        key="idx",
+        # BUG-186-004: Use dynamic binding, not static string
+        **{":key": "idx"},
         classes="mb-2",
     ):
         # Compaction marker — special alert style
@@ -114,7 +118,8 @@ def _build_transcript_entries() -> None:
             density="compact",
             icon="mdi-content-cut",
         ):
-            html.Span("{{ entry.content }}")
+            # BUG-350-XSS-001: Use v_text instead of mustache to prevent XSS
+            html.Span(v_text="entry.content")
 
         # Thinking — collapsible expansion panel
         with v3.VExpansionPanels(
@@ -133,8 +138,9 @@ def _build_transcript_entries() -> None:
                         variant="tonal",
                     )
                 with v3.VExpansionPanelText():
+                    # BUG-350-XSS-001: Use v_text instead of mustache to prevent XSS
                     html.Pre(
-                        "{{ entry.content }}",
+                        v_text="entry.content",
                         style="white-space: pre-wrap; word-break: break-word; "
                         "font-size: 0.85rem; max-height: 300px; overflow-y: auto;",
                     )
@@ -158,8 +164,9 @@ def _build_transcript_entries() -> None:
                     variant="text",
                 )
             with v3.VCardText(classes="py-1"):
+                # BUG-350-XSS-001: Use v_text instead of mustache to prevent XSS
                 html.Pre(
-                    "{{ entry.content }}",
+                    v_text="entry.content",
                     style="white-space: pre-wrap; word-break: break-word; font-size: 0.85rem;",
                 )
                 _build_expand_button()
@@ -188,8 +195,9 @@ def _build_transcript_entries() -> None:
                     variant="text",
                 )
             with v3.VCardText(classes="py-1"):
+                # BUG-350-XSS-001: Use v_text instead of mustache to prevent XSS
                 html.Pre(
-                    "{{ entry.content }}",
+                    v_text="entry.content",
                     style="white-space: pre-wrap; word-break: break-word; font-size: 0.85rem;",
                 )
                 _build_expand_button()
@@ -219,8 +227,9 @@ def _build_transcript_entries() -> None:
                     variant="text",
                 )
             with v3.VCardText(classes="py-1"):
+                # BUG-350-XSS-001: Use v_text instead of mustache to prevent XSS
                 html.Pre(
-                    "{{ entry.content }}",
+                    v_text="entry.content",
                     style="white-space: pre-wrap; word-break: break-word; "
                     "font-family: monospace; font-size: 0.8rem; "
                     "max-height: 200px; overflow-y: auto;",
@@ -250,8 +259,9 @@ def _build_transcript_entries() -> None:
                     variant="text",
                 )
             with v3.VCardText(classes="py-1"):
+                # BUG-350-XSS-001: Use v_text instead of mustache to prevent XSS
                 html.Pre(
-                    "{{ entry.content }}",
+                    v_text="entry.content",
                     style="white-space: pre-wrap; word-break: break-word; "
                     "font-family: monospace; font-size: 0.8rem; "
                     "max-height: 200px; overflow-y: auto;",

@@ -55,7 +55,8 @@ def build_tool_calls_card() -> None:
             ):
                 with v3.VExpansionPanel(
                     v_for="(call, idx) in session_tool_calls",
-                    key=("idx",),
+                    # BUG-290-TC-001: Use dynamic Vue key binding, not static tuple
+                    **{":key": "idx"},
                 ):
                     with v3.VExpansionPanelTitle(classes="d-flex align-center"):
                         v3.VIcon(
@@ -89,8 +90,9 @@ def build_tool_calls_card() -> None:
                         # Input summary
                         with html.Div(classes="mb-2"):
                             html.Div("Input", classes="text-caption text-grey")
+                            # BUG-350-XSS-002: Use v_text instead of mustache to prevent XSS
                             html.Pre(
-                                "{{ call.input_summary || 'N/A' }}",
+                                v_text="call.input_summary || 'N/A'",
                                 style="white-space: pre-wrap; font-family: monospace; "
                                       "font-size: 0.8rem; padding: 8px; "
                                       "border-radius: 4px; margin: 0;",
@@ -101,8 +103,9 @@ def build_tool_calls_card() -> None:
                             v_if="call.output_summary",
                         ):
                             html.Div("Output", classes="text-caption text-grey")
+                            # BUG-350-XSS-002: Use v_text instead of mustache to prevent XSS
                             html.Pre(
-                                "{{ call.output_summary }}",
+                                v_text="call.output_summary",
                                 style="white-space: pre-wrap; font-family: monospace; "
                                       "font-size: 0.8rem; padding: 8px; "
                                       "border-radius: 4px; margin: 0; "
@@ -140,17 +143,19 @@ def _build_thinking_items_card() -> None:
             ):
                 with v3.VExpansionPanel(
                     v_for="(thought, idx) in session_thinking_items",
-                    key=("idx",),
+                    # BUG-290-TC-001: Use dynamic Vue key binding, not static tuple
+                    **{":key": "idx"},
                 ):
                     with v3.VExpansionPanelTitle():
                         v3.VIcon("mdi-thought-bubble", size="small", classes="mr-2")
                         html.Span(
                             "{{ 'Thinking block #' + (idx + 1) + "
-                            "' (' + (thought.char_count || 0) + ' chars)' }}"
+                            "' (' + (thought.chars || 0) + ' chars)' }}"
                         )
                     with v3.VExpansionPanelText():
+                        # BUG-350-XSS-002: Use v_text instead of mustache to prevent XSS
                         html.Pre(
-                            "{{ thought.content }}",
+                            v_text="thought.content",
                             style="white-space: pre-wrap; font-family: monospace; "
                                   "font-size: 0.8rem; padding: 8px; "
                                   "border-radius: 4px; margin: 0; "

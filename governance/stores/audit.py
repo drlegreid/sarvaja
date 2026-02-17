@@ -43,6 +43,9 @@ class AuditEntry:
 # In-memory audit store
 _audit_store: List[Dict[str, Any]] = []
 
+# BUG-353-AUD-001: Hard cap on in-memory audit entries to prevent unbounded growth
+_MAX_AUDIT_ENTRIES = 50_000
+
 
 def _load_audit_store():
     """Load audit entries from file."""
@@ -161,6 +164,9 @@ def _apply_retention(days: int = 7):
         e for e in _audit_store
         if e.get("timestamp", "")[:10] >= cutoff
     ]
+    # BUG-353-AUD-001: Hard cap independent of date-based retention
+    if len(_audit_store) > _MAX_AUDIT_ENTRIES:
+        _audit_store[:] = _audit_store[-_MAX_AUDIT_ENTRIES:]
     removed = original_count - len(_audit_store)
     if removed > 0:
         logger.info(f"Retention policy removed {removed} old audit entries")

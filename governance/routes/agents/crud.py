@@ -22,18 +22,26 @@ router = APIRouter(tags=["Agents"])
 @router.post("/agents", response_model=AgentResponse, status_code=201)
 async def create_agent(body: AgentCreate):
     """Create a new agent. Per ASSESS-PLATFORM-GAPS-2026-02-15 Fix B."""
-    result = agent_service.create_agent(
-        agent_id=body.agent_id,
-        name=body.name,
-        agent_type=body.agent_type,
-        trust_score=body.trust_score,
-        capabilities=body.capabilities,
-        rules=body.rules,
-        source="rest-api",
-    )
-    if result is None:
-        raise HTTPException(status_code=409, detail=f"Agent {body.agent_id} already exists")
-    return AgentResponse(**result)
+    # BUG-190-007: Add try-except matching list_agents pattern
+    try:
+        result = agent_service.create_agent(
+            agent_id=body.agent_id,
+            name=body.name,
+            agent_type=body.agent_type,
+            trust_score=body.trust_score,
+            capabilities=body.capabilities,
+            rules=body.rules,
+            source="rest-api",
+        )
+        if result is None:
+            raise HTTPException(status_code=409, detail=f"Agent {body.agent_id} already exists")
+        return AgentResponse(**result)
+    except HTTPException:
+        raise
+    except Exception as e:
+        # BUG-352-INF-003: Log full error but return generic message to prevent info disclosure
+        logger.error(f"Failed to create agent: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail="Failed to create agent")
 
 
 @router.get("/agents", response_model=PaginatedAgentResponse)
@@ -46,6 +54,13 @@ async def list_agents(
     status: Optional[str] = Query(None, description="Filter by status: ACTIVE, INACTIVE")
 ):
     """List agents with pagination, sorting, and filtering. Per GAP-ARCH-003, GAP-UI-036."""
+    # BUG-237-SORT-001: Whitelist sort_by to prevent unexpected sort keys
+    _valid_sort = {"agent_id", "name", "trust_score", "status"}
+    if sort_by not in _valid_sort:
+        raise HTTPException(status_code=422, detail=f"Invalid sort_by: {sort_by}. Must be one of {sorted(_valid_sort)}")
+    # BUG-253-INJ-001: Whitelist order direction to prevent injection
+    if order not in {"asc", "desc"}:
+        raise HTTPException(status_code=422, detail="order must be 'asc' or 'desc'")
     # BUG-ROUTE-MISSING-EXCEPT-001: Add try-except matching other CRUD endpoints
     try:
         result = agent_service.list_agents(
@@ -65,42 +80,76 @@ async def list_agents(
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to list agents: {e}")
+        # BUG-352-INF-003: Log full error but return generic message to prevent info disclosure
+        logger.error(f"Failed to list agents: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail="Failed to list agents")
 
 
 @router.get("/agents/{agent_id}", response_model=AgentResponse)
 async def get_agent(agent_id: str):
     """Get a specific agent. Per GAP-ARCH-003, GAP-UI-048."""
-    result = agent_service.get_agent(agent_id, source="rest-api")
-    if result is None:
-        raise HTTPException(status_code=404, detail=f"Agent {agent_id} not found")
-    return AgentResponse(**result)
+    # BUG-190-005: Add try-except matching list_agents pattern
+    try:
+        result = agent_service.get_agent(agent_id, source="rest-api")
+        if result is None:
+            raise HTTPException(status_code=404, detail=f"Agent {agent_id} not found")
+        return AgentResponse(**result)
+    except HTTPException:
+        raise
+    except Exception as e:
+        # BUG-352-INF-003: Log full error but return generic message to prevent info disclosure
+        logger.error(f"Failed to get agent {agent_id}: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail="Failed to get agent")
 
 
 @router.delete("/agents/{agent_id}", status_code=204)
 async def delete_agent(agent_id: str):
     """Delete an agent. Per GAP-ARCH-003."""
-    if not agent_service.delete_agent(agent_id, source="rest-api"):
-        raise HTTPException(status_code=404, detail=f"Agent {agent_id} not found")
-    return None
+    # BUG-190-006: Add try-except matching list_agents pattern
+    try:
+        if not agent_service.delete_agent(agent_id, source="rest-api"):
+            raise HTTPException(status_code=404, detail=f"Agent {agent_id} not found")
+        return None
+    except HTTPException:
+        raise
+    except Exception as e:
+        # BUG-352-INF-003: Log full error but return generic message to prevent info disclosure
+        logger.error(f"Failed to delete agent {agent_id}: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail="Failed to delete agent")
 
 
 @router.put("/agents/{agent_id}/status/toggle", response_model=AgentResponse)
 async def toggle_agent_status(agent_id: str):
     """Toggle agent between PAUSED and ACTIVE. Per GAP-AGENT-PAUSE-001."""
-    result = agent_service.toggle_agent_status(agent_id, source="rest-api")
-    if result is None:
-        raise HTTPException(status_code=404, detail=f"Agent {agent_id} not found")
-    return AgentResponse(**result)
+    # BUG-224-AGENT-001: Add try/except matching other agent endpoints
+    try:
+        result = agent_service.toggle_agent_status(agent_id, source="rest-api")
+        if result is None:
+            raise HTTPException(status_code=404, detail=f"Agent {agent_id} not found")
+        return AgentResponse(**result)
+    except HTTPException:
+        raise
+    except Exception as e:
+        # BUG-352-INF-003: Log full error but return generic message to prevent info disclosure
+        logger.error(f"Failed to toggle agent {agent_id}: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail="Failed to toggle agent status")
 
 
 @router.put("/agents/{agent_id}/task", response_model=AgentResponse)
 async def record_agent_task(agent_id: str):
     """Record that an agent executed a task. Per P11.9, GAP-STUB-005."""
-    result = agent_service.record_task_execution(agent_id, source="rest-api")
-    if result is None:
-        raise HTTPException(status_code=404, detail=f"Agent {agent_id} not found")
-    return AgentResponse(**result)
+    # BUG-224-AGENT-001: Add try/except matching other agent endpoints
+    try:
+        result = agent_service.record_task_execution(agent_id, source="rest-api")
+        if result is None:
+            raise HTTPException(status_code=404, detail=f"Agent {agent_id} not found")
+        return AgentResponse(**result)
+    except HTTPException:
+        raise
+    except Exception as e:
+        # BUG-352-INF-003: Log full error but return generic message to prevent info disclosure
+        logger.error(f"Failed to record task for agent {agent_id}: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail="Failed to record task")
 
 
 @router.get("/agents/{agent_id}/sessions")
@@ -110,21 +159,29 @@ async def get_agent_sessions(
     limit: int = Query(20, ge=1, le=100),
 ):
     """Get sessions linked to an agent. Per EPIC-A.4: Session-agent linking."""
-    # Verify agent exists
-    agent = agent_service.get_agent(agent_id, source="rest-api")
-    if agent is None:
-        raise HTTPException(status_code=404, detail=f"Agent {agent_id} not found")
+    # BUG-224-AGENT-002: Add try/except for agent session lookup
+    try:
+        # Verify agent exists
+        agent = agent_service.get_agent(agent_id, source="rest-api")
+        if agent is None:
+            raise HTTPException(status_code=404, detail=f"Agent {agent_id} not found")
 
-    result = session_service.list_sessions(
-        agent_id=agent_id, offset=offset, limit=limit,
-    )
-    return {
-        "agent_id": agent_id,
-        "sessions": result["items"],
-        "pagination": {
-            "total": result["total"],
-            "offset": result["offset"],
-            "limit": result["limit"],
-            "has_more": result["has_more"],
-        },
-    }
+        result = session_service.list_sessions(
+            agent_id=agent_id, offset=offset, limit=limit,
+        )
+        return {
+            "agent_id": agent_id,
+            "sessions": result["items"],
+            "pagination": {
+                "total": result["total"],
+                "offset": result["offset"],
+                "limit": result["limit"],
+                "has_more": result["has_more"],
+            },
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        # BUG-352-INF-003: Log full error but return generic message to prevent info disclosure
+        logger.error(f"Failed to get agent sessions: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail="Failed to get agent sessions")

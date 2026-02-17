@@ -71,8 +71,9 @@ async def link_evidence_to_session(session_id: str, data: EvidenceLink):
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Error linking evidence to session: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        # BUG-352-INF-002: Log full error but return generic message to prevent info disclosure
+        logger.error(f"Error linking evidence to session: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail="Failed to link evidence")
 
 
 @router.get("/sessions/{session_id}/tasks")
@@ -108,8 +109,9 @@ async def get_session_tasks(session_id: str):
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Error getting session tasks: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        # BUG-352-INF-002: Log full error but return generic message to prevent info disclosure
+        logger.error(f"Error getting session tasks: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail="Failed to get session tasks")
 
 
 
@@ -158,7 +160,10 @@ def _scan_evidence_filesystem(session_id: str) -> list:
     Per H-SESSION-002: Provides fallback when TypeDB evidence links are missing.
     """
     import os
-    evidence_dir = os.path.join(os.getcwd(), "evidence")
+    # BUG-206-CWD-001: Use __file__-based path instead of fragile CWD lookup
+    _this_dir = os.path.dirname(os.path.abspath(__file__))
+    project_root = os.path.realpath(os.path.join(_this_dir, "..", "..", ".."))
+    evidence_dir = os.path.join(project_root, "evidence")
     if not os.path.isdir(evidence_dir):
         return []
 
