@@ -170,7 +170,9 @@ def check_cc_ingestion_complete(api_base_url: str) -> dict:
 
     violations = []
     checked = 0
-    for s in cc_sessions:
+    # BUG-319-INGEST-001: Cap inner loop to prevent unbounded N+1 API calls
+    # (200 sessions × 10s timeout = 2000s worst case without cap)
+    for s in cc_sessions[:30]:
         sid = s.get("session_id", "unknown")
         # Check ingestion status via checkpoint API
         status = _api_get(api_base_url, f"/api/ingestion/status/{sid}")
@@ -181,6 +183,15 @@ def check_cc_ingestion_complete(api_base_url: str) -> dict:
             elif phase not in ("complete", "not_started"):
                 violations.append(f"{sid} (phase={phase})")
             checked += 1
+
+    # BUG-207-INGESTION-001: Return SKIP when no sessions were actually checked
+    # (e.g., all ingestion status API calls failed)
+    if checked == 0:
+        return {
+            "status": "SKIP",
+            "message": f"Could not check ingestion for {len(cc_sessions)} CC sessions (API unreachable)",
+            "violations": [],
+        }
 
     return {
         "status": "FAIL" if violations else "PASS",

@@ -100,7 +100,10 @@ def build_orchestrator_graph() -> MockStateGraph:
 def _run_fallback_workflow(state: Dict[str, Any]) -> Dict[str, Any]:
     """Execute the orchestrator loop without LangGraph runtime."""
     # BUG-ORCH-LOOP-001: Hard safety cap prevents infinite loop if gate/budget logic fails
-    _MAX_ITERATIONS = state.get("max_cycles", 100) * 3  # 3x max_cycles as safety margin
+    # BUG-246-GRP-001: Coerce max_cycles to int to prevent type confusion (str * 3 = repeat)
+    # BUG-266-GRAPH-001: Guard against explicit None value (int(None) raises TypeError)
+    # BUG-321-GRAPH-001: Hard cap at 3000 regardless of caller input (prevents 1M+ iterations)
+    _MAX_ITERATIONS = min(int(state.get("max_cycles") or 100) * 3, 3000)
     _iteration = 0
     _retrying = False
     while _iteration < _MAX_ITERATIONS:
@@ -137,10 +140,16 @@ def _run_fallback_workflow(state: Dict[str, Any]) -> Dict[str, Any]:
             continue
         elif route == "park_task":
             state.update(park_task_node(state))
+            # BUG-202-GRAPH-001: Must continue to gate, not fall through
+            # park_task sets current_task=None; without continue, next
+            # iteration would run spec/impl/validate on a None task
+            continue
     else:
-        # Safety cap reached — force completion
+        # Safety cap reached — force completion with proper certification
         state["gate_decision"] = "stop"
         state["safety_cap_reached"] = True
+        state.update(certify_node(state))
+        state.update(complete_node(state))
 
     return state
 

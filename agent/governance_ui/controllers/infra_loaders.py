@@ -276,14 +276,25 @@ def register_infra_loader_controllers(
             state.infra_log_lines = [f"Failed to fetch logs: {e}"]
         state.infra_log_container = container
 
+    # BUG-320-INFRA-001: Cooldown timer to prevent rapid repeated pkill
+    _cleanup_last_run = [0.0]  # mutable container for closure access
+    _CLEANUP_COOLDOWN_SECS = 30
+
     @ctrl.trigger("cleanup_zombies")
     def cleanup_zombies():
         """Cleanup zombie MCP processes. Per GAP-INFRA-004."""
+        import time
+        now = time.time()
+        if now - _cleanup_last_run[0] < _CLEANUP_COOLDOWN_SECS:
+            remaining = int(_CLEANUP_COOLDOWN_SECS - (now - _cleanup_last_run[0]))
+            state.infra_last_action = f"Cleanup cooldown: wait {remaining}s"
+            return
         try:
             subprocess.run(
                 ["pkill", "-9", "-f", "governance.mcp_server"],
                 capture_output=True, timeout=5
             )
+            _cleanup_last_run[0] = now
             state.infra_last_action = "Cleaned up zombie MCP processes"
         except Exception as e:
             state.infra_last_action = f"Cleanup failed: {e}"
