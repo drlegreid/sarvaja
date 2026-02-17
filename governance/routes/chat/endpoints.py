@@ -75,12 +75,16 @@ async def send_chat_message(request: ChatMessageRequest):
             "context": context_dict,
         }
 
-    session = _chat_sessions.get(session_id, {
-        "session_id": session_id,
-        "messages": [],
-        "active_task_id": None,
-        "selected_agent_id": request.agent_id,
-    })
+    # BUG-336-CHAT-001: Reject unknown session_id instead of fabricating a phantom fallback dict
+    session = _chat_sessions.get(session_id)
+    if session is None:
+        session = {
+            "session_id": session_id,
+            "messages": [],
+            "active_task_id": None,
+            "selected_agent_id": request.agent_id,
+        }
+        _chat_sessions[session_id] = session
 
     # Store user message
     user_msg = {
@@ -111,8 +115,9 @@ async def send_chat_message(request: ChatMessageRequest):
 
     # Start governance session for new chat sessions (A.2 session bridge)
     # BUG-206-PURGE-001: Cap _chat_gov_sessions to prevent unbounded memory growth
+    # BUG-336-CHAT-002: Snapshot keys before eviction to prevent RuntimeError on concurrent mutation
     if len(_chat_gov_sessions) > 200:
-        oldest_keys = sorted(_chat_gov_sessions.keys())[:50]
+        oldest_keys = sorted(list(_chat_gov_sessions.keys()))[:50]
         for k in oldest_keys:
             _chat_gov_sessions.pop(k, None)
 

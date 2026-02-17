@@ -46,7 +46,8 @@ def add_to_backlog(
     description: str,
 ) -> Dict[str, Any]:
     """Add a task to the backlog, sorted by priority. Rejects duplicates."""
-    existing_ids = {t["task_id"] for t in state["backlog"]}
+    # BUG-281-STATE-001: Use .get() to prevent KeyError on partial/corrupt state
+    existing_ids = {t.get("task_id") for t in state.get("backlog", []) if t.get("task_id")}
     if task_id in existing_ids:
         return state
 
@@ -55,7 +56,8 @@ def add_to_backlog(
         "priority": priority,
         "description": description,
     }
-    backlog = state["backlog"] + [entry]
-    backlog.sort(key=lambda t: PRIORITY_ORDER.get(t["priority"], 99))
-    state["backlog"] = backlog
-    return state
+    # BUG-220-MUTATE-001: Return new dict instead of mutating input state
+    backlog = state.get("backlog", []) + [entry]
+    # BUG-337-STATE-001: Use .get() to prevent KeyError on malformed backlog entries
+    backlog.sort(key=lambda t: PRIORITY_ORDER.get(t.get("priority", "LOW"), 99))
+    return {**state, "backlog": backlog}

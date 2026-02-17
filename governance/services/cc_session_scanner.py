@@ -54,7 +54,8 @@ def scan_jsonl_metadata(filepath: Path) -> Optional[Dict[str, Any]]:
         compaction_count = 0
         models_seen = set()
 
-        with open(filepath, "r") as f:
+        # BUG-209-SCANNER-ENCODING-001: Specify encoding for non-UTF-8 locales
+        with open(filepath, "r", encoding="utf-8") as f:
             for line in f:
                 line = line.strip()
                 if not line:
@@ -121,8 +122,9 @@ def scan_jsonl_metadata(filepath: Path) -> Optional[Dict[str, Any]]:
 def build_session_id(meta: Dict[str, Any], project_slug: str) -> str:
     """Build governance session ID from JSONL metadata."""
     # BUG-SCANNER-001: Defensive .get() for external callers
-    date_str = meta.get("first_ts", "1970-01-01")[:10]
-    name = meta.get("slug", "unknown").upper().replace(" ", "-")[:30]
+    # BUG-SCANNER-DICT-GET-001: Use `or` to handle both missing AND None
+    date_str = (meta.get("first_ts") or "1970-01-01")[:10]
+    name = (meta.get("slug") or "unknown").upper().replace(" ", "-")[:30]
     return f"SESSION-{date_str}-CC-{name}"
 
 
@@ -148,7 +150,11 @@ def discover_cc_projects() -> list[Dict[str, Any]]:
 
         slug = derive_project_slug(d)
         # Decode directory name back to filesystem path
+        # BUG-334-SCAN-001: Validate decoded path against user home to prevent path traversal
         decoded_path = "/" + d.name.lstrip("-").replace("-", "/")
+        _home = str(Path.home())
+        if not decoded_path.startswith(_home) and not decoded_path.startswith("/tmp"):
+            decoded_path = str(d)
 
         # Count JSONL files as proxy for session count
         jsonl_count = len(list(d.glob("*.jsonl")))

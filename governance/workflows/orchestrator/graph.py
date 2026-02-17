@@ -103,7 +103,8 @@ def _run_fallback_workflow(state: Dict[str, Any]) -> Dict[str, Any]:
     # BUG-246-GRP-001: Coerce max_cycles to int to prevent type confusion (str * 3 = repeat)
     # BUG-266-GRAPH-001: Guard against explicit None value (int(None) raises TypeError)
     # BUG-321-GRAPH-001: Hard cap at 3000 regardless of caller input (prevents 1M+ iterations)
-    _MAX_ITERATIONS = min(int(state.get("max_cycles") or 100) * 3, 3000)
+    # BUG-337-GRAPH-001: Clamp to positive minimum to prevent negative/zero iterations
+    _MAX_ITERATIONS = min(max(1, int(state.get("max_cycles") or 100)) * 3, 3000)
     _iteration = 0
     _retrying = False
     while _iteration < _MAX_ITERATIONS:

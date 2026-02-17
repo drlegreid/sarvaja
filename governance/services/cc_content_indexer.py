@@ -36,7 +36,11 @@ def _get_chromadb_collection(collection_name: str = CONTENT_COLLECTION) -> Any:
     import chromadb
 
     host = os.getenv("CHROMADB_HOST", "localhost")
-    port = int(os.getenv("CHROMADB_PORT", "8001"))
+    # BUG-334-INDEX-001: Guard against non-numeric CHROMADB_PORT at call time
+    try:
+        port = int(os.getenv("CHROMADB_PORT", "8001"))
+    except (ValueError, TypeError):
+        port = 8001
     client = chromadb.HttpClient(host=host, port=port)
     return client.get_or_create_collection(collection_name)
 
@@ -159,6 +163,12 @@ def index_session_content(
             logger.error(msg)
             return {**result, "status": "error", "errors": [msg]}
 
+    # BUG-194-002: Guard against missing JSONL file before streaming
+    if not Path(jsonl_path).exists():
+        msg = f"JSONL file not found: {jsonl_path}"
+        logger.error(msg)
+        return {**result, "status": "error", "errors": [msg]}
+
     # Stream entries from JSONL
     entries = parse_log_file_extended(
         jsonl_path, include_thinking=include_thinking, start_line=start_line
@@ -188,6 +198,8 @@ def index_session_content(
             batch_metas.append(chunk_meta)
 
             if len(batch_ids) >= batch_size:
+                # BUG-236-IDX-002: Only count chunks on successful upsert
+                upsert_ok = True
                 if not dry_run and collection is not None:
                     try:
                         collection.upsert(
@@ -200,10 +212,12 @@ def index_session_content(
                         logger.error(msg)
                         result["errors"].append(msg)
                         ckpt.add_error(msg)
+                        upsert_ok = False
 
-                result["chunks_indexed"] += len(batch_ids)
-                # BUG-CONTENT-001: +1 so resume skips last-processed entry
-                lines_seen = meta.get("line_end", lines_seen) + start_line + 1
+                if upsert_ok:
+                    result["chunks_indexed"] += len(batch_ids)
+                # BUG-257-IDX-001: line_end is relative to current run; add start_line for absolute offset
+                lines_seen = start_line + meta.get("line_end", lines_seen - start_line) + 1
                 result["lines_processed"] = lines_seen
 
                 # Checkpoint after each batch
@@ -216,6 +230,8 @@ def index_session_content(
 
     # Flush final batch
     if batch_ids:
+        # BUG-236-IDX-002: Only count chunks on successful upsert
+        final_ok = True
         if not dry_run and collection is not None:
             try:
                 collection.upsert(
@@ -226,12 +242,14 @@ def index_session_content(
                 logger.error(msg)
                 result["errors"].append(msg)
                 ckpt.add_error(msg)
+                final_ok = False
 
-        result["chunks_indexed"] += len(batch_ids)
+        if final_ok:
+            result["chunks_indexed"] += len(batch_ids)
         # Update lines_processed for the final partial batch
         if batch_metas:
-            # BUG-CONTENT-001: +1 so resume skips last-processed entry
-            lines_seen = batch_metas[-1].get("line_end", lines_seen) + start_line + 1
+            # BUG-257-IDX-001: line_end is relative to current run; add start_line for absolute offset
+            lines_seen = start_line + batch_metas[-1].get("line_end", lines_seen - start_line) + 1
             result["lines_processed"] = lines_seen
 
     # Final checkpoint

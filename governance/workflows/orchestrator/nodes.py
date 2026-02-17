@@ -4,6 +4,7 @@ Per WORKFLOW-ORCH-01-v1: Each node transforms state for one phase
 of the continuous Spec -> Impl -> Validate loop.
 """
 
+import re
 from typing import Any, Dict
 
 from governance.workflows.orchestrator.state import add_to_backlog
@@ -15,12 +16,13 @@ def gate_node(state: Dict[str, Any]) -> Dict[str, Any]:
     Uses dynamic budget when token_budget is set in state,
     otherwise falls back to static max_cycles check.
     """
-    if not state["backlog"]:
+    # BUG-220-GATE-001: Use .get() to prevent KeyError on partial state
+    if not state.get("backlog"):
         return {
             "current_phase": "backlog_empty",
             "gate_decision": "stop",
         }
-    if state["cycles_completed"] >= state["max_cycles"]:
+    if state.get("cycles_completed", 0) >= state.get("max_cycles", 10):
         return {
             "current_phase": "max_cycles_reached",
             "gate_decision": "stop",
@@ -40,7 +42,8 @@ def gate_node(state: Dict[str, Any]) -> Dict[str, Any]:
 
 def backlog_node(state: Dict[str, Any]) -> Dict[str, Any]:
     """Pick the highest-priority task from the backlog."""
-    backlog = list(state["backlog"])
+    # BUG-266-NODE-001: Use .get() to prevent KeyError on partial state
+    backlog = list(state.get("backlog", []))
     # BUG-ORCH-001: Guard against empty backlog
     if not backlog:
         return {"current_phase": "backlog_empty", "gate_decision": "stop"}
@@ -59,18 +62,22 @@ def spec_node(state: Dict[str, Any]) -> Dict[str, Any]:
     task = state.get("current_task")
     if not task:
         return {"current_phase": "spec_error", "error_message": "No current task to specify"}
+    # BUG-246-NOD-001: Sanitize task_id to prevent path traversal in file paths
+    # BUG-337-NODE-001: Use .get() to prevent KeyError on malformed task dict
+    raw_id = task.get('task_id', 'unknown')
+    safe_id = re.sub(r'[^a-z0-9_\-]', '_', raw_id.lower())
     return {
         "current_phase": "specified",
         "specification": {
-            "task_id": task["task_id"],
-            "description": task["description"],
+            "task_id": raw_id,
+            "description": task.get("description", ""),
             "acceptance_criteria": [
-                f"Resolve {task['task_id']} per its description",
+                f"Resolve {raw_id} per its description",
                 "All existing tests continue to pass",
                 "New tests cover the change",
             ],
             "files_to_modify": [
-                f"governance/workflows/orchestrator/{task['task_id'].lower()}.py",
+                f"governance/workflows/orchestrator/{safe_id}.py",
             ],
         },
     }
@@ -82,7 +89,10 @@ def implement_node(state: Dict[str, Any]) -> Dict[str, Any]:
     task = state.get("current_task")
     if not task:
         return {"current_phase": "impl_error", "error_message": "No current task to implement"}
-    spec = state["specification"]
+    # BUG-200-IMPL-001: Guard against None specification (spec_node may have failed)
+    spec = state.get("specification") or {}
+    if not spec:
+        return {"current_phase": "impl_error", "error_message": "No specification available"}
     return {
         "current_phase": "implemented",
         "implementation": {
@@ -140,7 +150,8 @@ def inject_node(state: Dict[str, Any]) -> Dict[str, Any]:
     if not gaps:
         return {"current_phase": "no_gaps_to_inject"}
 
-    backlog = list(state["backlog"])
+    # BUG-266-NODE-001: Use .get() to prevent KeyError on partial state
+    backlog = list(state.get("backlog", []))
     existing_ids = {t["task_id"] for t in backlog}
     for gap in gaps:
         gid = gap.get("gap_id", gap.get("task_id"))
@@ -168,7 +179,11 @@ def complete_cycle_node(state: Dict[str, Any]) -> Dict[str, Any]:
 
     Also tracks budget: increments value_delivered and tokens_used.
     """
-    task = state["current_task"]
+    # BUG-ORCH-NULL-TASK-002: Guard consistent with spec/implement/validate nodes
+    task = state.get("current_task")
+    if not task:
+        # BUG-220-GAPS-001: Clear gaps_discovered in error path to prevent stale re-injection
+        return {"current_phase": "cycle_error", "error_message": "No current task to complete", "gaps_discovered": []}
     history = list(state.get("cycle_history", []))
     history.append({
         "task_id": task["task_id"],
@@ -178,7 +193,8 @@ def complete_cycle_node(state: Dict[str, Any]) -> Dict[str, Any]:
     })
     result = {
         "current_phase": "cycle_complete",
-        "cycles_completed": state["cycles_completed"] + 1,
+        # BUG-234-LOGIC-002: Use .get() to avoid KeyError on partial state
+        "cycles_completed": state.get("cycles_completed", 0) + 1,
         "cycle_history": history,
         "current_task": None,
         "specification": None,
@@ -205,15 +221,20 @@ def park_task_node(state: Dict[str, Any]) -> Dict[str, Any]:
 
     BUG-ORCH-PARK-001: Also tracks tokens_used for budget consistency.
     """
+    # BUG-ORCH-NULL-TASK-003: Guard consistent with spec/implement/validate nodes
+    task = state.get("current_task")
+    if not task:
+        return {"current_phase": "park_error", "error_message": "No current task to park"}
     history = list(state.get("cycle_history", []))
     history.append({
-        "task_id": state["current_task"]["task_id"],
+        "task_id": task["task_id"],
         "status": "parked",
         "reason": "exhausted_retries",
     })
     result = {
         "current_phase": "task_parked",
-        "cycles_completed": state["cycles_completed"] + 1,
+        # BUG-234-LOGIC-002: Use .get() to avoid KeyError on partial state
+        "cycles_completed": state.get("cycles_completed", 0) + 1,
         "cycle_history": history,
         "current_task": None,
     }
@@ -231,7 +252,8 @@ def certify_node(state: Dict[str, Any]) -> Dict[str, Any]:
     and tasks completed — suitable for commit messages and GitHub issues.
     """
     history = state.get("cycle_history", [])
-    completed = [h for h in history if h.get("task_id") and not h.get("status") == "parked"]
+    # BUG-246-NOD-005: Use != for clarity (not x == y is confusing precedence)
+    completed = [h for h in history if h.get("task_id") and h.get("status") != "parked"]
     parked = [h for h in history if h.get("status") == "parked"]
 
     # Collect all files changed across cycles

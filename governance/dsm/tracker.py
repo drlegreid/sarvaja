@@ -37,6 +37,8 @@ class DSMTracker:
         """Initialize DSM Tracker with optional evidence_dir and state_file."""
         self.evidence_dir = Path(evidence_dir or "./evidence")
         self.state_file = Path(state_file or ".dsm_state.json")
+        # BUG-337-TRACK-001: Per-instance lock for thread-safe method access
+        self._lock = threading.Lock()
 
         self.current_cycle: Optional[DSMCycle] = None
         self.completed_cycles: List[DSMCycle] = []
@@ -53,7 +55,13 @@ class DSMTracker:
 
     def start_cycle(self, batch_id: str = None) -> DSMCycle:
         """Start a new DSM cycle with optional batch_id."""
-        if self.current_cycle and self.current_cycle.current_phase != "complete":
+        # BUG-337-TRACK-001: Thread-safe access via per-instance lock
+        with self._lock:
+            return self._start_cycle_locked(batch_id)
+
+    def _start_cycle_locked(self, batch_id: str = None) -> DSMCycle:
+        # BUG-337-TRACK-002: Also accept "aborted" as restartable state
+        if self.current_cycle and self.current_cycle.current_phase not in ("complete", "aborted"):
             raise ValueError("A cycle is already in progress. Complete or abort it first.")
 
         cycle_id = f"DSM-{date.today()}-{datetime.now().strftime('%H%M%S')}"
@@ -72,7 +80,11 @@ class DSMTracker:
         """Get current phase as enum."""
         if not self.current_cycle:
             return DSPPhase.IDLE
-        return DSPPhase(self.current_cycle.current_phase)
+        # BUG-245-TRK-001: Guard against unknown/aborted phase values
+        try:
+            return DSPPhase(self.current_cycle.current_phase)
+        except ValueError:
+            return DSPPhase.IDLE
 
     def advance_phase(self, force: bool = False) -> DSPPhase:
         """Advance to next phase. Validates evidence unless force=True."""
@@ -95,7 +107,8 @@ class DSMTracker:
                 )
 
         # Record completion of current phase
-        if current != DSPPhase.IDLE:
+        # BUG-231-006: Dedup to prevent progress_percent > 100%
+        if current != DSPPhase.IDLE and current.value not in self.current_cycle.phases_completed:
             self.current_cycle.phases_completed.append(current.value)
 
         self.current_cycle.current_phase = next_phase.value
@@ -112,7 +125,8 @@ class DSMTracker:
             raise ValueError(f"Cannot jump to {phase.value}")
 
         current = self.get_current_phase()
-        if current != DSPPhase.IDLE:
+        # BUG-DSM-DEDUP-001: Deduplicate to prevent progress_percent > 100%
+        if current != DSPPhase.IDLE and current.value not in self.current_cycle.phases_completed:
             self.current_cycle.phases_completed.append(current.value)
 
         self.current_cycle.current_phase = phase.value
@@ -183,8 +197,10 @@ class DSMTracker:
 
         # Mark complete
         current = self.get_current_phase()
+        # BUG-231-006: Dedup phases_completed to prevent progress_percent > 100%
         if current != DSPPhase.IDLE and current not in (DSPPhase.COMPLETE, DSPPhase.REPORT):
-            self.current_cycle.phases_completed.append(current.value)
+            if current.value not in self.current_cycle.phases_completed:
+                self.current_cycle.phases_completed.append(current.value)
 
         self.current_cycle.current_phase = DSPPhase.COMPLETE.value
         self.current_cycle.end_time = datetime.now().isoformat()
@@ -216,9 +232,10 @@ class DSMTracker:
         self.current_cycle.end_time = datetime.now().isoformat()
         self.current_cycle.current_phase = "aborted"
 
-        # Save but don't archive
-        self.current_cycle = None
+        # BUG-DSM-ABORT-001: Save BEFORE nulling current_cycle,
+        # otherwise abort metadata is lost (writes null to disk)
         self._save_state()
+        self.current_cycle = None
 
     def get_status(self) -> Dict[str, Any]:
         """
@@ -245,7 +262,8 @@ class DSMTracker:
             "current_phase": current_phase.value,
             "phases_completed": self.current_cycle.phases_completed,
             "progress": f"{completed_count}/{total_phases}",
-            "progress_percent": round(completed_count / total_phases * 100, 1),
+            # BUG-270-TRACKER-001: Guard against division by zero if phase_order() is empty
+            "progress_percent": round(completed_count / total_phases * 100, 1) if total_phases else 0.0,
             "checkpoints_count": len(self.current_cycle.checkpoints),
             "findings_count": len(self.current_cycle.findings),
             "required_mcps": current_phase.required_mcps,
