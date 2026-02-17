@@ -271,7 +271,8 @@ def _detect_document_entropy() -> list:
         dsm_state = Path(__file__).parent.parent.parent / ".dsm_state.json"
         if dsm_state.exists():
             import json as json_mod
-            state = json_mod.loads(dsm_state.read_text())
+            # BUG-324-DEC-001: Specify encoding for locale-independent file reading
+            state = json_mod.loads(dsm_state.read_text(encoding="utf-8"))
             last_updated = state.get("last_updated")
             if last_updated:
                 last_dt = datetime.fromisoformat(last_updated)

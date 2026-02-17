@@ -128,7 +128,12 @@ def register_ingestion_tools(mcp) -> None:
         """
         from governance.services.ingestion_orchestrator import estimate_ingestion
 
-        result = estimate_ingestion(Path(jsonl_path))
+        # BUG-324-ING-001: Validate path before passing to estimate_ingestion
+        # (mirrors _resolve_jsonl_path validation to prevent path traversal)
+        resolved = _resolve_jsonl_path("", jsonl_path)
+        if resolved is None:
+            return format_mcp_result({"error": "Invalid or inaccessible path", "status": "error"})
+        result = estimate_ingestion(resolved)
         return format_mcp_result(result)
 
 

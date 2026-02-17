@@ -6,6 +6,7 @@ Created: 2026-02-11
 """
 
 import logging
+import re
 from datetime import datetime
 from typing import Dict, Any, List, Optional
 
@@ -30,8 +31,9 @@ def _get_client():
         client = get_client()
         if client and client.is_connected():
             return client
-    except Exception:
-        pass
+    except Exception as e:
+        # BUG-215-PRJ-004: Log instead of silently swallowing
+        logger.debug(f"TypeDB client unavailable: {e}")
     return None
 
 
@@ -43,8 +45,14 @@ def create_project(
 ) -> Optional[Dict[str, Any]]:
     """Create a new project."""
     if not project_id:
-        slug = name.upper().replace(" ", "-")[:20]
+        # BUG-242-PRJ-001: Sanitize slug to prevent TypeQL injection via special chars
+        slug = re.sub(r'[^A-Z0-9\-]', '-', name.upper())[:20]
         project_id = f"PROJ-{slug}"
+
+    # BUG-215-PRJ-001: Check for duplicate before creating
+    existing = get_project(project_id)
+    if existing:
+        return existing
 
     client = _get_client()
     if client:
@@ -100,14 +108,17 @@ def list_projects(
     limit: int = 50, offset: int = 0,
 ) -> Dict[str, Any]:
     """List projects with pagination."""
+    # BUG-323-PRJ-001: Clamp offset/limit to prevent negative indexing or unbounded fetch
+    offset = max(0, offset)
+    limit = max(1, min(limit, 200))
     client = _get_client()
     projects = []
 
     if client:
         try:
             projects = client.list_projects(limit=limit, offset=offset)
-            # Enrich with counts
-            for p in projects:
+            # BUG-323-PRJ-002: Cap N+1 enrichment loop to prevent unbounded DB calls
+            for p in projects[:50]:
                 pid = p.get("project_id", "")
                 try:
                     p["session_count"] = len(client.get_project_sessions(pid))

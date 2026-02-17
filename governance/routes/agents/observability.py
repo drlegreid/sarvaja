@@ -64,10 +64,12 @@ async def get_agents_status_summary():
         summary["conflict_count"] = conflict_summary.get("conflict_count", 0)
         summary["has_conflicts"] = conflict_summary.get("has_conflicts", False)
 
-        # Add conflict alerts to the main alerts list
+        # BUG-224-OBS-001: Guard against missing "alerts" key
+        alerts = summary.get("alerts", [])
         for alert in conflict_summary.get("alerts", []):
-            summary["alerts"].append(alert)
-            summary["alert_count"] = len(summary["alerts"])
+            alerts.append(alert)
+        summary["alerts"] = alerts
+        summary["alert_count"] = len(alerts)
 
         # Update overall status if conflicts found
         if conflict_summary.get("has_conflicts"):
@@ -118,6 +120,16 @@ async def agent_heartbeat(
     if not AGENT_STATUS_AVAILABLE:
         raise HTTPException(status_code=503, detail="Agent status checker not available")
 
+    # BUG-294-OBS-003: Whitelist status and agent_type, cap current_task length
+    _valid_statuses = {"active", "idle", "blocked", "unknown"}
+    if status not in _valid_statuses:
+        raise HTTPException(status_code=422, detail=f"Invalid status. Must be one of {sorted(_valid_statuses)}")
+    _valid_types = {"claude-code", "docker-agent", "ci", "unknown"}
+    if agent_type not in _valid_types:
+        agent_type = "unknown"
+    if current_task and len(current_task) > 512:
+        current_task = current_task[:512]
+
     result = update_agent_heartbeat(agent_id, agent_type, current_task, status)
     return {"agent_id": agent_id, "heartbeat": result}
 
@@ -131,6 +143,13 @@ async def acquire_lock(resource: str, agent_id: str, timeout: int = 30):
     """
     if not AGENT_STATUS_AVAILABLE:
         raise HTTPException(status_code=503, detail="Agent status checker not available")
+
+    # BUG-294-OBS-001: Sanitize resource name to prevent path traversal
+    import re as _re
+    if not _re.match(r'^[A-Za-z0-9_\-\.]{1,128}$', resource):
+        raise HTTPException(status_code=422, detail="Invalid resource name: must be alphanumeric/dash/dot, max 128 chars")
+    # BUG-294-OBS-002: Cap timeout to prevent event loop blocking
+    timeout = max(1, min(60, timeout))
 
     lock_path = acquire_file_lock(resource, agent_id, timeout)
     if lock_path:
@@ -147,6 +166,11 @@ async def release_lock(resource: str, agent_id: str):
     """
     if not AGENT_STATUS_AVAILABLE:
         raise HTTPException(status_code=503, detail="Agent status checker not available")
+
+    # BUG-325-OBS-001: Validate resource name (matches acquire_lock validation)
+    import re as _re
+    if not _re.match(r'^[A-Za-z0-9_\-\.]{1,128}$', resource):
+        raise HTTPException(status_code=422, detail="Invalid resource name: must be alphanumeric/dash/dot, max 128 chars")
 
     released = release_file_lock(resource, agent_id)
     if released:

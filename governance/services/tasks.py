@@ -51,7 +51,8 @@ __all__ = [
 def _get_active_session_id() -> Optional[str]:
     """Find the most recent active session for auto-linking (DATA-LINK-01-v1)."""
     active = [
-        (sid, s) for sid, s in _sessions_store.items()
+        # BUG-214-008: Snapshot to prevent RuntimeError on concurrent dict mutation
+        (sid, s) for sid, s in list(_sessions_store.items())
         if s.get("status") == "ACTIVE"
     ]
     if not active:
@@ -93,6 +94,9 @@ def list_tasks(
     Raises:
         ConnectionError: If TypeDB unavailable and no fallback data.
     """
+    # BUG-323-TASK-001: Clamp offset/limit to prevent negative indexing or unbounded fetch
+    offset = max(0, offset)
+    limit = max(1, min(limit, 500))
     tasks = get_all_tasks_from_typedb(
         status=status, phase=phase, agent_id=agent_id, allow_fallback=True
     )
@@ -173,7 +177,8 @@ def create_task(
                         try:
                             client.link_task_to_document(task_id, doc_path)
                         except Exception as le:
-                            logger.debug(f"TypeDB document link {task_id}->{doc_path}: {le}")
+                            # BUG-275-TASKS-001: Promote to WARNING (debug hides link failures)
+                            logger.warning(f"TypeDB document link {task_id}->{doc_path}: {le}")
                 record_audit("CREATE", "task", task_id,
                              actor_id=agent_id or "system",
                              metadata={"phase": phase, "status": status, "source": source})
@@ -193,8 +198,9 @@ def create_task(
         "task_id": task_id, "description": description, "phase": phase,
         "status": status, "priority": priority, "task_type": task_type,
         "agent_id": agent_id, "body": body,
-        "linked_rules": linked_rules, "linked_sessions": linked_sessions,
-        "linked_documents": linked_documents, "gap_id": gap_id,
+        # BUG-214-003: Normalize list fields to [] to prevent NoneType iteration errors
+        "linked_rules": linked_rules or [], "linked_sessions": linked_sessions or [],
+        "linked_documents": linked_documents or [], "gap_id": gap_id,
         "created_at": datetime.now().isoformat(),
     }
     _tasks_store[task_id] = task_data

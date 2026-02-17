@@ -42,7 +42,15 @@ def _validate_jsonl_path(path: Path) -> bool:
         Path(__file__).resolve().parent.parent,  # governance root → project root parent
     ]
     resolved = path.resolve()
-    return any(str(resolved).startswith(str(b.resolve())) for b in _allowed_bases)
+    # BUG-322-ORCH-001: Use relative_to() instead of startswith() to prevent
+    # path traversal bypass (e.g. "/allowed_base_extra/../evil" matches startswith)
+    for b in _allowed_bases:
+        try:
+            resolved.relative_to(b.resolve())
+            return True
+        except ValueError:
+            continue
+    return False
 
 
 def estimate_ingestion(jsonl_path: Path) -> dict[str, Any]:
