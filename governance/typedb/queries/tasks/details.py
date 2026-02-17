@@ -141,8 +141,8 @@ class TaskDetailOperations:
             logger.warning(f"Task {task_id} not found")
             return False
 
-        # BUG-TASK-DETAIL-MISSING-ESCAPE: Escape task_id and content for TypeQL
-        task_id_escaped = task_id.replace('"', '\\"')
+        # BUG-314-DET-001: Backslash-first escape order (was quote-only)
+        task_id_escaped = task_id.replace('\\', '\\\\').replace('"', '\\"')
         content_escaped = content.replace('\\', '\\\\').replace('"', '\\"')
 
         try:

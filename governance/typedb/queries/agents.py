@@ -46,8 +46,8 @@ class AgentQueries:
 
     def get_agent(self, agent_id: str) -> Optional[Agent]:
         """Get a specific agent by ID."""
-        # BUG-AGENT-ESCAPE-001: Escape agent_id for TypeQL safety
-        aid = agent_id.replace('"', '\\"')
+        # BUG-314-AGT-001: Backslash-first escape order (was quote-only)
+        aid = agent_id.replace('\\', '\\\\').replace('"', '\\"')
         query = f"""
             match $a isa agent,
                 has agent-id "{aid}",
@@ -75,10 +75,10 @@ class AgentQueries:
         if existing:
             self.delete_agent(agent_id)
 
-        name_escaped = name.replace('"', '\\"')
-        type_escaped = agent_type.replace('"', '\\"')
-        # BUG-AGENT-ESCAPE-001: Escape agent_id for consistency
-        agent_id_escaped = agent_id.replace('"', '\\"')
+        name_escaped = name.replace('\\', '\\\\').replace('"', '\\"')
+        type_escaped = agent_type.replace('\\', '\\\\').replace('"', '\\"')
+        # BUG-314-AGT-001: Backslash-first escape order (was quote-only)
+        agent_id_escaped = agent_id.replace('\\', '\\\\').replace('"', '\\"')
         query = f"""
             insert $a isa agent,
                 has agent-id "{agent_id_escaped}",
@@ -94,8 +94,8 @@ class AgentQueries:
 
     def delete_agent(self, agent_id: str) -> bool:
         """Delete all agent entities with the given ID from TypeDB."""
-        # BUG-AGENT-ESCAPE-001: Escape agent_id for consistency
-        agent_id_escaped = agent_id.replace('"', '\\"')
+        # BUG-314-AGT-001: Backslash-first escape order (was quote-only)
+        agent_id_escaped = agent_id.replace('\\', '\\\\').replace('"', '\\"')
         query = f"""
             match $a isa agent, has agent-id "{agent_id_escaped}";
             delete $a;
@@ -114,8 +114,8 @@ class AgentQueries:
         if not current:
             return False
 
-        # BUG-AGENT-ESCAPE-001: Escape agent_id for consistency
-        agent_id_escaped = agent_id.replace('"', '\\"')
+        # BUG-314-AGT-001: Backslash-first escape order (was quote-only)
+        agent_id_escaped = agent_id.replace('\\', '\\\\').replace('"', '\\"')
         # BUG-AGENT-TRUST-NONATOMIC: Single transaction — update attribute, not delete+re-insert entity
         try:
             with self._driver.transaction(self.database, TransactionType.WRITE) as tx:
