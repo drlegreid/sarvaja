@@ -7,6 +7,7 @@ survive container restarts. Uses JSON sidecar files per session.
 
 import json
 import logging
+import re
 from pathlib import Path
 from typing import Any, Dict
 
@@ -20,8 +21,9 @@ _PERSIST_KEYS = {"tool_calls", "thoughts", "topic", "session_type", "intent"}
 
 def _get_path(session_id: str) -> Path:
     """Get the JSON file path for a session."""
-    # Sanitize session_id for filesystem safety
-    safe = session_id.replace("/", "_").replace("..", "_")
+    # BUG-226-PERSIST-001: Whitelist sanitization for filesystem safety
+    # Old: replace("/","_").replace("..","_") — insufficient for null bytes, special chars
+    safe = re.sub(r'[^A-Za-z0-9_\-]', '_', session_id)
     return _STORE_DIR / f"{safe}.json"
 
 
@@ -33,7 +35,8 @@ def persist_session(session_id: str, session_data: Dict[str, Any]) -> None:
     """
     try:
         _STORE_DIR.mkdir(parents=True, exist_ok=True)
-        subset = {k: v for k, v in session_data.items() if k in _PERSIST_KEYS and v}
+        # BUG-212-PERSIST-FALSY-001: Use 'is not None' to preserve empty lists like tool_calls=[]
+        subset = {k: v for k, v in session_data.items() if k in _PERSIST_KEYS and v is not None}
         if not subset:
             return
         path = _get_path(session_id)
@@ -62,7 +65,10 @@ def load_persisted_sessions(sessions_store: Dict[str, Dict[str, Any]]) -> int:
         return 0
 
     loaded = 0
-    for path in _STORE_DIR.glob("*.json"):
+    # BUG-329-PERSIST-001: Cap file count to prevent unbounded load on startup
+    # (directory bomb protection — 10,000 files is well beyond normal operation)
+    _MAX_SESSION_FILES = 10000
+    for path in list(_STORE_DIR.glob("*.json"))[:_MAX_SESSION_FILES]:
         session_id = path.stem
         try:
             data = json.loads(path.read_text(encoding="utf-8"))
@@ -74,8 +80,10 @@ def load_persisted_sessions(sessions_store: Dict[str, Dict[str, Any]]) -> int:
 
             entry = sessions_store[session_id]
             # Merge persisted arrays — don't overwrite if store already has data
+            # BUG-241-PER-003: Use 'key not in entry' instead of 'not entry.get(key)'
+            # to avoid skipping falsy values like empty lists []
             for key in ("tool_calls", "thoughts"):
-                if key in data and not entry.get(key):
+                if key in data and key not in entry:
                     entry[key] = data[key]
             # Restore bridge-specific fields
             for key in ("topic", "session_type", "intent"):

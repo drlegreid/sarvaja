@@ -32,6 +32,13 @@ async def list_tasks(
     agent_id: Optional[str] = None,
 ):
     """List tasks with pagination, sorting, and filtering. Per GAP-UI-036, EPIC-DR-003."""
+    # BUG-237-SORT-001: Whitelist sort_by to prevent unexpected sort keys
+    _valid_sort = {"task_id", "status", "phase", "priority"}
+    if sort_by not in _valid_sort:
+        raise HTTPException(status_code=422, detail=f"Invalid sort_by: {sort_by}. Must be one of {sorted(_valid_sort)}")
+    # BUG-253-INJ-001: Whitelist order direction to prevent injection
+    if order not in {"asc", "desc"}:
+        raise HTTPException(status_code=422, detail="order must be 'asc' or 'desc'")
     try:
         result = task_service.list_tasks(
             status=status, phase=phase, agent_id=agent_id,
@@ -49,6 +56,10 @@ async def list_tasks(
     except (TypeDBUnavailable, ConnectionError) as e:
         logger.error(f"TypeDB unavailable: {e}")
         raise HTTPException(status_code=503, detail="Database service unavailable")
+    # BUG-273-TASKS-001: Broad handler matching get_task/update_task/delete_task pattern
+    except Exception as e:
+        logger.error(f"list_tasks failed: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to list tasks: {e}")
 
 
 @router.post("/tasks", response_model=TaskResponse, status_code=201)
@@ -154,9 +165,10 @@ async def link_task_to_session(task_id: str, session_id: str):
 @router.get("/tasks/{task_id}/sessions")
 async def get_task_sessions(task_id: str):
     """Get all sessions linked to a task. Reverse query for completed-in relations."""
-    sessions = task_service.get_sessions_for_task(task_id)
-    if sessions is None:
+    # BUG-224-TASK-003: Check task existence BEFORE fetching sessions (was TOCTOU)
+    if not task_service.get_task(task_id):
         raise HTTPException(status_code=404, detail=f"Task {task_id} not found")
+    sessions = task_service.get_sessions_for_task(task_id)
     return {"task_id": task_id, "sessions": sessions, "count": len(sessions)}
 
 
@@ -168,6 +180,9 @@ async def link_task_to_document(task_id: str, body: dict):
     document_path = body.get("document_path")
     if not document_path:
         raise HTTPException(status_code=422, detail="document_path is required")
+    # BUG-328-TASK-001: Validate document_path length and basic format
+    if not isinstance(document_path, str) or len(document_path) > 500:
+        raise HTTPException(status_code=422, detail="document_path must be a string under 500 chars")
     if not task_service.link_task_to_document(task_id, document_path, source="rest-api"):
         raise HTTPException(status_code=400, detail="Failed to link document (task not found or TypeDB unavailable)")
     return {"task_id": task_id, "document_path": document_path, "linked": True}

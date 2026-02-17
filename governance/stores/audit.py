@@ -49,7 +49,8 @@ def _load_audit_store():
     global _audit_store
     if AUDIT_STORE_PATH.exists():
         try:
-            with open(AUDIT_STORE_PATH, "r") as f:
+            # BUG-201-AUDIT-002: Specify encoding for cross-platform safety
+            with open(AUDIT_STORE_PATH, "r", encoding="utf-8") as f:
                 data = json.load(f)
             # BUG-STORE-004: Validate JSON structure
             if isinstance(data, list):
@@ -64,12 +65,27 @@ def _load_audit_store():
 
 
 def _save_audit_store():
-    """Save audit entries to file."""
+    """Save audit entries to file.
+
+    BUG-201-AUDIT-001: Uses atomic write (temp file + rename) to prevent
+    data loss if process is killed mid-write.
+    """
+    # BUG-329-AUD-001: Initialize tmp before try to prevent UnboundLocalError
+    # if mkdir raises (e.g. permission denied) before tmp assignment
+    tmp = None
     try:
         AUDIT_STORE_PATH.parent.mkdir(parents=True, exist_ok=True)
-        with open(AUDIT_STORE_PATH, "w") as f:
+        tmp = AUDIT_STORE_PATH.with_suffix(".tmp")
+        with open(tmp, "w", encoding="utf-8") as f:
             json.dump(_audit_store, f, indent=2)
+        tmp.replace(AUDIT_STORE_PATH)
     except Exception as e:
+        # BUG-291-AUD-001: Clean up orphaned .tmp file on save failure
+        if tmp is not None:
+            try:
+                tmp.unlink(missing_ok=True)
+            except OSError:
+                pass
         logger.warning(f"Failed to save audit store: {e}")
 
 
@@ -139,7 +155,9 @@ def _apply_retention(days: int = 7):
     cutoff = (datetime.now() - timedelta(days=days)).strftime("%Y-%m-%d")
 
     original_count = len(_audit_store)
-    _audit_store = [
+    # BUG-329-AUD-002: Use slice assignment instead of name rebinding to prevent
+    # race condition where concurrent append() is lost during retention
+    _audit_store[:] = [
         e for e in _audit_store
         if e.get("timestamp", "")[:10] >= cutoff
     ]
@@ -179,6 +197,10 @@ def query_audit_trail(
     Returns:
         List of matching audit entries (most recent first)
     """
+    # BUG-226-AUDIT-003: Validate offset/limit to prevent negative slice behavior
+    limit = max(1, limit)
+    offset = max(0, offset)
+
     result = _audit_store.copy()
 
     # Apply filters
@@ -196,7 +218,8 @@ def query_audit_trail(
         result = [e for e in result if e.get("timestamp", "") >= date_from]
     if date_to:
         # Add end-of-day to include the full date_to day
-        date_to_end = date_to + "T23:59:59" if "T" not in date_to else date_to
+        # BUG-AUDIT-MICROSECOND-001: Include microseconds to avoid off-by-one
+        date_to_end = date_to + "T23:59:59.999999" if "T" not in date_to else date_to
         result = [e for e in result if e.get("timestamp", "") <= date_to_end]
 
     # Sort by timestamp descending (most recent first)

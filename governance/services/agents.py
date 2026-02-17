@@ -171,6 +171,10 @@ def list_agents(
     Returns:
         Dict with 'items' (list of agent dicts) and pagination metadata.
     """
+    # BUG-327-AGT-001: Clamp offset/limit at service layer (route has Query(ge/le)
+    # but MCP tools may bypass routes and call service directly)
+    offset = max(0, offset)
+    limit = max(1, min(limit, 200))
     client = get_typedb_client()
 
     if client:
@@ -184,7 +188,11 @@ def list_agents(
                 for agent in typedb_agents:
                     agent_metrics = metrics.get(agent.id, {})
                     last_active = agent_metrics.get("last_active", None)
-                    base_trust = _AGENT_BASE_CONFIG.get(agent.id, {}).get("base_trust", agent.trust_score or 0.8)
+                    # BUG-286-TRUST-001: Use 'is not None' instead of 'or' to preserve 0.0 trust scores
+                    base_trust = _AGENT_BASE_CONFIG.get(agent.id, {}).get(
+                        "base_trust",
+                        agent.trust_score if agent.trust_score is not None else 0.8
+                    )
 
                     recent_sessions, active_tasks, task_count = _get_relations(
                         agent.id, sessions_by_agent, tasks_by_agent, task_count_by_agent
@@ -212,7 +220,13 @@ def list_agents(
 
                 valid_sort_fields = ["agent_id", "name", "trust_score", "status", "tasks_executed"]
                 sort_field = sort_by if sort_by in valid_sort_fields else "trust_score"
-                result.sort(key=lambda a: a.get(sort_field) or "", reverse=order.lower() == "desc")
+                # BUG-215-AGT-004: Use type-aware fallback (0.0 is falsy, 'or ""' crashes)
+                def _sort_key(a):
+                    v = a.get(sort_field)
+                    if v is None:
+                        return (1, "")  # Nones sort last
+                    return (0, v)
+                result.sort(key=_sort_key, reverse=order.lower() == "desc")
 
                 total = len(result)
                 paginated = result[offset: offset + limit]
@@ -336,7 +350,9 @@ def toggle_agent_status(agent_id: str, source: str = "rest") -> Optional[Dict[st
                     }
                 else:
                     return None
-            except Exception:
+            # BUG-195-012: Log the exception instead of silently swallowing
+            except Exception as e:
+                logger.warning(f"TypeDB toggle_agent_status failed for {agent_id}: {e}")
                 return None
         else:
             return None
