@@ -152,8 +152,8 @@ class SessionReadQueries:
 
     def _build_session_from_id(self, session_id: str) -> Optional[Session]:
         """Build a full Session object from TypeDB by ID."""
-        # BUG-TYPEQL-ESCAPE-SESSION-003: Escape session_id once, reuse in all queries
-        sid = session_id.replace('"', '\\"')
+        # BUG-310-READ-001: Backslash-first escape order (was quote-only)
+        sid = session_id.replace('\\', '\\\\').replace('"', '\\"')
         session = Session(id=session_id)
         name_results = self._execute_query(f'match $s isa work-session, has session-id "{sid}", has session-name $name; select $name;')
         if name_results:
@@ -234,13 +234,15 @@ class SessionReadQueries:
 
     def get_session(self, session_id: str) -> Optional[Session]:
         """Get a specific session by ID with all attributes."""
-        sid = session_id.replace('"', '\\"')
+        # BUG-310-READ-001: Backslash-first escape order (was quote-only)
+        sid = session_id.replace('\\', '\\\\').replace('"', '\\"')
         results = self._execute_query(f'match $s isa work-session, has session-id "{sid}"; select $s;')
         return self._build_session_from_id(session_id) if results else None
 
     def get_tasks_for_session(self, session_id: str) -> list[dict]:
         """Get all tasks linked to a session via completed-in relation."""
-        sid = session_id.replace('"', '\\"')
+        # BUG-310-READ-001: Backslash-first escape order (was quote-only)
+        sid = session_id.replace('\\', '\\\\').replace('"', '\\"')
         query = f"""
             match
                 $s isa work-session, has session-id "{sid}";

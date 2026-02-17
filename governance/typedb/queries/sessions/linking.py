@@ -51,9 +51,9 @@ class SessionLinkingOperations:
                 now = datetime.now()
                 timestamp_str = now.strftime('%Y-%m-%dT%H:%M:%S')
 
-                # BUG-TYPEDB-INJECTION-001: Escape file paths before TypeQL interpolation
-                evidence_source_escaped = evidence_source.replace('"', '\\"')
-                evidence_id_escaped = evidence_id.replace('"', '\\"')
+                # BUG-310-LINK-001: Backslash-first escape order (was quote-only)
+                evidence_source_escaped = evidence_source.replace('\\', '\\\\').replace('"', '\\"')
+                evidence_id_escaped = evidence_id.replace('\\', '\\\\').replace('"', '\\"')
 
                 # Insert evidence if not exists (TypeDB allows duplicates to be ignored)
                 insert_evidence = f"""
@@ -68,8 +68,8 @@ class SessionLinkingOperations:
                 except Exception:
                     pass  # Might already exist
 
-                # BUG-TYPEQL-ESCAPE-SESSION-002: Escape session_id
-                session_id_escaped = session_id.replace('"', '\\"')
+                # BUG-310-LINK-001: Backslash-first escape order (was quote-only)
+                session_id_escaped = session_id.replace('\\', '\\\\').replace('"', '\\"')
 
                 # Create the has-evidence relation
                 link_query = f"""
@@ -97,8 +97,8 @@ class SessionLinkingOperations:
         Returns:
             List of evidence file paths
         """
-        # BUG-TYPEQL-ESCAPE-SESSION-002: Escape session_id for read query defense
-        session_id_escaped = session_id.replace('"', '\\"')
+        # BUG-310-LINK-001: Backslash-first escape order (was quote-only)
+        session_id_escaped = session_id.replace('\\', '\\\\').replace('"', '\\"')
         query = f"""
             match
                 $s isa work-session, has session-id "{session_id_escaped}";
@@ -127,9 +127,9 @@ class SessionLinkingOperations:
 
         try:
             with self._driver.transaction(self.database, TransactionType.WRITE) as tx:
-                # BUG-TYPEQL-ESCAPE-SESSION-002: Escape IDs before TypeQL interpolation
-                session_id_escaped = session_id.replace('"', '\\"')
-                rule_id_escaped = rule_id.replace('"', '\\"')
+                # BUG-310-LINK-001: Backslash-first escape order (was quote-only)
+                session_id_escaped = session_id.replace('\\', '\\\\').replace('"', '\\"')
+                rule_id_escaped = rule_id.replace('\\', '\\\\').replace('"', '\\"')
                 # Create the session-applied-rule relation
                 link_query = f"""
                     match
@@ -164,9 +164,9 @@ class SessionLinkingOperations:
 
         try:
             with self._driver.transaction(self.database, TransactionType.WRITE) as tx:
-                # BUG-TYPEQL-ESCAPE-SESSION-002: Escape IDs before TypeQL interpolation
-                session_id_escaped = session_id.replace('"', '\\"')
-                decision_id_escaped = decision_id.replace('"', '\\"')
+                # BUG-310-LINK-001: Backslash-first escape order (was quote-only)
+                session_id_escaped = session_id.replace('\\', '\\\\').replace('"', '\\"')
+                decision_id_escaped = decision_id.replace('\\', '\\\\').replace('"', '\\"')
                 # Create the session-decision relation
                 link_query = f"""
                     match
@@ -193,7 +193,8 @@ class SessionLinkingOperations:
         Returns:
             List of rule IDs
         """
-        session_id_escaped = session_id.replace('"', '\\"')
+        # BUG-310-LINK-001: Backslash-first escape order (was quote-only)
+        session_id_escaped = session_id.replace('\\', '\\\\').replace('"', '\\"')
         query = f"""
             match
                 $s isa work-session, has session-id "{session_id_escaped}";
@@ -214,7 +215,8 @@ class SessionLinkingOperations:
         Returns:
             List of decision IDs
         """
-        session_id_escaped = session_id.replace('"', '\\"')
+        # BUG-310-LINK-001: Backslash-first escape order (was quote-only)
+        session_id_escaped = session_id.replace('\\', '\\\\').replace('"', '\\"')
         query = f"""
             match
                 $s isa work-session, has session-id "{session_id_escaped}";

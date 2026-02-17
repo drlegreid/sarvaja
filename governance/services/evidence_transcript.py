@@ -35,12 +35,17 @@ def find_evidence_file(session_id: str) -> Optional[Path]:
     """Find evidence markdown file matching session_id."""
     if not _EVIDENCE_DIR.is_dir():
         return None
-    candidate = _EVIDENCE_DIR / f"{session_id}.md"
+    # BUG-311-EVID-001: Path containment — prevent directory traversal via session_id
+    candidate = (_EVIDENCE_DIR / f"{session_id}.md").resolve()
+    if not str(candidate).startswith(str(_EVIDENCE_DIR.resolve())):
+        logger.warning(f"Path traversal blocked in find_evidence_file: {session_id}")
+        return None
     if candidate.is_file():
         return candidate
     # Fuzzy: scan for files containing session_id
     for f in _EVIDENCE_DIR.iterdir():
-        if f.suffix == ".md" and session_id in f.stem:
+        # BUG-EVIDENCE-ITERDIR-001: Guard against non-file entries
+        if f.is_file() and f.suffix == ".md" and session_id in f.stem:
             return f
     return None
 
@@ -74,6 +79,12 @@ def parse_evidence_transcript(
     Extracts tool calls and thoughts from the Event Timeline section.
     Falls back to Tool Calls table if no timeline found.
     """
+    # BUG-311-EVID-002: Guard against unbounded file read
+    _MAX_EVIDENCE_BYTES = 5 * 1024 * 1024  # 5 MB
+    if filepath.stat().st_size > _MAX_EVIDENCE_BYTES:
+        logger.warning(f"Evidence file too large ({filepath.stat().st_size} bytes): {filepath}")
+        return {"entries": [], "total": 0, "page": page, "per_page": per_page,
+                "has_more": False, "source": "evidence", "error": "file_too_large"}
     text = filepath.read_text(encoding="utf-8", errors="replace")
     entries: List[TranscriptEntry] = []
 

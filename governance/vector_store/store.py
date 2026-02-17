@@ -109,7 +109,9 @@ class VectorStore:
                     success_count += 1
                 except Exception as e:
                     print(f"Failed to insert {doc.id}: {e}")
-            tx.commit()
+            # BUG-203-VSTORE-001: Only commit if at least one insert succeeded
+            if success_count > 0:
+                tx.commit()
 
         return success_count
 
@@ -176,6 +178,9 @@ class VectorStore:
         Returns:
             List of SimilarityResult ordered by score descending
         """
+        # BUG-267-VSTORE-001: Guard against search when not connected and cache empty
+        if not self._cache and not self._connected:
+            return []
         # Load vectors from TypeDB if cache is empty
         if not self._cache:
             self.get_all_vectors()
@@ -209,6 +214,9 @@ class VectorStore:
 
     def search_by_source(self, source_id: str) -> Optional[VectorDocument]:
         """Find vector document by source ID."""
+        # BUG-292-VEC-001: Guard against search when not connected and cache empty
+        if not self._cache and not self._connected:
+            return None
         if not self._cache:
             self.get_all_vectors()
 
@@ -224,9 +232,12 @@ class VectorStore:
 
         from typedb.driver import TransactionType
 
+        # BUG-232-SEC-002: Escape source_id to prevent TypeQL injection
+        # BUG-313-VEC-001: Also strip newlines to prevent query breakout
+        safe_id = source_id.replace('\\', '\\\\').replace('"', '\\"').replace('\n', '').replace('\r', '')
         # TypeDB 3.x syntax: delete $v; (not delete $v isa type;)
         query = f"""
-            match $v isa vector-document, has vector-source "{source_id}";
+            match $v isa vector-document, has vector-source "{safe_id}";
             delete $v;
         """
 
