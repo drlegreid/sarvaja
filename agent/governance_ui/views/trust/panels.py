@@ -21,7 +21,8 @@ def build_trust_leaderboard() -> None:
             with v3.VCardText():
                 with v3.VList(density="compact"):
                     with v3.VListItem(
-                        v_for="agent in trust_leaderboard",
+                        # BUG-282-PANEL-001: Null guard prevents JS crash on null iteration
+                        v_for="agent in (trust_leaderboard || [])",
                         key=("agent.agent_id",),
                         click="trigger('select_agent', [agent.agent_id])",
                         __properties=["data-testid"],
@@ -36,7 +37,8 @@ def build_trust_leaderboard() -> None:
                                 size="32"
                             ):
                                 html.Span(
-                                    "{{ agent.rank }}",
+                                    # BUG-282-PANEL-002: Guard against null/undefined rank
+                                    "{{ agent.rank != null ? agent.rank : '?' }}",
                                     classes="text-white font-weight-bold"
                                 )
                         with html.Template(v_slot_default=True):
@@ -44,7 +46,8 @@ def build_trust_leaderboard() -> None:
                             v3.VListItemSubtitle("{{ agent.agent_type }}")
                         with html.Template(v_slot_append=True):
                             v3.VChip(
-                                v_text="(agent.trust_score * 100).toFixed(0) + '%'",
+                                # BUG-223-TRUST-001: Guard against null trust_score
+                                v_text="((agent.trust_score || 0) * 100).toFixed(0) + '%'",
                                 color=(
                                     "agent.trust_level === 'HIGH' ? 'success' : "
                                     "agent.trust_level === 'MEDIUM' ? 'warning' : 'error'"
@@ -72,7 +75,8 @@ def build_proposals_panel() -> None:
             with v3.VCardText():
                 with v3.VList(density="compact"):
                     with v3.VListItem(
-                        v_for="prop in proposals.slice(0, 5)",
+                        # BUG-269-PANEL-001: Guard against null proposals
+                        v_for="prop in (proposals || []).slice(0, 5)",
                         key=("prop.proposal_id",),
                         __properties=["data-testid"],
                         **{"data-testid": "trust-proposal-item"}
@@ -92,7 +96,8 @@ def build_proposals_panel() -> None:
                         with html.Template(v_slot_default=True):
                             v3.VListItemTitle("{{ prop.proposal_id }}")
                             v3.VListItemSubtitle(
-                                "{{ prop.affected_rule }} - {{ prop.proposal_status }}"
+                                # BUG-282-PANEL-003: Guard against null rendering as literal "null"
+                                "{{ prop.affected_rule || 'N/A' }} - {{ prop.proposal_status || 'unknown' }}"
                             )
                         with html.Template(v_slot_append=True):
                             v3.VChip(
@@ -120,8 +125,9 @@ def build_escalated_proposals_alert() -> None:
         classes="mt-4"
     ):
         with v3.VCol(cols=12):
+            # BUG-333-PANEL-001: Use type_ instead of type (Python reserved keyword)
             v3.VAlert(
-                type="warning",
+                type_="warning",
                 title="Human Escalation Required",
                 text=("escalated_proposals.length + ' proposals require human review'",),
                 variant="tonal",

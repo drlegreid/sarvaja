@@ -114,7 +114,8 @@ def register_traceability_tools(mcp) -> None:
                         known = {r.get("rule_id") for r in result.get("rules_detail", [])}
                         s["rules_detail"] = [
                             _trace_rule(client, rid)
-                            for rid in s.get("rules_applied", []) if rid not in known
+                            # BUG-331-TRACE-001: Guard against None/empty rule IDs from malformed DB rows
+                            for rid in s.get("rules_applied", []) if rid and rid not in known
                         ]
 
                 log_monitor_event(
@@ -142,8 +143,9 @@ def register_traceability_tools(mcp) -> None:
                     return format_mcp_result(result)
 
                 if depth >= 1:
-                    result["tasks_detail"] = [_trace_task(client, tid) for tid in result["task_ids"]]
-                    result["rules_detail"] = [_trace_rule(client, rid) for rid in result["rules_applied"]]
+                    # BUG-331-TRACE-001: Guard against None/empty IDs from malformed DB rows
+                    result["tasks_detail"] = [_trace_task(client, tid) for tid in result["task_ids"] if tid]
+                    result["rules_detail"] = [_trace_rule(client, rid) for rid in result["rules_applied"] if rid]
 
                 log_monitor_event(
                     event_type="trace_event", source="mcp-trace-session-chain",

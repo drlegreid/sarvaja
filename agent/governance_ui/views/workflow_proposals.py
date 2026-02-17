@@ -61,21 +61,25 @@ def build_proposal_graph_panel() -> None:
                         with v3.VCol(cols=4):
                             with v3.VChip(size="small", variant="tonal", color="info"):
                                 html.Span(
-                                    "Quorum: {{ (workflow_info.thresholds.quorum * 100) }}%"
+                                    # BUG-290-PROP-001: Guard null thresholds to prevent NaN rendering
+                                    "Quorum: {{ ((workflow_info.thresholds.quorum || 0) * 100).toFixed(0) }}%"
                                 )
                         with v3.VCol(cols=4):
                             with v3.VChip(size="small", variant="tonal", color="success"):
                                 html.Span(
-                                    "Approval: {{ (workflow_info.thresholds.approval * 100).toFixed(0) }}%"
+                                    # BUG-290-PROP-001: Guard null thresholds to prevent NaN rendering
+                                    "Approval: {{ ((workflow_info.thresholds.approval || 0) * 100).toFixed(0) }}%"
                                 )
                         with v3.VCol(cols=4):
                             with v3.VChip(size="small", variant="tonal", color="warning"):
                                 html.Span(
-                                    "Dispute: {{ (workflow_info.thresholds.dispute * 100) }}%"
+                                    # BUG-290-PROP-001: Guard null thresholds to prevent NaN rendering
+                                    "Dispute: {{ ((workflow_info.thresholds.dispute || 0) * 100).toFixed(0) }}%"
                                 )
+                    # BUG-333-PANEL-001: Use type_ instead of type (Python reserved keyword)
                     v3.VAlert(
                         v_if="!workflow_info",
-                        type="info",
+                        type_="info",
                         density="compact",
                         text="Click Refresh to load workflow graph information."
                     )
@@ -159,8 +163,9 @@ def build_proposal_form() -> None:
     # Result display
     with v3.VRow(classes="mt-2", v_if="proposal_result"):
         with v3.VCol(cols=12):
+            # BUG-333-PANEL-001: Use type_ instead of type (Python reserved keyword)
             with v3.VAlert(
-                type=(
+                type_=(
                     "proposal_result.decision === 'approved' ? 'success' : "
                     "proposal_result.decision === 'rejected' ? 'error' : 'info'",
                 ),
@@ -169,31 +174,37 @@ def build_proposal_form() -> None:
                 **{"data-testid": "proposal-result"}
             ):
                 html.Div(
-                    "Proposal {{ proposal_result.proposal_id }}: "
-                    "{{ proposal_result.decision.toUpperCase() }}",
+                    # BUG-290-PROP-002: Guard null proposal_id on error path
+                    "Proposal {{ proposal_result.proposal_id || 'N/A' }}: "
+                    "{{ (proposal_result.decision || 'pending').toUpperCase() }}",
                     classes="font-weight-bold"
                 )
-                html.Div("{{ proposal_result.decision_reasoning }}")
+                # BUG-290-PROP-002: Guard null decision_reasoning
+                html.Div("{{ proposal_result.decision_reasoning || '' }}")
                 with v3.VRow(dense=True, classes="mt-2"):
                     with v3.VCol(cols=3):
                         html.Span(
-                            "Impact: {{ proposal_result.impact_score }}",
+                            # BUG-290-PROP-002: Guard null impact_score on error path
+                            "Impact: {{ proposal_result.impact_score || 'N/A' }}",
                             classes="text-caption"
                         )
                     with v3.VCol(cols=3):
                         html.Span(
-                            "Risk: {{ proposal_result.risk_level }}",
+                            # BUG-290-PROP-002: Guard null risk_level on error path
+                            "Risk: {{ proposal_result.risk_level || 'N/A' }}",
                             classes="text-caption"
                         )
                     with v3.VCol(cols=3):
                         html.Span(
-                            "Votes: {{ proposal_result.votes_for.toFixed(1) }} / "
-                            "{{ proposal_result.votes_against.toFixed(1) }}",
+                            # BUG-223-VOTES-001: Guard against null votes
+                            "Votes: {{ (proposal_result.votes_for || 0).toFixed(1) }} / "
+                            "{{ (proposal_result.votes_against || 0).toFixed(1) }}",
                             classes="text-caption"
                         )
                     with v3.VCol(cols=3):
                         html.Span(
-                            "Phases: {{ proposal_result.phases_completed.join(' → ') }}",
+                            # BUG-238-WP-001: Guard null phases_completed
+                            "Phases: {{ (proposal_result.phases_completed || []).join(' → ') }}",
                             classes="text-caption"
                         )
 
@@ -223,7 +234,8 @@ def build_proposal_history() -> None:
                     ):
                         with v3.VListItem(
                             v_for="(p, idx) in proposal_history",
-                            key="idx",
+                            # BUG-290-PROP-003: Use dynamic key binding, not static string
+                            **{":key": "p.proposal_id || idx"},
                         ):
                             with html.Template(v_slot_prepend=True):
                                 v3.VIcon(
@@ -240,16 +252,19 @@ def build_proposal_history() -> None:
                                 )
                             v3.VListItemTitle(
                                 "{{ p.proposal_id }} — {{ p.action }} "
-                                "{{ p.decision.toUpperCase() }}"
+                                # BUG-223-DECISION-001: Guard against null decision
+                                "{{ (p.decision || 'pending').toUpperCase() }}"
                             )
+                            # BUG-333-WF-001: Guard against null impact_score and risk_level
                             v3.VListItemSubtitle(
-                                "Impact: {{ p.impact_score }} | "
-                                "Risk: {{ p.risk_level }} | "
+                                "Impact: {{ p.impact_score || 'N/A' }} | "
+                                "Risk: {{ p.risk_level || 'N/A' }} | "
                                 "{{ p.dry_run ? '[DRY RUN]' : '[LIVE]' }}"
                             )
+                    # BUG-333-PANEL-001: Use type_ instead of type (Python reserved keyword)
                     v3.VAlert(
                         v_if="!proposal_history || proposal_history.length === 0",
-                        type="info",
+                        type_="info",
                         density="compact",
                         text="No proposals submitted yet. Use the form above to submit a governance proposal."
                     )

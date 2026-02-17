@@ -19,13 +19,25 @@ from .status import update_task_status as _update_task_status
 logger = logging.getLogger(__name__)
 
 
+# BUG-289-ATTR-001: Allowlist of valid TypeQL attribute names to prevent injection
+_ALLOWED_TASK_ATTR_NAMES = frozenset({
+    "task-status", "task-name", "phase", "item-type",
+    "document-path", "task-priority", "task-type",
+})
+
+
 def _update_attribute(tx, task_id: str, attr_name: str, old_value: str, new_value: str):
     """Delete old attribute value and insert new one for a task. DRY helper for TypeDB 3.x."""
-    # BUG-TYPEQL-ESCAPE-TASK-001: Escape task_id for TypeQL safety
-    tid = task_id.replace('"', '\\"')
-    new_escaped = new_value.replace('"', '\\"')
-    if old_value:
-        old_escaped = old_value.replace('"', '\\"')
+    # BUG-289-ATTR-001: Validate attr_name against allowlist before interpolation
+    if attr_name not in _ALLOWED_TASK_ATTR_NAMES:
+        raise ValueError(f"Disallowed attribute name for task update: {attr_name!r}")
+    # BUG-TYPEQL-ESCAPE-TASK-001: Escape backslash FIRST, then quotes (match insert_task)
+    tid = task_id.replace('\\', '\\\\').replace('"', '\\"')
+    new_escaped = new_value.replace('\\', '\\\\').replace('"', '\\"')
+    # BUG-332-CRUD-001: Use 'is not None' instead of truthiness to handle empty-string
+    # values correctly — 'if old_value:' skips "" which leaves orphaned attributes in TypeDB
+    if old_value is not None:
+        old_escaped = old_value.replace('\\', '\\\\').replace('"', '\\"')
         tx.query(f'''
             match $t isa task, has task-id "{tid}", has {attr_name} $v;
                 $v == "{old_escaped}";
@@ -43,8 +55,8 @@ def _set_lifecycle_timestamps(tx, task_id: str, new_status: str, current):
     Mirrors the logic from update_task_status() so that update_task()
     also handles lifecycle timestamps correctly.
     """
-    # BUG-TYPEQL-ESCAPE-TASK-001: Escape task_id
-    tid = task_id.replace('"', '\\"')
+    # BUG-TYPEQL-ESCAPE-TASK-001 + BUG-182-003: Escape backslash first, then quotes
+    tid = task_id.replace('\\', '\\\\').replace('"', '\\"')
     now_str = datetime.now().strftime('%Y-%m-%dT%H:%M:%S')
 
     if new_status == "IN_PROGRESS" and not current.claimed_at:
@@ -110,9 +122,13 @@ class TaskCRUDOperations:
         """
         from typedb.driver import TransactionType
 
-        # Escape strings
-        name_escaped = name.replace('"', '\\"')
-        body_escaped = body.replace('"', '\\"') if body else None
+        # BUG-332-CRUD-002: Guard name against None before escaping
+        if not name:
+            logger.error("insert_task called with empty/None name for task_id=%s", task_id)
+            return None
+        # Escape strings — backslash FIRST, then quotes (BUG-TYPEQL-ESCAPE-002)
+        name_escaped = name.replace('\\', '\\\\').replace('"', '\\"')
+        body_escaped = body.replace('\\', '\\\\').replace('"', '\\"') if body else None
 
         try:
             # TypeDB 3.x: driver.transaction() directly
@@ -121,12 +137,12 @@ class TaskCRUDOperations:
                 now = datetime.now()
                 timestamp_str = now.strftime('%Y-%m-%dT%H:%M:%S')
 
-                # BUG-TYPEQL-ESCAPE-001: Escape all user-provided fields
-                status_escaped = status.replace('"', '\\"') if status else "TODO"
-                phase_escaped = phase.replace('"', '\\"') if phase else ""
+                # BUG-TYPEQL-ESCAPE-001 + BUG-TYPEQL-ESCAPE-002: Escape backslash then quotes
+                status_escaped = status.replace('\\', '\\\\').replace('"', '\\"') if status else "TODO"
+                phase_escaped = phase.replace('\\', '\\\\').replace('"', '\\"') if phase else ""
 
                 # BUG-TYPEQL-ESCAPE-TASK-001: Escape task_id
-                task_id_escaped = task_id.replace('"', '\\"')
+                task_id_escaped = task_id.replace('\\', '\\\\').replace('"', '\\"')
                 insert_parts = [
                     f'has task-id "{task_id_escaped}"',
                     f'has task-name "{name_escaped}"',
@@ -136,29 +152,29 @@ class TaskCRUDOperations:
                 ]
                 # GAP-UI-046: task-resolution (may not exist in older schemas)
                 if resolution:
-                    resolution_escaped = resolution.replace('"', '\\"')
+                    resolution_escaped = resolution.replace('\\', '\\\\').replace('"', '\\"')
                     insert_parts.append(f'has task-resolution "{resolution_escaped}"')
                 if body_escaped:
                     insert_parts.append(f'has task-body "{body_escaped}"')
                 if gap_id:
-                    gap_id_escaped = gap_id.replace('"', '\\"')
+                    gap_id_escaped = gap_id.replace('\\', '\\\\').replace('"', '\\"')
                     insert_parts.append(f'has gap-reference "{gap_id_escaped}"')
                 # GAP-GAPS-TASKS-001: Unified work item attributes
                 if item_type:
-                    item_type_escaped = item_type.replace('"', '\\"')
+                    item_type_escaped = item_type.replace('\\', '\\\\').replace('"', '\\"')
                     insert_parts.append(f'has item-type "{item_type_escaped}"')
                 if document_path:
-                    doc_path_escaped = document_path.replace('"', '\\"')
+                    doc_path_escaped = document_path.replace('\\', '\\\\').replace('"', '\\"')
                     insert_parts.append(f'has document-path "{doc_path_escaped}"')
                 if agent_id:
-                    agent_id_escaped = agent_id.replace('"', '\\"')
+                    agent_id_escaped = agent_id.replace('\\', '\\\\').replace('"', '\\"')
                     insert_parts.append(f'has agent-id "{agent_id_escaped}"')
                 # BUG-TASK-TAXONOMY-001: Task classification
                 if priority:
-                    priority_escaped = priority.replace('"', '\\"')
+                    priority_escaped = priority.replace('\\', '\\\\').replace('"', '\\"')
                     insert_parts.append(f'has task-priority "{priority_escaped}"')
                 if task_type:
-                    task_type_escaped = task_type.replace('"', '\\"')
+                    task_type_escaped = task_type.replace('\\', '\\\\').replace('"', '\\"')
                     insert_parts.append(f'has task-type "{task_type_escaped}"')
 
                 insert_query = f"""
@@ -170,8 +186,8 @@ class TaskCRUDOperations:
                 # Create relationships to rules
                 if linked_rules:
                     for rule_id in linked_rules:
-                        # BUG-TYPEQL-ESCAPE-TASK-001: Escape IDs in relationship queries
-                        rid = rule_id.replace('"', '\\"')
+                        # BUG-TYPEQL-ESCAPE-TASK-001 + BUG-272-CRUD-001: Escape backslash FIRST, then quotes
+                        rid = rule_id.replace('\\', '\\\\').replace('"', '\\"')
                         rel_query = f"""
                             match
                                 $t isa task, has task-id "{task_id_escaped}";
@@ -184,8 +200,8 @@ class TaskCRUDOperations:
                 # Create relationships to sessions
                 if linked_sessions:
                     for session_id in linked_sessions:
-                        # BUG-TYPEQL-ESCAPE-TASK-001: Escape session_id
-                        sid = session_id.replace('"', '\\"')
+                        # BUG-TYPEQL-ESCAPE-TASK-001 + BUG-272-CRUD-001: Escape backslash FIRST, then quotes
+                        sid = session_id.replace('\\', '\\\\').replace('"', '\\"')
                         rel_query = f"""
                             match
                                 $t isa task, has task-id "{task_id_escaped}";
@@ -304,8 +320,8 @@ class TaskCRUDOperations:
         """Delete a task from TypeDB."""
         from typedb.driver import TransactionType
 
-        # BUG-TYPEQL-ESCAPE-TASK-001: Escape task_id for TypeQL safety
-        task_id_escaped = task_id.replace('"', '\\"')
+        # BUG-196-006: Escape backslash AND quotes (consistent with insert_task/update_task)
+        task_id_escaped = task_id.replace('\\', '\\\\').replace('"', '\\"')
 
         try:
             # TypeDB 3.x: driver.transaction() directly
@@ -316,7 +332,7 @@ class TaskCRUDOperations:
                         $t isa task, has task-id "{task_id_escaped}";
                         $rel (implementing-task: $t) isa implements-rule;
                     delete
-                        $rel isa implements-rule;
+                        $rel;
                 """
                 try:
                     tx.query(rel_query).resolve()
@@ -328,7 +344,7 @@ class TaskCRUDOperations:
                         $t isa task, has task-id "{task_id_escaped}";
                         $rel (completed-task: $t) isa completed-in;
                     delete
-                        $rel isa completed-in;
+                        $rel;
                 """
                 try:
                     tx.query(rel_query2).resolve()

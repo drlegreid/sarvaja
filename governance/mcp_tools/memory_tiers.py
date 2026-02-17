@@ -18,6 +18,8 @@ Created: 2026-02-09
 
 import json
 import logging
+import os
+import threading
 from datetime import datetime
 from typing import Optional, List
 
@@ -25,8 +27,21 @@ from governance.mcp_tools.common import format_mcp_result
 
 logger = logging.getLogger(__name__)
 
+# BUG-218-MEM-001: Use env vars for ChromaDB host/port (not hardcoded localhost)
+CHROMADB_HOST = os.getenv("CHROMADB_HOST", "localhost")
+# BUG-288-MEM-001: Guard against non-numeric CHROMADB_PORT at import time
+try:
+    CHROMADB_PORT = int(os.getenv("CHROMADB_PORT", "8001"))
+except (ValueError, TypeError):
+    logger.warning("Invalid CHROMADB_PORT env var, defaulting to 8001")
+    CHROMADB_PORT = 8001
+
 # L1 short memory: in-process dict, lost on restart
+# BUG-271-MEMORY-001: Cap at 500 entries to prevent unbounded growth
 _short_memory: dict = {}
+_SHORT_MEMORY_MAX = 500
+# BUG-331-MEM-001: Lock for thread-safe access to _short_memory
+_short_memory_lock = threading.Lock()
 
 
 def register_memory_tier_tools(mcp) -> None:
@@ -61,12 +76,18 @@ def register_memory_tier_tools(mcp) -> None:
         memory_id = f"MEM-{tier}-{datetime.now().strftime('%Y%m%d%H%M%S')}"
 
         if tier == "L1":
-            _short_memory[memory_id] = {
-                "content": content,
-                "tags": tag_list,
-                "session_id": session_id,
-                "created": ts,
-            }
+            # BUG-331-MEM-001: Thread-safe access to _short_memory
+            with _short_memory_lock:
+                # BUG-271-MEMORY-001: Evict oldest entries when cap exceeded
+                if len(_short_memory) >= _SHORT_MEMORY_MAX:
+                    oldest_key = next(iter(_short_memory))
+                    del _short_memory[oldest_key]
+                _short_memory[memory_id] = {
+                    "content": content,
+                    "tags": tag_list,
+                    "session_id": session_id,
+                    "created": ts,
+                }
             return format_mcp_result({
                 "memory_id": memory_id,
                 "tier": "L1",
@@ -79,7 +100,7 @@ def register_memory_tier_tools(mcp) -> None:
             try:
                 # Use governance stores ChromaDB integration if available
                 import chromadb
-                chroma = chromadb.HttpClient(host="localhost", port=8001)
+                chroma = chromadb.HttpClient(host=CHROMADB_HOST, port=CHROMADB_PORT)
                 if chroma:
                     collection = chroma.get_or_create_collection("memory_tiers")
                     collection.add(
@@ -101,13 +122,19 @@ def register_memory_tier_tools(mcp) -> None:
                 logger.debug(f"ChromaDB save failed, falling back to L1: {e}")
 
             # Fallback: save to L1 with L2 marker
-            _short_memory[memory_id] = {
-                "content": content,
-                "tags": tag_list,
-                "session_id": session_id,
-                "created": ts,
-                "intended_tier": "L2",
-            }
+            # BUG-331-MEM-001: Thread-safe access to _short_memory
+            with _short_memory_lock:
+                # BUG-288-MEM-002: Enforce _SHORT_MEMORY_MAX cap on L2 fallback path
+                if len(_short_memory) >= _SHORT_MEMORY_MAX:
+                    oldest_key = next(iter(_short_memory))
+                    del _short_memory[oldest_key]
+                _short_memory[memory_id] = {
+                    "content": content,
+                    "tags": tag_list,
+                    "session_id": session_id,
+                    "created": ts,
+                    "intended_tier": "L2",
+                }
             return format_mcp_result({
                 "memory_id": memory_id,
                 "tier": "L2",
@@ -168,7 +195,10 @@ def register_memory_tier_tools(mcp) -> None:
 
         # L1: Search short memory (keyword match)
         if not tier or tier.upper() == "L1":
-            for mid, mem in _short_memory.items():
+            # BUG-331-MEM-001: Snapshot dict to prevent RuntimeError during concurrent mutation
+            with _short_memory_lock:
+                _snapshot = list(_short_memory.items())
+            for mid, mem in _snapshot:
                 if (query_lower in mem["content"].lower()
                         or any(query_lower in t.lower() for t in mem.get("tags", []))):
                     results["results"].append({
@@ -185,7 +215,7 @@ def register_memory_tier_tools(mcp) -> None:
         if not tier or tier.upper() == "L2":
             try:
                 import chromadb
-                chroma = chromadb.HttpClient(host="localhost", port=8001)
+                chroma = chromadb.HttpClient(host=CHROMADB_HOST, port=CHROMADB_PORT)
                 if chroma:
                     collection = chroma.get_or_create_collection("memory_tiers")
                     hits = collection.query(
