@@ -46,7 +46,12 @@ def create_project(
     """Create a new project."""
     if not project_id:
         # BUG-242-PRJ-001: Sanitize slug to prevent TypeQL injection via special chars
+        # BUG-348-PRJ-001: Collapse consecutive hyphens and strip leading/trailing hyphens
+        # to prevent empty/degenerate slugs (e.g. name="!!!" → slug="---" → "PROJ----")
         slug = re.sub(r'[^A-Z0-9\-]', '-', name.upper())[:20]
+        slug = re.sub(r'-+', '-', slug).strip('-')
+        if not slug:
+            slug = "UNNAMED"
         project_id = f"PROJ-{slug}"
 
     # BUG-215-PRJ-001: Check for duplicate before creating

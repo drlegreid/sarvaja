@@ -51,9 +51,13 @@ def _extract_tool_result_content(block: dict) -> str:
 
 def _truncate(text: str, limit: int) -> tuple:
     """Truncate text to limit. Returns (text, was_truncated)."""
-    if not limit or len(text) <= limit:
+    # BUG-346-TRS-001: Enforce absolute hard cap even when limit=0 (disabled)
+    # to prevent multi-megabyte responses from 10KB+ Bash outputs
+    _ABSOLUTE_MAX = 100_000
+    effective = limit if limit > 0 else _ABSOLUTE_MAX
+    if len(text) <= effective:
         return text, False
-    return text[:limit] + f"\n... [{len(text) - limit} chars truncated]", True
+    return text[:effective] + f"\n... [{len(text) - effective} chars truncated]", True
 
 
 def stream_transcript(
@@ -74,9 +78,9 @@ def stream_transcript(
     yielded = 0
 
     try:
-        f = open(filepath, "r")
+        # BUG-257-TRS-001: Use context manager for reliable handle cleanup on generator abandon
+        f = open(filepath, "r", encoding="utf-8")
     except (PermissionError, IOError) as e:
-        # BUG-TRANSCRIPT-001: Guard against unreadable file
         logger.error(f"Cannot read transcript file {filepath}: {e}")
         return
 
@@ -190,7 +194,11 @@ def stream_transcript(
                         entry_index += 1
 
                     elif btype == "tool_use":
-                        full_input = json.dumps(block.get("input", {}))
+                        # BUG-257-TRS-002: Use default=str to prevent TypeError on non-serializable inputs
+                        try:
+                            full_input = json.dumps(block.get("input", {}), default=str)
+                        except (TypeError, ValueError):
+                            full_input = str(block.get("input", {}))[:500]
                         text, truncated = _truncate(full_input, content_limit)
                         tool_name = block.get("name", "")
                         if entry_index >= start_index:
@@ -266,6 +274,8 @@ def build_synthetic_transcript(
     for i, entry in enumerate(entries):
         entry.index = i
     total = len(entries)
+    # BUG-257-TRS-003: Validate page to prevent negative start index
+    page = max(1, page)
     start = (page - 1) * per_page
     return {
         "entries": [e.to_dict() for e in entries[start:start + per_page]],
@@ -286,6 +296,8 @@ def get_transcript_page(
 
     Returns dict with entries, total, page, per_page, has_more.
     """
+    # BUG-257-TRS-003: Validate page to prevent negative start index
+    page = max(1, page)
     start_index = (page - 1) * per_page
     entries = []
     total_count = 0

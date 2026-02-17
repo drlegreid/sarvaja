@@ -58,10 +58,20 @@ def _validate_entity_exists(
         if entity_type == "task":
             exists = client.get_task(entity_id) is not None
         elif entity_type == "rule":
-            exists = client.get_rule(entity_id) is not None
+            # BUG-LINKMINER-001: TypeDB method is get_rule_by_id, not get_rule
+            exists = client.get_rule_by_id(entity_id) is not None
         elif entity_type == "decision":
-            exists = client.get_decision(entity_id) is not None
-    except Exception:
+            # BUG-LINKMINER-001: No get_decision() method; use get_all_decisions filter
+            # BUG-236-LNK-001: Cache decision ID set to avoid O(N*M) re-fetch
+            _dkey = "_all_decision_ids"
+            if _dkey not in cache:
+                # BUG-257-LNK-001: Guard against None return from get_all_decisions
+                all_decisions = client.get_all_decisions() or []
+                cache[_dkey] = {d.decision_id for d in all_decisions}
+            exists = entity_id in cache[_dkey]
+    except Exception as e:
+        # BUG-257-LNK-002: Log TypeDB failures instead of silently swallowing
+        logger.warning(f"TypeDB validation failed for {entity_type}:{entity_id}: {e}")
         exists = False
 
     cache[key] = exists
@@ -110,15 +120,26 @@ def mine_session_links(
     decision_refs: set[str] = set()
     gap_refs: set[str] = set()
 
+    # BUG-286-MINE-001: Guard against missing JSONL file before streaming
+    if not Path(jsonl_path).exists():
+        result["status"] = "error"
+        result["errors"] = [f"JSONL file not found: {jsonl_path}"]
+        return result
+
     entries = parse_log_file_extended(
         jsonl_path, include_thinking=False, start_line=start_line
     )
+
+    # BUG-346-LNK-001: Truncate per-entry text before regex extraction to prevent
+    # DoS via megabyte-scale assistant messages triggering regex backtracking
+    _MAX_REF_TEXT = 50_000
 
     for entry in entries:
         text = entry.text_content or ""
         if not text:
             continue
 
+        text = text[:_MAX_REF_TEXT]
         task_refs.update(extract_task_refs(text))
         rule_refs.update(extract_rule_refs(text))
         decision_refs.update(_extract_decision_refs(text))

@@ -151,9 +151,12 @@ def discover_cc_projects() -> list[Dict[str, Any]]:
         slug = derive_project_slug(d)
         # Decode directory name back to filesystem path
         # BUG-334-SCAN-001: Validate decoded path against user home to prevent path traversal
+        # BUG-346-SCAN-001: Use is_relative_to() instead of startswith() to prevent
+        # prefix-sibling bypass (e.g. /home/user-evil matching /home/user)
         decoded_path = "/" + d.name.lstrip("-").replace("-", "/")
-        _home = str(Path.home())
-        if not decoded_path.startswith(_home) and not decoded_path.startswith("/tmp"):
+        _home_path = Path.home()
+        _decoded = Path(decoded_path)
+        if not (_decoded.is_relative_to(_home_path) or _decoded.is_relative_to(Path("/tmp"))):
             decoded_path = str(d)
 
         # Count JSONL files as proxy for session count

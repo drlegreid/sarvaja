@@ -15,7 +15,9 @@ def create_initial_state(
     max_cycles: int = 10, dry_run: bool = False,
 ) -> Dict[str, Any]:
     """Create initial orchestrator state with empty backlog."""
-    ts = datetime.now().strftime("%Y%m%d-%H%M%S")
+    # BUG-349-ST-001: Include microseconds to prevent cycle_id collision
+    # when two calls happen within the same second
+    ts = datetime.now().strftime("%Y%m%d-%H%M%S-%f")
     return {
         "cycle_id": f"ORCH-{ts}",
         "current_phase": "idle",

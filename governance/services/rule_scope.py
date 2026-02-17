@@ -7,7 +7,9 @@ instead of applying globally.
 Uses fnmatch glob patterns for path matching.
 """
 
+import os.path
 from fnmatch import fnmatch
+from pathlib import PurePath
 from typing import Dict, List, Optional, Any
 
 
@@ -27,11 +29,30 @@ def rule_applies_to_path(scope: Optional[List[str]], path: str) -> bool:
     if not scope:
         return True
 
+    # BUG-287-RSC-001: Guard against None/empty path
+    if not isinstance(path, str) or not path:
+        return False
+
+    # BUG-348-SCO-001: Normalize path to collapse '..' and prevent traversal bypass
+    # (e.g. 'governance/../../admin/secrets.py' matching 'governance/**')
+    # os.path.normpath resolves '..' unlike PurePath.as_posix()
+    path = os.path.normpath(path).replace(os.sep, "/")
+    # Strip leading '../' sequences after normalization
+    while path.startswith("../"):
+        path = path[3:]
+
     for pattern in scope:
         if pattern == "*":
             return True
         if fnmatch(path, pattern):
             return True
+        # BUG-RULE-SCOPE-DOUBLESTAR-001: fnmatch doesn't support **
+        if "**" in pattern:
+            try:
+                if PurePath(path).match(pattern):
+                    return True
+            except (ValueError, TypeError):
+                pass
 
     return False
 

@@ -234,7 +234,9 @@ def generate_session_evidence(
     try:
         resolved_dir = output_dir.resolve()
         default_resolved = _DEFAULT_EVIDENCE_DIR.resolve()
-        if not str(resolved_dir).startswith(str(default_resolved)):
+        # BUG-347-EVD-001: Use is_relative_to() instead of startswith() to prevent
+        # prefix-sibling bypass (e.g. evidence_evil matching evidence)
+        if not resolved_dir.is_relative_to(default_resolved):
             logger.error(f"output_dir {output_dir} outside evidence root {_DEFAULT_EVIDENCE_DIR}")
             return None
     except (OSError, ValueError) as e:
