@@ -83,7 +83,8 @@ class TestSendChatMessage:
     async def test_delegation_handling(self, _reset_stores):
         from governance.routes.chat.endpoints import send_chat_message
         from governance.models import ChatMessageRequest
-        req = ChatMessageRequest(content="delegate task", agent_id="AGENT-001")
+        # BUG-300-DEL-001: Must use explicit /delegate command for sentinel to be honored
+        req = ChatMessageRequest(content="/delegate do stuff", agent_id="AGENT-001")
         with patch(f"{_P}.generate_chat_session_id", return_value="CHAT-3"), \
              patch(f"{_P}.preload_session_context") as mock_ctx, \
              patch(f"{_P}.process_chat_command", return_value="__DELEGATE__:do stuff"), \

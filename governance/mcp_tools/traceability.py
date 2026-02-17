@@ -4,7 +4,11 @@ Enables: test → GAP → evidence → session → task → rule backtracking.
 Created: 2026-01-28 | Per SESSION-EVID-01-v1, GOV-TRANSP-01-v1.
 """
 
+import logging
+
 from governance.mcp_tools.common import typedb_client, format_mcp_result, log_monitor_event
+
+logger = logging.getLogger(__name__)
 
 
 def _trace_task(client, task_id: str) -> dict:
@@ -166,16 +170,21 @@ def register_traceability_tools(mcp) -> None:
                     return format_mcp_result(result)
 
                 if depth >= 1:
+                    # BUG-299-TRC-001: Escape backslash, quotes, AND control chars for TypeQL safety
+                    safe_rule_id = (rule_id.replace('\\', '\\\\').replace('"', '\\"')
+                                    .replace('\n', '\\n').replace('\r', '\\r').replace('\t', '\\t'))
                     query = (
                         f'match $t isa task, has task-id $tid; '
-                        f'$r isa governance-rule, has rule-id "{rule_id}"; '
+                        f'$r isa governance-rule, has rule-id "{safe_rule_id}"; '
                         f'(implementing-task: $t, implemented-rule: $r) isa implements-rule; '
-                        f'get $tid;'
+                        f'select $tid;'
                     )
                     try:
                         rows = client.execute_query(query)
                         task_ids = [r.get("tid", r.get("task-id", "")) for r in rows if r]
-                    except Exception:
+                    # BUG-276-TRACE-001: Log instead of silently swallowing
+                    except Exception as e:
+                        logger.debug(f"trace_rule_chain query failed for {rule_id}: {e}")
                         task_ids = []
 
                     tasks = [_trace_task(client, tid) for tid in task_ids if tid]
@@ -201,14 +210,19 @@ def register_traceability_tools(mcp) -> None:
         """
         try:
             with typedb_client() as client:
+                # BUG-299-TRC-001: Escape backslash, quotes, AND control chars for TypeQL safety
+                safe_gap_id = (gap_id.replace('\\', '\\\\').replace('"', '\\"')
+                               .replace('\n', '\\n').replace('\r', '\\r').replace('\t', '\\t'))
                 query = (
-                    f'match $t isa task, has task-id $tid, has gap-id "{gap_id}"; '
-                    f'get $tid;'
+                    f'match $t isa task, has task-id $tid, has gap-id "{safe_gap_id}"; '
+                    f'select $tid;'
                 )
                 try:
                     rows = client.execute_query(query)
                     task_ids = [r.get("tid", r.get("task-id", "")) for r in rows if r]
-                except Exception:
+                # BUG-276-TRACE-001: Log instead of silently swallowing
+                except Exception as e:
+                    logger.debug(f"trace_gap_chain query failed for {gap_id}: {e}")
                     task_ids = []
 
                 if not task_ids:
@@ -254,30 +268,37 @@ def register_traceability_tools(mcp) -> None:
         """
         try:
             with typedb_client() as client:
+                # BUG-299-TRC-001: Escape backslash, quotes, AND control chars for TypeQL safety
+                safe_evidence_path = (evidence_path.replace('\\', '\\\\').replace('"', '\\"')
+                                      .replace('\n', '\\n').replace('\r', '\\r').replace('\t', '\\t'))
                 # Find tasks linked to this evidence
                 query = (
                     f'match $t isa task, has task-id $tid; '
-                    f'$e isa evidence, has evidence-source "{evidence_path}"; '
+                    f'$e isa evidence, has evidence-source "{safe_evidence_path}"; '
                     f'(supporting-evidence: $e, supported-task: $t) isa evidence-supports; '
-                    f'get $tid;'
+                    f'select $tid;'
                 )
                 try:
                     rows = client.execute_query(query)
                     task_ids = [r.get("tid", r.get("task-id", "")) for r in rows if r]
-                except Exception:
+                # BUG-276-TRACE-001: Log instead of silently swallowing
+                except Exception as e:
+                    logger.debug(f"trace_evidence_chain task query failed for {evidence_path}: {e}")
                     task_ids = []
 
                 # Find sessions linked to this evidence
                 query_sessions = (
                     f'match $s isa work-session, has session-id $sid; '
-                    f'$e isa evidence, has evidence-source "{evidence_path}"; '
+                    f'$e isa evidence, has evidence-source "{safe_evidence_path}"; '
                     f'(session-with-evidence: $s, session-evidence: $e) isa has-evidence; '
-                    f'get $sid;'
+                    f'select $sid;'
                 )
                 try:
                     rows_s = client.execute_query(query_sessions)
                     session_ids = [r.get("sid", r.get("session-id", "")) for r in rows_s if r]
-                except Exception:
+                # BUG-276-TRACE-001: Log instead of silently swallowing
+                except Exception as e:
+                    logger.debug(f"trace_evidence_chain session query failed for {evidence_path}: {e}")
                     session_ids = []
 
                 tasks = []

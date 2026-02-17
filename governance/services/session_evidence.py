@@ -63,18 +63,15 @@ def _compute_duration(start_time: str, end_time: str) -> str:
     if not start_time or not end_time:
         return "unknown"
     try:
-        # Handle both full ISO and truncated formats
-        for fmt in ("%Y-%m-%dT%H:%M:%S", "%Y-%m-%dT%H:%M:%S.%f"):
-            try:
-                start = datetime.fromisoformat(start_time.replace("Z", ""))
-                end = datetime.fromisoformat(end_time.replace("Z", ""))
-                break
-            except ValueError:
-                continue
-        else:
-            return "unknown"
-
+        # BUG-217-EVD-001: Strip Z suffix properly and handle +00:00 timestamps
+        _st = start_time.rstrip("Z")[:19]  # Truncate to naive YYYY-MM-DDTHH:MM:SS
+        _et = end_time.rstrip("Z")[:19]
+        start = datetime.fromisoformat(_st)
+        end = datetime.fromisoformat(_et)
         delta = end - start
+        # BUG-217-EVD-002: Guard against negative duration
+        if delta.total_seconds() < 0:
+            return "unknown"
         total_minutes = int(delta.total_seconds() / 60)
         hours = total_minutes // 60
         minutes = total_minutes % 60
@@ -82,7 +79,9 @@ def _compute_duration(start_time: str, end_time: str) -> str:
         if hours > 0:
             return f"{hours}h {minutes}m"
         return f"{minutes}m"
-    except Exception:
+    except Exception as e:
+        # BUG-265-EVID-001: Log duration parse errors instead of silently swallowing
+        logger.debug(f"Duration parse failed: {e}")
         return "unknown"
 
 
@@ -165,8 +164,9 @@ def render_evidence_markdown(evidence_data: Dict[str, Any]) -> str:
         lines.append("|----|-------|-----------|")
         for dec in decisions:
             did = dec.get("decision_id", "N/A")
-            title = dec.get("title", "N/A")
-            rationale = _truncate(dec.get("rationale", ""), 80)
+            # BUG-EVIDENCE-TABLE-PIPE-001: Escape pipes to prevent markdown table corruption
+            title = dec.get("title", "N/A").replace("|", "\\|")
+            rationale = _truncate(dec.get("rationale", ""), 80).replace("|", "\\|")
             lines.append(f"| {did} | {title} | {rationale} |")
         lines.append("")
     else:
@@ -184,8 +184,9 @@ def render_evidence_markdown(evidence_data: Dict[str, Any]) -> str:
         lines.append("|----|-------------|--------|")
         for task in tasks:
             tid = task.get("task_id", "N/A")
-            desc = _truncate(task.get("description", "N/A"), 60)
-            status = task.get("status", "N/A")
+            # BUG-EVIDENCE-TABLE-PIPE-002: Escape pipes in task fields (matches decision escaping)
+            desc = _truncate(task.get("description", "N/A"), 60).replace("|", "\\|")
+            status = task.get("status", "N/A").replace("|", "\\|")
             lines.append(f"| {tid} | {desc} | {status} |")
         lines.append("")
     else:
@@ -228,9 +229,29 @@ def generate_session_evidence(
 
     session_id = session_data.get("session_id", "UNKNOWN")
     output_dir = output_dir or _DEFAULT_EVIDENCE_DIR
-    output_dir.mkdir(parents=True, exist_ok=True)
 
-    filepath = output_dir / f"{session_id}.md"
+    # BUG-298-EVID-001: Validate output_dir is within the expected evidence root
+    try:
+        resolved_dir = output_dir.resolve()
+        default_resolved = _DEFAULT_EVIDENCE_DIR.resolve()
+        if not str(resolved_dir).startswith(str(default_resolved)):
+            logger.error(f"output_dir {output_dir} outside evidence root {_DEFAULT_EVIDENCE_DIR}")
+            return None
+    except (OSError, ValueError) as e:
+        logger.error(f"Failed to validate output_dir {output_dir}: {e}")
+        return None
+
+    # BUG-194-005: Wrap all filesystem ops in try-except for disk/permission errors
+    try:
+        output_dir.mkdir(parents=True, exist_ok=True)
+    except OSError as e:
+        logger.error(f"Failed to create evidence directory {output_dir}: {e}")
+        return None
+
+    # BUG-252-SES-001: Sanitize session_id to prevent path traversal
+    import re as _re
+    safe_session_id = _re.sub(r'[^A-Za-z0-9_\-]', '_', session_id)
+    filepath = output_dir / f"{safe_session_id}.md"
 
     # Idempotent: don't overwrite existing evidence
     if filepath.exists():
@@ -241,8 +262,11 @@ def generate_session_evidence(
     evidence_data = compile_evidence_data(session_data)
     markdown = render_evidence_markdown(evidence_data)
 
-    # Write file
-    filepath.write_text(markdown, encoding="utf-8")
+    try:
+        filepath.write_text(markdown, encoding="utf-8")
+    except OSError as e:
+        logger.error(f"Failed to write evidence file {filepath}: {e}")
+        return None
     logger.info(f"Generated session evidence: {filepath}")
 
     return str(filepath)

@@ -110,6 +110,12 @@ async def send_chat_message(request: ChatMessageRequest):
     agent_name = agent.get("name", "Agent")
 
     # Start governance session for new chat sessions (A.2 session bridge)
+    # BUG-206-PURGE-001: Cap _chat_gov_sessions to prevent unbounded memory growth
+    if len(_chat_gov_sessions) > 200:
+        oldest_keys = sorted(_chat_gov_sessions.keys())[:50]
+        for k in oldest_keys:
+            _chat_gov_sessions.pop(k, None)
+
     gov_collector = _chat_gov_sessions.get(session_id)
     if gov_collector is None:
         try:
@@ -122,7 +128,10 @@ async def send_chat_message(request: ChatMessageRequest):
     # Process command
     import time as _time
     _cmd_start = _time.time()
-    response_content = process_chat_command(request.content, agent_id)
+    # BUG-300-DEL-001: Track whether user explicitly issued /delegate command
+    _is_explicit_delegate = bool(request.content and request.content.strip().lower().startswith("/delegate"))
+    # BUG-206-RESPONSE-001: Guard against None return from process_chat_command
+    response_content = process_chat_command(request.content, agent_id) or ""
     _cmd_duration = int((_time.time() - _cmd_start) * 1000)
 
     # Record tool call in governance session
@@ -152,7 +161,9 @@ async def send_chat_message(request: ChatMessageRequest):
             logger.debug(f"Failed to record chat thought: {e}")
 
     # Handle async delegation
-    if response_content.startswith("__DELEGATE__:"):
+    # BUG-300-DEL-001: Only honour __DELEGATE__ sentinel from explicit /delegate command,
+    # not from LLM output (prevents prompt-injection-driven agent command injection)
+    if _is_explicit_delegate and response_content.startswith("__DELEGATE__:"):
         task_desc = response_content[13:]
         response_content = await _delegate_task_async(task_desc, agent_id)
 

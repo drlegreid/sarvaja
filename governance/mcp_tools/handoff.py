@@ -26,6 +26,11 @@ def register_handoff_tools(mcp) -> None:
                        source_session_id: Optional[str] = None) -> str:
         """Create a task handoff for delegation to another agent workspace."""
         try:
+            # BUG-299-HND-001: Sanitize task_id, from_agent, to_agent to prevent path
+            # traversal via write_handoff_evidence which builds filename from these fields
+            task_id = re.sub(r'[^A-Za-z0-9_\-]', '_', task_id)
+            from_agent = re.sub(r'[^A-Za-z0-9_\-]', '_', from_agent)
+            to_agent = re.sub(r'[^A-Za-z0-9_\-]', '_', to_agent)
             files_list = [f.strip() for f in (files_examined or "").split("|") if f.strip()]
             evidence_list = [e.strip() for e in (evidence_gathered or "").split("|") if e.strip()]
             steps_list = [s.strip() for s in (action_steps or "").split("|") if s.strip()]
@@ -80,7 +85,11 @@ def register_handoff_tools(mcp) -> None:
         """Mark a handoff as completed."""
         try:
             evidence_dir = Path(__file__).parent.parent.parent / "evidence"
-            filename = f"HANDOFF-{task_id}-{from_agent.upper()}-{to_agent.upper()}.md"
+            # BUG-229-HANDOFF-001: Whitelist sanitize to prevent path traversal
+            safe_task = re.sub(r'[^A-Za-z0-9_\-]', '_', task_id)
+            safe_from = re.sub(r'[^A-Za-z0-9_\-]', '_', from_agent.upper())
+            safe_to = re.sub(r'[^A-Za-z0-9_\-]', '_', to_agent.upper())
+            filename = f"HANDOFF-{safe_task}-{safe_from}-{safe_to}.md"
             filepath = evidence_dir / filename
 
             if not filepath.exists():
@@ -92,6 +101,9 @@ def register_handoff_tools(mcp) -> None:
 
             handoff.status = HandoffStatus.COMPLETED.value
             if completion_notes:
+                # BUG-288-HND-001: Guard against None evidence_gathered list
+                if handoff.evidence_gathered is None:
+                    handoff.evidence_gathered = []
                 handoff.evidence_gathered.append(f"Completion: {completion_notes}")
             write_handoff_evidence(handoff, evidence_dir)
 
@@ -109,7 +121,11 @@ def register_handoff_tools(mcp) -> None:
         """Get a specific handoff by task ID and agents."""
         try:
             evidence_dir = Path(__file__).parent.parent.parent / "evidence"
-            filename = f"HANDOFF-{task_id}-{from_agent.upper()}-{to_agent.upper()}.md"
+            # BUG-240-HND-001: Whitelist sanitize to prevent path traversal (matches handoff_complete)
+            safe_task = re.sub(r'[^A-Za-z0-9_\-]', '_', task_id)
+            safe_from = re.sub(r'[^A-Za-z0-9_\-]', '_', from_agent.upper())
+            safe_to = re.sub(r'[^A-Za-z0-9_\-]', '_', to_agent.upper())
+            filename = f"HANDOFF-{safe_task}-{safe_from}-{safe_to}.md"
             filepath = evidence_dir / filename
 
             if not filepath.exists():

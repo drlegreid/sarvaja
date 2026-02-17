@@ -35,6 +35,16 @@ def _get_rss_mb() -> float:
     return usage.ru_maxrss / 1024.0
 
 
+def _validate_jsonl_path(path: Path) -> bool:
+    """BUG-301-ORCH-001: Validate jsonl_path is under allowed base directories."""
+    _allowed_bases = [
+        Path.home() / ".claude" / "projects",
+        Path(__file__).resolve().parent.parent,  # governance root → project root parent
+    ]
+    resolved = path.resolve()
+    return any(str(resolved).startswith(str(b.resolve())) for b in _allowed_bases)
+
+
 def estimate_ingestion(jsonl_path: Path) -> dict[str, Any]:
     """Estimate ingestion work without processing.
 
@@ -43,13 +53,17 @@ def estimate_ingestion(jsonl_path: Path) -> dict[str, Any]:
     path = Path(jsonl_path)
     if not path.exists():
         return {"error": f"File not found: {path}", "status": "error"}
+    # BUG-301-ORCH-001: Path containment check
+    if not _validate_jsonl_path(path):
+        return {"error": "Path outside allowed directories", "status": "error"}
 
     size_bytes = path.stat().st_size
     size_mb = size_bytes / (1024 * 1024)
 
     # Count lines without loading entire file
     line_count = 0
-    with open(path, "r") as f:
+    # BUG-199-ORCH-001: Specify encoding for locale-independent file reading
+    with open(path, "r", encoding="utf-8") as f:
         for _ in f:
             line_count += 1
 
@@ -138,6 +152,9 @@ def run_ingestion_pipeline(
     path = Path(jsonl_path)
     if not path.exists():
         return {"error": f"File not found: {path}", "status": "error"}
+    # BUG-301-ORCH-001: Path containment check
+    if not _validate_jsonl_path(path):
+        return {"error": "Path outside allowed directories", "status": "error"}
 
     result: dict[str, Any] = {
         "session_id": session_id,

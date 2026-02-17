@@ -138,7 +138,17 @@ def _resolve_jsonl_path(
     """Resolve JSONL path from explicit path or auto-discovery."""
     if explicit_path:
         p = Path(explicit_path)
-        return p if p.exists() else None
+        if not p.exists():
+            return None
+        # BUG-299-ING-001: Validate path is under allowed base directories
+        _allowed_bases = [
+            Path.home() / ".claude" / "projects",
+            Path(__file__).resolve().parent.parent.parent,  # project root
+        ]
+        resolved = p.resolve()
+        if not any(str(resolved).startswith(str(b.resolve())) for b in _allowed_bases):
+            return None
+        return p
 
     try:
         from governance.services.cc_session_scanner import find_jsonl_for_session
@@ -159,7 +169,8 @@ def _list_all_checkpoints() -> str:
     checkpoints = []
     for f in sorted(cdir.glob("*.json")):
         try:
-            data = json.loads(f.read_text())
+            # BUG-204-ENCODING-001: Specify encoding to avoid UnicodeDecodeError in containers
+            data = json.loads(f.read_text(encoding="utf-8"))
             checkpoints.append({
                 "session_id": data.get("session_id", f.stem),
                 "phase": data.get("phase", "unknown"),
@@ -167,7 +178,7 @@ def _list_all_checkpoints() -> str:
                 "chunks_indexed": data.get("chunks_indexed", 0),
                 "updated_at": data.get("updated_at", ""),
             })
-        except (json.JSONDecodeError, OSError):
+        except (json.JSONDecodeError, OSError, UnicodeDecodeError):
             continue
 
     return format_mcp_result({"checkpoints": checkpoints, "count": len(checkpoints)})
