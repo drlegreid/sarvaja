@@ -60,7 +60,12 @@ def warn_deprecated(old_name: str, new_name: str) -> None:
 
 # TypeDB configuration (from environment or defaults)
 TYPEDB_HOST = os.getenv("TYPEDB_HOST", "localhost")
-TYPEDB_PORT = int(os.getenv("TYPEDB_PORT", "1729"))
+# BUG-308-COM-001: Guard against non-numeric TYPEDB_PORT at import time
+try:
+    TYPEDB_PORT = int(os.getenv("TYPEDB_PORT", "1729"))
+except (ValueError, TypeError):
+    logger.warning("Invalid TYPEDB_PORT env var, defaulting to 1729")
+    TYPEDB_PORT = 1729
 DATABASE_NAME = "sim-ai-governance"
 
 
@@ -116,4 +121,7 @@ def typedb_client() -> Generator[Any, None, None]:
             raise ConnectionError("Failed to connect to TypeDB")
         yield client
     finally:
-        client.close()
+        try:
+            client.close()
+        except Exception:
+            pass

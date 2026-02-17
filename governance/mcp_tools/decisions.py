@@ -24,7 +24,12 @@ from governance.mcp_tools.common import (
 
 # ChromaDB configuration
 CHROMADB_HOST = os.getenv("CHROMADB_HOST", "localhost")
-CHROMADB_PORT = int(os.getenv("CHROMADB_PORT", "8001"))
+# BUG-308-DEC-001: Guard against non-numeric CHROMADB_PORT at import time
+try:
+    CHROMADB_PORT = int(os.getenv("CHROMADB_PORT", "8001"))
+except (ValueError, TypeError):
+    logger.warning("Invalid CHROMADB_PORT env var, defaulting to 8001")
+    CHROMADB_PORT = 8001
 
 
 def register_decision_tools(mcp) -> None:
@@ -49,6 +54,10 @@ def register_decision_tools(mcp) -> None:
 
             impacts = client.get_decision_impacts(decision_id)
             return format_mcp_result(impacts)
+
+        # BUG-B185-006: Add except to prevent raw TypeDB errors to MCP caller
+        except Exception as e:
+            return format_mcp_result({"error": f"governance_get_decision_impacts failed: {e}"})
 
         finally:
             client.close()
@@ -78,7 +87,7 @@ def register_decision_tools(mcp) -> None:
                 "error": "DEPENDENCY_FAILURE",
                 "action_required": "START_SERVICES",
                 "services": ["typedb"],
-                "recovery_hint": "docker compose up -d typedb"
+                "recovery_hint": "podman compose --profile cpu up -d typedb"
             }
         """
         import socket
@@ -109,11 +118,13 @@ def register_decision_tools(mcp) -> None:
         chromadb_healthy = False
         chromadb_error = None
         try:
-            # Simple TCP check first
+            # BUG-240-DEC-001: Wrap socket in try/finally to prevent leak on exception
             sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            sock.settimeout(2)
-            result = sock.connect_ex((CHROMADB_HOST, CHROMADB_PORT))
-            sock.close()
+            try:
+                sock.settimeout(2)
+                result = sock.connect_ex((CHROMADB_HOST, CHROMADB_PORT))
+            finally:
+                sock.close()
             if result == 0:
                 # Port open, try HTTP heartbeat
                 import urllib.request
@@ -143,7 +154,7 @@ def register_decision_tools(mcp) -> None:
                 "error": "DEPENDENCY_FAILURE",
                 "action_required": "START_SERVICES",
                 "services": failed_services,
-                "recovery_hint": f"docker compose --profile dev up -d {' '.join(failed_services)}",
+                "recovery_hint": f"podman compose --profile cpu up -d {' '.join(failed_services)}",
                 "details": service_status,
                 "timestamp": datetime.now().isoformat()
             })
@@ -151,17 +162,24 @@ def register_decision_tools(mcp) -> None:
         # All healthy - get statistics
         stats = {}
         entropy_alerts = []
+        # BUG-271-DEC-001: Use try/finally to prevent client leak on exception
+        stat_client = None
         try:
-            client = get_typedb_client()
-            if client.connect():
-                rules = client.get_all_rules()
+            stat_client = get_typedb_client()
+            if stat_client.connect():
+                rules = stat_client.get_all_rules()
                 stats = {
                     "rules_count": len(rules),
                     "active_rules": len([r for r in rules if r.status == "ACTIVE"])
                 }
-                client.close()
         except Exception as e:
             logger.debug(f"Failed to get TypeDB statistics: {e}")
+        finally:
+            if stat_client is not None:
+                try:
+                    stat_client.close()
+                except Exception:
+                    pass
 
         # GAP-HEALTH-002: Document entropy detection for DSP trigger
         entropy_alerts = _detect_document_entropy()

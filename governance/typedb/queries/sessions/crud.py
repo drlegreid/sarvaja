@@ -58,42 +58,51 @@ class SessionCRUDOperations(SessionMutationOperations):
             logger.info(f"Session {session_id} already exists, skipping insert")
             return None
 
-        # BUG-TYPEQL-ESCAPE-SESSION-004: Escape session_id for TypeQL safety
-        session_id_escaped = session_id.replace('"', '\\"')
+        # BUG-306-SES-001: Escape backslash FIRST, then quotes (correct order)
+        # Previously only escaped quotes, allowing backslash injection
+        session_id_escaped = session_id.replace('\\', '\\\\').replace('"', '\\"')
 
         try:
             with self._driver.transaction(self.database, TransactionType.WRITE) as tx:
                     insert_parts = [f'has session-id "{session_id_escaped}"']
 
                     if name:
-                        name_escaped = name.replace('"', '\\"')
+                        # BUG-306-SES-001: Backslash-first escape
+                        name_escaped = name.replace('\\', '\\\\').replace('"', '\\"')
                         insert_parts.append(f'has session-name "{name_escaped}"')
                     if description:
-                        desc_escaped = description.replace('"', '\\"')
+                        # BUG-306-SES-001: Backslash-first escape
+                        desc_escaped = description.replace('\\', '\\\\').replace('"', '\\"')
                         insert_parts.append(f'has session-description "{desc_escaped}"')
                     if file_path:
-                        path_escaped = file_path.replace('"', '\\"')
+                        # BUG-306-SES-001: Backslash-first escape
+                        path_escaped = file_path.replace('\\', '\\\\').replace('"', '\\"')
                         insert_parts.append(f'has session-file-path "{path_escaped}"')
                     if agent_id:
-                        agent_escaped = agent_id.replace('"', '\\"')
+                        # BUG-306-SES-001: Backslash-first escape
+                        agent_escaped = agent_id.replace('\\', '\\\\').replace('"', '\\"')
                         insert_parts.append(f'has agent-id "{agent_escaped}"')
 
                     # CC session metadata (SESSION-CC-01-v1)
                     if cc_session_uuid:
-                        uuid_esc = cc_session_uuid.replace('"', '\\"')
+                        # BUG-306-SES-001: Backslash-first escape
+                        uuid_esc = cc_session_uuid.replace('\\', '\\\\').replace('"', '\\"')
                         insert_parts.append(f'has cc-session-uuid "{uuid_esc}"')
                     if cc_project_slug:
-                        slug_esc = cc_project_slug.replace('"', '\\"')
+                        # BUG-306-SES-001: Backslash-first escape
+                        slug_esc = cc_project_slug.replace('\\', '\\\\').replace('"', '\\"')
                         insert_parts.append(f'has cc-project-slug "{slug_esc}"')
                     if cc_git_branch:
-                        branch_esc = cc_git_branch.replace('"', '\\"')
+                        # BUG-306-SES-001: Backslash-first escape
+                        branch_esc = cc_git_branch.replace('\\', '\\\\').replace('"', '\\"')
                         insert_parts.append(f'has cc-git-branch "{branch_esc}"')
+                    # BUG-306-SES-003: Coerce integer fields to prevent TypeQL injection
                     if cc_tool_count is not None:
-                        insert_parts.append(f'has cc-tool-count {cc_tool_count}')
+                        insert_parts.append(f'has cc-tool-count {int(cc_tool_count)}')
                     if cc_thinking_chars is not None:
-                        insert_parts.append(f'has cc-thinking-chars {cc_thinking_chars}')
+                        insert_parts.append(f'has cc-thinking-chars {int(cc_thinking_chars)}')
                     if cc_compaction_count is not None:
-                        insert_parts.append(f'has cc-compaction-count {cc_compaction_count}')
+                        insert_parts.append(f'has cc-compaction-count {int(cc_compaction_count)}')
 
                     now = datetime.now()
                     timestamp_str = now.strftime('%Y-%m-%dT%H:%M:%S')
@@ -115,8 +124,8 @@ class SessionCRUDOperations(SessionMutationOperations):
         """End a session by setting completed-at timestamp."""
         from typedb.driver import TransactionType
 
-        # BUG-TYPEQL-ESCAPE-SESSION-004: Escape session_id for TypeQL safety
-        sid = session_id.replace('"', '\\"')
+        # BUG-306-SES-002: Escape backslash FIRST, then quotes (correct order)
+        sid = session_id.replace('\\', '\\\\').replace('"', '\\"')
 
         try:
             with self._driver.transaction(self.database, TransactionType.WRITE) as tx:

@@ -51,13 +51,15 @@ class SessionMutationOperations:
         if not existing:
             return None
 
-        # BUG-TYPEQL-ESCAPE-SESSION-001: Escape session_id once, reuse throughout
-        session_id_escaped = session_id.replace('"', '\\"')
+        # BUG-306-MUT-001: Escape backslash FIRST, then quotes (correct order)
+        # Previously only escaped quotes, allowing backslash injection
+        session_id_escaped = session_id.replace('\\', '\\\\').replace('"', '\\"')
 
         try:
             with self._driver.transaction(self.database, TransactionType.WRITE) as tx:
                     # Update started-at
                     if start_time is not None:
+                        # BUG-306-MUT-004: Validate timestamp format
                         ts = start_time[:19]  # YYYY-MM-DDTHH:MM:SS
                         delete_query = f"""
                             match
@@ -115,8 +117,8 @@ class SessionMutationOperations:
                         except Exception:
                             pass  # May not have existing description
 
-                        # Insert new description
-                        desc_escaped = description.replace('"', '\\"')
+                        # BUG-306-MUT-001: Backslash-first escape
+                        desc_escaped = description.replace('\\', '\\\\').replace('"', '\\"')
                         insert_query = f"""
                             match
                                 $s isa work-session, has session-id "{session_id_escaped}";
@@ -140,8 +142,8 @@ class SessionMutationOperations:
                         except Exception:
                             pass
 
-                        # Insert new agent_id
-                        agent_escaped = agent_id.replace('"', '\\"')
+                        # BUG-306-MUT-001: Backslash-first escape
+                        agent_escaped = agent_id.replace('\\', '\\\\').replace('"', '\\"')
                         insert_query = f"""
                             match
                                 $s isa work-session, has session-id "{session_id_escaped}";
@@ -186,7 +188,8 @@ class SessionMutationOperations:
                     }
                     for attr, val in cc_str_fields.items():
                         if val is not None:
-                            val_esc = val.replace('"', '\\"')
+                            # BUG-306-MUT-001: Backslash-first escape
+                            val_esc = val.replace('\\', '\\\\').replace('"', '\\"')
                             try:
                                 tx.query(f'''
                                     match $s isa work-session, has session-id "{session_id_escaped}",
@@ -207,6 +210,8 @@ class SessionMutationOperations:
                     }
                     for attr, val in cc_int_fields.items():
                         if val is not None:
+                            # BUG-306-MUT-003: Coerce to int to prevent TypeQL injection
+                            safe_val = int(val)
                             try:
                                 tx.query(f'''
                                     match $s isa work-session, has session-id "{session_id_escaped}",
@@ -217,7 +222,7 @@ class SessionMutationOperations:
                                 pass
                             tx.query(f'''
                                 match $s isa work-session, has session-id "{session_id_escaped}";
-                                insert $s has {attr} {val};
+                                insert $s has {attr} {safe_val};
                             ''').resolve()
 
                     tx.commit()
@@ -244,8 +249,8 @@ class SessionMutationOperations:
         if not existing:
             return False
 
-        # BUG-TYPEQL-ESCAPE-SESSION-001: Escape session_id for TypeQL safety
-        session_id_escaped = session_id.replace('"', '\\"')
+        # BUG-306-MUT-002: Escape backslash FIRST, then quotes (correct order)
+        session_id_escaped = session_id.replace('\\', '\\\\').replace('"', '\\"')
 
         try:
             # Delete relations in separate transactions to avoid
