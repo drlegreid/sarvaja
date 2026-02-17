@@ -51,6 +51,9 @@ def register_agent_tools(mcp) -> None:
                 })
             else:
                 return format_mcp_result({"error": f"Failed to create agent {agent_id}"})
+        # BUG-192-001: Add except to prevent raw TypeDB errors to MCP caller
+        except Exception as e:
+            return format_mcp_result({"error": f"agent_create failed: {e}"})
         finally:
             client.close()
 
@@ -74,6 +77,9 @@ def register_agent_tools(mcp) -> None:
                 return format_mcp_result(asdict(agent))
             else:
                 return format_mcp_result({"error": f"Agent {agent_id} not found"})
+        # BUG-192-001: Add except to prevent raw TypeDB errors to MCP caller
+        except Exception as e:
+            return format_mcp_result({"error": f"agent_get failed: {e}"})
         finally:
             client.close()
 
@@ -91,6 +97,9 @@ def register_agent_tools(mcp) -> None:
                 "count": len(agents),
                 "source": "typedb"
             })
+        # BUG-192-001: Add except to prevent raw TypeDB errors to MCP caller
+        except Exception as e:
+            return format_mcp_result({"error": f"agents_list failed: {e}"})
         finally:
             client.close()
 
@@ -131,6 +140,9 @@ def register_agent_tools(mcp) -> None:
                 })
             else:
                 return format_mcp_result({"error": f"Failed to update agent {agent_id}"})
+        # BUG-192-001: Add except to prevent raw TypeDB errors to MCP caller
+        except Exception as e:
+            return format_mcp_result({"error": f"agent_trust_update failed: {e}"})
         finally:
             client.close()
 
@@ -190,6 +202,9 @@ def register_agent_tools(mcp) -> None:
             }
 
             return format_mcp_result(dashboard)
+        # BUG-192-001: Add except to prevent raw TypeDB errors to MCP caller
+        except Exception as e:
+            return format_mcp_result({"error": f"agents_dashboard failed: {e}"})
         finally:
             client.close()
 
@@ -209,8 +224,9 @@ def register_agent_tools(mcp) -> None:
                 (executor: $agent, executed: $task) isa task-execution;
             """
             if agent_id:
-                # BUG-AGENT-ACTIVITY-ESCAPE-001: Escape agent_id before TypeQL interpolation
-                agent_id_escaped = agent_id.replace('"', '\\"')
+                # BUG-342-AGT-001: Escape backslash FIRST then quotes (canonical two-step
+                # TypeQL escape — previous version missed backslash, allowing malformed literals)
+                agent_id_escaped = agent_id.replace('\\', '\\\\').replace('"', '\\"')
                 query += f'$agent has agent-id "{agent_id_escaped}";'
 
             query += """

@@ -38,6 +38,9 @@ def register_task_linking_tools(mcp) -> None:
                 return format_mcp_result({
                     "error": f"Failed to link task {task_id} to session {session_id}"
                 })
+        # BUG-B185-007: Add except to match task_link_document pattern
+        except Exception as e:
+            return format_mcp_result({"error": f"task_link_session failed: {e}"})
         finally:
             client.close()
 
@@ -65,6 +68,9 @@ def register_task_linking_tools(mcp) -> None:
                 return format_mcp_result({
                     "error": f"Failed to link task {task_id} to rule {rule_id}"
                 })
+        # BUG-B185-007: Add except to match task_link_document pattern
+        except Exception as e:
+            return format_mcp_result({"error": f"task_link_rule failed: {e}"})
         finally:
             client.close()
 
@@ -92,6 +98,9 @@ def register_task_linking_tools(mcp) -> None:
                 return format_mcp_result({
                     "error": f"Failed to link evidence {evidence_path} to task {task_id}"
                 })
+        # BUG-B185-007: Add except to match task_link_document pattern
+        except Exception as e:
+            return format_mcp_result({"error": f"task_link_evidence failed: {e}"})
         finally:
             client.close()
 
@@ -103,7 +112,8 @@ def register_task_linking_tools(mcp) -> None:
             if not client.connect():
                 return format_mcp_result({"error": "Failed to connect to TypeDB"})
 
-            evidence_files = client.get_task_evidence(task_id)
+            # BUG-271-TASKSLINK-001: Guard against None return from get_task_evidence
+            evidence_files = client.get_task_evidence(task_id) or []
 
             if MONITORING_AVAILABLE:
                 log_monitor_event(event_type="link_event", source="mcp-task-get-evidence",
@@ -113,6 +123,9 @@ def register_task_linking_tools(mcp) -> None:
                 "evidence_files": evidence_files,
                 "count": len(evidence_files)
             })
+        # BUG-B185-007: Add except to match task_link_document pattern
+        except Exception as e:
+            return format_mcp_result({"error": f"task_get_evidence failed: {e}"})
         finally:
             client.close()
 
@@ -140,6 +153,9 @@ def register_task_linking_tools(mcp) -> None:
                 return format_mcp_result({
                     "error": f"Failed to link task {task_id} to commit {commit_sha}"
                 })
+        # BUG-B185-007: Add except to match task_link_document pattern
+        except Exception as e:
+            return format_mcp_result({"error": f"task_link_commit failed: {e}"})
         finally:
             client.close()
 
@@ -151,7 +167,8 @@ def register_task_linking_tools(mcp) -> None:
             if not client.connect():
                 return format_mcp_result({"error": "Failed to connect to TypeDB"})
 
-            commits = client.get_task_commits(task_id)
+            # BUG-271-TASKSLINK-001: Guard against None return from get_task_commits
+            commits = client.get_task_commits(task_id) or []
 
             if MONITORING_AVAILABLE:
                 log_monitor_event(event_type="link_event", source="mcp-task-get-commits",
@@ -161,6 +178,9 @@ def register_task_linking_tools(mcp) -> None:
                 "commits": commits,
                 "count": len(commits)
             })
+        # BUG-B185-007: Add except to match task_link_document pattern
+        except Exception as e:
+            return format_mcp_result({"error": f"task_get_commits failed: {e}"})
         finally:
             client.close()
 
@@ -201,7 +221,8 @@ def register_task_linking_tools(mcp) -> None:
             if not client.connect():
                 return format_mcp_result({"error": "Failed to connect to TypeDB"})
 
-            documents = client.get_task_documents(task_id)
+            # BUG-271-TASKSLINK-001: Guard against None return from get_task_documents
+            documents = client.get_task_documents(task_id) or []
 
             if MONITORING_AVAILABLE:
                 log_monitor_event(event_type="link_event", source="mcp-task-get-documents",
@@ -237,18 +258,27 @@ def register_task_linking_tools(mcp) -> None:
                 if MONITORING_AVAILABLE:
                     log_monitor_event(event_type="task_event", source="mcp-task-update-details",
                         details={"task_id": task_id, "action": "update_details"})
+                # BUG-344-LNK-001: locals() inside a list comprehension sees the
+                # comprehension's own scope in Python 3, NOT the enclosing function's
+                # variables — so locals().get(s) always returns None. Build explicitly.
+                updated_sections = [
+                    s for s, v in [
+                        ("business", business), ("design", design),
+                        ("architecture", architecture), ("test_section", test_section)
+                    ] if v is not None
+                ]
                 return format_mcp_result({
                     "task_id": task_id,
-                    "updated_sections": [
-                        s for s in ["business", "design", "architecture", "test_section"]
-                        if locals().get(s) is not None
-                    ],
+                    "updated_sections": updated_sections,
                     "message": f"Successfully updated details for task {task_id}"
                 })
             else:
                 return format_mcp_result({
                     "error": f"Failed to update details for task {task_id}"
                 })
+        # BUG-B185-007: Add except to match task_link_document pattern
+        except Exception as e:
+            return format_mcp_result({"error": f"task_update_details failed: {e}"})
         finally:
             client.close()
 
@@ -274,5 +304,8 @@ def register_task_linking_tools(mcp) -> None:
                 "task_id": task_id,
                 **details
             })
+        # BUG-B185-007: Add except to match task_link_document pattern
+        except Exception as e:
+            return format_mcp_result({"error": f"task_get_details failed: {e}"})
         finally:
             client.close()

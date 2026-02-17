@@ -73,7 +73,10 @@ def register_memory_tier_tools(mcp) -> None:
         tier = tier.upper()
         tag_list = [t.strip() for t in (tags or "").split(",") if t.strip()]
         ts = datetime.now().isoformat()
-        memory_id = f"MEM-{tier}-{datetime.now().strftime('%Y%m%d%H%M%S')}"
+        # BUG-343-MEM-001: Include microseconds + random suffix to prevent ID collision
+        # when two concurrent calls occur within the same second
+        import uuid as _uuid_mod
+        memory_id = f"MEM-{tier}-{datetime.now().strftime('%Y%m%d%H%M%S%f')}-{_uuid_mod.uuid4().hex[:6]}"
 
         if tier == "L1":
             # BUG-331-MEM-001: Thread-safe access to _short_memory

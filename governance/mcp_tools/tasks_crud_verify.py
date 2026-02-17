@@ -58,21 +58,24 @@ def register_task_verify_tools(mcp) -> None:
         evidence_short = evidence[:500] if len(evidence) > 500 else evidence
         try:
             with typedb_client() as client:
-                success = client.update_task(task_id=task_id, status="completed")
+                # BUG-VERIFY-STATUS-001: Use uppercase "DONE" so lifecycle timestamps fire
+                success = client.update_task(task_id=task_id, status="DONE")
                 if success:
                     _monitor_task("mcp-task-verify", task_id, "verify", method=verification_method)
                     return format_mcp_result({
-                        "task_id": task_id, "status": "completed", "verified": True,
+                        "task_id": task_id, "status": "DONE", "verified": True,
                         "verification_method": verification_method,
                         "evidence": evidence_short, "rule": "TEST-FIX-01-v1",
                         "message": f"Task {task_id} verified and marked completed"
                     })
+                # BUG-254-VER-001: Return verified=False when TypeDB update fails
                 return format_mcp_result({
-                    "task_id": task_id, "verified": True,
+                    "task_id": task_id, "verified": False,
                     "verification_method": verification_method,
                     "evidence": evidence_short,
-                    "note": "Task not in TypeDB but verification recorded",
-                    "message": f"Verification complete for {task_id}"
+                    "error": f"Task {task_id} not found in TypeDB - status not updated",
+                    "hint": "Create the task first with task_create, then verify",
+                    "message": f"Verification failed for {task_id}: not in TypeDB"
                 })
         except Exception as e:
             return format_mcp_result({"error": f"task_verify failed: {e}"})
@@ -105,15 +108,23 @@ def register_task_verify_tools(mcp) -> None:
         if not isinstance(todos, list):
             return format_mcp_result({"error": "todos_json must be a JSON array"})
 
+        # BUG-344-VER-001: Cap todos list to prevent DoS via unbounded TypeDB calls
+        _MAX_TODOS = 500
+        if len(todos) > _MAX_TODOS:
+            return format_mcp_result({"error": f"Too many todos ({len(todos)}); max is {_MAX_TODOS}"})
+
         try:
             with typedb_client() as client:
                 date_str = datetime.now().strftime("%Y%m%d")
                 created, updated, skipped = 0, 0, 0
                 synced_tasks = []
 
+                # BUG-SYNC-STATUS-001: Map TodoWrite lowercase to TypeDB uppercase
+                _STATUS_MAP = {"pending": "TODO", "in_progress": "IN_PROGRESS", "completed": "DONE"}
                 for i, todo in enumerate(todos, 1):
                     content = todo.get("content", "")
-                    status = todo.get("status", "pending")
+                    raw_status = todo.get("status", "pending")
+                    status = _STATUS_MAP.get(raw_status, raw_status.upper())
                     if not content:
                         skipped += 1
                         continue

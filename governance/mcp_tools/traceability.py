@@ -95,6 +95,10 @@ def register_traceability_tools(mcp) -> None:
         Returns:
             Complete trace chain with all linked governance entities.
         """
+        # BUG-344-TRC-001: Cap depth to prevent exponential TypeDB query fan-out
+        # (O(sessions × rules) per depth level — unbounded depth is a DoS vector)
+        depth = max(0, min(depth, 3))
+
         try:
             with typedb_client() as client:
                 result = _trace_task(client, task_id)

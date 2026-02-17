@@ -151,7 +151,10 @@ def _resolve_jsonl_path(
             Path(__file__).resolve().parent.parent.parent,  # project root
         ]
         resolved = p.resolve()
-        if not any(str(resolved).startswith(str(b.resolve())) for b in _allowed_bases):
+        # BUG-342-ING-001: Use is_relative_to() instead of str.startswith() to
+        # prevent prefix-bypass (e.g. /home/user/.claude/projects-evil/... matches
+        # /home/user/.claude/projects with startswith but NOT with is_relative_to)
+        if not any(resolved == b.resolve() or resolved.is_relative_to(b.resolve()) for b in _allowed_bases):
             return None
         return p
 

@@ -107,7 +107,8 @@ def write_handoff_evidence(
     filepath = evidence_dir / filename
 
     content = handoff.to_markdown()
-    filepath.write_text(content)
+    # BUG-342-HND-001: Specify encoding for container compatibility (LANG=C defaults to ASCII)
+    filepath.write_text(content, encoding="utf-8")
 
     return filepath
 
@@ -125,7 +126,8 @@ def read_handoff_evidence(filepath: Path) -> Optional[TaskHandoff]:
     if not filepath.exists():
         return None
 
-    content = filepath.read_text()
+    # BUG-342-HND-001: Specify encoding for container compatibility
+    content = filepath.read_text(encoding="utf-8")
     return parse_handoff(content)
 
 

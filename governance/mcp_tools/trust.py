@@ -42,8 +42,8 @@ def register_trust_tools(mcp) -> None:
                 return format_mcp_result({"error": "Failed to connect to TypeDB"})
 
             # Query agent data from TypeDB
-            # BUG-TRUST-ESCAPE-001: Escape agent_id before TypeQL interpolation
-            agent_id_escaped = agent_id.replace('"', '\\"')
+            # BUG-259-TRUST-001: Escape backslash THEN quotes for TypeQL safety
+            agent_id_escaped = agent_id.replace('\\', '\\\\').replace('"', '\\"')
             query = f'''
                 match
                     $a isa agent, has agent-id "{agent_id_escaped}";
@@ -61,15 +61,18 @@ def register_trust_tools(mcp) -> None:
                 return format_mcp_result({"error": f"Agent {agent_id} not found"})
 
             result = results[0]
-            trust_score = result.get('trust', 0.0)
+            # BUG-344-TRU-001: Coerce DB values to expected types — TypeDB may
+            # return str or int for numeric fields, causing TypeError in comparisons
+            trust_score = float(result.get('trust', 0.0))
+            trust_score = max(0.0, min(1.0, trust_score))  # clamp to valid range
 
             score = TrustScore(
                 agent_id=agent_id,
                 agent_name=result.get('name', 'Unknown'),
                 trust_score=trust_score,
-                compliance_rate=result.get('compliance', 0.0),
-                accuracy_rate=result.get('accuracy', 0.0),
-                tenure_days=result.get('tenure', 0),
+                compliance_rate=float(result.get('compliance', 0.0)),
+                accuracy_rate=float(result.get('accuracy', 0.0)),
+                tenure_days=int(float(result.get('tenure', 0))),
                 vote_weight=calculate_vote_weight(trust_score)
             )
 
@@ -80,6 +83,10 @@ def register_trust_tools(mcp) -> None:
                 details={"agent_id": agent_id, "trust_score": trust_score}
             )
             return format_mcp_result(asdict(score))
+
+        # BUG-192-004: Add except to prevent raw TypeDB errors to MCP caller
+        except Exception as e:
+            return format_mcp_result({"error": f"governance_get_trust_score failed: {e}"})
 
         finally:
             client.close()
