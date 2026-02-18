@@ -238,7 +238,8 @@ def generate_session_evidence(
         # BUG-347-EVD-001: Use is_relative_to() instead of startswith() to prevent
         # prefix-sibling bypass (e.g. evidence_evil matching evidence)
         if not resolved_dir.is_relative_to(default_resolved):
-            logger.error(f"output_dir {output_dir} outside evidence root {_DEFAULT_EVIDENCE_DIR}")
+            # BUG-442-EVD-001: Redact full paths to prevent info disclosure in logs
+            logger.error(f"output_dir {output_dir.name} outside evidence root")
             return None
     except (OSError, ValueError) as e:
         # BUG-407-EVD-001: Add exc_info for stack trace preservation
