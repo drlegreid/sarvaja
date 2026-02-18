@@ -86,13 +86,14 @@ def audit_node(state: DSPState) -> dict:
 
     except Exception as e:
         duration_ms = int((time.perf_counter() - start_time) * 1000)
-        logger.error(f"[DSP] AUDIT phase failed: {e}")
+        # BUG-410-NOD-001: Don't leak exception text into state/API; add exc_info
+        logger.error(f"[DSP] AUDIT phase failed: {e}", exc_info=True)
         return {
             "current_phase": "audit_failed",
             "status": "failed",
-            "error_message": f"AUDIT phase failed: {str(e)}",
+            "error_message": f"AUDIT phase failed: {type(e).__name__}",
             "phase_results": state.get("phase_results", []) + [
-                _create_phase_result("audit", "failed", state, str(e), duration_ms)
+                _create_phase_result("audit", "failed", state, type(e).__name__, duration_ms)
             ],
         }
 
@@ -139,13 +140,14 @@ def hypothesize_node(state: DSPState) -> dict:
 
     except Exception as e:
         duration_ms = int((time.perf_counter() - start_time) * 1000)
-        logger.error(f"[DSP] HYPOTHESIZE phase failed: {e}")
+        # BUG-410-NOD-002: Don't leak exception text into state/API; add exc_info
+        logger.error(f"[DSP] HYPOTHESIZE phase failed: {e}", exc_info=True)
         return {
             "current_phase": "hypothesize_failed",
             "status": "failed",
-            "error_message": f"HYPOTHESIZE phase failed: {str(e)}",
+            "error_message": f"HYPOTHESIZE phase failed: {type(e).__name__}",
             "phase_results": state.get("phase_results", []) + [
-                _create_phase_result("hypothesize", "failed", state, str(e), duration_ms)
+                _create_phase_result("hypothesize", "failed", state, type(e).__name__, duration_ms)
             ],
         }
 
@@ -191,12 +193,13 @@ def measure_node(state: DSPState) -> dict:
 
     except Exception as e:
         duration_ms = int((time.perf_counter() - start_time) * 1000)
-        logger.error(f"[DSP] MEASURE phase failed: {e}")
+        # BUG-410-NOD-003: Don't leak exception text into state/API; add exc_info
+        logger.error(f"[DSP] MEASURE phase failed: {e}", exc_info=True)
         return {
             "current_phase": "measure_failed",
             "status": "failed",
-            "error_message": f"MEASURE phase failed: {str(e)}",
+            "error_message": f"MEASURE phase failed: {type(e).__name__}",
             "phase_results": state.get("phase_results", []) + [
-                _create_phase_result("measure", "failed", state, str(e), duration_ms)
+                _create_phase_result("measure", "failed", state, type(e).__name__, duration_ms)
             ],
         }

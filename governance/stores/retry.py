@@ -76,8 +76,10 @@ def retry_on_transient(max_attempts: int = 2, base_delay: float = 0.5):
                         )
                         time.sleep(delay)
                     else:
+                        # BUG-411-RTY-001: Add exc_info for stack trace preservation
                         logger.error(
-                            f"Transient error in {fn.__name__} after {max_attempts} attempts: {e}"
+                            f"Transient error in {fn.__name__} after {max_attempts} attempts: {e}",
+                            exc_info=True,
                         )
             raise last_exc
         return wrapper

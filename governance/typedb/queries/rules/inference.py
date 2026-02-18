@@ -119,7 +119,8 @@ class RuleInferenceQueries:
             logger.info(f"Created dependency: {dependent_id} -> {dependency_id}")
             return True
         except Exception as e:
-            logger.warning(f"Failed to create dependency {dependent_id}->{dependency_id}: {e}")
+            # BUG-412-INF-001: Add exc_info for stack trace preservation
+            logger.warning(f"Failed to create dependency {dependent_id}->{dependency_id}: {e}", exc_info=True)
             return False
 
     def get_decision_impacts(self, decision_id: str) -> List[str]:

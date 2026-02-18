@@ -69,7 +69,8 @@ class EmbeddingPipeline:
             return docs
 
         except Exception as e:
-            logger.error(f"Error embedding rules: {e}")
+            # BUG-413-EP-001: Add exc_info for stack trace preservation
+            logger.error(f"Error embedding rules: {e}", exc_info=True)
             return []
 
     def embed_and_store_rule(self, rule_id: str, rule_content: str) -> VectorDocument:
@@ -106,7 +107,8 @@ class EmbeddingPipeline:
             return docs
 
         except Exception as e:
-            logger.error(f"Error embedding decisions: {e}")
+            # BUG-413-EP-002: Add exc_info for stack trace preservation
+            logger.error(f"Error embedding decisions: {e}", exc_info=True)
             return []
 
     def embed_session(self, session_id: str, session_content: str) -> VectorDocument:
@@ -162,7 +164,8 @@ class EmbeddingPipeline:
             return docs
 
         except Exception as e:
-            logger.error(f"Error embedding sessions: {e}")
+            # BUG-413-EP-003: Add exc_info for stack trace preservation
+            logger.error(f"Error embedding sessions: {e}", exc_info=True)
             return []
 
     def store_embedding(self, doc: VectorDocument) -> bool:

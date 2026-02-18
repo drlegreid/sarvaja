@@ -272,7 +272,8 @@ class RuleCRUDOperations:
                 self.archive_rule(rule_id, reason="deleted")
             except Exception as e:
                 # Log but don't fail deletion if archiving fails
-                logger.warning(f"Could not archive rule {rule_id}: {e}")
+                # BUG-412-RCR-001: Add exc_info for stack trace preservation
+                logger.warning(f"Could not archive rule {rule_id}: {e}", exc_info=True)
 
         from typedb.driver import TransactionType
 

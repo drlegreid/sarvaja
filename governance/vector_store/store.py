@@ -67,7 +67,8 @@ class VectorStore:
             logger.error("TypeDB driver not installed. Run: pip install typedb-driver>=3.7.0")
             return False
         except Exception as e:
-            logger.error(f"Failed to connect to TypeDB: {e}")
+            # BUG-413-VS-001: Add exc_info for stack trace preservation
+            logger.error(f"Failed to connect to TypeDB: {e}", exc_info=True)
             return False
 
     def close(self):
@@ -93,7 +94,8 @@ class VectorStore:
             self._cache[doc.id] = doc
             return True
         except Exception as e:
-            logger.error(f"Insert failed: {e}")
+            # BUG-413-VS-002: Add exc_info for stack trace preservation
+            logger.error(f"Insert failed: {e}", exc_info=True)
             return False
 
     def insert_batch(self, docs: List[VectorDocument]) -> int:
@@ -112,7 +114,8 @@ class VectorStore:
                     self._cache[doc.id] = doc
                     success_count += 1
                 except Exception as e:
-                    logger.warning(f"Failed to insert {doc.id}: {e}")
+                    # BUG-413-VS-003: Add exc_info for stack trace preservation
+                    logger.warning(f"Failed to insert {doc.id}: {e}", exc_info=True)
             # BUG-203-VSTORE-001: Only commit if at least one insert succeeded
             if success_count > 0:
                 tx.commit()
@@ -159,7 +162,8 @@ class VectorStore:
                     results.append(doc)
                     self._cache[doc.id] = doc
                 except Exception as e:
-                    logger.warning(f"Failed to parse vector: {e}")
+                    # BUG-413-VS-004: Add exc_info for stack trace preservation
+                    logger.warning(f"Failed to parse vector: {e}", exc_info=True)
 
         return results
 
@@ -258,7 +262,8 @@ class VectorStore:
 
             return True
         except Exception as e:
-            logger.error(f"Delete failed: {e}")
+            # BUG-413-VS-005: Add exc_info for stack trace preservation
+            logger.error(f"Delete failed: {e}", exc_info=True)
             return False
 
     def clear_cache(self):

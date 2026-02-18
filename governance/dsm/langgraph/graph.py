@@ -281,9 +281,10 @@ def _run_fallback_workflow(graph: StateGraph, initial_state: DSPState) -> DSPSta
             result = graph.nodes[node_name](state)
             state.update(result)
         except Exception as e:
-            logger.error(f"[DSP] Node {node_name} failed: {e}")
+            # BUG-410-DSM-001: Don't leak str(e) into state; add exc_info
+            logger.error(f"[DSP] Node {node_name} failed: {e}", exc_info=True)
             state["status"] = "failed"
-            state["error_message"] = str(e)
+            state["error_message"] = f"Node '{node_name}' failed: {type(e).__name__}"
             break
 
         # GAP-WORKFLOW-LOOP-001: Check for retry loop after validate

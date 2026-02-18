@@ -34,15 +34,33 @@ def discover_log_files(
     if not include_agents:
         files = [f for f in files if not f.name.startswith("agent-")]
 
-    files.sort(key=lambda f: f.stat().st_mtime, reverse=True)
+    # BUG-278-PARSER-002: Safe mtime to handle files deleted between glob and sort
+    def _safe_mtime(p: Path) -> float:
+        try:
+            return p.stat().st_mtime
+        except OSError:
+            return 0.0
+
+    files.sort(key=_safe_mtime, reverse=True)
     return files
 
 
 def _parse_timestamp(raw: str) -> datetime:
-    """Parse ISO 8601 timestamp, handling Z suffix."""
+    """Parse ISO 8601 timestamp, handling Z suffix.
+
+    BUG-245-PAR-001: Always produce tz-aware datetime (UTC default)
+    to prevent TypeError on mixed tz-aware/tz-naive subtraction.
+    """
+    # BUG-278-PARSER-003: Guard against non-string input (int timestamps, None)
+    if not isinstance(raw, str):
+        raise TypeError(f"Expected str timestamp, got {type(raw).__name__}")
     if raw.endswith("Z"):
         raw = raw[:-1] + "+00:00"
-    return datetime.fromisoformat(raw)
+    dt = datetime.fromisoformat(raw)
+    if dt.tzinfo is None:
+        from datetime import timezone
+        dt = dt.replace(tzinfo=timezone.utc)
+    return dt
 
 
 def _extract_text_content(content: list) -> str | None:
@@ -118,7 +136,15 @@ def parse_log_file(
         ParsedEntry for each valid line.
     """
     filepath = Path(filepath)
-    with open(filepath, "r") as f:
+    # BUG-278-PARSER-001: Guard against file deletion between discovery and parsing
+    try:
+        f = open(filepath, "r", encoding="utf-8")
+    except (FileNotFoundError, PermissionError) as exc:
+        # BUG-413-PAR-001: Add exc_info for stack trace preservation
+        logger.warning("Cannot open log file %s: %s", filepath, exc, exc_info=True)
+        return
+    # BUG-216-003-001: Specify encoding for non-UTF-8 locales
+    with f:
         for line in f:
             line = line.strip()
             if not line:
@@ -202,7 +228,15 @@ def parse_log_file_extended(
         ParsedEntry with extended fields populated.
     """
     filepath = Path(filepath)
-    with open(filepath, "r") as f:
+    # BUG-278-PARSER-001: Guard against file deletion between discovery and parsing
+    try:
+        f = open(filepath, "r", encoding="utf-8")
+    except (FileNotFoundError, PermissionError) as exc:
+        # BUG-413-PAR-002: Add exc_info for stack trace preservation
+        logger.warning("Cannot open log file %s: %s", filepath, exc, exc_info=True)
+        return
+    # BUG-216-003-001: Specify encoding for non-UTF-8 locales
+    with f:
         for line_num, line in enumerate(f):
             if line_num < start_line:
                 continue
