@@ -84,7 +84,8 @@ def register_session_tools(mcp) -> None:
                 })
 
             except Exception as e:
-                logger.debug(f"Failed to parse session file {filepath}: {e}")
+                # BUG-477-ESS-1: Sanitize debug/info logger
+                logger.debug(f"Failed to parse session file {filepath}: {type(e).__name__}")
                 continue
 
         return format_mcp_result({

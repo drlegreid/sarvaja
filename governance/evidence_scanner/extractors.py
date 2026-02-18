@@ -83,7 +83,7 @@ TASK_PATTERNS = [
 
 RULE_PATTERNS = [
     r'\b(RULE-\d{3})\b',                    # Legacy: RULE-001
-    r'\b([A-Z]+-[A-Z]+-\d{2}-v\d)\b',       # Semantic: SESSION-EVID-01-v1
+    r'\b([A-Z]+-[A-Z]+-\d{2}-v\d+)\b',      # Semantic: SESSION-EVID-01-v1, v10+
 ]
 
 GAP_PATTERNS = [
@@ -115,12 +115,24 @@ def extract_task_refs(content: str) -> Set[str]:
     return refs
 
 
+def _normalize_rule_id(raw: str) -> str:
+    """Normalize rule ID: uppercase domain, preserve lowercase v in version.
+
+    TypeDB stores version suffixes as lowercase (e.g., SESSION-EVID-01-v1).
+    Blanket .upper() would produce -V1, breaking TypeDB matches.
+    """
+    m = re.match(r'^(.+?)(-v\d+)$', raw, re.IGNORECASE)
+    if m:
+        return m.group(1).upper() + m.group(2).lower()
+    return raw.upper()
+
+
 def extract_rule_refs(content: str) -> Set[str]:
     """Extract rule ID references from content."""
     refs = set()
     for pattern in RULE_PATTERNS:
         matches = re.findall(pattern, content, re.IGNORECASE)
-        refs.update(m.upper() if isinstance(m, str) else m[0].upper() for m in matches)
+        refs.update(_normalize_rule_id(m if isinstance(m, str) else m[0]) for m in matches)
     return refs
 
 

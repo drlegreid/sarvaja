@@ -256,7 +256,8 @@ def _detect_document_entropy() -> list:
             if open_high > 50:
                 alerts.append(f"HIGH gap entropy: {open_high} open gaps (threshold: 50)")
     except Exception as e:
-        logger.debug(f"Gap entropy check failed: {e}")
+        # BUG-477-DEC-1: Sanitize debug/info logger
+        logger.debug(f"Gap entropy check failed: {type(e).__name__}")
 
     # 2. Check for large Python files (>300 lines per RULE-012)
     try:
@@ -270,7 +271,8 @@ def _detect_document_entropy() -> list:
         if large_files:
             alerts.append(f"Large files detected (>300 lines): {', '.join(large_files[:3])}")
     except Exception as e:
-        logger.debug(f"Large file check failed: {e}")
+        # BUG-477-DEC-2: Sanitize debug/info logger
+        logger.debug(f"Large file check failed: {type(e).__name__}")
 
     # 3. Check DSM state for last cycle
     try:
@@ -286,7 +288,8 @@ def _detect_document_entropy() -> list:
                 if days_ago > 7:
                     alerts.append(f"No DSP cycle in {days_ago} days (threshold: 7)")
     except Exception as e:
-        logger.debug(f"DSM state check failed: {e}")
+        # BUG-477-DEC-3: Sanitize debug/info logger
+        logger.debug(f"DSM state check failed: {type(e).__name__}")
 
     # 4. Check evidence file accumulation
     try:
@@ -296,6 +299,7 @@ def _detect_document_entropy() -> list:
             if len(session_files) > 20:
                 alerts.append(f"Evidence accumulation: {len(session_files)} session files")
     except Exception as e:
-        logger.debug(f"Evidence accumulation check failed: {e}")
+        # BUG-477-DEC-4: Sanitize debug/info logger
+        logger.debug(f"Evidence accumulation check failed: {type(e).__name__}")
 
     return alerts

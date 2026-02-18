@@ -30,7 +30,8 @@ def _api_get(api_base_url: str, endpoint: str) -> dict:
             data = resp.json()
             return data.get("items", data) if isinstance(data, dict) else data
     except Exception as e:
-        logger.debug(f"Heuristic API call failed: {endpoint}: {e}")
+        # BUG-477-CRS-1: Sanitize debug/info logger
+        logger.debug(f"Heuristic API call failed: {endpoint}: {type(e).__name__}")
     return []
 
 
@@ -177,7 +178,8 @@ def check_testid_coverage(api_base_url: str) -> dict:
                 violations.append(os.path.basename(filepath))
         except Exception as e:
             # BUG-264-CROSS-001: Log file read errors instead of silently swallowing
-            logger.debug(f"Skipping {filepath}: {e}")
+            # BUG-477-CRS-2: Sanitize debug/info logger
+            logger.debug(f"Skipping {filepath}: {type(e).__name__}")
     return {
         "status": "FAIL" if violations else "PASS",
         "message": f"{len(violations)} view files lack data-testid" if violations else "Key views have data-testid attributes",

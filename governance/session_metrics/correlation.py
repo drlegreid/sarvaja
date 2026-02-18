@@ -29,54 +29,36 @@ def correlate_tool_calls(entries: list[ParsedEntry]) -> list[CorrelatedToolCall]
     use_index: dict[str, tuple[str, bool, object]] = {}
     for entry in entries:
         for tu in entry.tool_uses:
-            # Extract tool_use_id from the content block
-            # ToolUseInfo doesn't store id, so we need to find it from
-            # the entry context. The id is set per tool_use block.
-            pass
-
-    # We need tool_use IDs. Let's build from raw data by scanning
-    # tool_uses alongside their parent entries.
-    # Since ToolUseInfo doesn't have the id field, we need to
-    # re-extract from the entry's tool_uses with position tracking.
-    #
-    # Better approach: scan all entries, build use_index from
-    # tool_use blocks that have IDs embedded in content.
-    # But ToolUseInfo.from_content_block doesn't store id...
-    # We need to enhance this. For now, let's use a different strategy:
-    # look at the raw content to get IDs.
-    #
-    # Actually, let's just add tool_use_id to ToolUseInfo. But that
-    # would change the existing model. Instead, let's build the index
-    # by scanning entries that have tool_uses, and extracting the id
-    # from the content blocks directly... but we don't have raw content
-    # in ParsedEntry.
-    #
-    # The cleanest fix: add tool_use_id to ToolUseInfo.
-
-    # Since we enhanced ToolUseInfo with tool_use_id, use it directly:
-    use_index = {}
-    for entry in entries:
-        for tu in entry.tool_uses:
             if tu.tool_use_id:
                 use_index[tu.tool_use_id] = (tu.name, tu.is_mcp, entry.timestamp)
 
     # Match tool_results to tool_uses
+    # BUG-278-CORR-001: Pop matched entries to prevent duplicate correlations on retry
     correlated = []
     for entry in entries:
         for tr in entry.tool_results:
-            if tr.tool_use_id in use_index:
-                tool_name, is_mcp, use_ts = use_index[tr.tool_use_id]
+            if not tr.tool_use_id or tr.tool_use_id not in use_index:
+                continue
+            tool_name, is_mcp, use_ts = use_index.pop(tr.tool_use_id)
+            # BUG-267-CORR-001: Guard against mixed timezone (aware vs naive) TypeError
+            try:
                 delta = entry.timestamp - use_ts
-                latency_ms = int(delta.total_seconds() * 1000)
-                correlated.append(CorrelatedToolCall(
-                    tool_use_id=tr.tool_use_id,
-                    tool_name=tool_name,
-                    is_mcp=is_mcp,
-                    use_timestamp=use_ts,
-                    result_timestamp=entry.timestamp,
-                    latency_ms=latency_ms,
-                    server_name=tr.server_name,
-                ))
+            except TypeError:
+                delta = None
+            if delta is None:
+                latency_ms = 0
+            else:
+                # BUG-183-007: Guard against negative latency from out-of-order entries
+                latency_ms = max(0, int(delta.total_seconds() * 1000))
+            correlated.append(CorrelatedToolCall(
+                tool_use_id=tr.tool_use_id,
+                tool_name=tool_name,
+                is_mcp=is_mcp,
+                use_timestamp=use_ts,
+                result_timestamp=entry.timestamp,
+                latency_ms=latency_ms,
+                server_name=tr.server_name,
+            ))
 
     return correlated
 

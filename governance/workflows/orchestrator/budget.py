@@ -29,8 +29,15 @@ def compute_budget(state: Dict[str, Any]) -> Dict[str, Any]:
     backlog = state.get("backlog", [])
     cycles_done = state.get("cycles_completed", 0)
     hard_cap = state.get("max_cycles", 10)
-    token_budget = state.get("token_budget", 0)
-    tokens_used = state.get("tokens_used", 0)
+    # BUG-281-BUDGET-001: Type-validate numeric fields to prevent float/str corruption
+    try:
+        token_budget = int(state.get("token_budget", 0) or 0)
+    except (TypeError, ValueError):
+        token_budget = 0
+    try:
+        tokens_used = max(int(state.get("tokens_used", 0) or 0), 0)
+    except (TypeError, ValueError):
+        tokens_used = 0
     value_delivered = state.get("value_delivered", 0)
 
     remaining_value = sum(

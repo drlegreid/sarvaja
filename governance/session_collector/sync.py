@@ -104,6 +104,7 @@ class SessionSyncMixin:
         if not TYPEDB_AVAILABLE:
             return False
 
+        client = None  # BUG-267-SYNC-001: Track for finally block (matches _index_task_to_typedb)
         try:
             from governance.client import TypeDBClient
 
@@ -116,12 +117,17 @@ class SessionSyncMixin:
             if not client.connect():
                 return False
 
-            # BUG-TYPEDB-INJECTION-003: Escape all user-provided decision fields
-            id_escaped = decision.id.replace('"', '\\"')
-            name_escaped = decision.name.replace('"', '\\"')
-            context_escaped = decision.context.replace('"', '\\"')
-            rationale_escaped = decision.rationale.replace('"', '\\"')
-            status_escaped = decision.status.replace('"', '\\"')
+            # BUG-TYPEDB-INJECTION-003 + BUG-233-SYN-001: Escape backslash THEN quotes
+            # BUG-293-SYN-001: Guard against None fields from TypeDB Decision class
+            def _esc(val) -> str:
+                if val is None:
+                    return ""
+                return str(val).replace('\\', '\\\\').replace('"', '\\"')
+            id_escaped = _esc(decision.id)
+            name_escaped = _esc(decision.name)
+            context_escaped = _esc(decision.context)
+            rationale_escaped = _esc(decision.rationale)
+            status_escaped = _esc(decision.status)
 
             # Insert decision via TypeQL
             query = f'''
@@ -134,12 +140,19 @@ class SessionSyncMixin:
             '''
 
             client.execute_query(query)
-            client.close()
             return True
 
         except Exception as e:
             logger.debug(f"Failed to index decision to TypeDB: {e}")
             return False
+        finally:
+            # BUG-233-SYN-002: Always close client, even on exception
+            # BUG-267-SYNC-001: Check client is not None before close
+            if client is not None:
+                try:
+                    client.close()
+                except Exception:
+                    pass
 
     def _index_task_to_typedb(self, task: Task) -> bool:
         """
@@ -151,6 +164,7 @@ class SessionSyncMixin:
         if not TYPEDB_AVAILABLE:
             return False
 
+        client = None  # BUG-248-SYN-002: Track for finally block
         try:
             from governance.client import TypeDBClient
 
@@ -163,9 +177,17 @@ class SessionSyncMixin:
             if not client.connect():
                 return False
 
+            # BUG-248-SYN-003: Consistent _esc() helper (matches _index_decision_to_typedb)
+            # BUG-293-SYN-001: Guard against None fields from TypeDB Task class
+            def _esc(val) -> str:
+                if val is None:
+                    return ""
+                return str(val).replace('\\', '\\\\').replace('"', '\\"')
+
             # First ensure work-session exists
+            session_id_escaped = _esc(self.session_id)
             session_query = f'''
-                match $s isa work-session, has session-id "{self.session_id}";
+                match $s isa work-session, has session-id "{session_id_escaped}";
                 select $s;
             '''
             existing_session = client.execute_query(session_query)
@@ -174,55 +196,68 @@ class SessionSyncMixin:
                 # Create work-session with agent_id (A.4: session-agent linking)
                 agent_part = ""
                 if getattr(self, "agent_id", None):
-                    agent_escaped = self.agent_id.replace('"', '\\"')
+                    # BUG-248-SYN-004: Use _esc for agent_id
+                    agent_escaped = _esc(self.agent_id)
                     agent_part = f',\n                        has agent-id "{agent_escaped}"'
-                # BUG-TYPEDB-INJECTION-002: Escape topic and session_type
-                topic_escaped = self.topic.replace('"', '\\"')
-                type_escaped = self.session_type.replace('"', '\\"')
+                topic_escaped = _esc(self.topic)
+                type_escaped = _esc(self.session_type)
                 create_session_query = f'''
                     insert $s isa work-session,
-                        has session-id "{self.session_id}",
+                        has session-id "{session_id_escaped}",
                         has session-name "{topic_escaped}",
                         has session-description "Session for {type_escaped}"{agent_part};
                 '''
                 client.execute_query(create_session_query)
 
             # Insert or update task with session link
-            task_name_escaped = task.name.replace('"', '\\"')
-            task_desc_escaped = task.description.replace('"', '\\"') if task.description else ""
-
-            # Check if task exists
+            task_name_escaped = _esc(task.name)
+            task_id_escaped = _esc(task.id)
             task_check = f'''
-                match $t isa task, has task-id "{task.id}";
+                match $t isa task, has task-id "{task_id_escaped}";
                 select $t;
             '''
             existing_task = client.execute_query(task_check)
 
             if not existing_task:
                 # Insert new task
-                task_status_escaped = task.status.replace('"', '\\"') if task.status else "pending"
+                task_status_escaped = _esc(task.status) if task.status else "pending"
                 insert_task_query = f'''
                     insert $t isa task,
-                        has task-id "{task.id}",
+                        has task-id "{task_id_escaped}",
                         has task-name "{task_name_escaped}",
                         has task-status "{task_status_escaped}",
                         has phase "SESSION";
                 '''
                 client.execute_query(insert_task_query)
 
-            # Create completed-in relation (session-task link)
-            link_query = f'''
+            # BUG-293-SYN-002: Check for existing relation before inserting to prevent duplicates
+            relation_check = f'''
                 match
-                    $t isa task, has task-id "{task.id}";
-                    $s isa work-session, has session-id "{self.session_id}";
-                insert
-                    (completed-task: $t, hosting-session: $s) isa completed-in;
+                    $t isa task, has task-id "{task_id_escaped}";
+                    $s isa work-session, has session-id "{session_id_escaped}";
+                    $r (completed-task: $t, hosting-session: $s) isa completed-in;
+                select $r;
             '''
-            client.execute_query(link_query)
+            existing_rel = client.execute_query(relation_check)
+            if not existing_rel:
+                link_query = f'''
+                    match
+                        $t isa task, has task-id "{task_id_escaped}";
+                        $s isa work-session, has session-id "{session_id_escaped}";
+                    insert
+                        (completed-task: $t, hosting-session: $s) isa completed-in;
+                '''
+                client.execute_query(link_query)
 
-            client.close()
             return True
 
         except Exception as e:
             logger.debug(f"Failed to index task to TypeDB: {e}")
             return False
+        finally:
+            # BUG-248-SYN-002: Always close client to prevent connection leak
+            if client is not None:
+                try:
+                    client.close()
+                except Exception:
+                    pass

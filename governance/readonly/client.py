@@ -53,7 +53,8 @@ class ChromaReadOnly:
             except ImportError:
                 return None
             except Exception as e:
-                logger.debug(f"ChromaDB connection failed: {e}")
+                # BUG-477-RCL-1: Sanitize debug/info logger
+                logger.debug(f"ChromaDB connection failed: {type(e).__name__}")
                 return None
 
         return self._client
@@ -149,7 +150,8 @@ class ChromaReadOnly:
             return [c.name for c in client.list_collections()]
 
         except Exception as e:
-            logger.debug(f"Failed to list ChromaDB collections: {e}")
+            # BUG-477-RCL-2: Sanitize debug/info logger
+            logger.debug(f"Failed to list ChromaDB collections: {type(e).__name__}")
             return []
 
     def get_collection(self, name: str) -> ReadOnlyCollection:

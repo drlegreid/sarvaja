@@ -14,8 +14,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Optional
 
-# Default checkpoint directory (relative to project root)
-_DEFAULT_CHECKPOINT_DIR = Path(".ingestion_checkpoints")
+# BUG-265-CKPT-001: Anchor to file location, not CWD, for reliable resolution
+_DEFAULT_CHECKPOINT_DIR = Path(__file__).resolve().parent.parent.parent / ".ingestion_checkpoints"
 
 
 @dataclass
@@ -64,7 +64,14 @@ def _now_iso() -> str:
 
 def _checkpoint_path(checkpoint_dir: Path, session_id: str) -> Path:
     safe_name = session_id.replace("/", "_").replace("\\", "_")
-    return checkpoint_dir / f"{safe_name}.json"
+    target = checkpoint_dir / f"{safe_name}.json"
+    # BUG-274-CKPT-002 + BUG-287-CKP-001: Use relative_to() to prevent prefix bypass
+    resolved = target.resolve()
+    try:
+        resolved.relative_to(checkpoint_dir.resolve())
+    except ValueError:
+        raise ValueError(f"Path traversal detected in session_id: {session_id}")
+    return target
 
 
 def load_checkpoint(
@@ -81,7 +88,8 @@ def load_checkpoint(
     try:
         data = json.loads(path.read_text(encoding="utf-8"))
         return IngestionCheckpoint.from_dict(data)
-    except (json.JSONDecodeError, KeyError, TypeError):
+    # BUG-199-CKPT-001: Also catch OSError for permission/disk errors
+    except (json.JSONDecodeError, KeyError, TypeError, OSError):
         return None
 
 
@@ -130,7 +138,9 @@ def delete_checkpoint(
     """Remove a checkpoint file. Returns True if deleted."""
     cdir = checkpoint_dir or _DEFAULT_CHECKPOINT_DIR
     path = _checkpoint_path(cdir, session_id)
-    if path.exists():
+    # BUG-274-CKPT-001: Use try/except instead of check-then-unlink (TOCTOU race)
+    try:
         path.unlink()
         return True
-    return False
+    except FileNotFoundError:
+        return False

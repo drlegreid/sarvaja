@@ -79,7 +79,8 @@ def register_search_tools(mcp) -> None:
                         "search_method": "semantic_vector"
                     })
         except Exception as e:
-            logger.debug(f"Semantic search failed, falling back to keyword: {e}")
+            # BUG-477-SRC-1: Sanitize debug/info logger
+            logger.debug(f"Semantic search failed, falling back to keyword: {type(e).__name__}")
 
         # Fall back to keyword search
         results = []
@@ -102,7 +103,8 @@ def register_search_tools(mcp) -> None:
                             "content": content[:200] + "..."
                         })
                 except Exception as e:
-                    logger.debug(f"Failed to search evidence file {filepath}: {e}")
+                    # BUG-477-SRC-2: Sanitize debug/info logger
+                    logger.debug(f"Failed to search evidence file {filepath}: {type(e).__name__}")
                     continue
 
         # Sort by score descending

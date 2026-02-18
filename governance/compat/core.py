@@ -67,7 +67,8 @@ def governance_list_sessions(limit=20, session_type=None):
                 "path": str(filepath)
             })
         except Exception as e:
-            logger.debug(f"Failed to parse session file: {e}")
+            # BUG-477-COR-1: Sanitize debug/info logger
+            logger.debug(f"Failed to parse session file: {type(e).__name__}")
             continue
     return json.dumps({"sessions": sessions, "count": len(sessions)}, indent=2)
 
@@ -106,7 +107,8 @@ def governance_list_decisions():
                 })
             client.close()
     except Exception as e:
-        logger.debug(f"Failed to query decisions from TypeDB: {e}")
+        # BUG-477-COR-2: Sanitize debug/info logger
+        logger.debug(f"Failed to query decisions from TypeDB: {type(e).__name__}")
     return json.dumps({"decisions": decisions, "count": len(decisions)}, indent=2)
 
 
@@ -124,7 +126,8 @@ def governance_get_decision(decision_id):
                     break
             client.close()
     except Exception as e:
-        logger.debug(f"Failed to get decision from TypeDB: {e}")
+        # BUG-477-COR-3: Sanitize debug/info logger
+        logger.debug(f"Failed to get decision from TypeDB: {type(e).__name__}")
     if len(result) == 1:
         return json.dumps({"error": f"Decision {decision_id} not found"})
     return json.dumps(result, indent=2)
@@ -168,7 +171,8 @@ def governance_list_tasks(phase=None, status=None):
             finally:
                 client.close()
     except Exception as e:
-        logger.debug(f"TypeDB task query failed, falling back to markdown: {e}")
+        # BUG-477-COR-4: Sanitize debug/info logger
+        logger.debug(f"TypeDB task query failed, falling back to markdown: {type(e).__name__}")
 
     # Fallback to markdown parsing (backward compatibility)
     tasks = []

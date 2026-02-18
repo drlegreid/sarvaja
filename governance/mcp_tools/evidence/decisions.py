@@ -51,7 +51,8 @@ def register_decision_tools(mcp) -> None:
                     })
                 client.close()
         except Exception as e:
-            logger.debug(f"TypeDB decisions list failed: {e}")
+            # BUG-477-EDC-1: Sanitize debug/info logger
+            logger.debug(f"TypeDB decisions list failed: {type(e).__name__}")
 
         # Also scan evidence directory for DECISION-*.md files
         pattern = EVIDENCE_DIR / "DECISION-*.md"
@@ -77,7 +78,8 @@ def register_decision_tools(mcp) -> None:
                         "source": "evidence_file"
                     })
             except Exception as e:
-                logger.debug(f"Failed to parse decision file {filepath}: {e}")
+                # BUG-477-EDC-2: Sanitize debug/info logger
+                logger.debug(f"Failed to parse decision file {filepath}: {type(e).__name__}")
                 continue
 
         return format_mcp_result({
@@ -119,7 +121,8 @@ def register_decision_tools(mcp) -> None:
 
                 client.close()
         except Exception as e:
-            logger.debug(f"TypeDB decision get for {decision_id} failed: {e}")
+            # BUG-477-EDC-3: Sanitize debug/info logger
+            logger.debug(f"TypeDB decision get for {decision_id} failed: {type(e).__name__}")
 
         # Check for evidence file
         evidence_file = EVIDENCE_DIR / f"{decision_id}.md"

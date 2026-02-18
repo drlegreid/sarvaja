@@ -348,7 +348,8 @@ class TaskCRUDOperations:
                     tx.query(rel_query).resolve()
                 # BUG-364-CRUD-001: Log instead of silently swallowing — connection errors are actionable
                 except Exception as e:
-                    logger.debug(f"delete_task implements-rule cleanup for {task_id} (expected if absent): {e}")
+                    # BUG-477-TCR-1: Sanitize debug/info logger
+                    logger.debug(f"delete_task implements-rule cleanup for {task_id} (expected if absent): {type(e).__name__}")
 
                 rel_query2 = f"""
                     match
@@ -361,7 +362,8 @@ class TaskCRUDOperations:
                     tx.query(rel_query2).resolve()
                 # BUG-364-CRUD-001: Log instead of silently swallowing
                 except Exception as e:
-                    logger.debug(f"delete_task completed-in cleanup for {task_id} (expected if absent): {e}")
+                    # BUG-477-TCR-2: Sanitize debug/info logger
+                    logger.debug(f"delete_task completed-in cleanup for {task_id} (expected if absent): {type(e).__name__}")
 
                 # Delete task entity (TypeDB 3.x: delete $var; not $var isa type;)
                 delete_query = f"""

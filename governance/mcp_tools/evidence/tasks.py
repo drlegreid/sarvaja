@@ -81,7 +81,8 @@ def register_task_tools(mcp) -> None:
                 finally:
                     client.close()
         except Exception as e:
-            logger.debug(f"TypeDB task list failed, falling back to markdown: {e}")
+            # BUG-477-ETK-1: Sanitize debug/info logger
+            logger.debug(f"TypeDB task list failed, falling back to markdown: {type(e).__name__}")
 
         # Fallback: Parse R&D-BACKLOG.md (backward compatibility)
         tasks = []

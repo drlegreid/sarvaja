@@ -63,7 +63,8 @@ class AccessLogMiddleware(BaseHTTPMiddleware):
         if response.status_code >= 500:
             logger.warning(line)
         elif response.status_code >= 400:
-            logger.info(line)
+            # BUG-225-MW-001: 4xx should be WARNING (auth failures, bad requests)
+            logger.warning(line)
         else:
             logger.info(line)
 

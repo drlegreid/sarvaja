@@ -201,7 +201,8 @@ class RuleQualityAnalyzer:
                     ))
         except Exception as e:
             # Query may fail if no documents exist
-            logger.debug(f"Failed to query rule document references: {e}")
+            # BUG-477-ANL-1: Sanitize debug/info logger
+            logger.debug(f"Failed to query rule document references: {type(e).__name__}")
 
         return issues
 

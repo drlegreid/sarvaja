@@ -17,12 +17,23 @@ def check_gate_decision(state: Dict[str, Any]) -> str:
 
 
 def check_validation_result(state: Dict[str, Any]) -> str:
-    """Route based on validation outcome."""
-    if state.get("validation_passed"):
+    """Route based on validation outcome.
+
+    BUG-246-EDG-001: Distinguish None (never ran / error) from False (failed).
+    None → park immediately (no point retrying a broken pipeline).
+    False → retry up to MAX_RETRIES, then park.
+    """
+    vp = state.get("validation_passed")
+    if vp is True:
         if state.get("gaps_discovered"):
             return "inject"
         return "complete_cycle"
 
+    # None means validation didn't produce a result — park, don't retry
+    if vp is None:
+        return "park_task"
+
+    # Explicit False — retry if budget allows
     if state.get("retry_count", 0) < MAX_RETRIES:
         return "loop_to_spec"
     return "park_task"

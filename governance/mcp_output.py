@@ -161,7 +161,8 @@ def format_output(
             try:
                 return toons.dumps(data)
             except Exception as e:
-                logger.debug(f"TOON encoding failed, falling back to JSON: {e}")
+                # BUG-477-MCP-1: Sanitize debug/info logger
+                logger.debug(f"TOON encoding failed, falling back to JSON: {type(e).__name__}")
 
     # Default: JSON format
     return json.dumps(data, indent=indent, default=str, ensure_ascii=ensure_ascii)
@@ -193,7 +194,8 @@ def parse_input(text: str, format: OutputFormat = OutputFormat.AUTO) -> Any:
             try:
                 return toons.loads(text)
             except Exception as e:
-                logger.debug(f"TOON parsing failed: {e}")
+                # BUG-477-MCP-2: Sanitize debug/info logger
+                logger.debug(f"TOON parsing failed: {type(e).__name__}")
 
         raise ValueError("Failed to parse input as JSON or TOON")
 
@@ -231,7 +233,8 @@ def estimate_token_savings(data: Any) -> dict:
                 "toon_available": True
             }
         except Exception as e:
-            logger.debug(f"TOON comparison failed: {e}")
+            # BUG-477-MCP-3: Sanitize debug/info logger
+            logger.debug(f"TOON comparison failed: {type(e).__name__}")
 
     return {
         "json_chars": json_chars,

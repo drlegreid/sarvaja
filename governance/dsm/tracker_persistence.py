@@ -154,6 +154,7 @@ def check_abandoned_cycle(cycle: DSMCycle) -> bool:
             cycle.current_phase = "aborted"
             return True
     except (ValueError, TypeError) as e:
-        logger.debug(f"Could not parse cycle start time for age check: {e}")
+        # BUG-477-DTP-1: Sanitize debug/info logger
+        logger.debug(f"Could not parse cycle start time for age check: {type(e).__name__}")
 
     return False

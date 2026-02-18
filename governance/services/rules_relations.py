@@ -87,7 +87,8 @@ def get_rule_linkage_counts(client, rule_ids: List[str]) -> Dict[str, Dict[str, 
                 counts.setdefault(rid, {"tasks": 0, "sessions": 0})
                 counts[rid]["tasks"] += 1
     except Exception as e:
-        logger.debug(f"Failed to query rule-task counts: {e}")
+        # BUG-477-RRL-1: Sanitize debug/info logger
+        logger.debug(f"Failed to query rule-task counts: {type(e).__name__}")
     try:
         query = """
         match
@@ -103,7 +104,8 @@ def get_rule_linkage_counts(client, rule_ids: List[str]) -> Dict[str, Dict[str, 
                 counts.setdefault(rid, {"tasks": 0, "sessions": 0})
                 counts[rid]["sessions"] += 1
     except Exception as e:
-        logger.debug(f"Failed to query rule-session counts: {e}")
+        # BUG-477-RRL-2: Sanitize debug/info logger
+        logger.debug(f"Failed to query rule-session counts: {type(e).__name__}")
     return counts
 
 

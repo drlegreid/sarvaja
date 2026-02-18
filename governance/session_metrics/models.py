@@ -19,7 +19,11 @@ class ToolUseInfo:
 
     @classmethod
     def from_content_block(cls, block: dict) -> ToolUseInfo:
-        raw_input = json.dumps(block.get("input", {}))
+        # BUG-216-009-001: Guard against non-serializable input values
+        try:
+            raw_input = json.dumps(block.get("input", {}), default=str)
+        except (TypeError, ValueError):
+            raw_input = str(block.get("input", {}))[:200]
         if len(raw_input) > 200:
             raw_input = raw_input[:197] + "..."
         name = block.get("name", "")

@@ -115,7 +115,8 @@ def build_trust_history_timeline() -> None:
     ):
         with v3.VTimelineItem(
             v_for="(event, idx) in selected_agent.trust_history",
-            key="idx",
+            # BUG-186-003: Use dynamic binding, not static string
+            **{":key": "idx"},
             dot_color=(
                 "event.change > 0 ? 'success' : "
                 "event.change < 0 ? 'error' : 'grey'",
@@ -126,7 +127,8 @@ def build_trust_history_timeline() -> None:
                 with v3.VCardText(classes="py-2"):
                     with html.Div(classes="d-flex align-center"):
                         v3.VIcon(
-                            v_text=(
+                            # BUG-186-001: Use icon prop, not v_text (renders text, not icon)
+                            icon=(
                                 "event.change > 0 ? 'mdi-arrow-up' : "
                                 "event.change < 0 ? 'mdi-arrow-down' : "
                                 "'mdi-minus'"
@@ -139,12 +141,13 @@ def build_trust_history_timeline() -> None:
                             classes="mr-1"
                         )
                         html.Span(
+                            # BUG-282-METRICS-001: Guard against null event.change / event.new_score → NaN
                             "{{ event.change > 0 ? '+' : '' }}"
-                            "{{ (event.change * 100).toFixed(1) }}%",
+                            "{{ ((event.change || 0) * 100).toFixed(1) }}%",
                             classes="font-weight-bold"
                         )
                         html.Span(
-                            " → {{ (event.new_score * 100).toFixed(0) }}%",
+                            " → {{ ((event.new_score || 0) * 100).toFixed(0) }}%",
                             classes="text-grey ml-1"
                         )
                     html.Div(

@@ -26,7 +26,8 @@ def task_to_response(task: TypeDBTask):
     from governance.models import TaskResponse
     return TaskResponse(
         task_id=task.id,
-        description=task.name or task.description or "",
+        # BUG-227-HELPER-002: Align priority with _task_to_dict (body > description > name)
+        description=task.body or task.description or task.name or "",
         phase=task.phase,
         status=task.status,
         resolution=task.resolution,  # NONE, DEFERRED, IMPLEMENTED, VALIDATED, CERTIFIED
@@ -96,12 +97,14 @@ def synthesize_execution_events(task_id: str, task_data: Any) -> List[Dict[str, 
         })
 
     # Completed event
-    if completed_at or status in ["DONE", "completed"]:
+    # BUG-227-HELPER-003: Remove "completed" — not a valid TaskResponse status (always uppercase)
+    if completed_at or status == "DONE":
         events.append({
             "event_id": f"EVT-{uuid.uuid4().hex[:8].upper()}",
             "task_id": task_id,
             "event_type": "completed",
-            "timestamp": completed_at or datetime.now().isoformat(),
+            # BUG-213-SYNTH-TIMESTAMP-001: Use created_at as fallback before datetime.now()
+            "timestamp": completed_at or created_at or datetime.now().isoformat(),
             "agent_id": agent_id,
             "message": "Task completed",
             "details": None
@@ -115,7 +118,8 @@ def synthesize_execution_events(task_id: str, task_data: Any) -> List[Dict[str, 
             "event_id": f"EVT-{uuid.uuid4().hex[:8].upper()}",
             "task_id": task_id,
             "event_type": "evidence",
-            "timestamp": completed_at or datetime.now().isoformat(),
+            # BUG-213-SYNTH-TIMESTAMP-001: Use created_at as fallback before datetime.now()
+            "timestamp": completed_at or created_at or datetime.now().isoformat(),
             "agent_id": agent_id,
             "message": evidence_str[:100] + ("..." if len(evidence_str) > 100 else ""),
             "details": {"full_evidence": evidence_str}
@@ -133,7 +137,8 @@ def session_to_response(session: TypeDBSession):
     from governance.models import SessionResponse
     return SessionResponse(
         session_id=session.id,
-        start_time=session.started_at.isoformat() if session.started_at else datetime.now().isoformat(),
+        # BUG-226-TYPEDB-003: Use stable sentinel instead of non-deterministic datetime.now()
+        start_time=session.started_at.isoformat() if session.started_at else "1970-01-01T00:00:00",
         end_time=session.completed_at.isoformat() if session.completed_at else None,
         status=session.status,
         tasks_completed=session.tasks_completed or 0,

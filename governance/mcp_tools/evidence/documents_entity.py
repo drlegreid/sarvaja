@@ -117,7 +117,8 @@ def register_entity_document_tools(mcp) -> None:
                         })
                 client.close()
         except Exception as e:
-            logger.debug(f"TypeDB fallback for rule {rule_id} failed: {e}")
+            # BUG-477-DOC-1: Sanitize debug/info logger
+            logger.debug(f"TypeDB fallback for rule {rule_id} failed: {type(e).__name__}")
 
         return format_mcp_result({"error": f"Rule {rule_id} not found in docs/rules/ or TypeDB"})
 
@@ -182,7 +183,8 @@ def register_entity_document_tools(mcp) -> None:
                     }
                 client.close()
         except Exception as e:
-            logger.debug(f"TypeDB fallback for task {task_id} failed: {e}")
+            # BUG-477-DOC-2: Sanitize debug/info logger
+            logger.debug(f"TypeDB fallback for task {task_id} failed: {type(e).__name__}")
 
         if not result["sources"] and "typedb" not in result:
             return format_mcp_result({"error": f"Task {task_id} not found in workspace documents or TypeDB"})

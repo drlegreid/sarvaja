@@ -159,7 +159,8 @@ def update_task_status(
                         except Exception as e:
                             # BUG-360-STS-001: Log instead of silently swallowing — connection
                             # errors are actionable even if "not found" is expected
-                            logger.debug(f"Resolution delete for {task_id} (expected if absent): {e}")
+                            # BUG-477-TST-1: Sanitize debug/info logger
+                            logger.debug(f"Resolution delete for {task_id} (expected if absent): {type(e).__name__}")
 
                     # Insert new resolution
                     insert_res_query = f"""
@@ -188,7 +189,8 @@ def update_task_status(
                             tx.query(delete_res_query).resolve()
                         except Exception as e:
                             # BUG-360-STS-001: Log instead of silently swallowing
-                            logger.debug(f"Resolution reset delete for {task_id} (expected if absent): {e}")
+                            # BUG-477-TST-2: Sanitize debug/info logger
+                            logger.debug(f"Resolution reset delete for {task_id} (expected if absent): {type(e).__name__}")
                         insert_res_query = f"""
                             match
                                 $t isa task, has task-id "{tid}";

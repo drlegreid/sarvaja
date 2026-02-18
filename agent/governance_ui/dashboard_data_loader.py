@@ -159,7 +159,8 @@ def _auto_ingest_cc_sessions(cc_proj: dict) -> None:
         if results:
             logger.info(f"Auto-ingested {len(results)} CC sessions for {cc_proj['project_id']}")
     except Exception as e:
-        logger.debug(f"Auto-ingest sessions failed for {cc_proj.get('project_id', '?')}: {e}")
+        # BUG-477-DDL-1: Sanitize debug/info logger
+        logger.debug(f"Auto-ingest sessions failed for {cc_proj.get('project_id', '?')}: {type(e).__name__}")
 
 
 def _load_projects(state, client, api_base_url) -> None:
@@ -176,7 +177,8 @@ def _load_projects(state, client, api_base_url) -> None:
         else:
             existing = []
     except Exception as e:
-        logger.debug(f"Failed to load projects from API: {e}")
+        # BUG-477-DDL-2: Sanitize debug/info logger
+        logger.debug(f"Failed to load projects from API: {type(e).__name__}")
         existing = []
 
     # Auto-discover CC projects and create missing ones
@@ -210,7 +212,8 @@ def _load_projects(state, client, api_base_url) -> None:
                         existing_ids.add(cc_proj["project_id"])
                         logger.info(f"Auto-created project: {cc_proj['project_id']} (type={proj_type})")
                 except Exception as e:
-                    logger.debug(f"Auto-create project failed for {cc_proj['project_id']}: {e}")
+                    # BUG-477-DDL-3: Sanitize debug/info logger
+                    logger.debug(f"Auto-create project failed for {cc_proj['project_id']}: {type(e).__name__}")
 
             # Auto-ingest CC sessions in background (P3 fix: non-blocking startup)
             thread = threading.Thread(
@@ -220,7 +223,8 @@ def _load_projects(state, client, api_base_url) -> None:
             )
             thread.start()
     except Exception as e:
-        logger.debug(f"CC project discovery failed: {e}")
+        # BUG-477-DDL-4: Sanitize debug/info logger
+        logger.debug(f"CC project discovery failed: {type(e).__name__}")
 
     # Filesystem-based discovery for projects without CC directories (P2 fix)
     try:
@@ -263,10 +267,12 @@ def _load_projects(state, client, api_base_url) -> None:
                 else:
                     existing.append(fs_proj)
             except Exception as e:
-                logger.debug(f"Auto-create FS project failed for {fs_proj['project_id']}: {e}")
+                # BUG-477-DDL-5: Sanitize debug/info logger
+                logger.debug(f"Auto-create FS project failed for {fs_proj['project_id']}: {type(e).__name__}")
                 existing.append(fs_proj)
     except Exception as e:
-        logger.debug(f"Filesystem project discovery failed: {e}")
+        # BUG-477-DDL-6: Sanitize debug/info logger
+        logger.debug(f"Filesystem project discovery failed: {type(e).__name__}")
 
     state.projects = existing
 
@@ -286,7 +292,8 @@ def _load_tests(state, client, api_base_url) -> None:
         if cvp_resp.status_code == 200:
             state.tests_cvp_status = cvp_resp.json()
     except Exception as e:
-        logger.debug(f"Failed to load test results: {e}")
+        # BUG-477-DDL-7: Sanitize debug/info logger
+        logger.debug(f"Failed to load test results: {type(e).__name__}")
         state.tests_recent_runs = []
 
 

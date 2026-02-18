@@ -65,15 +65,18 @@ def build_metrics_summary() -> None:
                 variant="outlined",
                 classes="text-center pa-2",
                 hover=True,
-                click="active_view = 'compliance'",
+                # BUG-223-COMPLIANCE-001: 'compliance' is not a valid view; use 'rules'
+                click="active_view = 'rules'",
                 style="cursor: pointer",
                 __properties=["data-testid"],
                 **{"data-testid": "metric-compliance-card"},
             ):
                 v3.VIcon("mdi-percent", size="large", color="warning")
                 html.Div(
-                    "{{ (executive_report.metrics_summary?.compliance_rate || 0)"
-                    ".toFixed(0) }}%",
+                    # BUG-282-EXEC-001: Guard against Infinity/NaN from division-by-zero
+                    "{{ isFinite(executive_report.metrics_summary?.compliance_rate)"
+                    " ? (executive_report.metrics_summary.compliance_rate).toFixed(0)"
+                    " : '0' }}%",
                     classes="text-h5 mt-1"
                 )
                 html.Div("Compliance", classes="text-caption")

@@ -38,7 +38,8 @@ def generate_task_id(task_type: str, client=None) -> str:
         try:
             max_num = _find_max_id_from_typedb(client, prefix)
         except Exception as e:
-            logger.debug(f"TypeDB ID scan for {prefix}: {e}")
+            # BUG-477-TIG-1: Sanitize debug/info logger
+            logger.debug(f"TypeDB ID scan for {prefix}: {type(e).__name__}")
 
     # Also check in-memory store for IDs that may not be in TypeDB yet
     try:
@@ -66,7 +67,8 @@ def _find_max_id_from_typedb(client, prefix: str) -> int:
             if num > max_num:
                 max_num = num
     except Exception as e:
-        logger.debug(f"TypeDB task scan for prefix {prefix}: {e}")
+        # BUG-477-TIG-2: Sanitize debug/info logger
+        logger.debug(f"TypeDB task scan for prefix {prefix}: {type(e).__name__}")
     return max_num
 
 

@@ -57,7 +57,11 @@ def get_ollama_config() -> tuple:
     Returns: (host, port)
     """
     host = os.getenv("OLLAMA_HOST", "localhost")
-    port = int(os.getenv("OLLAMA_PORT", "11434"))
+    # BUG-203-EMBED-CFG-001: Guard against non-integer port env var
+    try:
+        port = int(os.getenv("OLLAMA_PORT", "11434"))
+    except (ValueError, TypeError):
+        port = 11434
     return host, port
 
 
@@ -67,7 +71,11 @@ def get_litellm_config() -> tuple:
     Returns: (host, port)
     """
     host = os.getenv("LITELLM_HOST", "localhost")
-    port = int(os.getenv("LITELLM_PORT", "4000"))
+    # BUG-203-EMBED-CFG-001: Guard against non-integer port env var
+    try:
+        port = int(os.getenv("LITELLM_PORT", "4000"))
+    except (ValueError, TypeError):
+        port = 4000
     return host, port
 
 

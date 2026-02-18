@@ -28,8 +28,9 @@ def chunk_content(content: str, chunk_size: int = 2000) -> List[str]:
         List of chunks, each <= chunk_size characters
         (except single lines that exceed limit)
     """
+    # BUG-232-LOG-007: Return empty list for empty input, not [""]
     if not content:
-        return [""]
+        return []
 
     if len(content) <= chunk_size:
         return [content]

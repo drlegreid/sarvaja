@@ -5,9 +5,13 @@ Modularized: 2026-01-02 (RULE-032)
 
 Generates evidence files for completed DSM cycles.
 """
+import re
 from pathlib import Path
 
 from governance.dsm.models import DSMCycle
+
+# BUG-280-EVID-001: Allowed characters for cycle_id in filesystem paths
+_SAFE_ID = re.compile(r'^[\w\-]+$')
 
 
 def generate_evidence(
@@ -26,8 +30,16 @@ def generate_evidence(
     """
     evidence_dir.mkdir(parents=True, exist_ok=True)
 
-    filename = f"{cycle.cycle_id}.md"
+    # BUG-280-EVID-001: Validate cycle_id to prevent path traversal
+    safe_id = cycle.cycle_id
+    if not _SAFE_ID.match(safe_id):
+        raise ValueError(f"Unsafe cycle_id for filesystem use: {safe_id!r}")
+
+    filename = f"{safe_id}.md"
     filepath = evidence_dir / filename
+    # Confirm resolved path stays inside evidence_dir
+    if not filepath.resolve().is_relative_to(evidence_dir.resolve()):
+        raise ValueError(f"Path traversal detected for cycle_id {safe_id!r}")
 
     lines = [
         f"# DSM Cycle Evidence: {cycle.cycle_id}",

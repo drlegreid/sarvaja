@@ -123,7 +123,8 @@ async def search_evidence(
                     search_method="semantic_vector"
                 )
     except Exception as e:
-        logger.debug(f"Semantic search unavailable, falling back to keyword: {e}")
+        # BUG-477-EVD-1: Sanitize debug/info logger
+        logger.debug(f"Semantic search unavailable, falling back to keyword: {type(e).__name__}")
 
     # Keyword search fallback
     results = []

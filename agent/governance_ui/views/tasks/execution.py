@@ -12,7 +12,8 @@ from trame.widgets import vuetify3 as v3, html
 def build_execution_timeline() -> None:
     """Build the execution events timeline."""
     with v3.VTimeline(
-        v_if="!task_execution_loading && task_execution_log.length > 0",
+        # BUG-290-EXEC-001: Null guard on task_execution_log before .length access
+        v_if="!task_execution_loading && (task_execution_log || []).length > 0",
         density="compact",
         side="end",
         __properties=["data-testid"],
@@ -20,7 +21,8 @@ def build_execution_timeline() -> None:
     ):
         with v3.VTimelineItem(
             v_for="(event, idx) in task_execution_log",
-            key="idx",
+            # BUG-186-002: Use dynamic binding, not static string
+            **{":key": "idx"},
             dot_color=(
                 "event.event_type === 'completed' ? 'success' : "
                 "event.event_type === 'failed' ? 'error' : "
@@ -54,8 +56,9 @@ def build_execution_timeline() -> None:
                         classes="mr-2"
                     )
                     html.Strong(
-                        "{{ event.event_type.charAt(0).toUpperCase() + "
-                        "event.event_type.slice(1) }}",
+                        # BUG-256-UI-003: Guard against null event_type before charAt
+                        "{{ event.event_type ? (event.event_type.charAt(0).toUpperCase() + "
+                        "event.event_type.slice(1)) : 'Unknown' }}",
                         classes="text-body-2"
                     )
                     v3.VChip(
@@ -92,7 +95,8 @@ def build_task_execution_log() -> None:
                 size="small",
                 prepend_icon="mdi-refresh",
                 click=(
-                    "trigger('load_task_execution', "
+                    # BUG-290-EXEC-002: Guard against null selected_task before accessing task_id
+                    "selected_task && trigger('load_task_execution', "
                     "[selected_task.task_id || selected_task.id])"
                 ),
                 loading=("task_execution_loading",),
@@ -125,7 +129,8 @@ def build_task_execution_log() -> None:
                     # Empty state
                     html.Div(
                         "No execution events recorded",
-                        v_if="!task_execution_loading && task_execution_log.length === 0",
+                        # BUG-290-EXEC-001: Null guard on task_execution_log before .length access
+                        v_if="!task_execution_loading && (task_execution_log || []).length === 0",
                         classes="text-grey text-center py-4"
                     )
 

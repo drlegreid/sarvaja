@@ -64,7 +64,8 @@ class TaskLinkingOperations:
                     tx.query(insert_evidence).resolve()
                 # BUG-364-LINK-001: Log instead of silently swallowing
                 except Exception as e:
-                    logger.debug(f"Evidence entity insert for {evidence_id} (expected if exists): {e}")
+                    # BUG-477-TLK-1: Sanitize debug/info logger
+                    logger.debug(f"Evidence entity insert for {evidence_id} (expected if exists): {type(e).__name__}")
 
                 # Create the evidence-supports relation
                 link_query = f"""
@@ -219,7 +220,8 @@ class TaskLinkingOperations:
                     tx.query(insert_commit).resolve()
                 # BUG-364-LINK-001: Log instead of silently swallowing
                 except Exception as e:
-                    logger.debug(f"Git commit entity insert for {commit_sha} (expected if exists): {e}")
+                    # BUG-477-TLK-2: Sanitize debug/info logger
+                    logger.debug(f"Git commit entity insert for {commit_sha} (expected if exists): {type(e).__name__}")
 
                 # Create the task-commit relation
                 link_query = f"""
@@ -294,7 +296,8 @@ class TaskLinkingOperations:
                     tx.query(insert_doc).resolve()
                 # BUG-364-LINK-001: Log instead of silently swallowing
                 except Exception as e:
-                    logger.debug(f"Document entity insert for {doc_id} (expected if exists): {e}")
+                    # BUG-477-TLK-3: Sanitize debug/info logger
+                    logger.debug(f"Document entity insert for {doc_id} (expected if exists): {type(e).__name__}")
 
                 # Create document-references-task relation
                 link_query = f"""

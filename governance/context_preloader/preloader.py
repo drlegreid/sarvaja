@@ -129,7 +129,8 @@ class ContextPreloader:
                         return f"Phase {m.group(1)}"
             except Exception as e:
                 # BUG-PRELOADER-001: Log instead of silently skipping
-                logger.debug(f"Failed to read phase file {pf}: {e}")
+                # BUG-477-CPR-1: Sanitize debug/info logger
+                logger.debug(f"Failed to read phase file {pf}: {type(e).__name__}")
                 continue
         return None
 

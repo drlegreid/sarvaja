@@ -75,7 +75,8 @@ def run_regression(
                 session_type="test",
             )
         except Exception as e:
-            logger.debug(f"Session bridge unavailable: {e}")
+            # BUG-477-REG-1: Sanitize debug/info logger
+            logger.debug(f"Session bridge unavailable: {type(e).__name__}")
 
     phases = []
     overall_start = time.time()

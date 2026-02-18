@@ -32,15 +32,16 @@ class VectorDocument:
         embedding_json = json.dumps(self.embedding)
         created_at = self.created_at.isoformat() if self.created_at else datetime.now().isoformat()
 
+        # BUG-279-VMODEL-001: Escape ALL string fields to prevent TypeQL injection
         return f"""
             insert $v isa vector-document,
-                has vector-id "{self.id}",
+                has vector-id "{self._escape(self.id)}",
                 has vector-content "{self._escape(self.content)}",
                 has vector-embedding "{self._escape(embedding_json)}",
-                has vector-model "{self.model}",
+                has vector-model "{self._escape(self.model)}",
                 has vector-dimension {self.dimension},
-                has vector-source "{self.source}",
-                has vector-source-type "{self.source_type}",
+                has vector-source "{self._escape(self.source)}",
+                has vector-source-type "{self._escape(self.source_type)}",
                 has vector-created-at {created_at};
         """
 

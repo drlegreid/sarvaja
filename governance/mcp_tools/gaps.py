@@ -125,7 +125,8 @@ def register_gap_tools(mcp) -> None:
             for gap in gaps:
                 work_items.append(gap.to_work_item())
         except Exception as e:
-            logger.debug(f"Gap parsing failed, continuing: {e}")
+            # BUG-477-GAP-1: Sanitize debug/info logger
+            logger.debug(f"Gap parsing failed, continuing: {type(e).__name__}")
 
         # 2. Get tasks from TypeDB (if requested)
         if include_tasks:
@@ -140,7 +141,8 @@ def register_gap_tools(mcp) -> None:
                             work_items.append(item)
                     client.close()
             except Exception as e:
-                logger.debug(f"TypeDB task fetch failed, continuing: {e}")
+                # BUG-477-GAP-2: Sanitize debug/info logger
+                logger.debug(f"TypeDB task fetch failed, continuing: {type(e).__name__}")
 
         # 3. Sort by priority and limit
         sorted_items = sort_by_priority(work_items)[:limit]

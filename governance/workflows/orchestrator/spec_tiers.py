@@ -138,7 +138,8 @@ def export_to_robot(spec: Dict[str, Any]) -> str:
     Produces BDD-style RF test with Given/When/Then keywords
     and Documentation from tier_1 business intent.
     """
-    task_id = spec["task_id"]
+    # BUG-202-ROBOT-001: Use .get() consistent with other keys
+    task_id = spec.get("task_id", "unknown")
     endpoint = spec.get("endpoint", "")
     method = spec.get("method", "GET")
     is_ui = spec.get("spec_type") == "ui"
@@ -193,7 +194,8 @@ def generate_specs_from_validation(
     If task has 'ui_path', generates a UI spec.
     Otherwise generates a default API spec.
     """
-    task_id = task["task_id"]
+    # BUG-191-012: Guard against missing task_id key
+    task_id = task.get("task_id", "unknown")
     description = task.get("description", f"Validate {task_id}")
     specs = []
 
@@ -239,9 +241,11 @@ def generate_batch_specs(
     """
     results = []
     for task in backlog:
+        # BUG-202-SPEC-001: Use .get() to avoid KeyError on gap-injected tasks
+        tid = task.get("task_id", "unknown")
         spec = generate_spec(
-            task_id=task["task_id"],
-            description=task.get("description", f"Validate {task['task_id']}"),
+            task_id=tid,
+            description=task.get("description", f"Validate {tid}"),
             endpoint=task.get("endpoint", "/api/health"),
             method=task.get("method", "GET"),
         )

@@ -179,7 +179,8 @@ def register_agent_tools(mcp) -> None:
                 handoffs = get_pending_handoffs()
                 pending_handoffs = len(handoffs)
             except Exception as e:
-                logger.debug(f"Failed to get pending handoffs: {e}")
+                # BUG-477-AGT-1: Sanitize debug/info logger
+                logger.debug(f"Failed to get pending handoffs: {type(e).__name__}")
                 pending_handoffs = 0
 
             # Build dashboard
@@ -262,7 +263,8 @@ def register_agent_tools(mcp) -> None:
                 "filter": agent_id or "all"
             })
         except Exception as e:
-            logger.debug(f"Agent activity query failed: {e}")
+            # BUG-477-AGT-2: Sanitize debug/info logger
+            logger.debug(f"Agent activity query failed: {type(e).__name__}")
             return format_mcp_result({
                 "activities": [],
                 "count": 0,

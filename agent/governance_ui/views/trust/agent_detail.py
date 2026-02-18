@@ -18,15 +18,17 @@ def build_agent_detail_metrics() -> None:
             with v3.VCard(
                 variant="tonal",
                 color=(
-                    "selected_agent.trust_score >= 0.8 ? 'success' : "
-                    "selected_agent.trust_score >= 0.5 ? 'warning' : 'error'"
+                    # BUG-256-UI-001: Guard against null trust_score in color binding
+                    "(selected_agent.trust_score || 0) >= 0.8 ? 'success' : "
+                    "(selected_agent.trust_score || 0) >= 0.5 ? 'warning' : 'error'"
                 ),
                 __properties=["data-testid"],
                 **{"data-testid": "agent-trust-score"}
             ):
                 with v3.VCardText(classes="text-center"):
                     html.Div(
-                        "{{ (selected_agent.trust_score * 100).toFixed(1) }}%",
+                        # BUG-223-TRUST-002: Guard against null trust_score
+                        "{{ ((selected_agent.trust_score || 0) * 100).toFixed(1) }}%",
                         classes="text-h4 font-weight-bold"
                     )
                     html.Div("Trust Score", classes="text-subtitle-2")
@@ -39,7 +41,8 @@ def build_agent_detail_metrics() -> None:
             ):
                 with v3.VCardText(classes="text-center"):
                     html.Div(
-                        "{{ (selected_agent.compliance_rate * 100 || 0).toFixed(1) }}%",
+                        # BUG-256-UI-002: Guard before multiplication, not after
+                        "{{ ((selected_agent.compliance_rate || 0) * 100).toFixed(1) }}%",
                         classes="text-h5"
                     )
                     html.Div("Compliance (40%)", classes="text-caption")
@@ -52,7 +55,8 @@ def build_agent_detail_metrics() -> None:
             ):
                 with v3.VCardText(classes="text-center"):
                     html.Div(
-                        "{{ (selected_agent.accuracy_rate * 100 || 0).toFixed(1) }}%",
+                        # BUG-256-UI-002: Guard before multiplication, not after
+                        "{{ ((selected_agent.accuracy_rate || 0) * 100).toFixed(1) }}%",
                         classes="text-h5"
                     )
                     html.Div("Accuracy (30%)", classes="text-caption")

@@ -128,10 +128,11 @@ class TestHeartbeat:
     @patch(f"{_MOD}.AGENT_STATUS_AVAILABLE", True)
     @patch(f"{_MOD}.update_agent_heartbeat", return_value={"ts": "2026-02-11"})
     def test_successful_heartbeat(self, mock_hb):
-        resp = client.post("/api/agents/code-agent/heartbeat?agent_type=coding&status=active")
+        # BUG-294-OBS-003: agent_type must be in whitelist {claude-code, docker-agent, ci, unknown}
+        resp = client.post("/api/agents/code-agent/heartbeat?agent_type=claude-code&status=active")
         data = resp.json()
         assert data["agent_id"] == "code-agent"
-        mock_hb.assert_called_once_with("code-agent", "coding", None, "active")
+        mock_hb.assert_called_once_with("code-agent", "claude-code", None, "active")
 
 
 # ── lock acquire/release ─────────────────────────────────
