@@ -63,7 +63,8 @@ async def send_chat_message(request: ChatMessageRequest):
             context = preload_session_context()
             context_dict = context.to_dict()
         except Exception as e:
-            logger.warning(f"Failed to preload context: {e}")
+            # BUG-424-CHT-001: Add exc_info for stack trace preservation
+            logger.warning(f"Failed to preload context: {e}", exc_info=True)
             context_dict = {}
 
         _chat_sessions[session_id] = {
@@ -128,7 +129,8 @@ async def send_chat_message(request: ChatMessageRequest):
             gov_collector = start_chat_session(agent_id, topic)
             _chat_gov_sessions[session_id] = gov_collector
         except Exception as e:
-            logger.warning(f"Failed to start governance session: {e}")
+            # BUG-424-CHT-002: Add exc_info for stack trace preservation
+            logger.warning(f"Failed to start governance session: {e}", exc_info=True)
 
     # Process command
     import time as _time
@@ -151,7 +153,8 @@ async def send_chat_message(request: ChatMessageRequest):
                 duration_ms=_cmd_duration,
             )
         except Exception as e:
-            logger.debug(f"Failed to record chat tool call: {e}")
+            # BUG-424-CHT-003: Upgrade debug→warning + exc_info (data integrity)
+            logger.warning(f"Failed to record chat tool call: {e}", exc_info=True)
 
     # Record LLM reasoning as thought (GAP-GOVSESS-CAPTURE-001)
     if gov_collector and not response_content.startswith("__DELEGATE__:"):
@@ -163,7 +166,8 @@ async def send_chat_message(request: ChatMessageRequest):
                 thought_type="command_result" if is_command else "llm_response",
             )
         except Exception as e:
-            logger.debug(f"Failed to record chat thought: {e}")
+            # BUG-424-CHT-004: Upgrade debug→warning + exc_info (data integrity)
+            logger.warning(f"Failed to record chat thought: {e}", exc_info=True)
 
     # Handle async delegation
     # BUG-300-DEL-001: Only honour __DELEGATE__ sentinel from explicit /delegate command,
@@ -231,7 +235,8 @@ async def delete_chat_session(session_id: str):
             msg_count = len(_chat_sessions.get(session_id, {}).get("messages", []))
             end_chat_session(gov_collector, summary=f"Chat ended ({msg_count} messages)")
         except Exception as e:
-            logger.debug(f"Failed to end governance session: {e}")
+            # BUG-424-CHT-005: Upgrade debug→warning + exc_info (data integrity)
+            logger.warning(f"Failed to end governance session: {e}", exc_info=True)
 
     # BUG-CHAT-001: Safe removal to avoid KeyError from race conditions
     _chat_sessions.pop(session_id, None)

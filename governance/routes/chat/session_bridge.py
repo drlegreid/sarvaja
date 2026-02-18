@@ -80,7 +80,9 @@ def start_chat_session(
         SessionCollector instance for recording events
     """
     # Sanitize topic: replace spaces, slashes, and other path-unsafe chars
-    sanitized = topic[:40].replace(' ', '-').replace('/', '-').replace('\\', '-')
+    # BUG-210-BRIDGE-SANITIZE-001: Strip control chars + additional path-unsafe chars
+    import re
+    sanitized = re.sub(r'[\x00-\x1f\x7f]', '', topic[:40]).replace(' ', '-').replace('/', '-').replace('\\', '-')
     safe_topic = f"CHAT-{sanitized.upper()}"
     collector = SessionCollector(
         topic=safe_topic,
@@ -103,7 +105,8 @@ def start_chat_session(
                 f"(status={p_status}) — will appear as orphan until sync"
             )
     except Exception as e:
-        logger.error(f"TypeDB session create failed: {e}")
+        # BUG-424-BRG-001: Add exc_info for stack trace preservation
+        logger.error(f"TypeDB session create failed: {e}", exc_info=True)
 
     # Always ensure _sessions_store has session data for bridge syncing
     # (create_session may have stored in TypeDB but not in _sessions_store)
@@ -175,6 +178,9 @@ def record_chat_tool_call(
             "success": success,
             "timestamp": datetime.now().isoformat(),
         })
+        # BUG-210-BRIDGE-CAP-001: Cap tool_calls to prevent unbounded growth
+        if len(_sessions_store[session_id]["tool_calls"]) > 500:
+            _sessions_store[session_id]["tool_calls"] = _sessions_store[session_id]["tool_calls"][-500:]
         persist_session(session_id, _sessions_store[session_id])
 
 
@@ -217,6 +223,9 @@ def record_chat_thought(
             "confidence": confidence,
             "timestamp": datetime.now().isoformat(),
         })
+        # BUG-210-BRIDGE-CAP-002: Cap thoughts to prevent unbounded growth
+        if len(_sessions_store[session_id]["thoughts"]) > 200:
+            _sessions_store[session_id]["thoughts"] = _sessions_store[session_id]["thoughts"][-200:]
         persist_session(session_id, _sessions_store[session_id])
 
 
@@ -252,7 +261,8 @@ def end_chat_session(
             source="chat-bridge",
         )
     except Exception as e:
-        logger.error(f"TypeDB session end failed: {e}")
+        # BUG-424-BRG-002: Add exc_info for stack trace preservation
+        logger.error(f"TypeDB session end failed: {e}", exc_info=True)
 
     # Always update _sessions_store for consistency
     if session_id in _sessions_store:
@@ -267,7 +277,8 @@ def end_chat_session(
     try:
         evidence_path = collector.generate_session_log()
     except Exception as e:
-        logger.warning(f"Failed to generate session log: {e}")
+        # BUG-424-BRG-003: Add exc_info for stack trace preservation
+        logger.warning(f"Failed to generate session log: {e}", exc_info=True)
 
     # BUG-SESSION-EVIDENCE-001: Auto-link evidence to TypeDB after generation
     if evidence_path:
@@ -280,7 +291,8 @@ def end_chat_session(
             else:
                 logger.warning(f"TypeDB unavailable; evidence not linked: {session_id} -> {evidence_path}")
         except Exception as e:
-            logger.error(f"Evidence linking failed for {session_id}: {e}")
+            # BUG-424-BRG-004: Add exc_info for stack trace preservation
+            logger.error(f"Evidence linking failed for {session_id}: {e}", exc_info=True)
         # Also store in _sessions_store for fallback
         if session_id in _sessions_store:
             existing = _sessions_store[session_id].get("evidence_files") or []
@@ -292,7 +304,8 @@ def end_chat_session(
     try:
         collector.sync_to_chromadb()
     except Exception as e:
-        logger.warning(f"Failed to sync session to ChromaDB: {e}")
+        # BUG-424-BRG-005: Add exc_info for stack trace preservation
+        logger.warning(f"Failed to sync session to ChromaDB: {e}", exc_info=True)
 
     # Per TEST-CVP-01-v1 Tier 2: Post-session validation
     _run_post_session_checks(session_id, collector)
@@ -326,4 +339,5 @@ def _run_post_session_checks(session_id: str, collector: SessionCollector) -> No
         else:
             logger.info(f"Post-session validation [{session_id}]: OK")
     except Exception as e:
-        logger.debug(f"Post-session validation failed: {e}")
+        # BUG-424-BRG-006: Upgrade debug→warning + exc_info (data integrity)
+        logger.warning(f"Post-session validation failed: {e}", exc_info=True)

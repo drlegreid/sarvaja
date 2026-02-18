@@ -151,10 +151,12 @@ class EmbeddingPipeline:
                     session_result = json.loads(governance_get_session(session_id))
                     content = session_result.get('content', '')
                 except json.JSONDecodeError as e:
-                    logger.warning(f"Failed to parse session {session_id} JSON: {e}")
+                    # BUG-424-PIP-001: Add exc_info for stack trace preservation
+                    logger.warning(f"Failed to parse session {session_id} JSON: {e}", exc_info=True)
                     continue
                 except Exception as e:
-                    logger.warning(f"Failed to fetch session {session_id}: {e}")
+                    # BUG-424-PIP-002: Add exc_info for stack trace preservation
+                    logger.warning(f"Failed to fetch session {session_id}: {e}", exc_info=True)
                     continue
 
                 if content:

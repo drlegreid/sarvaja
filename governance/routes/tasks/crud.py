@@ -81,7 +81,8 @@ async def create_task(task: TaskCreate):
         return TaskResponse(**result)
     # BUG-381-TSK-001: Log full error but return only type name to prevent info disclosure
     except ValueError as e:
-        logger.warning(f"create_task conflict: {e}")
+        # BUG-423-TCR-001: Add exc_info for stack trace preservation
+        logger.warning(f"create_task conflict: {e}", exc_info=True)
         raise HTTPException(status_code=409, detail=f"Task conflict: {type(e).__name__}")
     except Exception as e:
         logger.error(f"create_task failed: {e}", exc_info=True)

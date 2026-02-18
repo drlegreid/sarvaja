@@ -33,7 +33,8 @@ def _get_client():
             return client
     except Exception as e:
         # BUG-215-PRJ-004: Log instead of silently swallowing
-        logger.debug(f"TypeDB client unavailable: {e}")
+        # BUG-425-PRJ-001: Upgrade debug→warning + exc_info for TypeDB failures
+        logger.warning(f"TypeDB client unavailable: {e}", exc_info=True)
     return None
 
 
@@ -96,12 +97,14 @@ def get_project(project_id: str) -> Optional[Dict[str, Any]]:
                 try:
                     result["session_count"] = len(client.get_project_sessions(project_id))
                 except Exception as e:
-                    logger.debug(f"Session count enrichment failed for {project_id}: {e}")
+                    # BUG-425-PRJ-002: Upgrade debug→warning + exc_info (data divergence)
+                    logger.warning(f"Session count enrichment failed for {project_id}: {e}", exc_info=True)
                     result.setdefault("session_count", 0)
                 try:
                     result["plan_count"] = len(client.get_project_plans(project_id))
                 except Exception as e:
-                    logger.debug(f"Plan count enrichment failed for {project_id}: {e}")
+                    # BUG-425-PRJ-003: Upgrade debug→warning + exc_info (data divergence)
+                    logger.warning(f"Plan count enrichment failed for {project_id}: {e}", exc_info=True)
                     result.setdefault("plan_count", 0)
                 return result
         except Exception as e:
@@ -130,12 +133,14 @@ def list_projects(
                 try:
                     p["session_count"] = len(client.get_project_sessions(pid))
                 except Exception as e:
-                    logger.debug(f"Session count enrichment failed for {pid}: {e}")
+                    # BUG-425-PRJ-004: Upgrade debug→warning + exc_info (data divergence)
+                    logger.warning(f"Session count enrichment failed for {pid}: {e}", exc_info=True)
                     p.setdefault("session_count", 0)
                 try:
                     p["plan_count"] = len(client.get_project_plans(pid))
                 except Exception as e:
-                    logger.debug(f"Plan count enrichment failed for {pid}: {e}")
+                    # BUG-425-PRJ-005: Upgrade debug→warning + exc_info (data divergence)
+                    logger.warning(f"Plan count enrichment failed for {pid}: {e}", exc_info=True)
                     p.setdefault("plan_count", 0)
         except Exception as e:
             # BUG-407-PRJ-003: Add exc_info for stack trace preservation
