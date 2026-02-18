@@ -19,6 +19,12 @@ from .status import update_task_status as _update_task_status
 logger = logging.getLogger(__name__)
 
 
+# BUG-393-CRUD-001: Strip control characters that could break TypeQL query syntax
+def _strip_ctl(value: str) -> str:
+    """Strip control characters (\n, \r, \t, \0) from a value before TypeQL escaping."""
+    return value.replace('\n', '').replace('\r', '').replace('\t', ' ').replace('\0', '')
+
+
 # BUG-289-ATTR-001: Allowlist of valid TypeQL attribute names to prevent injection
 _ALLOWED_TASK_ATTR_NAMES = frozenset({
     "task-status", "task-name", "phase", "item-type",
@@ -31,13 +37,13 @@ def _update_attribute(tx, task_id: str, attr_name: str, old_value: str, new_valu
     # BUG-289-ATTR-001: Validate attr_name against allowlist before interpolation
     if attr_name not in _ALLOWED_TASK_ATTR_NAMES:
         raise ValueError(f"Disallowed attribute name for task update: {attr_name!r}")
-    # BUG-TYPEQL-ESCAPE-TASK-001: Escape backslash FIRST, then quotes (match insert_task)
-    tid = task_id.replace('\\', '\\\\').replace('"', '\\"')
-    new_escaped = new_value.replace('\\', '\\\\').replace('"', '\\"')
+    # BUG-393-CRUD-001 + BUG-TYPEQL-ESCAPE-TASK-001: Strip control chars, then escape
+    tid = _strip_ctl(task_id).replace('\\', '\\\\').replace('"', '\\"')
+    new_escaped = _strip_ctl(new_value).replace('\\', '\\\\').replace('"', '\\"')
     # BUG-332-CRUD-001: Use 'is not None' instead of truthiness to handle empty-string
     # values correctly — 'if old_value:' skips "" which leaves orphaned attributes in TypeDB
     if old_value is not None:
-        old_escaped = old_value.replace('\\', '\\\\').replace('"', '\\"')
+        old_escaped = _strip_ctl(old_value).replace('\\', '\\\\').replace('"', '\\"')
         tx.query(f'''
             match $t isa task, has task-id "{tid}", has {attr_name} $v;
                 $v == "{old_escaped}";
@@ -55,8 +61,8 @@ def _set_lifecycle_timestamps(tx, task_id: str, new_status: str, current):
     Mirrors the logic from update_task_status() so that update_task()
     also handles lifecycle timestamps correctly.
     """
-    # BUG-TYPEQL-ESCAPE-TASK-001 + BUG-182-003: Escape backslash first, then quotes
-    tid = task_id.replace('\\', '\\\\').replace('"', '\\"')
+    # BUG-393-CRUD-001 + BUG-TYPEQL-ESCAPE-TASK-001 + BUG-182-003: Strip ctl chars, escape
+    tid = _strip_ctl(task_id).replace('\\', '\\\\').replace('"', '\\"')
     now_str = datetime.now().strftime('%Y-%m-%dT%H:%M:%S')
 
     if new_status == "IN_PROGRESS" and not current.claimed_at:

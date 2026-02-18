@@ -97,7 +97,12 @@ def session_thoughts(
 def session_evidence_rendered(session_id: str):
     """Get evidence file content rendered as HTML from markdown."""
     from governance.services.sessions import get_session
-    session = get_session(session_id)
+    # BUG-392-ERR-001: Wrap get_session in try/except — TypeDB errors can raise raw 500
+    try:
+        session = get_session(session_id)
+    except Exception as e:
+        logger.error(f"get_session failed for {session_id}: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Failed to load session: {type(e).__name__}")
     if not session:
         raise HTTPException(status_code=404, detail=f"Session {session_id} not found")
 
@@ -141,5 +146,6 @@ def ingestion_status(session_id: str):
         from governance.services.ingestion_orchestrator import get_ingestion_status
         return get_ingestion_status(session_id)
     except Exception as e:
-        logger.error(f"Ingestion status failed for {session_id}: {e}")
+        # BUG-392-ERR-002: Add exc_info=True for proper stack trace in logs
+        logger.error(f"Ingestion status failed for {session_id}: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail="Failed to retrieve ingestion status")

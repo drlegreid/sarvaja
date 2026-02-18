@@ -7,10 +7,13 @@ Per SESSION-METRICS-01-v1.
 """
 
 import json
+import logging
 from pathlib import Path
 from typing import Optional
 
 from governance.mcp_tools.common import format_mcp_result
+
+logger = logging.getLogger(__name__)
 
 
 def register_ingestion_tools(mcp) -> None:
@@ -43,9 +46,14 @@ def register_ingestion_tools(mcp) -> None:
                 {"error": "JSONL file not found", "session_id": session_id}
             )
 
-        result = index_session_content(
-            path, session_id, dry_run=dry_run, resume=resume
-        )
+        # BUG-391-ING-001: Guard against unhandled service exceptions leaking via MCP
+        try:
+            result = index_session_content(
+                path, session_id, dry_run=dry_run, resume=resume
+            )
+        except Exception as e:
+            logger.error(f"ingest_session_content failed for {session_id}: {e}", exc_info=True)
+            return format_mcp_result({"error": f"Ingestion failed: {type(e).__name__}", "session_id": session_id})
         return format_mcp_result(result)
 
     @mcp.tool()
@@ -72,7 +80,12 @@ def register_ingestion_tools(mcp) -> None:
                 {"error": "JSONL file not found", "session_id": session_id}
             )
 
-        result = _mine(path, session_id, dry_run=dry_run)
+        # BUG-391-ING-002: Guard against unhandled service exceptions leaking via MCP
+        try:
+            result = _mine(path, session_id, dry_run=dry_run)
+        except Exception as e:
+            logger.error(f"mine_session_links failed for {session_id}: {e}", exc_info=True)
+            return format_mcp_result({"error": f"Link mining failed: {type(e).__name__}", "session_id": session_id})
         return format_mcp_result(result)
 
     @mcp.tool()
@@ -99,7 +112,12 @@ def register_ingestion_tools(mcp) -> None:
                 {"error": "JSONL file not found", "session_id": session_id}
             )
 
-        result = run_ingestion_pipeline(path, session_id, dry_run=dry_run)
+        # BUG-391-ING-003: Guard against unhandled service exceptions leaking via MCP
+        try:
+            result = run_ingestion_pipeline(path, session_id, dry_run=dry_run)
+        except Exception as e:
+            logger.error(f"ingest_session_full failed for {session_id}: {e}", exc_info=True)
+            return format_mcp_result({"error": f"Full ingestion failed: {type(e).__name__}", "session_id": session_id})
         return format_mcp_result(result)
 
     @mcp.tool()
@@ -114,7 +132,12 @@ def register_ingestion_tools(mcp) -> None:
         if not session_id:
             return _list_all_checkpoints()
 
-        result = get_ingestion_status(session_id)
+        # BUG-391-ING-004: Guard against unhandled service exceptions leaking via MCP
+        try:
+            result = get_ingestion_status(session_id)
+        except Exception as e:
+            logger.error(f"ingestion_status failed for {session_id}: {e}", exc_info=True)
+            return format_mcp_result({"error": f"Status check failed: {type(e).__name__}", "session_id": session_id})
         return format_mcp_result(result)
 
     @mcp.tool()

@@ -91,7 +91,8 @@ class TestTypeQLEscapingPatterns:
         """Task _update_attribute helper escapes new_value."""
         from governance.typedb.queries.tasks import crud as task_crud
         src = inspect.getsource(task_crud)
-        assert "new_escaped = new_value.replace" in src
+        # BUG-393-CRUD-001: _strip_ctl wraps new_value before .replace
+        assert "new_escaped = _strip_ctl(new_value).replace" in src
 
     def test_rule_create_escapes_fields(self):
         """Rule create_rule() escapes name, directive, and rule_id."""

@@ -105,7 +105,8 @@ def register_decision_tools(mcp) -> None:
                 typedb_healthy = True
                 client.close()
         except Exception as e:
-            typedb_error = str(e)
+            # BUG-391-DEC-001: Don't leak connection strings/hostnames via MCP response payload
+            typedb_error = type(e).__name__
 
         service_status["typedb"] = {
             "healthy": typedb_healthy,
@@ -137,7 +138,8 @@ def register_decision_tools(mcp) -> None:
                     if resp.status == 200:
                         chromadb_healthy = True
         except Exception as e:
-            chromadb_error = str(e)
+            # BUG-391-DEC-002: Don't leak connection strings/hostnames via MCP response payload
+            chromadb_error = type(e).__name__
 
         service_status["chromadb"] = {
             "healthy": chromadb_healthy,
