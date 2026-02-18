@@ -72,7 +72,8 @@ def _validate_entity_exists(
     except Exception as e:
         # BUG-257-LNK-002: Log TypeDB failures instead of silently swallowing
         # BUG-406-LNK-001: Add exc_info for stack trace preservation
-        logger.warning(f"TypeDB validation failed for {entity_type}:{entity_id}: {e}", exc_info=True)
+        # BUG-462-LNK-001: Sanitize logger message — exc_info=True already captures full stack
+        logger.warning(f"TypeDB validation failed for {entity_type}:{entity_id}: {type(e).__name__}", exc_info=True)
         exists = False
 
     cache[key] = exists
@@ -186,7 +187,8 @@ def mine_session_links(
                 result["tasks_linked"] += 1
         except Exception as e:
             # BUG-406-LNK-002: Don't leak exception details in MCP-returned errors
-            logger.warning(f"Task link {task_id} failed: {e}", exc_info=True)
+            # BUG-462-LNK-002: Sanitize logger message — exc_info=True already captures full stack
+            logger.warning(f"Task link {task_id} failed: {type(e).__name__}", exc_info=True)
             if len(result["errors"]) < _MAX_ERRORS:
                 result["errors"].append(f"Task link {task_id}: {type(e).__name__}")
 
@@ -200,7 +202,8 @@ def mine_session_links(
                 result["gaps_linked"] += 1
         except Exception as e:
             # BUG-406-LNK-003: Don't leak exception details in MCP-returned errors
-            logger.warning(f"Gap link {gap_id} failed: {e}", exc_info=True)
+            # BUG-462-LNK-003: Sanitize logger message — exc_info=True already captures full stack
+            logger.warning(f"Gap link {gap_id} failed: {type(e).__name__}", exc_info=True)
             if len(result["errors"]) < _MAX_ERRORS:
                 result["errors"].append(f"Gap link {gap_id}: {type(e).__name__}")
 
@@ -214,7 +217,8 @@ def mine_session_links(
                 result["rules_linked"] += 1
         except Exception as e:
             # BUG-406-LNK-004: Don't leak exception details in MCP-returned errors
-            logger.warning(f"Rule link {rule_id} failed: {e}", exc_info=True)
+            # BUG-462-LNK-004: Sanitize logger message — exc_info=True already captures full stack
+            logger.warning(f"Rule link {rule_id} failed: {type(e).__name__}", exc_info=True)
             if len(result["errors"]) < _MAX_ERRORS:
                 result["errors"].append(f"Rule link {rule_id}: {type(e).__name__}")
 
@@ -228,7 +232,8 @@ def mine_session_links(
                 result["decisions_linked"] += 1
         except Exception as e:
             # BUG-406-LNK-005: Don't leak exception details in MCP-returned errors
-            logger.warning(f"Decision link {decision_id} failed: {e}", exc_info=True)
+            # BUG-462-LNK-005: Sanitize logger message — exc_info=True already captures full stack
+            logger.warning(f"Decision link {decision_id} failed: {type(e).__name__}", exc_info=True)
             if len(result["errors"]) < _MAX_ERRORS:
                 result["errors"].append(f"Decision link {decision_id}: {type(e).__name__}")
 

@@ -36,7 +36,8 @@ def _monitor(action: str, session_id: str, source: str = "service", **extra):
     except Exception as e:
         # BUG-MONITOR-SILENT-001: Log instead of silently swallowing
         # BUG-420-MON-003: Add exc_info for stack trace preservation
-        logger.warning(f"Monitor event failed for session {session_id}: {e}", exc_info=True)
+        # BUG-464-SLC-001: Sanitize logger message — exc_info=True already captures full stack
+        logger.warning(f"Monitor event failed for session {session_id}: {type(e).__name__}", exc_info=True)
 
 
 def delete_session(session_id: str, source: str = "rest") -> bool:
@@ -54,7 +55,8 @@ def delete_session(session_id: str, source: str = "rest") -> bool:
                 deleted = True
         except Exception as e:
             # BUG-408-SLC-001: Add exc_info for stack trace preservation
-            logger.warning(f"TypeDB session delete failed, using fallback: {e}", exc_info=True)
+            # BUG-464-SLC-002: Sanitize logger message — exc_info=True already captures full stack
+            logger.warning(f"TypeDB session delete failed, using fallback: {type(e).__name__}", exc_info=True)
 
     if session_id in _sessions_store:
         del _sessions_store[session_id]
@@ -113,7 +115,8 @@ def end_session(
                                 logger.info(f"Auto-generated evidence: {auto_path}")
                         except Exception as ae:
                             # BUG-408-SLC-002: Add exc_info for stack trace preservation
-                            logger.warning(f"Auto-evidence failed: {ae}", exc_info=True)
+                            # BUG-464-SLC-003: Sanitize logger message — exc_info=True already captures full stack
+                            logger.warning(f"Auto-evidence failed: {type(ae).__name__}", exc_info=True)
                     # BUG-SESSION-EVIDENCE-001: Link evidence to TypeDB
                     if evidence_files:
                         for ef in evidence_files:
@@ -122,7 +125,8 @@ def end_session(
                             except Exception as le:
                                 # BUG-LIFECYCLE-EVIDENCE-LOG-001: WARNING not DEBUG — data integrity
                                 # BUG-436-SLC-001: Add exc_info for stack trace preservation
-                                logger.warning(f"TypeDB evidence link failed {session_id}->{ef}: {le}", exc_info=True)
+                                # BUG-464-SLC-004: Sanitize logger message — exc_info=True already captures full stack
+                                logger.warning(f"TypeDB evidence link failed {session_id}->{ef}: {type(le).__name__}", exc_info=True)
                     # Also update _sessions_store for consistent fallback
                     # (TypeDB derives tasks_completed from relations, but chat
                     # sessions store tool_call count here for API visibility)
@@ -145,7 +149,8 @@ def end_session(
             raise
         except Exception as e:
             # BUG-408-SLC-003: Add exc_info for stack trace preservation
-            logger.warning(f"TypeDB session end failed, using fallback: {e}", exc_info=True)
+            # BUG-464-SLC-005: Sanitize logger message — exc_info=True already captures full stack
+            logger.warning(f"TypeDB session end failed, using fallback: {type(e).__name__}", exc_info=True)
 
     # Fallback to in-memory
     if session_id not in _sessions_store:
@@ -169,7 +174,8 @@ def end_session(
                 logger.info(f"Auto-generated evidence for {session_id}: {auto_path}")
         except Exception as e:
             # BUG-420-SLC-001: Add exc_info for stack trace preservation
-            logger.warning(f"Auto-evidence generation failed for {session_id}: {e}", exc_info=True)
+            # BUG-464-SLC-006: Sanitize logger message — exc_info=True already captures full stack
+            logger.warning(f"Auto-evidence generation failed for {session_id}: {type(e).__name__}", exc_info=True)
 
     if evidence_files is not None:
         session["evidence_files"] = evidence_files

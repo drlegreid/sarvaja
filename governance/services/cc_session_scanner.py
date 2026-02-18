@@ -116,7 +116,8 @@ def scan_jsonl_metadata(filepath: Path) -> Optional[Dict[str, Any]]:
         }
     except Exception as e:
         # BUG-415-SCN-001: Add exc_info for stack trace preservation
-        logger.warning(f"Failed to scan {filepath.name}: {e}", exc_info=True)
+        # BUG-462-SCN-001: Sanitize logger message — exc_info=True already captures full stack
+        logger.warning(f"Failed to scan {filepath.name}: {type(e).__name__}", exc_info=True)
         return None
 
 
@@ -144,7 +145,8 @@ def discover_cc_projects() -> list[Dict[str, Any]]:
     except OSError as e:
         # BUG-SCANNER-001: Guard against directory vanishing between check and iteration
         # BUG-415-SCN-002: Upgrade debug→warning for operational OSError + exc_info
-        logger.warning(f"CC directory iteration failed: {e}", exc_info=True)
+        # BUG-462-SCN-002: Sanitize logger message — exc_info=True already captures full stack
+        logger.warning(f"CC directory iteration failed: {type(e).__name__}", exc_info=True)
         return []
     for d in entries:
         if not d.is_dir() or d.name.startswith("."):
@@ -230,7 +232,8 @@ def discover_filesystem_projects(
         except OSError as e:
             # BUG-SCANNER-002: Guard against directory vanishing during scan
             # BUG-429-SCN-001: Log instead of silently swallowing
-            logger.warning(f"Directory scan failed for {scan_dir}: {e}", exc_info=True)
+            # BUG-462-SCN-003: Sanitize logger message — exc_info=True already captures full stack
+            logger.warning(f"Directory scan failed for {scan_dir}: {type(e).__name__}", exc_info=True)
             continue
         for d in dir_entries:
             if not d.is_dir() or d.name.startswith("."):

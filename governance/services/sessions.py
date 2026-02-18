@@ -54,7 +54,8 @@ def _monitor(action: str, session_id: str, source: str = "service", **extra):
     except Exception as e:
         # BUG-MONITOR-SILENT-001: Log instead of silently swallowing
         # BUG-420-MON-002: Add exc_info for stack trace preservation
-        logger.warning(f"Monitor event failed for session {session_id}: {e}", exc_info=True)
+        # BUG-464-SES-001: Sanitize logger message — exc_info=True already captures full stack
+        logger.warning(f"Monitor event failed for session {session_id}: {type(e).__name__}", exc_info=True)
 
 
 def _is_test_artifact(session: dict) -> bool:
@@ -208,7 +209,8 @@ def create_session(
                 return session_to_response(created)
         except Exception as e:
             # BUG-408-SES-001: Add exc_info for stack trace preservation
-            logger.warning(f"TypeDB session insert failed, using fallback: {e}", exc_info=True)
+            # BUG-464-SES-002: Sanitize logger message — exc_info=True already captures full stack
+            logger.warning(f"TypeDB session insert failed, using fallback: {type(e).__name__}", exc_info=True)
 
     # Fallback to in-memory
     if session_id in _sessions_store:
@@ -303,7 +305,8 @@ def update_session(
                 return session_to_response(updated)
         except Exception as e:
             # BUG-408-SES-002: Add exc_info for stack trace preservation
-            logger.warning(f"TypeDB session update failed, using fallback: {e}", exc_info=True)
+            # BUG-464-SES-003: Sanitize logger message — exc_info=True already captures full stack
+            logger.warning(f"TypeDB session update failed, using fallback: {type(e).__name__}", exc_info=True)
 
     # Fallback to in-memory
     if session_id not in _sessions_store:
@@ -390,7 +393,8 @@ def sync_pending_sessions() -> Dict[str, Any]:
                 except Exception as se:
                     # BUG-SYNC-STATUS-SILENT-001: Log instead of silent pass
                     # BUG-436-SES-001: Add exc_info for stack trace preservation
-                    logger.warning(f"Status sync failed for {session_id} (insert OK): {se}", exc_info=True)
+                    # BUG-464-SES-004: Sanitize logger message — exc_info=True already captures full stack
+                    logger.warning(f"Status sync failed for {session_id} (insert OK): {type(se).__name__}", exc_info=True)
             # BUG-205-SYNC-001: Mark as persisted to prevent duplicate in next list
             if session_id in _sessions_store:
                 _sessions_store[session_id]["persistence_status"] = "persisted"
@@ -399,7 +403,8 @@ def sync_pending_sessions() -> Dict[str, Any]:
         except Exception as e:
             failed += 1
             # BUG-408-SES-003: Add exc_info for stack trace preservation
-            logger.warning(f"Failed to sync session {session_id}: {e}", exc_info=True)
+            # BUG-464-SES-005: Sanitize logger message — exc_info=True already captures full stack
+            logger.warning(f"Failed to sync session {session_id}: {type(e).__name__}", exc_info=True)
 
     return {
         "synced": synced,

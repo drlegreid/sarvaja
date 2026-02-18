@@ -75,7 +75,8 @@ def _monitor(action: str, task_id: str, source: str = "service", **extra):
     except Exception as e:
         # BUG-MONITOR-SILENT-001: Log instead of silently swallowing
         # BUG-420-MON-005: Add exc_info for stack trace preservation
-        logger.warning(f"Monitor event failed for task {task_id}: {e}", exc_info=True)
+        # BUG-464-TSK-001: Sanitize logger message — exc_info=True already captures full stack
+        logger.warning(f"Monitor event failed for task {task_id}: {type(e).__name__}", exc_info=True)
 
 
 def list_tasks(
@@ -180,7 +181,8 @@ def create_task(
                         except Exception as le:
                             # BUG-275-TASKS-001: Promote to WARNING (debug hides link failures)
                             # BUG-450-TSK-001: Add exc_info for stack trace preservation
-                            logger.warning(f"TypeDB document link {task_id}->{doc_path}: {le}", exc_info=True)
+                            # BUG-464-TSK-002: Sanitize logger message — exc_info=True already captures full stack
+                            logger.warning(f"TypeDB document link {task_id}->{doc_path}: {type(le).__name__}", exc_info=True)
                 record_audit("CREATE", "task", task_id,
                              actor_id=agent_id or "system",
                              metadata={"phase": phase, "status": status, "source": source})
@@ -191,7 +193,8 @@ def create_task(
             raise
         except Exception as e:
             # BUG-408-TSK-001: Add exc_info for stack trace preservation
-            logger.warning(f"TypeDB task insert failed, using fallback: {e}", exc_info=True)
+            # BUG-464-TSK-003: Sanitize logger message — exc_info=True already captures full stack
+            logger.warning(f"TypeDB task insert failed, using fallback: {type(e).__name__}", exc_info=True)
 
     # Fallback to in-memory store
     if task_id in _tasks_store:
@@ -229,7 +232,8 @@ def get_task(task_id: str) -> Optional[Dict[str, Any]]:
                 return task_to_response(task)
         except Exception as e:
             # BUG-408-TSK-002: Add exc_info for stack trace preservation
-            logger.warning(f"TypeDB task get failed, using fallback: {e}", exc_info=True)
+            # BUG-464-TSK-004: Sanitize logger message — exc_info=True already captures full stack
+            logger.warning(f"TypeDB task get failed, using fallback: {type(e).__name__}", exc_info=True)
     if task_id in _tasks_store:
         return dict(_tasks_store[task_id])
     return None
@@ -251,7 +255,8 @@ def get_task_details(task_id: str) -> Optional[Dict[str, Any]]:
                 return {"task_id": task_id, **details}
         except Exception as e:
             # BUG-408-TSK-003: Add exc_info for stack trace preservation
-            logger.warning(f"TypeDB task details get failed, using fallback: {e}", exc_info=True)
+            # BUG-464-TSK-005: Sanitize logger message — exc_info=True already captures full stack
+            logger.warning(f"TypeDB task details get failed, using fallback: {type(e).__name__}", exc_info=True)
     # Fallback to in-memory store
     if task_id in _tasks_store:
         t = _tasks_store[task_id]
@@ -291,7 +296,8 @@ def update_task_details(
                 return get_task_details(task_id)
         except Exception as e:
             # BUG-408-TSK-004: Add exc_info for stack trace preservation
-            logger.warning(f"TypeDB task details update failed, using fallback: {e}", exc_info=True)
+            # BUG-464-TSK-006: Sanitize logger message — exc_info=True already captures full stack
+            logger.warning(f"TypeDB task details update failed, using fallback: {type(e).__name__}", exc_info=True)
     # Fallback to in-memory store
     if task_id in _tasks_store:
         t = _tasks_store[task_id]

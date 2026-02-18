@@ -34,7 +34,8 @@ def _get_client():
     except Exception as e:
         # BUG-215-PRJ-004: Log instead of silently swallowing
         # BUG-425-PRJ-001: Upgrade debug→warning + exc_info for TypeDB failures
-        logger.warning(f"TypeDB client unavailable: {e}", exc_info=True)
+        # BUG-463-PRJ-001: Sanitize logger message — exc_info=True already captures full stack
+        logger.warning(f"TypeDB client unavailable: {type(e).__name__}", exc_info=True)
     return None
 
 
@@ -71,7 +72,8 @@ def create_project(
                 return result
         except Exception as e:
             # BUG-407-PRJ-001: Add exc_info for stack trace preservation
-            logger.warning(f"TypeDB insert project failed: {e}", exc_info=True)
+            # BUG-463-PRJ-002: Sanitize logger message — exc_info=True already captures full stack
+            logger.warning(f"TypeDB insert project failed: {type(e).__name__}", exc_info=True)
 
     # In-memory fallback
     project = {
@@ -98,18 +100,21 @@ def get_project(project_id: str) -> Optional[Dict[str, Any]]:
                     result["session_count"] = len(client.get_project_sessions(project_id))
                 except Exception as e:
                     # BUG-425-PRJ-002: Upgrade debug→warning + exc_info (data divergence)
-                    logger.warning(f"Session count enrichment failed for {project_id}: {e}", exc_info=True)
+                    # BUG-463-PRJ-003: Sanitize logger message — exc_info=True already captures full stack
+                    logger.warning(f"Session count enrichment failed for {project_id}: {type(e).__name__}", exc_info=True)
                     result.setdefault("session_count", 0)
                 try:
                     result["plan_count"] = len(client.get_project_plans(project_id))
                 except Exception as e:
                     # BUG-425-PRJ-003: Upgrade debug→warning + exc_info (data divergence)
-                    logger.warning(f"Plan count enrichment failed for {project_id}: {e}", exc_info=True)
+                    # BUG-463-PRJ-004: Sanitize logger message — exc_info=True already captures full stack
+                    logger.warning(f"Plan count enrichment failed for {project_id}: {type(e).__name__}", exc_info=True)
                     result.setdefault("plan_count", 0)
                 return result
         except Exception as e:
             # BUG-407-PRJ-002: Add exc_info for stack trace preservation
-            logger.warning(f"TypeDB get project failed: {e}", exc_info=True)
+            # BUG-463-PRJ-005: Sanitize logger message — exc_info=True already captures full stack
+            logger.warning(f"TypeDB get project failed: {type(e).__name__}", exc_info=True)
 
     return _projects_store.get(project_id)
 
@@ -134,17 +139,20 @@ def list_projects(
                     p["session_count"] = len(client.get_project_sessions(pid))
                 except Exception as e:
                     # BUG-425-PRJ-004: Upgrade debug→warning + exc_info (data divergence)
-                    logger.warning(f"Session count enrichment failed for {pid}: {e}", exc_info=True)
+                    # BUG-463-PRJ-006: Sanitize logger message — exc_info=True already captures full stack
+                    logger.warning(f"Session count enrichment failed for {pid}: {type(e).__name__}", exc_info=True)
                     p.setdefault("session_count", 0)
                 try:
                     p["plan_count"] = len(client.get_project_plans(pid))
                 except Exception as e:
                     # BUG-425-PRJ-005: Upgrade debug→warning + exc_info (data divergence)
-                    logger.warning(f"Plan count enrichment failed for {pid}: {e}", exc_info=True)
+                    # BUG-463-PRJ-007: Sanitize logger message — exc_info=True already captures full stack
+                    logger.warning(f"Plan count enrichment failed for {pid}: {type(e).__name__}", exc_info=True)
                     p.setdefault("plan_count", 0)
         except Exception as e:
             # BUG-407-PRJ-003: Add exc_info for stack trace preservation
-            logger.warning(f"TypeDB list projects failed: {e}", exc_info=True)
+            # BUG-463-PRJ-008: Sanitize logger message — exc_info=True already captures full stack
+            logger.warning(f"TypeDB list projects failed: {type(e).__name__}", exc_info=True)
 
     if not projects:
         all_projects = sorted(_projects_store.values(), key=lambda p: p.get("project_id", ""))
@@ -178,7 +186,8 @@ def delete_project(project_id: str) -> bool:
             return client.delete_project(project_id)
         except Exception as e:
             # BUG-407-PRJ-004: Add exc_info for stack trace preservation
-            logger.warning(f"TypeDB delete project failed: {e}", exc_info=True)
+            # BUG-463-PRJ-009: Sanitize logger message — exc_info=True already captures full stack
+            logger.warning(f"TypeDB delete project failed: {type(e).__name__}", exc_info=True)
 
     if project_id in _projects_store:
         del _projects_store[project_id]
@@ -194,5 +203,6 @@ def link_session_to_project(project_id: str, session_id: str) -> bool:
             return client.link_project_to_session(project_id, session_id)
         except Exception as e:
             # BUG-407-PRJ-005: Add exc_info for stack trace preservation
-            logger.warning(f"TypeDB link session to project failed: {e}", exc_info=True)
+            # BUG-463-PRJ-010: Sanitize logger message — exc_info=True already captures full stack
+            logger.warning(f"TypeDB link session to project failed: {type(e).__name__}", exc_info=True)
     return False

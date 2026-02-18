@@ -82,7 +82,8 @@ def _compute_duration(start_time: str, end_time: str) -> str:
     except Exception as e:
         # BUG-265-EVID-001: Log duration parse errors instead of silently swallowing
         # BUG-420-EVD-001: Upgrade debug→warning + exc_info for duration parse failures
-        logger.warning(f"Duration parse failed: {e}", exc_info=True)
+        # BUG-464-EVD-001: Sanitize logger message — exc_info=True already captures full stack
+        logger.warning(f"Duration parse failed: {type(e).__name__}", exc_info=True)
         return "unknown"
 
 
@@ -243,7 +244,8 @@ def generate_session_evidence(
             return None
     except (OSError, ValueError) as e:
         # BUG-407-EVD-001: Add exc_info for stack trace preservation
-        logger.error(f"Failed to validate output_dir {output_dir}: {e}", exc_info=True)
+        # BUG-464-EVD-002: Sanitize logger message — exc_info=True already captures full stack
+        logger.error(f"Failed to validate output_dir {output_dir}: {type(e).__name__}", exc_info=True)
         return None
 
     # BUG-194-005: Wrap all filesystem ops in try-except for disk/permission errors
@@ -251,7 +253,8 @@ def generate_session_evidence(
         output_dir.mkdir(parents=True, exist_ok=True)
     except OSError as e:
         # BUG-407-EVD-002: Add exc_info for stack trace preservation
-        logger.error(f"Failed to create evidence directory {output_dir}: {e}", exc_info=True)
+        # BUG-464-EVD-003: Sanitize logger message — exc_info=True already captures full stack
+        logger.error(f"Failed to create evidence directory {output_dir}: {type(e).__name__}", exc_info=True)
         return None
 
     # BUG-252-SES-001: Sanitize session_id to prevent path traversal
@@ -272,7 +275,8 @@ def generate_session_evidence(
         filepath.write_text(markdown, encoding="utf-8")
     except OSError as e:
         # BUG-407-EVD-003: Add exc_info for stack trace preservation
-        logger.error(f"Failed to write evidence file {filepath}: {e}", exc_info=True)
+        # BUG-464-EVD-004: Sanitize logger message — exc_info=True already captures full stack
+        logger.error(f"Failed to write evidence file {filepath}: {type(e).__name__}", exc_info=True)
         return None
     logger.info(f"Generated session evidence: {filepath}")
 

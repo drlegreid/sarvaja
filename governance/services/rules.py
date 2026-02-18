@@ -65,7 +65,8 @@ def _monitor(action: str, rule_id: str, source: str = "service", **extra):
     except Exception as e:
         # BUG-MONITOR-SILENT-001: Log instead of silently swallowing
         # BUG-407-RUL-001: Add exc_info for stack trace preservation
-        logger.warning(f"Monitor event failed for rule {rule_id}: {e}", exc_info=True)
+        # BUG-463-RUL-001: Sanitize logger message — exc_info=True already captures full stack
+        logger.warning(f"Monitor event failed for rule {rule_id}: {type(e).__name__}", exc_info=True)
 
 
 def get_semantic_id(legacy_id: str) -> Optional[str]:

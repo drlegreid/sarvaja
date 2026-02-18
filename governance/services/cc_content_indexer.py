@@ -161,7 +161,8 @@ def index_session_content(
         except Exception as e:
             # BUG-394-IDX-001: Don't leak ChromaDB connection details in MCP/API errors list
             msg = f"ChromaDB connection failed: {type(e).__name__}"
-            logger.error(f"ChromaDB connection failed: {e}", exc_info=True)
+            # BUG-462-IDX-001: Sanitize logger message — exc_info=True already captures full stack
+            logger.error(f"ChromaDB connection failed: {type(e).__name__}", exc_info=True)
             return {**result, "status": "error", "errors": [msg]}
 
     # BUG-194-002: Guard against missing JSONL file before streaming
@@ -212,7 +213,8 @@ def index_session_content(
                     except Exception as e:
                         # BUG-394-IDX-002: Don't leak ChromaDB internals in errors list
                         msg = f"ChromaDB upsert failed at chunk {meta['chunk_index']}: {type(e).__name__}"
-                        logger.error(f"ChromaDB upsert failed at chunk {meta['chunk_index']}: {e}", exc_info=True)
+                        # BUG-462-IDX-002: Sanitize logger message — exc_info=True already captures full stack
+                        logger.error(f"ChromaDB upsert failed at chunk {meta['chunk_index']}: {type(e).__name__}", exc_info=True)
                         result["errors"].append(msg)
                         ckpt.add_error(msg)
                         upsert_ok = False
@@ -243,7 +245,8 @@ def index_session_content(
             except Exception as e:
                 # BUG-394-IDX-003: Don't leak ChromaDB internals in errors list
                 msg = f"ChromaDB final upsert failed: {type(e).__name__}"
-                logger.error(f"ChromaDB final upsert failed: {e}", exc_info=True)
+                # BUG-462-IDX-003: Sanitize logger message — exc_info=True already captures full stack
+                logger.error(f"ChromaDB final upsert failed: {type(e).__name__}", exc_info=True)
                 result["errors"].append(msg)
                 ckpt.add_error(msg)
                 final_ok = False
@@ -281,5 +284,6 @@ def delete_session_content(session_id: str) -> dict[str, Any]:
         return {"status": "success", "session_id": session_id}
     # BUG-370-IDX-001: Log full error but return only type name
     except Exception as e:
-        logger.error(f"delete_session_content failed: {e}", exc_info=True)
+        # BUG-462-IDX-004: Sanitize logger message — exc_info=True already captures full stack
+        logger.error(f"delete_session_content failed: {type(e).__name__}", exc_info=True)
         return {"status": "error", "error": f"delete_session_content failed: {type(e).__name__}"}

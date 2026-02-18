@@ -68,7 +68,8 @@ def ingest_session(
         is_active = (datetime.now(tz=timezone.utc) - last_mod) < timedelta(hours=2)
     except Exception as e:
         # BUG-429-ING-001: Log bare except instead of silently swallowing
-        logger.warning(f"Failed to determine session active status: {e}", exc_info=True)
+        # BUG-462-ING-001: Sanitize logger message — exc_info=True already captures full stack
+        logger.warning(f"Failed to determine session active status: {type(e).__name__}", exc_info=True)
         is_active = False
 
     description = f"CC session: {meta['slug']} ({meta['user_count']} user, {meta['assistant_count']} assistant, {meta['tool_use_count']} tools)"

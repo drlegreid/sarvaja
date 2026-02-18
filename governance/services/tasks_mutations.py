@@ -40,7 +40,8 @@ def _monitor(action: str, task_id: str, source: str = "service", **extra):
     except Exception as e:
         # BUG-MONITOR-SILENT-001: Log instead of silently swallowing
         # BUG-420-MON-004: Add exc_info for stack trace preservation
-        logger.warning(f"Monitor event failed for task {task_id}: {e}", exc_info=True)
+        # BUG-464-TM-001: Sanitize logger message — exc_info=True already captures full stack
+        logger.warning(f"Monitor event failed for task {task_id}: {type(e).__name__}", exc_info=True)
 
 
 def update_task(
@@ -89,7 +90,8 @@ def update_task(
                     )
                 except Exception as ue:
                     # BUG-TASK-TAXONOMY-DEBUG-001: WARNING not DEBUG — data divergence
-                    logger.warning(f"TypeDB attribute update {task_id}: {ue}")
+                    # BUG-464-TM-002: Sanitize logger message + add exc_info for stack trace
+                    logger.warning(f"TypeDB attribute update {task_id}: {type(ue).__name__}", exc_info=True)
             # Persist linked_sessions to TypeDB via relations
             if linked_sessions:
                 for sid in linked_sessions:
@@ -97,7 +99,8 @@ def update_task(
                         client.link_task_to_session(task_id, sid)
                     except Exception as le:
                         # BUG-MUTATIONS-002: Link failures are data integrity issues
-                        logger.warning(f"TypeDB session link {task_id}->{sid}: {le}")
+                        # BUG-464-TM-003: Sanitize logger message + add exc_info for stack trace
+                        logger.warning(f"TypeDB session link {task_id}->{sid}: {type(le).__name__}", exc_info=True)
             # Persist linked_documents to TypeDB via relations
             if linked_documents:
                 for doc_path in linked_documents:
@@ -105,10 +108,12 @@ def update_task(
                         client.link_task_to_document(task_id, doc_path)
                     except Exception as le:
                         # BUG-MUTATIONS-002: Link failures are data integrity issues
-                        logger.warning(f"TypeDB document link {task_id}->{doc_path}: {le}")
+                        # BUG-464-TM-004: Sanitize logger message + add exc_info for stack trace
+                        logger.warning(f"TypeDB document link {task_id}->{doc_path}: {type(le).__name__}", exc_info=True)
         except Exception as e:
             # BUG-408-TM-001: Add exc_info for stack trace preservation
-            logger.warning(f"TypeDB task update failed, using fallback: {e}", exc_info=True)
+            # BUG-464-TM-005: Sanitize logger message — exc_info=True already captures full stack
+            logger.warning(f"TypeDB task update failed, using fallback: {type(e).__name__}", exc_info=True)
 
     # Ensure task in fallback store
     if task_id not in _tasks_store:
@@ -190,7 +195,8 @@ def delete_task(task_id: str, source: str = "rest") -> bool:
                 deleted = True
         except Exception as e:
             # BUG-408-TM-002: Add exc_info for stack trace preservation
-            logger.warning(f"TypeDB task delete failed, using fallback: {e}", exc_info=True)
+            # BUG-464-TM-006: Sanitize logger message — exc_info=True already captures full stack
+            logger.warning(f"TypeDB task delete failed, using fallback: {type(e).__name__}", exc_info=True)
 
     if task_id in _tasks_store:
         del _tasks_store[task_id]
@@ -217,7 +223,8 @@ def link_task_to_rule(task_id: str, rule_id: str, source: str = "rest") -> bool:
         return bool(result)
     except Exception as e:
         # BUG-404-TM-006: Add exc_info for stack trace preservation
-        logger.error(f"Failed to link task {task_id} to rule {rule_id}: {e}", exc_info=True)
+        # BUG-464-TM-007: Sanitize logger message — exc_info=True already captures full stack
+        logger.error(f"Failed to link task {task_id} to rule {rule_id}: {type(e).__name__}", exc_info=True)
         return False
 
 
@@ -235,7 +242,8 @@ def link_task_to_session(task_id: str, session_id: str, source: str = "rest") ->
         return bool(result)
     except Exception as e:
         # BUG-404-TM-006: Add exc_info for stack trace preservation
-        logger.error(f"Failed to link task {task_id} to session {session_id}: {e}", exc_info=True)
+        # BUG-464-TM-008: Sanitize logger message — exc_info=True already captures full stack
+        logger.error(f"Failed to link task {task_id} to session {session_id}: {type(e).__name__}", exc_info=True)
         return False
 
 
@@ -253,7 +261,8 @@ def link_task_to_document(task_id: str, document_path: str, source: str = "rest"
         return bool(result)
     except Exception as e:
         # BUG-404-TM-006: Add exc_info for stack trace preservation
-        logger.error(f"Failed to link task {task_id} to document {document_path}: {e}", exc_info=True)
+        # BUG-464-TM-009: Sanitize logger message — exc_info=True already captures full stack
+        logger.error(f"Failed to link task {task_id} to document {document_path}: {type(e).__name__}", exc_info=True)
         return False
 
 
@@ -269,5 +278,6 @@ def unlink_task_from_document(task_id: str, document_path: str, source: str = "r
         return bool(result)
     except Exception as e:
         # BUG-404-TM-006: Add exc_info for stack trace preservation
-        logger.error(f"Failed to unlink document {document_path} from task {task_id}: {e}", exc_info=True)
+        # BUG-464-TM-010: Sanitize logger message — exc_info=True already captures full stack
+        logger.error(f"Failed to unlink document {document_path} from task {task_id}: {type(e).__name__}", exc_info=True)
         return False
