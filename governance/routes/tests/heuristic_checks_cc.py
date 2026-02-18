@@ -21,7 +21,8 @@ def _api_get(api_base_url: str, endpoint: str):
             data = resp.json()
             return data.get("items", data) if isinstance(data, dict) else data
     except Exception as e:
-        logger.debug(f"Heuristic API call failed: {endpoint}: {e}")
+        # BUG-440-HCC-001: Upgrade debug→warning + exc_info for operational visibility
+        logger.warning(f"Heuristic API call failed: {endpoint}: {e}", exc_info=True)
     return []
 
 

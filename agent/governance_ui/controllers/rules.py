@@ -152,7 +152,8 @@ def register_rules_controllers(state: Any, ctrl: Any, api_base_url: str) -> None
 
             state.is_loading = False
         except Exception as e:
-            add_error_trace(state, f"Save rule failed: {e}", "/api/rules")
+            # BUG-439-RUL-001: Don't leak exception internals via add_error_trace → Trame WebSocket
+            add_error_trace(state, f"Save rule failed: {type(e).__name__}", "/api/rules")
             state.is_loading = False
             state.has_error = True
             # BUG-389-RUL-002: Don't leak httpx internals via Trame WebSocket
@@ -192,7 +193,8 @@ def register_rules_controllers(state: Any, ctrl: Any, api_base_url: str) -> None
 
             state.is_loading = False
         except Exception as e:
-            add_error_trace(state, f"Delete rule failed: {e}", f"/api/rules/{rule_id}")
+            # BUG-439-RUL-002: Don't leak exception internals via add_error_trace → Trame WebSocket
+            add_error_trace(state, f"Delete rule failed: {type(e).__name__}", f"/api/rules/{rule_id}")
             state.is_loading = False
             state.has_error = True
             # BUG-389-RUL-003: Don't leak httpx internals via Trame WebSocket
@@ -215,7 +217,8 @@ def register_rules_controllers(state: Any, ctrl: Any, api_base_url: str) -> None
                     data = response.json()
                     state.rules = data.get("items", data) if isinstance(data, dict) else data
         except Exception as e:
-            add_error_trace(state, f"Load rules failed: {e}", "/api/rules")
+            # BUG-439-RUL-003: Don't leak exception internals via add_error_trace → Trame WebSocket
+            add_error_trace(state, f"Load rules failed: {type(e).__name__}", "/api/rules")
             state.has_error = True
             # BUG-389-RUL-004: Don't leak httpx internals via Trame WebSocket
             state.error_message = f"Failed to load rules: {type(e).__name__}"

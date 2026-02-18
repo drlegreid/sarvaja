@@ -79,7 +79,8 @@ def register_data_loader_controllers(
                     response_body = response.json()
                 except Exception as e:
                     # BUG-UI-SILENT-JSON-001: Log JSON parse failures
-                    add_error_trace(state, f"Agents JSON parse failed: {e}", "/api/agents")
+                    # BUG-439-DL-001: Don't leak exception internals via add_error_trace → Trame WebSocket
+                    add_error_trace(state, f"Agents JSON parse failed: {type(e).__name__}", "/api/agents")
 
                 add_api_trace(
                     state, "/api/agents", "GET", response.status_code, duration_ms,
@@ -91,26 +92,30 @@ def register_data_loader_controllers(
                 else:
                     state.agents = []
         except Exception as e:
-            add_error_trace(state, f"Load agents failed: {str(e)}", "/api/agents")
+            # BUG-439-DL-002: Don't leak exception internals via add_error_trace → Trame WebSocket
+            add_error_trace(state, f"Load agents failed: {type(e).__name__}", "/api/agents")
             state.agents = []
 
         # BUG-283-DL-001: Wrap in try to prevent exception aborting proposals/stats load
         try:
             state.trust_leaderboard = build_trust_leaderboard(state.agents)
         except Exception as e:
-            add_error_trace(state, f"Build trust leaderboard failed: {e}", "build_trust_leaderboard()")
+            # BUG-439-DL-003: Don't leak exception internals via add_error_trace → Trame WebSocket
+            add_error_trace(state, f"Build trust leaderboard failed: {type(e).__name__}", "build_trust_leaderboard()")
             state.trust_leaderboard = []
 
         try:
             state.proposals = get_proposals()
         except Exception as e:
-            add_error_trace(state, f"Load proposals failed: {e}", "get_proposals()")
+            # BUG-439-DL-004: Don't leak exception internals via add_error_trace → Trame WebSocket
+            add_error_trace(state, f"Load proposals failed: {type(e).__name__}", "get_proposals()")
             state.proposals = []
 
         try:
             state.escalated_proposals = get_escalated_proposals()
         except Exception as e:
-            add_error_trace(state, f"Load escalated proposals failed: {e}", "get_escalated_proposals()")
+            # BUG-439-DL-005: Don't leak exception internals via add_error_trace → Trame WebSocket
+            add_error_trace(state, f"Load escalated proposals failed: {type(e).__name__}", "get_escalated_proposals()")
             state.escalated_proposals = []
 
         # BUG-193-010: Guard against get_governance_stats raising
@@ -120,7 +125,8 @@ def register_data_loader_controllers(
                 state.proposals
             )
         except Exception as e:
-            add_error_trace(state, f"Load governance stats failed: {e}", "get_governance_stats()")
+            # BUG-439-DL-006: Don't leak exception internals via add_error_trace → Trame WebSocket
+            add_error_trace(state, f"Load governance stats failed: {type(e).__name__}", "get_governance_stats()")
             state.governance_stats = {}
 
     def load_monitor_data():
@@ -139,7 +145,8 @@ def register_data_loader_controllers(
             state.hourly_stats = get_hourly_monitor_stats()
         except Exception as e:
             # BUG-UI-LOAD-002: Add error handling to monitor data loading
-            add_error_trace(state, f"Load monitor data failed: {e}", "monitor_data")
+            # BUG-439-DL-007: Don't leak exception internals via add_error_trace → Trame WebSocket
+            add_error_trace(state, f"Load monitor data failed: {type(e).__name__}", "monitor_data")
             # BUG-283-DL-002: Mark timestamp as error so UI doesn't show false freshness
             state.monitor_last_updated = f"{datetime.now().isoformat(timespec='seconds')} (ERROR)"
             return
@@ -175,7 +182,8 @@ def register_data_loader_controllers(
                 else:
                     state.claimed_tasks = []
         except Exception as e:
-            add_error_trace(state, f"Load backlog failed: {e}", "/api/tasks/available")
+            # BUG-439-DL-008: Don't leak exception internals via add_error_trace → Trame WebSocket
+            add_error_trace(state, f"Load backlog failed: {type(e).__name__}", "/api/tasks/available")
             # BUG-225-CTRL-007: Don't surface transient refresh errors to user
             # (other loaders use add_error_trace only, not has_error)
             state.available_tasks = []
@@ -205,7 +213,8 @@ def register_data_loader_controllers(
                         "metrics_summary": {},
                     }
         except Exception as e:
-            add_error_trace(state, f"Load executive report failed: {e}", "/api/reports/executive")
+            # BUG-439-DL-009: Don't leak exception internals via add_error_trace → Trame WebSocket
+            add_error_trace(state, f"Load executive report failed: {type(e).__name__}", "/api/reports/executive")
             # BUG-389-DL-001: Don't leak exception internals via Trame WebSocket (state.executive_report is pushed to browser)
             state.executive_report = {
                 "error": type(e).__name__,

@@ -40,7 +40,8 @@ def register_infra_loader_controllers(
         try:
             _load_infra_status_inner()
         except Exception as e:
-            add_error_trace(state, f"Load infra status failed: {e}", "load_infra_status")
+            # BUG-439-IL-001: Don't leak exception internals via add_error_trace → Trame WebSocket
+            add_error_trace(state, f"Load infra status failed: {type(e).__name__}", "load_infra_status")
         finally:
             state.infra_loading = False
 
@@ -123,7 +124,8 @@ def register_infra_loader_controllers(
                         stats["mcp_servers"][name] = "ON-DEMAND"
         except Exception as e:
             # BUG-UI-SILENT-JSON-001: Log healthcheck state parse failures
-            add_error_trace(state, f"Healthcheck state parse failed: {e}", ".healthcheck_state.json")
+            # BUG-439-IL-002: Don't leak exception internals via add_error_trace → Trame WebSocket
+            add_error_trace(state, f"Healthcheck state parse failed: {type(e).__name__}", ".healthcheck_state.json")
 
         # Get memory usage
         try:

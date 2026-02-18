@@ -25,7 +25,8 @@ def _api_get(api_base_url: str, endpoint: str) -> dict:
             data = resp.json()
             return data.get("items", data) if isinstance(data, dict) else data
     except Exception as e:
-        logger.debug(f"Heuristic API call failed: {endpoint}: {e}")
+        # BUG-440-HCS-001: Upgrade debug→warning + exc_info for operational visibility
+        logger.warning(f"Heuristic API call failed: {endpoint}: {e}", exc_info=True)
     return []
 
 
@@ -155,7 +156,10 @@ def check_session_stale_active(api_base_url: str) -> dict:
     if not active:
         return {"status": "PASS", "message": "No active sessions", "violations": []}
 
-    threshold = (datetime.now(timezone.utc) - timedelta(hours=24)).isoformat()
+    # BUG-HEURISTIC-TZ-001: Use naive datetime to match stored start_time format.
+    # TZ-aware ISO strings ("...+00:00") always compare > naive ("..."), causing
+    # all sessions to falsely appear stale.
+    threshold = (datetime.now() - timedelta(hours=24)).isoformat()
     violations = []
     for s in active:
         start = s.get("start_time", "")

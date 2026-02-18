@@ -64,7 +64,8 @@ def register_trust_controllers(state: Any, ctrl: Any, api_base_url: str) -> None
                     # BUG-225-CTRL-009: Clear stale sessions from prior agent
                     state.agent_sessions = []
         except Exception as e:
-            add_error_trace(state, f"Load agent sessions failed: {e}", f"/api/agents/{agent_id}/sessions")
+            # BUG-439-TRS-001: Don't leak exception internals via add_error_trace → Trame WebSocket
+            add_error_trace(state, f"Load agent sessions failed: {type(e).__name__}", f"/api/agents/{agent_id}/sessions")
             state.agent_sessions = []
 
     @ctrl.trigger("close_agent_detail")
@@ -104,7 +105,8 @@ def register_trust_controllers(state: Any, ctrl: Any, api_base_url: str) -> None
                 else:
                     state.status_message = f"Failed to toggle agent: {response.status_code}"
         except Exception as e:
-            add_error_trace(state, f"Toggle agent pause failed: {e}", f"/api/agents/{agent_id}/status/toggle")
+            # BUG-439-TRS-002: Don't leak exception internals via add_error_trace → Trame WebSocket
+            add_error_trace(state, f"Toggle agent pause failed: {type(e).__name__}", f"/api/agents/{agent_id}/status/toggle")
             # BUG-385-TRS-001: Don't leak httpx internals via Trame WebSocket
             state.status_message = f"Error toggling agent: {type(e).__name__}"
 
@@ -145,7 +147,8 @@ def register_trust_controllers(state: Any, ctrl: Any, api_base_url: str) -> None
                 else:
                     state.status_message = f"Registration failed: {response.status_code}"
         except Exception as e:
-            add_error_trace(state, f"Register agent failed: {e}", "/api/agents")
+            # BUG-439-TRS-003: Don't leak exception internals via add_error_trace → Trame WebSocket
+            add_error_trace(state, f"Register agent failed: {type(e).__name__}", "/api/agents")
             # BUG-385-TRS-002: Don't leak httpx internals via Trame WebSocket
             state.status_message = f"Registration failed: {type(e).__name__}"
 
@@ -167,6 +170,7 @@ def register_trust_controllers(state: Any, ctrl: Any, api_base_url: str) -> None
                     }]
                     state.status_message = f"Trust data loaded for {agent_id}"
         except Exception as e:
-            add_error_trace(state, f"Load trust history failed: {e}",
+            # BUG-439-TRS-004: Don't leak exception internals via add_error_trace → Trame WebSocket
+            add_error_trace(state, f"Load trust history failed: {type(e).__name__}",
                             f"/api/agents/{agent_id}")
             state.trust_history = []
