@@ -53,7 +53,8 @@ def register_agent_tools(mcp) -> None:
                 return format_mcp_result({"error": f"Failed to create agent {agent_id}"})
         # BUG-192-001 + BUG-362-AGT-001: Log full error but return only type name
         except Exception as e:
-            logger.error(f"agent_create failed: {e}", exc_info=True)
+            # BUG-458-AGT-001: Sanitize logger message — exc_info=True already captures full stack
+            logger.error(f"agent_create failed: {type(e).__name__}", exc_info=True)
             return format_mcp_result({"error": f"agent_create failed: {type(e).__name__}"})
         finally:
             client.close()
@@ -80,7 +81,8 @@ def register_agent_tools(mcp) -> None:
                 return format_mcp_result({"error": f"Agent {agent_id} not found"})
         # BUG-192-001 + BUG-362-AGT-001: Log full error but return only type name
         except Exception as e:
-            logger.error(f"agent_get failed: {e}", exc_info=True)
+            # BUG-458-AGT-002: Sanitize logger message — exc_info=True already captures full stack
+            logger.error(f"agent_get failed: {type(e).__name__}", exc_info=True)
             return format_mcp_result({"error": f"agent_get failed: {type(e).__name__}"})
         finally:
             client.close()
@@ -101,7 +103,8 @@ def register_agent_tools(mcp) -> None:
             })
         # BUG-192-001 + BUG-362-AGT-001: Log full error but return only type name
         except Exception as e:
-            logger.error(f"agents_list failed: {e}", exc_info=True)
+            # BUG-458-AGT-003: Sanitize logger message — exc_info=True already captures full stack
+            logger.error(f"agents_list failed: {type(e).__name__}", exc_info=True)
             return format_mcp_result({"error": f"agents_list failed: {type(e).__name__}"})
         finally:
             client.close()
@@ -145,7 +148,8 @@ def register_agent_tools(mcp) -> None:
                 return format_mcp_result({"error": f"Failed to update agent {agent_id}"})
         # BUG-192-001 + BUG-362-AGT-001: Log full error but return only type name
         except Exception as e:
-            logger.error(f"agent_trust_update failed: {e}", exc_info=True)
+            # BUG-458-AGT-004: Sanitize logger message — exc_info=True already captures full stack
+            logger.error(f"agent_trust_update failed: {type(e).__name__}", exc_info=True)
             return format_mcp_result({"error": f"agent_trust_update failed: {type(e).__name__}"})
         finally:
             client.close()
@@ -208,7 +212,8 @@ def register_agent_tools(mcp) -> None:
             return format_mcp_result(dashboard)
         # BUG-192-001 + BUG-362-AGT-001: Log full error but return only type name
         except Exception as e:
-            logger.error(f"agents_dashboard failed: {e}", exc_info=True)
+            # BUG-458-AGT-005: Sanitize logger message — exc_info=True already captures full stack
+            logger.error(f"agents_dashboard failed: {type(e).__name__}", exc_info=True)
             return format_mcp_result({"error": f"agents_dashboard failed: {type(e).__name__}"})
         finally:
             client.close()

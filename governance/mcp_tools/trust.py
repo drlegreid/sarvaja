@@ -92,7 +92,8 @@ def register_trust_tools(mcp) -> None:
 
         # BUG-192-004 + BUG-361-TRU-001: Log full error but return only type name
         except Exception as e:
-            logger.error(f"governance_get_trust_score failed: {e}", exc_info=True)
+            # BUG-458-TRU-001: Sanitize logger message — exc_info=True already captures full stack
+            logger.error(f"governance_get_trust_score failed: {type(e).__name__}", exc_info=True)
             return format_mcp_result({"error": f"governance_get_trust_score failed: {type(e).__name__}"})
 
         finally:

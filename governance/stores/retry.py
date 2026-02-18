@@ -70,15 +70,17 @@ def retry_on_transient(max_attempts: int = 2, base_delay: float = 0.5):
                     last_exc = e
                     if attempt < max_attempts:
                         delay = base_delay * (2 ** (attempt - 1))
+                        # BUG-460-RTY-001: Sanitize logger message — type name sufficient for triage
                         logger.warning(
-                            f"Transient error in {fn.__name__} (attempt {attempt}/{max_attempts}): {e}. "
+                            f"Transient error in {fn.__name__} (attempt {attempt}/{max_attempts}): {type(e).__name__}. "
                             f"Retrying in {delay:.2f}s..."
                         )
                         time.sleep(delay)
                     else:
                         # BUG-411-RTY-001: Add exc_info for stack trace preservation
+                        # BUG-460-RTY-002: Sanitize logger message — exc_info=True already captures full stack
                         logger.error(
-                            f"Transient error in {fn.__name__} after {max_attempts} attempts: {e}",
+                            f"Transient error in {fn.__name__} after {max_attempts} attempts: {type(e).__name__}",
                             exc_info=True,
                         )
             raise last_exc

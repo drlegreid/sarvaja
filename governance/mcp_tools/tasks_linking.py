@@ -43,7 +43,8 @@ def register_task_linking_tools(mcp) -> None:
                 })
         # BUG-B185-007 + BUG-366-TL-001: Log full error but return only type name
         except Exception as e:
-            logger.error(f"task_link_session failed: {e}", exc_info=True)
+            # BUG-459-TL-001: Sanitize logger message — exc_info=True already captures full stack
+            logger.error(f"task_link_session failed: {type(e).__name__}", exc_info=True)
             return format_mcp_result({"error": f"task_link_session failed: {type(e).__name__}"})
         finally:
             client.close()
@@ -74,7 +75,8 @@ def register_task_linking_tools(mcp) -> None:
                 })
         # BUG-B185-007 + BUG-366-TL-001: Log full error but return only type name
         except Exception as e:
-            logger.error(f"task_link_rule failed: {e}", exc_info=True)
+            # BUG-459-TL-002: Sanitize logger message — exc_info=True already captures full stack
+            logger.error(f"task_link_rule failed: {type(e).__name__}", exc_info=True)
             return format_mcp_result({"error": f"task_link_rule failed: {type(e).__name__}"})
         finally:
             client.close()
@@ -105,7 +107,8 @@ def register_task_linking_tools(mcp) -> None:
                 })
         # BUG-B185-007 + BUG-366-TL-001: Log full error but return only type name
         except Exception as e:
-            logger.error(f"task_link_evidence failed: {e}", exc_info=True)
+            # BUG-459-TL-003: Sanitize logger message — exc_info=True already captures full stack
+            logger.error(f"task_link_evidence failed: {type(e).__name__}", exc_info=True)
             return format_mcp_result({"error": f"task_link_evidence failed: {type(e).__name__}"})
         finally:
             client.close()
@@ -131,7 +134,8 @@ def register_task_linking_tools(mcp) -> None:
             })
         # BUG-B185-007 + BUG-366-TL-001: Log full error but return only type name
         except Exception as e:
-            logger.error(f"task_get_evidence failed: {e}", exc_info=True)
+            # BUG-459-TL-004: Sanitize logger message — exc_info=True already captures full stack
+            logger.error(f"task_get_evidence failed: {type(e).__name__}", exc_info=True)
             return format_mcp_result({"error": f"task_get_evidence failed: {type(e).__name__}"})
         finally:
             client.close()
@@ -166,7 +170,8 @@ def register_task_linking_tools(mcp) -> None:
                 })
         # BUG-B185-007 + BUG-366-TL-001: Log full error but return only type name
         except Exception as e:
-            logger.error(f"task_link_commit failed: {e}", exc_info=True)
+            # BUG-459-TL-005: Sanitize logger message — exc_info=True already captures full stack
+            logger.error(f"task_link_commit failed: {type(e).__name__}", exc_info=True)
             return format_mcp_result({"error": f"task_link_commit failed: {type(e).__name__}"})
         finally:
             client.close()
@@ -192,7 +197,8 @@ def register_task_linking_tools(mcp) -> None:
             })
         # BUG-B185-007 + BUG-366-TL-001: Log full error but return only type name
         except Exception as e:
-            logger.error(f"task_get_commits failed: {e}", exc_info=True)
+            # BUG-459-TL-006: Sanitize logger message — exc_info=True already captures full stack
+            logger.error(f"task_get_commits failed: {type(e).__name__}", exc_info=True)
             return format_mcp_result({"error": f"task_get_commits failed: {type(e).__name__}"})
         finally:
             client.close()
@@ -223,7 +229,8 @@ def register_task_linking_tools(mcp) -> None:
                 })
         # BUG-366-TL-001: Log full error but return only type name
         except Exception as e:
-            logger.error(f"task_link_document failed: {e}", exc_info=True)
+            # BUG-459-TL-007: Sanitize logger message — exc_info=True already captures full stack
+            logger.error(f"task_link_document failed: {type(e).__name__}", exc_info=True)
             return format_mcp_result({"error": f"task_link_document failed: {type(e).__name__}"})
         finally:
             client.close()
@@ -249,7 +256,8 @@ def register_task_linking_tools(mcp) -> None:
             })
         # BUG-366-TL-001: Log full error but return only type name
         except Exception as e:
-            logger.error(f"task_get_documents failed: {e}", exc_info=True)
+            # BUG-459-TL-008: Sanitize logger message — exc_info=True already captures full stack
+            logger.error(f"task_get_documents failed: {type(e).__name__}", exc_info=True)
             return format_mcp_result({"error": f"task_get_documents failed: {type(e).__name__}"})
         finally:
             client.close()
@@ -295,7 +303,8 @@ def register_task_linking_tools(mcp) -> None:
                 })
         # BUG-B185-007 + BUG-366-TL-001: Log full error but return only type name
         except Exception as e:
-            logger.error(f"task_update_details failed: {e}", exc_info=True)
+            # BUG-459-TL-009: Sanitize logger message — exc_info=True already captures full stack
+            logger.error(f"task_update_details failed: {type(e).__name__}", exc_info=True)
             return format_mcp_result({"error": f"task_update_details failed: {type(e).__name__}"})
         finally:
             client.close()
@@ -324,7 +333,8 @@ def register_task_linking_tools(mcp) -> None:
             })
         # BUG-B185-007 + BUG-366-TL-001: Log full error but return only type name
         except Exception as e:
-            logger.error(f"task_get_details failed: {e}", exc_info=True)
+            # BUG-459-TL-010: Sanitize logger message — exc_info=True already captures full stack
+            logger.error(f"task_get_details failed: {type(e).__name__}", exc_info=True)
             return format_mcp_result({"error": f"task_get_details failed: {type(e).__name__}"})
         finally:
             client.close()

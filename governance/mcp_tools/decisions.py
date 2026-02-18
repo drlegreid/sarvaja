@@ -57,7 +57,8 @@ def register_decision_tools(mcp) -> None:
 
         # BUG-B185-006 + BUG-362-DEC-001: Log full error but return only type name
         except Exception as e:
-            logger.error(f"governance_get_decision_impacts failed: {e}", exc_info=True)
+            # BUG-458-DEC-001: Sanitize logger message — exc_info=True already captures full stack
+            logger.error(f"governance_get_decision_impacts failed: {type(e).__name__}", exc_info=True)
             return format_mcp_result({"error": f"governance_get_decision_impacts failed: {type(e).__name__}"})
 
         finally:
@@ -177,7 +178,8 @@ def register_decision_tools(mcp) -> None:
                 }
         except Exception as e:
             # BUG-428-DEC-001: Upgrade debug→warning + exc_info for TypeDB failures
-            logger.warning(f"Failed to get TypeDB statistics: {e}", exc_info=True)
+            # BUG-458-DEC-002: Sanitize logger message — exc_info=True already captures full stack
+            logger.warning(f"Failed to get TypeDB statistics: {type(e).__name__}", exc_info=True)
         finally:
             if stat_client is not None:
                 try:

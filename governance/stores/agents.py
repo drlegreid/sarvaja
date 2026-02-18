@@ -115,7 +115,8 @@ def _load_workflow_configs() -> Dict[str, Dict[str, Any]]:
                     ],
                 }
     except Exception as e:
-        logger.warning(f"Failed to load agents.yaml workflow configs: {e}")
+        # BUG-460-STA-001: Sanitize logger + add exc_info for stack trace preservation
+        logger.warning(f"Failed to load agents.yaml workflow configs: {type(e).__name__}", exc_info=True)
     return configs
 
 
@@ -128,7 +129,8 @@ def _load_agent_metrics() -> Dict[str, Dict[str, Any]]:
             with open(_AGENT_METRICS_FILE, "r", encoding="utf-8") as f:
                 metrics = json.load(f)
         except Exception as e:
-            logger.warning(f"Failed to load agent metrics: {e}")
+            # BUG-460-STA-002: Sanitize logger + add exc_info for stack trace preservation
+            logger.warning(f"Failed to load agent metrics: {type(e).__name__}", exc_info=True)
     return metrics
 
 
@@ -151,7 +153,8 @@ def _save_agent_metrics(metrics: Dict[str, Any]) -> None:
             raise
     except Exception as e:
         # BUG-METRICS-001: Log instead of crash on filesystem errors
-        logger.warning(f"Failed to save agent metrics: {e}")
+        # BUG-460-STA-003: Sanitize logger + add exc_info for stack trace preservation
+        logger.warning(f"Failed to save agent metrics: {type(e).__name__}", exc_info=True)
 
 
 def _calculate_trust_score(agent_id: str, tasks_executed: int, base_trust: float) -> float:
