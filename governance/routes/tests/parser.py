@@ -180,5 +180,6 @@ _Evidence file: `{filename}`_
 
     except Exception as e:
         # Don't fail the test run if evidence generation fails
-        logger.warning(f"Failed to generate evidence file: {e}")
+        # BUG-470-PAR-001: Sanitize logger message + add exc_info for stack trace preservation
+        logger.warning(f"Failed to generate evidence file: {type(e).__name__}", exc_info=True)
         return None

@@ -13,7 +13,7 @@ import logging
 from datetime import datetime
 from pathlib import Path
 from typing import Optional
-from fastapi import APIRouter, Query, BackgroundTasks
+from fastapi import APIRouter, HTTPException, Query, BackgroundTasks
 from fastapi.responses import FileResponse
 
 from governance.routes.tests.runner_store import (
@@ -56,7 +56,11 @@ async def run_tests(
 
     cmd = ["python3", "-m", "pytest", "--tb=short", "-q"]
 
+    # BUG-243-RUN-001: Validate pattern to prevent path traversal
     if pattern:
+        import re as _re
+        if not _re.match(r'^tests/[\w/\-\.]+$', pattern):
+            raise HTTPException(status_code=400, detail="Invalid test pattern: must start with tests/")
         cmd.append(pattern)
     elif category:
         patterns = {
@@ -73,7 +77,11 @@ async def run_tests(
     else:
         cmd.append("tests/unit/")
 
+    # BUG-243-RUN-002: Validate markers to prevent injection
     if markers:
+        import re as _re
+        if not _re.match(r'^[\w\s\(\)]+$', markers):
+            raise HTTPException(status_code=400, detail="Invalid marker expression")
         cmd.extend(["-m", markers])
     if not markers and category not in ["e2e"]:
         cmd.extend(["-k", "not Integration and not slow"])
@@ -93,7 +101,7 @@ async def run_tests(
 async def get_test_results(run_id: str):
     """Get results for a specific test run."""
     if run_id not in _test_results:
-        return {"error": "Run not found", "run_id": run_id}
+        raise HTTPException(status_code=404, detail=f"Run {run_id} not found")
     return {"run_id": run_id, **_test_results[run_id]}
 
 

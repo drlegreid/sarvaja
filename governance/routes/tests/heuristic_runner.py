@@ -55,7 +55,8 @@ def run_heuristic_checks(
             )
         except Exception as e:
             # BUG-440-HRN-001: Upgrade debug→warning + exc_info for operational visibility
-            logger.warning(f"Session bridge unavailable: {e}", exc_info=True)
+            # BUG-469-HRN-001: Sanitize logger message — exc_info=True already captures full stack
+            logger.warning(f"Session bridge unavailable: {type(e).__name__}", exc_info=True)
 
     checks_to_run = HEURISTIC_CHECKS
     if domain:
@@ -105,12 +106,14 @@ def run_heuristic_checks(
                 except Exception as e:
                     # BUG-HEURISTIC-001: Log instead of silently swallowing
                     # BUG-440-HRN-002: Upgrade debug→warning + exc_info for operational visibility
-                    logger.warning(f"Failed to record heuristic tool call: {e}", exc_info=True)
+                    # BUG-469-HRN-002: Sanitize logger message — exc_info=True already captures full stack
+                    logger.warning(f"Failed to record heuristic tool call: {type(e).__name__}", exc_info=True)
 
         except Exception as e:
             duration_ms = int((time.time() - start) * 1000)
             # BUG-377-HRN-001: Log full error but return only type name in result
-            logger.error(f"Heuristic check {check_def['id']} failed: {e}", exc_info=True)
+            # BUG-469-HRN-003: Sanitize logger message — exc_info=True already captures full stack
+            logger.error(f"Heuristic check {check_def['id']} failed: {type(e).__name__}", exc_info=True)
             results.append({
                 "id": check_def["id"],
                 "domain": check_def["domain"],
@@ -133,7 +136,8 @@ def run_heuristic_checks(
         except Exception as e:
             # BUG-HEURISTIC-001: Log instead of silently swallowing
             # BUG-440-HRN-003: Upgrade debug→warning + exc_info for operational visibility
-            logger.warning(f"Failed to end heuristic session: {e}", exc_info=True)
+            # BUG-469-HRN-004: Sanitize logger message — exc_info=True already captures full stack
+            logger.warning(f"Failed to end heuristic session: {type(e).__name__}", exc_info=True)
 
     return {
         "timestamp": datetime.now().isoformat(),

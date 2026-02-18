@@ -75,7 +75,8 @@ def _load_persisted_results(results_dir: str = None) -> dict:
             except Exception as e:
                 # BUG-STORE-006: Log instead of silently skipping
                 # BUG-440-RST-001: Upgrade debug→warning + exc_info for operational visibility
-                logger.warning(f"Failed to load test result {filepath.name}: {e}", exc_info=True)
+                # BUG-469-RST-001: Sanitize logger message — exc_info=True already captures full stack
+                logger.warning(f"Failed to load test result {filepath.name}: {type(e).__name__}", exc_info=True)
                 continue
     return results
 
@@ -88,4 +89,5 @@ try:
 except Exception as e:
     # BUG-285-STORE-001: Promote to warning — startup load failure is operationally significant
     # BUG-440-RST-002: Add exc_info for stack trace preservation
-    logger.warning(f"Failed to load persisted test results on import: {e}", exc_info=True)
+    # BUG-469-RST-002: Sanitize logger message — exc_info=True already captures full stack
+    logger.warning(f"Failed to load persisted test results on import: {type(e).__name__}", exc_info=True)

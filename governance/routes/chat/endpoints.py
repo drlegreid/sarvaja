@@ -64,7 +64,8 @@ async def send_chat_message(request: ChatMessageRequest):
             context_dict = context.to_dict()
         except Exception as e:
             # BUG-424-CHT-001: Add exc_info for stack trace preservation
-            logger.warning(f"Failed to preload context: {e}", exc_info=True)
+            # BUG-469-CHT-001: Sanitize logger message — exc_info=True already captures full stack
+            logger.warning(f"Failed to preload context: {type(e).__name__}", exc_info=True)
             context_dict = {}
 
         _chat_sessions[session_id] = {
@@ -130,7 +131,8 @@ async def send_chat_message(request: ChatMessageRequest):
             _chat_gov_sessions[session_id] = gov_collector
         except Exception as e:
             # BUG-424-CHT-002: Add exc_info for stack trace preservation
-            logger.warning(f"Failed to start governance session: {e}", exc_info=True)
+            # BUG-469-CHT-002: Sanitize logger message — exc_info=True already captures full stack
+            logger.warning(f"Failed to start governance session: {type(e).__name__}", exc_info=True)
 
     # Process command
     import time as _time
@@ -154,7 +156,8 @@ async def send_chat_message(request: ChatMessageRequest):
             )
         except Exception as e:
             # BUG-424-CHT-003: Upgrade debug→warning + exc_info (data integrity)
-            logger.warning(f"Failed to record chat tool call: {e}", exc_info=True)
+            # BUG-469-CHT-003: Sanitize logger message — exc_info=True already captures full stack
+            logger.warning(f"Failed to record chat tool call: {type(e).__name__}", exc_info=True)
 
     # Record LLM reasoning as thought (GAP-GOVSESS-CAPTURE-001)
     if gov_collector and not response_content.startswith("__DELEGATE__:"):
@@ -167,7 +170,8 @@ async def send_chat_message(request: ChatMessageRequest):
             )
         except Exception as e:
             # BUG-424-CHT-004: Upgrade debug→warning + exc_info (data integrity)
-            logger.warning(f"Failed to record chat thought: {e}", exc_info=True)
+            # BUG-469-CHT-004: Sanitize logger message — exc_info=True already captures full stack
+            logger.warning(f"Failed to record chat thought: {type(e).__name__}", exc_info=True)
 
     # Handle async delegation
     # BUG-300-DEL-001: Only honour __DELEGATE__ sentinel from explicit /delegate command,
@@ -236,7 +240,8 @@ async def delete_chat_session(session_id: str):
             end_chat_session(gov_collector, summary=f"Chat ended ({msg_count} messages)")
         except Exception as e:
             # BUG-424-CHT-005: Upgrade debug→warning + exc_info (data integrity)
-            logger.warning(f"Failed to end governance session: {e}", exc_info=True)
+            # BUG-469-CHT-005: Sanitize logger message — exc_info=True already captures full stack
+            logger.warning(f"Failed to end governance session: {type(e).__name__}", exc_info=True)
 
     # BUG-CHAT-001: Safe removal to avoid KeyError from race conditions
     _chat_sessions.pop(session_id, None)

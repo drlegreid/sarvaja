@@ -59,7 +59,8 @@ async def list_decisions(
             try:
                 linked_rules = client.get_decision_impacts(d.id)
             except Exception as e:
-                logger.warning(f"Failed to get impacts for {d.id}: {e}")
+                # BUG-468-DEC-001: Sanitize logger message + add exc_info for stack trace preservation
+                logger.warning(f"Failed to get impacts for {d.id}: {type(e).__name__}", exc_info=True)
 
             items.append(DecisionResponse(
                 id=d.id,
@@ -83,7 +84,8 @@ async def list_decisions(
         )
     # BUG-377-DEC-001: Log full error but return only type name to HTTP client
     except Exception as e:
-        logger.error(f"list_decisions failed: {e}", exc_info=True)
+        # BUG-468-DEC-002: Sanitize logger message — exc_info=True already captures full stack
+        logger.error(f"list_decisions failed: {type(e).__name__}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"list_decisions failed: {type(e).__name__}")
 
 
@@ -120,10 +122,12 @@ async def get_decision(decision_id: str):
         raise
     # BUG-377-DEC-001: Log full error but return only type name to HTTP client
     except ValueError as e:
-        logger.warning(f"get_decision validation error: {e}")
+        # BUG-468-DEC-003: Sanitize logger message + add exc_info for stack trace preservation
+        logger.warning(f"get_decision validation error: {type(e).__name__}", exc_info=True)
         raise HTTPException(status_code=422, detail=f"Validation error: {type(e).__name__}")
     except Exception as e:
-        logger.error(f"get_decision failed: {e}", exc_info=True)
+        # BUG-468-DEC-004: Sanitize logger message — exc_info=True already captures full stack
+        logger.error(f"get_decision failed: {type(e).__name__}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"get_decision failed: {type(e).__name__}")
 
 
@@ -158,7 +162,8 @@ async def create_decision(decision: DecisionCreate):
                     if client.link_decision_to_rule(decision.decision_id, rule_id):
                         linked_rules.append(rule_id)
                 except Exception as e:
-                    logger.warning(f"Failed to link rule {rule_id} to {decision.decision_id}: {e}")
+                    # BUG-468-DEC-005: Sanitize logger message + add exc_info for stack trace preservation
+                    logger.warning(f"Failed to link rule {rule_id} to {decision.decision_id}: {type(e).__name__}", exc_info=True)
             return DecisionResponse(
                 id=created.id,
                 name=created.name,
@@ -173,10 +178,12 @@ async def create_decision(decision: DecisionCreate):
         raise
     # BUG-377-DEC-001: Log full error but return only type name to HTTP client
     except ValueError as e:
-        logger.warning(f"create_decision validation error: {e}")
+        # BUG-468-DEC-006: Sanitize logger message + add exc_info for stack trace preservation
+        logger.warning(f"create_decision validation error: {type(e).__name__}", exc_info=True)
         raise HTTPException(status_code=422, detail=f"Validation error: {type(e).__name__}")
     except Exception as e:
-        logger.error(f"create_decision failed: {e}", exc_info=True)
+        # BUG-468-DEC-007: Sanitize logger message — exc_info=True already captures full stack
+        logger.error(f"create_decision failed: {type(e).__name__}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"create_decision failed: {type(e).__name__}")
 
 
@@ -219,10 +226,12 @@ async def update_decision(decision_id: str, decision: DecisionUpdate):
         raise
     # BUG-377-DEC-001: Log full error but return only type name to HTTP client
     except ValueError as e:
-        logger.warning(f"update_decision validation error: {e}")
+        # BUG-468-DEC-008: Sanitize logger message + add exc_info for stack trace preservation
+        logger.warning(f"update_decision validation error: {type(e).__name__}", exc_info=True)
         raise HTTPException(status_code=422, detail=f"Validation error: {type(e).__name__}")
     except Exception as e:
-        logger.error(f"update_decision failed: {e}", exc_info=True)
+        # BUG-468-DEC-009: Sanitize logger message — exc_info=True already captures full stack
+        logger.error(f"update_decision failed: {type(e).__name__}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"update_decision failed: {type(e).__name__}")
 
 
@@ -243,7 +252,8 @@ async def link_rule_to_decision(decision_id: str, rule_id: str):
         raise
     # BUG-377-DEC-001: Log full error but return only type name to HTTP client
     except Exception as e:
-        logger.error(f"link_rule_to_decision failed: {e}", exc_info=True)
+        # BUG-468-DEC-010: Sanitize logger message — exc_info=True already captures full stack
+        logger.error(f"link_rule_to_decision failed: {type(e).__name__}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"link_rule_to_decision failed: {type(e).__name__}")
 
 
@@ -262,8 +272,10 @@ async def delete_decision(decision_id: str):
         raise
     # BUG-377-DEC-001: Log full error but return only type name to HTTP client
     except ValueError as e:
-        logger.warning(f"delete_decision validation error: {e}")
+        # BUG-468-DEC-011: Sanitize logger message + add exc_info for stack trace preservation
+        logger.warning(f"delete_decision validation error: {type(e).__name__}", exc_info=True)
         raise HTTPException(status_code=422, detail=f"Validation error: {type(e).__name__}")
     except Exception as e:
-        logger.error(f"delete_decision failed: {e}", exc_info=True)
+        # BUG-468-DEC-012: Sanitize logger message — exc_info=True already captures full stack
+        logger.error(f"delete_decision failed: {type(e).__name__}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"delete_decision failed: {type(e).__name__}")

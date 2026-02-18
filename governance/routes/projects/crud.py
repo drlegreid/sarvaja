@@ -42,7 +42,8 @@ def list_projects(
     except ConnectionError:
         raise HTTPException(status_code=503, detail="Database service unavailable")
     except Exception as e:
-        logger.error(f"Failed to list projects: {e}")
+        # BUG-470-PRJ-001: Sanitize logger message + add exc_info for stack trace preservation
+        logger.error(f"Failed to list projects: {type(e).__name__}", exc_info=True)
         raise HTTPException(status_code=500, detail="Internal server error")
 
 
@@ -64,7 +65,8 @@ def create_project(data: ProjectCreate):
     except ConnectionError:
         raise HTTPException(status_code=503, detail="Database service unavailable")
     except Exception as e:
-        logger.error(f"Failed to create project: {e}")
+        # BUG-470-PRJ-002: Sanitize logger message + add exc_info for stack trace preservation
+        logger.error(f"Failed to create project: {type(e).__name__}", exc_info=True)
         raise HTTPException(status_code=500, detail="Internal server error")
 
 
@@ -81,7 +83,8 @@ def get_project(project_id: str):
     except ConnectionError:
         raise HTTPException(status_code=503, detail="Database service unavailable")
     except Exception as e:
-        logger.error(f"Failed to get project {project_id}: {e}")
+        # BUG-470-PRJ-003: Sanitize logger message + add exc_info for stack trace preservation
+        logger.error(f"Failed to get project {project_id}: {type(e).__name__}", exc_info=True)
         raise HTTPException(status_code=500, detail="Internal server error")
 
 
@@ -97,7 +100,8 @@ def delete_project(project_id: str):
     except ConnectionError:
         raise HTTPException(status_code=503, detail="Database service unavailable")
     except Exception as e:
-        logger.error(f"Failed to delete project {project_id}: {e}")
+        # BUG-470-PRJ-004: Sanitize logger message + add exc_info for stack trace preservation
+        logger.error(f"Failed to delete project {project_id}: {type(e).__name__}", exc_info=True)
         raise HTTPException(status_code=500, detail="Internal server error")
 
 

@@ -53,7 +53,8 @@ def _get_delegation_protocol():
         return _delegation_protocol
 
     except Exception as e:
-        logger.warning(f"DelegationProtocol not available: {e}")
+        # BUG-469-DEL-001: Sanitize logger message + add exc_info for stack trace preservation
+        logger.warning(f"DelegationProtocol not available: {type(e).__name__}", exc_info=True)
         return None
 
 
@@ -104,7 +105,8 @@ async def delegate_task_async(task_desc: str, agent_id: str) -> str:
                 f"- Status: Task remains pending"
             )
     except Exception as e:
-        logger.error(f"Delegation error: {e}")
+        # BUG-469-DEL-002: Sanitize logger message + add exc_info for stack trace preservation
+        logger.error(f"Delegation error: {type(e).__name__}", exc_info=True)
         return (
             f"Task created: {task_id}\n"
             f"Delegation error: {str(e)}\n"

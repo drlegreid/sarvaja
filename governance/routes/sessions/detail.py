@@ -36,7 +36,8 @@ def session_detail(
         result = get_session_detail(session_id, zoom=zoom, page=page, per_page=per_page)
     # BUG-366-DET-001: Log full error but return only type name to prevent info disclosure
     except Exception as e:
-        logger.error(f"Session detail failed for {session_id}: {e}", exc_info=True)
+        # BUG-467-SDT-001: Sanitize logger message — exc_info=True already captures full stack
+        logger.error(f"Session detail failed for {session_id}: {type(e).__name__}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Failed to load session detail: {type(e).__name__}")
     if not result:
         raise HTTPException(status_code=404, detail=f"Session {session_id} not found")
@@ -55,7 +56,8 @@ def session_tools(
         result = get_session_detail(session_id, zoom=2, page=page, per_page=per_page)
     # BUG-366-DET-001: Log full error but return only type name to prevent info disclosure
     except Exception as e:
-        logger.error(f"Session tools failed for {session_id}: {e}", exc_info=True)
+        # BUG-467-SDT-002: Sanitize logger message — exc_info=True already captures full stack
+        logger.error(f"Session tools failed for {session_id}: {type(e).__name__}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Failed to load session tools: {type(e).__name__}")
     if not result:
         raise HTTPException(status_code=404, detail=f"Session {session_id} not found")
@@ -80,7 +82,8 @@ def session_thoughts(
         result = get_session_detail(session_id, zoom=3, page=page, per_page=per_page)
     # BUG-366-DET-001: Log full error but return only type name to prevent info disclosure
     except Exception as e:
-        logger.error(f"Session thoughts failed for {session_id}: {e}", exc_info=True)
+        # BUG-467-SDT-003: Sanitize logger message — exc_info=True already captures full stack
+        logger.error(f"Session thoughts failed for {session_id}: {type(e).__name__}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Failed to load session thoughts: {type(e).__name__}")
     if not result:
         raise HTTPException(status_code=404, detail=f"Session {session_id} not found")
@@ -101,7 +104,8 @@ def session_evidence_rendered(session_id: str):
     try:
         session = get_session(session_id)
     except Exception as e:
-        logger.error(f"get_session failed for {session_id}: {e}", exc_info=True)
+        # BUG-467-SDT-004: Sanitize logger message — exc_info=True already captures full stack
+        logger.error(f"get_session failed for {session_id}: {type(e).__name__}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Failed to load session: {type(e).__name__}")
     if not session:
         raise HTTPException(status_code=404, detail=f"Session {session_id} not found")
@@ -147,5 +151,6 @@ def ingestion_status(session_id: str):
         return get_ingestion_status(session_id)
     except Exception as e:
         # BUG-392-ERR-002: Add exc_info=True for proper stack trace in logs
-        logger.error(f"Ingestion status failed for {session_id}: {e}", exc_info=True)
+        # BUG-467-SDT-005: Sanitize logger message — exc_info=True already captures full stack
+        logger.error(f"Ingestion status failed for {session_id}: {type(e).__name__}", exc_info=True)
         raise HTTPException(status_code=500, detail="Failed to retrieve ingestion status")

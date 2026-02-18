@@ -59,7 +59,8 @@ async def get_agents_status_summary():
     try:
         summary = get_agent_status_summary()
     except Exception as e:
-        logger.error(f"get_agent_status_summary failed: {e}", exc_info=True)
+        # BUG-466-AOB-001: Sanitize logger message — exc_info=True already captures full stack
+        logger.error(f"get_agent_status_summary failed: {type(e).__name__}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Agent status summary failed: {type(e).__name__}")
 
     # Add conflict status if available (MULTI-007 completion)
@@ -68,7 +69,8 @@ async def get_agents_status_summary():
         try:
             conflict_summary = get_conflict_summary()
         except Exception as e:
-            logger.error(f"get_conflict_summary failed: {e}", exc_info=True)
+            # BUG-466-AOB-002: Sanitize logger message — exc_info=True already captures full stack
+            logger.error(f"get_conflict_summary failed: {type(e).__name__}", exc_info=True)
             conflict_summary = {"conflicts": [], "conflict_count": 0, "has_conflicts": False, "alerts": []}
         summary["conflicts"] = conflict_summary.get("conflicts", [])
         summary["conflict_count"] = conflict_summary.get("conflict_count", 0)
@@ -102,7 +104,8 @@ async def get_stuck_agents():
     try:
         return {"stuck_agents": check_stuck_agents()}
     except Exception as e:
-        logger.error(f"check_stuck_agents failed: {e}", exc_info=True)
+        # BUG-466-AOB-003: Sanitize logger message — exc_info=True already captures full stack
+        logger.error(f"check_stuck_agents failed: {type(e).__name__}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Stuck agents check failed: {type(e).__name__}")
 
 
@@ -120,7 +123,8 @@ async def get_stale_locks():
     try:
         return {"stale_locks": check_file_locks()}
     except Exception as e:
-        logger.error(f"check_file_locks failed: {e}", exc_info=True)
+        # BUG-466-AOB-004: Sanitize logger message — exc_info=True already captures full stack
+        logger.error(f"check_file_locks failed: {type(e).__name__}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"File locks check failed: {type(e).__name__}")
 
 
@@ -154,7 +158,8 @@ async def agent_heartbeat(
     try:
         result = update_agent_heartbeat(agent_id, agent_type, current_task, status)
     except Exception as e:
-        logger.error(f"update_agent_heartbeat failed for {agent_id}: {e}", exc_info=True)
+        # BUG-466-AOB-005: Sanitize logger message — exc_info=True already captures full stack
+        logger.error(f"update_agent_heartbeat failed for {agent_id}: {type(e).__name__}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Heartbeat update failed: {type(e).__name__}")
     return {"agent_id": agent_id, "heartbeat": result}
 
@@ -180,7 +185,8 @@ async def acquire_lock(resource: str, agent_id: str, timeout: int = 30):
     try:
         lock_path = acquire_file_lock(resource, agent_id, timeout)
     except Exception as e:
-        logger.error(f"acquire_file_lock failed for {resource}: {e}", exc_info=True)
+        # BUG-466-AOB-006: Sanitize logger message — exc_info=True already captures full stack
+        logger.error(f"acquire_file_lock failed for {resource}: {type(e).__name__}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Lock acquisition failed: {type(e).__name__}")
     if lock_path:
         return {"acquired": True, "resource": resource, "agent_id": agent_id}
@@ -206,7 +212,8 @@ async def release_lock(resource: str, agent_id: str):
     try:
         released = release_file_lock(resource, agent_id)
     except Exception as e:
-        logger.error(f"release_file_lock failed for {resource}: {e}", exc_info=True)
+        # BUG-466-AOB-007: Sanitize logger message — exc_info=True already captures full stack
+        logger.error(f"release_file_lock failed for {resource}: {type(e).__name__}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Lock release failed: {type(e).__name__}")
     if released:
         return {"released": True, "resource": resource, "agent_id": agent_id}
@@ -233,7 +240,8 @@ async def get_merge_conflicts():
     try:
         return get_conflict_summary()
     except Exception as e:
-        logger.error(f"get_conflict_summary failed: {e}", exc_info=True)
+        # BUG-466-AOB-008: Sanitize logger message — exc_info=True already captures full stack
+        logger.error(f"get_conflict_summary failed: {type(e).__name__}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Conflict summary failed: {type(e).__name__}")
 
 
@@ -271,7 +279,8 @@ async def get_monitor_events(
             severity=severity
         )
     except Exception as e:
-        logger.error(f"read_audit_events failed: {e}", exc_info=True)
+        # BUG-466-AOB-009: Sanitize logger message — exc_info=True already captures full stack
+        logger.error(f"read_audit_events failed: {type(e).__name__}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Monitor events failed: {type(e).__name__}")
 
     return {

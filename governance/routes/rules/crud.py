@@ -63,7 +63,8 @@ async def list_rules(
         raise HTTPException(status_code=503, detail="TypeDB not connected")
     except Exception as e:
         # BUG-355-RUL-001: Log full error but return generic message to prevent info disclosure
-        logger.error(f"Failed to list rules: {e}", exc_info=True)
+        # BUG-468-RCR-001: Sanitize logger message — exc_info=True already captures full stack
+        logger.error(f"Failed to list rules: {type(e).__name__}", exc_info=True)
         raise HTTPException(status_code=500, detail="Failed to list rules")
 
 
@@ -76,7 +77,8 @@ async def dependency_overview():
         raise HTTPException(status_code=503, detail="TypeDB not connected")
     except Exception as e:
         # BUG-355-RUL-001: Log full error but return generic message
-        logger.error(f"Failed to get dependency overview: {e}", exc_info=True)
+        # BUG-468-RCR-002: Sanitize logger message — exc_info=True already captures full stack
+        logger.error(f"Failed to get dependency overview: {type(e).__name__}", exc_info=True)
         raise HTTPException(status_code=500, detail="Failed to get dependency overview")
 
 
@@ -92,11 +94,13 @@ async def get_rule(rule_id: str):
         raise HTTPException(status_code=404, detail=f"Rule {rule_id} not found")
     except ValueError as e:
         # BUG-398-RUL-001: Don't leak internal ValueError message to client
-        logger.warning(f"get_rule validation error for {rule_id}: {e}", exc_info=True)
+        # BUG-468-RCR-003: Sanitize logger message — exc_info=True already captures full stack
+        logger.warning(f"get_rule validation error for {rule_id}: {type(e).__name__}", exc_info=True)
         raise HTTPException(status_code=422, detail="Invalid rule request")
     except Exception as e:
         # BUG-355-RUL-001: Log full error but return generic message
-        logger.error(f"Failed to get rule: {e}", exc_info=True)
+        # BUG-468-RCR-004: Sanitize logger message — exc_info=True already captures full stack
+        logger.error(f"Failed to get rule: {type(e).__name__}", exc_info=True)
         raise HTTPException(status_code=500, detail="Failed to get rule")
 
 
@@ -114,15 +118,18 @@ async def create_rule(rule: RuleCreate):
         raise HTTPException(status_code=503, detail="TypeDB not connected")
     except ValueError as e:
         # BUG-398-RUL-005: Don't leak internal ValueError message to client
-        logger.warning(f"create_rule conflict: {e}", exc_info=True)
+        # BUG-468-RCR-005: Sanitize logger message — exc_info=True already captures full stack
+        logger.warning(f"create_rule conflict: {type(e).__name__}", exc_info=True)
         raise HTTPException(status_code=409, detail="Rule creation conflict")
     except RuntimeError as e:
         # BUG-355-RUL-001: Log full error but return generic message
-        logger.error(f"Failed to create rule (runtime): {e}", exc_info=True)
+        # BUG-468-RCR-006: Sanitize logger message — exc_info=True already captures full stack
+        logger.error(f"Failed to create rule (runtime): {type(e).__name__}", exc_info=True)
         raise HTTPException(status_code=500, detail="Failed to create rule")
     except Exception as e:
         # BUG-355-RUL-001: Log full error but return generic message
-        logger.error(f"Failed to create rule: {e}", exc_info=True)
+        # BUG-468-RCR-007: Sanitize logger message — exc_info=True already captures full stack
+        logger.error(f"Failed to create rule: {type(e).__name__}", exc_info=True)
         raise HTTPException(status_code=500, detail="Failed to create rule")
 
 
@@ -142,15 +149,18 @@ async def update_rule(rule_id: str, rule: RuleUpdate):
         raise HTTPException(status_code=404, detail=f"Rule {rule_id} not found")
     except RuntimeError as e:
         # BUG-355-RUL-001: Log full error but return generic message
-        logger.error(f"Failed to update rule (runtime): {e}", exc_info=True)
+        # BUG-468-RCR-008: Sanitize logger message — exc_info=True already captures full stack
+        logger.error(f"Failed to update rule (runtime): {type(e).__name__}", exc_info=True)
         raise HTTPException(status_code=500, detail="Failed to update rule")
     except ValueError as e:
         # BUG-398-RUL-002: Don't leak internal ValueError message to client
-        logger.warning(f"update_rule validation error for {rule_id}: {e}", exc_info=True)
+        # BUG-468-RCR-009: Sanitize logger message — exc_info=True already captures full stack
+        logger.warning(f"update_rule validation error for {rule_id}: {type(e).__name__}", exc_info=True)
         raise HTTPException(status_code=422, detail="Invalid rule update request")
     except Exception as e:
         # BUG-355-RUL-001: Log full error but return generic message
-        logger.error(f"Failed to update rule: {e}", exc_info=True)
+        # BUG-468-RCR-010: Sanitize logger message — exc_info=True already captures full stack
+        logger.error(f"Failed to update rule: {type(e).__name__}", exc_info=True)
         raise HTTPException(status_code=500, detail="Failed to update rule")
 
 
@@ -163,7 +173,8 @@ async def get_rule_tasks(rule_id: str):
         raise HTTPException(status_code=503, detail="TypeDB not connected")
     except Exception as e:
         # BUG-355-RUL-001: Log full error but return generic message
-        logger.error(f"Failed to get rule tasks: {e}", exc_info=True)
+        # BUG-468-RCR-011: Sanitize logger message — exc_info=True already captures full stack
+        logger.error(f"Failed to get rule tasks: {type(e).__name__}", exc_info=True)
         raise HTTPException(status_code=500, detail="Failed to get rule tasks")
 
 
@@ -181,11 +192,13 @@ async def delete_rule(rule_id: str, archive: bool = Query(True, description="Arc
         raise HTTPException(status_code=404, detail=f"Rule {rule_id} not found")
     except ValueError as e:
         # BUG-398-RUL-003: Don't leak internal ValueError message to client
-        logger.warning(f"delete_rule validation error for {rule_id}: {e}", exc_info=True)
+        # BUG-468-RCR-012: Sanitize logger message — exc_info=True already captures full stack
+        logger.warning(f"delete_rule validation error for {rule_id}: {type(e).__name__}", exc_info=True)
         raise HTTPException(status_code=422, detail="Invalid rule delete request")
     except Exception as e:
         # BUG-355-RUL-001: Log full error but return generic message
-        logger.error(f"Failed to delete rule: {e}", exc_info=True)
+        # BUG-468-RCR-013: Sanitize logger message — exc_info=True already captures full stack
+        logger.error(f"Failed to delete rule: {type(e).__name__}", exc_info=True)
         raise HTTPException(status_code=500, detail="Failed to delete rule")
 
 
@@ -200,7 +213,8 @@ async def get_rule_dependencies(rule_id: str):
         raise HTTPException(status_code=404, detail=f"Rule {rule_id} not found")
     except Exception as e:
         # BUG-355-RUL-001: Log full error but return generic message
-        logger.error(f"Failed to get rule dependencies: {e}", exc_info=True)
+        # BUG-468-RCR-014: Sanitize logger message — exc_info=True already captures full stack
+        logger.error(f"Failed to get rule dependencies: {type(e).__name__}", exc_info=True)
         raise HTTPException(status_code=500, detail="Failed to get rule dependencies")
 
 
@@ -216,9 +230,11 @@ async def create_rule_dependency(rule_id: str, dep_id: str):
         raise HTTPException(status_code=503, detail="TypeDB not connected")
     except KeyError as e:
         # BUG-398-RUL-004: Don't leak internal KeyError message to client
-        logger.warning(f"create_rule_dependency not found {rule_id}->{dep_id}: {e}", exc_info=True)
+        # BUG-468-RCR-015: Sanitize logger message — exc_info=True already captures full stack
+        logger.warning(f"create_rule_dependency not found {rule_id}->{dep_id}: {type(e).__name__}", exc_info=True)
         raise HTTPException(status_code=404, detail="Rule or dependency not found")
     except Exception as e:
         # BUG-355-RUL-001: Log full error but return generic message
-        logger.error(f"Failed to create rule dependency: {e}", exc_info=True)
+        # BUG-468-RCR-016: Sanitize logger message — exc_info=True already captures full stack
+        logger.error(f"Failed to create rule dependency: {type(e).__name__}", exc_info=True)
         raise HTTPException(status_code=500, detail="Failed to create rule dependency")

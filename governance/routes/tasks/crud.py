@@ -54,11 +54,13 @@ async def list_tasks(
             pagination=pagination,
         )
     except (TypeDBUnavailable, ConnectionError) as e:
-        logger.error(f"TypeDB unavailable: {e}")
+        # BUG-469-TCR-001: Sanitize logger message + add exc_info for stack trace preservation
+        logger.error(f"TypeDB unavailable: {type(e).__name__}", exc_info=True)
         raise HTTPException(status_code=503, detail="Database service unavailable")
     # BUG-273-TASKS-001 + BUG-365-RT-001: Log full error, return only type name
     except Exception as e:
-        logger.error(f"list_tasks failed: {e}", exc_info=True)
+        # BUG-469-TCR-002: Sanitize logger message — exc_info=True already captures full stack
+        logger.error(f"list_tasks failed: {type(e).__name__}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Failed to list tasks: {type(e).__name__}")
 
 
@@ -82,10 +84,12 @@ async def create_task(task: TaskCreate):
     # BUG-381-TSK-001: Log full error but return only type name to prevent info disclosure
     except ValueError as e:
         # BUG-423-TCR-001: Add exc_info for stack trace preservation
-        logger.warning(f"create_task conflict: {e}", exc_info=True)
+        # BUG-469-TCR-003: Sanitize logger message — exc_info=True already captures full stack
+        logger.warning(f"create_task conflict: {type(e).__name__}", exc_info=True)
         raise HTTPException(status_code=409, detail=f"Task conflict: {type(e).__name__}")
     except Exception as e:
-        logger.error(f"create_task failed: {e}", exc_info=True)
+        # BUG-469-TCR-004: Sanitize logger message — exc_info=True already captures full stack
+        logger.error(f"create_task failed: {type(e).__name__}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Failed to create task: {type(e).__name__}")
 
 
@@ -104,7 +108,8 @@ async def get_task(task_id: str):
         raise
     # BUG-365-RT-001: Log full error, return only type name to prevent info disclosure
     except Exception as e:
-        logger.error(f"get_task failed: {e}", exc_info=True)
+        # BUG-469-TCR-005: Sanitize logger message — exc_info=True already captures full stack
+        logger.error(f"get_task failed: {type(e).__name__}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Failed to get task: {type(e).__name__}")
 
 
@@ -138,7 +143,8 @@ async def update_task(task_id: str, update: TaskUpdate):
         raise
     # BUG-365-RT-001: Log full error, return only type name to prevent info disclosure
     except Exception as e:
-        logger.error(f"update_task failed: {e}", exc_info=True)
+        # BUG-469-TCR-006: Sanitize logger message — exc_info=True already captures full stack
+        logger.error(f"update_task failed: {type(e).__name__}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Failed to update task: {type(e).__name__}")
 
 
@@ -154,7 +160,8 @@ async def delete_task(task_id: str):
         raise
     # BUG-365-RT-001: Log full error, return only type name to prevent info disclosure
     except Exception as e:
-        logger.error(f"delete_task failed: {e}", exc_info=True)
+        # BUG-469-TCR-007: Sanitize logger message — exc_info=True already captures full stack
+        logger.error(f"delete_task failed: {type(e).__name__}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Failed to delete task: {type(e).__name__}")
 
 
@@ -169,7 +176,8 @@ async def link_task_to_rule(task_id: str, rule_id: str):
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"link_task_to_rule failed: {e}", exc_info=True)
+        # BUG-469-TCR-008: Sanitize logger message — exc_info=True already captures full stack
+        logger.error(f"link_task_to_rule failed: {type(e).__name__}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Link failed: {type(e).__name__}")
 
 
@@ -184,7 +192,8 @@ async def link_task_to_session(task_id: str, session_id: str):
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"link_task_to_session failed: {e}", exc_info=True)
+        # BUG-469-TCR-009: Sanitize logger message — exc_info=True already captures full stack
+        logger.error(f"link_task_to_session failed: {type(e).__name__}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Link failed: {type(e).__name__}")
 
 
@@ -201,7 +210,8 @@ async def get_task_sessions(task_id: str):
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"get_task_sessions failed: {e}", exc_info=True)
+        # BUG-469-TCR-010: Sanitize logger message — exc_info=True already captures full stack
+        logger.error(f"get_task_sessions failed: {type(e).__name__}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Failed to get task sessions: {type(e).__name__}")
 
 
@@ -224,7 +234,8 @@ async def link_task_to_document(task_id: str, body: dict):
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"link_task_to_document failed: {e}", exc_info=True)
+        # BUG-469-TCR-011: Sanitize logger message — exc_info=True already captures full stack
+        logger.error(f"link_task_to_document failed: {type(e).__name__}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Link failed: {type(e).__name__}")
 
 
@@ -245,7 +256,8 @@ async def get_task_documents(task_id: str):
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"get_task_documents failed: {e}", exc_info=True)
+        # BUG-469-TCR-012: Sanitize logger message — exc_info=True already captures full stack
+        logger.error(f"get_task_documents failed: {type(e).__name__}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Failed to get task documents: {type(e).__name__}")
 
 
@@ -260,5 +272,6 @@ async def unlink_task_document(task_id: str, doc_id: str):
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"unlink_task_document failed: {e}", exc_info=True)
+        # BUG-469-TCR-013: Sanitize logger message — exc_info=True already captures full stack
+        logger.error(f"unlink_task_document failed: {type(e).__name__}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Unlink failed: {type(e).__name__}")

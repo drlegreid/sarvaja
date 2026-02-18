@@ -72,7 +72,8 @@ def execute_tests(run_id: str, cmd: list, category: str = None):
         try:
             _persist_result(run_id, test_result)
         except Exception as pe:
-            logger.warning(f"Failed to persist test result: {pe}")
+            # BUG-469-RXE-001: Sanitize logger message + add exc_info for stack trace preservation
+            logger.warning(f"Failed to persist test result: {type(pe).__name__}", exc_info=True)
 
     except subprocess.TimeoutExpired:
         timeout_result = {
@@ -86,10 +87,12 @@ def execute_tests(run_id: str, cmd: list, category: str = None):
             _persist_result(run_id, timeout_result)
         except Exception as pe:
             # BUG-RUNNER-002: Log persistence failures instead of silently swallowing
-            logger.warning(f"Failed to persist timeout result {run_id}: {pe}")
+            # BUG-469-RXE-002: Sanitize logger message + add exc_info for stack trace preservation
+            logger.warning(f"Failed to persist timeout result {run_id}: {type(pe).__name__}", exc_info=True)
     except Exception as e:
         # BUG-377-RNR-001: Log full error but return only type name in result
-        logger.error(f"execute_tests failed for {run_id}: {e}", exc_info=True)
+        # BUG-469-RXE-003: Sanitize logger message — exc_info=True already captures full stack
+        logger.error(f"execute_tests failed for {run_id}: {type(e).__name__}", exc_info=True)
         error_result = {
             "status": "error",
             "timestamp": start_time.isoformat(),
@@ -101,7 +104,8 @@ def execute_tests(run_id: str, cmd: list, category: str = None):
             _persist_result(run_id, error_result)
         except Exception as pe:
             # BUG-RUNNER-002: Log persistence failures instead of silently swallowing
-            logger.warning(f"Failed to persist error result {run_id}: {pe}")
+            # BUG-469-RXE-004: Sanitize logger message + add exc_info for stack trace preservation
+            logger.warning(f"Failed to persist error result {run_id}: {type(pe).__name__}", exc_info=True)
 
 
 def execute_regression(run_id: str, skip_dynamic: bool = False):
@@ -136,11 +140,13 @@ def execute_regression(run_id: str, skip_dynamic: bool = False):
         try:
             _persist_result(run_id, test_result)
         except Exception as pe:
-            logger.warning(f"Failed to persist regression result: {pe}")
+            # BUG-469-RXE-005: Sanitize logger message + add exc_info for stack trace preservation
+            logger.warning(f"Failed to persist regression result: {type(pe).__name__}", exc_info=True)
 
     except Exception as e:
         # BUG-377-RNR-001: Log full error but return only type name in result
-        logger.error(f"execute_regression failed for {run_id}: {e}", exc_info=True)
+        # BUG-469-RXE-006: Sanitize logger message — exc_info=True already captures full stack
+        logger.error(f"execute_regression failed for {run_id}: {type(e).__name__}", exc_info=True)
         _test_results[run_id] = {
             "status": "error",
             "timestamp": start_time.isoformat(),
@@ -151,7 +157,8 @@ def execute_regression(run_id: str, skip_dynamic: bool = False):
             _persist_result(run_id, _test_results[run_id])
         except Exception as pe:
             # BUG-RUNNER-002: Log persistence failures instead of silently swallowing
-            logger.warning(f"Failed to persist regression error result {run_id}: {pe}")
+            # BUG-469-RXE-007: Sanitize logger message + add exc_info for stack trace preservation
+            logger.warning(f"Failed to persist regression error result {run_id}: {type(pe).__name__}", exc_info=True)
 
 
 def execute_heuristic(run_id: str, domain: str = None):
@@ -184,11 +191,13 @@ def execute_heuristic(run_id: str, domain: str = None):
         try:
             _persist_result(run_id, test_result)
         except Exception as pe:
-            logger.warning(f"Failed to persist heuristic result: {pe}")
+            # BUG-469-RXE-008: Sanitize logger message + add exc_info for stack trace preservation
+            logger.warning(f"Failed to persist heuristic result: {type(pe).__name__}", exc_info=True)
 
     except Exception as e:
         # BUG-377-RNR-001: Log full error but return only type name in result
-        logger.error(f"execute_heuristic failed for {run_id}: {e}", exc_info=True)
+        # BUG-469-RXE-009: Sanitize logger message — exc_info=True already captures full stack
+        logger.error(f"execute_heuristic failed for {run_id}: {type(e).__name__}", exc_info=True)
         _test_results[run_id] = {
             "status": "error",
             "timestamp": start_time.isoformat(),
@@ -199,7 +208,8 @@ def execute_heuristic(run_id: str, domain: str = None):
             _persist_result(run_id, _test_results[run_id])
         except Exception as pe:
             # BUG-RUNNER-002: Log persistence failures instead of silently swallowing
-            logger.warning(f"Failed to persist heuristic error result {run_id}: {pe}")
+            # BUG-469-RXE-010: Sanitize logger message + add exc_info for stack trace preservation
+            logger.warning(f"Failed to persist heuristic error result {run_id}: {type(pe).__name__}", exc_info=True)
 
 
 def parse_robot_xml(test_root: str) -> dict:
@@ -242,7 +252,8 @@ def parse_robot_xml(test_root: str) -> dict:
         }
     except Exception as e:
         # BUG-377-RNR-001: Log full error but return only type name
-        logger.error(f"parse_robot_xml failed: {e}", exc_info=True)
+        # BUG-469-RXE-011: Sanitize logger message — exc_info=True already captures full stack
+        logger.error(f"parse_robot_xml failed: {type(e).__name__}", exc_info=True)
         return {"available": False, "message": f"Error parsing output.xml: {type(e).__name__}"}
 
 
@@ -299,7 +310,8 @@ def remediate_violations(run_id: str, dry_run: bool = False) -> dict:
                 # BUG-377-RNR-001: Log full error but return only type name
                 fix_details.append({"check": check_id, "entity": entity_id, "action": "failed", "error": type(e).__name__})
                 fixes_failed += 1
-                logger.warning(f"Remediation failed for {check_id}/{entity_id}: {e}")
+                # BUG-469-RXE-012: Sanitize logger message + add exc_info for stack trace preservation
+                logger.warning(f"Remediation failed for {check_id}/{entity_id}: {type(e).__name__}", exc_info=True)
 
     return {
         "run_id": run_id,

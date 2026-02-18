@@ -98,8 +98,9 @@ async def submit_proposal(req: ProposalRequest):
         return response
 
     except Exception as e:
-        logger.error(f"Proposal workflow failed: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        # BUG-470-PRP-001: Sanitize logger message + add exc_info for stack trace preservation
+        logger.error(f"Proposal workflow failed: {type(e).__name__}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Proposal workflow failed: {type(e).__name__}")
 
 
 @router.get("/history")

@@ -68,7 +68,8 @@ def query_llm(message: str, system_prompt: str = "") -> str:
             "Use /help to see available commands, or try again later."
         )
     except Exception as e:
-        logger.warning(f"LLM query error: {e}")
+        # BUG-469-CMD-001: Sanitize logger message + add exc_info for stack trace preservation
+        logger.warning(f"LLM query error: {type(e).__name__}", exc_info=True)
 
     return (
         "Cannot reach the LLM service (LiteLLM proxy). "
@@ -100,7 +101,8 @@ def process_chat_command(content: str, agent_id: str) -> str:
             rules_count = len(rules) if rules else 0
     except Exception as e:
         # BUG-446-CMD-001: Upgrade debug→warning + exc_info for operational visibility
-        logger.warning(f"Failed to query rules for chat context: {e}", exc_info=True)
+        # BUG-469-CMD-002: Sanitize logger message — exc_info=True already captures full stack
+        logger.warning(f"Failed to query rules for chat context: {type(e).__name__}", exc_info=True)
         rules_count = 0
 
     # Command recognition
@@ -144,7 +146,8 @@ def process_chat_command(content: str, agent_id: str) -> str:
                     return f"Active Rules ({len(active)} total):\n{rule_list}"
         except Exception as e:
             # BUG-446-CMD-002: Upgrade debug→warning + exc_info for operational visibility
-            logger.warning(f"Failed to query active rules: {e}", exc_info=True)
+            # BUG-469-CMD-003: Sanitize logger message — exc_info=True already captures full stack
+            logger.warning(f"Failed to query active rules: {type(e).__name__}", exc_info=True)
         return "No active rules found."
 
     elif content_lower.startswith("/help"):
@@ -168,7 +171,8 @@ You can also type natural language commands and I'll do my best to help!"""
             return context.to_agent_prompt()
         except Exception as e:
             # BUG-405-CMD-001: Don't leak exception details to chat UI
-            logger.error(f"Failed to load context: {e}", exc_info=True)
+            # BUG-469-CMD-004: Sanitize logger message — exc_info=True already captures full stack
+            logger.error(f"Failed to load context: {type(e).__name__}", exc_info=True)
             return f"Failed to load context: {type(e).__name__}"
 
     elif content_lower.startswith("/sessions"):
@@ -179,7 +183,8 @@ You can also type natural language commands and I'll do my best to help!"""
             total = result.get("pagination", {}).get("total", len(sessions))
         except Exception as e:
             # BUG-446-CMD-004: Upgrade debug→warning + exc_info for operational visibility
-            logger.warning(f"Service layer session query failed: {e}", exc_info=True)
+            # BUG-469-CMD-005: Sanitize logger message — exc_info=True already captures full stack
+            logger.warning(f"Service layer session query failed: {type(e).__name__}", exc_info=True)
             sessions = sorted(
                 _sessions_store.values(),
                 key=lambda s: s.get("start_time", ""),
@@ -232,7 +237,8 @@ You can also type natural language commands and I'll do my best to help!"""
                         results.append(f"Rule: {rule.id} - {rule.name}")
         except Exception as e:
             # BUG-446-CMD-003: Upgrade debug→warning + exc_info for operational visibility
-            logger.warning(f"Failed to search rules: {e}", exc_info=True)
+            # BUG-469-CMD-006: Sanitize logger message — exc_info=True already captures full stack
+            logger.warning(f"Failed to search rules: {type(e).__name__}", exc_info=True)
         # Search tasks from in-memory store
         for task in list(_tasks_store.values()):
             if query.lower() in (task.get("name", "") + task.get("description", "")).lower():
@@ -275,7 +281,8 @@ You can also type natural language commands and I'll do my best to help!"""
         except Exception as e:
             # BUG-CMD-003: Log instead of silently swallowing
             # BUG-446-CMD-005: Upgrade debug→warning + exc_info for operational visibility
-            logger.warning(f"Failed to load recent sessions for LLM context: {e}", exc_info=True)
+            # BUG-469-CMD-007: Sanitize logger message — exc_info=True already captures full stack
+            logger.warning(f"Failed to load recent sessions for LLM context: {type(e).__name__}", exc_info=True)
 
         context = (
             f"{GOVERNANCE_SYSTEM_PROMPT}\n\n"

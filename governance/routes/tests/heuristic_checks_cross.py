@@ -43,6 +43,9 @@ def check_service_layer_coverage(api_base_url: str) -> dict:
     data = _api_get(api_base_url, "/api/mcp/readiness")
     if not data:
         return {"status": "SKIP", "message": "Readiness endpoint unavailable", "violations": []}
+    # BUG-211-CROSS-ISINSTANCE-001: Guard against list return from _api_get
+    if not isinstance(data, dict):
+        return {"status": "SKIP", "message": "Unexpected readiness response format", "violations": []}
     sl = data.get("service_layer", {})
     violations = [domain for domain, status in sl.items() if status != "SERVICE_LAYER"]
     return {
@@ -114,7 +117,8 @@ def check_decisions_link_rules(api_base_url: str) -> dict:
         return {"status": "SKIP", "message": "No decisions found", "violations": []}
     violations = []
     for d in decisions:
-        rules = d.get("rules_applied", d.get("rule_ids", []))
+        # BUG-HEURISTIC-CROSS-FIELD-001: DecisionResponse field is "linked_rules"
+        rules = d.get("linked_rules", d.get("rules_applied", []))
         if not rules:
             violations.append(d.get("decision_id", d.get("id", "unknown")))
     return {
@@ -164,14 +168,16 @@ def check_testid_coverage(api_base_url: str) -> dict:
         if "__pycache__" in filepath:
             continue
         try:
-            with open(filepath) as f:
+            # BUG-211-CROSS-ENCODING-001: Specify encoding for non-ASCII files
+            with open(filepath, encoding="utf-8") as f:
                 content = f.read()
             has_components = "VCard(" in content or "VDialog(" in content
             has_testid = "data-testid" in content or "data_testid" in content
             if has_components and not has_testid:
                 violations.append(os.path.basename(filepath))
-        except Exception:
-            pass
+        except Exception as e:
+            # BUG-264-CROSS-001: Log file read errors instead of silently swallowing
+            logger.debug(f"Skipping {filepath}: {e}")
     return {
         "status": "FAIL" if violations else "PASS",
         "message": f"{len(violations)} view files lack data-testid" if violations else "Key views have data-testid attributes",

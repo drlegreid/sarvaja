@@ -97,7 +97,8 @@ async def list_sessions(
             except Exception as e:
                 sid = s.get("session_id", "?") if isinstance(s, dict) else "?"
                 # BUG-414-CRD-001: Add exc_info for stack trace preservation
-                logger.warning(f"Skipping malformed session {sid}: {e}", exc_info=True)
+                # BUG-467-SCR-001: Sanitize logger message — exc_info=True already captures full stack
+                logger.warning(f"Skipping malformed session {sid}: {type(e).__name__}", exc_info=True)
         pagination.returned = len(items)
         return PaginatedSessionResponse(
             items=items,
@@ -105,11 +106,13 @@ async def list_sessions(
         )
     except (TypeDBUnavailable, ConnectionError) as e:
         # BUG-403-CRD-001: Add exc_info for stack trace preservation
-        logger.error(f"TypeDB unavailable: {e}", exc_info=True)
+        # BUG-467-SCR-002: Sanitize logger message — exc_info=True already captures full stack
+        logger.error(f"TypeDB unavailable: {type(e).__name__}", exc_info=True)
         raise HTTPException(status_code=503, detail="Database service unavailable")
     # BUG-381-SES-003: Catch-all for unexpected exceptions (e.g. TypeError from malformed data)
     except Exception as e:
-        logger.error(f"list_sessions failed: {e}", exc_info=True)
+        # BUG-467-SCR-003: Sanitize logger message — exc_info=True already captures full stack
+        logger.error(f"list_sessions failed: {type(e).__name__}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Failed to list sessions: {type(e).__name__}")
 
 
@@ -134,15 +137,18 @@ async def create_session(session: SessionCreate):
     # BUG-381-SES-001: Log full error but return only type name to prevent info disclosure
     except ValueError as e:
         # BUG-403-CRD-001: Add exc_info for stack trace preservation
-        logger.warning(f"create_session conflict: {e}", exc_info=True)
+        # BUG-467-SCR-004: Sanitize logger message — exc_info=True already captures full stack
+        logger.warning(f"create_session conflict: {type(e).__name__}", exc_info=True)
         raise HTTPException(status_code=409, detail=f"Session conflict: {type(e).__name__}")
     except (TypeDBUnavailable, ConnectionError) as e:
         # BUG-403-CRD-001: Add exc_info for stack trace preservation
-        logger.error(f"TypeDB unavailable during session create: {e}", exc_info=True)
+        # BUG-467-SCR-005: Sanitize logger message — exc_info=True already captures full stack
+        logger.error(f"TypeDB unavailable during session create: {type(e).__name__}", exc_info=True)
         raise HTTPException(status_code=503, detail="Database service unavailable")
     except Exception as e:
         # BUG-352-INF-001: Log full error but return generic message to prevent info disclosure
-        logger.error(f"Failed to create session: {e}", exc_info=True)
+        # BUG-467-SCR-006: Sanitize logger message — exc_info=True already captures full stack
+        logger.error(f"Failed to create session: {type(e).__name__}", exc_info=True)
         raise HTTPException(status_code=500, detail="Failed to create session")
 
 
@@ -156,11 +162,13 @@ async def get_session(session_id: str):
         raise HTTPException(status_code=404, detail=f"Session {session_id} not found")
     except (TypeDBUnavailable, ConnectionError) as e:
         # BUG-403-CRD-001: Add exc_info for stack trace preservation
-        logger.error(f"TypeDB unavailable: {e}", exc_info=True)
+        # BUG-467-SCR-007: Sanitize logger message — exc_info=True already captures full stack
+        logger.error(f"TypeDB unavailable: {type(e).__name__}", exc_info=True)
         raise HTTPException(status_code=503, detail="Database service unavailable")
     # BUG-403-CRD-002: Add catch-all for unexpected exceptions (matches other handlers)
     except Exception as e:
-        logger.error(f"get_session failed: {e}", exc_info=True)
+        # BUG-467-SCR-008: Sanitize logger message — exc_info=True already captures full stack
+        logger.error(f"get_session failed: {type(e).__name__}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Failed to get session: {type(e).__name__}")
 
 
@@ -192,7 +200,8 @@ async def update_session(session_id: str, data: SessionUpdate):
         raise
     except Exception as e:
         # BUG-352-INF-001: Log full error but return generic message to prevent info disclosure
-        logger.error(f"Failed to update session {session_id}: {e}", exc_info=True)
+        # BUG-467-SCR-009: Sanitize logger message — exc_info=True already captures full stack
+        logger.error(f"Failed to update session {session_id}: {type(e).__name__}", exc_info=True)
         raise HTTPException(status_code=500, detail="Failed to update session")
 
 
@@ -208,7 +217,8 @@ async def delete_session(session_id: str):
         raise
     except Exception as e:
         # BUG-352-INF-001: Log full error but return generic message to prevent info disclosure
-        logger.error(f"Failed to delete session {session_id}: {e}", exc_info=True)
+        # BUG-467-SCR-010: Sanitize logger message — exc_info=True already captures full stack
+        logger.error(f"Failed to delete session {session_id}: {type(e).__name__}", exc_info=True)
         raise HTTPException(status_code=500, detail="Failed to delete session")
 
 
@@ -231,9 +241,11 @@ async def end_session(session_id: str, data: Optional[SessionEnd] = None):
     # BUG-381-SES-002: Log full error but return only type name to prevent info disclosure
     except ValueError as e:
         # BUG-414-CRD-002: Add exc_info for stack trace preservation
-        logger.warning(f"end_session conflict: {e}", exc_info=True)
+        # BUG-467-SCR-011: Sanitize logger message — exc_info=True already captures full stack
+        logger.warning(f"end_session conflict: {type(e).__name__}", exc_info=True)
         raise HTTPException(status_code=409, detail="Session conflict")
     except Exception as e:
         # BUG-352-INF-001: Log full error but return generic message to prevent info disclosure
-        logger.error(f"Failed to end session {session_id}: {e}", exc_info=True)
+        # BUG-467-SCR-012: Sanitize logger message — exc_info=True already captures full stack
+        logger.error(f"Failed to end session {session_id}: {type(e).__name__}", exc_info=True)
         raise HTTPException(status_code=500, detail="Failed to end session")

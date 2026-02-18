@@ -69,7 +69,8 @@ async def list_evidence(
                     session_id=session_id
                 ))
             except Exception as e:
-                logger.warning(f"Failed to read evidence file {filename}: {e}")
+                # BUG-470-EVD-001: Sanitize logger message + add exc_info for stack trace preservation
+                logger.warning(f"Failed to read evidence file {filename}: {type(e).__name__}", exc_info=True)
 
     return evidence_list
 
@@ -153,7 +154,8 @@ async def search_evidence(
                         content=content[:200] + "..." if len(content) > 200 else content
                     ))
             except Exception as e:
-                logger.warning(f"Failed to search file {filepath}: {e}")
+                # BUG-470-EVD-002: Sanitize logger message + add exc_info for stack trace preservation
+                logger.warning(f"Failed to search file {filepath}: {type(e).__name__}", exc_info=True)
                 continue
 
     # Sort by score descending

@@ -40,7 +40,8 @@ async def get_task_execution(task_id: str):
         try:
             task = client.get_task(task_id)
         except Exception as e:
-            logger.warning(f"TypeDB task query failed: {e}")
+            # BUG-470-EXE-001: Sanitize logger message + add exc_info for stack trace preservation
+            logger.warning(f"TypeDB task query failed: {type(e).__name__}", exc_info=True)
 
     if not task and task_id not in _tasks_store:
         raise HTTPException(status_code=404, detail=f"Task {task_id} not found")

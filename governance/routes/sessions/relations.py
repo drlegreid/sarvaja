@@ -72,7 +72,8 @@ async def link_evidence_to_session(session_id: str, data: EvidenceLink):
         raise
     except Exception as e:
         # BUG-352-INF-002: Log full error but return generic message to prevent info disclosure
-        logger.error(f"Error linking evidence to session: {e}", exc_info=True)
+        # BUG-467-SRL-001: Sanitize logger message — exc_info=True already captures full stack
+        logger.error(f"Error linking evidence to session: {type(e).__name__}", exc_info=True)
         raise HTTPException(status_code=500, detail="Failed to link evidence")
 
 
@@ -110,7 +111,8 @@ async def get_session_tasks(session_id: str):
         raise
     except Exception as e:
         # BUG-352-INF-002: Log full error but return generic message to prevent info disclosure
-        logger.error(f"Error getting session tasks: {e}", exc_info=True)
+        # BUG-467-SRL-002: Sanitize logger message — exc_info=True already captures full stack
+        logger.error(f"Error getting session tasks: {type(e).__name__}", exc_info=True)
         raise HTTPException(status_code=500, detail="Failed to get session tasks")
 
 
@@ -139,7 +141,8 @@ async def get_session_evidence(session_id: str):
             raise
         except Exception as e:
             # BUG-414-REL-001: Add exc_info for stack trace preservation
-            logger.warning(f"TypeDB evidence query failed, using fallback: {e}", exc_info=True)
+            # BUG-467-SRL-003: Sanitize logger message — exc_info=True already captures full stack
+            logger.warning(f"TypeDB evidence query failed, using fallback: {type(e).__name__}", exc_info=True)
 
     # H-SESSION-002: Filesystem fallback — scan evidence/ for matching files
     if not evidence:

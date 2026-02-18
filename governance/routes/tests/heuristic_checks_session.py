@@ -26,7 +26,8 @@ def _api_get(api_base_url: str, endpoint: str) -> dict:
             return data.get("items", data) if isinstance(data, dict) else data
     except Exception as e:
         # BUG-440-HCS-001: Upgrade debug→warning + exc_info for operational visibility
-        logger.warning(f"Heuristic API call failed: {endpoint}: {e}", exc_info=True)
+        # BUG-470-HCS-001: Sanitize logger message — exc_info=True already captures full stack
+        logger.warning(f"Heuristic API call failed: {endpoint}: {type(e).__name__}", exc_info=True)
     return []
 
 

@@ -55,7 +55,8 @@ def build_agent_relations_lookup(client) -> Tuple[dict, dict, dict]:
                         tasks_by_agent[agent_id].append(t.id)
 
     except Exception as e:
-        logger.warning(f"Failed to build agent relations lookup: {e}")
+        # BUG-466-AHL-001: Sanitize logger message + add exc_info for stack trace preservation
+        logger.warning(f"Failed to build agent relations lookup: {type(e).__name__}", exc_info=True)
 
     return sessions_by_agent, tasks_by_agent, task_count_by_agent
 

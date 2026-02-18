@@ -62,13 +62,15 @@ def check_chat_session_count_accuracy(api_base_url: str) -> dict:
         violations = []
         if len(active) > 0:
             violations.append(f"API shows {len(active)} active, total={api_total}")
+        # BUG-208-EXPLR-STATUS-001: Status must derive from violations, not api_total
         return {
-            "status": "PASS" if api_total > 0 else "FAIL",
+            "status": "FAIL" if violations else ("PASS" if api_total > 0 else "SKIP"),
             "message": f"API reports {api_total} sessions, {len(active)} active",
             "violations": violations,
         }
-    except Exception:
-        pass
+    except Exception as e:
+        # BUG-264-EXPLR-001: Log instead of silently swallowing
+        logging.getLogger(__name__).debug(f"check_chat_session_count_accuracy failed: {e}")
     return {"status": "SKIP", "message": "Could not check", "violations": []}
 
 
@@ -85,9 +87,11 @@ def check_monitor_event_count_consistency(api_base_url: str) -> dict:
         if resp.status_code == 200:
             data = resp.json()
             events = data.get("items", data) if isinstance(data, dict) else data
-            count = data.get("total", len(events)) if isinstance(data, dict) else len(events)
+            # BUG-208-EXPLR-PAGE-001: Compare page items count, not total vs page
             actual = len(events) if isinstance(events, list) else 0
-            if count != actual:
+            # BUG-221-TAUTOLOGY-001: Compare header total vs actual page items
+            count = data.get("total", actual) if isinstance(data, dict) else actual
+            if count != actual and actual > 0:
                 return {
                     "status": "FAIL",
                     "message": f"Counter says {count} but {actual} events returned",
@@ -100,8 +104,9 @@ def check_monitor_event_count_consistency(api_base_url: str) -> dict:
             }
         elif resp.status_code == 404:
             return {"status": "SKIP", "message": "Monitor API not found", "violations": []}
-    except Exception:
-        pass
+    except Exception as e:
+        # BUG-264-EXPLR-001: Log instead of silently swallowing
+        logging.getLogger(__name__).debug(f"check_monitor_event_count_consistency failed: {e}")
     return {"status": "SKIP", "message": "Monitor API unavailable", "violations": []}
 
 
@@ -120,7 +125,8 @@ def check_decision_rule_linking(api_base_url: str) -> dict:
     for d in decisions:
         rules = d.get("linked_rules", [])
         if not rules:
-            violations.append(d.get("id", "unknown"))
+            # BUG-198-EXPLR-DEC-FIELD-001: Use decision_id with id fallback (matches API)
+            violations.append(d.get("decision_id", d.get("id", "unknown")))
     return {
         "status": "FAIL" if violations else "PASS",
         "message": (
@@ -155,8 +161,9 @@ def check_audit_trail_populated(api_base_url: str) -> dict:
             }
         elif resp.status_code == 404:
             return {"status": "FAIL", "message": "Audit endpoint not found", "violations": ["NO_ENDPOINT"]}
-    except Exception:
-        pass
+    except Exception as e:
+        # BUG-264-EXPLR-001: Log instead of silently swallowing
+        logging.getLogger(__name__).debug(f"check_audit_trail_populated failed: {e}")
     return {"status": "SKIP", "message": "Audit API unavailable", "violations": []}
 
 
@@ -172,7 +179,8 @@ def check_rule_document_paths_populated(api_base_url: str) -> dict:
     active = [r for r in rules if r.get("status") == "ACTIVE"]
     if not active:
         return {"status": "SKIP", "message": "No active rules", "violations": []}
-    missing = [r.get("id", "unknown") for r in active if not r.get("document_path")]
+    # BUG-198-EXPLR-FIELD-001: Use rule_id, not id (matches API field name)
+    missing = [r.get("rule_id", "unknown") for r in active if not r.get("document_path")]
     return {
         "status": "FAIL" if len(missing) > len(active) * 0.5 else "PASS",
         "message": (
@@ -210,8 +218,9 @@ def check_mcp_readiness_consistency(api_base_url: str) -> dict:
                 ),
                 "violations": violations,
             }
-    except Exception:
-        pass
+    except Exception as e:
+        # BUG-264-EXPLR-001: Log instead of silently swallowing
+        logging.getLogger(__name__).debug(f"check_mcp_readiness_consistency failed: {e}")
     return {"status": "SKIP", "message": "Could not compare", "violations": []}
 
 

@@ -48,7 +48,8 @@ async def list_available_tasks():
             if tasks:
                 return [task_to_response(t) for t in tasks]
         except Exception as e:
-            logger.warning(f"TypeDB available tasks query failed, using fallback: {e}")
+            # BUG-470-WFL-001: Sanitize logger message + add exc_info for stack trace preservation
+            logger.warning(f"TypeDB available tasks query failed, using fallback: {type(e).__name__}", exc_info=True)
 
     # Fallback to in-memory
     AVAILABLE_STATUSES = {"TODO", "pending", "todo", "PENDING"}
@@ -92,16 +93,19 @@ async def claim_task(
                 try:
                     _update_agent_metrics_on_claim(agent_id)
                 except Exception as e:
-                    logger.warning(f"Agent metrics update failed (non-critical): {e}")
+                    # BUG-470-WFL-002: Sanitize logger message + add exc_info for stack trace preservation
+                    logger.warning(f"Agent metrics update failed (non-critical): {type(e).__name__}", exc_info=True)
                 try:
                     try_link_task_to_session(client, task_id, session_id, "claim")
                 except Exception as e:
-                    logger.warning(f"Task-session link failed (non-critical): {e}")
+                    # BUG-470-WFL-003: Sanitize logger message + add exc_info for stack trace preservation
+                    logger.warning(f"Task-session link failed (non-critical): {type(e).__name__}", exc_info=True)
                 return task_to_response(updated)
         except HTTPException:
             raise
         except Exception as e:
-            logger.warning(f"TypeDB claim_task failed, using fallback: {e}")
+            # BUG-470-WFL-004: Sanitize logger message + add exc_info for stack trace preservation
+            logger.warning(f"TypeDB claim_task failed, using fallback: {type(e).__name__}", exc_info=True)
 
     # Fallback to in-memory
     if task_id not in _tasks_store:
@@ -189,7 +193,8 @@ async def complete_task(
         except HTTPException:
             raise
         except Exception as e:
-            logger.warning(f"TypeDB complete_task failed, using fallback: {e}")
+            # BUG-470-WFL-005: Sanitize logger message + add exc_info for stack trace preservation
+            logger.warning(f"TypeDB complete_task failed, using fallback: {type(e).__name__}", exc_info=True)
 
     # Fallback to in-memory
     if task_id not in _tasks_store:
@@ -284,7 +289,8 @@ async def promote_task_resolution(
         except HTTPException:
             raise
         except Exception as e:
-            logger.warning(f"TypeDB promote_resolution failed, using fallback: {e}")
+            # BUG-470-WFL-006: Sanitize logger message + add exc_info for stack trace preservation
+            logger.warning(f"TypeDB promote_resolution failed, using fallback: {type(e).__name__}", exc_info=True)
 
     # Fallback to in-memory
     if task_id not in _tasks_store:

@@ -106,7 +106,8 @@ def start_chat_session(
             )
     except Exception as e:
         # BUG-424-BRG-001: Add exc_info for stack trace preservation
-        logger.error(f"TypeDB session create failed: {e}", exc_info=True)
+        # BUG-469-BRG-001: Sanitize logger message — exc_info=True already captures full stack
+        logger.error(f"TypeDB session create failed: {type(e).__name__}", exc_info=True)
 
     # Always ensure _sessions_store has session data for bridge syncing
     # (create_session may have stored in TypeDB but not in _sessions_store)
@@ -262,7 +263,8 @@ def end_chat_session(
         )
     except Exception as e:
         # BUG-424-BRG-002: Add exc_info for stack trace preservation
-        logger.error(f"TypeDB session end failed: {e}", exc_info=True)
+        # BUG-469-BRG-002: Sanitize logger message — exc_info=True already captures full stack
+        logger.error(f"TypeDB session end failed: {type(e).__name__}", exc_info=True)
 
     # Always update _sessions_store for consistency
     if session_id in _sessions_store:
@@ -278,7 +280,8 @@ def end_chat_session(
         evidence_path = collector.generate_session_log()
     except Exception as e:
         # BUG-424-BRG-003: Add exc_info for stack trace preservation
-        logger.warning(f"Failed to generate session log: {e}", exc_info=True)
+        # BUG-469-BRG-003: Sanitize logger message — exc_info=True already captures full stack
+        logger.warning(f"Failed to generate session log: {type(e).__name__}", exc_info=True)
 
     # BUG-SESSION-EVIDENCE-001: Auto-link evidence to TypeDB after generation
     if evidence_path:
@@ -292,7 +295,8 @@ def end_chat_session(
                 logger.warning(f"TypeDB unavailable; evidence not linked: {session_id} -> {evidence_path}")
         except Exception as e:
             # BUG-424-BRG-004: Add exc_info for stack trace preservation
-            logger.error(f"Evidence linking failed for {session_id}: {e}", exc_info=True)
+            # BUG-469-BRG-004: Sanitize logger message — exc_info=True already captures full stack
+            logger.error(f"Evidence linking failed for {session_id}: {type(e).__name__}", exc_info=True)
         # Also store in _sessions_store for fallback
         if session_id in _sessions_store:
             existing = _sessions_store[session_id].get("evidence_files") or []
@@ -305,7 +309,8 @@ def end_chat_session(
         collector.sync_to_chromadb()
     except Exception as e:
         # BUG-424-BRG-005: Add exc_info for stack trace preservation
-        logger.warning(f"Failed to sync session to ChromaDB: {e}", exc_info=True)
+        # BUG-469-BRG-005: Sanitize logger message — exc_info=True already captures full stack
+        logger.warning(f"Failed to sync session to ChromaDB: {type(e).__name__}", exc_info=True)
 
     # Per TEST-CVP-01-v1 Tier 2: Post-session validation
     _run_post_session_checks(session_id, collector)
@@ -340,4 +345,5 @@ def _run_post_session_checks(session_id: str, collector: SessionCollector) -> No
             logger.info(f"Post-session validation [{session_id}]: OK")
     except Exception as e:
         # BUG-424-BRG-006: Upgrade debug→warning + exc_info (data integrity)
-        logger.warning(f"Post-session validation failed: {e}", exc_info=True)
+        # BUG-469-BRG-006: Sanitize logger message — exc_info=True already captures full stack
+        logger.warning(f"Post-session validation failed: {type(e).__name__}", exc_info=True)

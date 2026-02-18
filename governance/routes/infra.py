@@ -142,7 +142,8 @@ def get_container_logs(
                 lines = [ln for ln in lines if level_upper in ln.upper()]
             return {"lines": lines[-tail:], "container": container, "source": sock_path}
         except Exception as e:
-            logger.warning(f"Socket log fetch failed: {e}")
+            # BUG-470-INF-001: Sanitize logger message + add exc_info for stack trace preservation
+            logger.warning(f"Socket log fetch failed: {type(e).__name__}", exc_info=True)
 
     # Strategy 2: podman CLI subprocess
     cli_lines = _fetch_logs_subprocess(container_name, tail)

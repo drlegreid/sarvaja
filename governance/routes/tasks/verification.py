@@ -140,7 +140,8 @@ PUT /api/tasks/{task_id}/promote-resolution
                     created_subtasks.append(task_to_response(created))
                     logger.info(f"Created verification subtask {subtask_id} for {task_id}")
             except Exception as e:
-                logger.warning(f"Failed to create subtask in TypeDB: {e}")
+                # BUG-470-VER-001: Sanitize logger message + add exc_info for stack trace preservation
+                logger.warning(f"Failed to create subtask in TypeDB: {type(e).__name__}", exc_info=True)
                 # Fallback to in-memory
                 _tasks_store[subtask_id] = subtask_data
                 created_subtasks.append(TaskResponse(**subtask_data))

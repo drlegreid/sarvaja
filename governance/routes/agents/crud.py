@@ -40,7 +40,8 @@ async def create_agent(body: AgentCreate):
         raise
     except Exception as e:
         # BUG-352-INF-003: Log full error but return generic message to prevent info disclosure
-        logger.error(f"Failed to create agent: {e}", exc_info=True)
+        # BUG-466-ACR-001: Sanitize logger message — exc_info=True already captures full stack
+        logger.error(f"Failed to create agent: {type(e).__name__}", exc_info=True)
         raise HTTPException(status_code=500, detail="Failed to create agent")
 
 
@@ -81,7 +82,8 @@ async def list_agents(
         raise
     except Exception as e:
         # BUG-352-INF-003: Log full error but return generic message to prevent info disclosure
-        logger.error(f"Failed to list agents: {e}", exc_info=True)
+        # BUG-466-ACR-002: Sanitize logger message — exc_info=True already captures full stack
+        logger.error(f"Failed to list agents: {type(e).__name__}", exc_info=True)
         raise HTTPException(status_code=500, detail="Failed to list agents")
 
 
@@ -98,7 +100,8 @@ async def get_agent(agent_id: str):
         raise
     except Exception as e:
         # BUG-352-INF-003: Log full error but return generic message to prevent info disclosure
-        logger.error(f"Failed to get agent {agent_id}: {e}", exc_info=True)
+        # BUG-466-ACR-003: Sanitize logger message — exc_info=True already captures full stack
+        logger.error(f"Failed to get agent {agent_id}: {type(e).__name__}", exc_info=True)
         raise HTTPException(status_code=500, detail="Failed to get agent")
 
 
@@ -114,7 +117,8 @@ async def delete_agent(agent_id: str):
         raise
     except Exception as e:
         # BUG-352-INF-003: Log full error but return generic message to prevent info disclosure
-        logger.error(f"Failed to delete agent {agent_id}: {e}", exc_info=True)
+        # BUG-466-ACR-004: Sanitize logger message — exc_info=True already captures full stack
+        logger.error(f"Failed to delete agent {agent_id}: {type(e).__name__}", exc_info=True)
         raise HTTPException(status_code=500, detail="Failed to delete agent")
 
 
@@ -131,7 +135,8 @@ async def toggle_agent_status(agent_id: str):
         raise
     except Exception as e:
         # BUG-352-INF-003: Log full error but return generic message to prevent info disclosure
-        logger.error(f"Failed to toggle agent {agent_id}: {e}", exc_info=True)
+        # BUG-466-ACR-005: Sanitize logger message — exc_info=True already captures full stack
+        logger.error(f"Failed to toggle agent {agent_id}: {type(e).__name__}", exc_info=True)
         raise HTTPException(status_code=500, detail="Failed to toggle agent status")
 
 
@@ -148,7 +153,8 @@ async def record_agent_task(agent_id: str):
         raise
     except Exception as e:
         # BUG-352-INF-003: Log full error but return generic message to prevent info disclosure
-        logger.error(f"Failed to record task for agent {agent_id}: {e}", exc_info=True)
+        # BUG-466-ACR-006: Sanitize logger message — exc_info=True already captures full stack
+        logger.error(f"Failed to record task for agent {agent_id}: {type(e).__name__}", exc_info=True)
         raise HTTPException(status_code=500, detail="Failed to record task")
 
 
@@ -183,5 +189,6 @@ async def get_agent_sessions(
         raise
     except Exception as e:
         # BUG-352-INF-003: Log full error but return generic message to prevent info disclosure
-        logger.error(f"Failed to get agent sessions: {e}", exc_info=True)
+        # BUG-466-ACR-007: Sanitize logger message — exc_info=True already captures full stack
+        logger.error(f"Failed to get agent sessions: {type(e).__name__}", exc_info=True)
         raise HTTPException(status_code=500, detail="Failed to get agent sessions")
