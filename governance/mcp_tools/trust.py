@@ -38,9 +38,10 @@ def register_trust_tools(mcp) -> None:
         Returns:
             JSON object with trust score details
         """
-        client = get_typedb_client()
-
+        # BUG-401-TRU-001: Allocate client inside try to prevent NameError in finally
+        client = None
         try:
+            client = get_typedb_client()
             if not client.connect():
                 return format_mcp_result({"error": "Failed to connect to TypeDB"})
 
@@ -95,7 +96,8 @@ def register_trust_tools(mcp) -> None:
             return format_mcp_result({"error": f"governance_get_trust_score failed: {type(e).__name__}"})
 
         finally:
-            client.close()
+            if client is not None:
+                client.close()
 
     # =========================================================================
     # PHASE 1: Domain-Based Aliases (RD-MCP-TOOL-NAMING)

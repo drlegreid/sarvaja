@@ -55,11 +55,21 @@ async def get_agents_status_summary():
             "status": "UNAVAILABLE"
         }
 
-    summary = get_agent_status_summary()
+    # BUG-398-OBS-001: Wrap service calls in try/except to prevent raw 500
+    try:
+        summary = get_agent_status_summary()
+    except Exception as e:
+        logger.error(f"get_agent_status_summary failed: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Agent status summary failed: {type(e).__name__}")
 
     # Add conflict status if available (MULTI-007 completion)
     if CONFLICT_CHECKER_AVAILABLE:
-        conflict_summary = get_conflict_summary()
+        # BUG-398-OBS-004: Wrap conflict summary in try/except
+        try:
+            conflict_summary = get_conflict_summary()
+        except Exception as e:
+            logger.error(f"get_conflict_summary failed: {e}", exc_info=True)
+            conflict_summary = {"conflicts": [], "conflict_count": 0, "has_conflicts": False, "alerts": []}
         summary["conflicts"] = conflict_summary.get("conflicts", [])
         summary["conflict_count"] = conflict_summary.get("conflict_count", 0)
         summary["has_conflicts"] = conflict_summary.get("has_conflicts", False)
@@ -88,7 +98,12 @@ async def get_stuck_agents():
     if not AGENT_STATUS_AVAILABLE:
         return {"stuck_agents": [], "error": "Agent status checker not available"}
 
-    return {"stuck_agents": check_stuck_agents()}
+    # BUG-398-OBS-002: Wrap service call in try/except
+    try:
+        return {"stuck_agents": check_stuck_agents()}
+    except Exception as e:
+        logger.error(f"check_stuck_agents failed: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Stuck agents check failed: {type(e).__name__}")
 
 
 @router.get("/agents/status/locks")
@@ -101,7 +116,12 @@ async def get_stale_locks():
     if not AGENT_STATUS_AVAILABLE:
         return {"stale_locks": [], "error": "Agent status checker not available"}
 
-    return {"stale_locks": check_file_locks()}
+    # BUG-398-OBS-003: Wrap service call in try/except
+    try:
+        return {"stale_locks": check_file_locks()}
+    except Exception as e:
+        logger.error(f"check_file_locks failed: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"File locks check failed: {type(e).__name__}")
 
 
 @router.post("/agents/{agent_id}/heartbeat")
@@ -130,7 +150,12 @@ async def agent_heartbeat(
     if current_task and len(current_task) > 512:
         current_task = current_task[:512]
 
-    result = update_agent_heartbeat(agent_id, agent_type, current_task, status)
+    # BUG-398-OBS-006: Wrap service call in try/except
+    try:
+        result = update_agent_heartbeat(agent_id, agent_type, current_task, status)
+    except Exception as e:
+        logger.error(f"update_agent_heartbeat failed for {agent_id}: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Heartbeat update failed: {type(e).__name__}")
     return {"agent_id": agent_id, "heartbeat": result}
 
 
@@ -151,7 +176,12 @@ async def acquire_lock(resource: str, agent_id: str, timeout: int = 30):
     # BUG-294-OBS-002: Cap timeout to prevent event loop blocking
     timeout = max(1, min(60, timeout))
 
-    lock_path = acquire_file_lock(resource, agent_id, timeout)
+    # BUG-398-OBS-007: Wrap service call in try/except
+    try:
+        lock_path = acquire_file_lock(resource, agent_id, timeout)
+    except Exception as e:
+        logger.error(f"acquire_file_lock failed for {resource}: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Lock acquisition failed: {type(e).__name__}")
     if lock_path:
         return {"acquired": True, "resource": resource, "agent_id": agent_id}
     raise HTTPException(status_code=409, detail=f"Could not acquire lock for {resource}")
@@ -172,7 +202,12 @@ async def release_lock(resource: str, agent_id: str):
     if not _re.match(r'^[A-Za-z0-9_\-\.]{1,128}$', resource):
         raise HTTPException(status_code=422, detail="Invalid resource name: must be alphanumeric/dash/dot, max 128 chars")
 
-    released = release_file_lock(resource, agent_id)
+    # BUG-398-OBS-008: Wrap service call in try/except
+    try:
+        released = release_file_lock(resource, agent_id)
+    except Exception as e:
+        logger.error(f"release_file_lock failed for {resource}: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Lock release failed: {type(e).__name__}")
     if released:
         return {"released": True, "resource": resource, "agent_id": agent_id}
     raise HTTPException(status_code=404, detail=f"Lock not found or not owned by {agent_id}")
@@ -194,7 +229,12 @@ async def get_merge_conflicts():
             "status": "UNAVAILABLE"
         }
 
-    return get_conflict_summary()
+    # BUG-398-OBS-004: Wrap service call in try/except (matches summary endpoint)
+    try:
+        return get_conflict_summary()
+    except Exception as e:
+        logger.error(f"get_conflict_summary failed: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Conflict summary failed: {type(e).__name__}")
 
 
 @router.get("/monitor/events")
@@ -222,12 +262,17 @@ async def get_monitor_events(
     days = max(1, min(7, days))
     limit = max(1, min(1000, limit))
 
-    events = read_audit_events(
-        days=days,
-        limit=limit,
-        event_type=event_type,
-        severity=severity
-    )
+    # BUG-398-OBS-005: Wrap service call in try/except
+    try:
+        events = read_audit_events(
+            days=days,
+            limit=limit,
+            event_type=event_type,
+            severity=severity
+        )
+    except Exception as e:
+        logger.error(f"read_audit_events failed: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Monitor events failed: {type(e).__name__}")
 
     return {
         "events": events,

@@ -91,7 +91,9 @@ async def get_rule(rule_id: str):
     except KeyError:
         raise HTTPException(status_code=404, detail=f"Rule {rule_id} not found")
     except ValueError as e:
-        raise HTTPException(status_code=422, detail=str(e))
+        # BUG-398-RUL-001: Don't leak internal ValueError message to client
+        logger.warning(f"get_rule validation error for {rule_id}: {e}", exc_info=True)
+        raise HTTPException(status_code=422, detail="Invalid rule request")
     except Exception as e:
         # BUG-355-RUL-001: Log full error but return generic message
         logger.error(f"Failed to get rule: {e}", exc_info=True)
@@ -111,7 +113,9 @@ async def create_rule(rule: RuleCreate):
     except ConnectionError:
         raise HTTPException(status_code=503, detail="TypeDB not connected")
     except ValueError as e:
-        raise HTTPException(status_code=409, detail=str(e))
+        # BUG-398-RUL-005: Don't leak internal ValueError message to client
+        logger.warning(f"create_rule conflict: {e}", exc_info=True)
+        raise HTTPException(status_code=409, detail="Rule creation conflict")
     except RuntimeError as e:
         # BUG-355-RUL-001: Log full error but return generic message
         logger.error(f"Failed to create rule (runtime): {e}", exc_info=True)
@@ -141,7 +145,9 @@ async def update_rule(rule_id: str, rule: RuleUpdate):
         logger.error(f"Failed to update rule (runtime): {e}", exc_info=True)
         raise HTTPException(status_code=500, detail="Failed to update rule")
     except ValueError as e:
-        raise HTTPException(status_code=422, detail=str(e))
+        # BUG-398-RUL-002: Don't leak internal ValueError message to client
+        logger.warning(f"update_rule validation error for {rule_id}: {e}", exc_info=True)
+        raise HTTPException(status_code=422, detail="Invalid rule update request")
     except Exception as e:
         # BUG-355-RUL-001: Log full error but return generic message
         logger.error(f"Failed to update rule: {e}", exc_info=True)
@@ -174,7 +180,9 @@ async def delete_rule(rule_id: str, archive: bool = Query(True, description="Arc
     except KeyError:
         raise HTTPException(status_code=404, detail=f"Rule {rule_id} not found")
     except ValueError as e:
-        raise HTTPException(status_code=422, detail=str(e))
+        # BUG-398-RUL-003: Don't leak internal ValueError message to client
+        logger.warning(f"delete_rule validation error for {rule_id}: {e}", exc_info=True)
+        raise HTTPException(status_code=422, detail="Invalid rule delete request")
     except Exception as e:
         # BUG-355-RUL-001: Log full error but return generic message
         logger.error(f"Failed to delete rule: {e}", exc_info=True)
@@ -207,7 +215,9 @@ async def create_rule_dependency(rule_id: str, dep_id: str):
     except ConnectionError:
         raise HTTPException(status_code=503, detail="TypeDB not connected")
     except KeyError as e:
-        raise HTTPException(status_code=404, detail=str(e))
+        # BUG-398-RUL-004: Don't leak internal KeyError message to client
+        logger.warning(f"create_rule_dependency not found {rule_id}->{dep_id}: {e}", exc_info=True)
+        raise HTTPException(status_code=404, detail="Rule or dependency not found")
     except Exception as e:
         # BUG-355-RUL-001: Log full error but return generic message
         logger.error(f"Failed to create rule dependency: {e}", exc_info=True)
