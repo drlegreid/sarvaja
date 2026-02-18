@@ -1,7 +1,10 @@
 """Task Linking MCP Tools. Per RULE-012, P11.3, GAP-DATA-002. Created: 2026-01-03."""
 
+import logging
 
 from governance.mcp_tools.common import get_typedb_client, format_mcp_result
+
+logger = logging.getLogger(__name__)
 
 # Monitoring instrumentation per GAP-MONITOR-INSTRUMENT-001
 try:
@@ -38,9 +41,10 @@ def register_task_linking_tools(mcp) -> None:
                 return format_mcp_result({
                     "error": f"Failed to link task {task_id} to session {session_id}"
                 })
-        # BUG-B185-007: Add except to match task_link_document pattern
+        # BUG-B185-007 + BUG-366-TL-001: Log full error but return only type name
         except Exception as e:
-            return format_mcp_result({"error": f"task_link_session failed: {e}"})
+            logger.error(f"task_link_session failed: {e}", exc_info=True)
+            return format_mcp_result({"error": f"task_link_session failed: {type(e).__name__}"})
         finally:
             client.close()
 
@@ -68,9 +72,10 @@ def register_task_linking_tools(mcp) -> None:
                 return format_mcp_result({
                     "error": f"Failed to link task {task_id} to rule {rule_id}"
                 })
-        # BUG-B185-007: Add except to match task_link_document pattern
+        # BUG-B185-007 + BUG-366-TL-001: Log full error but return only type name
         except Exception as e:
-            return format_mcp_result({"error": f"task_link_rule failed: {e}"})
+            logger.error(f"task_link_rule failed: {e}", exc_info=True)
+            return format_mcp_result({"error": f"task_link_rule failed: {type(e).__name__}"})
         finally:
             client.close()
 
@@ -98,9 +103,10 @@ def register_task_linking_tools(mcp) -> None:
                 return format_mcp_result({
                     "error": f"Failed to link evidence {evidence_path} to task {task_id}"
                 })
-        # BUG-B185-007: Add except to match task_link_document pattern
+        # BUG-B185-007 + BUG-366-TL-001: Log full error but return only type name
         except Exception as e:
-            return format_mcp_result({"error": f"task_link_evidence failed: {e}"})
+            logger.error(f"task_link_evidence failed: {e}", exc_info=True)
+            return format_mcp_result({"error": f"task_link_evidence failed: {type(e).__name__}"})
         finally:
             client.close()
 
@@ -123,9 +129,10 @@ def register_task_linking_tools(mcp) -> None:
                 "evidence_files": evidence_files,
                 "count": len(evidence_files)
             })
-        # BUG-B185-007: Add except to match task_link_document pattern
+        # BUG-B185-007 + BUG-366-TL-001: Log full error but return only type name
         except Exception as e:
-            return format_mcp_result({"error": f"task_get_evidence failed: {e}"})
+            logger.error(f"task_get_evidence failed: {e}", exc_info=True)
+            return format_mcp_result({"error": f"task_get_evidence failed: {type(e).__name__}"})
         finally:
             client.close()
 
@@ -153,9 +160,10 @@ def register_task_linking_tools(mcp) -> None:
                 return format_mcp_result({
                     "error": f"Failed to link task {task_id} to commit {commit_sha}"
                 })
-        # BUG-B185-007: Add except to match task_link_document pattern
+        # BUG-B185-007 + BUG-366-TL-001: Log full error but return only type name
         except Exception as e:
-            return format_mcp_result({"error": f"task_link_commit failed: {e}"})
+            logger.error(f"task_link_commit failed: {e}", exc_info=True)
+            return format_mcp_result({"error": f"task_link_commit failed: {type(e).__name__}"})
         finally:
             client.close()
 
@@ -178,9 +186,10 @@ def register_task_linking_tools(mcp) -> None:
                 "commits": commits,
                 "count": len(commits)
             })
-        # BUG-B185-007: Add except to match task_link_document pattern
+        # BUG-B185-007 + BUG-366-TL-001: Log full error but return only type name
         except Exception as e:
-            return format_mcp_result({"error": f"task_get_commits failed: {e}"})
+            logger.error(f"task_get_commits failed: {e}", exc_info=True)
+            return format_mcp_result({"error": f"task_get_commits failed: {type(e).__name__}"})
         finally:
             client.close()
 
@@ -208,8 +217,10 @@ def register_task_linking_tools(mcp) -> None:
                 return format_mcp_result({
                     "error": f"Failed to link document {document_path} to task {task_id}"
                 })
+        # BUG-366-TL-001: Log full error but return only type name
         except Exception as e:
-            return format_mcp_result({"error": str(e)})
+            logger.error(f"task_link_document failed: {e}", exc_info=True)
+            return format_mcp_result({"error": f"task_link_document failed: {type(e).__name__}"})
         finally:
             client.close()
 
@@ -232,8 +243,10 @@ def register_task_linking_tools(mcp) -> None:
                 "documents": documents,
                 "count": len(documents)
             })
+        # BUG-366-TL-001: Log full error but return only type name
         except Exception as e:
-            return format_mcp_result({"error": str(e)})
+            logger.error(f"task_get_documents failed: {e}", exc_info=True)
+            return format_mcp_result({"error": f"task_get_documents failed: {type(e).__name__}"})
         finally:
             client.close()
 
@@ -276,9 +289,10 @@ def register_task_linking_tools(mcp) -> None:
                 return format_mcp_result({
                     "error": f"Failed to update details for task {task_id}"
                 })
-        # BUG-B185-007: Add except to match task_link_document pattern
+        # BUG-B185-007 + BUG-366-TL-001: Log full error but return only type name
         except Exception as e:
-            return format_mcp_result({"error": f"task_update_details failed: {e}"})
+            logger.error(f"task_update_details failed: {e}", exc_info=True)
+            return format_mcp_result({"error": f"task_update_details failed: {type(e).__name__}"})
         finally:
             client.close()
 
@@ -304,8 +318,9 @@ def register_task_linking_tools(mcp) -> None:
                 "task_id": task_id,
                 **details
             })
-        # BUG-B185-007: Add except to match task_link_document pattern
+        # BUG-B185-007 + BUG-366-TL-001: Log full error but return only type name
         except Exception as e:
-            return format_mcp_result({"error": f"task_get_details failed: {e}"})
+            logger.error(f"task_get_details failed: {e}", exc_info=True)
+            return format_mcp_result({"error": f"task_get_details failed: {type(e).__name__}"})
         finally:
             client.close()

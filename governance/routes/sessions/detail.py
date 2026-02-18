@@ -31,7 +31,13 @@ def session_detail(
     - zoom=2: + individual tool calls with inputs (paginated)
     - zoom=3: + full thinking content (paginated)
     """
-    result = get_session_detail(session_id, zoom=zoom, page=page, per_page=per_page)
+    # BUG-197-DETAIL-001: Wrap in try/except to prevent raw 500 on parse/IO errors
+    try:
+        result = get_session_detail(session_id, zoom=zoom, page=page, per_page=per_page)
+    # BUG-366-DET-001: Log full error but return only type name to prevent info disclosure
+    except Exception as e:
+        logger.error(f"Session detail failed for {session_id}: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Failed to load session detail: {type(e).__name__}")
     if not result:
         raise HTTPException(status_code=404, detail=f"Session {session_id} not found")
     return result
@@ -44,7 +50,13 @@ def session_tools(
     per_page: int = Query(default=20, ge=1, le=100),
 ):
     """Get paginated tool calls for a session."""
-    result = get_session_detail(session_id, zoom=2, page=page, per_page=per_page)
+    # BUG-197-DETAIL-001: Wrap in try/except
+    try:
+        result = get_session_detail(session_id, zoom=2, page=page, per_page=per_page)
+    # BUG-366-DET-001: Log full error but return only type name to prevent info disclosure
+    except Exception as e:
+        logger.error(f"Session tools failed for {session_id}: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Failed to load session tools: {type(e).__name__}")
     if not result:
         raise HTTPException(status_code=404, detail=f"Session {session_id} not found")
     return {
@@ -63,7 +75,13 @@ def session_thoughts(
     per_page: int = Query(default=20, ge=1, le=100),
 ):
     """Get paginated thinking blocks for a session."""
-    result = get_session_detail(session_id, zoom=3, page=page, per_page=per_page)
+    # BUG-197-DETAIL-001: Wrap in try/except
+    try:
+        result = get_session_detail(session_id, zoom=3, page=page, per_page=per_page)
+    # BUG-366-DET-001: Log full error but return only type name to prevent info disclosure
+    except Exception as e:
+        logger.error(f"Session thoughts failed for {session_id}: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Failed to load session thoughts: {type(e).__name__}")
     if not result:
         raise HTTPException(status_code=404, detail=f"Session {session_id} not found")
     return {
@@ -102,6 +120,11 @@ def session_evidence_rendered(session_id: str):
     if not p.exists():
         raise HTTPException(status_code=404, detail="Evidence file not found on disk")
 
+    # BUG-277-DETAIL-002: Cap file read to 512KB to prevent memory exhaustion
+    file_size = p.stat().st_size
+    if file_size > 512 * 1024:
+        raise HTTPException(status_code=413, detail="Evidence file too large to render")
+
     content = p.read_text(encoding="utf-8", errors="replace")
     return {"session_id": session_id, "html": render_markdown(content), "raw": content}
 
@@ -113,5 +136,10 @@ def ingestion_status(session_id: str):
     Returns checkpoint data including phase, chunks indexed, and links created.
     Per SESSION-METRICS-01-v1.
     """
-    from governance.services.ingestion_orchestrator import get_ingestion_status
-    return get_ingestion_status(session_id)
+    # BUG-277-DETAIL-001: Wrap in try/except to prevent raw 500
+    try:
+        from governance.services.ingestion_orchestrator import get_ingestion_status
+        return get_ingestion_status(session_id)
+    except Exception as e:
+        logger.error(f"Ingestion status failed for {session_id}: {e}")
+        raise HTTPException(status_code=500, detail="Failed to retrieve ingestion status")
