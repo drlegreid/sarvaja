@@ -30,7 +30,8 @@ def register_decisions_controllers(state: Any, ctrl: Any, api_base_url: str) -> 
     @ctrl.trigger("select_decision")
     def select_decision(decision_id):
         """Handle decision selection for detail view."""
-        for decision in state.decisions:
+        # BUG-239-RULES-001: Guard against None state.decisions
+        for decision in (state.decisions or []):
             if decision.get('decision_id') == decision_id or decision.get('id') == decision_id:
                 state.selected_decision = decision
                 state.show_decision_detail = True
@@ -110,6 +111,8 @@ def register_decisions_controllers(state: Any, ctrl: Any, api_base_url: str) -> 
                     if not state.selected_decision:
                         state.has_error = True
                         state.error_message = "No decision selected for editing"
+                        # BUG-187-002: Reset is_loading on early return
+                        state.is_loading = False
                         return
                     decision_id = state.selected_decision.get('id') or state.selected_decision.get('decision_id')
                     response = client.put(f"{api_base_url}/api/decisions/{decision_id}", json=decision_data)
@@ -127,14 +130,16 @@ def register_decisions_controllers(state: Any, ctrl: Any, api_base_url: str) -> 
                     state.selected_decision = None
                 else:
                     state.has_error = True
-                    state.error_message = f"API Error: {response.status_code} - {response.text}"
+                    # BUG-389-DEC-001: Don't leak response.text (may contain internal paths/stack traces) via Trame WebSocket
+                    state.error_message = f"API Error: {response.status_code}"
 
             state.is_loading = False
         except Exception as e:
             add_error_trace(state, f"Save decision failed: {e}", "/api/decisions")
             state.is_loading = False
             state.has_error = True
-            state.error_message = f"Failed to save decision: {str(e)}"
+            # BUG-389-DEC-002: Don't leak httpx internals via Trame WebSocket
+            state.error_message = f"Failed to save decision: {type(e).__name__}"
 
     @ctrl.trigger("delete_decision")
     def delete_decision():
@@ -173,4 +178,5 @@ def register_decisions_controllers(state: Any, ctrl: Any, api_base_url: str) -> 
             add_error_trace(state, f"Delete decision failed: {e}", f"/api/decisions/{decision_id}")
             state.is_loading = False
             state.has_error = True
-            state.error_message = f"Failed to delete decision: {str(e)}"
+            # BUG-389-DEC-003: Don't leak httpx internals via Trame WebSocket
+            state.error_message = f"Failed to delete decision: {type(e).__name__}"

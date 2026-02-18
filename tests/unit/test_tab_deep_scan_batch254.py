@@ -19,7 +19,7 @@ class TestRulesCrudEscaping:
     def test_update_rule_uses_esc_helper(self):
         src = (SRC / "governance/typedb/queries/rules/crud.py").read_text()
         idx = src.index("def update_rule")
-        block = src[idx:idx + 4500]
+        block = src[idx:idx + 6000]
         # Should use _esc(rule_id) instead of bare .replace
         assert "_esc(rule_id)" in block
 

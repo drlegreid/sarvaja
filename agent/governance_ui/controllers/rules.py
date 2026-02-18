@@ -31,7 +31,8 @@ def register_rules_controllers(state: Any, ctrl: Any, api_base_url: str) -> None
         # BUG-UI-STALE-DETAIL-005: Clear prior rule detail state before loading
         state.rule_implementing_tasks = []
         state.rule_implementing_tasks_loading = False
-        for rule in state.rules:
+        # BUG-239-RULES-001: Guard against None state.rules
+        for rule in (state.rules or []):
             if rule.get('rule_id') == rule_id or rule.get('id') == rule_id:
                 state.selected_rule = rule
                 state.show_rule_detail = True
@@ -115,7 +116,9 @@ def register_rules_controllers(state: Any, ctrl: Any, api_base_url: str) -> None
                 "category": state.form_rule_category,
                 "priority": state.form_rule_priority,
                 "applicability": getattr(state, 'form_rule_applicability', 'MANDATORY'),
-                "status": "DRAFT"
+                # BUG-222-RULE-001: Preserve existing status in edit mode
+                "status": (getattr(state, 'selected_rule', {}) or {}).get('status', 'DRAFT')
+                          if state.rule_form_mode == "edit" else "DRAFT"
             }
 
             with httpx.Client(timeout=10.0) as client:
@@ -127,6 +130,8 @@ def register_rules_controllers(state: Any, ctrl: Any, api_base_url: str) -> None
                     if not state.selected_rule:
                         state.has_error = True
                         state.error_message = "No rule selected for editing"
+                        # BUG-187-001: Reset is_loading on early return
+                        state.is_loading = False
                         return
                     rule_id = state.selected_rule.get('id') or state.selected_rule.get('rule_id')
                     response = client.put(f"{api_base_url}/api/rules/{rule_id}", json=rule_data)
@@ -142,14 +147,16 @@ def register_rules_controllers(state: Any, ctrl: Any, api_base_url: str) -> None
                     state.show_rule_form = False
                 else:
                     state.has_error = True
-                    state.error_message = f"API Error: {response.status_code} - {response.text}"
+                    # BUG-389-RUL-001: Don't leak response.text (may contain internal paths/stack traces) via Trame WebSocket
+                    state.error_message = f"API Error: {response.status_code}"
 
             state.is_loading = False
         except Exception as e:
             add_error_trace(state, f"Save rule failed: {e}", "/api/rules")
             state.is_loading = False
             state.has_error = True
-            state.error_message = f"Failed to save rule: {str(e)}"
+            # BUG-389-RUL-002: Don't leak httpx internals via Trame WebSocket
+            state.error_message = f"Failed to save rule: {type(e).__name__}"
 
     @ctrl.trigger("delete_rule")
     def delete_rule():
@@ -188,7 +195,8 @@ def register_rules_controllers(state: Any, ctrl: Any, api_base_url: str) -> None
             add_error_trace(state, f"Delete rule failed: {e}", f"/api/rules/{rule_id}")
             state.is_loading = False
             state.has_error = True
-            state.error_message = f"Failed to delete rule: {str(e)}"
+            # BUG-389-RUL-003: Don't leak httpx internals via Trame WebSocket
+            state.error_message = f"Failed to delete rule: {type(e).__name__}"
 
     def load_rules():
         """Load rules from API with current filters (BUG-UI-RULES-001 fix)."""
@@ -209,7 +217,8 @@ def register_rules_controllers(state: Any, ctrl: Any, api_base_url: str) -> None
         except Exception as e:
             add_error_trace(state, f"Load rules failed: {e}", "/api/rules")
             state.has_error = True
-            state.error_message = f"Failed to load rules: {str(e)}"
+            # BUG-389-RUL-004: Don't leak httpx internals via Trame WebSocket
+            state.error_message = f"Failed to load rules: {type(e).__name__}"
 
     # Reactive filter handlers — @state.change pattern (BUG-UI-RULES-001 fix)
     @state.change("rules_status_filter")

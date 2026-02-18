@@ -223,7 +223,8 @@ def register_infra_loader_controllers(
             )
             state.infra_last_action = f"Starting {service}... (refresh in 10s)"
         except Exception as e:
-            state.infra_last_action = f"Failed to start {service}: {e}"
+            # BUG-389-INF-001: Don't leak subprocess exception internals via Trame WebSocket
+            state.infra_last_action = f"Failed to start {service}: {type(e).__name__}"
 
     @ctrl.trigger("start_all_services")
     def start_all_services():
@@ -235,7 +236,8 @@ def register_infra_loader_controllers(
             )
             state.infra_last_action = "Starting all services... (refresh in 30s)"
         except Exception as e:
-            state.infra_last_action = f"Failed to start services: {e}"
+            # BUG-389-INF-002: Don't leak subprocess exception internals via Trame WebSocket
+            state.infra_last_action = f"Failed to start services: {type(e).__name__}"
 
     @ctrl.trigger("restart_stack")
     def restart_stack():
@@ -247,7 +249,8 @@ def register_infra_loader_controllers(
             )
             state.infra_last_action = "Restarting stack... (refresh in 60s)"
         except Exception as e:
-            state.infra_last_action = f"Failed to restart stack: {e}"
+            # BUG-389-INF-003: Don't leak subprocess exception internals via Trame WebSocket
+            state.infra_last_action = f"Failed to restart stack: {type(e).__name__}"
 
     @ctrl.trigger("load_container_logs")
     def load_container_logs(container: str = "dashboard", lines: int = 50, level: str = ""):
@@ -273,7 +276,8 @@ def register_infra_loader_controllers(
             else:
                 state.infra_log_lines = [f"API error {resp.status_code}"]
         except Exception as e:
-            state.infra_log_lines = [f"Failed to fetch logs: {e}"]
+            # BUG-389-INF-004: Don't leak httpx exception internals via Trame WebSocket
+            state.infra_log_lines = [f"Failed to fetch logs: {type(e).__name__}"]
         state.infra_log_container = container
 
     # BUG-320-INFRA-001: Cooldown timer to prevent rapid repeated pkill
@@ -297,7 +301,8 @@ def register_infra_loader_controllers(
             _cleanup_last_run[0] = now
             state.infra_last_action = "Cleaned up zombie MCP processes"
         except Exception as e:
-            state.infra_last_action = f"Cleanup failed: {e}"
+            # BUG-389-INF-005: Don't leak subprocess exception internals via Trame WebSocket
+            state.infra_last_action = f"Cleanup failed: {type(e).__name__}"
 
     @ctrl.trigger("load_python_processes")
     def load_python_processes():

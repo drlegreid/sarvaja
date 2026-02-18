@@ -94,7 +94,12 @@ def register_data_loader_controllers(
             add_error_trace(state, f"Load agents failed: {str(e)}", "/api/agents")
             state.agents = []
 
-        state.trust_leaderboard = build_trust_leaderboard(state.agents)
+        # BUG-283-DL-001: Wrap in try to prevent exception aborting proposals/stats load
+        try:
+            state.trust_leaderboard = build_trust_leaderboard(state.agents)
+        except Exception as e:
+            add_error_trace(state, f"Build trust leaderboard failed: {e}", "build_trust_leaderboard()")
+            state.trust_leaderboard = []
 
         try:
             state.proposals = get_proposals()
@@ -108,13 +113,24 @@ def register_data_loader_controllers(
             add_error_trace(state, f"Load escalated proposals failed: {e}", "get_escalated_proposals()")
             state.escalated_proposals = []
 
-        state.governance_stats = get_governance_stats(
-            state.agents,
-            state.proposals
-        )
+        # BUG-193-010: Guard against get_governance_stats raising
+        try:
+            state.governance_stats = get_governance_stats(
+                state.agents,
+                state.proposals
+            )
+        except Exception as e:
+            add_error_trace(state, f"Load governance stats failed: {e}", "get_governance_stats()")
+            state.governance_stats = {}
 
     def load_monitor_data():
         """Load monitoring data from RuleMonitor."""
+        # BUG-283-DL-002: Initialize defaults before try to prevent partial state on exception
+        state.monitor_feed = state.monitor_feed if hasattr(state, 'monitor_feed') else []
+        state.monitor_alerts = state.monitor_alerts if hasattr(state, 'monitor_alerts') else []
+        state.monitor_stats = state.monitor_stats if hasattr(state, 'monitor_stats') else {}
+        state.top_rules = state.top_rules if hasattr(state, 'top_rules') else []
+        state.hourly_stats = state.hourly_stats if hasattr(state, 'hourly_stats') else []
         try:
             state.monitor_feed = get_monitor_feed(limit=50)
             state.monitor_alerts = get_monitor_alerts(acknowledged=False)
@@ -124,6 +140,9 @@ def register_data_loader_controllers(
         except Exception as e:
             # BUG-UI-LOAD-002: Add error handling to monitor data loading
             add_error_trace(state, f"Load monitor data failed: {e}", "monitor_data")
+            # BUG-283-DL-002: Mark timestamp as error so UI doesn't show false freshness
+            state.monitor_last_updated = f"{datetime.now().isoformat(timespec='seconds')} (ERROR)"
+            return
         state.monitor_last_updated = datetime.now().isoformat(timespec="seconds")
 
     def load_backlog_data():
@@ -132,7 +151,9 @@ def register_data_loader_controllers(
             with httpx.Client(timeout=10.0) as client:
                 response = client.get(f"{api_base_url}/api/tasks/available")
                 if response.status_code == 200:
-                    state.available_tasks = response.json()
+                    # BUG-239-DL-002: Unwrap paginated dict response
+                    data = response.json()
+                    state.available_tasks = data["items"] if isinstance(data, dict) and "items" in data else data
                 else:
                     state.available_tasks = []
 
@@ -155,9 +176,8 @@ def register_data_loader_controllers(
                     state.claimed_tasks = []
         except Exception as e:
             add_error_trace(state, f"Load backlog failed: {e}", "/api/tasks/available")
-            # BUG-UI-LOAD-004: Set error state on backlog load failure
-            state.has_error = True
-            state.error_message = f"Failed to load backlog: {str(e)}"
+            # BUG-225-CTRL-007: Don't surface transient refresh errors to user
+            # (other loaders use add_error_trace only, not has_error)
             state.available_tasks = []
             state.claimed_tasks = []
 
@@ -186,8 +206,9 @@ def register_data_loader_controllers(
                     }
         except Exception as e:
             add_error_trace(state, f"Load executive report failed: {e}", "/api/reports/executive")
+            # BUG-389-DL-001: Don't leak exception internals via Trame WebSocket (state.executive_report is pushed to browser)
             state.executive_report = {
-                "error": str(e),
+                "error": type(e).__name__,
                 "sections": [],
                 "overall_status": "error",
                 "metrics_summary": {},

@@ -231,7 +231,8 @@ class RuleCRUDOperations:
 
                 tx.commit()
         except Exception as e:
-            logger.error(f"Failed to update rule {rule_id}: {e}")
+            # BUG-389-RCR-001: Add exc_info for stack trace visibility in logs
+            logger.error(f"Failed to update rule {rule_id}: {e}", exc_info=True)
             return None
 
         return self.get_rule_by_id(rule_id)
@@ -293,7 +294,8 @@ class RuleCRUDOperations:
                 tx.query(delete_query).resolve()
                 tx.commit()
         except Exception as e:
-            logger.error(f"Failed to delete rule {rule_id}: {e}")
+            # BUG-389-RCR-002: Add exc_info for stack trace visibility in logs
+            logger.error(f"Failed to delete rule {rule_id}: {e}", exc_info=True)
             return False
 
         return True
