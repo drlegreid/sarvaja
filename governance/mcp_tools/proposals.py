@@ -1,5 +1,9 @@
 """Proposal MCP Tools. Per GOV-BICAM-01-v1, SESSION-DSM-01-v1: Proposal, voting, dispute operations."""
+import logging
+
 from governance.mcp_tools.common import format_mcp_result
+
+logger = logging.getLogger(__name__)
 
 import json
 from datetime import datetime
@@ -221,11 +225,13 @@ def register_proposal_tools(mcp) -> None:
                         "type": r.get("ptype"),
                         "status": r.get("pstatus")
                     })
+            # BUG-370-PRP-001: Log full error but return only type name
             except Exception as e:
+                logger.error(f"proposals_list query failed: {e}", exc_info=True)
                 return format_mcp_result({
                     "proposals": [],
                     "count": 0,
-                    "note": f"Query error: {str(e)}. No proposals in TypeDB yet."
+                    "note": f"Query error: {type(e).__name__}. No proposals in TypeDB yet."
                 })
 
         return format_mcp_result({
@@ -270,11 +276,13 @@ def register_proposal_tools(mcp) -> None:
                         "status": r.get("pstatus"),
                         "escalation_trigger": r.get("trigger")
                     })
+            # BUG-370-PRP-001: Log full error but return only type name
             except Exception as e:
+                logger.error(f"proposals_escalated query failed: {e}", exc_info=True)
                 return format_mcp_result({
                     "escalated_proposals": [],
                     "count": 0,
-                    "note": f"Query error: {str(e)}. No escalated proposals."
+                    "note": f"Query error: {type(e).__name__}. No escalated proposals."
                 })
 
         return format_mcp_result({

@@ -54,10 +54,13 @@ def register_gap_tools(mcp) -> None:
             }
             return format_mcp_result(result)
 
+        # BUG-370-GAP-001: Log full error but return only type name
         except FileNotFoundError as e:
-            return format_mcp_result({"error": str(e)})
+            logger.error(f"backlog_get file not found: {e}", exc_info=True)
+            return format_mcp_result({"error": f"backlog_get failed: FileNotFoundError"})
         except Exception as e:
-            return format_mcp_result({"error": f"Failed to parse gaps: {str(e)}"})
+            logger.error(f"backlog_get failed: {e}", exc_info=True)
+            return format_mcp_result({"error": f"backlog_get failed: {type(e).__name__}"})
 
     @mcp.tool()
     def gaps_summary() -> str:
@@ -70,8 +73,10 @@ def register_gap_tools(mcp) -> None:
         try:
             summary = get_gap_summary()
             return format_mcp_result(summary)
+        # BUG-370-GAP-001: Log full error but return only type name
         except Exception as e:
-            return format_mcp_result({"error": f"Failed to get summary: {str(e)}"})
+            logger.error(f"gaps_summary failed: {e}", exc_info=True)
+            return format_mcp_result({"error": f"gaps_summary failed: {type(e).__name__}"})
 
     @mcp.tool()
     def gaps_critical() -> str:
@@ -88,8 +93,10 @@ def register_gap_tools(mcp) -> None:
                 "count": len(critical),
                 "gaps": [g.to_dict() for g in critical],
             })
+        # BUG-370-GAP-001: Log full error but return only type name
         except Exception as e:
-            return format_mcp_result({"error": f"Failed to get critical gaps: {str(e)}"})
+            logger.error(f"gaps_critical failed: {e}", exc_info=True)
+            return format_mcp_result({"error": f"gaps_critical failed: {type(e).__name__}"})
 
     @mcp.tool()
     def backlog_unified(limit: int = 30, include_tasks: bool = True) -> str:

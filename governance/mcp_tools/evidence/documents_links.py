@@ -1,9 +1,12 @@
 """Document Link Extraction MCP Tools. Per DOC-LINK-01-v1."""
 
+import logging
 import re
 from pathlib import Path
 
 from governance.mcp_tools.common import format_mcp_result
+
+logger = logging.getLogger(__name__)
 from .common import (
     EVIDENCE_DIR,
     DOCS_DIR,
@@ -127,8 +130,10 @@ def register_link_document_tools(mcp) -> None:
                 }
             })
 
+        # BUG-370-DLK-001: Log full error but return only type name
         except Exception as e:
-            return format_mcp_result({"error": f"Failed to extract links: {str(e)}"})
+            logger.error(f"doc_links_extract failed: {e}", exc_info=True)
+            return format_mcp_result({"error": f"doc_links_extract failed: {type(e).__name__}"})
 
     @mcp.tool()
     def doc_link_resolve(link: str, context_path: str = "") -> str:

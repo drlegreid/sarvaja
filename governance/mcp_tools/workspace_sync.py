@@ -110,9 +110,10 @@ def register_workspace_sync_tools(mcp) -> None:
                     len(missing_in_typedb) == 0 and len(missing_in_files) == 0
                 )
 
+            # BUG-370-WKS-001: Log full error but return only type name
             except Exception as e:
-                logger.error(f"Rules sync check failed: {e}")
-                result["rules"]["error"] = str(e)
+                logger.error(f"Rules sync check failed: {e}", exc_info=True)
+                result["rules"]["error"] = type(e).__name__
 
             # 2. Compare Tasks: TypeDB vs TODO.md
             try:
@@ -158,9 +159,10 @@ def register_workspace_sync_tools(mcp) -> None:
                     len(mismatches) == 0 and len(missing_in_typedb) == 0
                 )
 
+            # BUG-370-WKS-001: Log full error but return only type name
             except Exception as e:
-                logger.error(f"Tasks sync check failed: {e}")
-                result["tasks"]["error"] = str(e)
+                logger.error(f"Tasks sync check failed: {e}", exc_info=True)
+                result["tasks"]["error"] = type(e).__name__
 
             # 3. Count Sessions and Evidence files
             try:
@@ -180,9 +182,10 @@ def register_workspace_sync_tools(mcp) -> None:
                     ]
                     result["sessions"]["evidence_files"] = len(evidence_files)
 
+            # BUG-370-WKS-001: Log full error but return only type name
             except Exception as e:
-                logger.error(f"Sessions sync check failed: {e}")
-                result["sessions"]["error"] = str(e)
+                logger.error(f"Sessions sync check failed: {e}", exc_info=True)
+                result["sessions"]["error"] = type(e).__name__
 
             # Determine if sync is needed
             result["sync_needed"] = (
@@ -200,9 +203,10 @@ def register_workspace_sync_tools(mcp) -> None:
 
             return format_mcp_result(result)
 
+        # BUG-370-WKS-001: Log full error but return only type name
         except Exception as e:
-            logger.error(f"governance_sync_status failed: {e}")
-            return format_mcp_result({"error": str(e)})
+            logger.error(f"governance_sync_status failed: {e}", exc_info=True)
+            return format_mcp_result({"error": f"governance_sync_status failed: {type(e).__name__}"})
 
     @mcp.tool()
     def workspace_sync_status() -> str:
@@ -261,8 +265,10 @@ def register_workspace_sync_tools(mcp) -> None:
                                 try:
                                     client.update_task(gap_id, status=task_status,
                                                        item_type="gap", document_path=document_path)
+                                # BUG-370-WKS-001: Log full error but return only type name
                                 except Exception as e:
-                                    result["errors"].append({"gap_id": gap_id, "action": "update", "error": str(e)})
+                                    logger.error(f"Gap sync update {gap_id} failed: {e}", exc_info=True)
+                                    result["errors"].append({"gap_id": gap_id, "action": "update", "error": type(e).__name__})
                         else:
                             result["skipped"].append(gap_id)
                     else:
@@ -278,8 +284,10 @@ def register_workspace_sync_tools(mcp) -> None:
                                     phase="GAP", body=f"Priority: {gap.priority.upper()}. {gap.description}",
                                     gap_id=gap_id, item_type="gap", document_path=document_path,
                                 )
+                            # BUG-370-WKS-001: Log full error but return only type name
                             except Exception as e:
-                                result["errors"].append({"gap_id": gap_id, "action": "insert", "error": str(e)})
+                                logger.error(f"Gap sync insert {gap_id} failed: {e}", exc_info=True)
+                                result["errors"].append({"gap_id": gap_id, "action": "insert", "error": type(e).__name__})
 
                 result["summary"] = {
                     "inserts": len(result["to_insert"]), "updates": len(result["to_update"]),
@@ -287,8 +295,9 @@ def register_workspace_sync_tools(mcp) -> None:
                 }
                 return format_mcp_result(result)
 
+        # BUG-370-WKS-001: Log full error but return only type name
         except Exception as e:
-            logger.error(f"workspace_sync_gaps_to_typedb failed: {e}")
-            return format_mcp_result({"error": f"workspace_sync_gaps_to_typedb failed: {e}"})
+            logger.error(f"workspace_sync_gaps_to_typedb failed: {e}", exc_info=True)
+            return format_mcp_result({"error": f"workspace_sync_gaps_to_typedb failed: {type(e).__name__}"})
 
     logger.info("Registered workspace sync status tools (3 tools)")

@@ -275,5 +275,7 @@ def delete_session_content(session_id: str) -> dict[str, Any]:
         # ChromaDB where filter on metadata
         collection.delete(where={"session_id": session_id})
         return {"status": "success", "session_id": session_id}
+    # BUG-370-IDX-001: Log full error but return only type name
     except Exception as e:
-        return {"status": "error", "error": str(e)}
+        logger.error(f"delete_session_content failed: {e}", exc_info=True)
+        return {"status": "error", "error": f"delete_session_content failed: {type(e).__name__}"}

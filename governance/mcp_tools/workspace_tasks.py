@@ -63,9 +63,10 @@ def register_workspace_task_tools(mcp) -> None:
                 "sources": len(by_source),
                 "by_source": by_source,
             })
+        # BUG-370-WKT-001: Log full error but return only type name
         except Exception as e:
-            logger.error(f"workspace_scan_tasks failed: {e}")
-            return format_mcp_result({"error": str(e)})
+            logger.error(f"workspace_scan_tasks failed: {e}", exc_info=True)
+            return format_mcp_result({"error": f"workspace_scan_tasks failed: {type(e).__name__}"})
 
     @mcp.tool()
     def workspace_capture_tasks() -> str:
@@ -87,9 +88,10 @@ def register_workspace_task_tools(mcp) -> None:
 
             result = capture_workspace_tasks()
             return format_mcp_result(result)
+        # BUG-370-WKT-001: Log full error but return only type name
         except Exception as e:
-            logger.error(f"workspace_capture_tasks failed: {e}")
-            return format_mcp_result({"error": str(e)})
+            logger.error(f"workspace_capture_tasks failed: {e}", exc_info=True)
+            return format_mcp_result({"error": f"workspace_capture_tasks failed: {type(e).__name__}"})
 
     @mcp.tool()
     def workspace_list_sources() -> str:

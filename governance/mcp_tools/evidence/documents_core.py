@@ -15,9 +15,12 @@ Created: 2026-01-13 (extracted from documents.py)
 Refactored: 2026-01-19 (compact aliases per RD-MCP-TOOL-NAMING)
 """
 
+import logging
 from pathlib import Path
 
 from governance.mcp_tools.common import format_mcp_result
+
+logger = logging.getLogger(__name__)
 from .common import (
     EVIDENCE_DIR,
     DOCS_DIR,
@@ -154,8 +157,10 @@ def register_core_document_tools(mcp) -> None:
 
             return format_mcp_result(result)
 
+        # BUG-370-DOC-001: Log full error but return only type name
         except Exception as e:
-            return format_mcp_result({"error": f"Failed to read document: {str(e)}"})
+            logger.error(f"doc_get failed: {e}", exc_info=True)
+            return format_mcp_result({"error": f"doc_get failed: {type(e).__name__}"})
 
     @mcp.tool()
     def docs_list(
@@ -220,8 +225,10 @@ def register_core_document_tools(mcp) -> None:
                 "documents": documents
             })
 
+        # BUG-370-DOC-001: Log full error but return only type name
         except Exception as e:
-            return format_mcp_result({"error": f"Failed to list documents: {str(e)}"})
+            logger.error(f"docs_list failed: {e}", exc_info=True)
+            return format_mcp_result({"error": f"docs_list failed: {type(e).__name__}"})
 
     # Legacy aliases for backward compatibility
     governance_get_document = doc_get

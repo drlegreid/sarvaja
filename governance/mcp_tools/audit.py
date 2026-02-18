@@ -12,9 +12,12 @@ Provides tools for:
 - Getting audit statistics
 """
 
+import logging
 from typing import Optional
 
 from governance.mcp_tools.common import format_mcp_result
+
+logger = logging.getLogger(__name__)
 
 
 def register_audit_tools(mcp) -> None:
@@ -61,8 +64,10 @@ def register_audit_tools(mcp) -> None:
             }
             return format_mcp_result(result)
 
+        # BUG-370-AUD-001: Log full error but return only type name
         except Exception as e:
-            return format_mcp_result({"error": f"Failed to query audit trail: {str(e)}"})
+            logger.error(f"audit_query failed: {e}", exc_info=True)
+            return format_mcp_result({"error": f"audit_query failed: {type(e).__name__}"})
 
     @mcp.tool()
     def audit_summary() -> str:
@@ -80,8 +85,10 @@ def register_audit_tools(mcp) -> None:
         try:
             summary = get_audit_summary()
             return format_mcp_result(summary)
+        # BUG-370-AUD-001: Log full error but return only type name
         except Exception as e:
-            return format_mcp_result({"error": f"Failed to get audit summary: {str(e)}"})
+            logger.error(f"audit_summary failed: {e}", exc_info=True)
+            return format_mcp_result({"error": f"audit_summary failed: {type(e).__name__}"})
 
     @mcp.tool()
     def audit_entity_trail(entity_id: str) -> str:
@@ -131,8 +138,10 @@ def register_audit_tools(mcp) -> None:
             }
             return format_mcp_result(result)
 
+        # BUG-370-AUD-001: Log full error but return only type name
         except Exception as e:
-            return format_mcp_result({"error": f"Failed to get entity audit trail: {str(e)}"})
+            logger.error(f"audit_entity_trail failed: {e}", exc_info=True)
+            return format_mcp_result({"error": f"audit_entity_trail failed: {type(e).__name__}"})
 
     @mcp.tool()
     def audit_trace(correlation_id: str) -> str:
@@ -177,5 +186,7 @@ def register_audit_tools(mcp) -> None:
             }
             return format_mcp_result(result)
 
+        # BUG-370-AUD-001: Log full error but return only type name
         except Exception as e:
-            return format_mcp_result({"error": f"Failed to trace correlation: {str(e)}"})
+            logger.error(f"audit_trace failed: {e}", exc_info=True)
+            return format_mcp_result({"error": f"audit_trace failed: {type(e).__name__}"})

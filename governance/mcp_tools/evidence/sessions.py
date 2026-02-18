@@ -139,5 +139,7 @@ def register_session_tools(mcp) -> None:
                 "lines": len(lines)
             })
 
+        # BUG-370-SES-001: Log full error but return only type name
         except Exception as e:
-            return format_mcp_result({"error": f"Failed to read session: {str(e)}"})
+            logger.error(f"governance_get_session failed: {e}", exc_info=True)
+            return format_mcp_result({"error": f"governance_get_session failed: {type(e).__name__}"})

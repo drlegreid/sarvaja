@@ -44,9 +44,10 @@ def register_workflow_compliance_tools(mcp) -> None:
             report = run_compliance_checks()
             return format_mcp_result(report.to_dict())
 
+        # BUG-370-WFC-001: Log full error but return only type name
         except Exception as e:
-            logger.error(f"workflow_compliance_check failed: {e}")
-            return format_mcp_result({"error": str(e)})
+            logger.error(f"workflow_compliance_check failed: {e}", exc_info=True)
+            return format_mcp_result({"error": f"workflow_compliance_check failed: {type(e).__name__}"})
 
     @mcp.tool()
     def workflow_compliance_summary() -> str:
@@ -73,8 +74,9 @@ def register_workflow_compliance_tools(mcp) -> None:
                 "recommendations": ui_data["recommendations"][:3],
             })
 
+        # BUG-370-WFC-001: Log full error but return only type name
         except Exception as e:
-            logger.error(f"workflow_compliance_summary failed: {e}")
-            return format_mcp_result({"error": str(e)})
+            logger.error(f"workflow_compliance_summary failed: {e}", exc_info=True)
+            return format_mcp_result({"error": f"workflow_compliance_summary failed: {type(e).__name__}"})
 
     logger.info("Registered workflow compliance tools (2 tools)")

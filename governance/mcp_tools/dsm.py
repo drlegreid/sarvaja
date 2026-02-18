@@ -8,9 +8,12 @@ Per FP + Digital Twin Paradigm: DSM entity module
 """
 
 import json
+import logging
 from typing import Optional, Union, Dict, Any
 
 from governance.mcp_tools.common import format_mcp_result
+
+logger = logging.getLogger(__name__)
 
 # Monitoring instrumentation per GAP-MONITOR-INSTRUMENT-001
 try:
@@ -67,8 +70,10 @@ def register_dsm_tools(mcp) -> None:
                 "started_at": cycle.start_time,
                 "message": f"DSM cycle started: {cycle.cycle_id}"
             })
+        # BUG-370-DSM-001: Log full error but return only type name
         except Exception as e:
-            return format_mcp_result({"error": str(e)})
+            logger.error(f"dsm_start failed: {e}", exc_info=True)
+            return format_mcp_result({"error": f"dsm_start failed: {type(e).__name__}"})
 
     @mcp.tool()
     def dsm_advance() -> str:
@@ -99,8 +104,10 @@ def register_dsm_tools(mcp) -> None:
                 "required_mcps": new_phase.required_mcps,
                 "message": f"Advanced to phase: {new_phase.value}"
             })
+        # BUG-370-DSM-001: Log full error but return only type name
         except Exception as e:
-            return format_mcp_result({"error": str(e)})
+            logger.error(f"dsm_advance failed: {e}", exc_info=True)
+            return format_mcp_result({"error": f"dsm_advance failed: {type(e).__name__}"})
 
     @mcp.tool()
     def dsm_checkpoint(
@@ -159,8 +166,10 @@ def register_dsm_tools(mcp) -> None:
                 "evidence": checkpoint.evidence,
                 "message": "Checkpoint recorded"
             })
+        # BUG-370-DSM-001: Log full error but return only type name
         except Exception as e:
-            return format_mcp_result({"error": str(e)})
+            logger.error(f"dsm_checkpoint failed: {e}", exc_info=True)
+            return format_mcp_result({"error": f"dsm_checkpoint failed: {type(e).__name__}"})
 
     @mcp.tool()
     def dsm_finding(
@@ -213,8 +222,10 @@ def register_dsm_tools(mcp) -> None:
                 "related_rules": rules or [],
                 "message": f"Finding recorded: {finding['id']}"
             })
+        # BUG-370-DSM-001: Log full error but return only type name
         except Exception as e:
-            return format_mcp_result({"error": str(e)})
+            logger.error(f"dsm_finding failed: {e}", exc_info=True)
+            return format_mcp_result({"error": f"dsm_finding failed: {type(e).__name__}"})
 
     @mcp.tool()
     def dsm_status() -> str:
@@ -260,8 +271,10 @@ def register_dsm_tools(mcp) -> None:
                 "completed_cycles": len(tracker.completed_cycles),
                 "message": f"Cycle completed. Evidence: {evidence_path}"
             })
+        # BUG-370-DSM-001: Log full error but return only type name
         except Exception as e:
-            return format_mcp_result({"error": str(e)})
+            logger.error(f"dsm_complete failed: {e}", exc_info=True)
+            return format_mcp_result({"error": f"dsm_complete failed: {type(e).__name__}"})
 
     @mcp.tool()
     def dsm_metrics(metrics_json: Union[str, Dict[str, Any]]) -> str:
@@ -296,5 +309,7 @@ def register_dsm_tools(mcp) -> None:
                 "metrics": cycle_metrics,
                 "message": "Metrics updated"
             })
+        # BUG-370-DSM-001: Log full error but return only type name
         except Exception as e:
-            return format_mcp_result({"error": str(e)})
+            logger.error(f"dsm_metrics failed: {e}", exc_info=True)
+            return format_mcp_result({"error": f"dsm_metrics failed: {type(e).__name__}"})
