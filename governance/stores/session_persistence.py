@@ -50,10 +50,12 @@ def persist_session(session_id: str, session_data: Dict[str, Any]) -> None:
             try:
                 tmp.unlink(missing_ok=True)
             except OSError as ue:
-                logger.debug(f"Failed to cleanup .tmp for {session_id}: {ue}")
+                # BUG-433-PER-001: Upgrade debug→warning + exc_info for filesystem failures
+                logger.warning(f"Failed to cleanup .tmp for {session_id}: {ue}", exc_info=True)
             raise
     except Exception as e:
-        logger.debug(f"Session persist skipped for {session_id}: {e}")
+        # BUG-433-PER-002: Upgrade debug→warning + exc_info for persist failures
+        logger.warning(f"Session persist skipped for {session_id}: {e}", exc_info=True)
 
 
 def load_persisted_sessions(sessions_store: Dict[str, Dict[str, Any]]) -> int:
@@ -111,4 +113,5 @@ def cleanup_persisted(session_id: str) -> None:
             path.unlink()
     except Exception as e:
         # BUG-PERSIST-001: Log cleanup failures instead of silently swallowing
-        logger.debug(f"Failed to cleanup persisted session {session_id}: {e}")
+        # BUG-433-PER-003: Upgrade debug→warning + exc_info for cleanup failures
+        logger.warning(f"Failed to cleanup persisted session {session_id}: {e}", exc_info=True)

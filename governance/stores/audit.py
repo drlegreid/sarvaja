@@ -63,7 +63,8 @@ def _load_audit_store():
                 _audit_store = []
             logger.info(f"Loaded {len(_audit_store)} audit entries")
         except Exception as e:
-            logger.warning(f"Failed to load audit store: {e}")
+            # BUG-433-AUD-001: Add exc_info for stack trace preservation
+            logger.warning(f"Failed to load audit store: {e}", exc_info=True)
             _audit_store = []
 
 
@@ -89,7 +90,8 @@ def _save_audit_store():
                 tmp.unlink(missing_ok=True)
             except OSError:
                 pass
-        logger.warning(f"Failed to save audit store: {e}")
+        # BUG-433-AUD-002: Add exc_info for stack trace preservation
+        logger.warning(f"Failed to save audit store: {e}", exc_info=True)
 
 
 def generate_correlation_id() -> str:
