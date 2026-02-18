@@ -55,9 +55,10 @@ def register_decision_tools(mcp) -> None:
             impacts = client.get_decision_impacts(decision_id)
             return format_mcp_result(impacts)
 
-        # BUG-B185-006: Add except to prevent raw TypeDB errors to MCP caller
+        # BUG-B185-006 + BUG-362-DEC-001: Log full error but return only type name
         except Exception as e:
-            return format_mcp_result({"error": f"governance_get_decision_impacts failed: {e}"})
+            logger.error(f"governance_get_decision_impacts failed: {e}", exc_info=True)
+            return format_mcp_result({"error": f"governance_get_decision_impacts failed: {type(e).__name__}"})
 
         finally:
             client.close()

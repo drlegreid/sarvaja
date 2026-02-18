@@ -47,10 +47,10 @@ class TaskLinkingOperations:
                 now = datetime.now()
                 timestamp_str = now.strftime('%Y-%m-%dT%H:%M:%S')
 
-                # BUG-LINK-ESCAPE-001: Escape all fields before TypeQL interpolation
-                evidence_id_escaped = evidence_id.replace('"', '\\"')
-                evidence_source_escaped = evidence_source.replace('"', '\\"')
-                task_id_escaped = task_id.replace('"', '\\"')
+                # BUG-254-ESC-002: Escape backslash THEN quotes for TypeQL safety
+                evidence_id_escaped = evidence_id.replace('\\', '\\\\').replace('"', '\\"')
+                evidence_source_escaped = evidence_source.replace('\\', '\\\\').replace('"', '\\"')
+                task_id_escaped = task_id.replace('\\', '\\\\').replace('"', '\\"')
 
                 # Insert evidence if not exists
                 insert_evidence = f"""
@@ -62,8 +62,9 @@ class TaskLinkingOperations:
                 """
                 try:
                     tx.query(insert_evidence).resolve()
-                except Exception:
-                    pass  # Might already exist
+                # BUG-364-LINK-001: Log instead of silently swallowing
+                except Exception as e:
+                    logger.debug(f"Evidence entity insert for {evidence_id} (expected if exists): {e}")
 
                 # Create the evidence-supports relation
                 link_query = f"""
@@ -99,9 +100,9 @@ class TaskLinkingOperations:
 
         try:
             with self._driver.transaction(self.database, TransactionType.WRITE) as tx:
-                # BUG-LINK-ESCAPE-001: Escape all fields
-                task_id_escaped = task_id.replace('"', '\\"')
-                session_id_escaped = session_id.replace('"', '\\"')
+                # BUG-254-ESC-002: Escape backslash THEN quotes for TypeQL safety
+                task_id_escaped = task_id.replace('\\', '\\\\').replace('"', '\\"')
+                session_id_escaped = session_id.replace('\\', '\\\\').replace('"', '\\"')
                 # Create the completed-in relation
                 link_query = f"""
                     match
@@ -136,9 +137,9 @@ class TaskLinkingOperations:
 
         try:
             with self._driver.transaction(self.database, TransactionType.WRITE) as tx:
-                # BUG-LINK-ESCAPE-001: Escape all fields
-                task_id_escaped = task_id.replace('"', '\\"')
-                rule_id_escaped = rule_id.replace('"', '\\"')
+                # BUG-254-ESC-002: Escape backslash THEN quotes for TypeQL safety
+                task_id_escaped = task_id.replace('\\', '\\\\').replace('"', '\\"')
+                rule_id_escaped = rule_id.replace('\\', '\\\\').replace('"', '\\"')
                 # Create the implements-rule relation
                 link_query = f"""
                     match
@@ -165,8 +166,8 @@ class TaskLinkingOperations:
         Returns:
             List of evidence file paths
         """
-        # BUG-LINK-ESCAPE-001: Escape for consistency
-        task_id_escaped = task_id.replace('"', '\\"')
+        # BUG-254-ESC-002: Escape backslash THEN quotes for TypeQL safety
+        task_id_escaped = task_id.replace('\\', '\\\\').replace('"', '\\"')
         query = f"""
             match
                 $t isa task, has task-id "{task_id_escaped}";
@@ -196,10 +197,10 @@ class TaskLinkingOperations:
         try:
             with self._driver.transaction(self.database, TransactionType.WRITE) as tx:
                 # Insert git-commit entity
-                # BUG-LINK-ESCAPE-001: Escape all fields
-                commit_sha_escaped = commit_sha.replace('"', '\\"')
-                task_id_escaped = task_id.replace('"', '\\"')
-                msg_escaped = commit_message.replace('"', '\\"') if commit_message else ""
+                # BUG-254-ESC-002: Escape backslash THEN quotes for TypeQL safety
+                commit_sha_escaped = commit_sha.replace('\\', '\\\\').replace('"', '\\"')
+                task_id_escaped = task_id.replace('\\', '\\\\').replace('"', '\\"')
+                msg_escaped = commit_message.replace('\\', '\\\\').replace('"', '\\"') if commit_message else ""
                 commit_parts = [f'has commit-sha "{commit_sha_escaped}"']
                 if commit_message:
                     commit_parts.append(f'has commit-message "{msg_escaped}"')
@@ -210,8 +211,9 @@ class TaskLinkingOperations:
                 """
                 try:
                     tx.query(insert_commit).resolve()
-                except Exception:
-                    pass  # Commit might already exist
+                # BUG-364-LINK-001: Log instead of silently swallowing
+                except Exception as e:
+                    logger.debug(f"Git commit entity insert for {commit_sha} (expected if exists): {e}")
 
                 # Create the task-commit relation
                 link_query = f"""
@@ -241,8 +243,8 @@ class TaskLinkingOperations:
         Returns:
             List of commit SHAs
         """
-        # BUG-LINK-ESCAPE-001: Escape for consistency
-        task_id_escaped = task_id.replace('"', '\\"')
+        # BUG-254-ESC-002: Escape backslash THEN quotes for TypeQL safety
+        task_id_escaped = task_id.replace('\\', '\\\\').replace('"', '\\"')
         query = f"""
             match
                 $t isa task, has task-id "{task_id_escaped}";
@@ -269,10 +271,10 @@ class TaskLinkingOperations:
             with self._driver.transaction(self.database, TransactionType.WRITE) as tx:
                 # Ensure document entity exists
                 doc_id = document_path.replace("/", "-").replace(".", "-").replace("\\", "-").upper()
-                # BUG-LINK-ESCAPE-002: Escape all fields
-                doc_id_escaped = doc_id.replace('"', '\\"')
-                document_path_escaped = document_path.replace('"', '\\"')
-                task_id_escaped = task_id.replace('"', '\\"')
+                # BUG-254-ESC-002: Escape backslash THEN quotes for TypeQL safety
+                doc_id_escaped = doc_id.replace('\\', '\\\\').replace('"', '\\"')
+                document_path_escaped = document_path.replace('\\', '\\\\').replace('"', '\\"')
+                task_id_escaped = task_id.replace('\\', '\\\\').replace('"', '\\"')
                 insert_doc = f"""
                     insert $d isa document,
                         has document-id "{doc_id_escaped}",
@@ -282,8 +284,9 @@ class TaskLinkingOperations:
                 """
                 try:
                     tx.query(insert_doc).resolve()
-                except Exception:
-                    pass  # Document might already exist
+                # BUG-364-LINK-001: Log instead of silently swallowing
+                except Exception as e:
+                    logger.debug(f"Document entity insert for {doc_id} (expected if exists): {e}")
 
                 # Create document-references-task relation
                 link_query = f"""
@@ -315,15 +318,15 @@ class TaskLinkingOperations:
 
         try:
             with self._driver.transaction(self.database, TransactionType.WRITE) as tx:
-                # BUG-LINK-ESCAPE-002: Escape all fields
-                task_id_escaped = task_id.replace('"', '\\"')
-                document_path_escaped = document_path.replace('"', '\\"')
+                # BUG-254-ESC-002: Escape backslash THEN quotes for TypeQL safety
+                task_id_escaped = task_id.replace('\\', '\\\\').replace('"', '\\"')
+                document_path_escaped = document_path.replace('\\', '\\\\').replace('"', '\\"')
                 delete_query = f"""
                     match
                         $t isa task, has task-id "{task_id_escaped}";
                         $d isa document, has document-path "{document_path_escaped}";
                         $rel (referencing-document: $d, referenced-task: $t) isa document-references-task;
-                    delete $rel isa document-references-task;
+                    delete $rel;
                 """
                 tx.query(delete_query).resolve()
                 tx.commit()
@@ -341,8 +344,8 @@ class TaskLinkingOperations:
         Returns:
             List of document paths
         """
-        # BUG-LINK-ESCAPE-001: Escape for consistency
-        task_id_escaped = task_id.replace('"', '\\"')
+        # BUG-254-ESC-002: Escape backslash THEN quotes for TypeQL safety
+        task_id_escaped = task_id.replace('\\', '\\\\').replace('"', '\\"')
         query = f"""
             match
                 $t isa task, has task-id "{task_id_escaped}";

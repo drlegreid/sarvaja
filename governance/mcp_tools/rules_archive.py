@@ -11,9 +11,12 @@ Created: 2026-01-03
 Refactored: 2026-01-19 - Removed deprecated functions, inlined aliases
 """
 
+import logging
 from dataclasses import asdict
 
 from governance.mcp_tools.common import get_typedb_client, format_mcp_result
+
+logger = logging.getLogger(__name__)
 
 
 def register_rule_archive_tools(mcp) -> None:
@@ -55,6 +58,11 @@ def register_rule_archive_tools(mcp) -> None:
                 "count": len(archives)
             })
 
+        # BUG-192-002 + BUG-362-RA-001: Log full error but return only type name
+        except Exception as e:
+            logger.error(f"rules_list_archived failed: {e}", exc_info=True)
+            return format_mcp_result({"error": f"rules_list_archived failed: {type(e).__name__}"})
+
         finally:
             client.close()
 
@@ -82,6 +90,11 @@ def register_rule_archive_tools(mcp) -> None:
                 return format_mcp_result(archive)
             else:
                 return format_mcp_result({"error": f"No archive found for rule {rule_id}"})
+
+        # BUG-192-002 + BUG-362-RA-001: Log full error but return only type name
+        except Exception as e:
+            logger.error(f"rule_get_archived failed: {e}", exc_info=True)
+            return format_mcp_result({"error": f"rule_get_archived failed: {type(e).__name__}"})
 
         finally:
             client.close()
@@ -116,8 +129,10 @@ def register_rule_archive_tools(mcp) -> None:
             else:
                 return format_mcp_result({"error": f"No archive found for rule {rule_id}"})
 
+        # BUG-362-RA-001: Log full error but return only type name
         except Exception as e:
-            return format_mcp_result({"error": f"rule_restore failed: {e}"})
+            logger.error(f"rule_restore failed: {e}", exc_info=True)
+            return format_mcp_result({"error": f"rule_restore failed: {type(e).__name__}"})
 
         finally:
             client.close()

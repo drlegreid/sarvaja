@@ -56,10 +56,10 @@ async def list_tasks(
     except (TypeDBUnavailable, ConnectionError) as e:
         logger.error(f"TypeDB unavailable: {e}")
         raise HTTPException(status_code=503, detail="Database service unavailable")
-    # BUG-273-TASKS-001: Broad handler matching get_task/update_task/delete_task pattern
+    # BUG-273-TASKS-001 + BUG-365-RT-001: Log full error, return only type name
     except Exception as e:
-        logger.error(f"list_tasks failed: {e}")
-        raise HTTPException(status_code=500, detail=f"Failed to list tasks: {e}")
+        logger.error(f"list_tasks failed: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Failed to list tasks: {type(e).__name__}")
 
 
 @router.post("/tasks", response_model=TaskResponse, status_code=201)
@@ -96,8 +96,10 @@ async def get_task(task_id: str):
         return TaskResponse(**result)
     except HTTPException:
         raise
+    # BUG-365-RT-001: Log full error, return only type name to prevent info disclosure
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to get task: {e}")
+        logger.error(f"get_task failed: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Failed to get task: {type(e).__name__}")
 
 
 @router.put("/tasks/{task_id}", response_model=TaskResponse)
@@ -128,8 +130,10 @@ async def update_task(task_id: str, update: TaskUpdate):
         return TaskResponse(**result)
     except HTTPException:
         raise
+    # BUG-365-RT-001: Log full error, return only type name to prevent info disclosure
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to update task: {e}")
+        logger.error(f"update_task failed: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Failed to update task: {type(e).__name__}")
 
 
 @router.delete("/tasks/{task_id}", status_code=204)
@@ -142,8 +146,10 @@ async def delete_task(task_id: str):
         return None
     except HTTPException:
         raise
+    # BUG-365-RT-001: Log full error, return only type name to prevent info disclosure
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to delete task: {e}")
+        logger.error(f"delete_task failed: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Failed to delete task: {type(e).__name__}")
 
 
 @router.post("/tasks/{task_id}/rules/{rule_id}", status_code=201)

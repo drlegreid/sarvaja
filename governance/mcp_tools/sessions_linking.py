@@ -12,7 +12,11 @@ Extracted from sessions.py per modularization plan.
 Created: 2026-01-03
 """
 
+import logging
+
 from governance.mcp_tools.common import format_mcp_result
+
+logger = logging.getLogger(__name__)
 
 # Monitoring instrumentation per GAP-MONITOR-INSTRUMENT-001
 try:
@@ -58,9 +62,13 @@ def register_session_linking_tools(mcp) -> None:
             try:
                 # Query tasks linked to session via completed-in relation
                 # TypeDB 3.x: 'select' replaces 'get'
+                # BUG-204-TYPEQL-001: Escape session_id for TypeQL safety
+                # BUG-296-SL-001: Also escape newlines/carriage returns/tabs to prevent TypeQL injection
+                safe_sid = (session_id.replace('\\', '\\\\').replace('"', '\\"')
+                            .replace('\n', '\\n').replace('\r', '\\r').replace('\t', '\\t'))
                 query = f'''
                     match
-                        $s isa work-session, has session-id "{session_id}";
+                        $s isa work-session, has session-id "{safe_sid}";
                         (completed-task: $t, hosting-session: $s) isa completed-in;
                         $t has task-id $tid, has task-name $name, has task-status $status;
                     select $tid, $name, $status;
@@ -87,8 +95,10 @@ def register_session_linking_tools(mcp) -> None:
                 "count": len(tasks)
             })
 
+        # BUG-362-SL-001: Log full error but return only type name to prevent info disclosure
         except Exception as e:
-            return format_mcp_result({"error": str(e)})
+            logger.error(f"session_get_tasks failed: {e}", exc_info=True)
+            return format_mcp_result({"error": f"session_get_tasks failed: {type(e).__name__}"})
 
     @mcp.tool()
     def session_link_rule(session_id: str, rule_id: str) -> str:
@@ -134,8 +144,10 @@ def register_session_linking_tools(mcp) -> None:
                     "error": f"Failed to link rule {rule_id} to session {session_id}"
                 })
 
+        # BUG-362-SL-001: Log full error but return only type name to prevent info disclosure
         except Exception as e:
-            return format_mcp_result({"error": str(e)})
+            logger.error(f"session_link_rule failed: {e}", exc_info=True)
+            return format_mcp_result({"error": f"session_link_rule failed: {type(e).__name__}"})
 
     @mcp.tool()
     def session_link_decision(session_id: str, decision_id: str) -> str:
@@ -181,8 +193,10 @@ def register_session_linking_tools(mcp) -> None:
                     "error": f"Failed to link decision {decision_id} to session {session_id}"
                 })
 
+        # BUG-362-SL-001: Log full error but return only type name to prevent info disclosure
         except Exception as e:
-            return format_mcp_result({"error": str(e)})
+            logger.error(f"session_link_decision failed: {e}", exc_info=True)
+            return format_mcp_result({"error": f"session_link_decision failed: {type(e).__name__}"})
 
     @mcp.tool()
     def session_link_evidence(session_id: str, evidence_path: str) -> str:
@@ -228,5 +242,7 @@ def register_session_linking_tools(mcp) -> None:
                     "error": f"Failed to link evidence {evidence_path} to session {session_id}"
                 })
 
+        # BUG-362-SL-001: Log full error but return only type name to prevent info disclosure
         except Exception as e:
-            return format_mcp_result({"error": str(e)})
+            logger.error(f"session_link_evidence failed: {e}", exc_info=True)
+            return format_mcp_result({"error": f"session_link_evidence failed: {type(e).__name__}"})

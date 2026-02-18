@@ -3,8 +3,11 @@ Updated: 2026-01-20 - Added monitoring instrumentation per GAP-MONITOR-INSTRUMEN
 Updated: 2026-01-21 - Fixed circular import by using lazy import for monitoring.
 """
 
+import logging
 from typing import Optional
 from dataclasses import asdict
+
+logger = logging.getLogger(__name__)
 
 from governance.mcp_tools.common import get_typedb_client, format_mcp_result, log_monitor_event
 from governance.mcp_tools.rule_fallback import (
@@ -62,8 +65,12 @@ def register_rule_query_tools(mcp) -> None:
                     source="mcp-rules-query",
                     details={"count": len(rules), "category": category, "status": status, "priority": priority, "applicability": applicability}
                 )
-                return format_mcp_result([asdict(r) for r in rules])
-        except Exception:
+                # BUG-296-RQ-001: Consistent response schema (dict, not bare array)
+                return format_mcp_result({"rules": [asdict(r) for r in rules], "count": len(rules), "source": "typedb"})
+        except Exception as e:
+            # BUG-268-RQUERY-001: Log instead of silently swallowing
+            import logging as _logging
+            _logging.getLogger(__name__).debug(f"rules_query TypeDB failed: {e}")
             use_fallback = True
         finally:
             client.close()
@@ -132,8 +139,10 @@ def register_rule_query_tools(mcp) -> None:
                 }
             })
 
+        # BUG-362-RQ-001: Log full error but return only type name to prevent info disclosure
         except Exception as e:
-            return format_mcp_result({"error": str(e)})
+            logger.error(f"rules_query_by_tags failed: {e}", exc_info=True)
+            return format_mcp_result({"error": f"rules_query_by_tags failed: {type(e).__name__}"})
 
         finally:
             client.close()
@@ -186,8 +195,10 @@ def register_rule_query_tools(mcp) -> None:
             )
             return format_mcp_result(wisdom.to_dict())
 
+        # BUG-362-RQ-001: Log full error but return only type name to prevent info disclosure
         except Exception as e:
-            return format_mcp_result({"error": str(e)})
+            logger.error(f"wisdom_get failed: {e}", exc_info=True)
+            return format_mcp_result({"error": f"wisdom_get failed: {type(e).__name__}"})
 
         finally:
             client.close()
@@ -222,7 +233,10 @@ def register_rule_query_tools(mcp) -> None:
                     return format_mcp_result(asdict(rule))
                 else:
                     use_fallback = True
-        except Exception:
+        except Exception as e:
+            # BUG-268-RQUERY-001: Log instead of silently swallowing
+            import logging as _logging
+            _logging.getLogger(__name__).debug(f"rule_get TypeDB failed: {e}")
             use_fallback = True
         finally:
             client.close()
@@ -257,6 +271,11 @@ def register_rule_query_tools(mcp) -> None:
             deps = client.get_rule_dependencies(rule_id)
             return format_mcp_result(deps)
 
+        # BUG-192-003 + BUG-362-RQ-001: Log full error but return only type name
+        except Exception as e:
+            logger.error(f"rule_get_deps failed: {e}", exc_info=True)
+            return format_mcp_result({"error": f"rule_get_deps failed: {type(e).__name__}"})
+
         finally:
             client.close()
 
@@ -278,6 +297,11 @@ def register_rule_query_tools(mcp) -> None:
 
             conflicts = client.find_conflicts()
             return format_mcp_result(conflicts)
+
+        # BUG-192-003 + BUG-362-RQ-001: Log full error but return only type name
+        except Exception as e:
+            logger.error(f"rules_find_conflicts failed: {e}", exc_info=True)
+            return format_mcp_result({"error": f"rules_find_conflicts failed: {type(e).__name__}"})
 
         finally:
             client.close()

@@ -336,8 +336,9 @@ class TaskCRUDOperations:
                 """
                 try:
                     tx.query(rel_query).resolve()
-                except Exception:
-                    pass  # Relationship may not exist
+                # BUG-364-CRUD-001: Log instead of silently swallowing — connection errors are actionable
+                except Exception as e:
+                    logger.debug(f"delete_task implements-rule cleanup for {task_id} (expected if absent): {e}")
 
                 rel_query2 = f"""
                     match
@@ -348,8 +349,9 @@ class TaskCRUDOperations:
                 """
                 try:
                     tx.query(rel_query2).resolve()
-                except Exception:
-                    pass
+                # BUG-364-CRUD-001: Log instead of silently swallowing
+                except Exception as e:
+                    logger.debug(f"delete_task completed-in cleanup for {task_id} (expected if absent): {e}")
 
                 # Delete task entity (TypeDB 3.x: delete $var; not $var isa type;)
                 delete_query = f"""
