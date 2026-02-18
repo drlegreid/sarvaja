@@ -334,38 +334,29 @@ class TaskCRUDOperations:
         task_id_escaped = task_id.replace('\\', '\\\\').replace('"', '\\"')
 
         try:
-            # TypeDB 3.x: driver.transaction() directly
+            # BUG-INTTEST-002: Use separate transactions for relationship cleanup
+            # and entity deletion to avoid TypeDB 3.x transaction state pollution.
+            # Relationship cleanup (best-effort, separate transactions)
+            for rel_label, role_name in [
+                ("implements-rule", "implementing-task"),
+                ("completed-in", "completed-task"),
+            ]:
+                try:
+                    with self._driver.transaction(self.database, TransactionType.WRITE) as tx_rel:
+                        rel_query = f"""
+                            match
+                                $t isa task, has task-id "{task_id_escaped}";
+                                $r ({role_name}: $t) isa {rel_label};
+                            delete
+                                $r;
+                        """
+                        tx_rel.query(rel_query).resolve()
+                        tx_rel.commit()
+                except Exception as e:
+                    logger.debug(f"delete_task {rel_label} cleanup for {task_id} (expected if absent): {type(e).__name__}")
+
+            # Delete task entity in its own clean transaction
             with self._driver.transaction(self.database, TransactionType.WRITE) as tx:
-                # Delete relationships first
-                rel_query = f"""
-                    match
-                        $t isa task, has task-id "{task_id_escaped}";
-                        $rel (implementing-task: $t) isa implements-rule;
-                    delete
-                        $rel;
-                """
-                try:
-                    tx.query(rel_query).resolve()
-                # BUG-364-CRUD-001: Log instead of silently swallowing — connection errors are actionable
-                except Exception as e:
-                    # BUG-477-TCR-1: Sanitize debug/info logger
-                    logger.debug(f"delete_task implements-rule cleanup for {task_id} (expected if absent): {type(e).__name__}")
-
-                rel_query2 = f"""
-                    match
-                        $t isa task, has task-id "{task_id_escaped}";
-                        $rel (completed-task: $t) isa completed-in;
-                    delete
-                        $rel;
-                """
-                try:
-                    tx.query(rel_query2).resolve()
-                # BUG-364-CRUD-001: Log instead of silently swallowing
-                except Exception as e:
-                    # BUG-477-TCR-2: Sanitize debug/info logger
-                    logger.debug(f"delete_task completed-in cleanup for {task_id} (expected if absent): {type(e).__name__}")
-
-                # Delete task entity (TypeDB 3.x: delete $var; not $var isa type;)
                 delete_query = f"""
                     match $t isa task, has task-id "{task_id_escaped}";
                     delete $t;

@@ -63,11 +63,18 @@ def register_task_crud_tools(mcp) -> None:
                 linked_sessions=linked_sessions,
                 source="mcp",
             )
-            actual_id = result.get("task_id") or task_id
+            # BUG-INTTEST-001: result is Pydantic TaskResponse, not dict
+            if hasattr(result, 'model_dump'):
+                result_dict = result.model_dump()
+            elif isinstance(result, dict):
+                result_dict = result
+            else:
+                result_dict = {"task_id": task_id}
+            actual_id = result_dict.get("task_id") or task_id
             _monitor_task("mcp-task-create", actual_id, "create", status=status,
                           priority=priority, session_id=session_id)
-            result["message"] = f"Task {actual_id} created successfully"
-            return format_mcp_result(result)
+            result_dict["message"] = f"Task {actual_id} created successfully"
+            return format_mcp_result(result_dict)
         except Exception as e:
             # BUG-357-MCP-001: Log full error for debugging
             # BUG-451-TC-001: Sanitize logger message to match response pattern
