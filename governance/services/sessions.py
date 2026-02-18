@@ -97,6 +97,17 @@ def list_sessions(
     Returns:
         Dict with 'items' (list of session dicts) and pagination metadata.
     """
+    # BUG-295-SES-001: Enforce bounds at service layer (defense-in-depth beyond route)
+    offset = max(0, offset)
+    limit = max(1, min(limit, 500))
+    # BUG-295-SES-002: Cap search string to prevent O(n * len) DoS
+    if search and len(search) > 500:
+        search = search[:500]
+    # BUG-354-SES-001: Whitelist status values to prevent injection/bypass
+    _VALID_STATUSES = {"ACTIVE", "COMPLETED", "ENDED", "FAILED", "CANCELLED"}
+    if status and status.upper() not in _VALID_STATUSES:
+        status = None  # Ignore invalid status silently
+
     sessions = get_all_sessions_from_typedb(allow_fallback=True)
 
     if exclude_test:
@@ -189,9 +200,11 @@ def create_session(
                              metadata={"description": description, "source": source})
                 _monitor("create", session_id, source=source)
                 log_event("session", "create", session_id=session_id, agent_id=agent_id, source=source)
-                result = session_to_response(created)
-                result["persistence_status"] = "persisted"
-                return result
+                # BUG-SESSION-PYDANTIC-001: session_to_response returns SessionResponse
+                # (Pydantic model), which doesn't support __setitem__. The subscript
+                # assignment was silently crashing, causing TypeDB creates to fall
+                # through to in-memory fallback despite successful TypeDB write.
+                return session_to_response(created)
         except Exception as e:
             logger.warning(f"TypeDB session insert failed, using fallback: {e}")
 
@@ -321,9 +334,10 @@ def update_session(
     if cc_compaction_count is not None:
         session["cc_compaction_count"] = cc_compaction_count
 
+    # BUG-AUDIT-NULL-001: Use old_status when status is None (matches TypeDB path)
     record_audit("UPDATE", "session", session_id,
                  actor_id=agent_id or "system",
-                 old_value=old_status, new_value=status,
+                 old_value=old_status, new_value=status if status is not None else old_status,
                  metadata={"source": source})
     _monitor("update", session_id, source=source, status=status)
     log_event("session", "update", session_id=session_id, status=status, source=source)
@@ -370,8 +384,12 @@ def sync_pending_sessions() -> Dict[str, Any]:
             if status_val:
                 try:
                     client.update_session(session_id, status=status_val)
-                except Exception:
-                    pass  # Best-effort; insert already succeeded
+                except Exception as se:
+                    # BUG-SYNC-STATUS-SILENT-001: Log instead of silent pass
+                    logger.warning(f"Status sync failed for {session_id} (insert OK): {se}")
+            # BUG-205-SYNC-001: Mark as persisted to prevent duplicate in next list
+            if session_id in _sessions_store:
+                _sessions_store[session_id]["persistence_status"] = "persisted"
             synced += 1
             logger.info(f"Synced orphan session to TypeDB: {session_id}")
         except Exception as e:

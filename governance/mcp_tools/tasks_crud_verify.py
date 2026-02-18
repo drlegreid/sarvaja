@@ -3,7 +3,10 @@
 Per DOC-SIZE-01-v1: Extracted from tasks_crud.py.
 task_verify and session_sync_todos tools.
 """
+import logging
 from governance.mcp_tools.common import typedb_client, format_mcp_result, log_monitor_event
+
+logger = logging.getLogger(__name__)
 
 
 def _monitor_task(source: str, task_id: str, action: str, severity: str = "INFO", **extra):
@@ -78,7 +81,9 @@ def register_task_verify_tools(mcp) -> None:
                     "message": f"Verification failed for {task_id}: not in TypeDB"
                 })
         except Exception as e:
-            return format_mcp_result({"error": f"task_verify failed: {e}"})
+            # BUG-357-MCP-003: Log full error for debugging
+            logger.error(f"task_verify failed: {e}", exc_info=True)
+            return format_mcp_result({"error": f"task_verify failed: {type(e).__name__}"})
 
     @mcp.tool()
     def session_sync_todos(session_id: str, todos_json: str) -> str:
@@ -154,4 +159,6 @@ def register_task_verify_tools(mcp) -> None:
                     "message": f"Synced {created + updated} tasks to TypeDB"
                 })
         except Exception as e:
-            return format_mcp_result({"error": f"session_sync_todos failed: {e}"})
+            # BUG-357-MCP-003: Log full error for debugging
+            logger.error(f"session_sync_todos failed: {e}", exc_info=True)
+            return format_mcp_result({"error": f"session_sync_todos failed: {type(e).__name__}"})

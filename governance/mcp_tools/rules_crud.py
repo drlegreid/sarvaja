@@ -1,10 +1,13 @@
 """Rule CRUD MCP Tools. Per RULE-012: DSP Semantic Code Structure.
 Updated: 2026-01-20 - Added monitoring instrumentation per GAP-MONITOR-INSTRUMENT-001.
 """
+import logging
 from typing import Optional
 from dataclasses import asdict
 
 from governance.mcp_tools.common import get_typedb_client, format_mcp_result, log_monitor_event
+
+logger = logging.getLogger(__name__)
 
 
 def register_rule_crud_tools(mcp) -> None:
@@ -79,7 +82,9 @@ def register_rule_crud_tools(mcp) -> None:
                 return format_mcp_result({"error": f"Failed to create rule {rule_id}"})
 
         except Exception as e:
-            return format_mcp_result({"error": f"rule_create failed: {e}"})
+            # BUG-357-MCP-002: Log full error for debugging
+            logger.error(f"rule_create failed: {e}", exc_info=True)
+            return format_mcp_result({"error": f"rule_create failed: {type(e).__name__}"})
 
         finally:
             client.close()
@@ -145,7 +150,9 @@ def register_rule_crud_tools(mcp) -> None:
                 return format_mcp_result({"error": f"Failed to update rule {rule_id}"})
 
         except Exception as e:
-            return format_mcp_result({"error": f"rule_update failed: {e}"})
+            # BUG-357-MCP-002: Log full error for debugging
+            logger.error(f"rule_update failed: {e}", exc_info=True)
+            return format_mcp_result({"error": f"rule_update failed: {type(e).__name__}"})
 
         finally:
             client.close()
@@ -193,7 +200,9 @@ def register_rule_crud_tools(mcp) -> None:
                 return format_mcp_result({"error": f"Rule {rule_id} not found"})
 
         except Exception as e:
-            return format_mcp_result({"error": f"rule_deprecate failed: {e}"})
+            # BUG-357-MCP-002: Log full error for debugging
+            logger.error(f"rule_deprecate failed: {e}", exc_info=True)
+            return format_mcp_result({"error": f"rule_deprecate failed: {type(e).__name__}"})
 
         finally:
             client.close()
@@ -247,7 +256,9 @@ def register_rule_crud_tools(mcp) -> None:
 
         # BUG-B185-005: Add except to match rule_create pattern
         except Exception as e:
-            return format_mcp_result({"error": f"rule_delete failed: {e}"})
+            # BUG-357-MCP-002: Log full error for debugging
+            logger.error(f"rule_delete failed: {e}", exc_info=True)
+            return format_mcp_result({"error": f"rule_delete failed: {type(e).__name__}"})
 
         finally:
             client.close()

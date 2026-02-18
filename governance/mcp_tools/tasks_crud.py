@@ -1,10 +1,13 @@
 """Task CRUD MCP Tools. Per RULE-012/032, DECISION-003.
 Per DOC-SIZE-01-v1: Verification + sync tools in tasks_crud_verify.py.
 """
+import logging
 from typing import Optional
 from dataclasses import asdict
 
 from governance.mcp_tools.common import typedb_client, format_mcp_result, log_monitor_event
+
+logger = logging.getLogger(__name__)
 
 # Re-export for backward compatibility
 from governance.mcp_tools.tasks_crud_verify import register_task_verify_tools  # noqa: F401
@@ -66,7 +69,9 @@ def register_task_crud_tools(mcp) -> None:
             result["message"] = f"Task {actual_id} created successfully"
             return format_mcp_result(result)
         except Exception as e:
-            return format_mcp_result({"error": f"task_create failed: {e}"})
+            # BUG-357-MCP-001: Log full error for debugging
+            logger.error(f"task_create failed: {e}", exc_info=True)
+            return format_mcp_result({"error": f"task_create failed: {type(e).__name__}"})
 
     @mcp.tool()
     def task_get(task_id: str) -> str:
@@ -87,7 +92,9 @@ def register_task_crud_tools(mcp) -> None:
                     return format_mcp_result(asdict(task))
                 return format_mcp_result({"error": f"Task {task_id} not found"})
         except Exception as e:
-            return format_mcp_result({"error": f"task_get failed: {e}"})
+            # BUG-357-MCP-001: Log full error for debugging
+            logger.error(f"task_get failed: {e}", exc_info=True)
+            return format_mcp_result({"error": f"task_get failed: {type(e).__name__}"})
 
     @mcp.tool()
     def task_update(task_id: str, status: Optional[str] = None, name: Optional[str] = None,
@@ -130,19 +137,31 @@ def register_task_crud_tools(mcp) -> None:
                     })
                 return format_mcp_result({"error": f"Failed to update task {task_id}"})
         except Exception as e:
-            return format_mcp_result({"error": f"task_update failed: {e}"})
+            # BUG-357-MCP-001: Log full error for debugging
+            logger.error(f"task_update failed: {e}", exc_info=True)
+            return format_mcp_result({"error": f"task_update failed: {type(e).__name__}"})
 
     @mcp.tool()
-    def task_delete(task_id: str) -> str:
+    def task_delete(task_id: str, confirm: bool = False) -> str:
         """
         Delete a task from TypeDB.
 
+        Requires explicit confirmation to prevent accidental deletion.
+
         Args:
             task_id: Task identifier to delete
+            confirm: Must be True to proceed with deletion
 
         Returns:
             JSON with deletion confirmation or error
         """
+        # BUG-357-TDL-001: Require explicit confirmation (matching rule_delete pattern)
+        if confirm is not True:
+            return format_mcp_result({
+                "error": "Deletion requires explicit confirmation. Set confirm=True to proceed.",
+                "task_id": task_id,
+                "hint": "Consider updating status to CLOSED instead of deleting."
+            })
         try:
             with typedb_client() as client:
                 success = client.delete_task(task_id)
@@ -154,7 +173,9 @@ def register_task_crud_tools(mcp) -> None:
                     })
                 return format_mcp_result({"error": f"Failed to delete task {task_id}"})
         except Exception as e:
-            return format_mcp_result({"error": f"task_delete failed: {e}"})
+            # BUG-357-MCP-001: Log full error for debugging
+            logger.error(f"task_delete failed: {e}", exc_info=True)
+            return format_mcp_result({"error": f"task_delete failed: {type(e).__name__}"})
 
     @mcp.tool()
     def taxonomy_get() -> str:
@@ -167,21 +188,27 @@ def register_task_crud_tools(mcp) -> None:
             JSON with task_types, task_priorities, task_type_prefixes,
             task_statuses, task_phases, rule_categories, rule_priorities, rule_statuses.
         """
-        from agent.governance_ui.state.constants import (
-            TASK_TYPES, TASK_PRIORITIES, TASK_TYPE_PREFIX,
-            TASK_STATUSES, TASK_PHASES,
-            RULE_CATEGORIES, RULE_PRIORITIES, RULE_STATUSES,
-        )
-        return format_mcp_result({
-            "task_types": TASK_TYPES,
-            "task_priorities": TASK_PRIORITIES,
-            "task_type_prefixes": TASK_TYPE_PREFIX,
-            "task_statuses": TASK_STATUSES,
-            "task_phases": TASK_PHASES,
-            "rule_categories": RULE_CATEGORIES,
-            "rule_priorities": RULE_PRIORITIES,
-            "rule_statuses": RULE_STATUSES,
-        })
+        # BUG-276-TCRUD-001: Wrap in try/except to prevent raw ImportError to MCP caller
+        try:
+            from agent.governance_ui.state.constants import (
+                TASK_TYPES, TASK_PRIORITIES, TASK_TYPE_PREFIX,
+                TASK_STATUSES, TASK_PHASES,
+                RULE_CATEGORIES, RULE_PRIORITIES, RULE_STATUSES,
+            )
+            return format_mcp_result({
+                "task_types": TASK_TYPES,
+                "task_priorities": TASK_PRIORITIES,
+                "task_type_prefixes": TASK_TYPE_PREFIX,
+                "task_statuses": TASK_STATUSES,
+                "task_phases": TASK_PHASES,
+                "rule_categories": RULE_CATEGORIES,
+                "rule_priorities": RULE_PRIORITIES,
+                "rule_statuses": RULE_STATUSES,
+            })
+        except Exception as e:
+            # BUG-357-MCP-001: Log full error for debugging
+            logger.error(f"taxonomy_get failed: {e}", exc_info=True)
+            return format_mcp_result({"error": f"taxonomy_get failed: {type(e).__name__}"})
 
     @mcp.tool()
     def tasks_list(
@@ -219,8 +246,11 @@ def register_task_crud_tools(mcp) -> None:
                     filtered = [t for t in filtered if t.phase == phase.upper()]
 
                 # Apply pagination
+                # BUG-204-OFFSET-001: Guard against negative offset/limit
                 total = len(filtered)
-                paginated = filtered[offset:offset + limit]
+                safe_offset = max(0, offset)
+                safe_limit = max(1, min(limit, 200))
+                paginated = filtered[safe_offset:safe_offset + safe_limit]
 
                 return format_mcp_result({
                     "tasks": [asdict(t) for t in paginated],
@@ -232,4 +262,6 @@ def register_task_crud_tools(mcp) -> None:
                     "source": "typedb"
                 })
         except Exception as e:
-            return format_mcp_result({"error": f"tasks_list failed: {e}"})
+            # BUG-357-MCP-001: Log full error for debugging
+            logger.error(f"tasks_list failed: {e}", exc_info=True)
+            return format_mcp_result({"error": f"tasks_list failed: {type(e).__name__}"})

@@ -12,6 +12,8 @@ import logging
 from fastapi import APIRouter, HTTPException, Query
 from typing import Optional
 
+# BUG-355-RUL-001: Log full errors for debugging but return generic messages
+
 from governance.models import RuleCreate, RuleUpdate, RuleResponse, PaginatedRuleResponse, PaginationMeta
 from governance.services import rules as rule_service
 
@@ -35,6 +37,13 @@ async def list_rules(
     search: Optional[str] = Query(None, description="Search in id, name, directive")
 ):
     """List governance rules with pagination, sorting, filtering, and search. Per GAP-UI-036."""
+    # BUG-237-SORT-001: Whitelist sort_by to prevent unexpected sort keys
+    _valid_sort = {"id", "name", "priority", "status", "category"}
+    if sort_by not in _valid_sort:
+        raise HTTPException(status_code=422, detail=f"Invalid sort_by: {sort_by}. Must be one of {sorted(_valid_sort)}")
+    # BUG-253-INJ-001: Whitelist order direction to prevent injection
+    if order not in {"asc", "desc"}:
+        raise HTTPException(status_code=422, detail="order must be 'asc' or 'desc'")
     try:
         result = rule_service.list_rules(
             status=status, category=category, priority=priority, search=search,
@@ -53,7 +62,22 @@ async def list_rules(
     except ConnectionError:
         raise HTTPException(status_code=503, detail="TypeDB not connected")
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        # BUG-355-RUL-001: Log full error but return generic message to prevent info disclosure
+        logger.error(f"Failed to list rules: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail="Failed to list rules")
+
+
+@router.get("/rules/dependencies/overview")
+async def dependency_overview():
+    """Global dependency overview. Per PLAN-UI-OVERHAUL-001 Task 4.3."""
+    try:
+        return rule_service.dependency_overview(source="rest-api")
+    except ConnectionError:
+        raise HTTPException(status_code=503, detail="TypeDB not connected")
+    except Exception as e:
+        # BUG-355-RUL-001: Log full error but return generic message
+        logger.error(f"Failed to get dependency overview: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail="Failed to get dependency overview")
 
 
 @router.get("/rules/{rule_id}", response_model=RuleResponse)
@@ -69,7 +93,9 @@ async def get_rule(rule_id: str):
     except ValueError as e:
         raise HTTPException(status_code=422, detail=str(e))
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        # BUG-355-RUL-001: Log full error but return generic message
+        logger.error(f"Failed to get rule: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail="Failed to get rule")
 
 
 @router.post("/rules", response_model=RuleResponse, status_code=201)
@@ -87,9 +113,13 @@ async def create_rule(rule: RuleCreate):
     except ValueError as e:
         raise HTTPException(status_code=409, detail=str(e))
     except RuntimeError as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        # BUG-355-RUL-001: Log full error but return generic message
+        logger.error(f"Failed to create rule (runtime): {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail="Failed to create rule")
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        # BUG-355-RUL-001: Log full error but return generic message
+        logger.error(f"Failed to create rule: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail="Failed to create rule")
 
 
 @router.put("/rules/{rule_id}", response_model=RuleResponse)
@@ -107,11 +137,15 @@ async def update_rule(rule_id: str, rule: RuleUpdate):
     except KeyError:
         raise HTTPException(status_code=404, detail=f"Rule {rule_id} not found")
     except RuntimeError as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        # BUG-355-RUL-001: Log full error but return generic message
+        logger.error(f"Failed to update rule (runtime): {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail="Failed to update rule")
     except ValueError as e:
         raise HTTPException(status_code=422, detail=str(e))
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        # BUG-355-RUL-001: Log full error but return generic message
+        logger.error(f"Failed to update rule: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail="Failed to update rule")
 
 
 @router.get("/rules/{rule_id}/tasks")
@@ -122,7 +156,9 @@ async def get_rule_tasks(rule_id: str):
     except ConnectionError:
         raise HTTPException(status_code=503, detail="TypeDB not connected")
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        # BUG-355-RUL-001: Log full error but return generic message
+        logger.error(f"Failed to get rule tasks: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail="Failed to get rule tasks")
 
 
 @router.delete("/rules/{rule_id}", status_code=204)
@@ -140,18 +176,9 @@ async def delete_rule(rule_id: str, archive: bool = Query(True, description="Arc
     except ValueError as e:
         raise HTTPException(status_code=422, detail=str(e))
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-
-@router.get("/rules/dependencies/overview")
-async def dependency_overview():
-    """Global dependency overview. Per PLAN-UI-OVERHAUL-001 Task 4.3."""
-    try:
-        return rule_service.dependency_overview(source="rest-api")
-    except ConnectionError:
-        raise HTTPException(status_code=503, detail="TypeDB not connected")
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        # BUG-355-RUL-001: Log full error but return generic message
+        logger.error(f"Failed to delete rule: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail="Failed to delete rule")
 
 
 @router.get("/rules/{rule_id}/dependencies")
@@ -164,7 +191,9 @@ async def get_rule_dependencies(rule_id: str):
     except KeyError:
         raise HTTPException(status_code=404, detail=f"Rule {rule_id} not found")
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        # BUG-355-RUL-001: Log full error but return generic message
+        logger.error(f"Failed to get rule dependencies: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail="Failed to get rule dependencies")
 
 
 @router.post("/rules/{rule_id}/dependencies/{dep_id}", status_code=201)
@@ -180,4 +209,6 @@ async def create_rule_dependency(rule_id: str, dep_id: str):
     except KeyError as e:
         raise HTTPException(status_code=404, detail=str(e))
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        # BUG-355-RUL-001: Log full error but return generic message
+        logger.error(f"Failed to create rule dependency: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail="Failed to create rule dependency")

@@ -39,10 +39,20 @@ def generate_timestamps(date_str: str) -> Tuple[str, str]:
 
     Assumes a working session: starts at 09:00, duration = _DEFAULT_DURATION_HOURS.
 
+    BUG-252-SRP-001: Guard against invalid date strings to prevent crash
+    in build_repair_plan() when session_id contains garbage dates.
+
     Returns:
         (start_iso, end_iso)
+
+    Raises:
+        ValueError: If date_str is not a valid ISO date.
     """
-    base = datetime.fromisoformat(f"{date_str}T09:00:00")
+    try:
+        base = datetime.fromisoformat(f"{date_str}T09:00:00")
+    except ValueError:
+        # Fall back to current date if date_str is unparseable
+        base = datetime.now().replace(hour=9, minute=0, second=0, microsecond=0)
     end = base + timedelta(hours=_DEFAULT_DURATION_HOURS)
     return base.isoformat(), end.isoformat()
 
@@ -141,7 +151,7 @@ def detect_unrealistic_durations(
     return flagged
 
 
-def cap_duration(session: Dict, max_hours: float = 8) -> Dict:
+def cap_duration(session: Dict, max_hours: float = _MAX_DURATION_HOURS) -> Dict:
     """Cap session duration to max_hours from start_time.
 
     If duration <= max_hours, returns session unchanged.
@@ -237,7 +247,8 @@ def build_repair_plan(sessions: List[Dict]) -> List[Dict]:
                 et = datetime.fromisoformat(end_t[:19])
                 hours = (et - st).total_seconds() / 3600
                 if hours > _MAX_DURATION_HOURS:
-                    capped = cap_duration(s)
+                    # BUG-REPAIR-CAP-DEFAULT-001: Pass module constant, not default 8h
+                    capped = cap_duration(s, max_hours=_MAX_DURATION_HOURS)
                     fixes["duration"] = {"end_time": capped["end_time"]}
             except (ValueError, TypeError):
                 pass
@@ -286,9 +297,13 @@ def apply_repair(plan_item: Dict, dry_run: bool = True) -> Dict[str, Any]:
         return {"session_id": sid, "applied": False, "no_changes": True, "fixes": fixes}
 
     try:
-        update_session(sid, **kwargs)
+        # BUG-195-013: Check return value — None means session not found
+        result_data = update_session(sid, **kwargs)
+        if result_data is None:
+            return {"session_id": sid, "applied": False, "error": "Session not found", "fixes": fixes}
     except Exception as e:
-        logger.error(f"Failed to apply repair for {sid}: {e}")
-        return {"session_id": sid, "applied": False, "error": str(e), "fixes": fixes}
+        # BUG-356-SRP-001: Log full error but return generic message to prevent info disclosure
+        logger.error(f"Failed to apply repair for {sid}: {e}", exc_info=True)
+        return {"session_id": sid, "applied": False, "error": "Repair failed due to internal error", "fixes": fixes}
 
     return {"session_id": sid, "applied": True, "fixes": fixes}

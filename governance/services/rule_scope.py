@@ -40,6 +40,9 @@ def rule_applies_to_path(scope: Optional[List[str]], path: str) -> bool:
     # Strip leading '../' sequences after normalization
     while path.startswith("../"):
         path = path[3:]
+    # BUG-355-RSC-002: Strip leading '/' from absolute paths so they match
+    # relative scope patterns (e.g. '/governance/foo.py' -> 'governance/foo.py')
+    path = path.lstrip("/")
 
     for pattern in scope:
         if pattern == "*":
