@@ -135,7 +135,8 @@ def register_decisions_controllers(state: Any, ctrl: Any, api_base_url: str) -> 
 
             state.is_loading = False
         except Exception as e:
-            add_error_trace(state, f"Save decision failed: {e}", "/api/decisions")
+            # BUG-449-DEC-001: Don't leak exception internals via add_error_trace → Trame WebSocket
+            add_error_trace(state, f"Save decision failed: {type(e).__name__}", "/api/decisions")
             state.is_loading = False
             state.has_error = True
             # BUG-389-DEC-002: Don't leak httpx internals via Trame WebSocket
@@ -175,7 +176,8 @@ def register_decisions_controllers(state: Any, ctrl: Any, api_base_url: str) -> 
 
             state.is_loading = False
         except Exception as e:
-            add_error_trace(state, f"Delete decision failed: {e}", f"/api/decisions/{decision_id}")
+            # BUG-449-DEC-002: Don't leak exception internals via add_error_trace → Trame WebSocket
+            add_error_trace(state, f"Delete decision failed: {type(e).__name__}", f"/api/decisions/{decision_id}")
             state.is_loading = False
             state.has_error = True
             # BUG-389-DEC-003: Don't leak httpx internals via Trame WebSocket

@@ -99,7 +99,8 @@ def process_chat_command(content: str, agent_id: str) -> str:
             rules = client.get_all_rules()
             rules_count = len(rules) if rules else 0
     except Exception as e:
-        logger.debug(f"Failed to query rules for chat context: {e}")
+        # BUG-446-CMD-001: Upgrade debug→warning + exc_info for operational visibility
+        logger.warning(f"Failed to query rules for chat context: {e}", exc_info=True)
         rules_count = 0
 
     # Command recognition
@@ -142,7 +143,8 @@ def process_chat_command(content: str, agent_id: str) -> str:
                     ])
                     return f"Active Rules ({len(active)} total):\n{rule_list}"
         except Exception as e:
-            logger.debug(f"Failed to query active rules: {e}")
+            # BUG-446-CMD-002: Upgrade debug→warning + exc_info for operational visibility
+            logger.warning(f"Failed to query active rules: {e}", exc_info=True)
         return "No active rules found."
 
     elif content_lower.startswith("/help"):
@@ -176,7 +178,8 @@ You can also type natural language commands and I'll do my best to help!"""
             sessions = result.get("items", [])
             total = result.get("pagination", {}).get("total", len(sessions))
         except Exception as e:
-            logger.debug(f"Service layer session query failed: {e}")
+            # BUG-446-CMD-004: Upgrade debug→warning + exc_info for operational visibility
+            logger.warning(f"Service layer session query failed: {e}", exc_info=True)
             sessions = sorted(
                 _sessions_store.values(),
                 key=lambda s: s.get("start_time", ""),
@@ -228,7 +231,8 @@ You can also type natural language commands and I'll do my best to help!"""
                     if query.lower() in ((rule.name or "") + (rule.directive or "")).lower():
                         results.append(f"Rule: {rule.id} - {rule.name}")
         except Exception as e:
-            logger.debug(f"Failed to search rules: {e}")
+            # BUG-446-CMD-003: Upgrade debug→warning + exc_info for operational visibility
+            logger.warning(f"Failed to search rules: {e}", exc_info=True)
         # Search tasks from in-memory store
         for task in list(_tasks_store.values()):
             if query.lower() in (task.get("name", "") + task.get("description", "")).lower():
@@ -270,7 +274,8 @@ You can also type natural language commands and I'll do my best to help!"""
                 )
         except Exception as e:
             # BUG-CMD-003: Log instead of silently swallowing
-            logger.debug(f"Failed to load recent sessions for LLM context: {e}")
+            # BUG-446-CMD-005: Upgrade debug→warning + exc_info for operational visibility
+            logger.warning(f"Failed to load recent sessions for LLM context: {e}", exc_info=True)
 
         context = (
             f"{GOVERNANCE_SYSTEM_PROMPT}\n\n"

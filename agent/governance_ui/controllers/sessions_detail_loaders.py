@@ -48,7 +48,8 @@ def register_session_detail_loaders(state: Any, api_base_url: str):
                             call['tool_name'] = call['name']
                     state.session_tool_calls = calls
         except Exception as e:
-            add_error_trace(state, f"Load tool calls failed: {e}", f"/api/sessions/{session_id}/tools")
+            # BUG-449-SDL-001: Don't leak exception internals via add_error_trace → Trame WebSocket
+            add_error_trace(state, f"Load tool calls failed: {type(e).__name__}", f"/api/sessions/{session_id}/tools")
             state.session_tool_calls = []
         finally:
             state.session_tool_calls_loading = False
@@ -73,7 +74,8 @@ def register_session_detail_loaders(state: Any, api_base_url: str):
                             item['char_count'] = item['chars']
                     state.session_thinking_items = items
         except Exception as e:
-            add_error_trace(state, f"Load thinking items failed: {e}", f"/api/sessions/{session_id}/thoughts")
+            # BUG-449-SDL-002: Don't leak exception internals via add_error_trace → Trame WebSocket
+            add_error_trace(state, f"Load thinking items failed: {type(e).__name__}", f"/api/sessions/{session_id}/thoughts")
             state.session_thinking_items = []
         finally:
             state.session_thinking_items_loading = False
@@ -121,7 +123,8 @@ def register_session_detail_loaders(state: Any, api_base_url: str):
                     data = response.json()
                     state.session_evidence_html = data.get('html', '')
         except Exception as e:
-            add_error_trace(state, f"Load evidence rendered failed: {e}", f"/api/sessions/{session_id}/evidence/rendered")
+            # BUG-449-SDL-003: Don't leak exception internals via add_error_trace → Trame WebSocket
+            add_error_trace(state, f"Load evidence rendered failed: {type(e).__name__}", f"/api/sessions/{session_id}/evidence/rendered")
             state.session_evidence_html = ''
         finally:
             state.session_evidence_loading = False
@@ -141,7 +144,8 @@ def register_session_detail_loaders(state: Any, api_base_url: str):
                         session['evidence_files'] = files
                         state.selected_session = session
         except Exception as e:
-            add_error_trace(state, f"Load evidence files failed: {e}", f"/api/sessions/{session_id}/evidence")
+            # BUG-449-SDL-004: Don't leak exception internals via add_error_trace → Trame WebSocket
+            add_error_trace(state, f"Load evidence files failed: {type(e).__name__}", f"/api/sessions/{session_id}/evidence")
 
     def load_session_tasks(session_id):
         """Load tasks linked to a session."""
@@ -158,7 +162,8 @@ def register_session_detail_loaders(state: Any, api_base_url: str):
                 else:
                     state.session_tasks = []
         except Exception as e:
-            add_error_trace(state, f"Load session tasks failed: {e}", f"/api/sessions/{session_id}/tasks")
+            # BUG-449-SDL-005: Don't leak exception internals via add_error_trace → Trame WebSocket
+            add_error_trace(state, f"Load session tasks failed: {type(e).__name__}", f"/api/sessions/{session_id}/tasks")
             state.session_tasks = []
         finally:
             state.session_tasks_loading = False
@@ -192,7 +197,8 @@ def register_session_detail_loaders(state: Any, api_base_url: str):
                     state.session_transcript = []
                     state.session_transcript_total = 0
         except Exception as e:
-            add_error_trace(state, f"Load transcript failed: {e}", f"/api/sessions/{session_id}/transcript")
+            # BUG-449-SDL-006: Don't leak exception internals via add_error_trace → Trame WebSocket
+            add_error_trace(state, f"Load transcript failed: {type(e).__name__}", f"/api/sessions/{session_id}/transcript")
             state.session_transcript = []
         finally:
             state.session_transcript_loading = False
@@ -220,7 +226,8 @@ def register_session_detail_loaders(state: Any, api_base_url: str):
                     state.session_transcript = updated
                     state.session_transcript_expanded_entry = entry_index
         except Exception as e:
-            add_error_trace(state, f"Expand transcript entry failed: {e}", f"/api/sessions/{session_id}/transcript/{entry_index}")
+            # BUG-449-SDL-007: Don't leak exception internals via add_error_trace → Trame WebSocket
+            add_error_trace(state, f"Expand transcript entry failed: {type(e).__name__}", f"/api/sessions/{session_id}/transcript/{entry_index}")
 
     return {
         "load_tool_calls": load_session_tool_calls,
