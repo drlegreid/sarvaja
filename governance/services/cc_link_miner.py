@@ -104,6 +104,9 @@ def mine_session_links(
     """
     from governance.session_metrics.parser import parse_log_file_extended
 
+    # BUG-359-LNK-001: Cap error list to prevent unbounded growth with many entities
+    _MAX_ERRORS = 100
+
     result: dict[str, Any] = {
         "tasks_linked": 0,
         "rules_linked": 0,
@@ -181,7 +184,8 @@ def mine_session_links(
             if link_task_to_session(task_id, session_id, source="ingestion"):
                 result["tasks_linked"] += 1
         except Exception as e:
-            result["errors"].append(f"Task link {task_id}: {e}")
+            if len(result["errors"]) < _MAX_ERRORS:
+                result["errors"].append(f"Task link {task_id}: {e}")
 
     # Link gaps (gaps are tasks with item_type=gap)
     for gap_id in sorted(gap_refs):
@@ -192,7 +196,8 @@ def mine_session_links(
             if link_task_to_session(gap_id, session_id, source="ingestion"):
                 result["gaps_linked"] += 1
         except Exception as e:
-            result["errors"].append(f"Gap link {gap_id}: {e}")
+            if len(result["errors"]) < _MAX_ERRORS:
+                result["errors"].append(f"Gap link {gap_id}: {e}")
 
     # Link rules
     for rule_id in sorted(rule_refs):
@@ -203,7 +208,8 @@ def mine_session_links(
             if ok:
                 result["rules_linked"] += 1
         except Exception as e:
-            result["errors"].append(f"Rule link {rule_id}: {e}")
+            if len(result["errors"]) < _MAX_ERRORS:
+                result["errors"].append(f"Rule link {rule_id}: {e}")
 
     # Link decisions
     for decision_id in sorted(decision_refs):
@@ -214,7 +220,8 @@ def mine_session_links(
             if ok:
                 result["decisions_linked"] += 1
         except Exception as e:
-            result["errors"].append(f"Decision link {decision_id}: {e}")
+            if len(result["errors"]) < _MAX_ERRORS:
+                result["errors"].append(f"Decision link {decision_id}: {e}")
 
     # Update checkpoint
     ckpt = load_checkpoint(session_id, checkpoint_dir)

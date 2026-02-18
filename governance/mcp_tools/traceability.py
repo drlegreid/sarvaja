@@ -127,7 +127,9 @@ def register_traceability_tools(mcp) -> None:
                     details={"task_id": task_id, "depth": depth})
                 return format_mcp_result(result)
         except Exception as e:
-            return format_mcp_result({"error": f"trace_task_chain failed: {e}"})
+            # BUG-361-TRC-001: Log full error but return only type name to prevent info disclosure
+            logger.error(f"trace_task_chain failed: {e}", exc_info=True)
+            return format_mcp_result({"error": f"trace_task_chain failed: {type(e).__name__}"})
 
     @mcp.tool()
     def trace_session_chain(session_id: str, depth: int = 1) -> str:
@@ -156,7 +158,9 @@ def register_traceability_tools(mcp) -> None:
                     details={"session_id": session_id, "depth": depth})
                 return format_mcp_result(result)
         except Exception as e:
-            return format_mcp_result({"error": f"trace_session_chain failed: {e}"})
+            # BUG-361-TRC-001: Log full error but return only type name to prevent info disclosure
+            logger.error(f"trace_session_chain failed: {e}", exc_info=True)
+            return format_mcp_result({"error": f"trace_session_chain failed: {type(e).__name__}"})
 
     @mcp.tool()
     def trace_rule_chain(rule_id: str, depth: int = 1) -> str:
@@ -202,7 +206,9 @@ def register_traceability_tools(mcp) -> None:
                     details={"rule_id": rule_id, "depth": depth})
                 return format_mcp_result(result)
         except Exception as e:
-            return format_mcp_result({"error": f"trace_rule_chain failed: {e}"})
+            # BUG-361-TRC-001: Log full error but return only type name to prevent info disclosure
+            logger.error(f"trace_rule_chain failed: {e}", exc_info=True)
+            return format_mcp_result({"error": f"trace_rule_chain failed: {type(e).__name__}"})
 
     @mcp.tool()
     def trace_gap_chain(gap_id: str) -> str:
@@ -260,7 +266,9 @@ def register_traceability_tools(mcp) -> None:
                     "evidence_count": len(all_evidence),
                 })
         except Exception as e:
-            return format_mcp_result({"error": f"trace_gap_chain failed: {e}"})
+            # BUG-361-TRC-001: Log full error but return only type name to prevent info disclosure
+            logger.error(f"trace_gap_chain failed: {e}", exc_info=True)
+            return format_mcp_result({"error": f"trace_gap_chain failed: {type(e).__name__}"})
 
     @mcp.tool()
     def trace_evidence_chain(evidence_path: str) -> str:
@@ -327,4 +335,6 @@ def register_traceability_tools(mcp) -> None:
                     "rule_count": len(all_rules),
                 })
         except Exception as e:
-            return format_mcp_result({"error": f"trace_evidence_chain failed: {e}"})
+            # BUG-361-TRC-001: Log full error but return only type name to prevent info disclosure
+            logger.error(f"trace_evidence_chain failed: {e}", exc_info=True)
+            return format_mcp_result({"error": f"trace_evidence_chain failed: {type(e).__name__}"})

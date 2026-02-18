@@ -156,8 +156,10 @@ def update_task_status(
                         """
                         try:
                             tx.query(delete_res_query).resolve()
-                        except Exception:
-                            pass  # Might not exist
+                        except Exception as e:
+                            # BUG-360-STS-001: Log instead of silently swallowing — connection
+                            # errors are actionable even if "not found" is expected
+                            logger.debug(f"Resolution delete for {task_id} (expected if absent): {e}")
 
                     # Insert new resolution
                     insert_res_query = f"""
@@ -181,8 +183,9 @@ def update_task_status(
                         """
                         try:
                             tx.query(delete_res_query).resolve()
-                        except Exception:
-                            pass
+                        except Exception as e:
+                            # BUG-360-STS-001: Log instead of silently swallowing
+                            logger.debug(f"Resolution reset delete for {task_id} (expected if absent): {e}")
                         insert_res_query = f"""
                             match
                                 $t isa task, has task-id "{tid}";

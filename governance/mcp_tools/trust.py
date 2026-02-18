@@ -8,6 +8,7 @@ Per FP + Digital Twin Paradigm: Trust entity module
 Updated: 2026-01-20 - Added monitoring instrumentation per GAP-MONITOR-INSTRUMENT-001.
 """
 
+import logging
 from dataclasses import asdict
 
 from governance.mcp_tools.common import (
@@ -17,6 +18,8 @@ from governance.mcp_tools.common import (
     format_mcp_result,
     log_monitor_event,
 )
+
+logger = logging.getLogger(__name__)
 
 
 def register_trust_tools(mcp) -> None:
@@ -42,8 +45,10 @@ def register_trust_tools(mcp) -> None:
                 return format_mcp_result({"error": "Failed to connect to TypeDB"})
 
             # Query agent data from TypeDB
-            # BUG-259-TRUST-001: Escape backslash THEN quotes for TypeQL safety
-            agent_id_escaped = agent_id.replace('\\', '\\\\').replace('"', '\\"')
+            # BUG-259-TRUST-001 + BUG-361-TRU-002: Escape backslash, quotes, AND control
+            # chars for TypeQL safety (matches traceability.py BUG-299-TRC-001 pattern)
+            agent_id_escaped = (agent_id.replace('\\', '\\\\').replace('"', '\\"')
+                                .replace('\n', '\\n').replace('\r', '\\r').replace('\t', '\\t'))
             query = f'''
                 match
                     $a isa agent, has agent-id "{agent_id_escaped}";
@@ -84,9 +89,10 @@ def register_trust_tools(mcp) -> None:
             )
             return format_mcp_result(asdict(score))
 
-        # BUG-192-004: Add except to prevent raw TypeDB errors to MCP caller
+        # BUG-192-004 + BUG-361-TRU-001: Log full error but return only type name
         except Exception as e:
-            return format_mcp_result({"error": f"governance_get_trust_score failed: {e}"})
+            logger.error(f"governance_get_trust_score failed: {e}", exc_info=True)
+            return format_mcp_result({"error": f"governance_get_trust_score failed: {type(e).__name__}"})
 
         finally:
             client.close()

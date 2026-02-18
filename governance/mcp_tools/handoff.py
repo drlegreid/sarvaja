@@ -1,5 +1,6 @@
 """Task Handoff MCP Tools. Per AGENT-WORKSPACES.md Phase 4, RULE-011."""
 
+import logging
 import re
 from typing import Optional
 from pathlib import Path
@@ -12,6 +13,8 @@ from governance.orchestrator.handoff import (
     HandoffStatus,
 )
 from governance.mcp_tools.common import format_mcp_result
+
+logger = logging.getLogger(__name__)
 
 
 def register_handoff_tools(mcp) -> None:
@@ -62,7 +65,9 @@ def register_handoff_tools(mcp) -> None:
             })
 
         except Exception as e:
-            return format_mcp_result({"error": str(e)})
+            # BUG-361-HND-001: Log full error but return only type name to prevent info disclosure
+            logger.error(f"handoff_create failed: {e}", exc_info=True)
+            return format_mcp_result({"error": f"handoff_create failed: {type(e).__name__}"})
 
     @mcp.tool()
     def handoffs_pending(for_agent: Optional[str] = None) -> str:
@@ -77,7 +82,9 @@ def register_handoff_tools(mcp) -> None:
             })
 
         except Exception as e:
-            return format_mcp_result({"error": str(e)})
+            # BUG-361-HND-001: Log full error but return only type name
+            logger.error(f"handoffs_pending failed: {e}", exc_info=True)
+            return format_mcp_result({"error": f"handoffs_pending failed: {type(e).__name__}"})
 
     @mcp.tool()
     def handoff_complete(task_id: str, from_agent: str, to_agent: str,
@@ -114,7 +121,9 @@ def register_handoff_tools(mcp) -> None:
             })
 
         except Exception as e:
-            return format_mcp_result({"error": str(e)})
+            # BUG-361-HND-001: Log full error but return only type name
+            logger.error(f"handoff_complete failed: {e}", exc_info=True)
+            return format_mcp_result({"error": f"handoff_complete failed: {type(e).__name__}"})
 
     @mcp.tool()
     def handoff_get(task_id: str, from_agent: str, to_agent: str) -> str:
@@ -141,7 +150,9 @@ def register_handoff_tools(mcp) -> None:
             })
 
         except Exception as e:
-            return format_mcp_result({"error": str(e)})
+            # BUG-361-HND-001: Log full error but return only type name
+            logger.error(f"handoff_get failed: {e}", exc_info=True)
+            return format_mcp_result({"error": f"handoff_get failed: {type(e).__name__}"})
 
     @mcp.tool()
     def handoff_route(task_id: str) -> str:
@@ -173,4 +184,6 @@ def register_handoff_tools(mcp) -> None:
                                "reason": "Default: Start with research to gather context"})
 
         except Exception as e:
-            return format_mcp_result({"error": str(e)})
+            # BUG-361-HND-001: Log full error but return only type name
+            logger.error(f"handoff_route failed: {e}", exc_info=True)
+            return format_mcp_result({"error": f"handoff_route failed: {type(e).__name__}"})

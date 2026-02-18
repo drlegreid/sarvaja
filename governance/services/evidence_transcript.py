@@ -35,9 +35,11 @@ def find_evidence_file(session_id: str) -> Optional[Path]:
     """Find evidence markdown file matching session_id."""
     if not _EVIDENCE_DIR.is_dir():
         return None
-    # BUG-311-EVID-001: Path containment — prevent directory traversal via session_id
+    # BUG-311-EVID-001 + BUG-358-EVT-001: Path containment — use is_relative_to()
+    # instead of startswith() to prevent prefix-sibling bypass
+    # (e.g. /evidence-evil/ matching /evidence with startswith but NOT is_relative_to)
     candidate = (_EVIDENCE_DIR / f"{session_id}.md").resolve()
-    if not str(candidate).startswith(str(_EVIDENCE_DIR.resolve())):
+    if not candidate.is_relative_to(_EVIDENCE_DIR.resolve()):
         logger.warning(f"Path traversal blocked in find_evidence_file: {session_id}")
         return None
     if candidate.is_file():
@@ -74,6 +76,8 @@ def parse_evidence_transcript(
     include_thinking: bool = True,
     content_limit: int = 2000,
 ) -> Dict[str, Any]:
+    # BUG-358-EVT-002: Cap per_page to prevent unbounded memory from large requests
+    per_page = max(1, min(per_page, 200))
     """Parse evidence .md file into transcript format.
 
     Extracts tool calls and thoughts from the Event Timeline section.

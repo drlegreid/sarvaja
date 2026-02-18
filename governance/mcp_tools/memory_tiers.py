@@ -71,6 +71,10 @@ def register_memory_tier_tools(mcp) -> None:
             Confirmation with memory ID.
         """
         tier = tier.upper()
+        # BUG-361-MEM-002: Cap content size to prevent unbounded ChromaDB storage
+        _MAX_CONTENT_SIZE = 100_000  # 100KB
+        if len(content) > _MAX_CONTENT_SIZE:
+            content = content[:_MAX_CONTENT_SIZE]
         tag_list = [t.strip() for t in (tags or "").split(",") if t.strip()]
         ts = datetime.now().isoformat()
         # BUG-343-MEM-001: Include microseconds + random suffix to prevent ID collision
@@ -164,12 +168,13 @@ def register_memory_tier_tools(mcp) -> None:
                     "status": "saved_typedb_audit",
                 })
             except Exception as e:
-                logger.debug(f"TypeDB audit save failed: {e}")
+                # BUG-361-MEM-001: Log full error but return only type name to prevent info disclosure
+                logger.error(f"TypeDB audit save failed for {memory_id}: {e}", exc_info=True)
                 return format_mcp_result({
                     "memory_id": memory_id,
                     "tier": "L3",
                     "status": "error",
-                    "error": str(e),
+                    "error": f"L3 save failed: {type(e).__name__}",
                 })
 
         return format_mcp_result({"error": f"Unknown tier: {tier}. Use L1, L2, or L3."})

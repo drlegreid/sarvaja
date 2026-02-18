@@ -70,11 +70,11 @@ class RuleCRUDOperations:
         if existing:
             raise ValueError(f"Rule {rule_id} already exists")
 
-        # BUG-RULE-CREATE-NAME-001: Escape all user-provided string fields
-        name_escaped = name.replace('"', '\\"')
-        directive_escaped = directive.replace('"', '\\"')
+        # BUG-RULE-CREATE-NAME-001 + BUG-235-INJ-004: Escape backslash THEN quotes
+        name_escaped = name.replace('\\', '\\\\').replace('"', '\\"')
+        directive_escaped = directive.replace('\\', '\\\\').replace('"', '\\"')
         # BUG-TYPEQL-ESCAPE-RULE-001: Escape rule_id for defense-in-depth
-        rule_id_escaped = rule_id.replace('"', '\\"')
+        rule_id_escaped = rule_id.replace('\\', '\\\\').replace('"', '\\"')
 
         # Build query with optional rule_type
         type_clause = f',\n                has rule-type "{rule_type}"' if rule_type else ''
@@ -124,6 +124,22 @@ class RuleCRUDOperations:
         Returns:
             Updated Rule object or None if not found
         """
+        # BUG-360-RCR-001: Validate update values against allowlists (matches create_rule)
+        valid_categories = ["governance", "technical", "operational", "architecture", "testing",
+                          "reporting", "autonomy", "maintenance", "traceability", "stability",
+                          "strategic", "devops", "development", "workflow", "documentation", "quality", "safety"]
+        valid_priorities = ["CRITICAL", "HIGH", "MEDIUM", "LOW"]
+        valid_statuses = ["ACTIVE", "DRAFT", "DEPRECATED", "PROPOSED", "DISABLED"]
+        valid_types = ["FOUNDATIONAL", "OPERATIONAL", "TECHNICAL", "META", "LEAF"]
+        if category is not None and category not in valid_categories:
+            raise ValueError(f"Invalid category: {category}. Must be one of {valid_categories}")
+        if priority is not None and priority not in valid_priorities:
+            raise ValueError(f"Invalid priority: {priority}. Must be one of {valid_priorities}")
+        if status is not None and status not in valid_statuses:
+            raise ValueError(f"Invalid status: {status}. Must be one of {valid_statuses}")
+        if rule_type is not None and rule_type not in valid_types:
+            raise ValueError(f"Invalid rule_type: {rule_type}. Must be one of {valid_types}")
+
         # Check if rule exists
         existing = self.get_rule_by_id(rule_id)
         if not existing:
@@ -134,80 +150,89 @@ class RuleCRUDOperations:
         # Build update queries for each changed attribute
         updates = []
         new_attrs = []  # For attributes that don't exist yet
+        # BUG-244-INJ-001: Escape backslash THEN quotes for all update values (matches create_rule)
+        def _esc(v: str) -> str:
+            return v.replace('\\', '\\\\').replace('"', '\\"')
+
         if name is not None and name != existing.name:
             # BUG-RULE-NULL-001: Guard against None from corrupted TypeDB data
-            old_name = (existing.name or "").replace('"', '\\"')
-            updates.append(('rule-name', old_name, name.replace('"', '\\"')))
+            old_name = _esc(existing.name or "")
+            updates.append(('rule-name', old_name, _esc(name)))
         if category is not None and category != existing.category:
-            old_cat = (existing.category or "").replace('"', '\\"')
-            updates.append(('category', old_cat, category.replace('"', '\\"')))
+            old_cat = _esc(existing.category or "")
+            updates.append(('category', old_cat, _esc(category)))
         if priority is not None and priority != existing.priority:
-            old_pri = (existing.priority or "").replace('"', '\\"')
-            updates.append(('priority', old_pri, priority.replace('"', '\\"')))
+            old_pri = _esc(existing.priority or "")
+            updates.append(('priority', old_pri, _esc(priority)))
         if status is not None and status != existing.status:
-            old_status = (existing.status or "").replace('"', '\\"')
-            updates.append(('status', old_status, status.replace('"', '\\"')))
+            old_status = _esc(existing.status or "")
+            updates.append(('status', old_status, _esc(status)))
         if directive is not None and directive != existing.directive:
-            old_dir = (existing.directive or "").replace('"', '\\"')
-            updates.append(('directive', old_dir, directive.replace('"', '\\"')))
+            old_dir = _esc(existing.directive or "")
+            updates.append(('directive', old_dir, _esc(directive)))
         if rule_type is not None:
             if existing.rule_type is None:
-                new_attrs.append(('rule-type', rule_type.replace('"', '\\"')))
+                new_attrs.append(('rule-type', _esc(rule_type)))
             elif rule_type != existing.rule_type:
-                updates.append(('rule-type', existing.rule_type.replace('"', '\\"'), rule_type.replace('"', '\\"')))
+                updates.append(('rule-type', _esc(existing.rule_type), _esc(rule_type)))
         if semantic_id is not None:
             if existing.semantic_id is None:
-                new_attrs.append(('semantic-id', semantic_id.replace('"', '\\"')))
+                new_attrs.append(('semantic-id', _esc(semantic_id)))
             elif semantic_id != existing.semantic_id:
-                updates.append(('semantic-id', existing.semantic_id.replace('"', '\\"'), semantic_id.replace('"', '\\"')))
+                updates.append(('semantic-id', _esc(existing.semantic_id), _esc(semantic_id)))
         if applicability is not None:
             # Validate applicability value
             valid_applicability = ["MANDATORY", "RECOMMENDED", "FORBIDDEN", "CONDITIONAL"]
             if applicability not in valid_applicability:
                 raise ValueError(f"Invalid applicability: {applicability}. Must be one of {valid_applicability}")
             if existing.applicability is None:
-                new_attrs.append(('applicability', applicability.replace('"', '\\"')))
+                new_attrs.append(('applicability', _esc(applicability)))
             elif applicability != existing.applicability:
-                updates.append(('applicability', existing.applicability.replace('"', '\\"'), applicability.replace('"', '\\"')))
+                updates.append(('applicability', _esc(existing.applicability), _esc(applicability)))
 
         if not updates and not new_attrs:
             return existing  # Nothing to update
 
-        # BUG-TYPEQL-ESCAPE-RULE-001: Escape rule_id for TypeQL safety
-        rule_id_escaped = rule_id.replace('"', '\\"')
+        # BUG-254-ESC-001: Use _esc() for consistent backslash+quote escaping
+        rule_id_escaped = _esc(rule_id)
 
-        # Execute updates - TypeDB 3.x: driver.transaction() directly
-        with self._driver.transaction(self.database, TransactionType.WRITE) as tx:
-            for attr_type, old_val, new_val in updates:
-                # Delete old attribute and insert new one (TypeDB 3.x: has $var of $entity)
-                delete_query = f'''
-                    match
-                        $r isa rule-entity, has rule-id "{rule_id_escaped}", has {attr_type} $a;
-                        $a == "{old_val}";
-                    delete
-                        has $a of $r;
-                '''
-                tx.query(delete_query).resolve()
+        # BUG-196-003: Wrap transaction in try/except to prevent unhandled propagation
+        try:
+            # Execute updates - TypeDB 3.x: driver.transaction() directly
+            with self._driver.transaction(self.database, TransactionType.WRITE) as tx:
+                for attr_type, old_val, new_val in updates:
+                    # Delete old attribute and insert new one (TypeDB 3.x: has $var of $entity)
+                    delete_query = f'''
+                        match
+                            $r isa rule-entity, has rule-id "{rule_id_escaped}", has {attr_type} $a;
+                            $a == "{old_val}";
+                        delete
+                            has $a of $r;
+                    '''
+                    tx.query(delete_query).resolve()
 
-                insert_query = f'''
-                    match
-                        $r isa rule-entity, has rule-id "{rule_id_escaped}";
-                    insert
-                        $r has {attr_type} "{new_val}";
-                '''
-                tx.query(insert_query).resolve()
+                    insert_query = f'''
+                        match
+                            $r isa rule-entity, has rule-id "{rule_id_escaped}";
+                        insert
+                            $r has {attr_type} "{new_val}";
+                    '''
+                    tx.query(insert_query).resolve()
 
-            # Insert new attributes (that didn't exist before)
-            for attr_type, new_val in new_attrs:
-                insert_query = f'''
-                    match
-                        $r isa rule-entity, has rule-id "{rule_id_escaped}";
-                    insert
-                        $r has {attr_type} "{new_val}";
-                '''
-                tx.query(insert_query).resolve()
+                # Insert new attributes (that didn't exist before)
+                for attr_type, new_val in new_attrs:
+                    insert_query = f'''
+                        match
+                            $r isa rule-entity, has rule-id "{rule_id_escaped}";
+                        insert
+                            $r has {attr_type} "{new_val}";
+                    '''
+                    tx.query(insert_query).resolve()
 
-            tx.commit()
+                tx.commit()
+        except Exception as e:
+            logger.error(f"Failed to update rule {rule_id}: {e}")
+            return None
 
         return self.get_rule_by_id(rule_id)
 
@@ -250,20 +275,25 @@ class RuleCRUDOperations:
 
         from typedb.driver import TransactionType
 
-        # BUG-TYPEQL-ESCAPE-RULE-001: Escape rule_id for TypeQL safety
-        rule_id_escaped = rule_id.replace('"', '\\"')
+        # BUG-254-ESC-001: Escape backslash THEN quotes for TypeQL safety
+        rule_id_escaped = rule_id.replace('\\', '\\\\').replace('"', '\\"')
 
-        # TypeDB 3.x: driver.transaction() directly
-        with self._driver.transaction(self.database, TransactionType.WRITE) as tx:
-            # Delete the rule entity and all its attributes
-            # TypeDB 3.x syntax: delete $r; (not delete $r isa rule-entity;)
-            delete_query = f'''
-                match
-                    $r isa rule-entity, has rule-id "{rule_id_escaped}";
-                delete
-                    $r;
-            '''
-            tx.query(delete_query).resolve()
-            tx.commit()
+        # BUG-196-003: Wrap transaction in try/except to prevent unhandled propagation
+        try:
+            # TypeDB 3.x: driver.transaction() directly
+            with self._driver.transaction(self.database, TransactionType.WRITE) as tx:
+                # Delete the rule entity and all its attributes
+                # TypeDB 3.x syntax: delete $r; (not delete $r isa rule-entity;)
+                delete_query = f'''
+                    match
+                        $r isa rule-entity, has rule-id "{rule_id_escaped}";
+                    delete
+                        $r;
+                '''
+                tx.query(delete_query).resolve()
+                tx.commit()
+        except Exception as e:
+            logger.error(f"Failed to delete rule {rule_id}: {e}")
+            return False
 
         return True
