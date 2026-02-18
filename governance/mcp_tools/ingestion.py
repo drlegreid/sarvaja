@@ -52,7 +52,8 @@ def register_ingestion_tools(mcp) -> None:
                 path, session_id, dry_run=dry_run, resume=resume
             )
         except Exception as e:
-            logger.error(f"ingest_session_content failed for {session_id}: {e}", exc_info=True)
+            # BUG-454-ING-001: Sanitize logger message — exc_info=True already captures full stack
+            logger.error(f"ingest_session_content failed for {session_id}: {type(e).__name__}", exc_info=True)
             return format_mcp_result({"error": f"Ingestion failed: {type(e).__name__}", "session_id": session_id})
         return format_mcp_result(result)
 
@@ -84,7 +85,8 @@ def register_ingestion_tools(mcp) -> None:
         try:
             result = _mine(path, session_id, dry_run=dry_run)
         except Exception as e:
-            logger.error(f"mine_session_links failed for {session_id}: {e}", exc_info=True)
+            # BUG-454-ING-002: Sanitize logger message — exc_info=True already captures full stack
+            logger.error(f"mine_session_links failed for {session_id}: {type(e).__name__}", exc_info=True)
             return format_mcp_result({"error": f"Link mining failed: {type(e).__name__}", "session_id": session_id})
         return format_mcp_result(result)
 
@@ -116,7 +118,8 @@ def register_ingestion_tools(mcp) -> None:
         try:
             result = run_ingestion_pipeline(path, session_id, dry_run=dry_run)
         except Exception as e:
-            logger.error(f"ingest_session_full failed for {session_id}: {e}", exc_info=True)
+            # BUG-454-ING-003: Sanitize logger message — exc_info=True already captures full stack
+            logger.error(f"ingest_session_full failed for {session_id}: {type(e).__name__}", exc_info=True)
             return format_mcp_result({"error": f"Full ingestion failed: {type(e).__name__}", "session_id": session_id})
         return format_mcp_result(result)
 
@@ -136,7 +139,8 @@ def register_ingestion_tools(mcp) -> None:
         try:
             result = get_ingestion_status(session_id)
         except Exception as e:
-            logger.error(f"ingestion_status failed for {session_id}: {e}", exc_info=True)
+            # BUG-454-ING-004: Sanitize logger message — exc_info=True already captures full stack
+            logger.error(f"ingestion_status failed for {session_id}: {type(e).__name__}", exc_info=True)
             return format_mcp_result({"error": f"Status check failed: {type(e).__name__}", "session_id": session_id})
         return format_mcp_result(result)
 

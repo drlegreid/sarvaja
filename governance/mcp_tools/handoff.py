@@ -67,7 +67,8 @@ def register_handoff_tools(mcp) -> None:
 
         except Exception as e:
             # BUG-361-HND-001: Log full error but return only type name to prevent info disclosure
-            logger.error(f"handoff_create failed: {e}", exc_info=True)
+            # BUG-454-HND-001: Sanitize logger message — exc_info=True already captures full stack
+            logger.error(f"handoff_create failed: {type(e).__name__}", exc_info=True)
             return format_mcp_result({"error": f"handoff_create failed: {type(e).__name__}"})
 
     @mcp.tool()
@@ -84,7 +85,8 @@ def register_handoff_tools(mcp) -> None:
 
         except Exception as e:
             # BUG-361-HND-001: Log full error but return only type name
-            logger.error(f"handoffs_pending failed: {e}", exc_info=True)
+            # BUG-454-HND-002: Sanitize logger message — exc_info=True already captures full stack
+            logger.error(f"handoffs_pending failed: {type(e).__name__}", exc_info=True)
             return format_mcp_result({"error": f"handoffs_pending failed: {type(e).__name__}"})
 
     @mcp.tool()
@@ -123,7 +125,8 @@ def register_handoff_tools(mcp) -> None:
 
         except Exception as e:
             # BUG-361-HND-001: Log full error but return only type name
-            logger.error(f"handoff_complete failed: {e}", exc_info=True)
+            # BUG-454-HND-003: Sanitize logger message — exc_info=True already captures full stack
+            logger.error(f"handoff_complete failed: {type(e).__name__}", exc_info=True)
             return format_mcp_result({"error": f"handoff_complete failed: {type(e).__name__}"})
 
     @mcp.tool()
@@ -153,7 +156,8 @@ def register_handoff_tools(mcp) -> None:
 
         except Exception as e:
             # BUG-361-HND-001: Log full error but return only type name
-            logger.error(f"handoff_get failed: {e}", exc_info=True)
+            # BUG-454-HND-004: Sanitize logger message — exc_info=True already captures full stack
+            logger.error(f"handoff_get failed: {type(e).__name__}", exc_info=True)
             return format_mcp_result({"error": f"handoff_get failed: {type(e).__name__}"})
 
     @mcp.tool()
@@ -187,5 +191,6 @@ def register_handoff_tools(mcp) -> None:
 
         except Exception as e:
             # BUG-361-HND-001: Log full error but return only type name
-            logger.error(f"handoff_route failed: {e}", exc_info=True)
+            # BUG-454-HND-005: Sanitize logger message — exc_info=True already captures full stack
+            logger.error(f"handoff_route failed: {type(e).__name__}", exc_info=True)
             return format_mcp_result({"error": f"handoff_route failed: {type(e).__name__}"})

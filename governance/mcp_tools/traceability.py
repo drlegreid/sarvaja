@@ -128,7 +128,8 @@ def register_traceability_tools(mcp) -> None:
                 return format_mcp_result(result)
         except Exception as e:
             # BUG-361-TRC-001: Log full error but return only type name to prevent info disclosure
-            logger.error(f"trace_task_chain failed: {e}", exc_info=True)
+            # BUG-454-TRC-001: Sanitize logger message — exc_info=True already captures full stack
+            logger.error(f"trace_task_chain failed: {type(e).__name__}", exc_info=True)
             return format_mcp_result({"error": f"trace_task_chain failed: {type(e).__name__}"})
 
     @mcp.tool()
@@ -159,7 +160,8 @@ def register_traceability_tools(mcp) -> None:
                 return format_mcp_result(result)
         except Exception as e:
             # BUG-361-TRC-001: Log full error but return only type name to prevent info disclosure
-            logger.error(f"trace_session_chain failed: {e}", exc_info=True)
+            # BUG-454-TRC-002: Sanitize logger message — exc_info=True already captures full stack
+            logger.error(f"trace_session_chain failed: {type(e).__name__}", exc_info=True)
             return format_mcp_result({"error": f"trace_session_chain failed: {type(e).__name__}"})
 
     @mcp.tool()
@@ -208,7 +210,8 @@ def register_traceability_tools(mcp) -> None:
                 return format_mcp_result(result)
         except Exception as e:
             # BUG-361-TRC-001: Log full error but return only type name to prevent info disclosure
-            logger.error(f"trace_rule_chain failed: {e}", exc_info=True)
+            # BUG-454-TRC-003: Sanitize logger message — exc_info=True already captures full stack
+            logger.error(f"trace_rule_chain failed: {type(e).__name__}", exc_info=True)
             return format_mcp_result({"error": f"trace_rule_chain failed: {type(e).__name__}"})
 
     @mcp.tool()
@@ -269,7 +272,8 @@ def register_traceability_tools(mcp) -> None:
                 })
         except Exception as e:
             # BUG-361-TRC-001: Log full error but return only type name to prevent info disclosure
-            logger.error(f"trace_gap_chain failed: {e}", exc_info=True)
+            # BUG-454-TRC-004: Sanitize logger message — exc_info=True already captures full stack
+            logger.error(f"trace_gap_chain failed: {type(e).__name__}", exc_info=True)
             return format_mcp_result({"error": f"trace_gap_chain failed: {type(e).__name__}"})
 
     @mcp.tool()
@@ -340,5 +344,6 @@ def register_traceability_tools(mcp) -> None:
                 })
         except Exception as e:
             # BUG-361-TRC-001: Log full error but return only type name to prevent info disclosure
-            logger.error(f"trace_evidence_chain failed: {e}", exc_info=True)
+            # BUG-454-TRC-005: Sanitize logger message — exc_info=True already captures full stack
+            logger.error(f"trace_evidence_chain failed: {type(e).__name__}", exc_info=True)
             return format_mcp_result({"error": f"trace_evidence_chain failed: {type(e).__name__}"})

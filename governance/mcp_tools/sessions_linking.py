@@ -97,7 +97,8 @@ def register_session_linking_tools(mcp) -> None:
 
         # BUG-362-SL-001: Log full error but return only type name to prevent info disclosure
         except Exception as e:
-            logger.error(f"session_get_tasks failed: {e}", exc_info=True)
+            # BUG-454-SL-001: Sanitize logger message — exc_info=True already captures full stack
+            logger.error(f"session_get_tasks failed: {type(e).__name__}", exc_info=True)
             return format_mcp_result({"error": f"session_get_tasks failed: {type(e).__name__}"})
 
     @mcp.tool()
@@ -146,7 +147,8 @@ def register_session_linking_tools(mcp) -> None:
 
         # BUG-362-SL-001: Log full error but return only type name to prevent info disclosure
         except Exception as e:
-            logger.error(f"session_link_rule failed: {e}", exc_info=True)
+            # BUG-454-SL-002: Sanitize logger message — exc_info=True already captures full stack
+            logger.error(f"session_link_rule failed: {type(e).__name__}", exc_info=True)
             return format_mcp_result({"error": f"session_link_rule failed: {type(e).__name__}"})
 
     @mcp.tool()
@@ -195,7 +197,8 @@ def register_session_linking_tools(mcp) -> None:
 
         # BUG-362-SL-001: Log full error but return only type name to prevent info disclosure
         except Exception as e:
-            logger.error(f"session_link_decision failed: {e}", exc_info=True)
+            # BUG-454-SL-003: Sanitize logger message — exc_info=True already captures full stack
+            logger.error(f"session_link_decision failed: {type(e).__name__}", exc_info=True)
             return format_mcp_result({"error": f"session_link_decision failed: {type(e).__name__}"})
 
     @mcp.tool()
@@ -244,5 +247,6 @@ def register_session_linking_tools(mcp) -> None:
 
         # BUG-362-SL-001: Log full error but return only type name to prevent info disclosure
         except Exception as e:
-            logger.error(f"session_link_evidence failed: {e}", exc_info=True)
+            # BUG-454-SL-004: Sanitize logger message — exc_info=True already captures full stack
+            logger.error(f"session_link_evidence failed: {type(e).__name__}", exc_info=True)
             return format_mcp_result({"error": f"session_link_evidence failed: {type(e).__name__}"})

@@ -170,7 +170,8 @@ def register_memory_tier_tools(mcp) -> None:
                 })
             except Exception as e:
                 # BUG-361-MEM-001: Log full error but return only type name to prevent info disclosure
-                logger.error(f"TypeDB audit save failed for {memory_id}: {e}", exc_info=True)
+                # BUG-454-MEM-001: Sanitize logger message — exc_info=True already captures full stack
+                logger.error(f"TypeDB audit save failed for {memory_id}: {type(e).__name__}", exc_info=True)
                 return format_mcp_result({
                     "memory_id": memory_id,
                     "tier": "L3",
