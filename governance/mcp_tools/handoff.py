@@ -60,7 +60,8 @@ def register_handoff_tools(mcp) -> None:
             return format_mcp_result({
                 "status": "created",
                 "handoff": handoff.to_dict(),
-                "evidence_file": str(filepath),
+                # BUG-385-HND-001: Use filename only, not absolute path, in MCP response
+                "evidence_file": filepath.name,
                 "message": f"Handoff created for {to_agent} agent"
             })
 
@@ -146,7 +147,8 @@ def register_handoff_tools(mcp) -> None:
 
             return format_mcp_result({
                 "handoff": handoff.to_dict(),
-                "evidence_file": str(filepath)
+                # BUG-385-HND-002: Use filename only, not absolute path
+                "evidence_file": filepath.name
             })
 
         except Exception as e:

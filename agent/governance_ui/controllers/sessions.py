@@ -271,7 +271,8 @@ def register_sessions_controllers(state: Any, ctrl: Any, api_base_url: str) -> N
             add_error_trace(state, f"Save session failed: {e}", "/api/sessions")
             state.is_loading = False
             state.has_error = True
-            state.error_message = f"Failed to save session: {str(e)}"
+            # BUG-385-SES-001: Don't leak httpx internals (URLs, connection errors) via Trame WebSocket
+            state.error_message = f"Failed to save session: {type(e).__name__}"
 
     @ctrl.trigger("delete_session")
     def delete_session():
@@ -312,7 +313,8 @@ def register_sessions_controllers(state: Any, ctrl: Any, api_base_url: str) -> N
             add_error_trace(state, f"Delete session failed: {e}", f"/api/sessions/{session_id}")
             state.is_loading = False
             state.has_error = True
-            state.error_message = f"Failed to delete session: {str(e)}"
+            # BUG-385-SES-002: Don't leak httpx internals via Trame WebSocket
+            state.error_message = f"Failed to delete session: {type(e).__name__}"
 
     @ctrl.trigger("attach_evidence")
     def attach_evidence(session_id: str, evidence_path: str):
@@ -355,4 +357,5 @@ def register_sessions_controllers(state: Any, ctrl: Any, api_base_url: str) -> N
             add_error_trace(state, f"Attach evidence failed: {e}", f"/api/sessions/{session_id}/evidence")
             state.evidence_attach_loading = False
             state.has_error = True
-            state.error_message = f"Failed to attach evidence: {str(e)}"
+            # BUG-385-SES-003: Don't leak httpx internals via Trame WebSocket
+            state.error_message = f"Failed to attach evidence: {type(e).__name__}"

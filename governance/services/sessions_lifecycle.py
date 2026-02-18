@@ -84,16 +84,27 @@ def end_session(
         try:
             session = client.get_session(session_id)
             if session:
+                # BUG-228-SESSIONS-003: Guard against double-complete in TypeDB path
+                # BUG-385-LCY-001: Handle both dict and dataclass session objects
+                _status = session.get("status") if isinstance(session, dict) else getattr(session, 'status', None)
+                if _status == "COMPLETED":
+                    raise ValueError(f"Session {session_id} already completed")
                 updated = client.end_session(session_id)
                 if updated:
+                    # BUG-261-LIFECYCLE-001: Capture end_time once for consistency
+                    end_time_str = datetime.now().isoformat()
                     # Auto-generate evidence when none provided (P0 fix)
                     if evidence_files is None:
                         try:
-                            session_dict = dict(session) if not isinstance(session, dict) else session
-                            session_dict["status"] = "COMPLETED"
-                            session_dict["end_time"] = datetime.now().isoformat()
+                            # BUG-189-001: Use dataclasses.asdict for Session entity, not dict()
+                            import dataclasses
+                            session_dict = dataclasses.asdict(session) if not isinstance(session, dict) else session
+                            # BUG-213-LIFECYCLE-UPDATE-001: Merge store FIRST, then set
+                            # status/end_time to prevent stale "ACTIVE" overwrite
                             if session_id in _sessions_store:
                                 session_dict.update(_sessions_store[session_id])
+                            session_dict["status"] = "COMPLETED"
+                            session_dict["end_time"] = end_time_str
                             auto_path = generate_session_evidence(session_dict)
                             if auto_path:
                                 evidence_files = [auto_path]
@@ -106,13 +117,14 @@ def end_session(
                             try:
                                 client.link_evidence_to_session(session_id, ef)
                             except Exception as le:
-                                logger.debug(f"TypeDB evidence link {session_id}->{ef}: {le}")
+                                # BUG-LIFECYCLE-EVIDENCE-LOG-001: WARNING not DEBUG — data integrity
+                                logger.warning(f"TypeDB evidence link failed {session_id}->{ef}: {le}")
                     # Also update _sessions_store for consistent fallback
                     # (TypeDB derives tasks_completed from relations, but chat
                     # sessions store tool_call count here for API visibility)
                     if session_id in _sessions_store:
                         _sessions_store[session_id]["status"] = "COMPLETED"
-                        _sessions_store[session_id]["end_time"] = datetime.now().isoformat()
+                        _sessions_store[session_id]["end_time"] = end_time_str
                         if tasks_completed is not None:
                             _sessions_store[session_id]["tasks_completed"] = tasks_completed
                         if evidence_files is not None:
@@ -124,6 +136,9 @@ def end_session(
                     log_event("session", "end", session_id=session_id, source=source)
                     return session_to_response(updated)
                 return None
+        except ValueError:
+            # BUG-242-LCY-001: Re-raise ValueError (double-complete) instead of swallowing
+            raise
         except Exception as e:
             logger.warning(f"TypeDB session end failed, using fallback: {e}")
 

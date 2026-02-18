@@ -191,7 +191,13 @@ class TestHandoffGet:
             mock_filepath = MagicMock()
             mock_filepath.exists.return_value = True
             mock_filepath.__str__ = MagicMock(return_value="/evidence/file.md")
-            mock_path_cls.return_value.__truediv__ = MagicMock(return_value=mock_filepath)
+            # BUG-385-HND-002: handoff_get now uses filepath.name instead of str(filepath)
+            mock_filepath.name = "file.md"
+            # evidence_dir = Path(__file__).parent.parent.parent / "evidence"
+            # filepath = evidence_dir / filename — configure full chain
+            mock_evidence_dir = MagicMock()
+            mock_evidence_dir.__truediv__ = MagicMock(return_value=mock_filepath)
+            mock_path_cls.return_value.parent.parent.parent.__truediv__ = MagicMock(return_value=mock_evidence_dir)
             with patch(f"{_P}.read_handoff_evidence", return_value=handoff):
                 result = json.loads(tools["handoff_get"](
                     task_id="T-1", from_agent="R", to_agent="C",

@@ -44,8 +44,9 @@ class TaskRelationshipOperations:
         from typedb.driver import TransactionType
 
         # BUG-254-ESC-003: Escape backslash THEN quotes for TypeQL safety
-        child_esc = child_task_id.replace('\\', '\\\\').replace('"', '\\"')
-        parent_esc = parent_task_id.replace('\\', '\\\\').replace('"', '\\"')
+        # BUG-385-REL-001: Also strip control chars that can break TypeQL queries
+        child_esc = child_task_id.replace('\\', '\\\\').replace('"', '\\"').replace('\n', '').replace('\r', '').replace('\t', '')
+        parent_esc = parent_task_id.replace('\\', '\\\\').replace('"', '\\"').replace('\n', '').replace('\r', '').replace('\t', '')
 
         try:
             with self._driver.transaction(self.database, TransactionType.WRITE) as tx:
@@ -84,8 +85,9 @@ class TaskRelationshipOperations:
         from typedb.driver import TransactionType
 
         # BUG-254-ESC-003: Escape backslash THEN quotes for TypeQL safety
-        blocker_esc = blocking_task_id.replace('\\', '\\\\').replace('"', '\\"')
-        blocked_esc = blocked_task_id.replace('\\', '\\\\').replace('"', '\\"')
+        # BUG-385-REL-001: Also strip control chars that can break TypeQL queries
+        blocker_esc = blocking_task_id.replace('\\', '\\\\').replace('"', '\\"').replace('\n', '').replace('\r', '').replace('\t', '')
+        blocked_esc = blocked_task_id.replace('\\', '\\\\').replace('"', '\\"').replace('\n', '').replace('\r', '').replace('\t', '')
 
         try:
             with self._driver.transaction(self.database, TransactionType.WRITE) as tx:
@@ -124,8 +126,9 @@ class TaskRelationshipOperations:
         from typedb.driver import TransactionType
 
         # BUG-254-ESC-003: Escape backslash THEN quotes for TypeQL safety
-        a_esc = task_id_a.replace('\\', '\\\\').replace('"', '\\"')
-        b_esc = task_id_b.replace('\\', '\\\\').replace('"', '\\"')
+        # BUG-385-REL-001: Also strip control chars that can break TypeQL queries
+        a_esc = task_id_a.replace('\\', '\\\\').replace('"', '\\"').replace('\n', '').replace('\r', '').replace('\t', '')
+        b_esc = task_id_b.replace('\\', '\\\\').replace('"', '\\"').replace('\n', '').replace('\r', '').replace('\t', '')
 
         try:
             with self._driver.transaction(self.database, TransactionType.WRITE) as tx:
@@ -146,7 +149,8 @@ class TaskRelationshipOperations:
     def get_task_children(self, task_id: str) -> List[str]:
         """Get child tasks of a parent task."""
         # BUG-196-009: Escape task_id for TypeQL safety
-        tid = task_id.replace('\\', '\\\\').replace('"', '\\"')
+        # BUG-385-REL-001: Also strip control chars that can break TypeQL queries
+        tid = task_id.replace('\\', '\\\\').replace('"', '\\"').replace('\n', '').replace('\r', '').replace('\t', '')
         query = f"""
             match
                 $parent isa task, has task-id "{tid}";
@@ -160,7 +164,8 @@ class TaskRelationshipOperations:
     def get_task_parent(self, task_id: str) -> Optional[str]:
         """Get parent task of a child task."""
         # BUG-196-009: Escape task_id for TypeQL safety
-        tid = task_id.replace('\\', '\\\\').replace('"', '\\"')
+        # BUG-385-REL-001: Also strip control chars that can break TypeQL queries
+        tid = task_id.replace('\\', '\\\\').replace('"', '\\"').replace('\n', '').replace('\r', '').replace('\t', '')
         query = f"""
             match
                 $child isa task, has task-id "{tid}";
@@ -174,7 +179,8 @@ class TaskRelationshipOperations:
     def get_tasks_blocking(self, task_id: str) -> List[str]:
         """Get tasks that block this task."""
         # BUG-196-009: Escape task_id for TypeQL safety
-        tid = task_id.replace('\\', '\\\\').replace('"', '\\"')
+        # BUG-385-REL-001: Also strip control chars that can break TypeQL queries
+        tid = task_id.replace('\\', '\\\\').replace('"', '\\"').replace('\n', '').replace('\r', '').replace('\t', '')
         query = f"""
             match
                 $blocked isa task, has task-id "{tid}";
@@ -188,7 +194,8 @@ class TaskRelationshipOperations:
     def get_tasks_blocked_by(self, task_id: str) -> List[str]:
         """Get tasks that this task blocks."""
         # BUG-196-009: Escape task_id for TypeQL safety
-        tid = task_id.replace('\\', '\\\\').replace('"', '\\"')
+        # BUG-385-REL-001: Also strip control chars that can break TypeQL queries
+        tid = task_id.replace('\\', '\\\\').replace('"', '\\"').replace('\n', '').replace('\r', '').replace('\t', '')
         query = f"""
             match
                 $blocker isa task, has task-id "{tid}";
@@ -202,7 +209,8 @@ class TaskRelationshipOperations:
     def get_related_tasks(self, task_id: str) -> List[str]:
         """Get tasks related to this task."""
         # BUG-196-009: Escape task_id for TypeQL safety
-        tid = task_id.replace('\\', '\\\\').replace('"', '\\"')
+        # BUG-385-REL-001: Also strip control chars that can break TypeQL queries
+        tid = task_id.replace('\\', '\\\\').replace('"', '\\"').replace('\n', '').replace('\r', '').replace('\t', '')
         query = f"""
             match
                 $t isa task, has task-id "{tid}";

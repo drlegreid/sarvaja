@@ -105,7 +105,8 @@ def register_trust_controllers(state: Any, ctrl: Any, api_base_url: str) -> None
                     state.status_message = f"Failed to toggle agent: {response.status_code}"
         except Exception as e:
             add_error_trace(state, f"Toggle agent pause failed: {e}", f"/api/agents/{agent_id}/status/toggle")
-            state.status_message = f"Error toggling agent: {e}"
+            # BUG-385-TRS-001: Don't leak httpx internals via Trame WebSocket
+            state.status_message = f"Error toggling agent: {type(e).__name__}"
 
     @ctrl.trigger("stop_agent_task")
     def stop_agent_task(agent_id):
@@ -145,7 +146,8 @@ def register_trust_controllers(state: Any, ctrl: Any, api_base_url: str) -> None
                     state.status_message = f"Registration failed: {response.status_code}"
         except Exception as e:
             add_error_trace(state, f"Register agent failed: {e}", "/api/agents")
-            state.status_message = f"Error: {e}"
+            # BUG-385-TRS-002: Don't leak httpx internals via Trame WebSocket
+            state.status_message = f"Registration failed: {type(e).__name__}"
 
     @ctrl.trigger("load_trust_history")
     def load_trust_history(agent_id):

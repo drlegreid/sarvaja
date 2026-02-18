@@ -27,27 +27,45 @@ class RuleInferenceQueries:
         Get all rules that a given rule depends on (including transitive).
         Uses TypeDB inference to find transitive dependencies.
         """
+        # BUG-255-ESC-001: Escape backslash THEN quotes for TypeQL safety
+        # BUG-385-INF-001: Also strip control chars that can break TypeQL queries
+        rid = rule_id.replace('\\', '\\\\').replace('"', '\\"').replace('\n', '').replace('\r', '').replace('\t', '')
         query = f"""
             match
-                $r1 isa rule-entity, has rule-id "{rule_id}";
+                $r1 isa rule-entity, has rule-id "{rid}";
                 (dependent: $r1, dependency: $r2) isa rule-dependency;
                 $r2 has rule-id $dep_id;
             select $dep_id;
         """
-        results = self._execute_query(query, infer=True)
-        return [r.get("dep_id") for r in results]
+        # BUG-289-INF-001: Guard _execute_query against DB unavailability
+        try:
+            results = self._execute_query(query, infer=True)
+        except Exception as e:
+            # BUG-385-INF-002: Add exc_info for stack trace visibility
+            logger.error(f"get_rule_dependencies query failed for {rule_id}: {e}", exc_info=True)
+            return []
+        return [r.get("dep_id") for r in results if r.get("dep_id")]
 
     def get_rules_depending_on(self, rule_id: str) -> List[str]:
         """Get all rules that depend on a given rule."""
+        # BUG-255-ESC-001: Escape backslash THEN quotes for TypeQL safety
+        # BUG-385-INF-001: Also strip control chars that can break TypeQL queries
+        rid = rule_id.replace('\\', '\\\\').replace('"', '\\"').replace('\n', '').replace('\r', '').replace('\t', '')
         query = f"""
             match
                 $r1 isa rule-entity, has rule-id $id;
-                $r2 isa rule-entity, has rule-id "{rule_id}";
+                $r2 isa rule-entity, has rule-id "{rid}";
                 (dependent: $r1, dependency: $r2) isa rule-dependency;
             select $id;
         """
-        results = self._execute_query(query, infer=True)
-        return [r.get("id") for r in results]
+        # BUG-289-INF-001: Guard _execute_query against DB unavailability
+        try:
+            results = self._execute_query(query, infer=True)
+        except Exception as e:
+            # BUG-385-INF-002: Add exc_info for stack trace visibility
+            logger.error(f"get_rules_depending_on query failed for {rule_id}: {e}", exc_info=True)
+            return []
+        return [r.get("id") for r in results if r.get("id")]
 
     def find_conflicts(self) -> List[Dict[str, str]]:
         """
@@ -61,8 +79,14 @@ class RuleInferenceQueries:
                 $r2 has rule-id $id2;
             select $id1, $id2;
         """
-        results = self._execute_query(query, infer=True)
-        return [{"rule1": r.get("id1"), "rule2": r.get("id2")} for r in results]
+        # BUG-289-INF-001: Guard _execute_query against DB unavailability
+        try:
+            results = self._execute_query(query, infer=True)
+        except Exception as e:
+            # BUG-385-INF-002: Add exc_info for stack trace visibility
+            logger.error(f"find_conflicts query failed: {e}", exc_info=True)
+            return []
+        return [{"rule1": r.get("id1"), "rule2": r.get("id2")} for r in results if r.get("id1") and r.get("id2")]
 
     def create_rule_dependency(self, dependent_id: str, dependency_id: str) -> bool:
         """
@@ -78,11 +102,15 @@ class RuleInferenceQueries:
         from typedb.driver import TransactionType
 
         try:
+            # BUG-255-ESC-001: Escape backslash THEN quotes for TypeQL safety
+            # BUG-385-INF-001: Also strip control chars that can break TypeQL queries
+            dep_id_esc = dependent_id.replace('\\', '\\\\').replace('"', '\\"').replace('\n', '').replace('\r', '').replace('\t', '')
+            dep_on_esc = dependency_id.replace('\\', '\\\\').replace('"', '\\"').replace('\n', '').replace('\r', '').replace('\t', '')
             with self._driver.transaction(self.database, TransactionType.WRITE) as tx:
                 query = f"""
                     match
-                        $r1 isa rule-entity, has rule-id "{dependent_id}";
-                        $r2 isa rule-entity, has rule-id "{dependency_id}";
+                        $r1 isa rule-entity, has rule-id "{dep_id_esc}";
+                        $r2 isa rule-entity, has rule-id "{dep_on_esc}";
                     insert
                         (dependent: $r1, dependency: $r2) isa rule-dependency;
                 """
@@ -99,12 +127,21 @@ class RuleInferenceQueries:
         Get all rules affected by a decision (including cascaded supersedes).
         Uses inference to follow supersede chains.
         """
+        # BUG-255-ESC-001: Escape backslash THEN quotes for TypeQL safety
+        # BUG-385-INF-001: Also strip control chars that can break TypeQL queries
+        did = decision_id.replace('\\', '\\\\').replace('"', '\\"').replace('\n', '').replace('\r', '').replace('\t', '')
         query = f"""
             match
-                $d isa decision, has decision-id "{decision_id}";
+                $d isa decision, has decision-id "{did}";
                 (affecting-decision: $d, affected-rule: $r) isa decision-affects;
                 $r has rule-id $rid;
             select $rid;
         """
-        results = self._execute_query(query, infer=True)
-        return [r.get("rid") for r in results]
+        # BUG-289-INF-001: Guard _execute_query against DB unavailability
+        try:
+            results = self._execute_query(query, infer=True)
+        except Exception as e:
+            # BUG-385-INF-002: Add exc_info for stack trace visibility
+            logger.error(f"get_decision_impacts query failed for {decision_id}: {e}", exc_info=True)
+            return []
+        return [r.get("rid") for r in results if r.get("rid")]
