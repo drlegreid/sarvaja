@@ -126,7 +126,8 @@ def register_memory_tier_tools(mcp) -> None:
                         "status": "saved_chromadb",
                     })
             except Exception as e:
-                logger.debug(f"ChromaDB save failed, falling back to L1: {e}")
+                # BUG-416-MEM-001: Upgrade debug→warning + exc_info for ChromaDB failure
+                logger.warning(f"ChromaDB save failed, falling back to L1: {type(e).__name__}", exc_info=True)
 
             # Fallback: save to L1 with L2 marker
             # BUG-331-MEM-001: Thread-safe access to _short_memory
@@ -241,7 +242,8 @@ def register_memory_tier_tools(mcp) -> None:
                             "created": meta.get("created", ""),
                         })
             except Exception as e:
-                logger.debug(f"ChromaDB recall failed: {e}")
+                # BUG-416-MEM-002: Upgrade debug→warning + exc_info for ChromaDB failure
+                logger.warning(f"ChromaDB recall failed: {type(e).__name__}", exc_info=True)
 
         # L3: Search audit trail (keyword match)
         if not tier or tier.upper() == "L3":
@@ -262,7 +264,8 @@ def register_memory_tier_tools(mcp) -> None:
                         if len([r for r in results["results"] if r["tier"] == "L3"]) >= limit:
                             break
             except Exception as e:
-                logger.debug(f"Audit recall failed: {e}")
+                # BUG-416-MEM-003: Upgrade debug→warning + exc_info for audit failure
+                logger.warning(f"Audit recall failed: {type(e).__name__}", exc_info=True)
 
         results["total"] = len(results["results"])
         return format_mcp_result(results)

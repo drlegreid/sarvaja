@@ -83,7 +83,8 @@ def estimate_ingestion(jsonl_path: Path) -> dict[str, Any]:
     est_chunks = max(1, est_content_lines * 2)  # ~2 chunks per content line
 
     return {
-        "file": str(path),
+        # BUG-415-ORC-001: Redact absolute path from API response (matches error path fix)
+        "file": path.name,
         "size_bytes": size_bytes,
         "size_mb": round(size_mb, 1),
         "line_count": line_count,

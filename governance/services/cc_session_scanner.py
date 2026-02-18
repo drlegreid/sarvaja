@@ -115,7 +115,8 @@ def scan_jsonl_metadata(filepath: Path) -> Optional[Dict[str, Any]]:
             "file_size": file_size,
         }
     except Exception as e:
-        logger.warning(f"Failed to scan {filepath.name}: {e}")
+        # BUG-415-SCN-001: Add exc_info for stack trace preservation
+        logger.warning(f"Failed to scan {filepath.name}: {e}", exc_info=True)
         return None
 
 
@@ -142,7 +143,8 @@ def discover_cc_projects() -> list[Dict[str, Any]]:
         entries = list(DEFAULT_CC_DIR.iterdir())
     except OSError as e:
         # BUG-SCANNER-001: Guard against directory vanishing between check and iteration
-        logger.debug(f"CC directory iteration failed: {e}")
+        # BUG-415-SCN-002: Upgrade debug→warning for operational OSError + exc_info
+        logger.warning(f"CC directory iteration failed: {e}", exc_info=True)
         return []
     for d in entries:
         if not d.is_dir() or d.name.startswith("."):

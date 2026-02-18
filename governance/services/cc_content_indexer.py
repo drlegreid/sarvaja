@@ -166,8 +166,9 @@ def index_session_content(
 
     # BUG-194-002: Guard against missing JSONL file before streaming
     if not Path(jsonl_path).exists():
-        msg = f"JSONL file not found: {jsonl_path}"
-        logger.error(msg)
+        # BUG-415-IDX-001: Redact absolute path from error response
+        msg = f"JSONL file not found: {Path(jsonl_path).name}"
+        logger.error(f"JSONL file not found: {jsonl_path}")
         return {**result, "status": "error", "errors": [msg]}
 
     # Stream entries from JSONL

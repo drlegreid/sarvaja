@@ -194,7 +194,8 @@ def register_traceability_tools(mcp) -> None:
                         task_ids = [r.get("tid", r.get("task-id", "")) for r in rows if r]
                     # BUG-276-TRACE-001: Log instead of silently swallowing
                     except Exception as e:
-                        logger.debug(f"trace_rule_chain query failed for {rule_id}: {e}")
+                        # BUG-416-TRC-001: Upgrade debug→warning + exc_info for TypeDB failure
+                        logger.warning(f"trace_rule_chain query failed for {rule_id}: {type(e).__name__}", exc_info=True)
                         task_ids = []
 
                     tasks = [_trace_task(client, tid) for tid in task_ids if tid]
@@ -234,7 +235,8 @@ def register_traceability_tools(mcp) -> None:
                     task_ids = [r.get("tid", r.get("task-id", "")) for r in rows if r]
                 # BUG-276-TRACE-001: Log instead of silently swallowing
                 except Exception as e:
-                    logger.debug(f"trace_gap_chain query failed for {gap_id}: {e}")
+                    # BUG-416-TRC-002: Upgrade debug→warning + exc_info for TypeDB failure
+                    logger.warning(f"trace_gap_chain query failed for {gap_id}: {type(e).__name__}", exc_info=True)
                     task_ids = []
 
                 if not task_ids:
@@ -297,7 +299,8 @@ def register_traceability_tools(mcp) -> None:
                     task_ids = [r.get("tid", r.get("task-id", "")) for r in rows if r]
                 # BUG-276-TRACE-001: Log instead of silently swallowing
                 except Exception as e:
-                    logger.debug(f"trace_evidence_chain task query failed for {evidence_path}: {e}")
+                    # BUG-416-TRC-003: Upgrade debug→warning + exc_info for TypeDB failure
+                    logger.warning(f"trace_evidence_chain task query failed: {type(e).__name__}", exc_info=True)
                     task_ids = []
 
                 # Find sessions linked to this evidence
@@ -312,7 +315,8 @@ def register_traceability_tools(mcp) -> None:
                     session_ids = [r.get("sid", r.get("session-id", "")) for r in rows_s if r]
                 # BUG-276-TRACE-001: Log instead of silently swallowing
                 except Exception as e:
-                    logger.debug(f"trace_evidence_chain session query failed for {evidence_path}: {e}")
+                    # BUG-416-TRC-004: Upgrade debug→warning + exc_info for TypeDB failure
+                    logger.warning(f"trace_evidence_chain session query failed: {type(e).__name__}", exc_info=True)
                     session_ids = []
 
                 tasks = []

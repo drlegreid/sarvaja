@@ -83,7 +83,9 @@ class DSMTracker:
         # BUG-245-TRK-001: Guard against unknown/aborted phase values
         try:
             return DSPPhase(self.current_cycle.current_phase)
-        except ValueError:
+        except ValueError as e:
+            # BUG-417-TRK-001: Bind exception + log unrecognised phase value
+            logger.warning(f"DSMTracker: unrecognised phase value {self.current_cycle.current_phase!r}, defaulting to IDLE", exc_info=True)
             return DSPPhase.IDLE
 
     def advance_phase(self, force: bool = False) -> DSPPhase:

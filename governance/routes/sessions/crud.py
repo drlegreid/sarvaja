@@ -96,7 +96,8 @@ async def list_sessions(
                 items.append(_ensure_response(s))
             except Exception as e:
                 sid = s.get("session_id", "?") if isinstance(s, dict) else "?"
-                logger.warning(f"Skipping malformed session {sid}: {e}")
+                # BUG-414-CRD-001: Add exc_info for stack trace preservation
+                logger.warning(f"Skipping malformed session {sid}: {e}", exc_info=True)
         pagination.returned = len(items)
         return PaginatedSessionResponse(
             items=items,
@@ -229,8 +230,9 @@ async def end_session(session_id: str, data: Optional[SessionEnd] = None):
         raise
     # BUG-381-SES-002: Log full error but return only type name to prevent info disclosure
     except ValueError as e:
-        logger.warning(f"end_session conflict: {e}")
-        raise HTTPException(status_code=409, detail=f"Session conflict: {type(e).__name__}")
+        # BUG-414-CRD-002: Add exc_info for stack trace preservation
+        logger.warning(f"end_session conflict: {e}", exc_info=True)
+        raise HTTPException(status_code=409, detail="Session conflict")
     except Exception as e:
         # BUG-352-INF-001: Log full error but return generic message to prevent info disclosure
         logger.error(f"Failed to end session {session_id}: {e}", exc_info=True)

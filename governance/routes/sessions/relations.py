@@ -138,7 +138,8 @@ async def get_session_evidence(session_id: str):
         except HTTPException:
             raise
         except Exception as e:
-            logger.warning(f"TypeDB evidence query failed, using fallback: {e}")
+            # BUG-414-REL-001: Add exc_info for stack trace preservation
+            logger.warning(f"TypeDB evidence query failed, using fallback: {e}", exc_info=True)
 
     # H-SESSION-002: Filesystem fallback — scan evidence/ for matching files
     if not evidence:
