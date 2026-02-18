@@ -222,4 +222,5 @@ class TestLoadRobotSummary:
 
         triggers["load_robot_summary"]()
         assert state.robot_summary["available"] is False
-        assert "timeout" in state.robot_summary["message"]
+        # BUG-453-TST-008: message now contains type(e).__name__ (not str(e)) to prevent info disclosure
+        assert state.robot_summary["message"] == "Exception"

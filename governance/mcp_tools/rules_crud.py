@@ -83,7 +83,8 @@ def register_rule_crud_tools(mcp) -> None:
 
         except Exception as e:
             # BUG-357-MCP-002: Log full error for debugging
-            logger.error(f"rule_create failed: {e}", exc_info=True)
+            # BUG-451-RC-001: Sanitize logger message to match response pattern
+            logger.error(f"rule_create failed: {type(e).__name__}", exc_info=True)
             return format_mcp_result({"error": f"rule_create failed: {type(e).__name__}"})
 
         finally:
@@ -151,7 +152,8 @@ def register_rule_crud_tools(mcp) -> None:
 
         except Exception as e:
             # BUG-357-MCP-002: Log full error for debugging
-            logger.error(f"rule_update failed: {e}", exc_info=True)
+            # BUG-451-RC-002: Sanitize logger message to match response pattern
+            logger.error(f"rule_update failed: {type(e).__name__}", exc_info=True)
             return format_mcp_result({"error": f"rule_update failed: {type(e).__name__}"})
 
         finally:
@@ -201,7 +203,8 @@ def register_rule_crud_tools(mcp) -> None:
 
         except Exception as e:
             # BUG-357-MCP-002: Log full error for debugging
-            logger.error(f"rule_deprecate failed: {e}", exc_info=True)
+            # BUG-451-RC-003: Sanitize logger message to match response pattern
+            logger.error(f"rule_deprecate failed: {type(e).__name__}", exc_info=True)
             return format_mcp_result({"error": f"rule_deprecate failed: {type(e).__name__}"})
 
         finally:
@@ -257,7 +260,8 @@ def register_rule_crud_tools(mcp) -> None:
         # BUG-B185-005: Add except to match rule_create pattern
         except Exception as e:
             # BUG-357-MCP-002: Log full error for debugging
-            logger.error(f"rule_delete failed: {e}", exc_info=True)
+            # BUG-451-RC-004: Sanitize logger message to match response pattern
+            logger.error(f"rule_delete failed: {type(e).__name__}", exc_info=True)
             return format_mcp_result({"error": f"rule_delete failed: {type(e).__name__}"})
 
         finally:

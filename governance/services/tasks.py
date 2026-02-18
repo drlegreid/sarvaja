@@ -179,7 +179,8 @@ def create_task(
                             client.link_task_to_document(task_id, doc_path)
                         except Exception as le:
                             # BUG-275-TASKS-001: Promote to WARNING (debug hides link failures)
-                            logger.warning(f"TypeDB document link {task_id}->{doc_path}: {le}")
+                            # BUG-450-TSK-001: Add exc_info for stack trace preservation
+                            logger.warning(f"TypeDB document link {task_id}->{doc_path}: {le}", exc_info=True)
                 record_audit("CREATE", "task", task_id,
                              actor_id=agent_id or "system",
                              metadata={"phase": phase, "status": status, "source": source})

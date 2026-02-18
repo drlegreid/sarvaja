@@ -140,7 +140,8 @@ def register_rule_query_tools(mcp) -> None:
 
         # BUG-362-RQ-001: Log full error but return only type name to prevent info disclosure
         except Exception as e:
-            logger.error(f"rules_query_by_tags failed: {e}", exc_info=True)
+            # BUG-451-RQ-001: Sanitize logger message to match response pattern
+            logger.error(f"rules_query_by_tags failed: {type(e).__name__}", exc_info=True)
             return format_mcp_result({"error": f"rules_query_by_tags failed: {type(e).__name__}"})
 
         finally:
@@ -196,7 +197,8 @@ def register_rule_query_tools(mcp) -> None:
 
         # BUG-362-RQ-001: Log full error but return only type name to prevent info disclosure
         except Exception as e:
-            logger.error(f"wisdom_get failed: {e}", exc_info=True)
+            # BUG-451-RQ-002: Sanitize logger message to match response pattern
+            logger.error(f"wisdom_get failed: {type(e).__name__}", exc_info=True)
             return format_mcp_result({"error": f"wisdom_get failed: {type(e).__name__}"})
 
         finally:
@@ -271,7 +273,8 @@ def register_rule_query_tools(mcp) -> None:
 
         # BUG-192-003 + BUG-362-RQ-001: Log full error but return only type name
         except Exception as e:
-            logger.error(f"rule_get_deps failed: {e}", exc_info=True)
+            # BUG-451-RQ-003: Sanitize logger message to match response pattern
+            logger.error(f"rule_get_deps failed: {type(e).__name__}", exc_info=True)
             return format_mcp_result({"error": f"rule_get_deps failed: {type(e).__name__}"})
 
         finally:
@@ -298,7 +301,8 @@ def register_rule_query_tools(mcp) -> None:
 
         # BUG-192-003 + BUG-362-RQ-001: Log full error but return only type name
         except Exception as e:
-            logger.error(f"rules_find_conflicts failed: {e}", exc_info=True)
+            # BUG-451-RQ-004: Sanitize logger message to match response pattern
+            logger.error(f"rules_find_conflicts failed: {type(e).__name__}", exc_info=True)
             return format_mcp_result({"error": f"rules_find_conflicts failed: {type(e).__name__}"})
 
         finally:

@@ -63,7 +63,8 @@ def register_tests_controllers(
                 else:
                     state.tests_recent_runs = []
         except Exception as e:
-            add_error_trace(state, f"Load tests failed: {str(e)}", "/api/tests/results")
+            # BUG-453-TST-001: Don't leak exception internals via add_error_trace → Trame WebSocket
+            add_error_trace(state, f"Load tests failed: {type(e).__name__}", "/api/tests/results")
             state.tests_recent_runs = []
         finally:
             state.tests_loading = False
@@ -96,7 +97,8 @@ def register_tests_controllers(
                 # BUG-UI-TESTS-POLL-001: Log errors, stop after 5 consecutive
                 consecutive_errors += 1
                 if consecutive_errors >= 5:
-                    add_error_trace(state, f"Poll stopped after 5 errors: {e}", f"/api/tests/results/{run_id}")
+                    # BUG-453-TST-002: Don't leak exception internals via add_error_trace → Trame WebSocket
+                    add_error_trace(state, f"Poll stopped after 5 errors: {type(e).__name__}", f"/api/tests/results/{run_id}")
                     break
         state.tests_running = False
         state.dirty("tests_running")
@@ -104,6 +106,9 @@ def register_tests_controllers(
     @ctrl.trigger("run_tests")
     def on_run_tests(category: str = None):
         """Run tests for a category."""
+        # BUG-239-TESTS-002: Guard against double-submit while tests running
+        if state.tests_running:
+            return
         state.tests_running = True
         try:
             with httpx.Client(timeout=30.0) as client:
@@ -132,6 +137,12 @@ def register_tests_controllers(
                 if response.status_code == 200:
                     data = response_body or {}
                     run_id = data.get("run_id")
+                    # BUG-187-003: Guard against None run_id before spawning poll thread
+                    if not run_id:
+                        state.tests_running = False
+                        state.has_error = True
+                        state.error_message = "Test run started but no run_id returned"
+                        return
                     state.tests_current_run = {
                         "run_id": run_id,
                         "status": "running",
@@ -150,7 +161,8 @@ def register_tests_controllers(
                     # BUG-UI-TESTS-001: No thread started — reset spinner
                     state.tests_running = False
         except Exception as e:
-            add_error_trace(state, f"Run tests failed: {str(e)}", "/api/tests/run")
+            # BUG-453-TST-003: Don't leak exception internals via add_error_trace → Trame WebSocket
+            add_error_trace(state, f"Run tests failed: {type(e).__name__}", "/api/tests/run")
             state.tests_running = False
 
     @ctrl.trigger("view_test_run")
@@ -162,7 +174,8 @@ def register_tests_controllers(
                 if response.status_code == 200:
                     state.tests_current_run = response.json()
         except Exception as e:
-            add_error_trace(state, f"View run failed: {str(e)}", f"/api/tests/results/{run_id}")
+            # BUG-453-TST-004: Don't leak exception internals via add_error_trace → Trame WebSocket
+            add_error_trace(state, f"View run failed: {type(e).__name__}", f"/api/tests/results/{run_id}")
 
     def _start_regression(skip_dynamic: bool = False):
         """Shared regression launcher."""
@@ -191,6 +204,12 @@ def register_tests_controllers(
                 if response.status_code == 200:
                     data = response_body or {}
                     run_id = data.get("run_id")
+                    # BUG-222-REGR-001: Guard against None run_id before polling
+                    if not run_id:
+                        state.tests_running = False
+                        state.has_error = True
+                        state.error_message = "Regression started but no run_id returned"
+                        return
                     state.tests_current_run = {
                         "run_id": run_id,
                         "status": "running",
@@ -210,8 +229,9 @@ def register_tests_controllers(
                     # BUG-UI-TESTS-001: No thread started — reset spinner
                     state.tests_running = False
         except Exception as e:
+            # BUG-453-TST-005: Don't leak exception internals via add_error_trace → Trame WebSocket
             add_error_trace(
-                state, f"Regression failed: {str(e)}",
+                state, f"Regression failed: {type(e).__name__}",
                 "/api/tests/regression/run",
             )
             state.tests_running = False
@@ -241,7 +261,8 @@ def register_tests_controllers(
                 # BUG-UI-TESTS-POLL-001: Log errors, stop after 5 consecutive
                 consecutive_errors += 1
                 if consecutive_errors >= 5:
-                    add_error_trace(state, f"Regression poll stopped: {e}", f"/api/tests/results/{run_id}")
+                    # BUG-453-TST-006: Don't leak exception internals via add_error_trace → Trame WebSocket
+                    add_error_trace(state, f"Regression poll stopped: {type(e).__name__}", f"/api/tests/results/{run_id}")
                     break
         state.tests_running = False
         state.dirty("tests_running")
@@ -265,11 +286,13 @@ def register_tests_controllers(
                 if response.status_code == 200:
                     state.robot_summary = response.json()
         except Exception as e:
+            # BUG-453-TST-007: Don't leak exception internals via add_error_trace → Trame WebSocket
             add_error_trace(
-                state, f"Load robot summary failed: {str(e)}",
+                state, f"Load robot summary failed: {type(e).__name__}",
                 "/api/tests/robot/summary",
             )
-            state.robot_summary = {"available": False, "message": str(e)}
+            # BUG-453-TST-008: Don't leak exception message via Trame state to browser
+            state.robot_summary = {"available": False, "message": type(e).__name__}
 
     return {
         "load_tests_data": load_tests_data,

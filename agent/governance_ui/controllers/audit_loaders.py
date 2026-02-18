@@ -65,7 +65,8 @@ def register_audit_loader_controllers(
                 state.audit_entries = entries
 
         except Exception as e:
-            add_error_trace(state, f"Load audit trail failed: {e}", "/api/audit")
+            # BUG-453-AUD-001: Don't leak exception internals via add_error_trace → Trame WebSocket
+            add_error_trace(state, f"Load audit trail failed: {type(e).__name__}", "/api/audit")
             # BUG-389-AUD-001: Don't leak exception internals via Trame WebSocket (state.audit_summary is pushed to browser)
             state.audit_summary = {
                 'total_entries': 0, 'by_action_type': {},

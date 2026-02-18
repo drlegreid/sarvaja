@@ -82,7 +82,8 @@ def register_task_verify_tools(mcp) -> None:
                 })
         except Exception as e:
             # BUG-357-MCP-003: Log full error for debugging
-            logger.error(f"task_verify failed: {e}", exc_info=True)
+            # BUG-451-TV-001: Sanitize logger message to match response pattern
+            logger.error(f"task_verify failed: {type(e).__name__}", exc_info=True)
             return format_mcp_result({"error": f"task_verify failed: {type(e).__name__}"})
 
     @mcp.tool()
@@ -163,5 +164,6 @@ def register_task_verify_tools(mcp) -> None:
                 })
         except Exception as e:
             # BUG-357-MCP-003: Log full error for debugging
-            logger.error(f"session_sync_todos failed: {e}", exc_info=True)
+            # BUG-451-TV-002: Sanitize logger message to match response pattern
+            logger.error(f"session_sync_todos failed: {type(e).__name__}", exc_info=True)
             return format_mcp_result({"error": f"session_sync_todos failed: {type(e).__name__}"})

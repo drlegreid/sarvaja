@@ -60,7 +60,8 @@ def register_rule_archive_tools(mcp) -> None:
 
         # BUG-192-002 + BUG-362-RA-001: Log full error but return only type name
         except Exception as e:
-            logger.error(f"rules_list_archived failed: {e}", exc_info=True)
+            # BUG-451-RA-001: Sanitize logger message to match response pattern
+            logger.error(f"rules_list_archived failed: {type(e).__name__}", exc_info=True)
             return format_mcp_result({"error": f"rules_list_archived failed: {type(e).__name__}"})
 
         finally:
@@ -93,7 +94,8 @@ def register_rule_archive_tools(mcp) -> None:
 
         # BUG-192-002 + BUG-362-RA-001: Log full error but return only type name
         except Exception as e:
-            logger.error(f"rule_get_archived failed: {e}", exc_info=True)
+            # BUG-451-RA-002: Sanitize logger message to match response pattern
+            logger.error(f"rule_get_archived failed: {type(e).__name__}", exc_info=True)
             return format_mcp_result({"error": f"rule_get_archived failed: {type(e).__name__}"})
 
         finally:
@@ -131,7 +133,8 @@ def register_rule_archive_tools(mcp) -> None:
 
         # BUG-362-RA-001: Log full error but return only type name
         except Exception as e:
-            logger.error(f"rule_restore failed: {e}", exc_info=True)
+            # BUG-451-RA-003: Sanitize logger message to match response pattern
+            logger.error(f"rule_restore failed: {type(e).__name__}", exc_info=True)
             return format_mcp_result({"error": f"rule_restore failed: {type(e).__name__}"})
 
         finally:

@@ -81,7 +81,8 @@ def register_sessions_controllers(state: Any, ctrl: Any, api_base_url: str) -> N
                 state.selected_session = session_data
                 state.show_session_detail = True
         except Exception as e:
-            add_error_trace(state, f"Load session detail failed: {e}", f"/api/sessions/{session_id}")
+            # BUG-453-SES-001: Don't leak exception internals via add_error_trace → Trame WebSocket
+            add_error_trace(state, f"Load session detail failed: {type(e).__name__}", f"/api/sessions/{session_id}")
 
         loaders["load_evidence"](session_id)
         loaders["load_tasks"](session_id)
@@ -269,7 +270,8 @@ def register_sessions_controllers(state: Any, ctrl: Any, api_base_url: str) -> N
 
             state.is_loading = False
         except Exception as e:
-            add_error_trace(state, f"Save session failed: {e}", "/api/sessions")
+            # BUG-453-SES-002: Don't leak exception internals via add_error_trace → Trame WebSocket
+            add_error_trace(state, f"Save session failed: {type(e).__name__}", "/api/sessions")
             state.is_loading = False
             state.has_error = True
             # BUG-385-SES-001: Don't leak httpx internals (URLs, connection errors) via Trame WebSocket
@@ -311,7 +313,8 @@ def register_sessions_controllers(state: Any, ctrl: Any, api_base_url: str) -> N
 
             state.is_loading = False
         except Exception as e:
-            add_error_trace(state, f"Delete session failed: {e}", f"/api/sessions/{session_id}")
+            # BUG-453-SES-003: Don't leak exception internals via add_error_trace → Trame WebSocket
+            add_error_trace(state, f"Delete session failed: {type(e).__name__}", f"/api/sessions/{session_id}")
             state.is_loading = False
             state.has_error = True
             # BUG-385-SES-002: Don't leak httpx internals via Trame WebSocket
@@ -355,7 +358,8 @@ def register_sessions_controllers(state: Any, ctrl: Any, api_base_url: str) -> N
                     state.error_message = f"Failed to attach evidence: {response.status_code}"
             state.evidence_attach_loading = False
         except Exception as e:
-            add_error_trace(state, f"Attach evidence failed: {e}", f"/api/sessions/{session_id}/evidence")
+            # BUG-453-SES-004: Don't leak exception internals via add_error_trace → Trame WebSocket
+            add_error_trace(state, f"Attach evidence failed: {type(e).__name__}", f"/api/sessions/{session_id}/evidence")
             state.evidence_attach_loading = False
             state.has_error = True
             # BUG-385-SES-003: Don't leak httpx internals via Trame WebSocket

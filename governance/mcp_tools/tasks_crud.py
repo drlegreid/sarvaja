@@ -70,7 +70,8 @@ def register_task_crud_tools(mcp) -> None:
             return format_mcp_result(result)
         except Exception as e:
             # BUG-357-MCP-001: Log full error for debugging
-            logger.error(f"task_create failed: {e}", exc_info=True)
+            # BUG-451-TC-001: Sanitize logger message to match response pattern
+            logger.error(f"task_create failed: {type(e).__name__}", exc_info=True)
             return format_mcp_result({"error": f"task_create failed: {type(e).__name__}"})
 
     @mcp.tool()
@@ -93,7 +94,8 @@ def register_task_crud_tools(mcp) -> None:
                 return format_mcp_result({"error": f"Task {task_id} not found"})
         except Exception as e:
             # BUG-357-MCP-001: Log full error for debugging
-            logger.error(f"task_get failed: {e}", exc_info=True)
+            # BUG-451-TC-002: Sanitize logger message to match response pattern
+            logger.error(f"task_get failed: {type(e).__name__}", exc_info=True)
             return format_mcp_result({"error": f"task_get failed: {type(e).__name__}"})
 
     @mcp.tool()
@@ -138,7 +140,8 @@ def register_task_crud_tools(mcp) -> None:
                 return format_mcp_result({"error": f"Failed to update task {task_id}"})
         except Exception as e:
             # BUG-357-MCP-001: Log full error for debugging
-            logger.error(f"task_update failed: {e}", exc_info=True)
+            # BUG-451-TC-003: Sanitize logger message to match response pattern
+            logger.error(f"task_update failed: {type(e).__name__}", exc_info=True)
             return format_mcp_result({"error": f"task_update failed: {type(e).__name__}"})
 
     @mcp.tool()
@@ -174,7 +177,8 @@ def register_task_crud_tools(mcp) -> None:
                 return format_mcp_result({"error": f"Failed to delete task {task_id}"})
         except Exception as e:
             # BUG-357-MCP-001: Log full error for debugging
-            logger.error(f"task_delete failed: {e}", exc_info=True)
+            # BUG-451-TC-004: Sanitize logger message to match response pattern
+            logger.error(f"task_delete failed: {type(e).__name__}", exc_info=True)
             return format_mcp_result({"error": f"task_delete failed: {type(e).__name__}"})
 
     @mcp.tool()
@@ -207,7 +211,8 @@ def register_task_crud_tools(mcp) -> None:
             })
         except Exception as e:
             # BUG-357-MCP-001: Log full error for debugging
-            logger.error(f"taxonomy_get failed: {e}", exc_info=True)
+            # BUG-451-TC-005: Sanitize logger message to match response pattern
+            logger.error(f"taxonomy_get failed: {type(e).__name__}", exc_info=True)
             return format_mcp_result({"error": f"taxonomy_get failed: {type(e).__name__}"})
 
     @mcp.tool()
@@ -263,5 +268,6 @@ def register_task_crud_tools(mcp) -> None:
                 })
         except Exception as e:
             # BUG-357-MCP-001: Log full error for debugging
-            logger.error(f"tasks_list failed: {e}", exc_info=True)
+            # BUG-451-TC-006: Sanitize logger message to match response pattern
+            logger.error(f"tasks_list failed: {type(e).__name__}", exc_info=True)
             return format_mcp_result({"error": f"tasks_list failed: {type(e).__name__}"})
