@@ -61,15 +61,17 @@ def load_state(state_file: Path) -> Optional[DSMCycle]:
         return None
 
     except (json.JSONDecodeError, KeyError, TypeError) as e:
-        logger.warning(f"Failed to load DSM state: {e}. Backing up corrupted file.")
+        # BUG-473-DTP-1: Sanitize logger message + add exc_info for stack trace preservation
+        logger.warning(f"Failed to load DSM state: {type(e).__name__}. Backing up corrupted file.", exc_info=True)
         backup_path = state_file.with_suffix(
             f".backup-{datetime.now().strftime('%Y%m%d%H%M%S')}.json"
         )
         try:
             shutil.copy2(state_file, backup_path)
             logger.info(f"Corrupted state backed up to {backup_path}")
-        except Exception:
-            pass
+        # BUG-280-PERSIST-002: Log backup failure instead of silently swallowing
+        except Exception as backup_err:
+            logger.error(f"Failed to back up corrupted state file {state_file}: {backup_err}")
         return None
 
 
@@ -94,16 +96,25 @@ def save_state(state_file: Path, current_cycle: Optional[DSMCycle],
         prefix=".dsm_state_",
         dir=str(dir_path)
     )
+    # BUG-280-PERSIST-001: Guard against FD leak if os.fdopen itself raises
     try:
-        with os.fdopen(fd, "w", encoding="utf-8") as f:
-            json.dump(state, f, indent=2)
+        try:
+            with os.fdopen(fd, "w", encoding="utf-8") as f:
+                json.dump(state, f, indent=2)
+            fd = -1  # fdopen took ownership; mark as closed
+        except Exception:
+            if fd != -1:
+                os.close(fd)
+                fd = -1
+            raise
         os.replace(temp_path, state_file)
     except Exception as e:
         try:
             os.unlink(temp_path)
         except OSError:
             pass
-        logger.error(f"Failed to save DSM state: {e}")
+        # BUG-473-DTP-2: Sanitize logger message + add exc_info for stack trace preservation
+        logger.error(f"Failed to save DSM state: {type(e).__name__}", exc_info=True)
         raise
 
 

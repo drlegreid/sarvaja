@@ -84,7 +84,8 @@ def record_task_execution(agent_id: str, source: str = "rest") -> Optional[Dict[
         try:
             client.update_agent_trust(agent_id, new_trust_score)
         except Exception as e:
-            logger.warning(f"Failed to update TypeDB trust for {agent_id}: {e}")
+            # BUG-473-AMT-1: Sanitize logger message + add exc_info for stack trace preservation
+            logger.warning(f"Failed to update TypeDB trust for {agent_id}: {type(e).__name__}", exc_info=True)
 
     # Update in-memory store
     if agent_id not in _agents_store:
@@ -99,7 +100,8 @@ def record_task_execution(agent_id: str, source: str = "rest") -> Optional[Dict[
         metrics[agent_id] = {"tasks_executed": tasks_executed, "last_active": now}
         _save_agent_metrics(metrics)
     except Exception as e:
-        logger.warning(f"Failed to persist agent metrics (non-critical): {e}")
+        # BUG-473-AMT-2: Sanitize logger message + add exc_info for stack trace preservation
+        logger.warning(f"Failed to persist agent metrics (non-critical): {type(e).__name__}", exc_info=True)
 
     _monitor("record_task", agent_id, source=source, tasks_executed=tasks_executed)
 
@@ -124,7 +126,8 @@ def record_task_execution(agent_id: str, source: str = "rest") -> Optional[Dict[
                     recent_sessions=recent_sessions, active_tasks=active_tasks,
                 )
         except Exception as e:
-            logger.warning(f"Failed to get agent from TypeDB: {e}")
+            # BUG-473-AMT-3: Sanitize logger message + add exc_info for stack trace preservation
+            logger.warning(f"Failed to get agent from TypeDB: {type(e).__name__}", exc_info=True)
 
     if agent_id in _agents_store:
         return dict(_agents_store[agent_id])

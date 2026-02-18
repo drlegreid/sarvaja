@@ -70,11 +70,13 @@ class TypeDB3BaseClient:
             return True
 
         except ImportError as e:
-            logger.error(f"TypeDB driver not installed: {e}")
+            # BUG-472-TB3-001: Sanitize logger message + add exc_info for stack trace preservation
+            logger.error(f"TypeDB driver not installed: {type(e).__name__}", exc_info=True)
             logger.error("Install with: pip install typedb-driver>=3.0.0")
             return False
         except Exception as e:
-            logger.error(f"Failed to connect to TypeDB 3.x: {e}")
+            # BUG-472-TB3-002: Sanitize logger message + add exc_info for stack trace preservation
+            logger.error(f"Failed to connect to TypeDB 3.x: {type(e).__name__}", exc_info=True)
             return False
 
     def close(self):

@@ -85,11 +85,12 @@ def discover_node(state: SFDCState) -> dict:
 
     except Exception as e:
         duration_ms = int((time.perf_counter() - start_time) * 1000)
-        logger.error(f"[SFDC] DISCOVER phase failed: {e}")
+        # BUG-473-SNA-1: Sanitize logger message + add exc_info for stack trace preservation
+        logger.error(f"[SFDC] DISCOVER phase failed: {type(e).__name__}", exc_info=True)
         return {
             "current_phase": "discover_failed",
             "status": "failed",
-            "error_message": f"DISCOVER phase failed: {str(e)}",
+            "error_message": f"DISCOVER phase failed: {type(e).__name__}",
             "phase_results": state.get("phase_results", []) + [
                 _create_phase_result("discover", "failed", state, str(e), duration_ms)
             ],
@@ -141,11 +142,12 @@ def review_node(state: SFDCState) -> dict:
 
     except Exception as e:
         duration_ms = int((time.perf_counter() - start_time) * 1000)
-        logger.error(f"[SFDC] REVIEW phase failed: {e}")
+        # BUG-473-SNA-2: Sanitize logger message + add exc_info for stack trace preservation
+        logger.error(f"[SFDC] REVIEW phase failed: {type(e).__name__}", exc_info=True)
         return {
             "current_phase": "review_failed",
             "status": "failed",
-            "error_message": f"REVIEW phase failed: {str(e)}",
+            "error_message": f"REVIEW phase failed: {type(e).__name__}",
             "phase_results": state.get("phase_results", []) + [
                 _create_phase_result("review", "failed", state, str(e), duration_ms)
             ],

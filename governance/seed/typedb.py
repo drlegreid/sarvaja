@@ -22,7 +22,8 @@ def get_typedb_client():
         if client and client.is_connected():
             return client
     except Exception as e:
-        logger.warning(f"TypeDB connection failed: {e}")
+        # BUG-474-STY-1: Sanitize logger message + add exc_info for stack trace preservation
+        logger.warning(f"TypeDB connection failed: {type(e).__name__}", exc_info=True)
     return None
 
 
@@ -57,7 +58,8 @@ def seed_tasks_to_typedb(client) -> int:
             if result:
                 count += 1
         except Exception as e:
-            logger.warning(f"Failed to seed task {task['task_id']}: {e}")
+            # BUG-474-STY-2: Sanitize logger message + add exc_info for stack trace preservation
+            logger.warning(f"Failed to seed task {task['task_id']}: {type(e).__name__}", exc_info=True)
 
     return count
 
@@ -89,7 +91,8 @@ def seed_sessions_to_typedb(client) -> int:
             if result:
                 count += 1
         except Exception as e:
-            logger.warning(f"Failed to seed session {session['session_id']}: {e}")
+            # BUG-474-STY-3: Sanitize logger message + add exc_info for stack trace preservation
+            logger.warning(f"Failed to seed session {session['session_id']}: {type(e).__name__}", exc_info=True)
 
     return count
 
@@ -121,6 +124,7 @@ def seed_agents_to_typedb(client) -> int:
             if result:
                 count += 1
         except Exception as e:
-            logger.warning(f"Failed to seed agent {agent['agent_id']}: {e}")
+            # BUG-474-STY-4: Sanitize logger message + add exc_info for stack trace preservation
+            logger.warning(f"Failed to seed agent {agent['agent_id']}: {type(e).__name__}", exc_info=True)
 
     return count

@@ -70,9 +70,9 @@ def register_dsm_tools(mcp) -> None:
                 "started_at": cycle.start_time,
                 "message": f"DSM cycle started: {cycle.cycle_id}"
             })
-        # BUG-370-DSM-001: Log full error but return only type name
+        # BUG-471-DSM-001: Sanitize logger message — exc_info=True already captures full stack
         except Exception as e:
-            logger.error(f"dsm_start failed: {e}", exc_info=True)
+            logger.error(f"dsm_start failed: {type(e).__name__}", exc_info=True)
             return format_mcp_result({"error": f"dsm_start failed: {type(e).__name__}"})
 
     @mcp.tool()
@@ -104,9 +104,9 @@ def register_dsm_tools(mcp) -> None:
                 "required_mcps": new_phase.required_mcps,
                 "message": f"Advanced to phase: {new_phase.value}"
             })
-        # BUG-370-DSM-001: Log full error but return only type name
+        # BUG-471-DSM-002: Sanitize logger message — exc_info=True already captures full stack
         except Exception as e:
-            logger.error(f"dsm_advance failed: {e}", exc_info=True)
+            logger.error(f"dsm_advance failed: {type(e).__name__}", exc_info=True)
             return format_mcp_result({"error": f"dsm_advance failed: {type(e).__name__}"})
 
     @mcp.tool()
@@ -166,9 +166,9 @@ def register_dsm_tools(mcp) -> None:
                 "evidence": checkpoint.evidence,
                 "message": "Checkpoint recorded"
             })
-        # BUG-370-DSM-001: Log full error but return only type name
+        # BUG-471-DSM-003: Sanitize logger message — exc_info=True already captures full stack
         except Exception as e:
-            logger.error(f"dsm_checkpoint failed: {e}", exc_info=True)
+            logger.error(f"dsm_checkpoint failed: {type(e).__name__}", exc_info=True)
             return format_mcp_result({"error": f"dsm_checkpoint failed: {type(e).__name__}"})
 
     @mcp.tool()
@@ -222,9 +222,9 @@ def register_dsm_tools(mcp) -> None:
                 "related_rules": rules or [],
                 "message": f"Finding recorded: {finding['id']}"
             })
-        # BUG-370-DSM-001: Log full error but return only type name
+        # BUG-471-DSM-004: Sanitize logger message — exc_info=True already captures full stack
         except Exception as e:
-            logger.error(f"dsm_finding failed: {e}", exc_info=True)
+            logger.error(f"dsm_finding failed: {type(e).__name__}", exc_info=True)
             return format_mcp_result({"error": f"dsm_finding failed: {type(e).__name__}"})
 
     @mcp.tool()
@@ -271,9 +271,9 @@ def register_dsm_tools(mcp) -> None:
                 "completed_cycles": len(tracker.completed_cycles),
                 "message": f"Cycle completed. Evidence: {evidence_path}"
             })
-        # BUG-370-DSM-001: Log full error but return only type name
+        # BUG-471-DSM-005: Sanitize logger message — exc_info=True already captures full stack
         except Exception as e:
-            logger.error(f"dsm_complete failed: {e}", exc_info=True)
+            logger.error(f"dsm_complete failed: {type(e).__name__}", exc_info=True)
             return format_mcp_result({"error": f"dsm_complete failed: {type(e).__name__}"})
 
     @mcp.tool()
@@ -309,7 +309,7 @@ def register_dsm_tools(mcp) -> None:
                 "metrics": cycle_metrics,
                 "message": "Metrics updated"
             })
-        # BUG-370-DSM-001: Log full error but return only type name
+        # BUG-471-DSM-006: Sanitize logger message — exc_info=True already captures full stack
         except Exception as e:
-            logger.error(f"dsm_metrics failed: {e}", exc_info=True)
+            logger.error(f"dsm_metrics failed: {type(e).__name__}", exc_info=True)
             return format_mcp_result({"error": f"dsm_metrics failed: {type(e).__name__}"})

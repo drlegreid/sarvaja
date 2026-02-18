@@ -139,7 +139,7 @@ def register_session_tools(mcp) -> None:
                 "lines": len(lines)
             })
 
-        # BUG-370-SES-001: Log full error but return only type name
+        # BUG-471-ESS-001: Sanitize logger message — exc_info=True already captures full stack
         except Exception as e:
-            logger.error(f"governance_get_session failed: {e}", exc_info=True)
+            logger.error(f"governance_get_session failed: {type(e).__name__}", exc_info=True)
             return format_mcp_result({"error": f"governance_get_session failed: {type(e).__name__}"})

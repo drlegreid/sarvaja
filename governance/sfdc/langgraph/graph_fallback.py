@@ -69,9 +69,10 @@ def run_fallback_workflow(graph, initial_state: "SFDCState") -> "SFDCState":
             result = graph.nodes[node_name](state)
             state.update(result)
         except Exception as e:
-            logger.error(f"[SFDC] Node {node_name} failed: {e}")
+            # BUG-473-SGF-1: Sanitize logger message + add exc_info for stack trace preservation
+            logger.error(f"[SFDC] Node {node_name} failed: {type(e).__name__}", exc_info=True)
             state["status"] = "failed"
-            state["error_message"] = str(e)
+            state["error_message"] = f"Node '{node_name}' failed: {type(e).__name__}"
             break
 
         # Check for deployment failure -> rollback

@@ -199,7 +199,8 @@ def get_rules_for_document(document_id: str) -> List[str]:
         results = client.execute_query(query)
         return [r.get("rid") for r in results if r.get("rid")]
     except Exception as e:
-        logger.warning(f"get_rules_for_document failed: {e}")
+        # BUG-474-RLD-1: Sanitize logger message + add exc_info for stack trace preservation
+        logger.warning(f"get_rules_for_document failed: {type(e).__name__}", exc_info=True)
         return []
     finally:
         client.close()
@@ -242,7 +243,8 @@ def get_document_for_rule(rule_id: str) -> Optional[str]:
             return results[0].get("path")
         return None
     except Exception as e:
-        logger.warning(f"get_document_for_rule failed: {e}")
+        # BUG-474-RLD-2: Sanitize logger message + add exc_info for stack trace preservation
+        logger.warning(f"get_document_for_rule failed: {type(e).__name__}", exc_info=True)
         return None
     finally:
         client.close()

@@ -170,7 +170,8 @@ class TaskDetailOperations:
                 tx.commit()
             return True
         except Exception as e:
-            logger.error(f"Failed to update {attribute} for task {task_id}: {e}")
+            # BUG-472-TDT-001: Sanitize logger message + add exc_info for stack trace preservation
+            logger.error(f"Failed to update {attribute} for task {task_id}: {type(e).__name__}", exc_info=True)
             return False
 
     def get_task_details(self, task_id: str) -> Optional[dict]:

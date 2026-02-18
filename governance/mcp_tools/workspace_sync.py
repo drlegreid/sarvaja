@@ -87,7 +87,8 @@ def register_workspace_sync_tools(mcp) -> None:
                     typedb_rules = {r.id for r in all_rules}
                     result["rules"]["typedb_count"] = len(typedb_rules)
                 except Exception as e:
-                    logger.warning(f"Could not get TypeDB rules: {e}")
+                    # BUG-471-WSY-001: Sanitize logger message + add exc_info for stack trace preservation
+                    logger.warning(f"Could not get TypeDB rules: {type(e).__name__}", exc_info=True)
 
                 # Get rules from markdown files
                 file_rules = set()
@@ -98,7 +99,8 @@ def register_workspace_sync_tools(mcp) -> None:
                             file_rules.update(doc.rule_ids)
                     result["rules"]["files_count"] = len(file_rules)
                 except Exception as e:
-                    logger.warning(f"Could not scan rule documents: {e}")
+                    # BUG-471-WSY-002: Sanitize logger message + add exc_info for stack trace preservation
+                    logger.warning(f"Could not scan rule documents: {type(e).__name__}", exc_info=True)
 
                 # Find divergence
                 missing_in_typedb = file_rules - typedb_rules
@@ -110,9 +112,9 @@ def register_workspace_sync_tools(mcp) -> None:
                     len(missing_in_typedb) == 0 and len(missing_in_files) == 0
                 )
 
-            # BUG-370-WKS-001: Log full error but return only type name
+            # BUG-471-WSY-003: Sanitize logger message — exc_info=True already captures full stack
             except Exception as e:
-                logger.error(f"Rules sync check failed: {e}", exc_info=True)
+                logger.error(f"Rules sync check failed: {type(e).__name__}", exc_info=True)
                 result["rules"]["error"] = type(e).__name__
 
             # 2. Compare Tasks: TypeDB vs TODO.md
@@ -127,7 +129,8 @@ def register_workspace_sync_tools(mcp) -> None:
                         typedb_tasks[t.id] = t.status
                     result["tasks"]["typedb_count"] = len(typedb_tasks)
                 except Exception as e:
-                    logger.warning(f"Could not get TypeDB tasks: {e}")
+                    # BUG-471-WSY-004: Sanitize logger message + add exc_info for stack trace preservation
+                    logger.warning(f"Could not get TypeDB tasks: {type(e).__name__}", exc_info=True)
 
                 # Get tasks from workspace files
                 file_tasks = {}
@@ -137,7 +140,8 @@ def register_workspace_sync_tools(mcp) -> None:
                         file_tasks[t.task_id] = t.status
                     result["tasks"]["files_count"] = len(file_tasks)
                 except Exception as e:
-                    logger.warning(f"Could not scan workspace tasks: {e}")
+                    # BUG-471-WSY-005: Sanitize logger message + add exc_info for stack trace preservation
+                    logger.warning(f"Could not scan workspace tasks: {type(e).__name__}", exc_info=True)
 
                 # Find status mismatches and missing tasks
                 mismatches = []
@@ -159,9 +163,9 @@ def register_workspace_sync_tools(mcp) -> None:
                     len(mismatches) == 0 and len(missing_in_typedb) == 0
                 )
 
-            # BUG-370-WKS-001: Log full error but return only type name
+            # BUG-471-WSY-006: Sanitize logger message — exc_info=True already captures full stack
             except Exception as e:
-                logger.error(f"Tasks sync check failed: {e}", exc_info=True)
+                logger.error(f"Tasks sync check failed: {type(e).__name__}", exc_info=True)
                 result["tasks"]["error"] = type(e).__name__
 
             # 3. Count Sessions and Evidence files
@@ -171,7 +175,8 @@ def register_workspace_sync_tools(mcp) -> None:
                     all_sessions = client.get_all_sessions()
                     result["sessions"]["typedb_count"] = len(all_sessions)
                 except Exception as e:
-                    logger.warning(f"Could not get TypeDB sessions: {e}")
+                    # BUG-471-WSY-007: Sanitize logger message + add exc_info for stack trace preservation
+                    logger.warning(f"Could not get TypeDB sessions: {type(e).__name__}", exc_info=True)
 
                 # Count evidence files
                 evidence_dir = os.path.join(WORKSPACE_ROOT, "evidence")
@@ -182,9 +187,9 @@ def register_workspace_sync_tools(mcp) -> None:
                     ]
                     result["sessions"]["evidence_files"] = len(evidence_files)
 
-            # BUG-370-WKS-001: Log full error but return only type name
+            # BUG-471-WSY-008: Sanitize logger message — exc_info=True already captures full stack
             except Exception as e:
-                logger.error(f"Sessions sync check failed: {e}", exc_info=True)
+                logger.error(f"Sessions sync check failed: {type(e).__name__}", exc_info=True)
                 result["sessions"]["error"] = type(e).__name__
 
             # Determine if sync is needed
@@ -203,9 +208,9 @@ def register_workspace_sync_tools(mcp) -> None:
 
             return format_mcp_result(result)
 
-        # BUG-370-WKS-001: Log full error but return only type name
+        # BUG-471-WSY-009: Sanitize logger message — exc_info=True already captures full stack
         except Exception as e:
-            logger.error(f"governance_sync_status failed: {e}", exc_info=True)
+            logger.error(f"governance_sync_status failed: {type(e).__name__}", exc_info=True)
             return format_mcp_result({"error": f"governance_sync_status failed: {type(e).__name__}"})
 
     @mcp.tool()
@@ -265,9 +270,9 @@ def register_workspace_sync_tools(mcp) -> None:
                                 try:
                                     client.update_task(gap_id, status=task_status,
                                                        item_type="gap", document_path=document_path)
-                                # BUG-370-WKS-001: Log full error but return only type name
+                                # BUG-471-WSY-010: Sanitize logger message — exc_info=True already captures full stack
                                 except Exception as e:
-                                    logger.error(f"Gap sync update {gap_id} failed: {e}", exc_info=True)
+                                    logger.error(f"Gap sync update {gap_id} failed: {type(e).__name__}", exc_info=True)
                                     result["errors"].append({"gap_id": gap_id, "action": "update", "error": type(e).__name__})
                         else:
                             result["skipped"].append(gap_id)
@@ -284,9 +289,9 @@ def register_workspace_sync_tools(mcp) -> None:
                                     phase="GAP", body=f"Priority: {gap.priority.upper()}. {gap.description}",
                                     gap_id=gap_id, item_type="gap", document_path=document_path,
                                 )
-                            # BUG-370-WKS-001: Log full error but return only type name
+                            # BUG-471-WSY-011: Sanitize logger message — exc_info=True already captures full stack
                             except Exception as e:
-                                logger.error(f"Gap sync insert {gap_id} failed: {e}", exc_info=True)
+                                logger.error(f"Gap sync insert {gap_id} failed: {type(e).__name__}", exc_info=True)
                                 result["errors"].append({"gap_id": gap_id, "action": "insert", "error": type(e).__name__})
 
                 result["summary"] = {
@@ -295,9 +300,9 @@ def register_workspace_sync_tools(mcp) -> None:
                 }
                 return format_mcp_result(result)
 
-        # BUG-370-WKS-001: Log full error but return only type name
+        # BUG-471-WSY-012: Sanitize logger message — exc_info=True already captures full stack
         except Exception as e:
-            logger.error(f"workspace_sync_gaps_to_typedb failed: {e}", exc_info=True)
+            logger.error(f"workspace_sync_gaps_to_typedb failed: {type(e).__name__}", exc_info=True)
             return format_mcp_result({"error": f"workspace_sync_gaps_to_typedb failed: {type(e).__name__}"})
 
     logger.info("Registered workspace sync status tools (3 tools)")

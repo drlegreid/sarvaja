@@ -57,9 +57,9 @@ def register_workspace_rule_tools(mcp) -> None:
                 "total_documents": len(documents),
                 "documents": result,
             })
-        # BUG-370-WKR-001: Log full error but return only type name
+        # BUG-471-WRU-001: Sanitize logger message — exc_info=True already captures full stack
         except Exception as e:
-            logger.error(f"workspace_scan_rule_documents failed: {e}", exc_info=True)
+            logger.error(f"workspace_scan_rule_documents failed: {type(e).__name__}", exc_info=True)
             return format_mcp_result({"error": f"workspace_scan_rule_documents failed: {type(e).__name__}"})
 
     @mcp.tool()
@@ -80,9 +80,9 @@ def register_workspace_rule_tools(mcp) -> None:
 
             result = link_rules_to_documents()
             return format_mcp_result(result)
-        # BUG-370-WKR-001: Log full error but return only type name
+        # BUG-471-WRU-002: Sanitize logger message — exc_info=True already captures full stack
         except Exception as e:
-            logger.error(f"workspace_link_rules_to_documents failed: {e}", exc_info=True)
+            logger.error(f"workspace_link_rules_to_documents failed: {type(e).__name__}", exc_info=True)
             return format_mcp_result({"error": f"workspace_link_rules_to_documents failed: {type(e).__name__}"})
 
     @mcp.tool()
@@ -107,9 +107,9 @@ def register_workspace_rule_tools(mcp) -> None:
                 "rule_id": rule_id,
                 "document_path": path,
             })
-        # BUG-370-WKR-001: Log full error but return only type name
+        # BUG-471-WRU-003: Sanitize logger message — exc_info=True already captures full stack
         except Exception as e:
-            logger.error(f"workspace_get_document_for_rule failed: {e}", exc_info=True)
+            logger.error(f"workspace_get_document_for_rule failed: {type(e).__name__}", exc_info=True)
             return format_mcp_result({"error": f"workspace_get_document_for_rule failed: {type(e).__name__}"})
 
     @mcp.tool()
@@ -134,9 +134,9 @@ def register_workspace_rule_tools(mcp) -> None:
                 "rule_count": len(rule_ids),
                 "rule_ids": rule_ids,
             })
-        # BUG-370-WKR-001: Log full error but return only type name
+        # BUG-471-WRU-004: Sanitize logger message — exc_info=True already captures full stack
         except Exception as e:
-            logger.error(f"workspace_get_rules_for_document failed: {e}", exc_info=True)
+            logger.error(f"workspace_get_rules_for_document failed: {type(e).__name__}", exc_info=True)
             return format_mcp_result({"error": f"workspace_get_rules_for_document failed: {type(e).__name__}"})
 
     logger.info("Registered workspace rule-document linking tools (4 tools)")

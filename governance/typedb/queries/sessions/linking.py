@@ -84,7 +84,8 @@ class SessionLinkingOperations:
 
             return True
         except Exception as e:
-            logger.error(f"Failed to link evidence {evidence_source} to session {session_id}: {e}")
+            # BUG-472-SLK-001: Sanitize logger message + add exc_info for stack trace preservation
+            logger.error(f"Failed to link evidence {evidence_source} to session {session_id}: {type(e).__name__}", exc_info=True)
             return False
 
     def get_session_evidence(self, session_id: str) -> List[str]:
@@ -143,7 +144,8 @@ class SessionLinkingOperations:
 
             return True
         except Exception as e:
-            logger.error(f"Failed to link rule {rule_id} to session {session_id}: {e}")
+            # BUG-472-SLK-002: Sanitize logger message + add exc_info for stack trace preservation
+            logger.error(f"Failed to link rule {rule_id} to session {session_id}: {type(e).__name__}", exc_info=True)
             return False
 
     def link_decision_to_session(self, session_id: str, decision_id: str) -> bool:
@@ -180,7 +182,8 @@ class SessionLinkingOperations:
 
             return True
         except Exception as e:
-            logger.error(f"Failed to link decision {decision_id} to session {session_id}: {e}")
+            # BUG-472-SLK-003: Sanitize logger message + add exc_info for stack trace preservation
+            logger.error(f"Failed to link decision {decision_id} to session {session_id}: {type(e).__name__}", exc_info=True)
             return False
 
     def get_session_rules(self, session_id: str) -> List[str]:

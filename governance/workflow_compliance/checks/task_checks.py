@@ -82,12 +82,13 @@ def check_task_evidence_compliance() -> ComplianceCheck:
             )
 
     except Exception as e:
-        logger.error(f"task_evidence check failed: {e}")
+        # BUG-474-WTC-1: Sanitize logger message + add exc_info for stack trace preservation
+        logger.error(f"task_evidence check failed: {type(e).__name__}", exc_info=True)
         return ComplianceCheck(
             rule_id="TEST-FIX-01-v1",
             check_name="task_evidence",
             status="SKIP",
-            message=f"Check failed: {e}"
+            message=f"Check failed: {type(e).__name__}"
         )
 
 
@@ -159,12 +160,13 @@ def check_task_session_linkage() -> ComplianceCheck:
             )
 
     except Exception as e:
-        logger.error(f"task_session_linkage check failed: {e}")
+        # BUG-474-WTC-2: Sanitize logger message + add exc_info for stack trace preservation
+        logger.error(f"task_session_linkage check failed: {type(e).__name__}", exc_info=True)
         return ComplianceCheck(
             rule_id="SESSION-EVID-01-v1",
             check_name="task_session_linkage",
             status="SKIP",
-            message=f"Check failed: {e}"
+            message=f"Check failed: {type(e).__name__}"
         )
 
 
@@ -229,10 +231,11 @@ def check_task_rule_linkage() -> ComplianceCheck:
             )
 
     except Exception as e:
-        logger.error(f"task_rule_linkage check failed: {e}")
+        # BUG-474-WTC-3: Sanitize logger message + add exc_info for stack trace preservation
+        logger.error(f"task_rule_linkage check failed: {type(e).__name__}", exc_info=True)
         return ComplianceCheck(
             rule_id="TASK-LIFE-01-v1",
             check_name="task_rule_linkage",
             status="SKIP",
-            message=f"Check failed: {e}"
+            message=f"Check failed: {type(e).__name__}"
         )

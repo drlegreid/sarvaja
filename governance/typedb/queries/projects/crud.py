@@ -48,7 +48,8 @@ class ProjectCRUDOperations:
 
             return self.get_project(project_id)
         except Exception as e:
-            logger.error(f"Failed to insert project {project_id}: {e}")
+            # BUG-472-PCR-001: Sanitize logger message + add exc_info for stack trace preservation
+            logger.error(f"Failed to insert project {project_id}: {type(e).__name__}", exc_info=True)
             return None
 
     def get_project(self, project_id: str) -> Optional[Dict[str, Any]]:
@@ -77,7 +78,8 @@ class ProjectCRUDOperations:
 
             return project
         except Exception as e:
-            logger.error(f"Failed to get project {project_id}: {e}")
+            # BUG-472-PCR-002: Sanitize logger message + add exc_info for stack trace preservation
+            logger.error(f"Failed to get project {project_id}: {type(e).__name__}", exc_info=True)
             return None
 
     def list_projects(self, limit: int = 50, offset: int = 0) -> List[Dict[str, Any]]:
@@ -100,7 +102,8 @@ class ProjectCRUDOperations:
 
             return projects
         except Exception as e:
-            logger.error(f"Failed to list projects: {e}")
+            # BUG-472-PCR-003: Sanitize logger message + add exc_info for stack trace preservation
+            logger.error(f"Failed to list projects: {type(e).__name__}", exc_info=True)
             return []
 
     def delete_project(self, project_id: str) -> bool:
@@ -134,5 +137,6 @@ class ProjectCRUDOperations:
 
             return True
         except Exception as e:
-            logger.error(f"Failed to delete project {project_id}: {e}")
+            # BUG-472-PCR-004: Sanitize logger message + add exc_info for stack trace preservation
+            logger.error(f"Failed to delete project {project_id}: {type(e).__name__}", exc_info=True)
             return False

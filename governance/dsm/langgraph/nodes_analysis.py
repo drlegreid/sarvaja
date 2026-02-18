@@ -87,7 +87,8 @@ def audit_node(state: DSPState) -> dict:
     except Exception as e:
         duration_ms = int((time.perf_counter() - start_time) * 1000)
         # BUG-410-NOD-001: Don't leak exception text into state/API; add exc_info
-        logger.error(f"[DSP] AUDIT phase failed: {e}", exc_info=True)
+        # BUG-473-DNA-1: Sanitize logger message — exc_info=True already captures full stack
+        logger.error(f"[DSP] AUDIT phase failed: {type(e).__name__}", exc_info=True)
         return {
             "current_phase": "audit_failed",
             "status": "failed",
@@ -141,7 +142,8 @@ def hypothesize_node(state: DSPState) -> dict:
     except Exception as e:
         duration_ms = int((time.perf_counter() - start_time) * 1000)
         # BUG-410-NOD-002: Don't leak exception text into state/API; add exc_info
-        logger.error(f"[DSP] HYPOTHESIZE phase failed: {e}", exc_info=True)
+        # BUG-473-DNA-2: Sanitize logger message — exc_info=True already captures full stack
+        logger.error(f"[DSP] HYPOTHESIZE phase failed: {type(e).__name__}", exc_info=True)
         return {
             "current_phase": "hypothesize_failed",
             "status": "failed",
@@ -194,7 +196,8 @@ def measure_node(state: DSPState) -> dict:
     except Exception as e:
         duration_ms = int((time.perf_counter() - start_time) * 1000)
         # BUG-410-NOD-003: Don't leak exception text into state/API; add exc_info
-        logger.error(f"[DSP] MEASURE phase failed: {e}", exc_info=True)
+        # BUG-473-DNA-3: Sanitize logger message — exc_info=True already captures full stack
+        logger.error(f"[DSP] MEASURE phase failed: {type(e).__name__}", exc_info=True)
         return {
             "current_phase": "measure_failed",
             "status": "failed",

@@ -68,7 +68,8 @@ def scan_evidence_files(
             results.append(result)
 
         except Exception as e:
-            logger.error(f"Error scanning {filepath}: {e}")
+            # BUG-474-EBF-1: Sanitize logger message + add exc_info for stack trace preservation
+            logger.error(f"Error scanning {filepath}: {type(e).__name__}", exc_info=True)
 
     return results
 
@@ -89,7 +90,8 @@ def get_existing_task_ids() -> Set[str]:
             client.close()
 
     except Exception as e:
-        logger.error(f"Failed to get existing tasks: {e}")
+        # BUG-474-EBF-2: Sanitize logger message + add exc_info for stack trace preservation
+        logger.error(f"Failed to get existing tasks: {type(e).__name__}", exc_info=True)
         return set()
 
 

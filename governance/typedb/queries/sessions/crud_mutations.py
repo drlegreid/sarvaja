@@ -229,7 +229,8 @@ class SessionMutationOperations:
 
             return self.get_session(session_id)
         except Exception as e:
-            logger.error(f"Failed to update session {session_id}: {e}")
+            # BUG-472-SMU-001: Sanitize logger message + add exc_info for stack trace preservation
+            logger.error(f"Failed to update session {session_id}: {type(e).__name__}", exc_info=True)
             return None
 
     def delete_session(self, session_id: str) -> bool:
@@ -302,5 +303,6 @@ class SessionMutationOperations:
 
             return True
         except Exception as e:
-            logger.error(f"Failed to delete session {session_id}: {e}")
+            # BUG-472-SMU-002: Sanitize logger message + add exc_info for stack trace preservation
+            logger.error(f"Failed to delete session {session_id}: {type(e).__name__}", exc_info=True)
             return False

@@ -64,9 +64,9 @@ def register_audit_tools(mcp) -> None:
             }
             return format_mcp_result(result)
 
-        # BUG-370-AUD-001: Log full error but return only type name
+        # BUG-471-AUD-001: Sanitize logger message — exc_info=True already captures full stack
         except Exception as e:
-            logger.error(f"audit_query failed: {e}", exc_info=True)
+            logger.error(f"audit_query failed: {type(e).__name__}", exc_info=True)
             return format_mcp_result({"error": f"audit_query failed: {type(e).__name__}"})
 
     @mcp.tool()
@@ -85,9 +85,9 @@ def register_audit_tools(mcp) -> None:
         try:
             summary = get_audit_summary()
             return format_mcp_result(summary)
-        # BUG-370-AUD-001: Log full error but return only type name
+        # BUG-471-AUD-002: Sanitize logger message — exc_info=True already captures full stack
         except Exception as e:
-            logger.error(f"audit_summary failed: {e}", exc_info=True)
+            logger.error(f"audit_summary failed: {type(e).__name__}", exc_info=True)
             return format_mcp_result({"error": f"audit_summary failed: {type(e).__name__}"})
 
     @mcp.tool()
@@ -138,9 +138,9 @@ def register_audit_tools(mcp) -> None:
             }
             return format_mcp_result(result)
 
-        # BUG-370-AUD-001: Log full error but return only type name
+        # BUG-471-AUD-003: Sanitize logger message — exc_info=True already captures full stack
         except Exception as e:
-            logger.error(f"audit_entity_trail failed: {e}", exc_info=True)
+            logger.error(f"audit_entity_trail failed: {type(e).__name__}", exc_info=True)
             return format_mcp_result({"error": f"audit_entity_trail failed: {type(e).__name__}"})
 
     @mcp.tool()
@@ -186,7 +186,7 @@ def register_audit_tools(mcp) -> None:
             }
             return format_mcp_result(result)
 
-        # BUG-370-AUD-001: Log full error but return only type name
+        # BUG-471-AUD-004: Sanitize logger message — exc_info=True already captures full stack
         except Exception as e:
-            logger.error(f"audit_trace failed: {e}", exc_info=True)
+            logger.error(f"audit_trace failed: {type(e).__name__}", exc_info=True)
             return format_mcp_result({"error": f"audit_trace failed: {type(e).__name__}"})

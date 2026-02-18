@@ -37,7 +37,8 @@ async def warmup_chromadb_embeddings():
             logger.warning("ChromaDB embeddings: not ready (%s) - first search may be slow", str(e)[:80])
 
     # Run in thread pool to not block startup
-    loop = asyncio.get_event_loop()
+    # BUG-225-STARTUP-001: Use get_running_loop() (get_event_loop deprecated in 3.10+)
+    loop = asyncio.get_running_loop()
     loop.run_in_executor(concurrent.futures.ThreadPoolExecutor(max_workers=1), _warmup)
 
 
@@ -67,7 +68,9 @@ async def cleanup_orphaned_chat_sessions(_sessions_store):
     for sid, data in list(_sessions_store.items()):
         if data.get("status") == "ACTIVE" and "CHAT-" in sid:
             data["status"] = "COMPLETED"
-            data["end_time"] = "orphan-cleanup-on-startup"
+            # BUG-213-ORPHAN-ENDTIME-001: Use ISO timestamp, not string literal
+            from datetime import datetime as _dt
+            data["end_time"] = _dt.now().isoformat()
             ended += 1
 
     # Clean TypeDB: end any ACTIVE CHAT-* sessions from prior runs
@@ -189,10 +192,12 @@ async def discover_cc_sessions():
             else:
                 logger.info("CC auto-discovery: all sessions already ingested")
         except Exception as e:
-            logger.warning(f"CC auto-discovery failed: {e}")
+            # BUG-474-AST-1: Sanitize logger message + add exc_info for stack trace preservation
+            logger.warning(f"CC auto-discovery failed: {type(e).__name__}", exc_info=True)
 
     # Run in thread pool to not block API startup
-    loop = asyncio.get_event_loop()
+    # BUG-225-STARTUP-001: Use get_running_loop() (get_event_loop deprecated in 3.10+)
+    loop = asyncio.get_running_loop()
     loop.run_in_executor(
         concurrent.futures.ThreadPoolExecutor(max_workers=1),
         _discover_and_ingest,

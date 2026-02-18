@@ -61,7 +61,8 @@ class HybridQueryRouter:
             )
             status["typedb"] = self._typedb_client.connect()
         except Exception as e:
-            logger.warning(f"TypeDB connection failed: {e}")
+            # BUG-474-HYB-1: Sanitize logger message + add exc_info for stack trace preservation
+            logger.warning(f"TypeDB connection failed: {type(e).__name__}", exc_info=True)
 
         # ChromaDB
         try:
@@ -74,7 +75,8 @@ class HybridQueryRouter:
             self._chromadb_client.heartbeat()
             status["chromadb"] = True
         except Exception as e:
-            logger.warning(f"ChromaDB connection failed: {e}")
+            # BUG-474-HYB-2: Sanitize logger message + add exc_info for stack trace preservation
+            logger.warning(f"ChromaDB connection failed: {type(e).__name__}", exc_info=True)
 
         return status
 
@@ -103,7 +105,8 @@ class HybridQueryRouter:
                 self._chromadb_client.heartbeat()
                 return True
         except Exception as e:
-            logger.warning(f"ChromaDB health check failed: {e}")
+            # BUG-474-HYB-3: Sanitize logger message + add exc_info for stack trace preservation
+            logger.warning(f"ChromaDB health check failed: {type(e).__name__}", exc_info=True)
         return False
 
     def query(self, query_text: str, query_type: Literal["inference", "semantic", "combined", "auto"] = "auto",

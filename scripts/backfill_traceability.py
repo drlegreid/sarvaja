@@ -74,7 +74,8 @@ def link_task_to_session(client: httpx.Client, task_id: str, session_id: str,
             return True
         logger.warning(f"  Link task->session failed: {resp.status_code} {resp.text[:100]}")
     except Exception as e:
-        logger.warning(f"  Link task->session error: {e}")
+        # BUG-474-BFT-1: Sanitize logger message + add exc_info for stack trace preservation
+        logger.warning(f"  Link task->session error: {type(e).__name__}", exc_info=True)
     return False
 
 
@@ -93,7 +94,8 @@ def link_task_to_rule(client: httpx.Client, task_id: str, rule_id: str,
             return True
         logger.warning(f"  Link task->rule failed: {resp.status_code} {resp.text[:100]}")
     except Exception as e:
-        logger.warning(f"  Link task->rule error: {e}")
+        # BUG-474-BFT-2: Sanitize logger message + add exc_info for stack trace preservation
+        logger.warning(f"  Link task->rule error: {type(e).__name__}", exc_info=True)
     return False
 
 
@@ -163,7 +165,8 @@ def main():
                 logger.error(f"API not healthy: {resp.status_code}")
                 sys.exit(1)
         except Exception as e:
-            logger.error(f"Cannot reach API at {API_BASE}: {e}")
+            # BUG-474-BFT-3: Sanitize logger message + add exc_info for stack trace preservation
+            logger.error(f"Cannot reach API at {API_BASE}: {type(e).__name__}", exc_info=True)
             sys.exit(1)
 
         # Fetch all data

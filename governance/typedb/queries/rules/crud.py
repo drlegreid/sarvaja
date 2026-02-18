@@ -232,7 +232,8 @@ class RuleCRUDOperations:
                 tx.commit()
         except Exception as e:
             # BUG-389-RCR-001: Add exc_info for stack trace visibility in logs
-            logger.error(f"Failed to update rule {rule_id}: {e}", exc_info=True)
+            # BUG-472-RCR-001: Sanitize logger message — exc_info=True already captures full stack
+            logger.error(f"Failed to update rule {rule_id}: {type(e).__name__}", exc_info=True)
             return None
 
         return self.get_rule_by_id(rule_id)
@@ -273,7 +274,8 @@ class RuleCRUDOperations:
             except Exception as e:
                 # Log but don't fail deletion if archiving fails
                 # BUG-412-RCR-001: Add exc_info for stack trace preservation
-                logger.warning(f"Could not archive rule {rule_id}: {e}", exc_info=True)
+                # BUG-472-RCR-002: Sanitize logger message — exc_info=True already captures full stack
+                logger.warning(f"Could not archive rule {rule_id}: {type(e).__name__}", exc_info=True)
 
         from typedb.driver import TransactionType
 
@@ -296,7 +298,8 @@ class RuleCRUDOperations:
                 tx.commit()
         except Exception as e:
             # BUG-389-RCR-002: Add exc_info for stack trace visibility in logs
-            logger.error(f"Failed to delete rule {rule_id}: {e}", exc_info=True)
+            # BUG-472-RCR-003: Sanitize logger message — exc_info=True already captures full stack
+            logger.error(f"Failed to delete rule {rule_id}: {type(e).__name__}", exc_info=True)
             return False
 
         return True

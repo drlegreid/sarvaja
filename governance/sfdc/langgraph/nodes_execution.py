@@ -46,11 +46,12 @@ def develop_node(state: SFDCState) -> dict:
 
     except Exception as e:
         duration_ms = int((time.perf_counter() - start_time) * 1000)
-        logger.error(f"[SFDC] DEVELOP phase failed: {e}")
+        # BUG-473-SNE-1: Sanitize logger message + add exc_info for stack trace preservation
+        logger.error(f"[SFDC] DEVELOP phase failed: {type(e).__name__}", exc_info=True)
         return {
             "current_phase": "develop_failed",
             "status": "failed",
-            "error_message": f"DEVELOP phase failed: {str(e)}",
+            "error_message": f"DEVELOP phase failed: {type(e).__name__}",
             "phase_results": state.get("phase_results", []) + [
                 _create_phase_result("develop", "failed", state, str(e), duration_ms)
             ],
@@ -102,11 +103,12 @@ def run_tests_node(state: SFDCState) -> dict:
 
     except Exception as e:
         duration_ms = int((time.perf_counter() - start_time) * 1000)
-        logger.error(f"[SFDC] TEST phase failed: {e}")
+        # BUG-473-SNE-2: Sanitize logger message + add exc_info for stack trace preservation
+        logger.error(f"[SFDC] TEST phase failed: {type(e).__name__}", exc_info=True)
         return {
             "current_phase": "test_failed",
             "status": "failed",
-            "error_message": f"TEST phase failed: {str(e)}",
+            "error_message": f"TEST phase failed: {type(e).__name__}",
             "phase_results": state.get("phase_results", []) + [
                 _create_phase_result("test", "failed", state, str(e), duration_ms)
             ],
@@ -150,11 +152,12 @@ def deploy_node(state: SFDCState) -> dict:
 
     except Exception as e:
         duration_ms = int((time.perf_counter() - start_time) * 1000)
-        logger.error(f"[SFDC] DEPLOY phase failed: {e}")
+        # BUG-473-SNE-3: Sanitize logger message + add exc_info for stack trace preservation
+        logger.error(f"[SFDC] DEPLOY phase failed: {type(e).__name__}", exc_info=True)
         return {
             "current_phase": "deploy_failed",
             "status": "failed",
-            "error_message": f"DEPLOY phase failed: {str(e)}",
+            "error_message": f"DEPLOY phase failed: {type(e).__name__}",
             "deployment_status": "Failed",
             "phase_results": state.get("phase_results", []) + [
                 _create_phase_result("deploy", "failed", state, str(e), duration_ms)
@@ -197,11 +200,12 @@ def validate_node(state: SFDCState) -> dict:
 
     except Exception as e:
         duration_ms = int((time.perf_counter() - start_time) * 1000)
-        logger.error(f"[SFDC] VALIDATE phase failed: {e}")
+        # BUG-473-SNE-4: Sanitize logger message + add exc_info for stack trace preservation
+        logger.error(f"[SFDC] VALIDATE phase failed: {type(e).__name__}", exc_info=True)
         return {
             "current_phase": "validate_failed",
             "status": "failed",
-            "error_message": f"VALIDATE phase failed: {str(e)}",
+            "error_message": f"VALIDATE phase failed: {type(e).__name__}",
             "validation_passed": False,
             "phase_results": state.get("phase_results", []) + [
                 _create_phase_result("validate", "failed", state, str(e), duration_ms)
@@ -239,11 +243,12 @@ def monitor_node(state: SFDCState) -> dict:
 
     except Exception as e:
         duration_ms = int((time.perf_counter() - start_time) * 1000)
-        logger.error(f"[SFDC] MONITOR phase failed: {e}")
+        # BUG-473-SNE-5: Sanitize logger message + add exc_info for stack trace preservation
+        logger.error(f"[SFDC] MONITOR phase failed: {type(e).__name__}", exc_info=True)
         return {
             "current_phase": "monitor_failed",
             "status": "failed",
-            "error_message": f"MONITOR phase failed: {str(e)}",
+            "error_message": f"MONITOR phase failed: {type(e).__name__}",
             "phase_results": state.get("phase_results", []) + [
                 _create_phase_result("monitor", "failed", state, str(e), duration_ms)
             ],
@@ -291,11 +296,12 @@ def report_node(state: SFDCState) -> dict:
 
     except Exception as e:
         duration_ms = int((time.perf_counter() - start_time) * 1000)
-        logger.error(f"[SFDC] REPORT phase failed: {e}")
+        # BUG-473-SNE-6: Sanitize logger message + add exc_info for stack trace preservation
+        logger.error(f"[SFDC] REPORT phase failed: {type(e).__name__}", exc_info=True)
         return {
             "current_phase": "report_failed",
             "status": "failed",
-            "error_message": f"REPORT phase failed: {str(e)}",
+            "error_message": f"REPORT phase failed: {type(e).__name__}",
             "phase_results": state.get("phase_results", []) + [
                 _create_phase_result("report", "failed", state, str(e), duration_ms)
             ],

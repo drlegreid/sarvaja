@@ -66,7 +66,8 @@ def scan_all_evidence_files(evidence_dir: str = EVIDENCE_DIR) -> List[ScanResult
                 )
                 results.append(result)
             except Exception as e:
-                logger.error(f"Error scanning {filepath}: {e}")
+                # BUG-474-ELK-1: Sanitize logger message + add exc_info for stack trace preservation
+                logger.error(f"Error scanning {filepath}: {type(e).__name__}", exc_info=True)
 
     return results
 

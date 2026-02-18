@@ -44,9 +44,9 @@ def register_workflow_compliance_tools(mcp) -> None:
             report = run_compliance_checks()
             return format_mcp_result(report.to_dict())
 
-        # BUG-370-WFC-001: Log full error but return only type name
+        # BUG-471-WCM-001: Sanitize logger message — exc_info=True already captures full stack
         except Exception as e:
-            logger.error(f"workflow_compliance_check failed: {e}", exc_info=True)
+            logger.error(f"workflow_compliance_check failed: {type(e).__name__}", exc_info=True)
             return format_mcp_result({"error": f"workflow_compliance_check failed: {type(e).__name__}"})
 
     @mcp.tool()
@@ -74,9 +74,9 @@ def register_workflow_compliance_tools(mcp) -> None:
                 "recommendations": ui_data["recommendations"][:3],
             })
 
-        # BUG-370-WFC-001: Log full error but return only type name
+        # BUG-471-WCM-002: Sanitize logger message — exc_info=True already captures full stack
         except Exception as e:
-            logger.error(f"workflow_compliance_summary failed: {e}", exc_info=True)
+            logger.error(f"workflow_compliance_summary failed: {type(e).__name__}", exc_info=True)
             return format_mcp_result({"error": f"workflow_compliance_summary failed: {type(e).__name__}"})
 
     logger.info("Registered workflow compliance tools (2 tools)")

@@ -25,5 +25,6 @@ def get_typedb_client():
         if client and client.is_connected():
             return client
     except Exception as e:
-        logger.warning(f"TypeDB connection failed: {e}")
+        # BUG-473-CFG-1: Sanitize logger message + add exc_info for stack trace preservation
+        logger.warning(f"TypeDB connection failed: {type(e).__name__}", exc_info=True)
     return None

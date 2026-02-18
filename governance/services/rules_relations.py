@@ -43,7 +43,8 @@ def _monitor(action: str, rule_id: str, source: str = "service", **extra):
         )
     except Exception as e:
         # BUG-MONITOR-SILENT-001: Log instead of silently swallowing
-        logger.warning(f"Monitor event failed for rule {rule_id}: {e}")
+        # BUG-473-RRL-1: Sanitize logger message + add exc_info for stack trace preservation
+        logger.warning(f"Monitor event failed for rule {rule_id}: {type(e).__name__}", exc_info=True)
 
 
 def get_rule_document_paths(client, rule_ids: List[str]) -> Dict[str, str]:
@@ -61,7 +62,8 @@ def get_rule_document_paths(client, rule_ids: List[str]) -> Dict[str, str]:
         results = client.execute_query(query)
         return {r["rid"]: r["path"] for r in results if r.get("rid") and r.get("path")}
     except Exception as e:
-        logger.warning(f"Failed to query rule document paths: {e}")
+        # BUG-473-RRL-2: Sanitize logger message + add exc_info for stack trace preservation
+        logger.warning(f"Failed to query rule document paths: {type(e).__name__}", exc_info=True)
         return {}
 
 

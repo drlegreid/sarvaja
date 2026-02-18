@@ -47,7 +47,8 @@ def load_initial_data(
             _load_tests(state, client, api_base_url)
     except Exception as e:
         # BUG-LOG-002: Log fallback instead of silently swallowing
-        logger.warning(f"REST API loading failed, falling back to MCP: {e}")
+        # BUG-474-DDL-1: Sanitize logger message + add exc_info for stack trace preservation
+        logger.warning(f"REST API loading failed, falling back to MCP: {type(e).__name__}", exc_info=True)
         state.rules = get_rules()
         state.decisions = get_decisions()
         state.sessions = get_sessions(limit=100)

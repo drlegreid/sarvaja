@@ -147,7 +147,8 @@ class MCPAutoSessionTracker:
             }
             persist_session(self.active_session_id, _sessions_store[self.active_session_id])
         except Exception as e:
-            logger.warning(f"Failed to persist MCP session start: {e}")
+            # BUG-471-ASN-001: Sanitize logger message + add exc_info for stack trace preservation
+            logger.warning(f"Failed to persist MCP session start: {type(e).__name__}", exc_info=True)
 
     def _persist_tool_call(self, call_record: Dict) -> None:
         """Persist a tool call to _sessions_store."""
@@ -161,7 +162,8 @@ class MCPAutoSessionTracker:
                 _sessions_store[sid]["tool_calls"].append(call_record)
                 persist_session(sid, _sessions_store[sid])
         except Exception as e:
-            logger.warning(f"Failed to persist MCP tool call: {e}")
+            # BUG-471-ASN-002: Sanitize logger message + add exc_info for stack trace preservation
+            logger.warning(f"Failed to persist MCP tool call: {type(e).__name__}", exc_info=True)
 
     def _persist_session_end(self) -> None:
         """Persist session end to _sessions_store."""
@@ -176,7 +178,8 @@ class MCPAutoSessionTracker:
                 # BUG-AUTO-SESSION-PERSIST-001: Must persist after update (matches _persist_session_start/_persist_tool_call)
                 persist_session(sid, _sessions_store[sid])
         except Exception as e:
-            logger.warning(f"Failed to persist MCP session end: {e}")
+            # BUG-471-ASN-003: Sanitize logger message + add exc_info for stack trace preservation
+            logger.warning(f"Failed to persist MCP session end: {type(e).__name__}", exc_info=True)
 
 
 # ---- Module-level convenience functions ----

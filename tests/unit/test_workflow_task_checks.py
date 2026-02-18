@@ -63,7 +63,7 @@ class TestCheckTaskEvidenceCompliance:
         mock_fetch.side_effect = Exception("Network error")
         result = check_task_evidence_compliance()
         assert result.status == "SKIP"
-        assert "Network error" in result.message
+        assert "Exception" in result.message
 
     @patch("governance.workflow_compliance.checks.task_checks.fetch_tasks")
     def test_violations_included_on_fail(self, mock_fetch):

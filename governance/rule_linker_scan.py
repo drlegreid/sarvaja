@@ -126,7 +126,8 @@ def scan_rule_documents(include_subdirs: bool = True) -> List[RuleDocument]:
                 with open(item_path, "r", encoding="utf-8") as f:
                     content = f.read()
             except Exception as e:
-                logger.warning(f"Failed to read {item_path}: {e}")
+                # BUG-474-RLS-1: Sanitize logger message + add exc_info for stack trace preservation
+                logger.warning(f"Failed to read {item_path}: {type(e).__name__}", exc_info=True)
                 continue
 
             # Generate document ID from filename

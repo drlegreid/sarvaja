@@ -60,12 +60,13 @@ def run_compliance_checks() -> ComplianceReport:
             result = check_fn()
             report.add_check(result)
         except Exception as e:
-            logger.error(f"Check {check_fn.__name__} failed: {e}")
+            # BUG-474-WCI-1: Sanitize logger message + add exc_info for stack trace preservation
+            logger.error(f"Check {check_fn.__name__} failed: {type(e).__name__}", exc_info=True)
             report.add_check(ComplianceCheck(
                 rule_id="SYSTEM",
                 check_name=check_fn.__name__,
                 status="SKIP",
-                message=f"Check failed: {e}"
+                message=f"Check failed: {type(e).__name__}"
             ))
 
     # Generate recommendations based on failures/warnings

@@ -29,8 +29,10 @@ class DecisionQueries:
         BUG-DECISION-DOUBLE-TRANSACTION: Single transaction for atomicity.
         """
         from typedb.driver import TransactionType
-        # BUG-TYPEQL-ESCAPE-DECISION-001: Escape decision_id for TypeQL safety
-        did = decision_id.replace('"', '\\"')
+        # BUG-TYPEQL-ESCAPE-DECISION-001 + BUG-235-INJ-001: Escape backslash THEN quotes
+        did = decision_id.replace('\\', '\\\\').replace('"', '\\"')
+        # BUG-235-INJ-001: Escape new_value inside helper, not just at caller
+        val_esc = new_value.replace('\\', '\\\\').replace('"', '\\"')
         with self._driver.transaction(self.database, TransactionType.WRITE) as tx:
             try:
                 tx.query(f'''
@@ -41,7 +43,7 @@ class DecisionQueries:
                 pass  # Attribute may not exist yet
             tx.query(f'''
                 match $d isa decision, has decision-id "{did}";
-                insert $d has {attr_name} "{new_value}";
+                insert $d has {attr_name} "{val_esc}";
             ''').resolve()
             tx.commit()
 
@@ -142,12 +144,12 @@ class DecisionQueries:
         if status not in valid_statuses:
             raise ValueError(f"Invalid status: {status}. Must be one of {valid_statuses}")
 
-        # Escape quotes
-        name_escaped = name.replace('"', '\\"')
-        context_escaped = context.replace('"', '\\"')
-        rationale_escaped = rationale.replace('"', '\\"')
+        # BUG-235-INJ-004: Escape backslash THEN quotes for all string fields
+        name_escaped = name.replace('\\', '\\\\').replace('"', '\\"')
+        context_escaped = context.replace('\\', '\\\\').replace('"', '\\"')
+        rationale_escaped = rationale.replace('\\', '\\\\').replace('"', '\\"')
         # BUG-TYPEQL-ESCAPE-DECISION-001: Escape decision_id too
-        decision_id_escaped = decision_id.replace('"', '\\"')
+        decision_id_escaped = decision_id.replace('\\', '\\\\').replace('"', '\\"')
 
         query = f'''
             insert $d isa decision,
@@ -311,5 +313,6 @@ class DecisionQueries:
                 tx.commit()
             return True
         except Exception as e:
-            logger.error(f"Failed to link decision {decision_id} to rule {rule_id}: {e}")
+            # BUG-472-RDC-001: Sanitize logger message + add exc_info for stack trace preservation
+            logger.error(f"Failed to link decision {decision_id} to rule {rule_id}: {type(e).__name__}", exc_info=True)
             return False

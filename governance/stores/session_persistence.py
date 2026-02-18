@@ -51,11 +51,13 @@ def persist_session(session_id: str, session_data: Dict[str, Any]) -> None:
                 tmp.unlink(missing_ok=True)
             except OSError as ue:
                 # BUG-433-PER-001: Upgrade debug→warning + exc_info for filesystem failures
-                logger.warning(f"Failed to cleanup .tmp for {session_id}: {ue}", exc_info=True)
+                # BUG-473-SPR-1: Sanitize logger message — exc_info=True already captures full stack
+                logger.warning(f"Failed to cleanup .tmp for {session_id}: {type(ue).__name__}", exc_info=True)
             raise
     except Exception as e:
         # BUG-433-PER-002: Upgrade debug→warning + exc_info for persist failures
-        logger.warning(f"Session persist skipped for {session_id}: {e}", exc_info=True)
+        # BUG-473-SPR-2: Sanitize logger message — exc_info=True already captures full stack
+        logger.warning(f"Session persist skipped for {session_id}: {type(e).__name__}", exc_info=True)
 
 
 def load_persisted_sessions(sessions_store: Dict[str, Dict[str, Any]]) -> int:
@@ -98,7 +100,8 @@ def load_persisted_sessions(sessions_store: Dict[str, Dict[str, Any]]) -> int:
             loaded += 1
         except Exception as e:
             # BUG-421-PER-001: Add exc_info for stack trace preservation
-            logger.warning(f"Failed to load persisted session {path.name}: {e}", exc_info=True)
+            # BUG-473-SPR-3: Sanitize logger message — exc_info=True already captures full stack
+            logger.warning(f"Failed to load persisted session {path.name}: {type(e).__name__}", exc_info=True)
 
     if loaded:
         logger.info(f"Loaded {loaded} persisted session(s) from disk")
@@ -114,4 +117,5 @@ def cleanup_persisted(session_id: str) -> None:
     except Exception as e:
         # BUG-PERSIST-001: Log cleanup failures instead of silently swallowing
         # BUG-433-PER-003: Upgrade debug→warning + exc_info for cleanup failures
-        logger.warning(f"Failed to cleanup persisted session {session_id}: {e}", exc_info=True)
+        # BUG-473-SPR-4: Sanitize logger message — exc_info=True already captures full stack
+        logger.warning(f"Failed to cleanup persisted session {session_id}: {type(e).__name__}", exc_info=True)

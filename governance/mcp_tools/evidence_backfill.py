@@ -44,9 +44,9 @@ def register_evidence_backfill_tools(mcp) -> None:
             result = scan_task_session_linkages()
             return format_mcp_result(format_scan_summary(result))
 
-        # BUG-370-BKF-001: Log full error but return only type name
+        # BUG-471-EBF-001: Sanitize logger message — exc_info=True already captures full stack
         except Exception as e:
-            logger.error(f"backfill_scan_task_sessions failed: {e}", exc_info=True)
+            logger.error(f"backfill_scan_task_sessions failed: {type(e).__name__}", exc_info=True)
             return format_mcp_result({"error": f"backfill_scan_task_sessions failed: {type(e).__name__}"})
 
     @mcp.tool()
@@ -76,9 +76,9 @@ def register_evidence_backfill_tools(mcp) -> None:
 
             return format_mcp_result(summary)
 
-        # BUG-370-BKF-001: Log full error but return only type name
+        # BUG-471-EBF-002: Sanitize logger message — exc_info=True already captures full stack
         except Exception as e:
-            logger.error(f"backfill_execute_task_sessions failed: {e}", exc_info=True)
+            logger.error(f"backfill_execute_task_sessions failed: {type(e).__name__}", exc_info=True)
             return format_mcp_result({"error": f"backfill_execute_task_sessions failed: {type(e).__name__}"})
 
     @mcp.tool()
@@ -101,9 +101,9 @@ def register_evidence_backfill_tools(mcp) -> None:
             result = scan_evidence_session_links()
             return format_mcp_result(format_evidence_link_summary(result))
 
-        # BUG-370-BKF-001: Log full error but return only type name
+        # BUG-471-EBF-003: Sanitize logger message — exc_info=True already captures full stack
         except Exception as e:
-            logger.error(f"backfill_scan_evidence_sessions failed: {e}", exc_info=True)
+            logger.error(f"backfill_scan_evidence_sessions failed: {type(e).__name__}", exc_info=True)
             return format_mcp_result({"error": f"backfill_scan_evidence_sessions failed: {type(e).__name__}"})
 
     @mcp.tool()
@@ -133,9 +133,9 @@ def register_evidence_backfill_tools(mcp) -> None:
 
             return format_mcp_result(summary)
 
-        # BUG-370-BKF-001: Log full error but return only type name
+        # BUG-471-EBF-004: Sanitize logger message — exc_info=True already captures full stack
         except Exception as e:
-            logger.error(f"backfill_execute_evidence_sessions failed: {e}", exc_info=True)
+            logger.error(f"backfill_execute_evidence_sessions failed: {type(e).__name__}", exc_info=True)
             return format_mcp_result({"error": f"backfill_execute_evidence_sessions failed: {type(e).__name__}"})
 
     @mcp.tool()
@@ -178,9 +178,9 @@ def register_evidence_backfill_tools(mcp) -> None:
 
             return format_mcp_result(summary)
 
-        # BUG-370-BKF-001: Log full error but return only type name
+        # BUG-471-EBF-005: Sanitize logger message — exc_info=True already captures full stack
         except Exception as e:
-            logger.error(f"backfill_scan_all_evidence failed: {e}", exc_info=True)
+            logger.error(f"backfill_scan_all_evidence failed: {type(e).__name__}", exc_info=True)
             return format_mcp_result({"error": f"backfill_scan_all_evidence failed: {type(e).__name__}"})
 
     logger.info("Registered evidence backfill tools (5 tools)")

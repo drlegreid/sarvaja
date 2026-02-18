@@ -28,7 +28,8 @@ def fetch_tasks() -> List[Dict[str, Any]]:
                 return data.get("items", data.get("tasks", []))
             return data
     except Exception as e:
-        logger.error(f"Failed to fetch tasks: {e}")
+        # BUG-474-WAC-1: Sanitize logger message + add exc_info for stack trace preservation
+        logger.error(f"Failed to fetch tasks: {type(e).__name__}", exc_info=True)
     return []
 
 
@@ -43,7 +44,8 @@ def fetch_rules() -> List[Dict[str, Any]]:
                 return data
             return data.get("rules", data.get("items", []))
     except Exception as e:
-        logger.error(f"Failed to fetch rules: {e}")
+        # BUG-474-WAC-2: Sanitize logger message + add exc_info for stack trace preservation
+        logger.error(f"Failed to fetch rules: {type(e).__name__}", exc_info=True)
     return []
 
 
@@ -56,5 +58,6 @@ def fetch_sessions() -> List[Dict[str, Any]]:
             data = response.json()
             return data.get("sessions", []) if isinstance(data, dict) else data
     except Exception as e:
-        logger.error(f"Failed to fetch sessions: {e}")
+        # BUG-474-WAC-3: Sanitize logger message + add exc_info for stack trace preservation
+        logger.error(f"Failed to fetch sessions: {type(e).__name__}", exc_info=True)
     return []

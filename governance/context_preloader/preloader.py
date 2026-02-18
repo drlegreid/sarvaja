@@ -69,7 +69,8 @@ class ContextPreloader:
                 summary=summary_match.group(1).strip()[:200] if summary_match else "",
                 source_file=str(file_path))
         except Exception as e:
-            logger.warning(f"Failed to parse {file_path}: {e}")
+            # BUG-474-CPR-1: Sanitize logger message + add exc_info for stack trace preservation
+            logger.warning(f"Failed to parse {file_path}: {type(e).__name__}", exc_info=True)
             return None
 
     def _parse_session_decisions_file(self, file_path: Path) -> List[Decision]:
@@ -91,7 +92,8 @@ class ContextPreloader:
                     summary=decision_match.group(1).strip()[:150] if decision_match else "",
                     source_file=str(file_path)))
         except Exception as e:
-            logger.warning(f"Failed to parse {file_path}: {e}")
+            # BUG-474-CPR-2: Sanitize logger message + add exc_info for stack trace preservation
+            logger.warning(f"Failed to parse {file_path}: {type(e).__name__}", exc_info=True)
         return decisions
 
     def _load_technology_choices(self) -> List[TechnologyChoice]:
@@ -111,7 +113,8 @@ class ContextPreloader:
                             if area and parts[1] and area != "Decision":
                                 choices.append(TechnologyChoice(area=area, choice=parts[1], not_using=parts[2], rationale=parts[3]))
         except Exception as e:
-            logger.warning(f"Failed to load technology choices: {e}")
+            # BUG-474-CPR-3: Sanitize logger message + add exc_info for stack trace preservation
+            logger.warning(f"Failed to load technology choices: {type(e).__name__}", exc_info=True)
         return choices
 
     def _detect_active_phase(self) -> Optional[str]:

@@ -59,10 +59,11 @@ def check_active_rules() -> ComplianceCheck:
             )
 
     except Exception as e:
-        logger.error(f"active_rules check failed: {e}")
+        # BUG-474-WRC-1: Sanitize logger message + add exc_info for stack trace preservation
+        logger.error(f"active_rules check failed: {type(e).__name__}", exc_info=True)
         return ComplianceCheck(
             rule_id="GOV-RULE-01-v1",
             check_name="active_rules",
             status="SKIP",
-            message=f"Check failed: {e}"
+            message=f"Check failed: {type(e).__name__}"
         )

@@ -42,7 +42,8 @@ class RuleInferenceQueries:
             results = self._execute_query(query, infer=True)
         except Exception as e:
             # BUG-385-INF-002: Add exc_info for stack trace visibility
-            logger.error(f"get_rule_dependencies query failed for {rule_id}: {e}", exc_info=True)
+            # BUG-472-RIN-001: Sanitize logger message — exc_info=True already captures full stack
+            logger.error(f"get_rule_dependencies query failed for {rule_id}: {type(e).__name__}", exc_info=True)
             return []
         return [r.get("dep_id") for r in results if r.get("dep_id")]
 
@@ -63,7 +64,8 @@ class RuleInferenceQueries:
             results = self._execute_query(query, infer=True)
         except Exception as e:
             # BUG-385-INF-002: Add exc_info for stack trace visibility
-            logger.error(f"get_rules_depending_on query failed for {rule_id}: {e}", exc_info=True)
+            # BUG-472-RIN-002: Sanitize logger message — exc_info=True already captures full stack
+            logger.error(f"get_rules_depending_on query failed for {rule_id}: {type(e).__name__}", exc_info=True)
             return []
         return [r.get("id") for r in results if r.get("id")]
 
@@ -84,7 +86,8 @@ class RuleInferenceQueries:
             results = self._execute_query(query, infer=True)
         except Exception as e:
             # BUG-385-INF-002: Add exc_info for stack trace visibility
-            logger.error(f"find_conflicts query failed: {e}", exc_info=True)
+            # BUG-472-RIN-003: Sanitize logger message — exc_info=True already captures full stack
+            logger.error(f"find_conflicts query failed: {type(e).__name__}", exc_info=True)
             return []
         return [{"rule1": r.get("id1"), "rule2": r.get("id2")} for r in results if r.get("id1") and r.get("id2")]
 
@@ -120,7 +123,8 @@ class RuleInferenceQueries:
             return True
         except Exception as e:
             # BUG-412-INF-001: Add exc_info for stack trace preservation
-            logger.warning(f"Failed to create dependency {dependent_id}->{dependency_id}: {e}", exc_info=True)
+            # BUG-472-RIN-004: Sanitize logger message — exc_info=True already captures full stack
+            logger.warning(f"Failed to create dependency {dependent_id}->{dependency_id}: {type(e).__name__}", exc_info=True)
             return False
 
     def get_decision_impacts(self, decision_id: str) -> List[str]:
@@ -143,6 +147,7 @@ class RuleInferenceQueries:
             results = self._execute_query(query, infer=True)
         except Exception as e:
             # BUG-385-INF-002: Add exc_info for stack trace visibility
-            logger.error(f"get_decision_impacts query failed for {decision_id}: {e}", exc_info=True)
+            # BUG-472-RIN-005: Sanitize logger message — exc_info=True already captures full stack
+            logger.error(f"get_decision_impacts query failed for {decision_id}: {type(e).__name__}", exc_info=True)
             return []
         return [r.get("rid") for r in results if r.get("rid")]

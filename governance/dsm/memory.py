@@ -61,7 +61,9 @@ def get_session_memory_payload(cycle: "DSMCycle") -> Optional[Dict[str, Any]]:
     except ImportError:
         return None
     except Exception as e:
-        logger.debug(f"Failed to create session memory payload: {e}")
+        # BUG-280-MEM-001: Promote from DEBUG to WARNING so AMNESIA failures are visible
+        # BUG-473-DMM-1: Sanitize logger message + add exc_info for stack trace preservation
+        logger.warning(f"Failed to create session memory payload: {type(e).__name__}", exc_info=True)
         return None
 
 

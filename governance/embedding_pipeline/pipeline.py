@@ -70,7 +70,8 @@ class EmbeddingPipeline:
 
         except Exception as e:
             # BUG-413-EP-001: Add exc_info for stack trace preservation
-            logger.error(f"Error embedding rules: {e}", exc_info=True)
+            # BUG-474-EPL-1: Sanitize logger message — exc_info=True already captures full stack
+            logger.error(f"Error embedding rules: {type(e).__name__}", exc_info=True)
             return []
 
     def embed_and_store_rule(self, rule_id: str, rule_content: str) -> VectorDocument:
@@ -108,7 +109,8 @@ class EmbeddingPipeline:
 
         except Exception as e:
             # BUG-413-EP-002: Add exc_info for stack trace preservation
-            logger.error(f"Error embedding decisions: {e}", exc_info=True)
+            # BUG-474-EPL-2: Sanitize logger message — exc_info=True already captures full stack
+            logger.error(f"Error embedding decisions: {type(e).__name__}", exc_info=True)
             return []
 
     def embed_session(self, session_id: str, session_content: str) -> VectorDocument:
@@ -152,11 +154,13 @@ class EmbeddingPipeline:
                     content = session_result.get('content', '')
                 except json.JSONDecodeError as e:
                     # BUG-424-PIP-001: Add exc_info for stack trace preservation
-                    logger.warning(f"Failed to parse session {session_id} JSON: {e}", exc_info=True)
+                    # BUG-474-EPL-3: Sanitize logger message — exc_info=True already captures full stack
+                    logger.warning(f"Failed to parse session {session_id} JSON: {type(e).__name__}", exc_info=True)
                     continue
                 except Exception as e:
                     # BUG-424-PIP-002: Add exc_info for stack trace preservation
-                    logger.warning(f"Failed to fetch session {session_id}: {e}", exc_info=True)
+                    # BUG-474-EPL-4: Sanitize logger message — exc_info=True already captures full stack
+                    logger.warning(f"Failed to fetch session {session_id}: {type(e).__name__}", exc_info=True)
                     continue
 
                 if content:
@@ -167,7 +171,8 @@ class EmbeddingPipeline:
 
         except Exception as e:
             # BUG-413-EP-003: Add exc_info for stack trace preservation
-            logger.error(f"Error embedding sessions: {e}", exc_info=True)
+            # BUG-474-EPL-5: Sanitize logger message — exc_info=True already captures full stack
+            logger.error(f"Error embedding sessions: {type(e).__name__}", exc_info=True)
             return []
 
     def store_embedding(self, doc: VectorDocument) -> bool:

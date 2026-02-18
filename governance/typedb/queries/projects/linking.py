@@ -35,7 +35,8 @@ class ProjectLinkingOperations:
                 tx.commit()
             return True
         except Exception as e:
-            logger.error(f"Failed to link project {project_id} to plan {plan_id}: {e}")
+            # BUG-472-PLK-001: Sanitize logger message + add exc_info for stack trace preservation
+            logger.error(f"Failed to link project {project_id} to plan {plan_id}: {type(e).__name__}", exc_info=True)
             return False
 
     def link_plan_to_epic(self, plan_id: str, epic_id: str) -> bool:
@@ -59,7 +60,8 @@ class ProjectLinkingOperations:
                 tx.commit()
             return True
         except Exception as e:
-            logger.error(f"Failed to link plan {plan_id} to epic {epic_id}: {e}")
+            # BUG-472-PLK-002: Sanitize logger message + add exc_info for stack trace preservation
+            logger.error(f"Failed to link plan {plan_id} to epic {epic_id}: {type(e).__name__}", exc_info=True)
             return False
 
     def link_epic_to_task(self, epic_id: str, task_id: str) -> bool:
@@ -83,7 +85,8 @@ class ProjectLinkingOperations:
                 tx.commit()
             return True
         except Exception as e:
-            logger.error(f"Failed to link epic {epic_id} to task {task_id}: {e}")
+            # BUG-472-PLK-003: Sanitize logger message + add exc_info for stack trace preservation
+            logger.error(f"Failed to link epic {epic_id} to task {task_id}: {type(e).__name__}", exc_info=True)
             return False
 
     def link_project_to_session(self, project_id: str, session_id: str) -> bool:
@@ -107,7 +110,8 @@ class ProjectLinkingOperations:
                 tx.commit()
             return True
         except Exception as e:
-            logger.error(f"Failed to link project {project_id} to session {session_id}: {e}")
+            # BUG-472-PLK-004: Sanitize logger message + add exc_info for stack trace preservation
+            logger.error(f"Failed to link project {project_id} to session {session_id}: {type(e).__name__}", exc_info=True)
             return False
 
     def get_project_sessions(self, project_id: str) -> list:
@@ -122,7 +126,8 @@ class ProjectLinkingOperations:
             )
             return [r.get("sid", "") for r in results]
         except Exception as e:
-            logger.error(f"Failed to get sessions for project {project_id}: {e}")
+            # BUG-472-PLK-005: Sanitize logger message + add exc_info for stack trace preservation
+            logger.error(f"Failed to get sessions for project {project_id}: {type(e).__name__}", exc_info=True)
             return []
 
     def get_project_plans(self, project_id: str) -> list:
@@ -137,5 +142,6 @@ class ProjectLinkingOperations:
             )
             return [r.get("plid", "") for r in results]
         except Exception as e:
-            logger.error(f"Failed to get plans for project {project_id}: {e}")
+            # BUG-472-PLK-006: Sanitize logger message + add exc_info for stack trace preservation
+            logger.error(f"Failed to get plans for project {project_id}: {type(e).__name__}", exc_info=True)
             return []

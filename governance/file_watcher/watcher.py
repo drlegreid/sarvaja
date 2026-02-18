@@ -139,7 +139,8 @@ class FileWatcher:
             return True
 
         except Exception as e:
-            logger.error(f"Failed to start file watcher: {e}")
+            # BUG-474-FWA-1: Sanitize logger message + add exc_info for stack trace preservation
+            logger.error(f"Failed to start file watcher: {type(e).__name__}", exc_info=True)
             self.stats.errors.append(str(e))
             return False
 
@@ -180,7 +181,8 @@ class FileWatcher:
             except asyncio.CancelledError:
                 break
             except Exception as e:
-                logger.error(f"Error processing queue: {e}")
+                # BUG-474-FWA-2: Sanitize logger message + add exc_info for stack trace preservation
+                logger.error(f"Error processing queue: {type(e).__name__}", exc_info=True)
                 self.stats.errors.append(str(e))
                 await asyncio.sleep(self.poll_interval)
 
@@ -205,7 +207,8 @@ class FileWatcher:
                         self.stats.syncs_by_category.get(cat_key, 0) + 1
                     )
                 except Exception as e:
-                    logger.error(f"Callback error for {category}: {e}")
+                    # BUG-474-FWA-3: Sanitize logger message + add exc_info for stack trace preservation
+                    logger.error(f"Callback error for {category}: {type(e).__name__}", exc_info=True)
                     self.stats.errors.append(f"{category}: {e}")
 
         self.stats.last_sync_time = time.time()

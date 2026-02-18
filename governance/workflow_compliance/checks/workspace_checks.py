@@ -69,12 +69,13 @@ def check_session_evidence_files() -> ComplianceCheck:
             )
 
     except Exception as e:
-        logger.error(f"session_evidence_files check failed: {e}")
+        # BUG-474-WWC-1: Sanitize logger message + add exc_info for stack trace preservation
+        logger.error(f"session_evidence_files check failed: {type(e).__name__}", exc_info=True)
         return ComplianceCheck(
             rule_id="SESSION-EVID-01-v1",
             check_name="session_evidence_files",
             status="SKIP",
-            message=f"Check failed: {e}"
+            message=f"Check failed: {type(e).__name__}"
         )
 
 
@@ -128,10 +129,11 @@ def check_workspace_files() -> ComplianceCheck:
             )
 
     except Exception as e:
-        logger.error(f"workspace_files check failed: {e}")
+        # BUG-474-WWC-2: Sanitize logger message + add exc_info for stack trace preservation
+        logger.error(f"workspace_files check failed: {type(e).__name__}", exc_info=True)
         return ComplianceCheck(
             rule_id="RECOVER-AMNES-01-v1",
             check_name="workspace_files",
             status="SKIP",
-            message=f"Check failed: {e}"
+            message=f"Check failed: {type(e).__name__}"
         )

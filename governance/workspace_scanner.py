@@ -30,6 +30,14 @@ class ParsedTask:
     source_file: Optional[str] = None
     linked_rules: Optional[List[str]] = None
 
+def _assert_within_workspace(filepath: str) -> None:
+    """BUG-293-WSC-001: Validate filepath is within workspace to prevent path traversal."""
+    real = os.path.realpath(filepath)
+    root = os.path.realpath(WORKSPACE_ROOT)
+    if not real.startswith(root + os.sep) and real != root:
+        raise ValueError(f"Path escapes workspace root: {filepath}")
+
+
 def parse_todo_md(filepath: str) -> List[ParsedTask]:
     """Parse TODO.md for tasks."""
     tasks = []
@@ -37,7 +45,8 @@ def parse_todo_md(filepath: str) -> List[ParsedTask]:
         with open(filepath, "r", encoding="utf-8") as f:
             content = f.read()
     except Exception as e:
-        logger.warning(f"Failed to read {filepath}: {e}")
+        # BUG-474-WSC-1: Sanitize logger message + add exc_info for stack trace preservation
+        logger.warning(f"Failed to read {filepath}: {type(e).__name__}", exc_info=True)
         return tasks
 
     rows = parse_markdown_table(content)
@@ -62,7 +71,8 @@ def parse_phase_md(filepath: str) -> List[ParsedTask]:
         with open(filepath, "r", encoding="utf-8") as f:
             content = f.read()
     except Exception as e:
-        logger.warning(f"Failed to read {filepath}: {e}")
+        # BUG-474-WSC-2: Sanitize logger message + add exc_info for stack trace preservation
+        logger.warning(f"Failed to read {filepath}: {type(e).__name__}", exc_info=True)
         return tasks
 
     # Extract phase from filename (e.g., PHASE-10.md -> P10)
@@ -93,7 +103,8 @@ def parse_rd_md(filepath: str) -> List[ParsedTask]:
         with open(filepath, "r", encoding="utf-8") as f:
             content = f.read()
     except Exception as e:
-        logger.warning(f"Failed to read {filepath}: {e}")
+        # BUG-474-WSC-3: Sanitize logger message + add exc_info for stack trace preservation
+        logger.warning(f"Failed to read {filepath}: {type(e).__name__}", exc_info=True)
         return tasks
 
     rows = parse_markdown_table(content)
@@ -117,15 +128,20 @@ def scan_workspace() -> List[ParsedTask]:
     # 1. TODO.md
     todo_path = os.path.join(WORKSPACE_ROOT, "TODO.md")
     if os.path.exists(todo_path):
+        # BUG-293-WSC-001: Validate path at entry point before parsing
+        _assert_within_workspace(todo_path)
         all_tasks.extend(parse_todo_md(todo_path))
         logger.info(f"Parsed {len(all_tasks)} tasks from TODO.md")
 
     # 2. Phase docs
     phases_dir = os.path.join(WORKSPACE_ROOT, "docs", "backlog", "phases")
     if os.path.exists(phases_dir):
-        for filename in os.listdir(phases_dir):
+        # BUG-232-LOG-005: Sort for deterministic scan order
+        for filename in sorted(os.listdir(phases_dir)):
             if filename.startswith("PHASE-") and filename.endswith(".md"):
                 filepath = os.path.join(phases_dir, filename)
+                # BUG-293-WSC-001: Validate constructed path before parsing
+                _assert_within_workspace(filepath)
                 phase_tasks = parse_phase_md(filepath)
                 all_tasks.extend(phase_tasks)
                 logger.info(f"Parsed {len(phase_tasks)} tasks from {filename}")
@@ -133,9 +149,12 @@ def scan_workspace() -> List[ParsedTask]:
     # 3. R&D docs
     rd_dir = os.path.join(WORKSPACE_ROOT, "docs", "backlog", "rd")
     if os.path.exists(rd_dir):
-        for filename in os.listdir(rd_dir):
+        # BUG-232-LOG-005: Sort for deterministic scan order
+        for filename in sorted(os.listdir(rd_dir)):
             if filename.startswith("RD-") and filename.endswith(".md"):
                 filepath = os.path.join(rd_dir, filename)
+                # BUG-293-WSC-001: Validate constructed path before parsing
+                _assert_within_workspace(filepath)
                 rd_tasks = parse_rd_md(filepath)
                 all_tasks.extend(rd_tasks)
                 logger.info(f"Parsed {len(rd_tasks)} tasks from {filename}")
@@ -153,15 +172,17 @@ def sync_tasks_to_typedb(tasks: List[ParsedTask]) -> Dict[str, int]:
             logger.error("TypeDB client not available")
             return stats
     except Exception as e:
-        logger.error(f"Failed to connect to TypeDB: {e}")
+        # BUG-474-WSC-4: Sanitize logger message + add exc_info for stack trace preservation
+        logger.error(f"Failed to connect to TypeDB: {type(e).__name__}", exc_info=True)
         return stats
     for task in tasks:
         try:
             existing = client.get_task(task.task_id)
             if existing:
                 if existing.status != task.status:
-                    client.update_task_status(task.task_id, task.status)
-                    stats["updated"] += 1
+                    # BUG-219-SCAN-001: Check return value of update
+                    success = client.update_task_status(task.task_id, task.status)
+                    stats["updated" if success else "errors"] += 1
                 else:
                     stats["skipped"] += 1
             else:
@@ -170,7 +191,8 @@ def sync_tasks_to_typedb(tasks: List[ParsedTask]) -> Dict[str, int]:
                                             linked_rules=task.linked_rules)
                 stats["inserted" if result else "errors"] += 1
         except Exception as e:
-            logger.warning(f"Failed to sync task {task.task_id}: {e}")
+            # BUG-474-WSC-5: Sanitize logger message + add exc_info for stack trace preservation
+            logger.warning(f"Failed to sync task {task.task_id}: {type(e).__name__}", exc_info=True)
             stats["errors"] += 1
     return stats
 

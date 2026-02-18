@@ -81,7 +81,8 @@ def stream_transcript(
         # BUG-257-TRS-001: Use context manager for reliable handle cleanup on generator abandon
         f = open(filepath, "r", encoding="utf-8")
     except (PermissionError, IOError) as e:
-        logger.error(f"Cannot read transcript file {filepath}: {e}")
+        # BUG-473-CTR-1: Sanitize logger message + add exc_info for stack trace preservation
+        logger.error(f"Cannot read transcript file {filepath}: {type(e).__name__}", exc_info=True)
         return
 
     try:

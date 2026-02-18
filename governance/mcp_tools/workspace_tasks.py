@@ -63,9 +63,9 @@ def register_workspace_task_tools(mcp) -> None:
                 "sources": len(by_source),
                 "by_source": by_source,
             })
-        # BUG-370-WKT-001: Log full error but return only type name
+        # BUG-471-WTK-001: Sanitize logger message — exc_info=True already captures full stack
         except Exception as e:
-            logger.error(f"workspace_scan_tasks failed: {e}", exc_info=True)
+            logger.error(f"workspace_scan_tasks failed: {type(e).__name__}", exc_info=True)
             return format_mcp_result({"error": f"workspace_scan_tasks failed: {type(e).__name__}"})
 
     @mcp.tool()
@@ -88,9 +88,9 @@ def register_workspace_task_tools(mcp) -> None:
 
             result = capture_workspace_tasks()
             return format_mcp_result(result)
-        # BUG-370-WKT-001: Log full error but return only type name
+        # BUG-471-WTK-002: Sanitize logger message — exc_info=True already captures full stack
         except Exception as e:
-            logger.error(f"workspace_capture_tasks failed: {e}", exc_info=True)
+            logger.error(f"workspace_capture_tasks failed: {type(e).__name__}", exc_info=True)
             return format_mcp_result({"error": f"workspace_capture_tasks failed: {type(e).__name__}"})
 
     @mcp.tool()

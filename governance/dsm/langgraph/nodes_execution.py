@@ -61,7 +61,8 @@ def optimize_node(state: DSPState) -> dict:
 
     except Exception as e:
         duration_ms = int((time.perf_counter() - start_time) * 1000)
-        logger.error(f"[DSP] OPTIMIZE phase failed: {e}", exc_info=True)
+        # BUG-473-DNE-1: Sanitize logger message — exc_info=True already captures full stack
+        logger.error(f"[DSP] OPTIMIZE phase failed: {type(e).__name__}", exc_info=True)
         # BUG-377-NOD-001: Sanitize error — don't expose raw exception in state/API
         return {
             "current_phase": "optimize_failed",
@@ -134,7 +135,8 @@ def validate_node(state: DSPState) -> dict:
 
     except Exception as e:
         duration_ms = int((time.perf_counter() - start_time) * 1000)
-        logger.error(f"[DSP] VALIDATE phase failed: {e}", exc_info=True)
+        # BUG-473-DNE-2: Sanitize logger message — exc_info=True already captures full stack
+        logger.error(f"[DSP] VALIDATE phase failed: {type(e).__name__}", exc_info=True)
         # BUG-377-NOD-001: Sanitize error — don't expose raw exception in state/API
         return {
             "current_phase": "validate_failed",
@@ -188,7 +190,8 @@ def dream_node(state: DSPState) -> dict:
 
     except Exception as e:
         duration_ms = int((time.perf_counter() - start_time) * 1000)
-        logger.error(f"[DSP] DREAM phase failed: {e}", exc_info=True)
+        # BUG-473-DNE-3: Sanitize logger message — exc_info=True already captures full stack
+        logger.error(f"[DSP] DREAM phase failed: {type(e).__name__}", exc_info=True)
         # BUG-377-NOD-001: Sanitize error — don't expose raw exception in state/API
         return {
             "current_phase": "dream_failed",
@@ -271,7 +274,8 @@ def report_node(state: DSPState) -> dict:
 
     except Exception as e:
         duration_ms = int((time.perf_counter() - start_time) * 1000)
-        logger.error(f"[DSP] REPORT phase failed: {e}", exc_info=True)
+        # BUG-473-DNE-4: Sanitize logger message — exc_info=True already captures full stack
+        logger.error(f"[DSP] REPORT phase failed: {type(e).__name__}", exc_info=True)
         # BUG-377-NOD-001: Sanitize error — don't expose raw exception in state/API
         return {
             "current_phase": "report_failed",

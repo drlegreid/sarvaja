@@ -41,7 +41,8 @@ def sync_typedb_to_memory(client, tasks_store: Dict[str, Any], sessions_store: D
             }
         logger.info(f"Synced {len(tasks)} tasks from TypeDB to memory")
     except Exception as e:
-        logger.warning(f"Failed to sync tasks from TypeDB: {e}")
+        # BUG-474-SSY-1: Sanitize logger message + add exc_info for stack trace preservation
+        logger.warning(f"Failed to sync tasks from TypeDB: {type(e).__name__}", exc_info=True)
 
     # Sync sessions
     try:
@@ -62,7 +63,8 @@ def sync_typedb_to_memory(client, tasks_store: Dict[str, Any], sessions_store: D
             }
         logger.info(f"Synced {len(sessions)} sessions from TypeDB to memory")
     except Exception as e:
-        logger.warning(f"Failed to sync sessions from TypeDB: {e}")
+        # BUG-474-SSY-2: Sanitize logger message + add exc_info for stack trace preservation
+        logger.warning(f"Failed to sync sessions from TypeDB: {type(e).__name__}", exc_info=True)
 
     # Sync agents (P10.3)
     # Per GAP-AGENT-PAUSE-001: preserve existing in-memory status (tracks toggles/defaults)
@@ -82,4 +84,5 @@ def sync_typedb_to_memory(client, tasks_store: Dict[str, Any], sessions_store: D
                 }
             logger.info(f"Synced {len(agents)} agents from TypeDB to memory")
         except Exception as e:
-            logger.warning(f"Failed to sync agents from TypeDB: {e}")
+            # BUG-474-SSY-3: Sanitize logger message + add exc_info for stack trace preservation
+            logger.warning(f"Failed to sync agents from TypeDB: {type(e).__name__}", exc_info=True)

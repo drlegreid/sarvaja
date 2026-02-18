@@ -222,7 +222,8 @@ class TaskCRUDOperations:
             return self.get_task(task_id)
         except Exception as e:
             # BUG-412-TCR-001: Add exc_info for stack trace preservation
-            logger.error(f"Failed to insert task {task_id}: {e}", exc_info=True)
+            # BUG-472-TCR-001: Sanitize logger message — exc_info=True already captures full stack
+            logger.error(f"Failed to insert task {task_id}: {type(e).__name__}", exc_info=True)
             return None
 
     def update_task_status(
@@ -321,7 +322,8 @@ class TaskCRUDOperations:
             return True
         except Exception as e:
             # BUG-412-TCR-002: Add exc_info for stack trace preservation
-            logger.error(f"Failed to update task {task_id}: {e}", exc_info=True)
+            # BUG-472-TCR-002: Sanitize logger message — exc_info=True already captures full stack
+            logger.error(f"Failed to update task {task_id}: {type(e).__name__}", exc_info=True)
             return False
 
     def delete_task(self, task_id: str) -> bool:
@@ -372,5 +374,6 @@ class TaskCRUDOperations:
             return True
         except Exception as e:
             # BUG-412-TCR-003: Add exc_info for stack trace preservation
-            logger.error(f"Failed to delete task {task_id}: {e}", exc_info=True)
+            # BUG-472-TCR-003: Sanitize logger message — exc_info=True already captures full stack
+            logger.error(f"Failed to delete task {task_id}: {type(e).__name__}", exc_info=True)
             return False

@@ -112,7 +112,8 @@ class HybridVectorDb:
                 return self._query_chromadb(query, n_results, collection)
 
         except Exception as e:
-            logger.error(f"Search error: {e}")
+            # BUG-474-HVD-1: Sanitize logger message + add exc_info for stack trace preservation
+            logger.error(f"Search error: {type(e).__name__}", exc_info=True)
             # Return empty results on error
             return []
 
@@ -136,7 +137,8 @@ class HybridVectorDb:
         try:
             return self._query_typedb(query, n_results)
         except Exception as e:
-            logger.warning(f"TypeDB query failed: {e}, falling back to ChromaDB")
+            # BUG-474-HVD-2: Sanitize logger message + add exc_info for stack trace preservation
+            logger.warning(f"TypeDB query failed: {type(e).__name__}, falling back to ChromaDB", exc_info=True)
             return self._query_chromadb(query, n_results, collection)
 
     def _query_typedb(self, query: str, n_results: int = 10) -> List[Dict[str, Any]]:
@@ -266,7 +268,8 @@ class HybridVectorDb:
             logger.info(f"Added {len(documents)} documents to {self.collection_name}")
 
         except Exception as e:
-            logger.error(f"Failed to add documents: {e}")
+            # BUG-474-HVD-3: Sanitize logger message + add exc_info for stack trace preservation
+            logger.error(f"Failed to add documents: {type(e).__name__}", exc_info=True)
 
     def delete(self, ids: List[str]) -> None:
         """
@@ -287,7 +290,8 @@ class HybridVectorDb:
             logger.info(f"Deleted {len(ids)} documents from {self.collection_name}")
 
         except Exception as e:
-            logger.error(f"Failed to delete documents: {e}")
+            # BUG-474-HVD-4: Sanitize logger message + add exc_info for stack trace preservation
+            logger.error(f"Failed to delete documents: {type(e).__name__}", exc_info=True)
 
 
 # Factory function for creating HybridVectorDb instances

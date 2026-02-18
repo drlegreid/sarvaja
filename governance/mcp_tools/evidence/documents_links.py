@@ -130,9 +130,9 @@ def register_link_document_tools(mcp) -> None:
                 }
             })
 
-        # BUG-370-DLK-001: Log full error but return only type name
+        # BUG-471-DLK-001: Sanitize logger message — exc_info=True already captures full stack
         except Exception as e:
-            logger.error(f"doc_links_extract failed: {e}", exc_info=True)
+            logger.error(f"doc_links_extract failed: {type(e).__name__}", exc_info=True)
             return format_mcp_result({"error": f"doc_links_extract failed: {type(e).__name__}"})
 
     @mcp.tool()

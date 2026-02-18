@@ -96,7 +96,8 @@ def get_all_tasks_from_typedb(
             return result
         except Exception as e:
             # BUG-411-TDB-001: Add exc_info for stack trace preservation
-            logger.warning(f"TypeDB task query failed: {e}", exc_info=True)
+            # BUG-473-TDA-1: Sanitize logger message — exc_info=True already captures full stack
+            logger.warning(f"TypeDB task query failed: {type(e).__name__}", exc_info=True)
             if not allow_fallback:
                 # BUG-377-TDB-001: Sanitize exception — don't forward raw error to HTTP clients
                 raise TypeDBUnavailable(f"TypeDB unavailable: {type(e).__name__}")
@@ -132,7 +133,8 @@ def get_task_from_typedb(task_id: str, allow_fallback: bool = False) -> Optional
             return None
         except Exception as e:
             # BUG-411-TDB-002: Add exc_info for stack trace preservation
-            logger.warning(f"TypeDB task get failed: {e}", exc_info=True)
+            # BUG-473-TDA-2: Sanitize logger message — exc_info=True already captures full stack
+            logger.warning(f"TypeDB task get failed: {type(e).__name__}", exc_info=True)
             if not allow_fallback:
                 # BUG-377-TDB-001: Sanitize exception — don't forward raw error to HTTP clients
                 raise TypeDBUnavailable(f"TypeDB unavailable: {type(e).__name__}")
@@ -173,7 +175,8 @@ def get_all_sessions_from_typedb(allow_fallback: bool = False) -> List[Dict[str,
             return result
         except Exception as e:
             # BUG-411-TDB-003: Add exc_info for stack trace preservation
-            logger.warning(f"TypeDB session query failed: {e}", exc_info=True)
+            # BUG-473-TDA-3: Sanitize logger message — exc_info=True already captures full stack
+            logger.warning(f"TypeDB session query failed: {type(e).__name__}", exc_info=True)
             if not allow_fallback:
                 # BUG-377-TDB-001: Sanitize exception — don't forward raw error to HTTP clients
                 raise TypeDBUnavailable(f"TypeDB unavailable: {type(e).__name__}")
@@ -207,7 +210,8 @@ def get_session_from_typedb(session_id: str, allow_fallback: bool = False) -> Op
             return None
         except Exception as e:
             # BUG-411-TDB-004: Add exc_info for stack trace preservation
-            logger.warning(f"TypeDB session get failed: {e}", exc_info=True)
+            # BUG-473-TDA-4: Sanitize logger message — exc_info=True already captures full stack
+            logger.warning(f"TypeDB session get failed: {type(e).__name__}", exc_info=True)
             if not allow_fallback:
                 # BUG-377-TDB-001: Sanitize exception — don't forward raw error to HTTP clients
                 raise TypeDBUnavailable(f"TypeDB unavailable: {type(e).__name__}")

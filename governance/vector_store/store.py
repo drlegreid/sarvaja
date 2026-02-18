@@ -68,7 +68,8 @@ class VectorStore:
             return False
         except Exception as e:
             # BUG-413-VS-001: Add exc_info for stack trace preservation
-            logger.error(f"Failed to connect to TypeDB: {e}", exc_info=True)
+            # BUG-474-VST-1: Sanitize logger message — exc_info=True already captures full stack
+            logger.error(f"Failed to connect to TypeDB: {type(e).__name__}", exc_info=True)
             return False
 
     def close(self):
@@ -95,7 +96,8 @@ class VectorStore:
             return True
         except Exception as e:
             # BUG-413-VS-002: Add exc_info for stack trace preservation
-            logger.error(f"Insert failed: {e}", exc_info=True)
+            # BUG-474-VST-2: Sanitize logger message — exc_info=True already captures full stack
+            logger.error(f"Insert failed: {type(e).__name__}", exc_info=True)
             return False
 
     def insert_batch(self, docs: List[VectorDocument]) -> int:
@@ -115,7 +117,8 @@ class VectorStore:
                     success_count += 1
                 except Exception as e:
                     # BUG-413-VS-003: Add exc_info for stack trace preservation
-                    logger.warning(f"Failed to insert {doc.id}: {e}", exc_info=True)
+                    # BUG-474-VST-3: Sanitize logger message — exc_info=True already captures full stack
+                    logger.warning(f"Failed to insert {doc.id}: {type(e).__name__}", exc_info=True)
             # BUG-203-VSTORE-001: Only commit if at least one insert succeeded
             if success_count > 0:
                 tx.commit()
@@ -163,7 +166,8 @@ class VectorStore:
                     self._cache[doc.id] = doc
                 except Exception as e:
                     # BUG-413-VS-004: Add exc_info for stack trace preservation
-                    logger.warning(f"Failed to parse vector: {e}", exc_info=True)
+                    # BUG-474-VST-4: Sanitize logger message — exc_info=True already captures full stack
+                    logger.warning(f"Failed to parse vector: {type(e).__name__}", exc_info=True)
 
         return results
 
@@ -263,7 +267,8 @@ class VectorStore:
             return True
         except Exception as e:
             # BUG-413-VS-005: Add exc_info for stack trace preservation
-            logger.error(f"Delete failed: {e}", exc_info=True)
+            # BUG-474-VST-5: Sanitize logger message — exc_info=True already captures full stack
+            logger.error(f"Delete failed: {type(e).__name__}", exc_info=True)
             return False
 
     def clear_cache(self):

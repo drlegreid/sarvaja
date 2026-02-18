@@ -282,7 +282,8 @@ def _run_fallback_workflow(graph: StateGraph, initial_state: DSPState) -> DSPSta
             state.update(result)
         except Exception as e:
             # BUG-410-DSM-001: Don't leak str(e) into state; add exc_info
-            logger.error(f"[DSP] Node {node_name} failed: {e}", exc_info=True)
+            # BUG-473-DGR-1: Sanitize logger message — exc_info=True already captures full stack
+            logger.error(f"[DSP] Node {node_name} failed: {type(e).__name__}", exc_info=True)
             state["status"] = "failed"
             state["error_message"] = f"Node '{node_name}' failed: {type(e).__name__}"
             break

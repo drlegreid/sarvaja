@@ -54,12 +54,13 @@ def register_gap_tools(mcp) -> None:
             }
             return format_mcp_result(result)
 
-        # BUG-370-GAP-001: Log full error but return only type name
+        # BUG-471-GAP-001: Sanitize logger message — exc_info=True already captures full stack
         except FileNotFoundError as e:
-            logger.error(f"backlog_get file not found: {e}", exc_info=True)
+            logger.error(f"backlog_get file not found: {type(e).__name__}", exc_info=True)
             return format_mcp_result({"error": f"backlog_get failed: FileNotFoundError"})
+        # BUG-471-GAP-002: Sanitize logger message — exc_info=True already captures full stack
         except Exception as e:
-            logger.error(f"backlog_get failed: {e}", exc_info=True)
+            logger.error(f"backlog_get failed: {type(e).__name__}", exc_info=True)
             return format_mcp_result({"error": f"backlog_get failed: {type(e).__name__}"})
 
     @mcp.tool()
@@ -73,9 +74,9 @@ def register_gap_tools(mcp) -> None:
         try:
             summary = get_gap_summary()
             return format_mcp_result(summary)
-        # BUG-370-GAP-001: Log full error but return only type name
+        # BUG-471-GAP-003: Sanitize logger message — exc_info=True already captures full stack
         except Exception as e:
-            logger.error(f"gaps_summary failed: {e}", exc_info=True)
+            logger.error(f"gaps_summary failed: {type(e).__name__}", exc_info=True)
             return format_mcp_result({"error": f"gaps_summary failed: {type(e).__name__}"})
 
     @mcp.tool()
@@ -93,9 +94,9 @@ def register_gap_tools(mcp) -> None:
                 "count": len(critical),
                 "gaps": [g.to_dict() for g in critical],
             })
-        # BUG-370-GAP-001: Log full error but return only type name
+        # BUG-471-GAP-004: Sanitize logger message — exc_info=True already captures full stack
         except Exception as e:
-            logger.error(f"gaps_critical failed: {e}", exc_info=True)
+            logger.error(f"gaps_critical failed: {type(e).__name__}", exc_info=True)
             return format_mcp_result({"error": f"gaps_critical failed: {type(e).__name__}"})
 
     @mcp.tool()

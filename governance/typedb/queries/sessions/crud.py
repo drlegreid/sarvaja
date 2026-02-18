@@ -117,7 +117,8 @@ class SessionCRUDOperations(SessionMutationOperations):
 
             return self.get_session(session_id)
         except Exception as e:
-            logger.error(f"Failed to insert session {session_id}: {e}")
+            # BUG-472-SCR-001: Sanitize logger message + add exc_info for stack trace preservation
+            logger.error(f"Failed to insert session {session_id}: {type(e).__name__}", exc_info=True)
             return None
 
     def end_session(self, session_id: str) -> Optional[Session]:
@@ -143,5 +144,6 @@ class SessionCRUDOperations(SessionMutationOperations):
 
             return self.get_session(session_id)
         except Exception as e:
-            logger.error(f"Failed to end session {session_id}: {e}")
+            # BUG-472-SCR-002: Sanitize logger message + add exc_info for stack trace preservation
+            logger.error(f"Failed to end session {session_id}: {type(e).__name__}", exc_info=True)
             return None

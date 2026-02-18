@@ -157,9 +157,9 @@ def register_core_document_tools(mcp) -> None:
 
             return format_mcp_result(result)
 
-        # BUG-370-DOC-001: Log full error but return only type name
+        # BUG-471-DCR-001: Sanitize logger message — exc_info=True already captures full stack
         except Exception as e:
-            logger.error(f"doc_get failed: {e}", exc_info=True)
+            logger.error(f"doc_get failed: {type(e).__name__}", exc_info=True)
             return format_mcp_result({"error": f"doc_get failed: {type(e).__name__}"})
 
     @mcp.tool()
@@ -225,9 +225,9 @@ def register_core_document_tools(mcp) -> None:
                 "documents": documents
             })
 
-        # BUG-370-DOC-001: Log full error but return only type name
+        # BUG-471-DCR-002: Sanitize logger message — exc_info=True already captures full stack
         except Exception as e:
-            logger.error(f"docs_list failed: {e}", exc_info=True)
+            logger.error(f"docs_list failed: {type(e).__name__}", exc_info=True)
             return format_mcp_result({"error": f"docs_list failed: {type(e).__name__}"})
 
     # Legacy aliases for backward compatibility

@@ -303,7 +303,8 @@ def apply_repair(plan_item: Dict, dry_run: bool = True) -> Dict[str, Any]:
             return {"session_id": sid, "applied": False, "error": "Session not found", "fixes": fixes}
     except Exception as e:
         # BUG-356-SRP-001: Log full error but return generic message to prevent info disclosure
-        logger.error(f"Failed to apply repair for {sid}: {e}", exc_info=True)
+        # BUG-473-SRP-1: Sanitize logger message — exc_info=True already captures full stack
+        logger.error(f"Failed to apply repair for {sid}: {type(e).__name__}", exc_info=True)
         return {"session_id": sid, "applied": False, "error": "Repair failed due to internal error", "fixes": fixes}
 
     return {"session_id": sid, "applied": True, "fixes": fixes}

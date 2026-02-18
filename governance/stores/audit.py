@@ -64,7 +64,8 @@ def _load_audit_store():
             logger.info(f"Loaded {len(_audit_store)} audit entries")
         except Exception as e:
             # BUG-433-AUD-001: Add exc_info for stack trace preservation
-            logger.warning(f"Failed to load audit store: {e}", exc_info=True)
+            # BUG-473-AUD-1: Sanitize logger message — exc_info=True already captures full stack
+            logger.warning(f"Failed to load audit store: {type(e).__name__}", exc_info=True)
             _audit_store = []
 
 
@@ -91,7 +92,8 @@ def _save_audit_store():
             except OSError:
                 pass
         # BUG-433-AUD-002: Add exc_info for stack trace preservation
-        logger.warning(f"Failed to save audit store: {e}", exc_info=True)
+        # BUG-473-AUD-2: Sanitize logger message — exc_info=True already captures full stack
+        logger.warning(f"Failed to save audit store: {type(e).__name__}", exc_info=True)
 
 
 def generate_correlation_id() -> str:
