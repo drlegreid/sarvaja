@@ -188,7 +188,8 @@ def create_task(
         except ValueError:
             raise
         except Exception as e:
-            logger.warning(f"TypeDB task insert failed, using fallback: {e}")
+            # BUG-408-TSK-001: Add exc_info for stack trace preservation
+            logger.warning(f"TypeDB task insert failed, using fallback: {e}", exc_info=True)
 
     # Fallback to in-memory store
     if task_id in _tasks_store:
@@ -225,7 +226,8 @@ def get_task(task_id: str) -> Optional[Dict[str, Any]]:
             if task:
                 return task_to_response(task)
         except Exception as e:
-            logger.warning(f"TypeDB task get failed, using fallback: {e}")
+            # BUG-408-TSK-002: Add exc_info for stack trace preservation
+            logger.warning(f"TypeDB task get failed, using fallback: {e}", exc_info=True)
     if task_id in _tasks_store:
         return dict(_tasks_store[task_id])
     return None
@@ -246,7 +248,8 @@ def get_task_details(task_id: str) -> Optional[Dict[str, Any]]:
             if details is not None:
                 return {"task_id": task_id, **details}
         except Exception as e:
-            logger.warning(f"TypeDB task details get failed, using fallback: {e}")
+            # BUG-408-TSK-003: Add exc_info for stack trace preservation
+            logger.warning(f"TypeDB task details get failed, using fallback: {e}", exc_info=True)
     # Fallback to in-memory store
     if task_id in _tasks_store:
         t = _tasks_store[task_id]
@@ -285,7 +288,8 @@ def update_task_details(
                 _monitor("update_details", task_id, source="service")
                 return get_task_details(task_id)
         except Exception as e:
-            logger.warning(f"TypeDB task details update failed, using fallback: {e}")
+            # BUG-408-TSK-004: Add exc_info for stack trace preservation
+            logger.warning(f"TypeDB task details update failed, using fallback: {e}", exc_info=True)
     # Fallback to in-memory store
     if task_id in _tasks_store:
         t = _tasks_store[task_id]

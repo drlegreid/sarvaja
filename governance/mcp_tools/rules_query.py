@@ -68,9 +68,8 @@ def register_rule_query_tools(mcp) -> None:
                 # BUG-296-RQ-001: Consistent response schema (dict, not bare array)
                 return format_mcp_result({"rules": [asdict(r) for r in rules], "count": len(rules), "source": "typedb"})
         except Exception as e:
-            # BUG-268-RQUERY-001: Log instead of silently swallowing
-            import logging as _logging
-            _logging.getLogger(__name__).debug(f"rules_query TypeDB failed: {e}")
+            # BUG-409-RQ-001: Upgrade to WARNING + exc_info (was debug, invisible in production)
+            logger.warning(f"rules_query TypeDB failed: {type(e).__name__}", exc_info=True)
             use_fallback = True
         finally:
             client.close()
@@ -234,9 +233,8 @@ def register_rule_query_tools(mcp) -> None:
                 else:
                     use_fallback = True
         except Exception as e:
-            # BUG-268-RQUERY-001: Log instead of silently swallowing
-            import logging as _logging
-            _logging.getLogger(__name__).debug(f"rule_get TypeDB failed: {e}")
+            # BUG-409-RQ-002: Upgrade to WARNING + exc_info (was debug, invisible in production)
+            logger.warning(f"rule_get TypeDB failed: {type(e).__name__}", exc_info=True)
             use_fallback = True
         finally:
             client.close()

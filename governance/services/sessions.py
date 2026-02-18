@@ -206,7 +206,8 @@ def create_session(
                 # through to in-memory fallback despite successful TypeDB write.
                 return session_to_response(created)
         except Exception as e:
-            logger.warning(f"TypeDB session insert failed, using fallback: {e}")
+            # BUG-408-SES-001: Add exc_info for stack trace preservation
+            logger.warning(f"TypeDB session insert failed, using fallback: {e}", exc_info=True)
 
     # Fallback to in-memory
     if session_id in _sessions_store:
@@ -300,7 +301,8 @@ def update_session(
                 log_event("session", "update", session_id=session_id, status=status, source=source)
                 return session_to_response(updated)
         except Exception as e:
-            logger.warning(f"TypeDB session update failed, using fallback: {e}")
+            # BUG-408-SES-002: Add exc_info for stack trace preservation
+            logger.warning(f"TypeDB session update failed, using fallback: {e}", exc_info=True)
 
     # Fallback to in-memory
     if session_id not in _sessions_store:
@@ -394,7 +396,8 @@ def sync_pending_sessions() -> Dict[str, Any]:
             logger.info(f"Synced orphan session to TypeDB: {session_id}")
         except Exception as e:
             failed += 1
-            logger.warning(f"Failed to sync session {session_id}: {e}")
+            # BUG-408-SES-003: Add exc_info for stack trace preservation
+            logger.warning(f"Failed to sync session {session_id}: {e}", exc_info=True)
 
     return {
         "synced": synced,

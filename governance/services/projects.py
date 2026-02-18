@@ -69,7 +69,8 @@ def create_project(
                 result["project_type"] = project_type
                 return result
         except Exception as e:
-            logger.warning(f"TypeDB insert project failed: {e}")
+            # BUG-407-PRJ-001: Add exc_info for stack trace preservation
+            logger.warning(f"TypeDB insert project failed: {e}", exc_info=True)
 
     # In-memory fallback
     project = {
@@ -104,7 +105,8 @@ def get_project(project_id: str) -> Optional[Dict[str, Any]]:
                     result.setdefault("plan_count", 0)
                 return result
         except Exception as e:
-            logger.warning(f"TypeDB get project failed: {e}")
+            # BUG-407-PRJ-002: Add exc_info for stack trace preservation
+            logger.warning(f"TypeDB get project failed: {e}", exc_info=True)
 
     return _projects_store.get(project_id)
 
@@ -136,7 +138,8 @@ def list_projects(
                     logger.debug(f"Plan count enrichment failed for {pid}: {e}")
                     p.setdefault("plan_count", 0)
         except Exception as e:
-            logger.warning(f"TypeDB list projects failed: {e}")
+            # BUG-407-PRJ-003: Add exc_info for stack trace preservation
+            logger.warning(f"TypeDB list projects failed: {e}", exc_info=True)
 
     if not projects:
         all_projects = sorted(_projects_store.values(), key=lambda p: p.get("project_id", ""))
@@ -169,7 +172,8 @@ def delete_project(project_id: str) -> bool:
         try:
             return client.delete_project(project_id)
         except Exception as e:
-            logger.warning(f"TypeDB delete project failed: {e}")
+            # BUG-407-PRJ-004: Add exc_info for stack trace preservation
+            logger.warning(f"TypeDB delete project failed: {e}", exc_info=True)
 
     if project_id in _projects_store:
         del _projects_store[project_id]
@@ -184,5 +188,6 @@ def link_session_to_project(project_id: str, session_id: str) -> bool:
         try:
             return client.link_project_to_session(project_id, session_id)
         except Exception as e:
-            logger.warning(f"TypeDB link session to project failed: {e}")
+            # BUG-407-PRJ-005: Add exc_info for stack trace preservation
+            logger.warning(f"TypeDB link session to project failed: {e}", exc_info=True)
     return False

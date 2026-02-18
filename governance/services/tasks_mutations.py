@@ -106,7 +106,8 @@ def update_task(
                         # BUG-MUTATIONS-002: Link failures are data integrity issues
                         logger.warning(f"TypeDB document link {task_id}->{doc_path}: {le}")
         except Exception as e:
-            logger.warning(f"TypeDB task update failed, using fallback: {e}")
+            # BUG-408-TM-001: Add exc_info for stack trace preservation
+            logger.warning(f"TypeDB task update failed, using fallback: {e}", exc_info=True)
 
     # Ensure task in fallback store
     if task_id not in _tasks_store:
@@ -187,7 +188,8 @@ def delete_task(task_id: str, source: str = "rest") -> bool:
             if client.get_task(task_id) and client.delete_task(task_id):
                 deleted = True
         except Exception as e:
-            logger.warning(f"TypeDB task delete failed, using fallback: {e}")
+            # BUG-408-TM-002: Add exc_info for stack trace preservation
+            logger.warning(f"TypeDB task delete failed, using fallback: {e}", exc_info=True)
 
     if task_id in _tasks_store:
         del _tasks_store[task_id]

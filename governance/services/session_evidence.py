@@ -240,14 +240,16 @@ def generate_session_evidence(
             logger.error(f"output_dir {output_dir} outside evidence root {_DEFAULT_EVIDENCE_DIR}")
             return None
     except (OSError, ValueError) as e:
-        logger.error(f"Failed to validate output_dir {output_dir}: {e}")
+        # BUG-407-EVD-001: Add exc_info for stack trace preservation
+        logger.error(f"Failed to validate output_dir {output_dir}: {e}", exc_info=True)
         return None
 
     # BUG-194-005: Wrap all filesystem ops in try-except for disk/permission errors
     try:
         output_dir.mkdir(parents=True, exist_ok=True)
     except OSError as e:
-        logger.error(f"Failed to create evidence directory {output_dir}: {e}")
+        # BUG-407-EVD-002: Add exc_info for stack trace preservation
+        logger.error(f"Failed to create evidence directory {output_dir}: {e}", exc_info=True)
         return None
 
     # BUG-252-SES-001: Sanitize session_id to prevent path traversal
@@ -267,7 +269,8 @@ def generate_session_evidence(
     try:
         filepath.write_text(markdown, encoding="utf-8")
     except OSError as e:
-        logger.error(f"Failed to write evidence file {filepath}: {e}")
+        # BUG-407-EVD-003: Add exc_info for stack trace preservation
+        logger.error(f"Failed to write evidence file {filepath}: {e}", exc_info=True)
         return None
     logger.info(f"Generated session evidence: {filepath}")
 

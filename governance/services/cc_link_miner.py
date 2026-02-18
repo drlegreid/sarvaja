@@ -71,7 +71,8 @@ def _validate_entity_exists(
             exists = entity_id in cache[_dkey]
     except Exception as e:
         # BUG-257-LNK-002: Log TypeDB failures instead of silently swallowing
-        logger.warning(f"TypeDB validation failed for {entity_type}:{entity_id}: {e}")
+        # BUG-406-LNK-001: Add exc_info for stack trace preservation
+        logger.warning(f"TypeDB validation failed for {entity_type}:{entity_id}: {e}", exc_info=True)
         exists = False
 
     cache[key] = exists
@@ -184,8 +185,10 @@ def mine_session_links(
             if link_task_to_session(task_id, session_id, source="ingestion"):
                 result["tasks_linked"] += 1
         except Exception as e:
+            # BUG-406-LNK-002: Don't leak exception details in MCP-returned errors
+            logger.warning(f"Task link {task_id} failed: {e}", exc_info=True)
             if len(result["errors"]) < _MAX_ERRORS:
-                result["errors"].append(f"Task link {task_id}: {e}")
+                result["errors"].append(f"Task link {task_id}: {type(e).__name__}")
 
     # Link gaps (gaps are tasks with item_type=gap)
     for gap_id in sorted(gap_refs):
@@ -196,8 +199,10 @@ def mine_session_links(
             if link_task_to_session(gap_id, session_id, source="ingestion"):
                 result["gaps_linked"] += 1
         except Exception as e:
+            # BUG-406-LNK-003: Don't leak exception details in MCP-returned errors
+            logger.warning(f"Gap link {gap_id} failed: {e}", exc_info=True)
             if len(result["errors"]) < _MAX_ERRORS:
-                result["errors"].append(f"Gap link {gap_id}: {e}")
+                result["errors"].append(f"Gap link {gap_id}: {type(e).__name__}")
 
     # Link rules
     for rule_id in sorted(rule_refs):
@@ -208,8 +213,10 @@ def mine_session_links(
             if ok:
                 result["rules_linked"] += 1
         except Exception as e:
+            # BUG-406-LNK-004: Don't leak exception details in MCP-returned errors
+            logger.warning(f"Rule link {rule_id} failed: {e}", exc_info=True)
             if len(result["errors"]) < _MAX_ERRORS:
-                result["errors"].append(f"Rule link {rule_id}: {e}")
+                result["errors"].append(f"Rule link {rule_id}: {type(e).__name__}")
 
     # Link decisions
     for decision_id in sorted(decision_refs):
@@ -220,8 +227,10 @@ def mine_session_links(
             if ok:
                 result["decisions_linked"] += 1
         except Exception as e:
+            # BUG-406-LNK-005: Don't leak exception details in MCP-returned errors
+            logger.warning(f"Decision link {decision_id} failed: {e}", exc_info=True)
             if len(result["errors"]) < _MAX_ERRORS:
-                result["errors"].append(f"Decision link {decision_id}: {e}")
+                result["errors"].append(f"Decision link {decision_id}: {type(e).__name__}")
 
     # Update checkpoint
     ckpt = load_checkpoint(session_id, checkpoint_dir)

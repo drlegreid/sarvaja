@@ -52,7 +52,8 @@ def delete_session(session_id: str, source: str = "rest") -> bool:
             if existing and client.delete_session(session_id):
                 deleted = True
         except Exception as e:
-            logger.warning(f"TypeDB session delete failed, using fallback: {e}")
+            # BUG-408-SLC-001: Add exc_info for stack trace preservation
+            logger.warning(f"TypeDB session delete failed, using fallback: {e}", exc_info=True)
 
     if session_id in _sessions_store:
         del _sessions_store[session_id]
@@ -110,7 +111,8 @@ def end_session(
                                 evidence_files = [auto_path]
                                 logger.info(f"Auto-generated evidence: {auto_path}")
                         except Exception as ae:
-                            logger.warning(f"Auto-evidence failed: {ae}")
+                            # BUG-408-SLC-002: Add exc_info for stack trace preservation
+                            logger.warning(f"Auto-evidence failed: {ae}", exc_info=True)
                     # BUG-SESSION-EVIDENCE-001: Link evidence to TypeDB
                     if evidence_files:
                         for ef in evidence_files:
@@ -140,7 +142,8 @@ def end_session(
             # BUG-242-LCY-001: Re-raise ValueError (double-complete) instead of swallowing
             raise
         except Exception as e:
-            logger.warning(f"TypeDB session end failed, using fallback: {e}")
+            # BUG-408-SLC-003: Add exc_info for stack trace preservation
+            logger.warning(f"TypeDB session end failed, using fallback: {e}", exc_info=True)
 
     # Fallback to in-memory
     if session_id not in _sessions_store:

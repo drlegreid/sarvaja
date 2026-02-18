@@ -64,7 +64,8 @@ def _monitor(action: str, rule_id: str, source: str = "service", **extra):
         )
     except Exception as e:
         # BUG-MONITOR-SILENT-001: Log instead of silently swallowing
-        logger.warning(f"Monitor event failed for rule {rule_id}: {e}")
+        # BUG-407-RUL-001: Add exc_info for stack trace preservation
+        logger.warning(f"Monitor event failed for rule {rule_id}: {e}", exc_info=True)
 
 
 def get_semantic_id(legacy_id: str) -> Optional[str]:
@@ -137,7 +138,8 @@ def list_rules(
     else:
         rules = client.get_all_rules()
 
-    if status and status != "ACTIVE":
+    # BUG-215-RUL-001: Remove != "ACTIVE" guard so category+ACTIVE combo filters correctly
+    if status:
         rules = [r for r in rules if r.status == status]
     if priority:
         rules = [r for r in rules if r.priority == priority]
@@ -147,7 +149,13 @@ def list_rules(
 
     valid_sort_fields = ["id", "name", "priority", "status", "category"]
     sort_field = sort_by if sort_by in valid_sort_fields else "id"
-    rules.sort(key=lambda r: getattr(r, sort_field) or "", reverse=order.lower() == "desc")
+    # BUG-215-AGT-004: Same fix as agents — type-aware sort to avoid falsy-number crash
+    def _sort_key(r):
+        v = getattr(r, sort_field, None)
+        if v is None:
+            return (1, "")
+        return (0, v)
+    rules.sort(key=_sort_key, reverse=order.lower() == "desc")
 
     total = len(rules)
     paginated = rules[offset: offset + limit]
@@ -164,7 +172,8 @@ def list_rules(
         "total": total,
         "offset": offset,
         "limit": limit,
-        "has_more": (offset + limit) < total,
+        # BUG-228-RULES-001: Use actual returned count, not limit (last page may be partial)
+        "has_more": (offset + len(items)) < total,
     }
 
 
