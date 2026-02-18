@@ -79,7 +79,8 @@ class TaskLinkingOperations:
 
             return True
         except Exception as e:
-            logger.error(f"Failed to link evidence {evidence_source} to task {task_id}: {e}")
+            # BUG-397-LNK-001: Add exc_info for stack trace preservation
+            logger.error(f"Failed to link evidence {evidence_source} to task {task_id}: {e}", exc_info=True)
             return False
 
     def link_task_to_session(self, task_id: str, session_id: str) -> bool:
@@ -116,7 +117,8 @@ class TaskLinkingOperations:
 
             return True
         except Exception as e:
-            logger.error(f"Failed to link task {task_id} to session {session_id}: {e}")
+            # BUG-397-LNK-002: Add exc_info for stack trace preservation
+            logger.error(f"Failed to link task {task_id} to session {session_id}: {e}", exc_info=True)
             return False
 
     def link_task_to_rule(self, task_id: str, rule_id: str) -> bool:
@@ -153,7 +155,8 @@ class TaskLinkingOperations:
 
             return True
         except Exception as e:
-            logger.error(f"Failed to link task {task_id} to rule {rule_id}: {e}")
+            # BUG-397-LNK-003: Add exc_info for stack trace preservation
+            logger.error(f"Failed to link task {task_id} to rule {rule_id}: {e}", exc_info=True)
             return False
 
     def get_task_evidence(self, task_id: str) -> List[str]:
@@ -228,7 +231,8 @@ class TaskLinkingOperations:
 
             return True
         except Exception as e:
-            logger.error(f"Failed to link task {task_id} to commit {commit_sha}: {e}")
+            # BUG-397-LNK-004: Add exc_info for stack trace preservation
+            logger.error(f"Failed to link task {task_id} to commit {commit_sha}: {e}", exc_info=True)
             return False
 
     def get_task_commits(self, task_id: str) -> List[str]:
@@ -301,7 +305,8 @@ class TaskLinkingOperations:
 
             return True
         except Exception as e:
-            logger.error(f"Failed to link task {task_id} to document {document_path}: {e}")
+            # BUG-397-LNK-005: Add exc_info for stack trace preservation
+            logger.error(f"Failed to link task {task_id} to document {document_path}: {e}", exc_info=True)
             return False
 
     def unlink_task_from_document(self, task_id: str, document_path: str) -> bool:
@@ -332,7 +337,8 @@ class TaskLinkingOperations:
                 tx.commit()
             return True
         except Exception as e:
-            logger.error(f"Failed to unlink document {document_path} from task {task_id}: {e}")
+            # BUG-397-LNK-006: Add exc_info for stack trace preservation
+            logger.error(f"Failed to unlink document {document_path} from task {task_id}: {e}", exc_info=True)
             return False
 
     def get_task_documents(self, task_id: str) -> List[str]:

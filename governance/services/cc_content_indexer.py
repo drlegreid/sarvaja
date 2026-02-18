@@ -159,8 +159,9 @@ def index_session_content(
         try:
             collection = _get_chromadb_collection()
         except Exception as e:
-            msg = f"ChromaDB connection failed: {e}"
-            logger.error(msg)
+            # BUG-394-IDX-001: Don't leak ChromaDB connection details in MCP/API errors list
+            msg = f"ChromaDB connection failed: {type(e).__name__}"
+            logger.error(f"ChromaDB connection failed: {e}", exc_info=True)
             return {**result, "status": "error", "errors": [msg]}
 
     # BUG-194-002: Guard against missing JSONL file before streaming
@@ -208,8 +209,9 @@ def index_session_content(
                             metadatas=batch_metas,
                         )
                     except Exception as e:
-                        msg = f"ChromaDB upsert failed at chunk {meta['chunk_index']}: {e}"
-                        logger.error(msg)
+                        # BUG-394-IDX-002: Don't leak ChromaDB internals in errors list
+                        msg = f"ChromaDB upsert failed at chunk {meta['chunk_index']}: {type(e).__name__}"
+                        logger.error(f"ChromaDB upsert failed at chunk {meta['chunk_index']}: {e}", exc_info=True)
                         result["errors"].append(msg)
                         ckpt.add_error(msg)
                         upsert_ok = False
@@ -238,8 +240,9 @@ def index_session_content(
                     ids=batch_ids, documents=batch_docs, metadatas=batch_metas
                 )
             except Exception as e:
-                msg = f"ChromaDB final upsert failed: {e}"
-                logger.error(msg)
+                # BUG-394-IDX-003: Don't leak ChromaDB internals in errors list
+                msg = f"ChromaDB final upsert failed: {type(e).__name__}"
+                logger.error(f"ChromaDB final upsert failed: {e}", exc_info=True)
                 result["errors"].append(msg)
                 ckpt.add_error(msg)
                 final_ok = False

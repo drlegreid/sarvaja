@@ -227,5 +227,6 @@ def update_task_status(
 
         return client.get_task(task_id)
     except Exception as e:
-        logger.error(f"Failed to update task {task_id}: {e}")
+        # BUG-397-STS-001: Add exc_info for stack trace preservation
+        logger.error(f"Failed to update task {task_id}: {e}", exc_info=True)
         return None

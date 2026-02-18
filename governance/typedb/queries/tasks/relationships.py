@@ -61,7 +61,8 @@ class TaskRelationshipOperations:
                 tx.commit()
             return True
         except Exception as e:
-            logger.error(f"Failed to link parent {parent_task_id} to child {child_task_id}: {e}")
+            # BUG-397-REL-001: Add exc_info for stack trace preservation
+            logger.error(f"Failed to link parent {parent_task_id} to child {child_task_id}: {e}", exc_info=True)
             return False
 
     def link_blocking_task(self, blocking_task_id: str, blocked_task_id: str) -> bool:
@@ -102,7 +103,8 @@ class TaskRelationshipOperations:
                 tx.commit()
             return True
         except Exception as e:
-            logger.error(f"Failed to link blocking task {blocking_task_id}: {e}")
+            # BUG-397-REL-002: Add exc_info for stack trace preservation
+            logger.error(f"Failed to link blocking task {blocking_task_id}: {e}", exc_info=True)
             return False
 
     def link_related_tasks(self, task_id_a: str, task_id_b: str) -> bool:
@@ -143,7 +145,8 @@ class TaskRelationshipOperations:
                 tx.commit()
             return True
         except Exception as e:
-            logger.error(f"Failed to link related tasks {task_id_a} and {task_id_b}: {e}")
+            # BUG-397-REL-003: Add exc_info for stack trace preservation
+            logger.error(f"Failed to link related tasks {task_id_a} and {task_id_b}: {e}", exc_info=True)
             return False
 
     def get_task_children(self, task_id: str) -> List[str]:
