@@ -95,7 +95,8 @@ def load_persisted_sessions(sessions_store: Dict[str, Dict[str, Any]]) -> int:
 
             loaded += 1
         except Exception as e:
-            logger.warning(f"Failed to load persisted session {path.name}: {e}")
+            # BUG-421-PER-001: Add exc_info for stack trace preservation
+            logger.warning(f"Failed to load persisted session {path.name}: {e}", exc_info=True)
 
     if loaded:
         logger.info(f"Loaded {loaded} persisted session(s) from disk")

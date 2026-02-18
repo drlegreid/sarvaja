@@ -81,7 +81,8 @@ def _compute_duration(start_time: str, end_time: str) -> str:
         return f"{minutes}m"
     except Exception as e:
         # BUG-265-EVID-001: Log duration parse errors instead of silently swallowing
-        logger.debug(f"Duration parse failed: {e}")
+        # BUG-420-EVD-001: Upgrade debug→warning + exc_info for duration parse failures
+        logger.warning(f"Duration parse failed: {e}", exc_info=True)
         return "unknown"
 
 

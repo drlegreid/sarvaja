@@ -61,7 +61,8 @@ def _monitor(action: str, agent_id: str, source: str = "service", **extra):
         )
     except Exception as e:
         # BUG-MONITOR-SILENT-001: Log instead of silently swallowing
-        logger.warning(f"Monitor event failed for agent {agent_id}: {e}")
+        # BUG-420-MON-001: Add exc_info for stack trace preservation
+        logger.warning(f"Monitor event failed for agent {agent_id}: {e}", exc_info=True)
 
 
 def _build_relations_lookup(client) -> Tuple[dict, dict, dict]:

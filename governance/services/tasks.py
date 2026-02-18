@@ -74,7 +74,8 @@ def _monitor(action: str, task_id: str, source: str = "service", **extra):
         )
     except Exception as e:
         # BUG-MONITOR-SILENT-001: Log instead of silently swallowing
-        logger.warning(f"Monitor event failed for task {task_id}: {e}")
+        # BUG-420-MON-005: Add exc_info for stack trace preservation
+        logger.warning(f"Monitor event failed for task {task_id}: {e}", exc_info=True)
 
 
 def list_tasks(

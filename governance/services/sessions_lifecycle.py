@@ -35,7 +35,8 @@ def _monitor(action: str, session_id: str, source: str = "service", **extra):
         )
     except Exception as e:
         # BUG-MONITOR-SILENT-001: Log instead of silently swallowing
-        logger.warning(f"Monitor event failed for session {session_id}: {e}")
+        # BUG-420-MON-003: Add exc_info for stack trace preservation
+        logger.warning(f"Monitor event failed for session {session_id}: {e}", exc_info=True)
 
 
 def delete_session(session_id: str, source: str = "rest") -> bool:
@@ -166,7 +167,8 @@ def end_session(
                 evidence_files = [auto_path]
                 logger.info(f"Auto-generated evidence for {session_id}: {auto_path}")
         except Exception as e:
-            logger.warning(f"Auto-evidence generation failed for {session_id}: {e}")
+            # BUG-420-SLC-001: Add exc_info for stack trace preservation
+            logger.warning(f"Auto-evidence generation failed for {session_id}: {e}", exc_info=True)
 
     if evidence_files is not None:
         session["evidence_files"] = evidence_files

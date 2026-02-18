@@ -53,7 +53,8 @@ def _monitor(action: str, session_id: str, source: str = "service", **extra):
         )
     except Exception as e:
         # BUG-MONITOR-SILENT-001: Log instead of silently swallowing
-        logger.warning(f"Monitor event failed for session {session_id}: {e}")
+        # BUG-420-MON-002: Add exc_info for stack trace preservation
+        logger.warning(f"Monitor event failed for session {session_id}: {e}", exc_info=True)
 
 
 def _is_test_artifact(session: dict) -> bool:

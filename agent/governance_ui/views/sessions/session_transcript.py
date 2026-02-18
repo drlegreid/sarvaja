@@ -216,7 +216,8 @@ def _build_transcript_entries() -> None:
                     color="orange",
                     classes="mr-1",
                 )
-                html.Span("{{ entry.tool_name }}", classes="text-orange font-weight-medium")
+                # BUG-418-XSS-001: Use v_text instead of mustache to prevent XSS on tool_name
+                html.Span(v_text="entry.tool_name", classes="text-orange font-weight-medium")
                 v3.VChip("inbound", size="x-small", color="orange", variant="tonal", classes="ml-2")
                 v3.VChip("MCP", size="x-small", color="deep-purple", variant="tonal",
                          v_if="entry.is_mcp", classes="ml-1")
@@ -245,8 +246,9 @@ def _build_transcript_entries() -> None:
         ):
             with v3.VCardTitle(classes="text-body-2 py-1"):
                 v3.VIcon("mdi-arrow-left-bold", size="small", color="teal", classes="mr-1")
+                # BUG-418-XSS-002: Use v_text instead of mustache to prevent XSS on tool_name
                 html.Span(
-                    "{{ entry.tool_name || 'Result' }}",
+                    v_text="entry.tool_name || 'Result'",
                     classes="text-teal font-weight-medium",
                 )
                 v3.VChip("outbound", size="x-small", color="teal", variant="tonal", classes="ml-2")
