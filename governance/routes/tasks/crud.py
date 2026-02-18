@@ -160,27 +160,48 @@ async def delete_task(task_id: str):
 @router.post("/tasks/{task_id}/rules/{rule_id}", status_code=201)
 async def link_task_to_rule(task_id: str, rule_id: str):
     """Link task to rule via implements-rule relation. Per GAP-LINK-002."""
-    if not task_service.link_task_to_rule(task_id, rule_id, source="rest-api"):
-        raise HTTPException(status_code=400, detail="Failed to create link (task not found or TypeDB unavailable)")
-    return {"task_id": task_id, "rule_id": rule_id, "linked": True}
+    # BUG-402-SVC-001: Wrap service call in try/except
+    try:
+        if not task_service.link_task_to_rule(task_id, rule_id, source="rest-api"):
+            raise HTTPException(status_code=400, detail="Failed to create link (task not found or TypeDB unavailable)")
+        return {"task_id": task_id, "rule_id": rule_id, "linked": True}
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"link_task_to_rule failed: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Link failed: {type(e).__name__}")
 
 
 @router.post("/tasks/{task_id}/sessions/{session_id}", status_code=201)
 async def link_task_to_session(task_id: str, session_id: str):
     """Link task to session via completed-in relation. Per GAP-LINK-001."""
-    if not task_service.link_task_to_session(task_id, session_id, source="rest-api"):
-        raise HTTPException(status_code=400, detail="Failed to create link (task not found or TypeDB unavailable)")
-    return {"task_id": task_id, "session_id": session_id, "linked": True}
+    # BUG-402-SVC-002: Wrap service call in try/except
+    try:
+        if not task_service.link_task_to_session(task_id, session_id, source="rest-api"):
+            raise HTTPException(status_code=400, detail="Failed to create link (task not found or TypeDB unavailable)")
+        return {"task_id": task_id, "session_id": session_id, "linked": True}
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"link_task_to_session failed: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Link failed: {type(e).__name__}")
 
 
 @router.get("/tasks/{task_id}/sessions")
 async def get_task_sessions(task_id: str):
     """Get all sessions linked to a task. Reverse query for completed-in relations."""
-    # BUG-224-TASK-003: Check task existence BEFORE fetching sessions (was TOCTOU)
-    if not task_service.get_task(task_id):
-        raise HTTPException(status_code=404, detail=f"Task {task_id} not found")
-    sessions = task_service.get_sessions_for_task(task_id)
-    return {"task_id": task_id, "sessions": sessions, "count": len(sessions)}
+    # BUG-402-SVC-003: Wrap service calls in try/except
+    try:
+        # BUG-224-TASK-003: Check task existence BEFORE fetching sessions (was TOCTOU)
+        if not task_service.get_task(task_id):
+            raise HTTPException(status_code=404, detail=f"Task {task_id} not found")
+        sessions = task_service.get_sessions_for_task(task_id)
+        return {"task_id": task_id, "sessions": sessions, "count": len(sessions)}
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"get_task_sessions failed: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Failed to get task sessions: {type(e).__name__}")
 
 
 # Task Document Management endpoints
@@ -194,28 +215,49 @@ async def link_task_to_document(task_id: str, body: dict):
     # BUG-328-TASK-001: Validate document_path length and basic format
     if not isinstance(document_path, str) or len(document_path) > 500:
         raise HTTPException(status_code=422, detail="document_path must be a string under 500 chars")
-    if not task_service.link_task_to_document(task_id, document_path, source="rest-api"):
-        raise HTTPException(status_code=400, detail="Failed to link document (task not found or TypeDB unavailable)")
-    return {"task_id": task_id, "document_path": document_path, "linked": True}
+    # BUG-402-SVC-004: Wrap service call in try/except
+    try:
+        if not task_service.link_task_to_document(task_id, document_path, source="rest-api"):
+            raise HTTPException(status_code=400, detail="Failed to link document (task not found or TypeDB unavailable)")
+        return {"task_id": task_id, "document_path": document_path, "linked": True}
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"link_task_to_document failed: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Link failed: {type(e).__name__}")
 
 
 @router.get("/tasks/{task_id}/documents")
 async def get_task_documents(task_id: str):
     """Get all documents linked to a task."""
-    result = task_service.get_task(task_id)
-    if result is None:
-        raise HTTPException(status_code=404, detail=f"Task {task_id} not found")
-    docs = []
-    if isinstance(result, TaskResponse):
-        docs = result.linked_documents or []
-    elif isinstance(result, dict):
-        docs = result.get("linked_documents") or []
-    return {"task_id": task_id, "documents": docs, "count": len(docs)}
+    # BUG-402-SVC-005: Wrap service calls in try/except
+    try:
+        result = task_service.get_task(task_id)
+        if result is None:
+            raise HTTPException(status_code=404, detail=f"Task {task_id} not found")
+        docs = []
+        if isinstance(result, TaskResponse):
+            docs = result.linked_documents or []
+        elif isinstance(result, dict):
+            docs = result.get("linked_documents") or []
+        return {"task_id": task_id, "documents": docs, "count": len(docs)}
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"get_task_documents failed: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Failed to get task documents: {type(e).__name__}")
 
 
 @router.delete("/tasks/{task_id}/documents/{doc_id:path}", status_code=204)
 async def unlink_task_document(task_id: str, doc_id: str):
     """Unlink a document from a task."""
-    if not task_service.unlink_task_from_document(task_id, doc_id, source="rest-api"):
-        raise HTTPException(status_code=400, detail="Failed to unlink document")
-    return None
+    # BUG-402-SVC-006: Wrap service call in try/except
+    try:
+        if not task_service.unlink_task_from_document(task_id, doc_id, source="rest-api"):
+            raise HTTPException(status_code=400, detail="Failed to unlink document")
+        return None
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"unlink_task_document failed: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Unlink failed: {type(e).__name__}")

@@ -22,6 +22,8 @@ __all__ = [
     "link_task_to_rule",
     "link_task_to_session",
     "link_task_to_document",
+    # BUG-214-011: Was missing from __all__ despite being defined at line 252
+    "unlink_task_from_document",
 ]
 
 
@@ -211,7 +213,8 @@ def link_task_to_rule(task_id: str, rule_id: str, source: str = "rest") -> bool:
             _monitor("link_rule", task_id, source=source, rule_id=rule_id)
         return bool(result)
     except Exception as e:
-        logger.error(f"Failed to link task {task_id} to rule {rule_id}: {e}")
+        # BUG-404-TM-006: Add exc_info for stack trace preservation
+        logger.error(f"Failed to link task {task_id} to rule {rule_id}: {e}", exc_info=True)
         return False
 
 
@@ -228,7 +231,8 @@ def link_task_to_session(task_id: str, session_id: str, source: str = "rest") ->
             _monitor("link_session", task_id, source=source, session_id=session_id)
         return bool(result)
     except Exception as e:
-        logger.error(f"Failed to link task {task_id} to session {session_id}: {e}")
+        # BUG-404-TM-006: Add exc_info for stack trace preservation
+        logger.error(f"Failed to link task {task_id} to session {session_id}: {e}", exc_info=True)
         return False
 
 
@@ -245,7 +249,8 @@ def link_task_to_document(task_id: str, document_path: str, source: str = "rest"
             _monitor("link_document", task_id, source=source, document_path=document_path)
         return bool(result)
     except Exception as e:
-        logger.error(f"Failed to link task {task_id} to document {document_path}: {e}")
+        # BUG-404-TM-006: Add exc_info for stack trace preservation
+        logger.error(f"Failed to link task {task_id} to document {document_path}: {e}", exc_info=True)
         return False
 
 
@@ -260,5 +265,6 @@ def unlink_task_from_document(task_id: str, document_path: str, source: str = "r
             _monitor("unlink_document", task_id, source=source, document_path=document_path)
         return bool(result)
     except Exception as e:
-        logger.error(f"Failed to unlink document {document_path} from task {task_id}: {e}")
+        # BUG-404-TM-006: Add exc_info for stack trace preservation
+        logger.error(f"Failed to unlink document {document_path} from task {task_id}: {e}", exc_info=True)
         return False

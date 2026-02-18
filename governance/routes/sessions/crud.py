@@ -103,7 +103,8 @@ async def list_sessions(
             pagination=pagination,
         )
     except (TypeDBUnavailable, ConnectionError) as e:
-        logger.error(f"TypeDB unavailable: {e}")
+        # BUG-403-CRD-001: Add exc_info for stack trace preservation
+        logger.error(f"TypeDB unavailable: {e}", exc_info=True)
         raise HTTPException(status_code=503, detail="Database service unavailable")
     # BUG-381-SES-003: Catch-all for unexpected exceptions (e.g. TypeError from malformed data)
     except Exception as e:
@@ -131,10 +132,12 @@ async def create_session(session: SessionCreate):
         return _ensure_response(result)
     # BUG-381-SES-001: Log full error but return only type name to prevent info disclosure
     except ValueError as e:
-        logger.warning(f"create_session conflict: {e}")
+        # BUG-403-CRD-001: Add exc_info for stack trace preservation
+        logger.warning(f"create_session conflict: {e}", exc_info=True)
         raise HTTPException(status_code=409, detail=f"Session conflict: {type(e).__name__}")
     except (TypeDBUnavailable, ConnectionError) as e:
-        logger.error(f"TypeDB unavailable during session create: {e}")
+        # BUG-403-CRD-001: Add exc_info for stack trace preservation
+        logger.error(f"TypeDB unavailable during session create: {e}", exc_info=True)
         raise HTTPException(status_code=503, detail="Database service unavailable")
     except Exception as e:
         # BUG-352-INF-001: Log full error but return generic message to prevent info disclosure
@@ -151,8 +154,13 @@ async def get_session(session_id: str):
             return _ensure_response(session)
         raise HTTPException(status_code=404, detail=f"Session {session_id} not found")
     except (TypeDBUnavailable, ConnectionError) as e:
-        logger.error(f"TypeDB unavailable: {e}")
+        # BUG-403-CRD-001: Add exc_info for stack trace preservation
+        logger.error(f"TypeDB unavailable: {e}", exc_info=True)
         raise HTTPException(status_code=503, detail="Database service unavailable")
+    # BUG-403-CRD-002: Add catch-all for unexpected exceptions (matches other handlers)
+    except Exception as e:
+        logger.error(f"get_session failed: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Failed to get session: {type(e).__name__}")
 
 
 @router.put("/sessions/{session_id}", response_model=SessionResponse)

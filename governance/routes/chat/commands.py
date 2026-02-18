@@ -119,7 +119,8 @@ def process_chat_command(content: str, agent_id: str) -> str:
         )
 
     elif content_lower.startswith("/tasks"):
-        pending = [t for t in _tasks_store.values() if t.get("status") == "pending"]
+        # BUG-209-CMD-ITER-001: Snapshot to avoid RuntimeError on concurrent mutation
+        pending = [t for t in list(_tasks_store.values()) if t.get("status") == "pending"]
         if pending:
             task_list = "\n".join([
                 f"- {t.get('task_id')}: {t.get('name')}"
@@ -164,7 +165,9 @@ You can also type natural language commands and I'll do my best to help!"""
             context = preload_session_context()
             return context.to_agent_prompt()
         except Exception as e:
-            return f"Failed to load context: {str(e)}"
+            # BUG-405-CMD-001: Don't leak exception details to chat UI
+            logger.error(f"Failed to load context: {e}", exc_info=True)
+            return f"Failed to load context: {type(e).__name__}"
 
     elif content_lower.startswith("/sessions"):
         # Query TypeDB via service layer (with in-memory fallback)
@@ -187,7 +190,8 @@ You can also type natural language commands and I'll do my best to help!"""
                 f"- {s.get('session_id', 'unknown')}: "
                 f"{s.get('status', 'UNKNOWN')} | "
                 f"agent: {s.get('agent_id', 'none')} | "
-                f"started: {s.get('start_time', 'N/A')[:16]}"
+                # BUG-209-CMD-SLICE-001: Guard against None start_time (key present but None)
+                f"started: {(s.get('start_time') or 'N/A')[:16]}"
                 + (f"\n  evidence: {len(s.get('evidence_files', []))} files"
                    if s.get("evidence_files") else "")
                 for s in sessions
@@ -201,7 +205,8 @@ You can also type natural language commands and I'll do my best to help!"""
         agents = list(_agents_store.values())
         if agents:
             agent_list = "\n".join([
-                f"- {a.get('agent_id')}: {a.get('name')} (trust: {a.get('trust_score', 0):.2f})"
+                # BUG-209-CMD-FORMAT-001: Guard against None trust_score
+                f"- {a.get('agent_id')}: {a.get('name')} (trust: {(a.get('trust_score') or 0):.2f})"
                 for a in agents[:5]
             ])
             return f"Registered Agents ({len(agents)} total):\n{agent_list}"
@@ -225,7 +230,7 @@ You can also type natural language commands and I'll do my best to help!"""
         except Exception as e:
             logger.debug(f"Failed to search rules: {e}")
         # Search tasks from in-memory store
-        for task in _tasks_store.values():
+        for task in list(_tasks_store.values()):
             if query.lower() in (task.get("name", "") + task.get("description", "")).lower():
                 results.append(f"Task: {task.get('task_id')} - {task.get('name')}")
         if results:
@@ -243,7 +248,7 @@ You can also type natural language commands and I'll do my best to help!"""
         # Natural language processing via LLM (PLAN-UI-OVERHAUL-001 Task 3.5)
         # A.3: Enriched context with active tasks, recent sessions, available commands
         active_tasks = [
-            t for t in _tasks_store.values()
+            t for t in list(_tasks_store.values())
             if t.get("status") in ("pending", "IN_PROGRESS", "in_progress")
         ]
         active_task_summary = ""
