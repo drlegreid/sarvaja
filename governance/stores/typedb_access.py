@@ -97,7 +97,8 @@ def get_all_tasks_from_typedb(
         except Exception as e:
             logger.warning(f"TypeDB task query failed: {e}")
             if not allow_fallback:
-                raise TypeDBUnavailable(f"TypeDB unavailable: {e}")
+                # BUG-377-TDB-001: Sanitize exception — don't forward raw error to HTTP clients
+                raise TypeDBUnavailable(f"TypeDB unavailable: {type(e).__name__}")
 
     if allow_fallback:
         # Fallback to in-memory (deprecated path)
@@ -131,7 +132,8 @@ def get_task_from_typedb(task_id: str, allow_fallback: bool = False) -> Optional
         except Exception as e:
             logger.warning(f"TypeDB task get failed: {e}")
             if not allow_fallback:
-                raise TypeDBUnavailable(f"TypeDB unavailable: {e}")
+                # BUG-377-TDB-001: Sanitize exception — don't forward raw error to HTTP clients
+                raise TypeDBUnavailable(f"TypeDB unavailable: {type(e).__name__}")
 
     if allow_fallback:
         logger.warning("Using deprecated in-memory fallback for task get")
@@ -159,7 +161,8 @@ def get_all_sessions_from_typedb(allow_fallback: bool = False) -> List[Dict[str,
             # Merge orphan sessions from _sessions_store (memory-only)
             if allow_fallback:
                 typedb_ids = {s["session_id"] for s in result}
-                for mem_session in _sessions_store.values():
+                # BUG-205-ITER-001: Snapshot to avoid RuntimeError on concurrent dict mutation
+                for mem_session in list(_sessions_store.values()):
                     sid = mem_session.get("session_id")
                     if sid and sid not in typedb_ids:
                         orphan = dict(mem_session)
@@ -169,12 +172,14 @@ def get_all_sessions_from_typedb(allow_fallback: bool = False) -> List[Dict[str,
         except Exception as e:
             logger.warning(f"TypeDB session query failed: {e}")
             if not allow_fallback:
-                raise TypeDBUnavailable(f"TypeDB unavailable: {e}")
+                # BUG-377-TDB-001: Sanitize exception — don't forward raw error to HTTP clients
+                raise TypeDBUnavailable(f"TypeDB unavailable: {type(e).__name__}")
 
     if allow_fallback:
         logger.warning("Using deprecated in-memory fallback for sessions")
         result = []
-        for s in _sessions_store.values():
+        # BUG-205-ITER-001: Snapshot to avoid RuntimeError on concurrent dict mutation
+        for s in list(_sessions_store.values()):
             entry = dict(s)
             entry["persistence_status"] = "memory_only"
             result.append(entry)
@@ -200,7 +205,8 @@ def get_session_from_typedb(session_id: str, allow_fallback: bool = False) -> Op
         except Exception as e:
             logger.warning(f"TypeDB session get failed: {e}")
             if not allow_fallback:
-                raise TypeDBUnavailable(f"TypeDB unavailable: {e}")
+                # BUG-377-TDB-001: Sanitize exception — don't forward raw error to HTTP clients
+                raise TypeDBUnavailable(f"TypeDB unavailable: {type(e).__name__}")
 
     if allow_fallback:
         logger.warning("Using deprecated in-memory fallback for session get")
@@ -233,8 +239,11 @@ def _task_to_dict(task) -> Dict[str, Any]:
     GAP-DATA-001: Ensure description has content from body if description is empty.
     Priority: body > description > name (for UI display)
     """
+    # BUG-291-TDB-001: Guard against None task from partial TypeDB results
+    if task is None:
+        raise ValueError("Cannot convert None task to dict")
     return {
-        "task_id": task.id,
+        "task_id": getattr(task, 'id', None),
         "name": task.name or "",  # Short title
         "description": task.body or task.description or task.name or "",  # Detailed content
         "phase": task.phase,
@@ -261,7 +270,8 @@ def _session_to_dict(session) -> Dict[str, Any]:
     """Convert TypeDB Session entity to dict format."""
     return {
         "session_id": session.id,
-        "start_time": session.started_at.isoformat() if session.started_at else datetime.now().isoformat(),
+        # BUG-226-TYPEDB-003: Use stable sentinel instead of non-deterministic datetime.now()
+        "start_time": session.started_at.isoformat() if session.started_at else "1970-01-01T00:00:00",
         "end_time": session.completed_at.isoformat() if session.completed_at else None,
         "status": session.status,
         "tasks_completed": session.tasks_completed or 0,

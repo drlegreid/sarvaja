@@ -61,13 +61,14 @@ def optimize_node(state: DSPState) -> dict:
 
     except Exception as e:
         duration_ms = int((time.perf_counter() - start_time) * 1000)
-        logger.error(f"[DSP] OPTIMIZE phase failed: {e}")
+        logger.error(f"[DSP] OPTIMIZE phase failed: {e}", exc_info=True)
+        # BUG-377-NOD-001: Sanitize error — don't expose raw exception in state/API
         return {
             "current_phase": "optimize_failed",
             "status": "failed",
-            "error_message": f"OPTIMIZE phase failed: {str(e)}",
+            "error_message": f"OPTIMIZE phase failed: {type(e).__name__}",
             "phase_results": state.get("phase_results", []) + [
-                _create_phase_result("optimize", "failed", state, str(e), duration_ms)
+                _create_phase_result("optimize", "failed", state, type(e).__name__, duration_ms)
             ],
         }
 
@@ -133,13 +134,14 @@ def validate_node(state: DSPState) -> dict:
 
     except Exception as e:
         duration_ms = int((time.perf_counter() - start_time) * 1000)
-        logger.error(f"[DSP] VALIDATE phase failed: {e}")
+        logger.error(f"[DSP] VALIDATE phase failed: {e}", exc_info=True)
+        # BUG-377-NOD-001: Sanitize error — don't expose raw exception in state/API
         return {
             "current_phase": "validate_failed",
             "status": "failed",
-            "error_message": f"VALIDATE phase failed: {str(e)}",
+            "error_message": f"VALIDATE phase failed: {type(e).__name__}",
             "phase_results": state.get("phase_results", []) + [
-                _create_phase_result("validate", "failed", state, str(e), duration_ms)
+                _create_phase_result("validate", "failed", state, type(e).__name__, duration_ms)
             ],
         }
 
@@ -186,13 +188,14 @@ def dream_node(state: DSPState) -> dict:
 
     except Exception as e:
         duration_ms = int((time.perf_counter() - start_time) * 1000)
-        logger.error(f"[DSP] DREAM phase failed: {e}")
+        logger.error(f"[DSP] DREAM phase failed: {e}", exc_info=True)
+        # BUG-377-NOD-001: Sanitize error — don't expose raw exception in state/API
         return {
             "current_phase": "dream_failed",
             "status": "failed",
-            "error_message": f"DREAM phase failed: {str(e)}",
+            "error_message": f"DREAM phase failed: {type(e).__name__}",
             "phase_results": state.get("phase_results", []) + [
-                _create_phase_result("dream", "failed", state, str(e), duration_ms)
+                _create_phase_result("dream", "failed", state, type(e).__name__, duration_ms)
             ],
         }
 
@@ -268,12 +271,13 @@ def report_node(state: DSPState) -> dict:
 
     except Exception as e:
         duration_ms = int((time.perf_counter() - start_time) * 1000)
-        logger.error(f"[DSP] REPORT phase failed: {e}")
+        logger.error(f"[DSP] REPORT phase failed: {e}", exc_info=True)
+        # BUG-377-NOD-001: Sanitize error — don't expose raw exception in state/API
         return {
             "current_phase": "report_failed",
             "status": "failed",
-            "error_message": f"REPORT phase failed: {str(e)}",
+            "error_message": f"REPORT phase failed: {type(e).__name__}",
             "phase_results": state.get("phase_results", []) + [
-                _create_phase_result("report", "failed", state, str(e), duration_ms)
+                _create_phase_result("report", "failed", state, type(e).__name__, duration_ms)
             ],
         }

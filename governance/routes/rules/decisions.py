@@ -81,8 +81,10 @@ async def list_decisions(
                 returned=len(items),
             ),
         )
+    # BUG-377-DEC-001: Log full error but return only type name to HTTP client
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error(f"list_decisions failed: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"list_decisions failed: {type(e).__name__}")
 
 
 @router.get("/decisions/{decision_id}", response_model=DecisionResponse)
@@ -116,10 +118,13 @@ async def get_decision(decision_id: str):
         raise HTTPException(status_code=404, detail=f"Decision {decision_id} not found")
     except HTTPException:
         raise
+    # BUG-377-DEC-001: Log full error but return only type name to HTTP client
     except ValueError as e:
-        raise HTTPException(status_code=422, detail=str(e))
+        logger.warning(f"get_decision validation error: {e}")
+        raise HTTPException(status_code=422, detail=f"Validation error: {type(e).__name__}")
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error(f"get_decision failed: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"get_decision failed: {type(e).__name__}")
 
 
 @router.post("/decisions", response_model=DecisionResponse, status_code=201)
@@ -166,10 +171,13 @@ async def create_decision(decision: DecisionCreate):
         raise HTTPException(status_code=500, detail="Failed to create decision")
     except HTTPException:
         raise
+    # BUG-377-DEC-001: Log full error but return only type name to HTTP client
     except ValueError as e:
-        raise HTTPException(status_code=422, detail=str(e))
+        logger.warning(f"create_decision validation error: {e}")
+        raise HTTPException(status_code=422, detail=f"Validation error: {type(e).__name__}")
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error(f"create_decision failed: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"create_decision failed: {type(e).__name__}")
 
 
 @router.put("/decisions/{decision_id}", response_model=DecisionResponse)
@@ -209,10 +217,13 @@ async def update_decision(decision_id: str, decision: DecisionUpdate):
         raise HTTPException(status_code=404, detail=f"Decision {decision_id} not found")
     except HTTPException:
         raise
+    # BUG-377-DEC-001: Log full error but return only type name to HTTP client
     except ValueError as e:
-        raise HTTPException(status_code=422, detail=str(e))
+        logger.warning(f"update_decision validation error: {e}")
+        raise HTTPException(status_code=422, detail=f"Validation error: {type(e).__name__}")
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error(f"update_decision failed: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"update_decision failed: {type(e).__name__}")
 
 
 @router.post("/decisions/{decision_id}/rules/{rule_id}", status_code=201)
@@ -230,8 +241,10 @@ async def link_rule_to_decision(decision_id: str, rule_id: str):
         raise HTTPException(status_code=404, detail=f"Decision {decision_id} or rule {rule_id} not found")
     except HTTPException:
         raise
+    # BUG-377-DEC-001: Log full error but return only type name to HTTP client
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error(f"link_rule_to_decision failed: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"link_rule_to_decision failed: {type(e).__name__}")
 
 
 @router.delete("/decisions/{decision_id}", status_code=204)
@@ -247,7 +260,10 @@ async def delete_decision(decision_id: str):
             raise HTTPException(status_code=404, detail=f"Decision {decision_id} not found")
     except HTTPException:
         raise
+    # BUG-377-DEC-001: Log full error but return only type name to HTTP client
     except ValueError as e:
-        raise HTTPException(status_code=422, detail=str(e))
+        logger.warning(f"delete_decision validation error: {e}")
+        raise HTTPException(status_code=422, detail=f"Validation error: {type(e).__name__}")
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error(f"delete_decision failed: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"delete_decision failed: {type(e).__name__}")

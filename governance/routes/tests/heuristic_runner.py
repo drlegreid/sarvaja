@@ -76,11 +76,13 @@ def run_heuristic_checks(
             result["name"] = check_def["name"]
             result["duration_ms"] = duration_ms
 
-            if result["status"] == "PASS":
+            # BUG-208-RUNNER-STATUS-001: Use .get() to avoid KeyError on partial results
+            status = result.get("status", "ERROR")
+            if status == "PASS":
                 passed += 1
-            elif result["status"] == "FAIL":
+            elif status == "FAIL":
                 failed += 1
-            elif result["status"] == "SKIP":
+            elif status == "SKIP":
                 skipped += 1
             else:
                 errors += 1
@@ -94,9 +96,10 @@ def run_heuristic_checks(
                         collector,
                         tool_name=f"heuristic/{check_def['id']}",
                         arguments={"domain": check_def["domain"]},
-                        result=f"{result['status']}: {result.get('message', '')}",
+                        # BUG-243-HRUN-001: Use .get() to prevent KeyError on missing status
+                    result=f"{result.get('status', 'ERROR')}: {result.get('message', '')}",
                         duration_ms=duration_ms,
-                        success=result["status"] in ("PASS", "SKIP"),
+                        success=result.get("status") in ("PASS", "SKIP"),
                     )
                 except Exception as e:
                     # BUG-HEURISTIC-001: Log instead of silently swallowing
@@ -104,12 +107,14 @@ def run_heuristic_checks(
 
         except Exception as e:
             duration_ms = int((time.time() - start) * 1000)
+            # BUG-377-HRN-001: Log full error but return only type name in result
+            logger.error(f"Heuristic check {check_def['id']} failed: {e}", exc_info=True)
             results.append({
                 "id": check_def["id"],
                 "domain": check_def["domain"],
                 "name": check_def["name"],
                 "status": "ERROR",
-                "message": str(e),
+                "message": f"Check failed: {type(e).__name__}",
                 "violations": [],
                 "duration_ms": duration_ms,
             })

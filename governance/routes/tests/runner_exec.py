@@ -88,10 +88,12 @@ def execute_tests(run_id: str, cmd: list, category: str = None):
             # BUG-RUNNER-002: Log persistence failures instead of silently swallowing
             logger.warning(f"Failed to persist timeout result {run_id}: {pe}")
     except Exception as e:
+        # BUG-377-RNR-001: Log full error but return only type name in result
+        logger.error(f"execute_tests failed for {run_id}: {e}", exc_info=True)
         error_result = {
             "status": "error",
             "timestamp": start_time.isoformat(),
-            "error": str(e),
+            "error": f"Test execution failed: {type(e).__name__}",
             "category": category,
         }
         _test_results[run_id] = error_result
@@ -137,10 +139,12 @@ def execute_regression(run_id: str, skip_dynamic: bool = False):
             logger.warning(f"Failed to persist regression result: {pe}")
 
     except Exception as e:
+        # BUG-377-RNR-001: Log full error but return only type name in result
+        logger.error(f"execute_regression failed for {run_id}: {e}", exc_info=True)
         _test_results[run_id] = {
             "status": "error",
             "timestamp": start_time.isoformat(),
-            "error": str(e),
+            "error": f"Regression execution failed: {type(e).__name__}",
             "category": "regression",
         }
         try:
@@ -183,10 +187,12 @@ def execute_heuristic(run_id: str, domain: str = None):
             logger.warning(f"Failed to persist heuristic result: {pe}")
 
     except Exception as e:
+        # BUG-377-RNR-001: Log full error but return only type name in result
+        logger.error(f"execute_heuristic failed for {run_id}: {e}", exc_info=True)
         _test_results[run_id] = {
             "status": "error",
             "timestamp": start_time.isoformat(),
-            "error": str(e),
+            "error": f"Heuristic execution failed: {type(e).__name__}",
             "category": "heuristic",
         }
         try:
@@ -235,7 +241,9 @@ def parse_robot_xml(test_root: str) -> dict:
             "log_exists": (project_root / "log.html").exists(),
         }
     except Exception as e:
-        return {"available": False, "message": f"Error parsing output.xml: {e}"}
+        # BUG-377-RNR-001: Log full error but return only type name
+        logger.error(f"parse_robot_xml failed: {e}", exc_info=True)
+        return {"available": False, "message": f"Error parsing output.xml: {type(e).__name__}"}
 
 
 # =============================================================================
@@ -288,7 +296,8 @@ def remediate_violations(run_id: str, dry_run: bool = False) -> dict:
                 fix_details.append({"check": check_id, "entity": entity_id, "action": "fixed"})
                 fixes_applied += 1
             except Exception as e:
-                fix_details.append({"check": check_id, "entity": entity_id, "action": "failed", "error": str(e)})
+                # BUG-377-RNR-001: Log full error but return only type name
+                fix_details.append({"check": check_id, "entity": entity_id, "action": "failed", "error": type(e).__name__})
                 fixes_failed += 1
                 logger.warning(f"Remediation failed for {check_id}/{entity_id}: {e}")
 

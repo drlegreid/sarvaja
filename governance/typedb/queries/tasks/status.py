@@ -174,10 +174,13 @@ def update_task_status(
                 if status in ["OPEN", "IN_PROGRESS"] and not resolution:
                     current_resolution = getattr(current, 'resolution', None)
                     if current_resolution and current_resolution != "NONE":
-                        # TypeDB 3.x: has $var of $entity
+                        # BUG-375-STS-001: Pin resolution value in delete (consistent with
+                        # status/agent/evidence delete patterns — prevents race condition)
+                        current_res_reset_escaped = current_resolution.replace('\\', '\\\\').replace('"', '\\"')
                         delete_res_query = f"""
                             match
                                 $t isa task, has task-id "{tid}", has task-resolution $r;
+                                $r == "{current_res_reset_escaped}";
                             delete
                                 has $r of $t;
                         """
