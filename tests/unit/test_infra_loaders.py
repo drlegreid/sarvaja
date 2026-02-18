@@ -152,6 +152,7 @@ class TestLoadContainerLogs:
         mock_os.environ.get.return_value = "http://localhost:8082"
         with patch("httpx.get") as mock_get:
             mock_resp = MagicMock()
+            mock_resp.status_code = 200
             mock_resp.json.return_value = {"lines": ["line1", "line2"]}
             mock_get.return_value = mock_resp
 

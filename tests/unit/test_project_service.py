@@ -67,6 +67,8 @@ class TestCreateProject:
     def test_create_with_typedb_success(self):
         mock_client = MagicMock()
         mock_client.is_connected.return_value = True
+        # get_project returns None (no duplicate), then insert succeeds
+        mock_client.get_project.return_value = None
         mock_client.insert_project.return_value = {
             "project_id": "PROJ-DB", "name": "DB Project",
         }
@@ -78,6 +80,8 @@ class TestCreateProject:
     def test_create_typedb_failure_falls_back(self):
         mock_client = MagicMock()
         mock_client.is_connected.return_value = True
+        # get_project returns None (no duplicate), then insert fails
+        mock_client.get_project.return_value = None
         mock_client.insert_project.side_effect = Exception("TypeDB down")
         with patch("governance.services.projects._get_client", return_value=mock_client):
             result = create_project(project_id="PROJ-FALL", name="Fallback")

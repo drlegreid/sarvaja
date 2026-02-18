@@ -51,17 +51,31 @@ class TestDetail(unittest.TestCase):
     @patch(f"{_D}.render_markdown", return_value="<h1>Hi</h1>")
     @patch("governance.services.sessions.get_session")
     def test_evidence_ok(self, gs, _):
-        gs.return_value = {"file_path": "/tmp/t.md"}
+        import os as _os
+        # Use the actual project evidence dir to pass the traversal check
+        detail_file = _os.path.abspath(_os.path.join(_os.path.dirname(__file__), "..", "..", "governance", "routes", "sessions", "detail.py"))
+        _this_dir = _os.path.dirname(detail_file)
+        project_root = _os.path.realpath(_os.path.join(_this_dir, "..", "..", ".."))
+        evidence_dir = _os.path.join(project_root, "evidence")
+        file_path = _os.path.join(evidence_dir, "test_evidence_ok.md")
+        gs.return_value = {"file_path": file_path}
         with patch("pathlib.Path") as mp:
-            i = MagicMock(); i.exists.return_value = True; i.read_text.return_value = "# Hi"
+            i = MagicMock(); i.exists.return_value = True; i.read_text.return_value = "# Hi"; i.stat.return_value = MagicMock(st_size=100)
             mp.return_value = i
             self.assertIn("html", self._c().get("/api/sessions/S1/evidence/rendered").json())
     @patch("governance.services.sessions.get_session", return_value=None)
     def test_evidence_no_sess(self, _): self.assertEqual(self._c().get("/api/sessions/S1/evidence/rendered").status_code, 404)
     @patch("governance.services.sessions.get_session", return_value={"file_path": None})
     def test_evidence_no_path(self, _): self.assertEqual(self._c().get("/api/sessions/S1/evidence/rendered").status_code, 404)
-    @patch("governance.services.sessions.get_session", return_value={"file_path": "/x.md"})
-    def test_evidence_gone(self, _):
+    @patch("governance.services.sessions.get_session")
+    def test_evidence_gone(self, gs):
+        import os as _os
+        detail_file = _os.path.abspath(_os.path.join(_os.path.dirname(__file__), "..", "..", "governance", "routes", "sessions", "detail.py"))
+        _this_dir = _os.path.dirname(detail_file)
+        project_root = _os.path.realpath(_os.path.join(_this_dir, "..", "..", ".."))
+        evidence_dir = _os.path.join(project_root, "evidence")
+        file_path = _os.path.join(evidence_dir, "nonexistent_evidence.md")
+        gs.return_value = {"file_path": file_path}
         with patch("pathlib.Path") as mp:
             mp.return_value.exists.return_value = False
             self.assertEqual(self._c().get("/api/sessions/S1/evidence/rendered").status_code, 404)
@@ -80,9 +94,15 @@ class TestDetail(unittest.TestCase):
     @patch(f"{_D}.render_markdown", return_value="<p>x</p>")
     @patch("governance.services.sessions.get_session")
     def test_evidence_has_raw(self, gs, _):
-        gs.return_value = {"file_path": "/t.md"}
+        import os as _os
+        detail_file = _os.path.abspath(_os.path.join(_os.path.dirname(__file__), "..", "..", "governance", "routes", "sessions", "detail.py"))
+        _this_dir = _os.path.dirname(detail_file)
+        project_root = _os.path.realpath(_os.path.join(_this_dir, "..", "..", ".."))
+        evidence_dir = _os.path.join(project_root, "evidence")
+        file_path = _os.path.join(evidence_dir, "test_raw.md")
+        gs.return_value = {"file_path": file_path}
         with patch("pathlib.Path") as mp:
-            i = MagicMock(); i.exists.return_value = True; i.read_text.return_value = "x"
+            i = MagicMock(); i.exists.return_value = True; i.read_text.return_value = "x"; i.stat.return_value = MagicMock(st_size=50)
             mp.return_value = i
             self.assertIn("raw", self._c().get("/api/sessions/S1/evidence/rendered").json())
 

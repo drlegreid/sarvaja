@@ -107,15 +107,15 @@ class TestExtractRuleRefs:
     def test_semantic_rule_pattern(self):
         """Extract semantic rule IDs (DOMAIN-SUB-NN-vN)."""
         refs = extract_rule_refs("Per SESSION-EVID-01-v1: Evidence required")
-        assert "SESSION-EVID-01-V1" in refs
+        assert "SESSION-EVID-01-v1" in refs
 
     def test_multiple_semantic_rules(self):
         """Extract multiple semantic rule IDs."""
         refs = extract_rule_refs(
             "Per TEST-GUARD-01-v1 and CONTAINER-DEV-01-v1"
         )
-        assert "TEST-GUARD-01-V1" in refs
-        assert "CONTAINER-DEV-01-V1" in refs
+        assert "TEST-GUARD-01-v1" in refs
+        assert "CONTAINER-DEV-01-v1" in refs
 
     def test_no_matches(self):
         """Return empty set when no rule IDs found."""
@@ -126,7 +126,7 @@ class TestExtractRuleRefs:
         """Extract both legacy and semantic rule IDs."""
         refs = extract_rule_refs("RULE-004 and DOC-SIZE-01-v1 apply")
         assert "RULE-004" in refs
-        assert "DOC-SIZE-01-V1" in refs
+        assert "DOC-SIZE-01-v1" in refs
 
 
 class TestExtractGapRefs:

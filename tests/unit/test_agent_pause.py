@@ -19,9 +19,13 @@ class TestAgentPauseDefaults:
             )
 
     def test_built_agents_store_has_paused_status(self):
-        """Agents built from config start with PAUSED status."""
+        """Agents built from config start with PAUSED status when no persisted metrics."""
+        from unittest.mock import patch
         from governance.stores.agents import _build_agents_store
-        agents = _build_agents_store()
+        # Mock empty metrics so persisted status doesn't override default
+        with patch("governance.stores.agents._load_agent_metrics", return_value={}):
+            with patch("governance.stores.agents._load_workflow_configs", return_value={}):
+                agents = _build_agents_store()
         for agent_id, agent in agents.items():
             assert agent["status"] == "PAUSED", (
                 f"Agent {agent_id} should start PAUSED, got {agent['status']}"

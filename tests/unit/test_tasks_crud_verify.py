@@ -76,7 +76,7 @@ class TestTaskVerify:
 
         result = json.loads(tools["task_verify"]("T-1", "pytest", "All passed"))
         assert result["verified"] is True
-        assert result["status"] == "completed"
+        assert result["status"] == "DONE"
 
     @patch("governance.mcp_tools.tasks_crud_verify.typedb_client")
     @patch("governance.mcp_tools.tasks_crud_verify.log_monitor_event")
@@ -88,8 +88,8 @@ class TestTaskVerify:
         mock_ctx.return_value.__exit__ = MagicMock(return_value=False)
 
         result = json.loads(tools["task_verify"]("T-NONE", "curl", "200 OK"))
-        assert result["verified"] is True
-        assert "not in TypeDB" in result.get("note", "")
+        assert result["verified"] is False
+        assert "not found in TypeDB" in result.get("error", "")
 
 
 class TestSessionSyncTodos:
@@ -158,7 +158,7 @@ class TestSessionSyncTodos:
         tools = _get_tools()
         mock_client = MagicMock()
         mock_task = MagicMock()
-        mock_task.status = "pending"
+        mock_task.status = "TODO"
         mock_client.get_task.return_value = mock_task
         mock_ctx.return_value.__enter__ = MagicMock(return_value=mock_client)
         mock_ctx.return_value.__exit__ = MagicMock(return_value=False)

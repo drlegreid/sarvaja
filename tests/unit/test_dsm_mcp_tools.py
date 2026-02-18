@@ -76,7 +76,7 @@ class TestDsmStart(unittest.TestCase):
         mock_get_tracker.return_value.start_cycle.side_effect = Exception("boom")
         result = json.loads(self.dsm_start())
         self.assertIn("error", result)
-        self.assertIn("boom", result["error"])
+        self.assertIn("dsm_start failed: Exception", result["error"])
 
 
 class TestDsmAdvance(unittest.TestCase):

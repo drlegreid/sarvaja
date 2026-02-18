@@ -84,7 +84,7 @@ class TestScanRuleDocuments:
             result = json.loads(mcp.tools["workspace_scan_rule_documents"]())
 
         assert "error" in result
-        assert "scan failed" in result["error"]
+        assert "workspace_scan_rule_documents failed: RuntimeError" in result["error"]
 
 
 class TestLinkRulesToDocuments:

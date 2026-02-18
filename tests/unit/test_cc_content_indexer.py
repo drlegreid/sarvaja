@@ -104,12 +104,15 @@ class TestIndexSessionContent:
     @patch("governance.services.cc_content_indexer.get_resume_offset", return_value=0)
     @patch("governance.services.cc_content_indexer.chunk_content")
     @patch("governance.session_metrics.parser.parse_log_file_extended")
-    def test_dry_run_returns_results(self, mock_parse, mock_chunk, mock_offset, mock_load, mock_save):
+    @patch("governance.services.cc_content_indexer.Path")
+    def test_dry_run_returns_results(self, mock_path_cls, mock_parse, mock_chunk, mock_offset, mock_load, mock_save):
         from governance.services.cc_content_indexer import index_session_content
         from pathlib import Path
 
         mock_parse.return_value = iter([_FakeEntry(text_content="test content")])
         mock_chunk.return_value = ["test content"]
+        # Ensure the JSONL file existence check passes
+        mock_path_cls.return_value.exists.return_value = True
 
         result = index_session_content(
             Path("/fake/path.jsonl"), "SESSION-TEST", dry_run=True

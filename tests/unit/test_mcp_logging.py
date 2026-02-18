@@ -166,7 +166,7 @@ class TestLogToolCall:
         logger.error.assert_called_once()
         error_call = logger.error.call_args
         assert error_call[0][0] == "tool_call_error"
-        assert error_call[1]["error"] == "boom"
+        assert error_call[1]["error"] == "ValueError"
         assert error_call[1]["error_type"] == "ValueError"
 
     def test_duration_measured(self):

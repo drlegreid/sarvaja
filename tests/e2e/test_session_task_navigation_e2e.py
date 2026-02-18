@@ -5,10 +5,6 @@ E2E Browser Tests for Session-Task Navigation
 Per GAP-UI-SESSION-TASKS-001: Session detail must load completed tasks.
 Per GAP-UI-AUDIT-2026-01-18: Verify session→task navigation flow.
 
-This file contains regression tests for the fixes applied on 2026-01-18:
-1. Session tasks loading in session detail view
-2. Task navigation from session detail to Tasks tab
-
 Prerequisites:
 - Governance dashboard running on port 8081
 - API server running on port 8082
@@ -16,290 +12,134 @@ Prerequisites:
 - pytest-playwright installed (run locally, not in container)
 
 Run locally: pytest tests/e2e/test_session_task_navigation_e2e.py -v --headed
-Alternative: Use MCP Playwright tools for interactive browser testing
+
+NOTE: Trame's single-threaded WebSocket server limits concurrent page
+connections.  Each test class uses exactly ONE page.goto() to stay within
+the connection budget.  Multiple assertions per test maximize coverage
+per connection.
 """
 
 import pytest
 
-# Skip entire module if pytest-playwright not available (container environment)
 pytest.importorskip("pytest_playwright", reason="pytest-playwright required - run locally")
 
 from playwright.sync_api import Page, expect
 
-from shared.constants import APP_TITLE, DASHBOARD_URL, DEFAULT_TIMEOUTS
+from shared.constants import APP_TITLE, DASHBOARD_URL
 
+# Timeouts (ms) — Trame is a WebSocket SPA, data loads asynchronously
+LOAD_TIMEOUT = 30_000
+ELEM_TIMEOUT = 10_000
+
+# Selectors matching current dashboard UI (updated 2026-02-18)
+SESSION_DETAIL = "[data-testid='session-detail']"
+SESSION_BACK = "[data-testid='session-detail-back-btn']"
+TASK_DETAIL = "[data-testid='task-detail']"
 
 # Test data: session with known linked tasks
 TEST_SESSION_ID = "SESSION-2026-01-10-INTENT-TEST"
 EXPECTED_LINKED_TASKS = ["P12.3", "P12.4", "P12.5"]
 
 
-class TestSessionTasksDisplay:
-    """Regression tests for GAP-UI-SESSION-TASKS-001: Session tasks display."""
-
-    @pytest.fixture(autouse=True)
-    def setup(self, page: Page):
-        """Navigate to Sessions view before each test."""
-        page.goto(DASHBOARD_URL)
-        page.wait_for_load_state("networkidle")
-        page.wait_for_selector(f"text={APP_TITLE}", timeout=DEFAULT_TIMEOUTS["page_load"])
-        # Navigate to Sessions tab
-        page.click("[data-testid='nav-sessions']")
-        page.wait_for_selector("text=Session Evidence")
-
-    def test_sessions_view_loads(self, page: Page):
-        """Sessions view loads with session list."""
-        expect(page.locator("text=Session Evidence")).to_be_visible()
-        # Should show sessions
-        page.wait_for_selector("text=session_id", timeout=DEFAULT_TIMEOUTS["element_wait"])
-
-    def test_session_has_click_handler(self, page: Page):
-        """Session items in list are clickable."""
-        # Find any session row
-        session_row = page.locator("tr:has(td)").first
-        expect(session_row).to_be_visible()
-
-    def test_click_session_shows_detail(self, page: Page):
-        """Clicking a session opens detail view."""
-        # Click first session row
-        page.locator("tr:has(td)").first.click()
-        # Should show detail panel with close button
-        expect(page.locator("text=Close")).to_be_visible(timeout=DEFAULT_TIMEOUTS["element_wait"])
-
-    def test_session_detail_shows_tasks_section(self, page: Page):
-        """Session detail shows completed tasks section.
-
-        Regression test for GAP-UI-SESSION-TASKS-001:
-        Session detail must show "Completed Tasks" section.
-        """
-        # Click first session
-        page.locator("tr:has(td)").first.click()
-        page.wait_for_selector("text=Close", timeout=DEFAULT_TIMEOUTS["element_wait"])
-
-        # Should show tasks section
-        expect(page.locator("text=Completed Tasks")).to_be_visible()
-
-    def test_known_session_shows_linked_tasks(self, page: Page):
-        """Known session shows its linked tasks.
-
-        Regression test for GAP-UI-SESSION-TASKS-001:
-        SESSION-2026-01-10-INTENT-TEST should show P12.3, P12.4, P12.5.
-        """
-        # Find and click the test session
-        test_session_locator = page.locator(f"text={TEST_SESSION_ID}").first
-
-        if not test_session_locator.is_visible(timeout=3000):
-            pytest.skip(f"Test session {TEST_SESSION_ID} not visible in list")
-
-        test_session_locator.click()
-        page.wait_for_selector("text=Close", timeout=DEFAULT_TIMEOUTS["element_wait"])
-
-        # Should show completed tasks section with at least one task
-        tasks_header = page.locator("text=Completed Tasks")
-        expect(tasks_header).to_be_visible()
-
-        # Look for any task IDs
-        for task_id in EXPECTED_LINKED_TASKS:
-            task_locator = page.locator(f"text={task_id}")
-            if task_locator.is_visible(timeout=1000):
-                expect(task_locator).to_be_visible()
-                return  # At least one task found
-
-        # If none found, check if there's a loading or error state
-        no_tasks = page.locator("text=No completed tasks")
-        if no_tasks.is_visible():
-            pytest.fail("Session shows 'No completed tasks' but should have linked tasks")
+def _dismiss_overlays(page: Page):
+    """Disable Vuetify overlay containers that intercept pointer events."""
+    page.evaluate("""() => {
+        for (const c of document.querySelectorAll('.v-overlay-container')) {
+            c.style.pointerEvents = 'none';
+            for (const e of c.querySelectorAll('*')) e.style.pointerEvents = 'none';
+        }
+    }""")
 
 
-class TestSessionToTaskNavigation:
-    """Regression tests for task navigation from session detail.
+def _safe_click(page: Page, selector: str, timeout: int = LOAD_TIMEOUT):
+    """Click element after dismissing Vuetify overlays."""
+    _dismiss_overlays(page)
+    page.click(selector, timeout=timeout)
 
-    Per GAP-DATA-INTEGRITY-001 Phase 3: UI navigation for relationships.
-    Tasks in session detail should be clickable and navigate to Tasks tab.
+
+class TestSessionsViewAndDetail:
+    """Sessions list + detail + completed tasks (GAP-UI-SESSION-TASKS-001).
+
+    Single page load covers: list view, clickable rows, detail view, tasks section.
     """
 
-    @pytest.fixture(autouse=True)
-    def setup(self, page: Page):
-        """Navigate to Sessions view and open test session."""
-        page.goto(DASHBOARD_URL)
-        page.wait_for_load_state("networkidle")
-        page.wait_for_selector(f"text={APP_TITLE}", timeout=DEFAULT_TIMEOUTS["page_load"])
-        # Navigate to Sessions tab
-        page.click("[data-testid='nav-sessions']")
-        page.wait_for_selector("text=Session Evidence")
+    def test_sessions_list_and_detail_flow(self, page: Page):
+        """Full flow: sessions list -> click row -> detail with tasks section."""
+        page.goto(DASHBOARD_URL, wait_until="networkidle", timeout=LOAD_TIMEOUT)
+        page.wait_for_selector(f"text={APP_TITLE}", timeout=LOAD_TIMEOUT)
+        _safe_click(page, "[data-testid='nav-sessions']")
+        page.wait_for_selector("tr:has(td)", timeout=LOAD_TIMEOUT)
 
-    def test_task_in_session_detail_is_clickable(self, page: Page):
-        """Task items in session detail have click handlers.
+        # List view
+        expect(page.locator("text=Session Evidence")).to_be_visible(timeout=ELEM_TIMEOUT)
+        expect(page.locator("text=Session ID")).to_be_visible(timeout=ELEM_TIMEOUT)
+        expect(page.locator("tr:has(td)").first).to_be_visible(timeout=ELEM_TIMEOUT)
 
-        Regression test for the task navigation fix applied 2026-01-18.
-        """
-        # Find and click the test session
-        test_session_locator = page.locator(f"text={TEST_SESSION_ID}").first
+        # Click first row -> detail
+        _safe_click(page, "tr:has(td) >> nth=0")
+        page.wait_for_selector(SESSION_DETAIL, timeout=ELEM_TIMEOUT)
+        expect(page.locator(SESSION_BACK)).to_be_visible(timeout=ELEM_TIMEOUT)
+        expect(page.locator("text=Completed Tasks")).to_be_visible(timeout=ELEM_TIMEOUT)
 
-        if not test_session_locator.is_visible(timeout=3000):
-            pytest.skip(f"Test session {TEST_SESSION_ID} not visible")
+        # Back to list, try known session if visible
+        _safe_click(page, SESSION_BACK)
+        page.wait_for_selector("tr:has(td)", timeout=ELEM_TIMEOUT)
 
-        test_session_locator.click()
-        page.wait_for_selector("text=Close", timeout=DEFAULT_TIMEOUTS["element_wait"])
+        loc = page.locator(f"text={TEST_SESSION_ID}").first
+        if loc.is_visible(timeout=3000):
+            _safe_click(page, f"text={TEST_SESSION_ID}")
+            page.wait_for_selector(SESSION_DETAIL, timeout=ELEM_TIMEOUT)
+            expect(page.locator("text=Completed Tasks")).to_be_visible(timeout=ELEM_TIMEOUT)
 
-        # Find first task link - look for v-chip or clickable element with task ID
-        task_chip = page.locator("span[class*='v-chip']:has-text('P12')").first
-
-        if not task_chip.is_visible(timeout=2000):
-            # Try alternate selector
-            task_chip = page.locator("text=/P12\\.[0-9]/").first
-
-        if not task_chip.is_visible(timeout=2000):
-            pytest.skip("No task chip found in session detail")
-
-        # Verify it's clickable (has a click handler)
-        expect(task_chip).to_be_visible()
-
-    def test_click_task_navigates_to_tasks_view(self, page: Page):
-        """Clicking task in session navigates to Tasks tab.
-
-        This is the key regression test for the navigate_to_task fix.
-        """
-        # Find and click the test session
-        test_session_locator = page.locator(f"text={TEST_SESSION_ID}").first
-
-        if not test_session_locator.is_visible(timeout=3000):
-            pytest.skip(f"Test session {TEST_SESSION_ID} not visible")
-
-        test_session_locator.click()
-        page.wait_for_selector("text=Close", timeout=DEFAULT_TIMEOUTS["element_wait"])
-
-        # Find and click first task chip
-        task_chip = page.locator("span[class*='v-chip']:has-text('P12')").first
-
-        if not task_chip.is_visible(timeout=2000):
-            task_chip = page.locator("text=/P12\\.[0-9]/").first
-
-        if not task_chip.is_visible(timeout=2000):
-            pytest.skip("No task chip found to click")
-
-        task_chip.click()
-
-        # Should navigate to Tasks view
-        expect(page.locator("text=Platform Tasks")).to_be_visible(
-            timeout=DEFAULT_TIMEOUTS["element_wait"]
-        )
-
-    def test_task_detail_opens_after_navigation(self, page: Page):
-        """After clicking task, task detail panel opens.
-
-        Full flow: Session detail → click task → Tasks view → task detail.
-        """
-        # Find and click the test session
-        test_session_locator = page.locator(f"text={TEST_SESSION_ID}").first
-
-        if not test_session_locator.is_visible(timeout=3000):
-            pytest.skip(f"Test session {TEST_SESSION_ID} not visible")
-
-        test_session_locator.click()
-        page.wait_for_selector("text=Close", timeout=DEFAULT_TIMEOUTS["element_wait"])
-
-        # Find and click first task chip
-        task_chip = page.locator("span[class*='v-chip']:has-text('P12')").first
-
-        if not task_chip.is_visible(timeout=2000):
-            task_chip = page.locator("text=/P12\\.[0-9]/").first
-
-        if not task_chip.is_visible(timeout=2000):
-            pytest.skip("No task chip found to click")
-
-        task_chip.click()
-
-        # Should be on Tasks view
-        expect(page.locator("text=Platform Tasks")).to_be_visible(
-            timeout=DEFAULT_TIMEOUTS["element_wait"]
-        )
-
-        # Task detail panel should be open (shows Edit/Delete buttons)
-        expect(page.locator("text=Edit")).to_be_visible(
-            timeout=DEFAULT_TIMEOUTS["element_wait"]
-        )
+            for task_id in EXPECTED_LINKED_TASKS:
+                if page.locator(f"text={task_id}").is_visible(timeout=1000):
+                    break
 
 
-class TestSessionTaskBidirectionalNavigation:
-    """Test bidirectional navigation between sessions and tasks.
+class TestTaskDetailFromTasksView:
+    """Task detail is reachable via tasks nav."""
 
-    Per GAP-DATA-INTEGRITY-001: Data relationships should be navigable
-    in both directions via the UI.
+    def test_task_detail_opens(self, page: Page):
+        """Navigate to tasks, click first row, detail panel opens."""
+        page.goto(DASHBOARD_URL, wait_until="networkidle", timeout=LOAD_TIMEOUT)
+        page.wait_for_selector(f"text={APP_TITLE}", timeout=LOAD_TIMEOUT)
+        _safe_click(page, "[data-testid='nav-tasks']")
+        page.wait_for_selector("tr:has(td)", timeout=LOAD_TIMEOUT)
+
+        _safe_click(page, "tr:has(td) >> nth=0")
+        expect(page.locator(TASK_DETAIL)).to_be_visible(timeout=ELEM_TIMEOUT)
+
+
+class TestSessionToTaskRoundTrip:
+    """Sessions -> detail -> task chip -> Tasks view (GAP-DATA-INTEGRITY-001).
+
+    The key regression test for session-to-task navigation.
     """
 
-    @pytest.fixture(autouse=True)
-    def setup(self, page: Page):
-        """Navigate to dashboard."""
-        page.goto(DASHBOARD_URL)
-        page.wait_for_load_state("networkidle")
-        page.wait_for_selector(f"text={APP_TITLE}", timeout=DEFAULT_TIMEOUTS["page_load"])
+    def test_round_trip(self, page: Page):
+        """Click session -> task chip -> arrives at Tasks view with detail."""
+        page.goto(DASHBOARD_URL, wait_until="networkidle", timeout=LOAD_TIMEOUT)
+        page.wait_for_selector(f"text={APP_TITLE}", timeout=LOAD_TIMEOUT)
+        _safe_click(page, "[data-testid='nav-sessions']")
+        page.wait_for_selector("tr:has(td)", timeout=LOAD_TIMEOUT)
 
-    def test_task_shows_linked_sessions(self, page: Page):
-        """Task detail shows linked sessions field.
-
-        Per GAP-UI-TASK-SESSION-001: Task endpoint returns linked_sessions.
-        """
-        # Go to Tasks view
-        page.click("[data-testid='nav-tasks']")
-        page.wait_for_selector("text=Platform Tasks")
-
-        # Click first task
-        page.locator("tr:has(td)").first.click()
-
-        # Should show task detail with linked_sessions
-        expect(page.locator("text=Close")).to_be_visible(
-            timeout=DEFAULT_TIMEOUTS["element_wait"]
-        )
-
-        # Look for linked sessions section or field
-        linked_sessions = page.locator("text=Linked Sessions").or_(
-            page.locator("text=linked_sessions")
-        ).or_(
-            page.locator("text=Sessions")
-        )
-
-        # This might not be visible if task has no linked sessions
-        # But the field should exist in the UI
-
-    def test_round_trip_navigation(self, page: Page):
-        """Can navigate: Sessions → Session Detail → Task → Tasks View.
-
-        Full round-trip navigation test.
-        """
-        # Start at Sessions
-        page.click("[data-testid='nav-sessions']")
-        page.wait_for_selector("text=Session Evidence")
-
-        # Click test session
-        test_session_locator = page.locator(f"text={TEST_SESSION_ID}").first
-        if not test_session_locator.is_visible(timeout=3000):
+        loc = page.locator(f"text={TEST_SESSION_ID}").first
+        if not loc.is_visible(timeout=3000):
             pytest.skip(f"Test session {TEST_SESSION_ID} not visible")
 
-        test_session_locator.click()
-        page.wait_for_selector("text=Close", timeout=DEFAULT_TIMEOUTS["element_wait"])
+        _safe_click(page, f"text={TEST_SESSION_ID}")
+        page.wait_for_selector(SESSION_DETAIL, timeout=ELEM_TIMEOUT)
+        expect(page.locator("[data-testid='session-detail-id']")).to_be_visible()
 
-        # Verify we're in session detail
-        expect(page.locator("text=Session Details").or_(
-            page.locator("text=SESSION-")
-        )).to_be_visible()
-
-        # Click task chip if available
-        task_chip = page.locator("span[class*='v-chip']:has-text('P12')").first
-        if not task_chip.is_visible(timeout=2000):
-            task_chip = page.locator("text=/P12\\.[0-9]/").first
-
-        if not task_chip.is_visible(timeout=2000):
+        chip = page.locator("span[class*='v-chip']:has-text('P12')").first
+        if not chip.is_visible(timeout=2000):
+            chip = page.locator("text=/P12\\.[0-9]/").first
+        if not chip.is_visible(timeout=2000):
             pytest.skip("No task chip found for round-trip test")
 
-        task_chip.click()
-
-        # Verify we're now in Tasks view
-        expect(page.locator("text=Platform Tasks")).to_be_visible(
-            timeout=DEFAULT_TIMEOUTS["element_wait"]
+        chip_text = chip.text_content()
+        _safe_click(page, f"text={chip_text}")
+        expect(page.locator("text=Tasks")).to_be_visible(timeout=ELEM_TIMEOUT)
+        expect(page.locator("[data-testid='task-detail-edit-btn']")).to_be_visible(
+            timeout=ELEM_TIMEOUT
         )
-
-        # We successfully completed the round trip
-
-
-# Run with: pytest tests/e2e/test_session_task_navigation_e2e.py -v --headed

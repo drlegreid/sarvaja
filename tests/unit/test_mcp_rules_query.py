@@ -76,7 +76,9 @@ class TestRulesQuery:
         client = _mock_client([_MockRule()])
         with patch(f"{_P}.get_typedb_client", return_value=client):
             result = json.loads(tools["rules_query"]())
-        assert len(result) == 1
+        assert result["count"] == 1
+        assert len(result["rules"]) == 1
+        assert result["source"] == "typedb"
 
     def test_filter_by_category(self):
         tools = _register()
@@ -84,7 +86,8 @@ class TestRulesQuery:
         client = _mock_client(rules)
         with patch(f"{_P}.get_typedb_client", return_value=client):
             result = json.loads(tools["rules_query"](category="TEST"))
-        assert len(result) == 1
+        assert result["count"] == 1
+        assert len(result["rules"]) == 1
 
     def test_filter_by_active_status(self):
         tools = _register()
@@ -92,7 +95,8 @@ class TestRulesQuery:
         client = _mock_client(rules)
         with patch(f"{_P}.get_typedb_client", return_value=client):
             result = json.loads(tools["rules_query"](status="ACTIVE"))
-        assert len(result) == 1
+        assert result["count"] == 1
+        assert len(result["rules"]) == 1
 
     def test_filter_by_priority(self):
         tools = _register()
@@ -100,7 +104,8 @@ class TestRulesQuery:
         client = _mock_client(rules)
         with patch(f"{_P}.get_typedb_client", return_value=client):
             result = json.loads(tools["rules_query"](priority="HIGH"))
-        assert len(result) == 1
+        assert result["count"] == 1
+        assert len(result["rules"]) == 1
 
     def test_fallback_to_markdown(self):
         tools = _register()

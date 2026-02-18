@@ -127,8 +127,8 @@ class TestRuleDocumentPaths:
     @patch("governance.routes.tests.heuristic_checks_exploratory._api_get")
     def test_all_have_paths_passes(self, mock_api_get):
         mock_api_get.return_value = [
-            {"id": "R-001", "status": "ACTIVE", "document_path": "/docs/r1.md"},
-            {"id": "R-002", "status": "ACTIVE", "document_path": "/docs/r2.md"},
+            {"rule_id": "R-001", "status": "ACTIVE", "document_path": "/docs/r1.md"},
+            {"rule_id": "R-002", "status": "ACTIVE", "document_path": "/docs/r2.md"},
         ]
         result = check_rule_document_paths_populated("http://external:9999")
         assert result["status"] == "PASS"
@@ -136,9 +136,9 @@ class TestRuleDocumentPaths:
     @patch("governance.routes.tests.heuristic_checks_exploratory._api_get")
     def test_majority_missing_fails(self, mock_api_get):
         mock_api_get.return_value = [
-            {"id": "R-001", "status": "ACTIVE", "document_path": None},
-            {"id": "R-002", "status": "ACTIVE", "document_path": None},
-            {"id": "R-003", "status": "ACTIVE", "document_path": "/docs/r3.md"},
+            {"rule_id": "R-001", "status": "ACTIVE", "document_path": None},
+            {"rule_id": "R-002", "status": "ACTIVE", "document_path": None},
+            {"rule_id": "R-003", "status": "ACTIVE", "document_path": "/docs/r3.md"},
         ]
         result = check_rule_document_paths_populated("http://external:9999")
         assert result["status"] == "FAIL"
@@ -148,7 +148,7 @@ class TestRuleDocumentPaths:
     @patch("governance.routes.tests.heuristic_checks_exploratory._api_get")
     def test_no_active_rules_skips(self, mock_api_get):
         mock_api_get.return_value = [
-            {"id": "R-001", "status": "DRAFT"},
+            {"rule_id": "R-001", "status": "DRAFT"},
         ]
         result = check_rule_document_paths_populated("http://external:9999")
         assert result["status"] == "SKIP"

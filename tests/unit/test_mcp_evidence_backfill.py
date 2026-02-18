@@ -86,7 +86,7 @@ class TestBackfillScanTaskSessions:
         tools = _register()
         result = json.loads(tools["backfill_scan_task_sessions"]())
         assert "error" in result
-        assert "scan failed" in result["error"]
+        assert "backfill_scan_task_sessions failed: Exception" in result["error"]
 
 
 # ── backfill_execute_task_sessions ──────────────────────

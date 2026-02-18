@@ -147,7 +147,7 @@ class TestAdd:
 
         results = result["typedb_result"]["results"]
         assert results[0]["success"] is False
-        assert "boom" in results[0]["error"]
+        assert "RuntimeError" in results[0]["error"]
 
 
 class TestUpdate:

@@ -38,7 +38,8 @@ class TestEstimateIngestion:
         assert result["status"] == "error"
         assert "not found" in result["error"]
 
-    def test_valid_file(self):
+    @patch("governance.services.ingestion_orchestrator._validate_jsonl_path", return_value=True)
+    def test_valid_file(self, _mock_validate):
         from governance.services.ingestion_orchestrator import estimate_ingestion
         with tempfile.NamedTemporaryFile(mode="w", suffix=".jsonl", delete=False) as f:
             f.write('{"line": 1}\n')
@@ -56,7 +57,8 @@ class TestEstimateIngestion:
         finally:
             path.unlink()
 
-    def test_empty_file(self):
+    @patch("governance.services.ingestion_orchestrator._validate_jsonl_path", return_value=True)
+    def test_empty_file(self, _mock_validate):
         from governance.services.ingestion_orchestrator import estimate_ingestion
         with tempfile.NamedTemporaryFile(mode="w", suffix=".jsonl", delete=False) as f:
             path = Path(f.name)
@@ -112,11 +114,12 @@ class TestRunIngestionPipeline:
         result = run_ingestion_pipeline(Path("/nonexistent.jsonl"), "SESSION-X")
         assert result["status"] == "error"
 
+    @patch("governance.services.ingestion_orchestrator._validate_jsonl_path", return_value=True)
     @patch("governance.services.ingestion_orchestrator.save_checkpoint")
     @patch("governance.services.ingestion_orchestrator.load_checkpoint", return_value=None)
     @patch("governance.services.ingestion_orchestrator._get_rss_mb", return_value=600.0)
     @patch("governance.services.ingestion_orchestrator.index_session_content")
-    def test_memory_limit_skips_content(self, mock_index, mock_rss, mock_load, mock_save):
+    def test_memory_limit_skips_content(self, mock_index, mock_rss, mock_load, mock_save, _mock_validate):
         from governance.services.ingestion_orchestrator import run_ingestion_pipeline
         with tempfile.NamedTemporaryFile(suffix=".jsonl", delete=False) as f:
             f.write(b'{"x":1}\n')
@@ -129,12 +132,13 @@ class TestRunIngestionPipeline:
         finally:
             path.unlink()
 
+    @patch("governance.services.ingestion_orchestrator._validate_jsonl_path", return_value=True)
     @patch("governance.services.ingestion_orchestrator.save_checkpoint")
     @patch("governance.services.ingestion_orchestrator.load_checkpoint", return_value=None)
     @patch("governance.services.ingestion_orchestrator._get_rss_mb", return_value=50.0)
     @patch("governance.services.ingestion_orchestrator.mine_session_links")
     @patch("governance.services.ingestion_orchestrator.index_session_content")
-    def test_both_phases_run(self, mock_index, mock_mine, mock_rss, mock_load, mock_save):
+    def test_both_phases_run(self, mock_index, mock_mine, mock_rss, mock_load, mock_save, _mock_validate):
         from governance.services.ingestion_orchestrator import run_ingestion_pipeline
         mock_index.return_value = {"status": "success"}
         mock_mine.return_value = {"status": "success"}
@@ -151,11 +155,12 @@ class TestRunIngestionPipeline:
         finally:
             path.unlink()
 
+    @patch("governance.services.ingestion_orchestrator._validate_jsonl_path", return_value=True)
     @patch("governance.services.ingestion_orchestrator.save_checkpoint")
     @patch("governance.services.ingestion_orchestrator.load_checkpoint", return_value=None)
     @patch("governance.services.ingestion_orchestrator._get_rss_mb", return_value=50.0)
     @patch("governance.services.ingestion_orchestrator.index_session_content")
-    def test_content_only_phase(self, mock_index, mock_rss, mock_load, mock_save):
+    def test_content_only_phase(self, mock_index, mock_rss, mock_load, mock_save, _mock_validate):
         from governance.services.ingestion_orchestrator import run_ingestion_pipeline
         mock_index.return_value = {"status": "success"}
 

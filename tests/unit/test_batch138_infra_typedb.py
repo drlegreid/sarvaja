@@ -324,7 +324,8 @@ class TestTaskCRUDDelete:
     def test_delete_success(self):
         c, tx = self._make_client()
         assert c.delete_task("T1") is True
-        tx.commit.assert_called_once()
+        # 3 commits: 2 relationship cleanup transactions + 1 entity delete
+        assert tx.commit.call_count == 3
 
     def test_delete_error(self):
         c, _ = self._make_client()

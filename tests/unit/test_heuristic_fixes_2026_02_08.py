@@ -124,7 +124,7 @@ class TestTaskSessionAutoLinking:
         """When no active session exists, linked_sessions stays None."""
         from governance.services.tasks import create_task
         result = create_task("TEST-NOLINK-1", description="No active session")
-        assert result["linked_sessions"] is None
+        assert result["linked_sessions"] == []
 
 
 class TestHTaskCheckRefined:

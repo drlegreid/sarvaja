@@ -96,7 +96,8 @@ class TestTaskSessionsRoute:
     """Tests for GET /tasks/{task_id}/sessions route."""
 
     @patch("governance.services.tasks.get_sessions_for_task")
-    def test_returns_sessions_list(self, mock_func):
+    @patch("governance.services.tasks.get_task", return_value={"task_id": "T-001"})
+    def test_returns_sessions_list(self, mock_get, mock_func):
         """Should return task_id, sessions, and count."""
         from fastapi.testclient import TestClient
         from governance.routes.tasks.crud import router
@@ -119,7 +120,8 @@ class TestTaskSessionsRoute:
         assert len(data["sessions"]) == 2
 
     @patch("governance.services.tasks.get_sessions_for_task")
-    def test_returns_empty_sessions(self, mock_func):
+    @patch("governance.services.tasks.get_task", return_value={"task_id": "T-001"})
+    def test_returns_empty_sessions(self, mock_get, mock_func):
         """Should return empty list when no sessions linked."""
         from fastapi.testclient import TestClient
         from governance.routes.tasks.crud import router

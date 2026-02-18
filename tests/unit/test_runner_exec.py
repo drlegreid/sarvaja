@@ -62,7 +62,7 @@ class TestExecuteTests:
         with patch(_P_STORE, store), patch(_P_PERSIST):
             execute_tests("RUN-3", ["pytest"])
             assert store["RUN-3"]["status"] == "error"
-            assert "boom" in store["RUN-3"]["error"]
+            assert "Test execution failed: Exception" in store["RUN-3"]["error"]
 
     @patch(_P_ROOT, return_value="/tmp")
     def test_timeout(self, _root):

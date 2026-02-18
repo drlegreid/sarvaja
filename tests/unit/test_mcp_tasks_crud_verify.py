@@ -104,9 +104,9 @@ class TestTaskVerify:
             result = json.loads(tools["task_verify"](
                 task_id="T-1", verification_method="pytest",
                 evidence="all passed"))
-        assert result["status"] == "completed"
+        assert result["status"] == "DONE"
         assert result["verified"] is True
-        client.update_task.assert_called_once_with(task_id="T-1", status="completed")
+        client.update_task.assert_called_once_with(task_id="T-1", status="DONE")
 
     def test_not_in_typedb(self):
         tools = _register()
@@ -115,8 +115,8 @@ class TestTaskVerify:
             result = json.loads(tools["task_verify"](
                 task_id="T-1", verification_method="curl",
                 evidence="200 OK"))
-        assert result["verified"] is True
-        assert "not in TypeDB" in result["note"]
+        assert result["verified"] is False
+        assert "not found in TypeDB" in result["error"]
 
     def test_long_evidence_truncated(self):
         tools = _register()
@@ -185,7 +185,7 @@ class TestSessionSyncTodos:
     def test_skips_same_status(self):
         tools = _register()
         existing = MagicMock()
-        existing.status = "pending"
+        existing.status = "TODO"
         client = _mock_client(get_task_rv=existing)
         todos = [{"content": "Same", "status": "pending"}]
         with _with_client(client):

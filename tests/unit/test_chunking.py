@@ -16,8 +16,8 @@ class TestChunkContent:
     """Test content chunking for embeddings."""
 
     def test_empty_content(self):
-        """Empty content returns list with empty string."""
-        assert chunk_content("") == [""]
+        """Empty content returns empty list."""
+        assert chunk_content("") == []
 
     def test_short_content_single_chunk(self):
         """Content shorter than chunk_size returns single chunk."""

@@ -84,7 +84,7 @@ class TestWorkflowComplianceCheck:
         tools = _register_tools()
         result = json.loads(tools["workflow_compliance_check"]())
         assert "error" in result
-        assert "TypeDB down" in result["error"]
+        assert "RuntimeError" in result["error"]
 
     @patch(f"{_SRC}.run_compliance_checks")
     def test_non_compliant_report(self, mock_run):
@@ -151,4 +151,4 @@ class TestWorkflowComplianceSummary:
 
         result = json.loads(tools["workflow_compliance_summary"]())
         assert "error" in result
-        assert "Bad data" in result["error"]
+        assert "ValueError" in result["error"]

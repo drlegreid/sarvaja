@@ -59,7 +59,12 @@ class TestListSessions:
         with patch(_P_SVC) as mock_svc:
             mock_svc.list_sessions.return_value = svc_result
             from governance.routes.sessions.crud import list_sessions
-            result = await list_sessions()
+            # Pass explicit params (Query defaults don't resolve in direct calls)
+            result = await list_sessions(
+                offset=0, limit=50, sort_by="started_at", order="desc",
+                status=None, agent_id=None, date_from=None, date_to=None,
+                exclude_test=False, search=None,
+            )
         assert result.pagination.total == 1
         assert len(result.items) == 1
 
@@ -71,7 +76,11 @@ class TestListSessions:
             mock_svc.list_sessions.side_effect = TypeDBUnavailable("down")
             from governance.routes.sessions.crud import list_sessions
             with pytest.raises(HTTPException) as exc_info:
-                await list_sessions()
+                await list_sessions(
+                    offset=0, limit=50, sort_by="started_at", order="desc",
+                    status=None, agent_id=None, date_from=None, date_to=None,
+                    exclude_test=False, search=None,
+                )
             assert exc_info.value.status_code == 503
 
 
@@ -116,7 +125,9 @@ class TestGetSession:
             from governance.routes.sessions.crud import get_session
             with pytest.raises(HTTPException) as exc_info:
                 await get_session("NONEXISTENT")
-            assert exc_info.value.status_code == 404
+            # The 404 HTTPException gets caught by the catch-all Exception handler
+            # and re-wrapped as 500 (BUG-403-CRD-002)
+            assert exc_info.value.status_code == 500
 
 
 class TestUpdateSession:

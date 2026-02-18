@@ -293,7 +293,9 @@ class TestGenerateSessionEvidence:
         }
 
         with tempfile.TemporaryDirectory() as tmpdir:
-            path = generate_session_evidence(session_data, output_dir=Path(tmpdir))
+            # BUG-298-EVID-001: Patch _DEFAULT_EVIDENCE_DIR so tmpdir passes validation
+            with patch("governance.services.session_evidence._DEFAULT_EVIDENCE_DIR", Path(tmpdir)):
+                path = generate_session_evidence(session_data, output_dir=Path(tmpdir))
             assert path is not None
             assert Path(path).exists()
             content = Path(path).read_text()
@@ -311,7 +313,8 @@ class TestGenerateSessionEvidence:
         }
 
         with tempfile.TemporaryDirectory() as tmpdir:
-            path = generate_session_evidence(session_data, output_dir=Path(tmpdir))
+            with patch("governance.services.session_evidence._DEFAULT_EVIDENCE_DIR", Path(tmpdir)):
+                path = generate_session_evidence(session_data, output_dir=Path(tmpdir))
             assert Path(path).name == "SESSION-2026-02-15-FNAME.md"
 
     def test_returns_none_for_active_session(self):
@@ -325,7 +328,8 @@ class TestGenerateSessionEvidence:
         }
 
         with tempfile.TemporaryDirectory() as tmpdir:
-            path = generate_session_evidence(session_data, output_dir=Path(tmpdir))
+            with patch("governance.services.session_evidence._DEFAULT_EVIDENCE_DIR", Path(tmpdir)):
+                path = generate_session_evidence(session_data, output_dir=Path(tmpdir))
             assert path is None
 
     def test_idempotent_no_overwrite_existing(self):
@@ -340,13 +344,14 @@ class TestGenerateSessionEvidence:
         }
 
         with tempfile.TemporaryDirectory() as tmpdir:
-            # First call creates
-            path1 = generate_session_evidence(session_data, output_dir=Path(tmpdir))
-            mtime1 = Path(path1).stat().st_mtime
+            with patch("governance.services.session_evidence._DEFAULT_EVIDENCE_DIR", Path(tmpdir)):
+                # First call creates
+                path1 = generate_session_evidence(session_data, output_dir=Path(tmpdir))
+                mtime1 = Path(path1).stat().st_mtime
 
-            # Second call returns existing
-            path2 = generate_session_evidence(session_data, output_dir=Path(tmpdir))
-            mtime2 = Path(path2).stat().st_mtime
+                # Second call returns existing
+                path2 = generate_session_evidence(session_data, output_dir=Path(tmpdir))
+                mtime2 = Path(path2).stat().st_mtime
             assert mtime1 == mtime2  # File not overwritten
 
     def test_includes_tool_call_data_no_llm(self):
@@ -365,7 +370,8 @@ class TestGenerateSessionEvidence:
         }
 
         with tempfile.TemporaryDirectory() as tmpdir:
-            path = generate_session_evidence(session_data, output_dir=Path(tmpdir))
+            with patch("governance.services.session_evidence._DEFAULT_EVIDENCE_DIR", Path(tmpdir)):
+                path = generate_session_evidence(session_data, output_dir=Path(tmpdir))
             content = Path(path).read_text()
             assert "Read" in content
             assert "Bash" in content

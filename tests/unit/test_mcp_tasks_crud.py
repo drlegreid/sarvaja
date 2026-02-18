@@ -246,7 +246,8 @@ class TestTaskDelete:
         mock_ctx.return_value.__enter__ = MagicMock(return_value=client)
         mock_ctx.return_value.__exit__ = MagicMock(return_value=False)
 
-        result = json.loads(tools["task_delete"](task_id="T-1"))
+        # BUG-357-TDL-001: task_delete now requires confirm=True
+        result = json.loads(tools["task_delete"](task_id="T-1", confirm=True))
         assert result["deleted"] is True
 
     @patch(f"{_MOD}.format_mcp_result", side_effect=_json_fmt)

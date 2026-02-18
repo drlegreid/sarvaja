@@ -112,7 +112,7 @@ class TestRunFallbackWorkflow:
         g = _make_graph({"start": bad_node})
         result = run_fallback_workflow(g, {})
         assert result["status"] == "failed"
-        assert "boom" in result["error_message"]
+        assert "Node 'start' failed: RuntimeError" in result["error_message"]
 
     def test_deployment_failure_triggers_rollback(self):
         executed = []

@@ -78,21 +78,25 @@ class TestRulesQuery:
         rules = [_FakeRule(), _FakeRule(id="RULE-002", category="testing")]
         mock_get_client.return_value = _mock_client(rules)
         result = json.loads(mcp_tools["rules_query"]())
-        assert len(result) == 2
+        assert result["count"] == 2
+        assert len(result["rules"]) == 2
+        assert result["source"] == "typedb"
 
     @patch("governance.mcp_tools.rules_query.get_typedb_client")
     def test_filter_category(self, mock_get_client, mcp_tools):
         rules = [_FakeRule(category="governance"), _FakeRule(id="R-2", category="testing")]
         mock_get_client.return_value = _mock_client(rules)
         result = json.loads(mcp_tools["rules_query"](category="governance"))
-        assert len(result) == 1
+        assert result["count"] == 1
+        assert len(result["rules"]) == 1
 
     @patch("governance.mcp_tools.rules_query.get_typedb_client")
     def test_filter_priority(self, mock_get_client, mcp_tools):
         rules = [_FakeRule(priority="HIGH"), _FakeRule(id="R-2", priority="LOW")]
         mock_get_client.return_value = _mock_client(rules)
         result = json.loads(mcp_tools["rules_query"](priority="HIGH"))
-        assert len(result) == 1
+        assert result["count"] == 1
+        assert len(result["rules"]) == 1
 
     @patch("governance.mcp_tools.rules_query.get_all_markdown_rules")
     @patch("governance.mcp_tools.rules_query.get_typedb_client")

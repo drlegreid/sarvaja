@@ -293,7 +293,11 @@ class TestCreateSessionPersistenceStatus:
     @patch(f"{_SERVICE}.get_typedb_client")
     @patch(f"{_SERVICE}._sessions_store", {})
     def test_persisted_when_typedb_succeeds(self, mock_client_fn, mock_mon, mock_audit, mock_log):
-        """create_session should return persistence_status='persisted'."""
+        """create_session via TypeDB returns the response (no persistence_status field).
+
+        When TypeDB succeeds, session_to_response(created) is returned directly.
+        The persistence_status field is only set on the in-memory fallback path.
+        """
         from governance.services.sessions import create_session
 
         mock_client = MagicMock()
@@ -306,7 +310,9 @@ class TestCreateSessionPersistenceStatus:
 
         with patch(f"{_SERVICE}.session_to_response", side_effect=lambda x: dict(x)):
             result = create_session(session_id="S-1", description="Test")
-        assert result.get("persistence_status") == "persisted"
+        # TypeDB success path delegates to session_to_response; no persistence_status key
+        assert result["session_id"] == "S-1"
+        assert result["status"] == "ACTIVE"
 
     @patch(f"{_SERVICE}.log_event")
     @patch(f"{_SERVICE}.record_audit")

@@ -109,13 +109,14 @@ class TestTaskGetEvidence:
 
 class TestTaskLinkCommit:
     def test_success(self, mcp):
+        # BUG-381-LNK-001: commit_sha must be 7-40 char hex string
         with patch(_P_CLIENT, return_value=_make_client()):
-            result = json.loads(mcp.tools["task_link_commit"]("T-1", "abc123"))
+            result = json.loads(mcp.tools["task_link_commit"]("T-1", "abc1234"))
             assert result["relation"] == "task-commit"
 
     def test_failure(self, mcp):
         with patch(_P_CLIENT, return_value=_make_client(link_result=False)):
-            result = json.loads(mcp.tools["task_link_commit"]("T-1", "abc123"))
+            result = json.loads(mcp.tools["task_link_commit"]("T-1", "abc1234"))
             assert "error" in result
 
 

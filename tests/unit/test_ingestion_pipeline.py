@@ -397,7 +397,7 @@ class TestMineSessionLinks(unittest.TestCase):
         )
         rules = result["refs_found"]["rules"]
         self.assertIn("RULE-011", rules)
-        self.assertIn("SESSION-EVID-01-V1", rules)
+        self.assertIn("SESSION-EVID-01-v1", rules)
 
     @patch("governance.services.cc_link_miner._get_typedb_client")
     def test_no_typedb_returns_error(self, mock_client):
@@ -422,7 +422,8 @@ class TestEstimateIngestion(unittest.TestCase):
         result = estimate_ingestion(Path("/nonexistent/file.jsonl"))
         self.assertEqual(result["status"], "error")
 
-    def test_valid_file(self):
+    @patch("governance.services.ingestion_orchestrator._validate_jsonl_path", return_value=True)
+    def test_valid_file(self, _mock_validate):
         from governance.services.ingestion_orchestrator import estimate_ingestion
         tmp = Path(tempfile.mktemp(suffix=".jsonl"))
         tmp.write_text("\n".join(["{}" for _ in range(100)]))
@@ -487,9 +488,10 @@ class TestRunIngestionPipeline(unittest.TestCase):
         result = run_ingestion_pipeline(Path("/nope.jsonl"), "S1")
         self.assertEqual(result["status"], "error")
 
+    @patch("governance.services.ingestion_orchestrator._validate_jsonl_path", return_value=True)
     @patch("governance.services.ingestion_orchestrator._get_rss_mb", return_value=50.0)
     @patch("governance.services.cc_content_indexer._get_chromadb_collection")
-    def test_content_only_phase(self, mock_get_coll, _mock_rss):
+    def test_content_only_phase(self, mock_get_coll, _mock_rss, _mock_validate):
         from governance.services.ingestion_orchestrator import run_ingestion_pipeline
         mock_coll = MagicMock()
         mock_get_coll.return_value = mock_coll
@@ -513,8 +515,9 @@ class TestRunIngestionPipeline(unittest.TestCase):
             import shutil
             shutil.rmtree(tmpdir)
 
+    @patch("governance.services.ingestion_orchestrator._validate_jsonl_path", return_value=True)
     @patch("governance.services.ingestion_orchestrator._get_rss_mb", return_value=50.0)
-    def test_dry_run_pipeline(self, _mock_rss):
+    def test_dry_run_pipeline(self, _mock_rss, _mock_validate):
         from governance.services.ingestion_orchestrator import run_ingestion_pipeline
         tmpdir = Path(tempfile.mkdtemp())
         jsonl = tmpdir / "test.jsonl"
@@ -569,7 +572,10 @@ class TestResolveJsonlPath(unittest.TestCase):
 
     def test_explicit_existing_path(self):
         from governance.mcp_tools.ingestion import _resolve_jsonl_path
-        tmp = Path(tempfile.mktemp(suffix=".jsonl"))
+        # BUG-299-ING-001: _resolve_jsonl_path validates path is under allowed dirs;
+        # create temp file under project root so it passes validation.
+        project_root = Path(__file__).resolve().parent.parent.parent
+        tmp = project_root / "_test_resolve_tmp.jsonl"
         tmp.write_text("{}")
         try:
             result = _resolve_jsonl_path("S1", str(tmp))

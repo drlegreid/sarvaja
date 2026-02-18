@@ -16,7 +16,7 @@ class TestChunkContent:
     """Test chunk_content function."""
 
     def test_empty_content(self):
-        assert chunk_content("") == [""]
+        assert chunk_content("") == []
 
     def test_short_content_single_chunk(self):
         result = chunk_content("Hello world", chunk_size=100)

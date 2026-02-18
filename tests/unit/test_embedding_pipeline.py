@@ -38,6 +38,8 @@ def _make_gen():
 def _make_store():
     store = MagicMock()
     store._cache = {}
+    # BUG-338-PIP-002: store_embedding checks _connected; set False to use cache fallback
+    store._connected = False
     return store
 
 

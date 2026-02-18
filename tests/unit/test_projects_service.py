@@ -53,6 +53,9 @@ class TestCreateProject:
     def test_typedb_success(self):
         from governance.services.projects import create_project
         client = MagicMock()
+        # get_project returns None first (no duplicate), then insert succeeds
+        client.get_project.return_value = None
+        client.is_connected.return_value = True
         client.insert_project.return_value = {"project_id": "PROJ-DB", "name": "DB"}
         with patch(f"{_P}._get_client", return_value=client):
             result = create_project(project_id="PROJ-DB", name="DB")
@@ -62,6 +65,9 @@ class TestCreateProject:
     def test_typedb_failure_fallback(self, _reset_store):
         from governance.services.projects import create_project
         client = MagicMock()
+        # get_project returns None (no duplicate), insert fails
+        client.get_project.return_value = None
+        client.is_connected.return_value = True
         client.insert_project.side_effect = Exception("db error")
         with patch(f"{_P}._get_client", return_value=client):
             result = create_project(project_id="PROJ-FB", name="Fallback")
@@ -71,6 +77,9 @@ class TestCreateProject:
     def test_typedb_returns_none_fallback(self, _reset_store):
         from governance.services.projects import create_project
         client = MagicMock()
+        # get_project returns None (no duplicate), insert returns None
+        client.get_project.return_value = None
+        client.is_connected.return_value = True
         client.insert_project.return_value = None
         with patch(f"{_P}._get_client", return_value=client):
             result = create_project(project_id="PROJ-NONE", name="None")

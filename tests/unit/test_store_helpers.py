@@ -56,7 +56,8 @@ class TestSynthesizeExecutionEvents:
         assert events[0]["event_type"] == "completed"
 
     def test_dict_completed_alt_status(self):
-        data = {"status": "completed"}
+        # BUG-227-HELPER-003: Only uppercase "DONE" triggers completed event
+        data = {"status": "DONE"}
         events = synthesize_execution_events("T1", data)
         assert len(events) == 1
         assert events[0]["event_type"] == "completed"

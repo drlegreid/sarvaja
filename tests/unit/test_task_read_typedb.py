@@ -91,11 +91,12 @@ class TestFetchTaskRelation:
         )
         assert result == ["RULE-001", "RULE-002"]
 
-    def test_empty_returns_none(self):
+    def test_empty_returns_empty_list(self):
         client = _make_client()
         client._safe_query = MagicMock(return_value=[])
         result = client._fetch_task_relation("T-1", "...", "rid")
-        assert result is None
+        # BUG-TASK-EXTRACT-002: Returns [] not None (matches List[str] return type)
+        assert result == []
 
     def test_formats_task_id_in_query(self):
         client = _make_client()

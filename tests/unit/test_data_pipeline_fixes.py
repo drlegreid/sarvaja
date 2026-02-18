@@ -181,12 +181,15 @@ class TestTimelineAllSessions:
     def test_compute_timeline_data_uses_all_items(self):
         """Timeline should see sessions across multiple days."""
         from agent.governance_ui.utils import compute_timeline_data
+        from datetime import datetime, timedelta
 
-        # Create sessions spread across 5 different days
+        # Create sessions spread across 5 recent days (within 14-day window)
+        today = datetime.now()
         items = []
-        for day in range(1, 6):
-            items.append({"start_time": f"2026-02-0{day}T10:00:00"})
-            items.append({"start_time": f"2026-02-0{day}T14:00:00"})
+        for offset in range(0, 5):
+            d = (today - timedelta(days=offset)).strftime("%Y-%m-%d")
+            items.append({"start_time": f"{d}T10:00:00"})
+            items.append({"start_time": f"{d}T14:00:00"})
 
         values, labels = compute_timeline_data(items)
         # Multiple days should have non-zero counts

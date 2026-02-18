@@ -72,11 +72,17 @@ class TestRegistration:
 # ── _resolve_jsonl_path ─────────────────────────────────
 
 class TestResolveJsonlPath:
-    def test_explicit_path_exists(self, tmp_path):
-        f = tmp_path / "session.jsonl"
+    def test_explicit_path_exists(self):
+        # BUG-299-ING-001: _resolve_jsonl_path validates path is under allowed dirs;
+        # create temp file under project root so it passes validation.
+        project_root = Path(__file__).resolve().parent.parent.parent
+        f = project_root / "_test_resolve_mcp_tmp.jsonl"
         f.touch()
-        result = _resolve_jsonl_path("S-1", str(f))
-        assert result == f
+        try:
+            result = _resolve_jsonl_path("S-1", str(f))
+            assert result == f
+        finally:
+            f.unlink()
 
     def test_explicit_path_missing(self):
         result = _resolve_jsonl_path("S-1", "/nonexistent/file.jsonl")

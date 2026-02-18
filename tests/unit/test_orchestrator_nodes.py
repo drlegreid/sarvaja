@@ -58,7 +58,7 @@ class TestGateNode:
 class TestBacklogNode:
     def test_picks_first(self):
         state = _state_with_task()
-        add_to_backlog(state, "T-2", "LOW", "Other")
+        state = add_to_backlog(state, "T-2", "LOW", "Other")
         result = backlog_node(state)
         assert result["current_task"]["task_id"] == "T-1"
         assert len(result["backlog"]) == 1

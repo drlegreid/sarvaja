@@ -88,7 +88,7 @@ class TestBacklogGet:
         tools = _register()
         with patch(f"{_P}.GapParser", side_effect=Exception("parse error")):
             result = json.loads(tools["backlog_get"]())
-        assert "Failed to parse" in result["error"]
+        assert "backlog_get failed: Exception" in result["error"]
 
     def test_custom_limit(self):
         tools = _register()

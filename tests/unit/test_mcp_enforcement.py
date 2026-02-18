@@ -229,9 +229,12 @@ class TestAgentDefaults:
     """Verify agent default status configuration."""
 
     def test_all_agents_paused_by_default(self):
-        """All agents should be PAUSED by default. Per GAP-AGENT-PAUSE-001."""
-        from governance.stores.agents import get_all_agents
-        agents = get_all_agents()
+        """All agents should be PAUSED by default when no persisted metrics. Per GAP-AGENT-PAUSE-001."""
+        from governance.stores.agents import _build_agents_store
+        # Build fresh store with no persisted metrics
+        with patch("governance.stores.agents._load_agent_metrics", return_value={}):
+            with patch("governance.stores.agents._load_workflow_configs", return_value={}):
+                agents = list(_build_agents_store().values())
         paused = [a for a in agents if a["status"] == "PAUSED"]
         assert len(paused) == len(agents), (
             f"Expected all {len(agents)} agents PAUSED, got {len(paused)}"

@@ -163,8 +163,27 @@ class TestGetSessionEvidence:
 
 class TestScanEvidenceFilesystem:
 
+    def _patch_project_root(self, tmp_path):
+        """Patch _scan_evidence_filesystem to use tmp_path as project root."""
+        import os
+        real_abspath = os.path.abspath
+        real_realpath = os.path.realpath
+
+        def fake_abspath(p):
+            if p.endswith("relations.py"):
+                return str(tmp_path / "governance" / "routes" / "sessions" / "relations.py")
+            return real_abspath(p)
+
+        def fake_realpath(p):
+            if str(tmp_path) in str(p):
+                return str(tmp_path)
+            return real_realpath(p)
+
+        return patch("os.path.abspath", side_effect=fake_abspath), patch("os.path.realpath", side_effect=fake_realpath)
+
     def test_no_evidence_dir(self, tmp_path):
-        with patch("os.getcwd", return_value=str(tmp_path)):
+        p1, p2 = self._patch_project_root(tmp_path)
+        with p1, p2:
             result = _scan_evidence_filesystem("S-1")
             assert result == []
 
@@ -175,7 +194,8 @@ class TestScanEvidenceFilesystem:
         (ev_dir / "SESSION-2026-02-11-S-2.md").write_text("other")
         (ev_dir / "unrelated.txt").write_text("not md")
 
-        with patch("os.getcwd", return_value=str(tmp_path)):
+        p1, p2 = self._patch_project_root(tmp_path)
+        with p1, p2:
             result = _scan_evidence_filesystem("S-1")
             assert len(result) == 1
             assert "S-1" in result[0]
@@ -186,7 +206,8 @@ class TestScanEvidenceFilesystem:
         (ev_dir / "SESSION-B-CHAT.md").write_text("b")
         (ev_dir / "SESSION-A-CHAT.md").write_text("a")
 
-        with patch("os.getcwd", return_value=str(tmp_path)):
+        p1, p2 = self._patch_project_root(tmp_path)
+        with p1, p2:
             result = _scan_evidence_filesystem("CHAT")
             assert result == sorted(result)
 
@@ -196,7 +217,8 @@ class TestScanEvidenceFilesystem:
         (ev_dir / "SESSION-S1.json").write_text("json")
         (ev_dir / "SESSION-S1.md").write_text("md")
 
-        with patch("os.getcwd", return_value=str(tmp_path)):
+        p1, p2 = self._patch_project_root(tmp_path)
+        with p1, p2:
             result = _scan_evidence_filesystem("S1")
             assert len(result) == 1
             assert result[0].endswith(".md")

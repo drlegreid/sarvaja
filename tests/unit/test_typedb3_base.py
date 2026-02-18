@@ -54,8 +54,15 @@ class TestConnect:
 
     def test_connect_exception(self):
         client = TypeDB3BaseClient()
+        import logging
         with patch("builtins.__import__", side_effect=Exception("connection refused")):
-            result = client.connect()
+            # Suppress logging to avoid cascade error when exc_info=True
+            # tries to format traceback while __import__ is patched
+            logging.disable(logging.CRITICAL)
+            try:
+                result = client.connect()
+            finally:
+                logging.disable(logging.NOTSET)
             assert result is False
 
 

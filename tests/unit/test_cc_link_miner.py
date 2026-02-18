@@ -64,15 +64,20 @@ class TestValidateEntityExists:
     def test_rule_not_found(self):
         from governance.services.cc_link_miner import _validate_entity_exists
         client = MagicMock()
-        client.get_rule.return_value = None
+        # Production code uses get_rule_by_id, not get_rule
+        client.get_rule_by_id.return_value = None
         cache = {}
         result = _validate_entity_exists(client, "rule", "RULE-001", cache)
         assert result is False
 
     def test_decision_lookup(self):
         from governance.services.cc_link_miner import _validate_entity_exists
-        client = MagicMock()
-        client.get_decision.return_value = {"id": "D-1"}
+        from unittest.mock import MagicMock as MM
+        client = MM()
+        # Production code uses get_all_decisions() and checks decision_id set
+        decision = MM()
+        decision.decision_id = "D-1"
+        client.get_all_decisions.return_value = [decision]
         cache = {}
         result = _validate_entity_exists(client, "decision", "D-1", cache)
         assert result is True
@@ -93,12 +98,13 @@ class TestMineSessionLinks:
     @patch("governance.services.cc_link_miner.extract_rule_refs", return_value=set())
     @patch("governance.services.cc_link_miner.extract_task_refs", return_value=set())
     @patch("governance.session_metrics.parser.parse_log_file_extended")
-    def test_dry_run_no_links(self, mock_parse, mock_task, mock_rule, mock_gap, mock_load, mock_save):
+    def test_dry_run_no_links(self, mock_parse, mock_task, mock_rule, mock_gap, mock_load, mock_save, tmp_path):
         from governance.services.cc_link_miner import mine_session_links
-        from pathlib import Path
 
+        fake_jsonl = tmp_path / "fake.jsonl"
+        fake_jsonl.write_text("")
         mock_parse.return_value = iter([_FakeEntry(text_content="hello")])
-        result = mine_session_links(Path("/fake.jsonl"), "SESSION-X", dry_run=True)
+        result = mine_session_links(fake_jsonl, "SESSION-X", dry_run=True)
         assert result["status"] == "dry_run"
         assert result["tasks_linked"] == 0
 
@@ -108,12 +114,13 @@ class TestMineSessionLinks:
     @patch("governance.services.cc_link_miner.extract_rule_refs", return_value={"RULE-001"})
     @patch("governance.services.cc_link_miner.extract_task_refs", return_value={"T-001"})
     @patch("governance.session_metrics.parser.parse_log_file_extended")
-    def test_dry_run_captures_refs(self, mock_parse, mock_task, mock_rule, mock_gap, mock_load, mock_save):
+    def test_dry_run_captures_refs(self, mock_parse, mock_task, mock_rule, mock_gap, mock_load, mock_save, tmp_path):
         from governance.services.cc_link_miner import mine_session_links
-        from pathlib import Path
 
+        fake_jsonl = tmp_path / "fake.jsonl"
+        fake_jsonl.write_text("")
         mock_parse.return_value = iter([_FakeEntry(text_content="T-001 and RULE-001")])
-        result = mine_session_links(Path("/fake.jsonl"), "SESSION-X", dry_run=True)
+        result = mine_session_links(fake_jsonl, "SESSION-X", dry_run=True)
         assert "T-001" in result["refs_found"]["tasks"]
         assert "RULE-001" in result["refs_found"]["rules"]
 

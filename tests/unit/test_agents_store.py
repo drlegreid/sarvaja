@@ -251,13 +251,16 @@ class TestLoadSaveMetrics(unittest.TestCase):
             result = _load_agent_metrics()
         self.assertEqual(result, {})
 
+    @patch("os.replace")
     @patch("os.makedirs")
-    def test_save(self, mock_makedirs):
+    @patch("tempfile.mkstemp", return_value=(99, "/tmp/.metrics_abc.tmp"))
+    def test_save(self, mock_mkstemp, mock_makedirs, mock_replace):
         m = mock_open()
-        with patch("builtins.open", m):
+        with patch("os.fdopen", m):
             _save_agent_metrics({"test": {"tasks": 1}})
-        m.assert_called_once()
+        mock_mkstemp.assert_called_once()
         mock_makedirs.assert_called_once()
+        mock_replace.assert_called_once()
 
 
 if __name__ == "__main__":

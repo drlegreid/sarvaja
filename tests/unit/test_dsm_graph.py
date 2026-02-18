@@ -107,4 +107,4 @@ class TestFallbackWorkflow:
         graph.nodes["start"] = MagicMock(side_effect=Exception("Node crash"))
         state = _run_fallback_workflow(graph, initial)
         assert state["status"] == "failed"
-        assert "Node crash" in state.get("error_message", "")
+        assert "Node 'start' failed: Exception" in state.get("error_message", "")

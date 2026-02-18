@@ -121,7 +121,7 @@ class TestDSMStart:
         monkeypatch.setattr(dsm_mod, "get_tracker", lambda: mock_tracker)
         result = json.loads(mcp_tools["dsm_start"]())
         assert "error" in result
-        assert "Cycle already active" in result["error"]
+        assert "dsm_start failed: ValueError" in result["error"]
 
 
 # ---------------------------------------------------------------------------

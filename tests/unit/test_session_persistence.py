@@ -60,8 +60,10 @@ class TestPersistSession:
         assert "status" not in loaded
 
     def test_skips_empty_data(self, store_dir):
-        persist_session("SESSION-EMPTY", {"tool_calls": [], "thoughts": []})
-        # Empty lists are falsy, so nothing should be written
+        # BUG-212-PERSIST-FALSY-001: Empty lists pass 'is not None' filter,
+        # so {"tool_calls": [], "thoughts": []} IS persisted (non-empty subset dict).
+        # To skip persistence, all values must be None.
+        persist_session("SESSION-EMPTY", {"tool_calls": None, "thoughts": None})
         assert not (store_dir / "SESSION-EMPTY.json").exists()
 
     def test_atomic_write(self, store_dir):
@@ -89,7 +91,9 @@ class TestPersistSession:
         persist_session("SESSION-../../../etc/passwd", data)
         # Should not create file outside store_dir
         assert not Path("/etc/passwd.json").exists()
-        assert (store_dir / "SESSION-______etc_passwd.json").exists()
+        # BUG-226-PERSIST-001: Whitelist regex replaces each . and / with _
+        # "../../../etc/passwd" -> "_________etc_passwd" (9 underscores)
+        assert (store_dir / "SESSION-_________etc_passwd.json").exists()
 
     def test_creates_directory_if_missing(self, tmp_path):
         new_dir = tmp_path / "new" / "nested" / "dir"

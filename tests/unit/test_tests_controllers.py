@@ -15,6 +15,10 @@ def _setup():
     """Create mock ctrl + state, register handlers, return internals."""
     ctrl = MagicMock()
     state = MagicMock()
+    # Initialise trace_events so add_api_trace / add_error_trace work with MagicMock state
+    state.trace_events = []
+    # Production code guards against double-submit: if state.tests_running: return
+    state.tests_running = False
 
     triggers = {}
 

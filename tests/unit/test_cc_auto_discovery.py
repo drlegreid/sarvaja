@@ -21,7 +21,8 @@ class TestDiscoverCcSessions:
         from governance.api_startup import discover_cc_sessions
 
         mock_loop = MagicMock()
-        with patch("asyncio.get_event_loop", return_value=mock_loop):
+        # Production code uses get_running_loop() (not get_event_loop)
+        with patch("asyncio.get_running_loop", return_value=mock_loop):
             await discover_cc_sessions()
 
         mock_loop.run_in_executor.assert_called_once()

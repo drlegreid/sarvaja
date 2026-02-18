@@ -351,7 +351,8 @@ class TestDeleteTask:
 
             result = client.delete_task("T-1")
             assert result is True
-            mock_tx.commit.assert_called_once()
+            # 3 commits: 2 relationship cleanup transactions + 1 entity delete
+            assert mock_tx.commit.call_count == 3
 
     def test_cleans_up_relations(self):
         mock_typedb = _make_typedb_mocks()

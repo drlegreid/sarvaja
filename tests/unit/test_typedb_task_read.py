@@ -62,10 +62,11 @@ class TestFetchTaskRelation:
         result = reader._fetch_task_relation("T-1", 'match ...', "rid")
         assert result == ["RULE-001", "RULE-002"]
 
-    def test_returns_none_when_empty(self, reader):
+    def test_returns_empty_list_when_empty(self, reader):
         reader._execute_query.return_value = []
         result = reader._fetch_task_relation("T-1", 'match ...', "rid")
-        assert result is None
+        # BUG-TASK-EXTRACT-002: Returns [] not None (matches List[str] return type)
+        assert result == []
 
 
 class TestGetAllTasks:

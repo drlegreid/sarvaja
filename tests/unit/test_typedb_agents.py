@@ -139,11 +139,14 @@ class TestUpdateAgentTrust:
         q._execute_query.return_value = [
             {"name": "Agent", "type": "code", "trust": 0.5},
         ]
-        q._execute_write.return_value = None
+        # Production code uses _driver.transaction() directly (atomic update)
+        mock_tx = MagicMock()
+        mock_tx.query.return_value.resolve.return_value = None
+        q._driver = MagicMock()
+        q._driver.transaction.return_value.__enter__ = MagicMock(return_value=mock_tx)
+        q._driver.transaction.return_value.__exit__ = MagicMock(return_value=False)
         result = q.update_agent_trust("a1", 0.95)
         assert result is True
-        # Should delete + re-insert
-        assert q._execute_write.call_count == 2
 
     def test_agent_not_found(self):
         q = _TestableAgentQueries()

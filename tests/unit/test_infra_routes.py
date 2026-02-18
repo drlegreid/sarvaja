@@ -189,12 +189,13 @@ class TestGetContainerLogs:
             result = get_container_logs(container="dashboard", tail=50, level="")
         assert result["source"] == "cli"
 
-    def test_unknown_container_passthrough(self):
+    def test_unknown_container_rejected(self):
         from governance.routes.infra import get_container_logs
-        with patch(f"{_P}._find_socket", return_value="/sock"), \
-             patch(f"{_P}._fetch_logs_socket", return_value=["ok"]):
-            result = get_container_logs(container="custom-name", tail=50, level="")
-        assert result["container"] == "custom-name"
+        from fastapi import HTTPException
+        # BUG-ROUTE-LOGIC-010: Unknown container names are now rejected
+        with pytest.raises(HTTPException) as exc_info:
+            get_container_logs(container="custom-name", tail=50, level="")
+        assert exc_info.value.status_code == 400
 
     def test_cli_with_level_filter(self):
         from governance.routes.infra import get_container_logs

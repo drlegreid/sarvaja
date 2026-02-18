@@ -282,7 +282,7 @@ class TestGovernanceGetSession:
         with patch(f"{_MOD}.EVIDENCE_DIR", mock_dir):
             result = json.loads(tools["governance_get_session"]("SESSION-2026-01-01-X"))
         assert "error" in result
-        assert "Failed to read" in result["error"]
+        assert "governance_get_session failed: OSError" in result["error"]
 
     def test_metadata_parsing_partial(self):
         """File with only Date metadata."""

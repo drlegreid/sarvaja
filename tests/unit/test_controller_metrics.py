@@ -83,7 +83,7 @@ class TestLoadMetricsData:
         state, _, _, result = _make_state_ctrl()
         result["load_metrics_data"]()
         assert state.metrics_data is None
-        assert "offline" in str(state.metrics_error)
+        assert state.metrics_error == "ConnectionError"
         assert state.metrics_loading is False
 
     @patch("agent.governance_ui.controllers.metrics.httpx")

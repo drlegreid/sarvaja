@@ -100,10 +100,11 @@ class TestCheckMandatoryRules:
         assert isinstance(results, list)
 
     def test_healthy_services_pass(self):
+        # BUG-RULE-HEALTHY-001: ServiceChecker uses "ok" key, not "healthy"
         ctx = {
             "services": {
-                "typedb": {"healthy": True},
-                "chromadb": {"healthy": True},
+                "typedb": {"ok": True},
+                "chromadb": {"ok": True},
             }
         }
         results = check_mandatory_rules(ctx)
@@ -115,8 +116,8 @@ class TestCheckMandatoryRules:
     def test_unhealthy_services_fail(self):
         ctx = {
             "services": {
-                "typedb": {"healthy": False},
-                "chromadb": {"healthy": True},
+                "typedb": {"ok": False},
+                "chromadb": {"ok": True},
             }
         }
         results = check_mandatory_rules(ctx)
@@ -208,8 +209,9 @@ class TestCheckConditionalRules:
 
 class TestGetApplicabilityStatus:
     def test_compliant(self):
+        # BUG-RULE-HEALTHY-001: ServiceChecker uses "ok" key, not "healthy"
         ctx = {
-            "services": {"typedb": {"healthy": True}, "chromadb": {"healthy": True}},
+            "services": {"typedb": {"ok": True}, "chromadb": {"ok": True}},
             "command": "python3 run.py",
         }
         result = get_applicability_status(ctx)
@@ -302,8 +304,9 @@ class TestFormatForHealthcheck:
 
 class TestGetRuleApplicabilitySummary:
     def test_compliant_summary(self):
+        # BUG-RULE-HEALTHY-001: ServiceChecker uses "ok" key, not "healthy"
         ctx = {
-            "services": {"typedb": {"healthy": True}, "chromadb": {"healthy": True}},
+            "services": {"typedb": {"ok": True}, "chromadb": {"ok": True}},
         }
         result = get_rule_applicability_summary(ctx)
         assert result["compliant"] is True

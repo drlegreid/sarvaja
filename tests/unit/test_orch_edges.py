@@ -62,9 +62,10 @@ class TestCheckValidationResult:
     def test_max_retries_is_3(self):
         assert MAX_RETRIES == 3
 
-    def test_none_validation_with_retries_loops(self):
+    def test_none_validation_parks_immediately(self):
+        """None means validation didn't produce a result — park, don't retry."""
         state = {"validation_passed": None, "retry_count": 0}
-        assert check_validation_result(state) == "loop_to_spec"
+        assert check_validation_result(state) == "park_task"
 
     def test_passed_truthy_gaps_injects(self):
         state = {"validation_passed": True, "gaps_discovered": ["GAP-X"]}

@@ -101,7 +101,9 @@ class TestValidateNode:
 
         state = _base_state(dry_run=False)
         result = validate_node(state)
-        assert result["validation_results"]["tests_run"] == 0
+        # Production stub now sets tests_run=1 (BUG-349-NE-001)
+        assert result["validation_results"]["tests_run"] == 1
+        assert result["validation_results"]["stub"] is True
         assert result["validation_passed"] is True  # 0 failures = passed
 
     def test_creates_checkpoint(self):

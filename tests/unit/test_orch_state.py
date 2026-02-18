@@ -120,4 +120,4 @@ class TestAddToBacklog:
     def test_returns_state(self):
         state = create_initial_state()
         result = add_to_backlog(state, "T-1", "HIGH", "Task")
-        assert result is state  # mutates in place
+        assert result is not state  # returns new dict (immutable pattern)

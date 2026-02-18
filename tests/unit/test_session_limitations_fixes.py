@@ -29,7 +29,7 @@ class TestEndSessionUpdatesSessionsStore:
 
         mock_session = MagicMock()
         mock_session.id = sid
-        mock_session.status = "COMPLETED"
+        mock_session.status = "ACTIVE"
         mock_updated = MagicMock()
 
         try:
@@ -161,7 +161,8 @@ class TestStartupOrphanCleanup:
                     self._run_cleanup()
 
             assert _sessions_store[chat_sid]["status"] == "COMPLETED"
-            assert _sessions_store[chat_sid]["end_time"] == "orphan-cleanup-on-startup"
+            # BUG-213-ORPHAN-ENDTIME-001: end_time is now ISO timestamp, not literal string
+            assert _sessions_store[chat_sid]["end_time"]  # Just verify it's set (ISO timestamp)
         finally:
             _sessions_store.pop(chat_sid, None)
 

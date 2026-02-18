@@ -137,20 +137,41 @@ class TestGetSessionEvidence:
 
 
 class TestScanEvidenceFilesystem:
+    def _patch_project_root(self, tmp_path):
+        """Patch _scan_evidence_filesystem to use tmp_path as project root."""
+        import os
+        real_abspath = os.path.abspath
+        real_realpath = os.path.realpath
+
+        def fake_abspath(p):
+            # Override only for __file__ resolution inside _scan_evidence_filesystem
+            if p.endswith("relations.py"):
+                return str(tmp_path / "governance" / "routes" / "sessions" / "relations.py")
+            return real_abspath(p)
+
+        def fake_realpath(p):
+            if str(tmp_path) in str(p):
+                return str(tmp_path)
+            return real_realpath(p)
+
+        return patch("os.path.abspath", side_effect=fake_abspath), patch("os.path.realpath", side_effect=fake_realpath)
+
     def test_matches_files(self, tmp_path):
         from governance.routes.sessions.relations import _scan_evidence_filesystem
         ev_dir = tmp_path / "evidence"
         ev_dir.mkdir()
         (ev_dir / "SESSION-2026-01-01-TEST.md").write_text("ev")
         (ev_dir / "OTHER.md").write_text("other")
-        with patch("os.getcwd", return_value=str(tmp_path)):
+        p1, p2 = self._patch_project_root(tmp_path)
+        with p1, p2:
             result = _scan_evidence_filesystem("SESSION-2026-01-01-TEST")
         assert len(result) == 1
         assert "SESSION-2026-01-01-TEST.md" in result[0]
 
     def test_no_evidence_dir(self, tmp_path):
         from governance.routes.sessions.relations import _scan_evidence_filesystem
-        with patch("os.getcwd", return_value=str(tmp_path)):
+        p1, p2 = self._patch_project_root(tmp_path)
+        with p1, p2:
             result = _scan_evidence_filesystem("S-1")
         assert result == []
 
@@ -159,6 +180,7 @@ class TestScanEvidenceFilesystem:
         ev_dir = tmp_path / "evidence"
         ev_dir.mkdir()
         (ev_dir / "OTHER.md").write_text("other")
-        with patch("os.getcwd", return_value=str(tmp_path)):
+        p1, p2 = self._patch_project_root(tmp_path)
+        with p1, p2:
             result = _scan_evidence_filesystem("S-UNIQUE")
         assert result == []

@@ -119,7 +119,7 @@ class TestSessionTestResult:
         )
 
         event = collector.events[0]
-        assert len(event.metadata["error_message"]) <= 500
+        assert len(event.metadata["error_message"]) <= 503  # 500 + "..."
 
     def test_capture_test_result_skipped(self):
         """capture_test_result handles skipped tests."""

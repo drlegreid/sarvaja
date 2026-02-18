@@ -74,7 +74,7 @@ class TestAuditQuery:
         tools = _register_tools()
         result = json.loads(tools["audit_query"]())
         assert "error" in result
-        assert "DB error" in result["error"]
+        assert "audit_query failed: Exception" in result["error"]
 
     @patch("governance.stores.query_audit_trail", return_value=[])
     @patch(f"{_MOD}.format_mcp_result", side_effect=_json_fmt)

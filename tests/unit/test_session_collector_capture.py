@@ -275,4 +275,4 @@ class TestCaptureTestResult:
             test_id="t", name="t", category="unit", status="failed",
             error_message=long_error,
         )
-        assert len(c.events[0].metadata["error_message"]) <= 500
+        assert len(c.events[0].metadata["error_message"]) <= 503  # 500 + "..."

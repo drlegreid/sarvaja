@@ -175,11 +175,13 @@ class TestCreateProject:
     def test_provided_id(self, _): assert create_project(project_id="PROJ-C", name="X")["project_id"] == "PROJ-C"
     @patch(f"{_P}._get_client")
     def test_typedb_ok(self, m):
-        m.return_value = MagicMock(); m.return_value.insert_project.return_value = {"project_id": "P"}
+        c = MagicMock(); c.get_project.return_value = None; c.insert_project.return_value = {"project_id": "P"}
+        m.return_value = c
         assert create_project(project_id="P")["project_id"] == "P"; assert "P" not in _projects_store
     @patch(f"{_P}._get_client")
     def test_typedb_fail(self, m):
-        m.return_value = MagicMock(); m.return_value.insert_project.side_effect = Exception("e")
+        c = MagicMock(); c.get_project.return_value = None; c.insert_project.side_effect = Exception("e")
+        m.return_value = c
         assert create_project(project_id="PF", name="F")["project_id"] == "PF"; assert "PF" in _projects_store
     @patch(f"{_P}._get_client", return_value=None)
     def test_in_memory(self, _): create_project(project_id="PM", name="M"); assert "PM" in _projects_store
