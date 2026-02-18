@@ -227,8 +227,10 @@ def discover_filesystem_projects(
 
         try:
             dir_entries = list(parent.iterdir())
-        except OSError:
+        except OSError as e:
             # BUG-SCANNER-002: Guard against directory vanishing during scan
+            # BUG-429-SCN-001: Log instead of silently swallowing
+            logger.warning(f"Directory scan failed for {scan_dir}: {e}", exc_info=True)
             continue
         for d in dir_entries:
             if not d.is_dir() or d.name.startswith("."):

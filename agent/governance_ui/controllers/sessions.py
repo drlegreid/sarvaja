@@ -264,7 +264,8 @@ def register_sessions_controllers(state: Any, ctrl: Any, api_base_url: str) -> N
                     state.selected_session = None
                 else:
                     state.has_error = True
-                    state.error_message = f"API Error: {response.status_code} - {response.text}"
+                    # BUG-426-SES-001: Don't leak response.text (may contain internal paths/stack traces) via Trame WebSocket
+                    state.error_message = f"API Error: {response.status_code}"
 
             state.is_loading = False
         except Exception as e:

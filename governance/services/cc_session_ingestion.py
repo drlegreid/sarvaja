@@ -59,11 +59,16 @@ def ingest_session(
         return None
 
     # Determine status
-    from datetime import datetime, timedelta
+    from datetime import datetime, timedelta, timezone
     try:
-        last_mod = datetime.fromtimestamp(Path(meta["file_path"]).stat().st_mtime)
-        is_active = (datetime.now() - last_mod) < timedelta(hours=2)
-    except Exception:
+        # BUG-257-ING-001: Use UTC-aware datetimes for consistent timezone handling
+        last_mod = datetime.fromtimestamp(
+            Path(meta["file_path"]).stat().st_mtime, tz=timezone.utc
+        )
+        is_active = (datetime.now(tz=timezone.utc) - last_mod) < timedelta(hours=2)
+    except Exception as e:
+        # BUG-429-ING-001: Log bare except instead of silently swallowing
+        logger.warning(f"Failed to determine session active status: {e}", exc_info=True)
         is_active = False
 
     description = f"CC session: {meta['slug']} ({meta['user_count']} user, {meta['assistant_count']} assistant, {meta['tool_use_count']} tools)"
@@ -258,14 +263,16 @@ def get_session_detail(
 
         if zoom >= 2:
             total = len(all_tool_calls)
-            start = (page - 1) * per_page
+            # BUG-199-INGEST-003: Guard against negative page producing wrong slice
+            start = max(0, (page - 1) * per_page)
             result["tool_calls"] = all_tool_calls[start:start + per_page]
             result["tool_calls_total"] = total
             result["tool_calls_page"] = page
 
         if zoom >= 3:
             total = len(all_thinking)
-            start = (page - 1) * per_page
+            # BUG-199-INGEST-003: Guard against negative page
+            start = max(0, (page - 1) * per_page)
             result["thinking_blocks"] = all_thinking[start:start + per_page]
             result["thinking_blocks_total"] = total
     else:
@@ -275,7 +282,8 @@ def get_session_detail(
         if zoom >= 2:
             tool_calls = _collect_tool_calls_from_store(store_data)
             total = len(tool_calls)
-            start = (page - 1) * per_page
+            # BUG-217-ING-001: Guard against page=0 or negative page
+            start = max(0, (page - 1) * per_page)
             result["tool_calls"] = tool_calls[start:start + per_page]
             result["tool_calls_total"] = total
             result["tool_calls_page"] = page
@@ -283,7 +291,8 @@ def get_session_detail(
         if zoom >= 3:
             thinking = _collect_thinking_from_store(store_data)
             total = len(thinking)
-            start = (page - 1) * per_page
+            # BUG-217-ING-001: Guard against page=0 or negative page
+            start = max(0, (page - 1) * per_page)
             result["thinking_blocks"] = thinking[start:start + per_page]
             result["thinking_blocks_total"] = total
 
@@ -374,8 +383,20 @@ def render_markdown(text: str) -> str:
     html = re.sub(r'\*\*(.+?)\*\*', r'<strong>\1</strong>', html)
     html = re.sub(r'\*(.+?)\*', r'<em>\1</em>', html)
 
-    # Links
-    html = re.sub(r'\[([^\]]+)\]\(([^)]+)\)', r'<a href="\2">\1</a>', html)
+    # Links — BUG-INGEST-SES-002 + BUG-286-XSS-001: Block dangerous URI schemes
+    _SAFE_SCHEMES = {"http", "https", "mailto", "ftp", ""}
+
+    def _safe_link(m):
+        href = m.group(2).strip()
+        # BUG-286-XSS-001: Collapse whitespace that browsers use to bypass filters
+        normalized = re.sub(r'[\x00-\x20]+', '', href).lower()
+        scheme = normalized.split(":", 1)[0] if ":" in normalized else ""
+        if scheme and scheme not in _SAFE_SCHEMES:
+            return m.group(1)  # Strip link, keep text
+        # Escape href attribute to prevent quote breakout
+        safe_href = href.replace("&", "&amp;").replace('"', "&quot;")
+        return f'<a href="{safe_href}">{m.group(1)}</a>'
+    html = re.sub(r'\[([^\]]+)\]\(([^)]+)\)', _safe_link, html)
 
     # List items
     html = re.sub(r'^- (.+)$', r'<li>\1</li>', html, flags=re.MULTILINE)

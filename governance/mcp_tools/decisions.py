@@ -176,7 +176,8 @@ def register_decision_tools(mcp) -> None:
                     "active_rules": len([r for r in rules if r.status == "ACTIVE"])
                 }
         except Exception as e:
-            logger.debug(f"Failed to get TypeDB statistics: {e}")
+            # BUG-428-DEC-001: Upgrade debug→warning + exc_info for TypeDB failures
+            logger.warning(f"Failed to get TypeDB statistics: {e}", exc_info=True)
         finally:
             if stat_client is not None:
                 try:

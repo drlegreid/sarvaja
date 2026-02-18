@@ -66,8 +66,9 @@ def build_tool_calls_card() -> None:
                             size="small",
                             classes="mr-2"
                         )
+                        # BUG-427-XSS-001: Use v_text instead of mustache to prevent XSS on tool_name
                         html.Span(
-                            "{{ call.tool_name }}",
+                            v_text="call.tool_name",
                             classes="font-weight-medium"
                         )
                         v3.VSpacer()
