@@ -46,7 +46,8 @@ def _persist_agent_status(agent_id: str, status: str) -> None:
         metrics[agent_id]["status"] = status
         _save_agent_metrics(metrics)
     except Exception as e:
-        logger.warning(f"Failed to persist agent status for {agent_id}: {e}")
+        # BUG-436-AGT-001: Add exc_info for stack trace preservation
+        logger.warning(f"Failed to persist agent status for {agent_id}: {e}", exc_info=True)
 
 
 def _monitor(action: str, agent_id: str, source: str = "service", **extra):
@@ -134,7 +135,8 @@ def create_agent(
                 return None
             client.insert_agent(agent_id, name, agent_type, trust_score)
         except Exception as e:
-            logger.warning(f"TypeDB agent create failed for {agent_id}: {e}")
+            # BUG-436-AGT-002: Add exc_info for stack trace preservation
+            logger.warning(f"TypeDB agent create failed for {agent_id}: {e}", exc_info=True)
 
     # Always populate in-memory store
     _agents_store[agent_id] = {
@@ -239,7 +241,8 @@ def list_agents(
                     "has_more": (offset + limit) < total,
                 }
         except Exception as e:
-            logger.warning(f"TypeDB agents query failed, using fallback: {e}")
+            # BUG-436-AGT-003: Add exc_info for stack trace preservation
+            logger.warning(f"TypeDB agents query failed, using fallback: {e}", exc_info=True)
 
     # Fallback to in-memory
     agents = list(_agents_store.values())
@@ -291,7 +294,8 @@ def get_agent(agent_id: str, source: str = "rest") -> Optional[Dict[str, Any]]:
                     recent_sessions=recent_sessions, active_tasks=active_tasks,
                 )
         except Exception as e:
-            logger.warning(f"TypeDB agent query failed, using fallback: {e}")
+            # BUG-436-AGT-004: Add exc_info for stack trace preservation
+            logger.warning(f"TypeDB agent query failed, using fallback: {e}", exc_info=True)
 
     if agent_id in _agents_store:
         return dict(_agents_store[agent_id])
@@ -312,7 +316,8 @@ def delete_agent(agent_id: str, source: str = "rest") -> bool:
             if existing and client.delete_agent(agent_id):
                 deleted = True
         except Exception as e:
-            logger.warning(f"TypeDB delete failed for agent {agent_id}: {e}")
+            # BUG-436-AGT-005: Add exc_info for stack trace preservation
+            logger.warning(f"TypeDB delete failed for agent {agent_id}: {e}", exc_info=True)
 
     if agent_id in _agents_store:
         _agents_store.pop(agent_id, None)
@@ -353,7 +358,8 @@ def toggle_agent_status(agent_id: str, source: str = "rest") -> Optional[Dict[st
                     return None
             # BUG-195-012: Log the exception instead of silently swallowing
             except Exception as e:
-                logger.warning(f"TypeDB toggle_agent_status failed for {agent_id}: {e}")
+                # BUG-436-AGT-006: Add exc_info for stack trace preservation
+                logger.warning(f"TypeDB toggle_agent_status failed for {agent_id}: {e}", exc_info=True)
                 return None
         else:
             return None

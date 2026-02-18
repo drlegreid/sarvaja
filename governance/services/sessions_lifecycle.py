@@ -121,7 +121,8 @@ def end_session(
                                 client.link_evidence_to_session(session_id, ef)
                             except Exception as le:
                                 # BUG-LIFECYCLE-EVIDENCE-LOG-001: WARNING not DEBUG — data integrity
-                                logger.warning(f"TypeDB evidence link failed {session_id}->{ef}: {le}")
+                                # BUG-436-SLC-001: Add exc_info for stack trace preservation
+                                logger.warning(f"TypeDB evidence link failed {session_id}->{ef}: {le}", exc_info=True)
                     # Also update _sessions_store for consistent fallback
                     # (TypeDB derives tasks_completed from relations, but chat
                     # sessions store tool_call count here for API visibility)

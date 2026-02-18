@@ -389,7 +389,8 @@ def sync_pending_sessions() -> Dict[str, Any]:
                     client.update_session(session_id, status=status_val)
                 except Exception as se:
                     # BUG-SYNC-STATUS-SILENT-001: Log instead of silent pass
-                    logger.warning(f"Status sync failed for {session_id} (insert OK): {se}")
+                    # BUG-436-SES-001: Add exc_info for stack trace preservation
+                    logger.warning(f"Status sync failed for {session_id} (insert OK): {se}", exc_info=True)
             # BUG-205-SYNC-001: Mark as persisted to prevent duplicate in next list
             if session_id in _sessions_store:
                 _sessions_store[session_id]["persistence_status"] = "persisted"
