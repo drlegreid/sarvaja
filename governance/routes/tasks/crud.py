@@ -79,8 +79,13 @@ async def create_task(task: TaskCreate):
         if isinstance(result, TaskResponse):
             return result
         return TaskResponse(**result)
+    # BUG-381-TSK-001: Log full error but return only type name to prevent info disclosure
     except ValueError as e:
-        raise HTTPException(status_code=409, detail=str(e))
+        logger.warning(f"create_task conflict: {e}")
+        raise HTTPException(status_code=409, detail=f"Task conflict: {type(e).__name__}")
+    except Exception as e:
+        logger.error(f"create_task failed: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Failed to create task: {type(e).__name__}")
 
 
 @router.get("/tasks/{task_id}", response_model=TaskResponse)

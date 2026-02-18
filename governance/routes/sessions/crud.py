@@ -105,6 +105,10 @@ async def list_sessions(
     except (TypeDBUnavailable, ConnectionError) as e:
         logger.error(f"TypeDB unavailable: {e}")
         raise HTTPException(status_code=503, detail="Database service unavailable")
+    # BUG-381-SES-003: Catch-all for unexpected exceptions (e.g. TypeError from malformed data)
+    except Exception as e:
+        logger.error(f"list_sessions failed: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Failed to list sessions: {type(e).__name__}")
 
 
 @router.post("/sessions", response_model=SessionResponse, status_code=201)
@@ -125,8 +129,10 @@ async def create_session(session: SessionCreate):
             cc_compaction_count=session.cc_compaction_count,
         )
         return _ensure_response(result)
+    # BUG-381-SES-001: Log full error but return only type name to prevent info disclosure
     except ValueError as e:
-        raise HTTPException(status_code=409, detail=str(e))
+        logger.warning(f"create_session conflict: {e}")
+        raise HTTPException(status_code=409, detail=f"Session conflict: {type(e).__name__}")
     except (TypeDBUnavailable, ConnectionError) as e:
         logger.error(f"TypeDB unavailable during session create: {e}")
         raise HTTPException(status_code=503, detail="Database service unavailable")
@@ -213,8 +219,10 @@ async def end_session(session_id: str, data: Optional[SessionEnd] = None):
         return _ensure_response(result)
     except HTTPException:
         raise
+    # BUG-381-SES-002: Log full error but return only type name to prevent info disclosure
     except ValueError as e:
-        raise HTTPException(status_code=409, detail=str(e))
+        logger.warning(f"end_session conflict: {e}")
+        raise HTTPException(status_code=409, detail=f"Session conflict: {type(e).__name__}")
     except Exception as e:
         # BUG-352-INF-001: Log full error but return generic message to prevent info disclosure
         logger.error(f"Failed to end session {session_id}: {e}", exc_info=True)

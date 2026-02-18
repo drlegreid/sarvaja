@@ -6,9 +6,13 @@ Contains: VectorStore class for TypeDB vector storage with Python similarity.
 """
 
 import json
+import logging
 from typing import List, Dict, Optional, Tuple
 
 from .models import VectorDocument, SimilarityResult
+
+# BUG-381-VEC-001: Use logger instead of print() for production observability
+logger = logging.getLogger(__name__)
 
 
 class VectorStore:
@@ -60,10 +64,10 @@ class VectorStore:
             self._connected = True
             return True
         except ImportError:
-            print("TypeDB driver not installed. Run: pip install typedb-driver>=3.7.0")
+            logger.error("TypeDB driver not installed. Run: pip install typedb-driver>=3.7.0")
             return False
         except Exception as e:
-            print(f"Failed to connect to TypeDB: {e}")
+            logger.error(f"Failed to connect to TypeDB: {e}")
             return False
 
     def close(self):
@@ -89,7 +93,7 @@ class VectorStore:
             self._cache[doc.id] = doc
             return True
         except Exception as e:
-            print(f"Insert failed: {e}")
+            logger.error(f"Insert failed: {e}")
             return False
 
     def insert_batch(self, docs: List[VectorDocument]) -> int:
@@ -108,7 +112,7 @@ class VectorStore:
                     self._cache[doc.id] = doc
                     success_count += 1
                 except Exception as e:
-                    print(f"Failed to insert {doc.id}: {e}")
+                    logger.warning(f"Failed to insert {doc.id}: {e}")
             # BUG-203-VSTORE-001: Only commit if at least one insert succeeded
             if success_count > 0:
                 tx.commit()
@@ -155,7 +159,7 @@ class VectorStore:
                     results.append(doc)
                     self._cache[doc.id] = doc
                 except Exception as e:
-                    print(f"Failed to parse vector: {e}")
+                    logger.warning(f"Failed to parse vector: {e}")
 
         return results
 
@@ -254,7 +258,7 @@ class VectorStore:
 
             return True
         except Exception as e:
-            print(f"Delete failed: {e}")
+            logger.error(f"Delete failed: {e}")
             return False
 
     def clear_cache(self):

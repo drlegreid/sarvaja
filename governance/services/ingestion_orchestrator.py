@@ -60,7 +60,8 @@ def estimate_ingestion(jsonl_path: Path) -> dict[str, Any]:
     """
     path = Path(jsonl_path)
     if not path.exists():
-        return {"error": f"File not found: {path}", "status": "error"}
+        # BUG-381-ORCH-001: Redact absolute path from error response
+        return {"error": f"File not found: {path.name}", "status": "error"}
     # BUG-301-ORCH-001: Path containment check
     if not _validate_jsonl_path(path):
         return {"error": "Path outside allowed directories", "status": "error"}
@@ -159,14 +160,16 @@ def run_ingestion_pipeline(
 
     path = Path(jsonl_path)
     if not path.exists():
-        return {"error": f"File not found: {path}", "status": "error"}
+        # BUG-381-ORCH-001: Redact absolute path from error response
+        return {"error": f"File not found: {path.name}", "status": "error"}
     # BUG-301-ORCH-001: Path containment check
     if not _validate_jsonl_path(path):
         return {"error": "Path outside allowed directories", "status": "error"}
 
     result: dict[str, Any] = {
         "session_id": session_id,
-        "file": str(path),
+        # BUG-381-ORCH-002: Use filename only, not absolute path, in response
+        "file": path.name,
         "phases_requested": phases,
         "content": None,
         "linking": None,

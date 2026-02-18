@@ -108,7 +108,9 @@ def register_task_verify_tools(mcp) -> None:
         try:
             todos = json_lib.loads(todos_json)
         except json_lib.JSONDecodeError as e:
-            return format_mcp_result({"error": f"Invalid JSON: {e}"})
+            # BUG-381-VER-001: Don't leak raw JSON content in error; log full error for debugging
+            logger.warning(f"session_sync_todos invalid JSON: {e}")
+            return format_mcp_result({"error": f"Invalid JSON: {type(e).__name__}"})
 
         if not isinstance(todos, list):
             return format_mcp_result({"error": "todos_json must be a JSON array"})

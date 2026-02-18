@@ -139,6 +139,10 @@ def register_task_linking_tools(mcp) -> None:
     @mcp.tool()
     def task_link_commit(task_id: str, commit_sha: str, commit_message: str = None) -> str:
         """Link task to git commit (task-commit relation). Per GAP-TASK-LINK-002."""
+        # BUG-381-LNK-001: Validate commit_sha format to prevent injection and garbage data
+        import re as _re
+        if not commit_sha or not _re.fullmatch(r'[0-9a-fA-F]{7,40}', commit_sha):
+            return format_mcp_result({"error": "commit_sha must be a 7-40 character hex string"})
         client = get_typedb_client()
         try:
             if not client.connect():
