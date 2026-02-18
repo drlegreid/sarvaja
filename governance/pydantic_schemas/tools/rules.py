@@ -106,7 +106,7 @@ def query_rules_typed(config: RuleQueryConfig) -> RuleQueryResult:
             total_count=0,
             filtered_count=0,
             query_time_ms=round(elapsed, 2),
-            error=str(e)
+            error=type(e).__name__  # BUG-476-PSR-1: sanitize error info
         )
 
 
@@ -188,5 +188,5 @@ def analyze_dependencies_typed(config: DependencyConfig) -> DependencyResult:
         return DependencyResult(
             success=False,
             rule_id=config.rule_id,
-            error=str(e)
+            error=type(e).__name__  # BUG-476-PSR-2: sanitize error info
         )

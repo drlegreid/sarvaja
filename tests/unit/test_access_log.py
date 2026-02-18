@@ -92,7 +92,8 @@ class TestDispatch:
             mock_logger.warning.assert_called_once()
 
     @pytest.mark.asyncio
-    async def test_logs_400_as_info(self):
+    async def test_logs_400_as_warning(self):
+        """Per BUG-225-MW-001: 4xx are logged as WARNING (auth failures, bad requests)."""
         app = MagicMock()
         middleware = AccessLogMiddleware(app)
         request = _make_request()
@@ -101,7 +102,7 @@ class TestDispatch:
         with patch("governance.middleware.access_log.logger") as mock_logger:
             await middleware.dispatch(request, call_next)
 
-            mock_logger.info.assert_called_once()
+            mock_logger.warning.assert_called_once()
 
     @pytest.mark.asyncio
     async def test_includes_bytes_in_log(self):

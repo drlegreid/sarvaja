@@ -74,5 +74,5 @@ class ChromaScanner:
             return {
                 'collections': [],
                 'total_documents': 0,
-                'error': str(e)
+                'error': type(e).__name__  # BUG-476-MSC-1: sanitize error info
             }

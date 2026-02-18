@@ -95,7 +95,7 @@ def register_chat_controllers(state: Any, ctrl: Any, api_base_url: str) -> None:
             error_msg = {
                 'id': f"MSG-{uuid.uuid4().hex[:8].upper()}",
                 'role': 'system',
-                'content': f"Connection error: {str(e)}",
+                'content': f"Connection error: {type(e).__name__}",  # BUG-476-CCH-1b
                 'timestamp': datetime.now().strftime("%H:%M:%S"),
                 'status': 'error',
             }
@@ -144,7 +144,7 @@ def register_chat_controllers(state: Any, ctrl: Any, api_base_url: str) -> None:
                     state.file_viewer_error = error_detail
         except Exception as e:
             add_error_trace(state, f"Load file failed: {e}", "/api/files/content")
-            state.file_viewer_error = str(e)
+            state.file_viewer_error = type(e).__name__  # BUG-476-CCH-1
         finally:
             state.file_viewer_loading = False
 

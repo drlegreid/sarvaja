@@ -204,7 +204,8 @@ class TestExecuteTask:
         agent = TaskBacklogAgent("test-agent", task_handler=bad_handler)
         result = await agent.execute_task({"task_id": "T-1"})
         assert result.success is False
-        assert "boom" in result.error
+        # BUG-476-SAB-1: error now contains type(e).__name__ (sanitized)
+        assert "ValueError" in result.error
         assert agent.tasks_failed == 1
 
 

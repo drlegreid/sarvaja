@@ -93,5 +93,5 @@ def calculate_trust_score_typed(request: TrustScoreRequest) -> TrustScoreResult:
             agent_id=request.agent_id,
             trust_score=0.0,
             vote_weight=0.0,
-            error=str(e)
+            error=type(e).__name__  # BUG-476-PSA-1: sanitize error info
         )

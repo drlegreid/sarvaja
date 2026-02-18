@@ -11,8 +11,11 @@ Created: 2024-12-28
 """
 
 import json
+import logging
 import re
 from pathlib import Path
+
+logger = logging.getLogger(__name__)
 
 from governance.mcp_tools.evidence import EVIDENCE_DIR, DOCS_DIR, BACKLOG_DIR
 
@@ -53,7 +56,8 @@ def governance_get_document(path, max_lines=500):
             "truncated": truncated
         }, indent=2)
     except Exception as e:
-        return json.dumps({"error": f"Failed to read document: {str(e)}"})
+        logger.warning(f"governance_get_document failed: {type(e).__name__}", exc_info=True)
+        return json.dumps({"error": f"Failed to read document: {type(e).__name__}"})  # BUG-476-CDO-1
 
 
 def governance_list_documents(directory="docs", pattern="*.md", recursive=False):

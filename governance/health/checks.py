@@ -62,7 +62,7 @@ def check_podman() -> ServiceStatus:
             name="podman",
             ok=False,
             status="DOWN",
-            error=str(e)[:50]
+            error=type(e).__name__  # BUG-476-HCK-1: sanitize error info
         )
 
 

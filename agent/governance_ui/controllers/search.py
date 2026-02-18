@@ -47,7 +47,7 @@ def register_search_controllers(state: Any, ctrl: Any, api_base_url: str) -> Non
             add_error_trace(state, f"Evidence search failed: {e}", "search_evidence()")
             state.is_loading = False
             state.has_error = True
-            state.error_message = f"Search failed: {str(e)}"
+            state.error_message = f"Search failed: {type(e).__name__}"  # BUG-476-CSR-1
             state.search_results = []
 
     @ctrl.set("clear_search")

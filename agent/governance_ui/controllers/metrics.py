@@ -71,7 +71,7 @@ def register_metrics_controllers(
         except Exception as e:
             add_error_trace(state, f"Load metrics failed: {e}", "/api/metrics/summary")
             state.metrics_data = None
-            state.metrics_error = str(e)
+            state.metrics_error = type(e).__name__  # BUG-476-CME-1
         finally:
             state.metrics_loading = False
 

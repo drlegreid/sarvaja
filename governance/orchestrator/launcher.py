@@ -186,7 +186,7 @@ def launch_workspace(agent_role: str, task_id: Optional[str] = None,
             success=False,
             agent_role=agent_role,
             workspace_path=str(workspace),
-            error=str(e)
+            error=type(e).__name__  # BUG-476-OLA-1: sanitize error info
         )
 
 def launch_for_handoff(handoff: TaskHandoff, **kwargs) -> LaunchResult:

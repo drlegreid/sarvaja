@@ -68,7 +68,7 @@ def register_backlog_controllers(
             add_error_trace(state, f"Claim backlog task failed: {e}", f"/api/tasks/{task_id}/claim")
             state.is_loading = False
             state.has_error = True
-            state.error_message = f"Error claiming task: {str(e)}"
+            state.error_message = f"Error claiming task: {type(e).__name__}"  # BUG-476-CBL-1
 
     @ctrl.trigger("complete_task")
     @ctrl.trigger("complete_backlog_task")  # Backward compat
@@ -104,7 +104,7 @@ def register_backlog_controllers(
             add_error_trace(state, f"Complete backlog task failed: {e}", f"/api/tasks/{task_id}/complete")
             state.is_loading = False
             state.has_error = True
-            state.error_message = f"Error completing task: {str(e)}"
+            state.error_message = f"Error completing task: {type(e).__name__}"  # BUG-476-CBL-2
 
     @ctrl.trigger("toggle_backlog_auto_refresh")
     def toggle_backlog_auto_refresh():
@@ -136,7 +136,7 @@ def register_backlog_controllers(
             except Exception as e:
                 add_error_trace(state, f"Start auto-refresh failed: {e}", "backlog/auto-refresh")
                 state.backlog_auto_refresh = False
-                state.error_message = f"Failed to start auto-refresh: {str(e)}"
+                state.error_message = f"Failed to start auto-refresh: {type(e).__name__}"  # BUG-476-CBL-3
         else:
             # Stop polling
             if _polling_task and not _polling_task.done():

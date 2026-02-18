@@ -110,7 +110,8 @@ class ChromaReadOnly:
             }
 
         except Exception as e:
-            return {'error': str(e)}
+            logger.warning(f"ChromaDB query failed: {type(e).__name__}", exc_info=True)
+            return {'error': type(e).__name__}  # BUG-476-RCL-1
 
     def get(self, collection: str, ids: List[str], **kwargs) -> Dict[str, Any]:
         """Get documents by ID (allowed)."""
@@ -132,7 +133,8 @@ class ChromaReadOnly:
             return results
 
         except Exception as e:
-            return {'error': str(e)}
+            logger.warning(f"ChromaDB get failed: {type(e).__name__}", exc_info=True)
+            return {'error': type(e).__name__}  # BUG-476-RCL-2
 
     def list_collections(self) -> List[str]:
         """List all collections (allowed)."""
@@ -193,7 +195,8 @@ class ChromaReadOnly:
                 results.append(result)
 
             except Exception as e:
-                results.append({'success': False, 'error': str(e)})
+                logger.warning(f"ChromaDB add redirect failed: {type(e).__name__}", exc_info=True)
+                results.append({'success': False, 'error': type(e).__name__})  # BUG-476-RCL-3
 
         return asdict(DeprecationResult(
             deprecated=True,

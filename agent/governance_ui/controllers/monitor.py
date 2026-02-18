@@ -76,6 +76,6 @@ def register_monitor_controllers(state: Any, ctrl: Any, api_base_url: str) -> No
             # BUG-UI-LOAD-003: Use error_message + has_error, not status_message
             add_error_trace(state, f"Monitor load failed: {e}", "monitor_data")
             state.has_error = True
-            state.error_message = f"Monitor load failed: {str(e)[:50]}"
+            state.error_message = f"Monitor load failed: {type(e).__name__}"  # BUG-476-CMO-1
         finally:
             state.monitor_last_updated = datetime.now().isoformat(timespec="seconds")

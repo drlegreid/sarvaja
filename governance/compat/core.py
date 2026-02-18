@@ -86,7 +86,8 @@ def governance_get_session(session_id):
             "content": content
         }, indent=2)
     except Exception as e:
-        return json.dumps({"error": str(e)})
+        logger.warning(f"governance_get_session failed: {type(e).__name__}", exc_info=True)
+        return json.dumps({"error": type(e).__name__})  # BUG-476-CCR-1
 
 
 def governance_list_decisions():

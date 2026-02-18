@@ -157,9 +157,9 @@ class TaskBacklogAgent:
             return TaskExecution(
                 task_id=task_id,
                 success=False,
-                evidence=f"Task execution failed: {str(e)}",
+                evidence=f"Task execution failed: {type(e).__name__}",  # BUG-476-SAB-2: sanitize error info
                 duration_seconds=0,
-                error=str(e)
+                error=type(e).__name__  # BUG-476-SAB-1: sanitize error info
             )
 
     async def process_one_task(self) -> bool:

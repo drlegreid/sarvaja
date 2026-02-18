@@ -145,7 +145,7 @@ def register_tasks_controllers(state: Any, ctrl: Any, api_base_url: str) -> dict
             add_error_trace(state, f"Delete task failed: {e}", f"/api/tasks/{task_id}")
             state.is_loading = False
             state.has_error = True
-            state.error_message = f"Failed to delete task: {str(e)}"
+            state.error_message = f"Failed to delete task: {type(e).__name__}"  # BUG-476-CTK-1
 
     @ctrl.trigger("claim_selected_task")
     def claim_selected_task():
@@ -171,7 +171,7 @@ def register_tasks_controllers(state: Any, ctrl: Any, api_base_url: str) -> dict
             add_error_trace(state, f"Claim task failed: {e}", f"/api/tasks/{task_id}/claim")
             state.is_loading = False
             state.has_error = True
-            state.error_message = f"Claim failed: {str(e)}"
+            state.error_message = f"Claim failed: {type(e).__name__}"  # BUG-476-CTK-2
 
     @ctrl.trigger("complete_selected_task")
     def complete_selected_task():
@@ -197,7 +197,7 @@ def register_tasks_controllers(state: Any, ctrl: Any, api_base_url: str) -> dict
             add_error_trace(state, f"Complete task failed: {e}", f"/api/tasks/{task_id}/complete")
             state.is_loading = False
             state.has_error = True
-            state.error_message = f"Complete failed: {str(e)}"
+            state.error_message = f"Complete failed: {type(e).__name__}"  # BUG-476-CTK-3
 
     @ctrl.trigger("edit_task")
     def edit_task():
@@ -273,7 +273,7 @@ def register_tasks_controllers(state: Any, ctrl: Any, api_base_url: str) -> dict
             add_error_trace(state, f"Update task failed: {e}", f"/api/tasks/{task_id}")
             state.is_loading = False
             state.has_error = True
-            state.error_message = f"Failed to update task: {str(e)}"
+            state.error_message = f"Failed to update task: {type(e).__name__}"  # BUG-476-CTK-4
 
     @ctrl.trigger("create_task")
     def create_task():
@@ -348,7 +348,7 @@ def register_tasks_controllers(state: Any, ctrl: Any, api_base_url: str) -> dict
             add_error_trace(state, f"Create task failed: {e}", "/api/tasks")
             state.is_loading = False
             state.has_error = True
-            state.error_message = f"Task creation failed: {str(e)}"
+            state.error_message = f"Task creation failed: {type(e).__name__}"  # BUG-476-CTK-5
 
     @ctrl.trigger("attach_document")
     def attach_document():
@@ -381,7 +381,7 @@ def register_tasks_controllers(state: Any, ctrl: Any, api_base_url: str) -> dict
         except Exception as e:
             add_error_trace(state, f"Attach document failed: {e}", f"/api/tasks/{task_id}/documents")
             state.has_error = True
-            state.error_message = f"Attach failed: {str(e)}"
+            state.error_message = f"Attach failed: {type(e).__name__}"  # BUG-476-CTK-6
         finally:
             state.show_attach_document_dialog = False
             state.attach_document_path = ""
@@ -461,7 +461,7 @@ def register_tasks_controllers(state: Any, ctrl: Any, api_base_url: str) -> dict
             add_error_trace(state, f"Load tasks page failed: {e}", "/api/tasks")
             state.is_loading = False
             state.has_error = True
-            state.error_message = f"Failed to load tasks: {str(e)}"
+            state.error_message = f"Failed to load tasks: {type(e).__name__}"  # BUG-476-CTK-7
 
     @ctrl.trigger("tasks_prev_page")
     def tasks_prev_page():

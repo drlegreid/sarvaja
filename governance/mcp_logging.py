@@ -174,7 +174,7 @@ def log_tool_call(
             tool=tool_name,
             call_id=call_id,
             duration_ms=round(duration_ms, 2),
-            error=str(e),
+            error=type(e).__name__,  # BUG-476-MLC-1: sanitize error info
             error_type=type(e).__name__
         )
         raise

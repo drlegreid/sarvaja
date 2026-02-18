@@ -91,14 +91,14 @@ async def execute_task(task: TaskResult, agents: dict):
         task_store.update_task(
             task_id,
             status=TaskStatus.FAILED,
-            error=str(e),
+            error=type(e).__name__,  # BUG-476-TUI-1: sanitize error info
             completed_at=datetime.utcnow().isoformat()
         )
 
         await task_store.emit_event(task_id, AGUIEvent(
             type=AGUIEventType.RUN_ERROR,
             run_id=task_id,
-            data={"error": str(e), "error_type": type(e).__name__}
+            data={"error": type(e).__name__, "error_type": type(e).__name__}  # BUG-476-TUI-2: sanitize error info
         ))
 
 

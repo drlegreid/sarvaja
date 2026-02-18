@@ -10,7 +10,10 @@ Created: 2024-12-28
 
 from fastapi import APIRouter, HTTPException, Query
 from datetime import datetime
+import logging
 import os
+
+logger = logging.getLogger(__name__)
 
 from governance.models import FileContentResponse
 
@@ -81,4 +84,6 @@ async def get_file_content(path: str = Query(..., description="File path relativ
     except UnicodeDecodeError:
         raise HTTPException(status_code=400, detail="Cannot read binary files")
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error reading file: {str(e)}")
+        # BUG-475-FIL-1: Sanitize HTTPException detail — prevent exception detail leakage to API clients
+        logger.error(f"Error reading file: {type(e).__name__}", exc_info=True)
+        raise HTTPException(status_code=500, detail="Internal server error")

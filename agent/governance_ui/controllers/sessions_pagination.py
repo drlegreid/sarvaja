@@ -140,7 +140,7 @@ def register_sessions_pagination(
             add_error_trace(state, f"Load sessions page failed: {e}", "/api/sessions")
             state.is_loading = False
             state.has_error = True
-            state.error_message = f"Failed to load sessions: {str(e)}"
+            state.error_message = f"Failed to load sessions: {type(e).__name__}"  # BUG-476-CSP-1
 
     @ctrl.trigger("sessions_prev_page")
     def sessions_prev_page():

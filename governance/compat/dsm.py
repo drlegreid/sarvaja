@@ -10,6 +10,9 @@ Created: 2024-12-28
 """
 
 import json
+import logging
+
+logger = logging.getLogger(__name__)
 
 # Try to import DSM tracker
 try:
@@ -33,7 +36,8 @@ def dsm_start(batch_id=None):
             "message": f"DSM cycle started: {cycle.cycle_id}"
         }, indent=2)
     except ValueError as e:
-        return json.dumps({"error": str(e)})
+        logger.warning(f"dsm_start failed: {type(e).__name__}", exc_info=True)
+        return json.dumps({"error": type(e).__name__})  # BUG-476-CDS-1
 
 
 def dsm_advance():
@@ -49,7 +53,8 @@ def dsm_advance():
             "required_mcps": new_phase.required_mcps
         }, indent=2)
     except ValueError as e:
-        return json.dumps({"error": str(e)})
+        logger.warning(f"dsm_advance failed: {type(e).__name__}", exc_info=True)
+        return json.dumps({"error": type(e).__name__})  # BUG-476-CDS-2
 
 
 def dsm_checkpoint(description, metrics=None, evidence=None):
@@ -72,7 +77,8 @@ def dsm_checkpoint(description, metrics=None, evidence=None):
             "message": "Checkpoint recorded"
         }, indent=2)
     except ValueError as e:
-        return json.dumps({"error": str(e)})
+        logger.warning(f"dsm_checkpoint failed: {type(e).__name__}", exc_info=True)
+        return json.dumps({"error": type(e).__name__})  # BUG-476-CDS-3
 
 
 def dsm_status():
@@ -96,7 +102,8 @@ def dsm_complete():
             "message": f"Cycle completed. Evidence: {evidence_path}"
         }, indent=2)
     except ValueError as e:
-        return json.dumps({"error": str(e)})
+        logger.warning(f"dsm_complete failed: {type(e).__name__}", exc_info=True)
+        return json.dumps({"error": type(e).__name__})  # BUG-476-CDS-4
 
 
 def dsm_finding(finding_type, description, severity="MEDIUM", related_rules=None):
@@ -122,7 +129,8 @@ def dsm_finding(finding_type, description, severity="MEDIUM", related_rules=None
             "message": f"Finding recorded: {finding['id']}"
         }, indent=2)
     except ValueError as e:
-        return json.dumps({"error": str(e)})
+        logger.warning(f"dsm_finding failed: {type(e).__name__}", exc_info=True)
+        return json.dumps({"error": type(e).__name__})  # BUG-476-CDS-5
 
 
 def dsm_metrics(metrics_json):
@@ -141,4 +149,5 @@ def dsm_metrics(metrics_json):
             "message": "Metrics updated"
         }, indent=2)
     except ValueError as e:
-        return json.dumps({"error": str(e)})
+        logger.warning(f"dsm_metrics failed: {type(e).__name__}", exc_info=True)
+        return json.dumps({"error": type(e).__name__})  # BUG-476-CDS-6

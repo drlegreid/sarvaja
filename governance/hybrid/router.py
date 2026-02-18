@@ -135,7 +135,7 @@ class HybridQueryRouter:
                 results=[],
                 count=0,
                 latency_ms=latency,
-                error=str(e)
+                error=type(e).__name__  # BUG-476-HRT-1: sanitize error info
             )
 
     def _detect_query_type(self, query_text: str) -> str:
@@ -196,7 +196,7 @@ class HybridQueryRouter:
             )
 
         except Exception as e:
-            return self._query_chromadb_fallback(query_text, start_time, error=str(e))
+            return self._query_chromadb_fallback(query_text, start_time, error=type(e).__name__)  # BUG-476-HRT-2: sanitize error info
 
     def _query_chromadb(self, query_text: str, collection: str, n_results: int,
                         start_time: float) -> QueryResult:
@@ -247,7 +247,7 @@ class HybridQueryRouter:
                 results=[],
                 count=0,
                 latency_ms=latency,
-                error=str(e)
+                error=type(e).__name__  # BUG-476-HRT-3: sanitize error info
             )
 
     def _query_combined(self, query_text: str, collection: str, n_results: int,

@@ -66,7 +66,8 @@ class TestTaskEvidenceCompliance:
     def test_exception(self, _m):
         result = check_task_evidence_compliance()
         assert result.status == "SKIP"
-        assert "API down" in result.message
+        # BUG-474: message now contains type(e).__name__ (sanitized)
+        assert "Exception" in result.message
 
 
 class TestTaskSessionLinkage:

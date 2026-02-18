@@ -117,7 +117,7 @@ def register_common_handlers(ctrl: Any, state: Any) -> None:
             state.is_loading = False
             # BUG-UI-SILENT-FAIL-001: Use error_message not status_message for failures
             state.has_error = True
-            state.error_message = f"API unavailable: {str(e)}"
+            state.error_message = f"API unavailable: {type(e).__name__}"  # BUG-476-CHN-1
 
     @ctrl.set("toggle_graph_view")
     def toggle_graph_view() -> None:
@@ -179,7 +179,7 @@ def register_backlog_handlers(ctrl: Any, state: Any) -> None:
             state.backlog_loading = False
         except Exception as e:
             state.backlog_loading = False
-            state.backlog_error = f"Failed to load backlog: {str(e)}"
+            state.backlog_error = f"Failed to load backlog: {type(e).__name__}"  # BUG-476-CHN-2
 
     @ctrl.trigger("refresh_backlog")
     def refresh_backlog() -> None:
@@ -201,7 +201,7 @@ def register_backlog_handlers(ctrl: Any, state: Any) -> None:
                 else:
                     state.error_message = f"Failed to claim task: {response.status_code}"
         except Exception as e:
-            state.error_message = f"Failed to claim task: {str(e)}"
+            state.error_message = f"Failed to claim task: {type(e).__name__}"  # BUG-476-CHN-3
 
     @ctrl.trigger("complete_backlog_task")
     def complete_backlog_task(task_id: str) -> None:
@@ -218,7 +218,7 @@ def register_backlog_handlers(ctrl: Any, state: Any) -> None:
                 else:
                     state.error_message = f"Failed to complete task: {response.status_code}"
         except Exception as e:
-            state.error_message = f"Failed to complete task: {str(e)}"
+            state.error_message = f"Failed to complete task: {type(e).__name__}"  # BUG-476-CHN-4
 
 
 def register_executive_handlers(ctrl: Any, state: Any) -> None:
@@ -241,7 +241,7 @@ def register_executive_handlers(ctrl: Any, state: Any) -> None:
             state.executive_loading = False
         except Exception as e:
             state.executive_loading = False
-            state.executive_error = f"Failed to load report: {str(e)}"
+            state.executive_error = f"Failed to load report: {type(e).__name__}"  # BUG-476-CHN-5
 
     @ctrl.trigger("trigger_load_executive_report")
     def trigger_load_executive_report() -> None:

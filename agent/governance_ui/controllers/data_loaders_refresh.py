@@ -172,7 +172,7 @@ def register_refresh_controllers(
             state.is_loading = False
             # BUG-UI-SILENT-FAIL-001: Use error_message not status_message for failures
             state.has_error = True
-            state.error_message = f"API unavailable: {str(e)}"
+            state.error_message = f"API unavailable: {type(e).__name__}"  # BUG-476-CDR-1
 
     def load_sessions_list():
         """Load sessions list for dropdowns. Per UI-AUDIT-007."""

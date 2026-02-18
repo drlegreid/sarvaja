@@ -141,7 +141,7 @@ class ChromaMigration:
 
                 except Exception as e:
                     failed += 1
-                    errors.append(f"{doc_id}: {str(e)}")
+                    errors.append(f"{doc_id}: {type(e).__name__}")  # BUG-476-MMG-1: sanitize error info
 
             self._migration_state['collections'][collection_name] = {
                 'status': 'completed',
@@ -177,7 +177,7 @@ class ChromaMigration:
                 failed=failed + 1,
                 skipped=skipped,
                 dry_run=self.dry_run,
-                errors=[str(e)]
+                errors=[type(e).__name__]  # BUG-476-MMG-2: sanitize error info
             ))
 
     def migrate_all(self) -> Dict[str, Any]:

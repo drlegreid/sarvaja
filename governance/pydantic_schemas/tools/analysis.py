@@ -76,7 +76,7 @@ def analyze_impact_typed(config: ImpactAnalysisConfig) -> ImpactAnalysisResult:
             rule_id=config.rule_id,
             impact_score=0,
             risk_level="MEDIUM",
-            error=str(e)
+            error=type(e).__name__  # BUG-476-PSN-1: sanitize error info
         )
 
 
