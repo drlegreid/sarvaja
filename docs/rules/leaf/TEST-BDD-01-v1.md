@@ -19,7 +19,31 @@ All E2E tests MUST use Behavior-Driven Development (BDD) paradigm.
 - **Robot Framework** (PREFERRED for new tests) - Native Given/When/Then
 - **pytest-bdd** - Python with Gherkin feature files
 
-### Structure
+### Structure (Robot Framework — Primary)
+
+```
+tests/e2e/robot/
+├── suites/             # .robot test suites by domain
+│   ├── dashboard_navigation.robot
+│   ├── rules_view.robot
+│   ├── tasks_view.robot
+│   ├── sessions_view.robot
+│   ├── trust_agents_view.robot
+│   ├── infra_view.robot
+│   └── smoke.robot
+├── resources/          # Shared .resource files
+│   ├── common.resource     # Setup/teardown keywords
+│   ├── selectors.resource  # Centralized CSS selectors
+│   └── api.resource        # REST API test keywords
+└── libraries/          # Python keyword libraries (SRP)
+    ├── actions.py      # Click, fill, scroll, Fibonacci backoff
+    ├── navigation.py   # Tab navigation, page verification
+    └── overlay.py      # Vuetify overlay management
+```
+
+Per TEST-E2E-FRAMEWORK-01-v1: Each library follows SRP, max 300 lines.
+
+### Structure (pytest-bdd — Legacy)
 
 ```
 tests/e2e/
@@ -136,9 +160,10 @@ This produces structured evidence per TEST-EVID-01-v1 without requiring Gherkin 
 
 ## Evidence
 
-- Feature files: `tests/e2e/features/*.feature`
-- Step definitions: `tests/e2e/steps/*.py`
-- Test factories: `tests/e2e/conftest.py`
+- Robot Framework suites: `tests/e2e/robot/suites/*.robot`
+- RF keyword libraries: `tests/e2e/robot/libraries/*.py`
+- RF resource files: `tests/e2e/robot/resources/*.resource`
+- Legacy feature files: `tests/e2e/features/*.feature`
 - Programmatic BDD: `tests/evidence/collector.py`
 
 ---
