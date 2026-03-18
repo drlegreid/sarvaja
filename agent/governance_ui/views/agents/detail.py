@@ -9,6 +9,7 @@ Per GAP-UI-041: Agent-to-session/task relation links.
 
 from trame.widgets import vuetify3 as v3, html
 
+from .capabilities import build_agent_capabilities_card
 from .config import build_agent_config_card
 from .controls import build_agent_controls_card
 from .metrics import build_agent_metrics_card, build_trust_history_card
@@ -61,6 +62,9 @@ def build_agent_detail_view() -> None:
 
             # Trust history (GAP-UI-042)
             build_trust_history_card()
+
+            # Capabilities (rule→agent bindings)
+            build_agent_capabilities_card()
 
             # Config display
             build_agent_config_card()

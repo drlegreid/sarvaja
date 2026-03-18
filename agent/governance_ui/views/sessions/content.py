@@ -41,13 +41,21 @@ def build_session_metadata_chips() -> None:
             color="purple",
             size="small",
         )
-        # CC Project Slug (SESSION-CC-01-v1)
+        # CC Project Slug — clickable to navigate to project (P2 cross-linkage)
         v3.VChip(
             v_if="selected_session.cc_project_slug",
             v_text="selected_session.cc_project_slug",
             prepend_icon="mdi-folder",
             color="teal",
             size="small",
+            classes="cursor-pointer",
+            click=(
+                "active_view = 'projects'; "
+                "trigger('select_project', "
+                "[selected_session.cc_project_slug])"
+            ),
+            __properties=["data-testid"],
+            **{"data-testid": "session-project-link"}
         )
 
 
@@ -93,8 +101,23 @@ def build_session_info_card() -> None:
                     prepend_icon="mdi-file-document",
                 )
                 v3.VListItem(
+                    v_if="selected_session.agent_id",
                     title="Agent",
-                    subtitle=("selected_session.agent_id || 'No agent assigned'",),
+                    subtitle=("selected_session.agent_id",),
+                    prepend_icon="mdi-robot",
+                    classes="cursor-pointer",
+                    click=(
+                        "active_view = 'agents'; "
+                        "trigger('select_agent', "
+                        "[selected_session.agent_id])"
+                    ),
+                    __properties=["data-testid"],
+                    **{"data-testid": "session-agent-link"}
+                )
+                v3.VListItem(
+                    v_if="!selected_session.agent_id",
+                    title="Agent",
+                    subtitle="No agent assigned",
                     prepend_icon="mdi-robot",
                 )
                 v3.VListItem(

@@ -53,6 +53,7 @@ def register_sessions_controllers(state: Any, ctrl: Any, api_base_url: str) -> N
         state.evidence_search = ''
         state.session_transcript = []
         state.session_transcript_page = 1
+        state.session_validation_data = None
         # BUG-260-SESSION-001: Guard against None state.sessions
         for session in (state.sessions or []):
             if session.get('session_id') == session_id or session.get('id') == session_id:
@@ -91,6 +92,7 @@ def register_sessions_controllers(state: Any, ctrl: Any, api_base_url: str) -> N
         loaders["build_timeline"]()
         loaders["load_evidence_rendered"](session_id)
         loaders["load_transcript"](session_id)
+        loaders["load_validation"](session_id)
 
     @ctrl.trigger("navigate_to_rule_from_session")
     def navigate_to_rule_from_session(rule_id):

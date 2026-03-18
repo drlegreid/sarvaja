@@ -14,8 +14,10 @@ This package splits the agents_view.py (464 lines) into focused modules:
 
 from .list import build_agents_list_view
 from .detail import build_agent_detail_view
+from .capabilities import build_agent_capabilities_card
 
 __all__ = [
     "build_agents_list_view",
     "build_agent_detail_view",
+    "build_agent_capabilities_card",
 ]

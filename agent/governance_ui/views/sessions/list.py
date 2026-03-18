@@ -94,6 +94,15 @@ def _build_filters_row():
                 **{"data-testid": "sessions-search"},
             )
         with v3.VCol(cols=12, sm=2, classes="d-flex gap-1 align-center"):
+            v3.VSwitch(
+                v_model="sessions_exclude_test",
+                label="Hide test",
+                density="compact",
+                hide_details=True,
+                color="primary",
+                __properties=["data-testid"],
+                **{"data-testid": "sessions-exclude-test"},
+            )
             v3.VBtn(
                 icon="mdi-text-search", variant="tonal", size="small",
                 color="secondary",

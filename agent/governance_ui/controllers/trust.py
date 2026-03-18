@@ -47,6 +47,12 @@ def register_trust_controllers(state: Any, ctrl: Any, api_base_url: str) -> None
                 state.show_agent_detail = True
                 break
 
+        # Load capabilities (rule→agent bindings) for this agent
+        try:
+            ctrl.trigger("load_agent_capabilities")(agent_id)
+        except Exception:
+            pass  # Capabilities controller may not be registered yet
+
         # Fetch full session data for this agent (A.4: session-agent linking)
         try:
             with httpx.Client(timeout=10.0) as client:
@@ -74,6 +80,7 @@ def register_trust_controllers(state: Any, ctrl: Any, api_base_url: str) -> None
         state.selected_agent = None
         state.show_agent_detail = False
         state.agent_sessions = []
+        state.agent_capabilities = []
 
     @ctrl.trigger("toggle_agent_pause")
     def toggle_agent_pause(agent_id):

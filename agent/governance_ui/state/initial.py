@@ -95,6 +95,10 @@ def get_initial_state() -> Dict[str, Any]:
         'session_thinking_items_loading': False,
         'session_timeline': [],  # Merged chronological view of tools+thoughts
 
+        # Session Content Validation (RELIABILITY-PLAN-01-v1 P1)
+        'session_validation_data': None,
+        'session_validation_loading': False,
+
         # Session Evidence Rendered HTML (GAP-SESSION-DETAIL-002)
         'session_evidence_html': '',
         'session_evidence_loading': False,
@@ -257,6 +261,7 @@ def get_initial_state() -> Dict[str, Any]:
         'sessions_filter_status': None,
         'sessions_filter_agent': None,
         'sessions_agent_options': [],
+        'sessions_exclude_test': True,  # BUG-3: Hide test sessions by default
         # Sessions view mode (F.4: pivot table)
         'sessions_view_mode': 'table',  # 'table' | 'pivot'
         'sessions_pivot_data': [],
@@ -305,6 +310,21 @@ def get_initial_state() -> Dict[str, Any]:
             'has_more': False,
             'returned': 0,
         },
+
+        # Workspaces state (Entity chain: Project→Workspace→Agent)
+        'workspaces': [],
+        'selected_workspace': None,
+        'show_workspace_detail': False,
+        'workspaces_loading': False,
+        'workspaces_search': '',
+        'workspaces_type_filter': None,
+        'workspaces_status_filter': None,
+        'workspace_types': [],
+        'workspace_type_options': [],
+
+        # Agent Capabilities state (rule→agent bindings)
+        'agent_capabilities': [],
+        'agent_capabilities_loading': False,
 
         # Projects state (GOV-PROJECT-01-v1)
         'projects': [],

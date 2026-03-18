@@ -26,6 +26,7 @@ from agent.governance_ui.views import (
     build_tests_view,
     build_metrics_view,
     build_projects_view,
+    build_workspaces_view,
     build_trace_bar,
     build_all_dialogs,
 )
@@ -175,6 +176,7 @@ def build_dashboard_layout(server, navigation_items):
                 build_tests_view()
                 build_metrics_view()
                 build_projects_view()
+                build_workspaces_view()
 
             build_all_dialogs()
 

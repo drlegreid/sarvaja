@@ -195,10 +195,60 @@ def build_tool_breakdown() -> None:
                         html.Td("{{ count }}")
 
 
+def build_metrics_histogram() -> None:
+    """Build session activity histogram from per-day metrics data.
+
+    Renders a bar-style sparkline chart showing sessions per day.
+    Data comes from metrics_data.days (already loaded by controller).
+    """
+    with v3.VCard(
+        v_if="metrics_data && metrics_data.days && metrics_data.days.length > 0",
+        variant="outlined",
+        classes="mt-4",
+        __properties=["data-testid"],
+        **{"data-testid": "metrics-histogram"}
+    ):
+        with v3.VCardTitle(classes="d-flex align-center"):
+            v3.VIcon("mdi-chart-bar", classes="mr-2", size="small")
+            html.Span("Sessions per Day")
+        with v3.VCardText():
+            v3.VSparkline(
+                model_value=(
+                    "metrics_data.days.map(d => d.session_count || 0)",
+                ),
+                labels=(
+                    "metrics_data.days.map(d => d.date ? d.date.slice(5) : '')",
+                ),
+                type="bar",
+                color="primary",
+                height=120,
+                padding=8,
+                line_width=2,
+                show_labels=True,
+                label_size=10,
+                auto_draw=True,
+                __properties=["data-testid"],
+                **{"data-testid": "metrics-histogram-chart"}
+            )
+            # Legend row
+            with v3.VRow(classes="mt-1", dense=True):
+                with v3.VCol(cols="auto"):
+                    html.Span(
+                        "{{ metrics_data.days.length }} days",
+                        classes="text-caption text-grey"
+                    )
+                with v3.VCol(cols="auto"):
+                    html.Span(
+                        "{{ metrics_data.days.reduce((s, d) => s + (d.session_count || 0), 0) }} total sessions",
+                        classes="text-caption text-grey"
+                    )
+
+
 def build_summary_tab() -> None:
     """Build the summary tab content."""
     with html.Div(v_if="metrics_active_tab === 'summary'"):
         build_stat_cards()
+        build_metrics_histogram()
         build_per_day_table()
         build_tool_breakdown()
 

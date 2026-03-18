@@ -229,6 +229,25 @@ def register_session_detail_loaders(state: Any, api_base_url: str):
             # BUG-449-SDL-007: Don't leak exception internals via add_error_trace → Trame WebSocket
             add_error_trace(state, f"Expand transcript entry failed: {type(e).__name__}", f"/api/sessions/{session_id}/transcript/{entry_index}")
 
+    def load_session_validation(session_id):
+        """Load content validation data for CC sessions (RELIABILITY-PLAN-01-v1 P1)."""
+        if not _valid_session_id(session_id):
+            return
+        state.session_validation_loading = True
+        try:
+            state.session_validation_data = None
+            with httpx.Client(timeout=15.0) as client:
+                response = client.get(
+                    f"{api_base_url}/api/sessions/{session_id}/validate"
+                )
+                if response.status_code == 200:
+                    state.session_validation_data = response.json()
+        except Exception as e:
+            add_error_trace(state, f"Load validation failed: {type(e).__name__}", f"/api/sessions/{session_id}/validate")
+            state.session_validation_data = None
+        finally:
+            state.session_validation_loading = False
+
     return {
         "load_tool_calls": load_session_tool_calls,
         "load_thinking_items": load_session_thinking_items,
@@ -238,4 +257,5 @@ def register_session_detail_loaders(state: Any, api_base_url: str):
         "load_tasks": load_session_tasks,
         "load_transcript": load_session_transcript,
         "load_transcript_entry": load_transcript_entry_expanded,
+        "load_validation": load_session_validation,
     }

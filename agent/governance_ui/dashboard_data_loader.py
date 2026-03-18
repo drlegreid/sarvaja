@@ -44,6 +44,7 @@ def load_initial_data(
             _load_agents(state, client, api_base_url)
             _load_tasks(state, client, api_base_url, get_tasks, page_size)
             _load_projects(state, client, api_base_url)
+            _load_workspaces(state, client, api_base_url)
             _load_tests(state, client, api_base_url)
     except Exception as e:
         # BUG-LOG-002: Log fallback instead of silently swallowing
@@ -275,6 +276,31 @@ def _load_projects(state, client, api_base_url) -> None:
         logger.debug(f"Filesystem project discovery failed: {type(e).__name__}")
 
     state.projects = existing
+
+
+def _load_workspaces(state, client, api_base_url) -> None:
+    """Load workspaces and workspace types from REST API."""
+    try:
+        resp = client.get(f"{api_base_url}/api/workspaces", params={"limit": 200})
+        if resp.status_code == 200:
+            state.workspaces = resp.json()
+        else:
+            state.workspaces = []
+    except Exception as e:
+        logger.debug(f"Failed to load workspaces: {type(e).__name__}")
+        state.workspaces = []
+
+    try:
+        types_resp = client.get(f"{api_base_url}/api/workspaces/types")
+        if types_resp.status_code == 200:
+            types_data = types_resp.json()
+            state.workspace_types = types_data
+            state.workspace_type_options = [
+                t.get("type_id", t.get("name", ""))
+                for t in types_data
+            ]
+    except Exception as e:
+        logger.debug(f"Failed to load workspace types: {type(e).__name__}")
 
 
 def _load_tests(state, client, api_base_url) -> None:

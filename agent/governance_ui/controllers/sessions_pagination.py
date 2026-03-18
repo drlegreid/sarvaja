@@ -76,8 +76,9 @@ def register_sessions_pagination(
             # Server-side keyword search (GAP-SESSION-SEARCH-001)
             if getattr(state, 'sessions_search_query', None):
                 params["search"] = state.sessions_search_query
-            # Exclude test artifacts from UI by default
-            params["exclude_test"] = "true"
+            # BUG-3: Exclude test artifacts unless user toggles off
+            if getattr(state, 'sessions_exclude_test', True):
+                params["exclude_test"] = "true"
             with httpx.Client(timeout=10.0) as client:
                 response = client.get(f"{api_base_url}/api/sessions", params=params)
                 if response.status_code == 200:
@@ -127,13 +128,16 @@ def register_sessions_pagination(
                     items = format_timestamps_in_list(
                         items, ["start_time", "end_time"])
                     # BUG-UI-SESSIONS-005: Annotate missing end_time (after formatting)
+                    # BUG-SESSIONS-ONGOING-001: Handle UNKNOWN status for ingested sessions
                     for item in items:
                         if not item.get("end_time"):
                             status = (item.get("status") or "").upper()
-                            if status in ("COMPLETED", "CLOSED"):
+                            if status in ("COMPLETED", "CLOSED", "ENDED"):
                                 item["end_time"] = "(completed)"
                             elif status == "ACTIVE":
                                 item["end_time"] = "ongoing"
+                            elif status == "UNKNOWN":
+                                item["end_time"] = "(unknown)"
                     state.sessions = items
             state.is_loading = False
         except Exception as e:
@@ -195,6 +199,12 @@ def register_sessions_pagination(
     @state.change("sessions_search_query")
     def _on_search_query_change(sessions_search_query, **kwargs):
         """Server-side search: reset to page 1 and reload."""
+        state.sessions_page = 1
+        load_sessions_page()
+
+    @state.change("sessions_exclude_test")
+    def _on_exclude_test_change(sessions_exclude_test, **kwargs):
+        """BUG-3: Reload when test session visibility toggled."""
         state.sessions_page = 1
         load_sessions_page()
 

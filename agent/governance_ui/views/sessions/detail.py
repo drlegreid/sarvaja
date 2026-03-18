@@ -15,6 +15,7 @@ from .tasks import build_completed_tasks_card
 from .tool_calls import build_tool_calls_card
 from .session_timeline import build_session_timeline_card
 from .session_transcript import build_session_transcript_card
+from .validation_card import build_validation_card
 
 
 def build_session_detail_view() -> None:
@@ -86,6 +87,9 @@ def build_session_detail_view() -> None:
 
             # Activity Timeline — merged chronological view (GAP-SESSION-DETAIL-001)
             build_session_timeline_card()
+
+            # Content Validation summary (RELIABILITY-PLAN-01-v1 P1)
+            build_validation_card()
 
             # Tool Calls drill-down (PLAN-UI-OVERHAUL-001 Task 5.2)
             build_tool_calls_card()
