@@ -1,27 +1,14 @@
 {
-  "session_start": "2026-01-01T00:00:00",
-  "session_hash": "HIGH",
-  "tool_count": 121,
-  "check_count": 2,
-  "last_save": null,
-  "warnings_shown": 2,
-  "last_warning_at": 120,
+  "tool_count": 150,
+  "session_start": "2026-02-15T10:00:00",
+  "warnings_shown": 1,
+  "last_warning_at": 150,
   "history": [
     {
-      "timestamp": "2026-02-01T02:53:23.348945",
-      "event": "WARNING_HIGH",
-      "tool_count": 120,
-      "session_hash": "HIGH"
-    },
-    {
-      "timestamp": "2026-02-14T21:03:16.124050",
-      "event": "COMPACTION",
-      "tool_count": 121
-    },
-    {
-      "timestamp": "2026-02-14T21:03:49.962061",
-      "event": "COMPACTION",
-      "tool_count": 121
+      "timestamp": "2026-02-18T16:58:54.833389",
+      "event": "WARNING_CRITICAL",
+      "tool_count": 150,
+      "session_hash": "0000"
     }
   ]
 }

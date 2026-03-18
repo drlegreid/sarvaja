@@ -220,6 +220,9 @@ def main():
         event = None
         extra = None
 
+        # Periodic checkpoint for audit trail (every CHECKPOINT_INTERVAL calls)
+        should_checkpoint = (tool_count % CHECKPOINT_INTERVAL == 0)
+
         # G.3: Context rot detection — check for repetitive patterns
         rot_score = _detect_context_rot(recent_tools)
         if rot_score > 0.7 and tool_count > 30:
@@ -231,11 +234,9 @@ def main():
             event = "CONTEXT_ROT"
             extra = {"rot_score": rot_score, "freshness": 1 - rot_score}
 
-        # Periodic checkpoint for audit trail (every CHECKPOINT_INTERVAL calls)
-        should_checkpoint = (tool_count % CHECKPOINT_INTERVAL == 0)
-
         # HIGH threshold - strong suggestion (but don't spam)
-        if tool_count >= HIGH_THRESHOLD and tool_count - last_warning_at >= 20:
+        # BUG-ENTROPY-OVERWRITE-001: Use elif to preserve context rot message
+        elif tool_count >= HIGH_THRESHOLD and tool_count - last_warning_at >= 20:
             context = (
                 f"[CONTEXT ENTROPY HIGH] {tool_count} tool calls, {int(session_minutes)}m session.\n"
                 f"Run /save before complex tasks to preserve context."

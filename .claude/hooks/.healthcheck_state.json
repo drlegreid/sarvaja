@@ -1,43 +1,113 @@
 {
-  "master_hash": "6B9026E4",
-  "check_count": 10,
-  "last_check": "2026-02-01T02:53:35.052984",
-  "unchanged_since": 1769907201.5486538,
+  "master_hash": "33FA5AD0",
+  "check_count": 6,
+  "last_check": "2026-02-18T15:24:54.936033",
+  "unchanged_since": 1771421094.9360292,
   "components": {
     "podman": "OK",
     "typedb": "OK",
     "chromadb": "OK",
+    "governance-api": "UP_NO_HEALTH",
     "litellm": "OK",
     "ollama": "OK",
     "claude-mem": "OK"
   },
   "component_hashes": {
-    "podman": "17F0",
-    "typedb": "F47C",
-    "chromadb": "827A",
-    "litellm": "7510",
-    "ollama": "283B",
-    "claude-mem": "17F0"
+    "podman": "A33C",
+    "typedb": "6A0C",
+    "chromadb": "76BC",
+    "governance-api": "07ED",
+    "litellm": "DD09",
+    "ollama": "44EB",
+    "claude-mem": "A33C"
   },
   "history": [
     {
-      "timestamp": "2026-02-01T02:53:21.548775",
-      "hash": "6B9026E4",
+      "timestamp": "2026-02-18T15:24:40.388053",
+      "hash": "FDFA344C",
       "components": {
         "podman": "OK",
         "typedb": "OK",
         "chromadb": "OK",
+        "governance-api": "OK",
         "litellm": "OK",
         "ollama": "OK",
         "claude-mem": "OK"
       },
       "component_hashes": {
-        "podman": "17F0",
-        "typedb": "F47C",
-        "chromadb": "827A",
-        "litellm": "7510",
-        "ollama": "283B",
-        "claude-mem": "17F0"
+        "podman": "A33C",
+        "typedb": "6A0C",
+        "chromadb": "76BC",
+        "governance-api": "B02B",
+        "litellm": "DD09",
+        "ollama": "44EB",
+        "claude-mem": "A33C"
+      }
+    },
+    {
+      "timestamp": "2026-02-18T15:24:43.860277",
+      "hash": "33FA5AD0",
+      "components": {
+        "podman": "OK",
+        "typedb": "OK",
+        "chromadb": "OK",
+        "governance-api": "UP_NO_HEALTH",
+        "litellm": "OK",
+        "ollama": "OK",
+        "claude-mem": "OK"
+      },
+      "component_hashes": {
+        "podman": "A33C",
+        "typedb": "6A0C",
+        "chromadb": "76BC",
+        "governance-api": "07ED",
+        "litellm": "DD09",
+        "ollama": "44EB",
+        "claude-mem": "A33C"
+      }
+    },
+    {
+      "timestamp": "2026-02-18T15:24:47.524245",
+      "hash": "FDFA344C",
+      "components": {
+        "podman": "OK",
+        "typedb": "OK",
+        "chromadb": "OK",
+        "governance-api": "OK",
+        "litellm": "OK",
+        "ollama": "OK",
+        "claude-mem": "OK"
+      },
+      "component_hashes": {
+        "podman": "A33C",
+        "typedb": "6A0C",
+        "chromadb": "76BC",
+        "governance-api": "B02B",
+        "litellm": "DD09",
+        "ollama": "44EB",
+        "claude-mem": "A33C"
+      }
+    },
+    {
+      "timestamp": "2026-02-18T15:24:54.936169",
+      "hash": "33FA5AD0",
+      "components": {
+        "podman": "OK",
+        "typedb": "OK",
+        "chromadb": "OK",
+        "governance-api": "UP_NO_HEALTH",
+        "litellm": "OK",
+        "ollama": "OK",
+        "claude-mem": "OK"
+      },
+      "component_hashes": {
+        "podman": "A33C",
+        "typedb": "6A0C",
+        "chromadb": "76BC",
+        "governance-api": "07ED",
+        "litellm": "DD09",
+        "ollama": "44EB",
+        "claude-mem": "A33C"
       }
     }
   ]

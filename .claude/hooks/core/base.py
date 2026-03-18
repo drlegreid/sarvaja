@@ -77,8 +77,9 @@ class HookConfig:
 
     # Container runtime (Linux: podman, Windows: docker)
     # Podman socket path for Linux
+    # BUG-181-003: Use actual UID, not hardcoded 1000
     podman_socket_path: Path = field(
-        default_factory=lambda: Path("/run/user/1000/podman/podman.sock")
+        default_factory=lambda: Path(f"/run/user/{os.getuid()}/podman/podman.sock")
     )
 
     @property

@@ -191,8 +191,9 @@ def main():
             # Check for warning
             warning = check_warning(state)
             if warning:
-                print(warning)
-                sys.exit(1)  # Non-blocking warning
+                # BUG-188-004: Use stderr + exit(0) — exit(1) blocks UserPromptSubmit
+                print(warning, file=sys.stderr)
+                sys.exit(0)
 
             if not args.quiet:
                 print(f"[CONTEXT {get_level(state.get('used_percentage', 0))}] {state.get('used_percentage', 0):.0f}%")

@@ -112,6 +112,9 @@ def _sync_todo_to_api(todo: dict, state: dict) -> bool:
                 )
                 if not post_resp.is_success:
                     return False
+            else:
+                # BUG-SYNC-002: Non-200/404 (e.g. 500) must not record as synced
+                return False
 
         # Record sync
         state.setdefault("synced_todos", {})[task_id] = {

@@ -77,7 +77,8 @@ class AmnesiaDetector:
             for svc in self.config.core_services:
                 prev_status = prev_components.get(svc, "")
                 current_ok = current_services.get(svc, {}).get("ok", False)
-                if prev_status in ("DOWN", "DOCKER_DOWN") and current_ok:
+                # BUG-AMNESIA-DOCKER-001: Platform migrated to Podman (2026-01-09)
+                if prev_status in ("DOWN", "PODMAN_DOWN") and current_ok:
                     indicators.append(f"SERVICE_RECOVERED:{svc}")
                     confidence += 0.2
 

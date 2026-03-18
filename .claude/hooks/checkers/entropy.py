@@ -269,7 +269,7 @@ def main():
 
         if args.increment:
             result = checker.increment_and_check()
-            if result.is_warning:
+            if result.status == "WARNING":
                 print(result.message)
                 sys.exit(1)  # Non-blocking warning
             elif not args.quiet:
@@ -294,7 +294,7 @@ def main():
         else:
             # Default: just check without incrementing
             result = checker.check()
-            if result.is_warning:
+            if result.status == "WARNING":
                 print(result.message)
                 sys.exit(1)
             sys.exit(0)

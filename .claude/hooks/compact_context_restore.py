@@ -23,7 +23,9 @@ HOOKS_DIR = Path(__file__).parent
 PROJECT_DIR = HOOKS_DIR.parent.parent
 ENTROPY_STATE = HOOKS_DIR / ".entropy_state.json"
 SESSION_STATE = HOOKS_DIR / ".session_state.json"
-MEMORY_FILE = PROJECT_DIR / ".claude" / "projects" / "-home-oderid-Documents-Vibe-sarvaja-platform" / "memory" / "MEMORY.md"
+# BUG-181-006: Compute memory path dynamically from PROJECT_DIR, not hardcoded username
+_project_slug = str(PROJECT_DIR).replace("/", "-").lstrip("-")
+MEMORY_FILE = Path.home() / ".claude" / "projects" / _project_slug / "memory" / "MEMORY.md"
 CLAUDE_MD = PROJECT_DIR / "CLAUDE.md"
 
 

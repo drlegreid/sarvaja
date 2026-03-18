@@ -148,8 +148,9 @@ def check_mandatory_rules(context: Dict[str, Any] = None) -> List[ApplicabilityC
     # Check SAFETY-HEALTH-02-v1: Health checks must pass
     if "services" in context:
         services = context["services"]
-        typedb_ok = services.get("typedb", {}).get("healthy", False)
-        chromadb_ok = services.get("chromadb", {}).get("healthy", False)
+        # BUG-RULE-HEALTHY-001: ServiceChecker uses "ok" key, not "healthy"
+        typedb_ok = services.get("typedb", {}).get("ok", False)
+        chromadb_ok = services.get("chromadb", {}).get("ok", False)
 
         if not typedb_ok or not chromadb_ok:
             results.append(ApplicabilityCheck(

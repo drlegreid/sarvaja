@@ -22,7 +22,8 @@
       "Skill(context-stats)",
       "Bash(python:*)",
       "Bash(python3:*)",
-      "Bash(CONTAINERS_STORAGE_CONF=/dev/null podman system reset:*)"
+      "Bash(CONTAINERS_STORAGE_CONF=/dev/null podman system reset:*)",
+      "Read(//home/oderid/Documents/OlegResume/15Resume/**)"
     ]
   },
   "enableAllProjectMcpServers": true,

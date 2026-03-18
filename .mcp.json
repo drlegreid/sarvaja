@@ -84,6 +84,20 @@
         "PLAYWRIGHT_BROWSERS_PATH": "/home/oderid/.cache/ms-playwright"
       },
       "_comment": "E2E UI testing automation"
+    },
+    "log-analyzer": {
+      "type": "stdio",
+      "command": "/home/oderid/.local/bin/uvx",
+      "args": ["log-analyzer-mcp"],
+      "env": {
+        "PYTHONUNBUFFERED": "1",
+        "PYTHONIOENCODING": "utf-8",
+        "MCP_LOG_LEVEL": "INFO",
+        "LOG_DIRECTORIES": "[\"/home/oderid/.claude/projects/-home-oderid-Documents-Vibe-sarvaja-platform\"]",
+        "LOG_FILE_PATTERNS": "[\"*.jsonl\", \"*.log\", \"*.txt\"]",
+        "MCP_LOG_FILE": "/home/oderid/Documents/Vibe/sarvaja/platform/logs/mcp/log_analyzer_mcp_server.log"
+      },
+      "_comment": "Fallback mega-session search — points at CC session JSONL files"
     }
   }
 }
