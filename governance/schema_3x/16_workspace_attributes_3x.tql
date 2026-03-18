@@ -1,0 +1,25 @@
+# Workspace & Project Attributes
+# Part of: EPIC-ENTITY-CHAIN Schema Modularization
+# Created: 2026-02-21
+
+define
+
+# Project attributes
+attribute project-id value string;
+attribute project-name value string;
+attribute project-path value string;
+attribute project-type value string;
+attribute project-description value string;
+attribute project-created-at value datetime;
+
+# Workspace attributes
+attribute workspace-id value string;
+attribute workspace-name value string;
+attribute workspace-type value string;
+attribute workspace-description value string;
+attribute workspace-status value string;
+attribute workspace-created-at value datetime;
+
+# Capability attributes (on the agent-capability relation)
+attribute capability-category value string;
+attribute capability-status value string;

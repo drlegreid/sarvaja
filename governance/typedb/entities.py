@@ -149,6 +149,36 @@ class Agent:
 
 
 @dataclass
+class Workspace:
+    """Workspace entity — organizational context within a project.
+
+    Completes the chain: Project → Workspace → Agent → Capabilities → Tasks → Sessions.
+    """
+    id: str
+    name: str
+    workspace_type: str  # "governance", "gamedev", "video", "financial", "ml", "generic"
+    project_id: Optional[str] = None
+    description: Optional[str] = None
+    status: str = "active"  # "active", "archived"
+    created_at: Optional[datetime] = None
+    agent_ids: Optional[List[str]] = None
+    rule_ids: Optional[List[str]] = None
+
+
+@dataclass
+class Capability:
+    """Capability — binding of a rule to an agent.
+
+    Represents which rules govern which agents and in what category.
+    This is the critical link between rules and agents.
+    """
+    agent_id: str
+    rule_id: str
+    category: str = "general"  # "coding", "testing", "governance", "research"
+    status: str = "active"  # "active", "suspended"
+
+
+@dataclass
 class InferenceResult:
     """Result from inference query."""
     query: str

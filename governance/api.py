@@ -43,6 +43,8 @@ from governance.routes.audit import router as audit_router  # RD-DEBUG-AUDIT
 from governance.routes.agents.observability import router as observability_router  # GAP-MONITOR-IPC-001
 from governance.routes.proposals import router as proposals_router  # GOV-BICAM-01-v1: LangGraph workflow
 from governance.routes.infra import router as infra_router  # EPIC-7.1: Container logs
+from governance.routes.capabilities import router as capabilities_router  # Entity chain: Agent → Rules
+from governance.routes.workspaces import router as workspaces_router  # Entity chain: Project → Workspace
 from governance.stores import (
     _tasks_store, _sessions_store, _agents_store,
     generate_chat_session_id, synthesize_execution_events,
@@ -170,6 +172,8 @@ app.include_router(proposals_router, prefix="/api")  # GOV-BICAM-01-v1: LangGrap
 app.include_router(projects_router, prefix="/api")  # GOV-PROJECT-01-v1: Project hierarchy
 app.include_router(taxonomy_router, prefix="/api")  # META-TAXON-01-v1: Task/rule taxonomy
 app.include_router(infra_router)  # EPIC-7.1: Container logs via podman socket
+app.include_router(capabilities_router, prefix="/api")  # Entity chain: Agent → Capabilities (rules)
+app.include_router(workspaces_router, prefix="/api")  # Entity chain: Project → Workspace → Agent
 
 
 # =============================================================================

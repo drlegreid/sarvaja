@@ -66,20 +66,33 @@ class SessionReadQueries:
                         setattr(session_map[session_id], session_attr, int(val) if val is not None else None)
             except Exception:
                 pass
+        # BUG-SESSIONS-ONGOING-001: Infer status from completed-at attribute.
+        # Previously blindly set ALL sessions without completed-at to "ACTIVE",
+        # causing dashboard to show every session as "ongoing".
         try:
             completed_results = self._execute_query("match $s isa work-session, has session-id $id, has completed-at $v; select $id, $v;")
             completed_ids = set()
             for r in completed_results:
                 session_id = r.get("id")
                 if session_id in session_map:
-                    session_map[session_id].completed_at, session_map[session_id].status = r.get("v"), "COMPLETED"
+                    session_map[session_id].completed_at = r.get("v")
+                    session_map[session_id].status = "COMPLETED"
                     completed_ids.add(session_id)
             for sid, session in session_map.items():
                 if sid not in completed_ids:
-                    session.status = "ACTIVE"
+                    # Only mark as ACTIVE if session has started_at (real active session).
+                    # For ingested/backfilled sessions without completed-at,
+                    # the merge layer in get_all_sessions_from_typedb() will
+                    # check _sessions_store for the real status.
+                    if session.started_at:
+                        session.status = "ACTIVE"
+                    else:
+                        session.status = "UNKNOWN"
         except Exception:
-            for session in session_map.values():
-                session.status = "ACTIVE"
+            # On exception, leave entity defaults (status="ACTIVE").
+            # The merge layer in get_all_sessions_from_typedb() will
+            # check _sessions_store for the real status.
+            pass
 
     def _batch_fetch_session_relationships(self, session_map: dict) -> None:
         """Batch fetch relationships for all sessions."""
@@ -169,9 +182,12 @@ class SessionReadQueries:
             session.started_at = start_results[0].get("start")
         end_results = self._execute_query(f'match $s isa work-session, has session-id "{sid}", has completed-at $end; select $end;')
         if end_results:
-            session.completed_at, session.status = end_results[0].get("end"), "COMPLETED"
+            session.completed_at = end_results[0].get("end")
+            session.status = "COMPLETED"
         else:
-            session.status = "ACTIVE"
+            # BUG-SESSIONS-ONGOING-001: Don't blindly default to ACTIVE.
+            # Service/merge layer will check _sessions_store for real status.
+            session.status = "ACTIVE" if session.started_at else "UNKNOWN"
         agent_results = self._execute_query(f'match $s isa work-session, has session-id "{sid}", has agent-id $agent; select $agent;')
         if agent_results:
             session.agent_id = agent_results[0].get("agent")

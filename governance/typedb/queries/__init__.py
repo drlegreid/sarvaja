@@ -12,6 +12,7 @@ from .sessions import SessionQueries
 from .rules import RuleQueries
 from .agents import AgentQueries
 from .projects import ProjectQueries
+from .proposals import ProposalQueries
 
 __all__ = [
     "TaskQueries",
@@ -19,4 +20,5 @@ __all__ = [
     "RuleQueries",
     "AgentQueries",
     "ProjectQueries",
+    "ProposalQueries",
 ]

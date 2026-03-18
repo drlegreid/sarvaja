@@ -206,6 +206,103 @@ def check_cc_ingestion_complete(api_base_url: str) -> dict:
     }
 
 
+def check_cc_session_tool_pairing(api_base_url: str) -> dict:
+    """H-SESSION-CC-003: CC sessions should have matched tool call/result pairs.
+
+    Validates that every tool_use in a CC session JSONL has a corresponding
+    tool_result, and vice versa. Orphaned calls indicate lost execution context.
+    """
+    sessions = _api_get(api_base_url, "/api/sessions?limit=200")
+    if not sessions:
+        return {"status": "SKIP", "message": "No sessions to check", "violations": []}
+
+    cc_sessions = [
+        s for s in sessions
+        if s.get("session_id", "").startswith("SESSION-") and "-CC-" in s.get("session_id", "")
+    ]
+    if not cc_sessions:
+        return {"status": "SKIP", "message": "No CC-ingested sessions found", "violations": []}
+
+    violations = []
+    checked = 0
+    for s in cc_sessions[:30]:
+        sid = s.get("session_id", "unknown")
+        validation = _api_get(api_base_url, f"/api/sessions/{sid}/validate")
+        if not isinstance(validation, dict) or "orphaned_tool_calls" not in validation:
+            continue
+        checked += 1
+        orphaned = validation.get("orphaned_tool_calls", 0) + validation.get("orphaned_tool_results", 0)
+        if orphaned > 0:
+            total = validation.get("tool_calls_total", 0)
+            violations.append(f"{sid} ({orphaned} orphaned of {total} calls)")
+
+    if checked == 0:
+        return {
+            "status": "SKIP",
+            "message": f"Could not validate tool pairing for {len(cc_sessions)} CC sessions",
+            "violations": [],
+        }
+
+    return {
+        "status": "FAIL" if violations else "PASS",
+        "message": (
+            f"{len(violations)}/{checked} CC sessions have orphaned tool calls/results"
+            if violations
+            else f"All {checked} CC sessions have complete tool call/result pairing"
+        ),
+        "violations": violations[:20],
+    }
+
+
+def check_cc_session_mcp_metadata(api_base_url: str) -> dict:
+    """H-SESSION-CC-004: CC session MCP calls should have server metadata.
+
+    Validates that MCP tool calls (mcp__*) in CC session JSONL have
+    mcpMeta.serverName populated for traceability to the originating
+    MCP server (gov-core, gov-tasks, gov-sessions, etc.).
+    """
+    sessions = _api_get(api_base_url, "/api/sessions?limit=200")
+    if not sessions:
+        return {"status": "SKIP", "message": "No sessions to check", "violations": []}
+
+    cc_sessions = [
+        s for s in sessions
+        if s.get("session_id", "").startswith("SESSION-") and "-CC-" in s.get("session_id", "")
+    ]
+    if not cc_sessions:
+        return {"status": "SKIP", "message": "No CC-ingested sessions found", "violations": []}
+
+    violations = []
+    checked = 0
+    for s in cc_sessions[:30]:
+        sid = s.get("session_id", "unknown")
+        validation = _api_get(api_base_url, f"/api/sessions/{sid}/validate")
+        if not isinstance(validation, dict) or "mcp_calls_total" not in validation:
+            continue
+        checked += 1
+        mcp_total = validation.get("mcp_calls_total", 0)
+        mcp_without = validation.get("mcp_calls_without_server", 0)
+        if mcp_without > 0:
+            violations.append(f"{sid} ({mcp_without}/{mcp_total} MCP calls lack server metadata)")
+
+    if checked == 0:
+        return {
+            "status": "SKIP",
+            "message": f"Could not validate MCP metadata for {len(cc_sessions)} CC sessions",
+            "violations": [],
+        }
+
+    return {
+        "status": "FAIL" if violations else "PASS",
+        "message": (
+            f"{len(violations)}/{checked} CC sessions have MCP calls without server metadata"
+            if violations
+            else f"All {checked} CC sessions have complete MCP server metadata"
+        ),
+        "violations": violations[:20],
+    }
+
+
 # ===== REGISTRY =====
 
 CC_PROJECT_CHECKS = [
@@ -220,6 +317,18 @@ CC_PROJECT_CHECKS = [
         "domain": "SESSION",
         "name": "CC session project linkage",
         "check_fn": check_cc_session_project_link,
+    },
+    {
+        "id": "H-SESSION-CC-003",
+        "domain": "SESSION",
+        "name": "CC session tool call/result pairing",
+        "check_fn": check_cc_session_tool_pairing,
+    },
+    {
+        "id": "H-SESSION-CC-004",
+        "domain": "SESSION",
+        "name": "CC session MCP server metadata",
+        "check_fn": check_cc_session_mcp_metadata,
     },
     {
         "id": "H-PROJECT-001",

@@ -162,13 +162,33 @@ def get_all_sessions_from_typedb(allow_fallback: bool = False) -> List[Dict[str,
             result = [_session_to_dict(s) for s in sessions]
             for s in result:
                 s["persistence_status"] = "persisted"
-            # Merge orphan sessions from _sessions_store (memory-only)
+            # BUG-SESSIONS-ONGOING-001: Merge in-memory status/end_time for
+            # TypeDB sessions where TypeDB lacks completed-at but in-memory
+            # has correct COMPLETED status (e.g. session ended via API but
+            # completed-at not persisted to TypeDB, or ingested CC sessions).
             if allow_fallback:
                 typedb_ids = {s["session_id"] for s in result}
+                mem_snapshot = {
+                    v.get("session_id"): v
+                    for v in list(_sessions_store.values())
+                    if v.get("session_id")
+                }
+                for s in result:
+                    sid = s["session_id"]
+                    mem = mem_snapshot.get(sid)
+                    if mem:
+                        mem_status = (mem.get("status") or "").upper()
+                        tdb_status = (s.get("status") or "").upper()
+                        # In-memory says COMPLETED but TypeDB says ACTIVE:
+                        # trust the in-memory data (service layer wrote it)
+                        if mem_status in ("COMPLETED", "CLOSED", "ENDED") and tdb_status == "ACTIVE":
+                            s["status"] = mem_status
+                            if mem.get("end_time") and not s.get("end_time"):
+                                s["end_time"] = mem["end_time"]
+                # Merge orphan sessions from _sessions_store (memory-only)
                 # BUG-205-ITER-001: Snapshot to avoid RuntimeError on concurrent dict mutation
-                for mem_session in list(_sessions_store.values()):
-                    sid = mem_session.get("session_id")
-                    if sid and sid not in typedb_ids:
+                for sid, mem_session in mem_snapshot.items():
+                    if sid not in typedb_ids:
                         orphan = dict(mem_session)
                         orphan["persistence_status"] = "memory_only"
                         result.append(orphan)

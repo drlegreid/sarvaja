@@ -36,6 +36,7 @@ from governance.typedb.queries import (
     RuleQueries,
     AgentQueries,
     ProjectQueries,
+    ProposalQueries,
 )
 
 
@@ -46,6 +47,7 @@ class TypeDBClient(
     RuleQueries,
     AgentQueries,
     ProjectQueries,
+    ProposalQueries,
 ):
     """
     High-level TypeDB client for governance queries.

@@ -32,3 +32,9 @@ _sessions_store: Dict[str, Dict[str, Any]] = {}
 
 # Chat sessions store (ORCH-006)
 _chat_sessions: Dict[str, Dict[str, Any]] = {}
+
+# Proposal store - in-memory primary, TypeDB best-effort (BUG-1 fix)
+_proposals_store: Dict[str, Dict[str, Any]] = {}
+
+# Proposal votes store - keyed by proposal_id
+_proposal_votes_store: Dict[str, List[Dict[str, Any]]] = {}

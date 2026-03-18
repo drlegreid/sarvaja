@@ -1,0 +1,41 @@
+# Workspace, Project & Capability Relations
+# Completes the chain: Project → Workspace → Agent → Capabilities → Tasks → Sessions
+# Part of: EPIC-ENTITY-CHAIN Schema Modularization
+# Created: 2026-02-21
+
+define
+
+# =============================================================================
+# PROJECT → WORKSPACE RELATION
+# =============================================================================
+
+relation project-has-workspace,
+    relates owning-project,
+    relates workspace-member;
+
+# =============================================================================
+# WORKSPACE → AGENT RELATION
+# =============================================================================
+
+relation workspace-has-agent,
+    relates agent-workspace,
+    relates assigned-agent;
+
+# =============================================================================
+# AGENT → RULE CAPABILITY RELATION
+# The critical missing link: which rules govern which agent
+# =============================================================================
+
+relation agent-capability,
+    relates capable-agent,
+    relates governing-rule,
+    owns capability-category,   # "coding", "testing", "governance", "research"
+    owns capability-status;     # "active", "suspended"
+
+# =============================================================================
+# PROJECT → SESSION RELATION (makes sessions traceable to projects)
+# =============================================================================
+
+relation project-has-session,
+    relates session-project,
+    relates project-session;

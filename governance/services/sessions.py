@@ -59,23 +59,34 @@ def _monitor(action: str, session_id: str, source: str = "service", **extra):
 
 
 def _is_test_artifact(session: dict) -> bool:
-    """Check if session was created by automated tests (not real work)."""
+    """Check if session was created by automated tests (not real work).
+
+    Synced with heuristic_checks_session.py _INTEGRATION_TEST_PATTERNS.
+    """
     sid = session.get("session_id", "")
-    desc = session.get("description", "")
+    agent_id = session.get("agent_id", "")
     # Exact test session IDs from conftest and unit tests
     if sid in ("SESSION-FAIL", "SESSION-TEST"):
         return True
-    # Test patterns in session ID
-    test_patterns = [
+    # Integration test patterns (from heuristic_checks_session.py)
+    test_patterns = (
         "-CHAT-TEST", "-CHAT-FAIL", "-CHAT-BOOM", "-CHAT-NO-TOOLS",
-        "-CHAT-NO-THOUGHTS", "-CHAT-DELETE-TEST", "-CHAT-FALLBACK-TEST",
-        "-CHAT-FALLBACK-END-TEST", "-CHAT-COMPLETE-SESSION",
-        "-CHAT-TEST-STORE", "-CHAT-TEST-LINKING", "-CHAT-TEST-SESSION",
-        "-CHAT-TEST-COUNT", "-CHAT-TEST-SUMMARY", "-CHAT-TEST-TOOL-SYNC",
-        "-CHAT-TEST-THOUGHT-SYNC", "-CHAT-TEST-FULL-RESULT",
-        "-CHAT-AAAA",
-    ]
-    return any(p in sid for p in test_patterns)
+        "-CHAT-NO-THOUGHTS", "-CHAT-DELETE", "-CHAT-FALLBACK",
+        "-CHAT-COMPLETE-SESSION", "-CHAT-CVP",
+        "-CHAT-FULL-LIFECYCLE", "-CHAT-REVIEWING",
+        "-CHAT-HELLO", "-CHAT-LINKING", "-CHAT-VERIFY",
+        "-CHAT-TESTING", "-CHAT-SUMMARY", "-CHAT--STATUS",
+        "-CHAT--HELP", "-CHAT-STORE-", "-CHAT-TYPEDB-",
+        "-CHAT-RESILIENT", "-CHAT-DONE", "-CHAT-ORPHAN",
+        "-CHAT-AAA", "-CHAT-BBB", "-CHAT-CCC",
+        "-CHAT-HEURISTIC-", "-CHAT-SESSION-BRIDGE",
+        "-INTTEST-", "E2E-TEST-",
+    )
+    if any(p in sid for p in test_patterns):
+        return True
+    # Test agent IDs (from integration conftest)
+    test_agents = ("test-agent", "e2e-test-agent", "inttest-agent")
+    return agent_id in test_agents
 
 
 def list_sessions(

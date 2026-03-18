@@ -1,0 +1,38 @@
+# Workspace & Project Entities (Digital Twin Model)
+# Completes the chain: Project → Workspace → Agent → Capabilities → Tasks → Sessions
+# Part of: EPIC-ENTITY-CHAIN Schema Modularization
+# Created: 2026-02-21
+
+define
+
+# =============================================================================
+# PROJECT ENTITY (migrated from legacy schema to 3x)
+# =============================================================================
+
+entity project,
+
+    owns project-id,
+    owns project-name,
+    owns project-path,
+    owns project-type,          # "governance", "gamedev", "video", "financial", "ml", "generic"
+    owns project-description,
+    owns project-created-at,
+    plays project-has-workspace:owning-project,
+    plays project-has-session:session-project;
+
+# =============================================================================
+# WORKSPACE ENTITY
+# =============================================================================
+
+# A workspace is an organizational context within a project where agents operate.
+# It defines which agents work there and what rules govern them.
+entity workspace,
+
+    owns workspace-id,
+    owns workspace-name,
+    owns workspace-type,        # "governance", "gamedev", "video", etc.
+    owns workspace-description,
+    owns workspace-status,      # "active", "archived"
+    owns workspace-created-at,
+    plays project-has-workspace:workspace-member,
+    plays workspace-has-agent:agent-workspace;
