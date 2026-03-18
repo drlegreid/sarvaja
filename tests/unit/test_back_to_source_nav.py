@@ -64,3 +64,38 @@ class TestSessionNavigationSetsContext:
         from agent.governance_ui.controllers.sessions import register_sessions_controllers
         source = inspect.getsource(register_sessions_controllers)
         assert "navigate_to_decision_from_session" in source
+
+
+class TestSessionDetailCrossEntityLinks:
+    """Session detail content has clickable cross-entity navigation."""
+
+    def test_project_slug_chip_is_clickable(self):
+        from agent.governance_ui.views.sessions.content import build_session_metadata_chips
+        source = inspect.getsource(build_session_metadata_chips)
+        # Project slug chip navigates to projects view
+        assert "session-project-link" in source
+        assert "select_project" in source
+        assert "active_view = 'projects'" in source
+
+    def test_agent_link_navigates_to_agents_view(self):
+        from agent.governance_ui.views.sessions.content import build_session_info_card
+        source = inspect.getsource(build_session_info_card)
+        # Agent item navigates to agents view
+        assert "session-agent-link" in source
+        assert "select_agent" in source
+        assert "active_view = 'agents'" in source
+
+    def test_linked_rules_are_clickable(self):
+        from agent.governance_ui.views.sessions.content import build_session_info_card
+        source = inspect.getsource(build_session_info_card)
+        assert "navigate_to_rule_from_session" in source
+
+    def test_linked_decisions_are_clickable(self):
+        from agent.governance_ui.views.sessions.content import build_session_info_card
+        source = inspect.getsource(build_session_info_card)
+        assert "navigate_to_decision_from_session" in source
+
+    def test_project_chip_in_metadata(self):
+        from agent.governance_ui.views.sessions.content import build_session_metadata_chips
+        source = inspect.getsource(build_session_metadata_chips)
+        assert "cc_project_slug" in source

@@ -57,6 +57,7 @@ class TestGetAllSessions:
         assert sessions[1].id == "S-2"
 
     def test_sets_completed_status(self):
+        """BUG-SESSIONS-ONGOING-001: S-1 completed, S-2 UNKNOWN (no started_at)."""
         client = _make_client()
         client._execute_query = MagicMock(side_effect=[
             [{"id": "S-1"}, {"id": "S-2"}],
@@ -70,7 +71,8 @@ class TestGetAllSessions:
         sessions = client.get_all_sessions()
         session_map = {s.id: s for s in sessions}
         assert session_map["S-1"].status == "COMPLETED"
-        assert session_map["S-2"].status == "ACTIVE"
+        # S-2 has no started_at and no completed-at → UNKNOWN (not ACTIVE)
+        assert session_map["S-2"].status == "UNKNOWN"
 
     def test_populates_attributes(self):
         client = _make_client()
@@ -133,7 +135,8 @@ class TestGetAllSessions:
         client._execute_query = MagicMock(side_effect=side_effect)
         sessions = client.get_all_sessions()
         assert len(sessions) == 1
-        assert sessions[0].status == "ACTIVE"
+        # BUG-SESSIONS-ONGOING-001: No started_at or completed-at → UNKNOWN
+        assert sessions[0].status == "UNKNOWN"
 
     def test_filters_none_session_ids(self):
         client = _make_client()
@@ -156,13 +159,15 @@ class TestBuildSessionFromId:
     """Tests for _build_session_from_id() method."""
 
     def test_minimal_session(self):
+        """BUG-SESSIONS-ONGOING-001: No attrs at all → UNKNOWN (not blindly ACTIVE)."""
         client = _make_client()
         # All queries return empty (no optional attrs)
         client._execute_query = MagicMock(return_value=[])
 
         session = client._build_session_from_id("S-1")
         assert session.id == "S-1"
-        assert session.status == "ACTIVE"
+        # No started_at and no completed-at → UNKNOWN
+        assert session.status == "UNKNOWN"
         assert session.tasks_completed == 0
 
     def test_completed_session(self):

@@ -65,3 +65,34 @@ class TestMetricsViewContent:
         from agent.governance_ui.views import metrics_view
         source = inspect.getsource(metrics_view)
         assert "metrics-days-filter" in source
+
+    def test_has_histogram(self):
+        from agent.governance_ui.views import metrics_view
+        source = inspect.getsource(metrics_view)
+        assert "metrics-histogram" in source
+
+    def test_has_histogram_chart(self):
+        from agent.governance_ui.views import metrics_view
+        source = inspect.getsource(metrics_view)
+        assert "metrics-histogram-chart" in source
+
+
+class TestMetricsHistogramFunction:
+    def test_build_metrics_histogram_callable(self):
+        from agent.governance_ui.views.metrics_view import build_metrics_histogram
+        assert callable(build_metrics_histogram)
+
+    def test_histogram_uses_sparkline(self):
+        """Histogram uses VSparkline for reactive data binding."""
+        from agent.governance_ui.views import metrics_view
+        source = inspect.getsource(metrics_view.build_metrics_histogram)
+        assert "VSparkline" in source
+        assert "session_count" in source
+
+    def test_histogram_renders_before_table(self):
+        """Histogram appears before per-day table for visual priority."""
+        from agent.governance_ui.views import metrics_view
+        source = inspect.getsource(metrics_view.build_summary_tab)
+        hist_pos = source.index("build_metrics_histogram")
+        table_pos = source.index("build_per_day_table")
+        assert hist_pos < table_pos

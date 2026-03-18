@@ -30,7 +30,8 @@ class TestLoaderRegistration:
     def test_returns_dict_with_all_keys(self, loaders):
         expected = {"load_tool_calls", "load_thinking_items", "build_timeline",
                     "load_evidence_rendered", "load_evidence", "load_tasks",
-                    "load_transcript", "load_transcript_entry"}
+                    "load_transcript", "load_transcript_entry",
+                    "load_validation"}
         assert set(loaders.keys()) == expected
 
     def test_all_values_callable(self, loaders):

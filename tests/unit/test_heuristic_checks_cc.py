@@ -11,6 +11,8 @@ from governance.routes.tests.heuristic_checks_cc import (
     check_cc_session_project_link,
     check_project_has_content,
     check_cc_ingestion_complete,
+    check_cc_session_tool_pairing,
+    check_cc_session_mcp_metadata,
     CC_PROJECT_CHECKS,
 )
 
@@ -216,13 +218,15 @@ class TestCheckCCIngestionComplete:
 class TestCCProjectChecksRegistry:
     """Verify registry structure."""
 
-    def test_registry_has_4_checks(self):
-        assert len(CC_PROJECT_CHECKS) == 4
+    def test_registry_has_6_checks(self):
+        assert len(CC_PROJECT_CHECKS) == 6
 
     def test_check_ids(self):
         ids = [c["id"] for c in CC_PROJECT_CHECKS]
         assert "H-SESSION-CC-001" in ids
         assert "H-SESSION-CC-002" in ids
+        assert "H-SESSION-CC-003" in ids
+        assert "H-SESSION-CC-004" in ids
         assert "H-PROJECT-001" in ids
         assert "H-INGESTION-001" in ids
 

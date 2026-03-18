@@ -71,9 +71,21 @@ class TestBatchFetchAttributes:
         assert session_map["S-1"].description == "Description here"
         assert session_map["S-1"].status == "COMPLETED"
 
-    def test_active_when_no_completed_at(self, reader):
+    def test_unknown_when_no_completed_at_and_no_started_at(self, reader):
+        """BUG-SESSIONS-ONGOING-001: Sessions without completed-at and no started_at get UNKNOWN."""
         from governance.typedb.entities import Session
         session_map = {"S-1": Session(id="S-1")}
+
+        reader._execute_query.return_value = []
+        reader._batch_fetch_session_attributes(session_map)
+        assert session_map["S-1"].status == "UNKNOWN"
+
+    def test_active_when_no_completed_at_but_has_started_at(self, reader):
+        """Sessions without completed-at but WITH started_at remain ACTIVE."""
+        from governance.typedb.entities import Session
+        session = Session(id="S-1")
+        session.started_at = "2026-02-11T08:00:00"
+        session_map = {"S-1": session}
 
         reader._execute_query.return_value = []
         reader._batch_fetch_session_attributes(session_map)
@@ -84,7 +96,8 @@ class TestBatchFetchAttributes:
         session_map = {"S-1": Session(id="S-1")}
 
         reader._execute_query.side_effect = Exception("TypeDB down")
-        # Should not raise
+        # Should not raise; keeps entity default ("ACTIVE")
+        # The merge layer corrects status from _sessions_store
         reader._batch_fetch_session_attributes(session_map)
         assert session_map["S-1"].status == "ACTIVE"
 

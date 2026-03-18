@@ -40,6 +40,24 @@ def api_url():
     return API_URL
 
 
+# JS snippet that injects a <style> to disable Vuetify overlay pointer events.
+# Trame/Vuetify creates .v-overlay-container elements that intercept clicks
+# even when no modal is open.  Idempotent — checks for existing tag by id.
+_INJECT_OVERLAY_FIX_JS = """() => {
+    if (!document.getElementById('e2e-overlay-fix')) {
+        const s = document.createElement('style');
+        s.id = 'e2e-overlay-fix';
+        s.textContent = `
+            .v-overlay-container,
+            .v-overlay-container *,
+            .v-overlay__scrim {
+                pointer-events: none !important;
+            }
+        `;
+        document.head.appendChild(s);
+    }
+}"""
+
 # Playwright-dependent fixtures (only defined if playwright is installed)
 if HAS_PLAYWRIGHT:
     @pytest.fixture(scope="session")
@@ -50,6 +68,24 @@ if HAS_PLAYWRIGHT:
             "viewport": {"width": 1280, "height": 720},
             "ignore_https_errors": True,
         }
+
+    @pytest.fixture(autouse=True)
+    def dismiss_vuetify_overlays(page: Page):
+        """Inject CSS to disable Vuetify overlay pointer interception.
+
+        Runs automatically for every Playwright E2E test. Hooks into
+        framenavigated so the fix re-applies after SPA route changes
+        and page.goto() calls.
+        """
+        def _on_navigate(frame):
+            if frame == frame.page.main_frame:
+                try:
+                    frame.page.evaluate(_INJECT_OVERLAY_FIX_JS)
+                except Exception:
+                    pass  # Page may be closing
+
+        page.on("framenavigated", _on_navigate)
+        yield page
 
     @pytest.fixture
     def authenticated_page(page: Page, dashboard_url: str):

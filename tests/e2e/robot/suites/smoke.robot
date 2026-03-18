@@ -19,7 +19,8 @@ API Health Check
 Dashboard Loads Successfully
     [Documentation]    Verify dashboard UI responds with HTTP 200
     [Tags]    ui    critical
-    ${response}=    GET On Session    api    ${BASE_URL}/    expected_status=any
+    Create Session    dashboard    ${DASHBOARD_URL}    verify=${False}
+    ${response}=    GET On Session    dashboard    /    expected_status=any
     Should Be True    ${response.status_code} in [200, 302]    Dashboard returned ${response.status_code}
 
 Rules API Returns List

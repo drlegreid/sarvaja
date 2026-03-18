@@ -1,55 +1,62 @@
 *** Settings ***
-Documentation    Common resources for all E2E tests
-...              Per RF-001: Base keyword library
+Documentation    Common resources for all E2E test suites
+...              Per TEST-E2E-FRAMEWORK-01-v1: Centralized setup, DRY keywords
 ...              Per TEST-BDD-01-v1: BDD E2E Testing Standard
 
 Library    Browser    auto_closing_level=SUITE
 Library    Collections
 Library    String
 Library    DateTime
+Library    ../libraries/actions.py
+Library    ../libraries/navigation.py
+Library    ../libraries/overlay.py
+
+Resource    selectors.resource
 
 *** Variables ***
-${BASE_URL}        http://localhost:8081
 ${API_URL}         http://localhost:8082/api
 ${TIMEOUT}         30s
 ${BROWSER}         chromium
-${HEADLESS}        True
+${HEADLESS}        true
 
 *** Keywords ***
-Open Dashboard
-    [Documentation]    Open the governance dashboard in browser
-    [Tags]    ui
+Suite Setup Open Dashboard
+    [Documentation]    Opens browser, navigates to dashboard, injects overlay fix.
+    ...                Used as Suite Setup for all browser E2E test suites.
     New Browser    ${BROWSER}    headless=${HEADLESS}
-    New Page    ${BASE_URL}
+    &{vp}=    Create Dictionary    width=${1280}    height=${720}
+    New Context    viewport=${vp}    ignoreHTTPSErrors=${TRUE}
+    Open Dashboard    ${DASHBOARD_URL}
+    Dashboard Should Be Loaded    ${APP_TITLE}
+    Inject Overlay Fix
+
+Suite Teardown Close Browser
+    [Documentation]    Closes all browser resources cleanly.
+    Close Browser    ALL
+
+Test Setup Navigate Home
+    [Documentation]    Reloads dashboard to reset Trame state between tests.
+    ...                Ensures each test starts from a clean dashboard.
+    Go To    ${DASHBOARD_URL}
     Wait For Load State    networkidle    timeout=${TIMEOUT}
+    Dashboard Should Be Loaded    ${APP_TITLE}
+    Inject Overlay Fix
 
-Close Dashboard
-    [Documentation]    Close browser session
-    [Tags]    ui
-    Close Browser
+Navigate And Verify Tab
+    [Documentation]    Navigate to a tab and verify expected content loaded.
+    ...                Uses Fibonacci backoff for the content check.
+    [Arguments]    ${tab_name}    ${expected_text}
+    Navigate To Tab    ${tab_name}
+    Element Should Be Visible With Backoff    text=${expected_text}
 
-Dashboard Should Be Visible
-    [Documentation]    Verify dashboard has loaded
-    [Tags]    ui
-    Wait For Elements State    css=.v-app    visible    timeout=${TIMEOUT}
-
-Navigate To Tab
-    [Documentation]    Navigate to a specific dashboard tab
-    [Arguments]    ${tab_name}
-    [Tags]    ui
-    Click    css=[data-testid='nav-${tab_name.lower()}']
-    Wait For Load State    networkidle
+Verify Data Table Has Rows
+    [Documentation]    Wait for a data table to have at least one data row.
+    ...                Uses Fibonacci backoff via actions library.
+    [Arguments]    ${table_selector}=tbody    ${max_attempts}=6
+    Wait For Table Rows    ${table_selector}    ${max_attempts}
 
 Take Evidence Screenshot
-    [Documentation]    Capture screenshot for test evidence
+    [Documentation]    Capture screenshot for test evidence.
     [Arguments]    ${name}=screenshot
-    [Tags]    evidence
     ${timestamp}=    Get Current Date    result_format=%Y%m%d_%H%M%S
     Take Screenshot    evidence_${name}_${timestamp}.png
-
-Log API Response
-    [Documentation]    Log API response for debugging
-    [Arguments]    ${response}
-    [Tags]    api    debug
-    Log    Status: ${response.status}
-    Log    Body: ${response.body}

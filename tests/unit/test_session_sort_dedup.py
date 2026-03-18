@@ -120,15 +120,30 @@ class TestExcludeTestArtifacts:
         for sid in test_ids:
             assert _is_test_artifact({"session_id": sid}) is True, f"Expected {sid} to be test artifact"
 
+    def test_is_test_artifact_detects_integration_patterns(self):
+        """Integration test patterns (CHAT-FULL-LIFECYCLE, etc.) should be detected."""
+        from governance.services.sessions import _is_test_artifact
+        integration_ids = [
+            "SESSION-2026-02-14-CHAT-FULL-LIFECYCLE",
+            "SESSION-2026-02-15-CHAT-REVIEWING-RULES",
+            "SESSION-2026-02-21-CHAT-HELLO",
+            "SESSION-2026-02-18-CHAT-VERIFY-SESSION",
+            "SESSION-2026-02-15-CHAT-CVP-TEST",
+            "SESSION-2026-02-21-CHAT-HEURISTIC-INTEGRITY-CHECK-(ALL)",
+            "SESSION-2026-02-18-INTTEST-RULE-LIFECYCLE",
+        ]
+        for sid in integration_ids:
+            assert _is_test_artifact({"session_id": sid}) is True, f"Expected {sid} to be test artifact"
+
     def test_is_test_artifact_allows_real_sessions(self):
         """Real sessions should not be detected as test artifacts."""
         from governance.services.sessions import _is_test_artifact
         real_ids = [
             "SESSION-2026-02-15-CC-E0E0A53E-60BC",
-            "SESSION-2026-02-14-CHAT-FULL-LIFECYCLE",
-            "SESSION-2026-02-13-CHAT-HEURISTIC-INTEGRITY-CHECK-(ALL)",
             "SESSION-2026-01-20-CC-176AB4A6-F892",
-            "SESSION-2026-02-15-CHAT-REVIEWING-RULES",
+            "SESSION-2026-02-15-ASSESS-P0-P6-GAPS-SESSION-2",
+            "SESSION-2026-01-02-ANALYSIS-REPORT",
+            "SESSION-2026-02-12-CHAT-DASHBOARD-WORK",
         ]
         for sid in real_ids:
             assert _is_test_artifact({"session_id": sid}) is False, f"Expected {sid} to be real session"
@@ -142,14 +157,14 @@ class TestExcludeTestArtifacts:
             {"session_id": "SESSION-FAIL", "status": "ACTIVE", "start_time": "2026-02-15"},
             {"session_id": "SESSION-2026-02-15-CHAT-TEST", "status": "COMPLETED", "start_time": "2026-02-15"},
             {"session_id": "SESSION-2026-02-15-CC-REAL", "status": "COMPLETED", "start_time": "2026-02-15"},
-            {"session_id": "SESSION-2026-02-14-CHAT-FULL-LIFECYCLE", "status": "COMPLETED", "start_time": "2026-02-14"},
+            {"session_id": "SESSION-2026-02-14-CHAT-DASHBOARD-WORK", "status": "COMPLETED", "start_time": "2026-02-14"},
         ]
 
         result = list_sessions(exclude_test=True, limit=100)
         ids = [s["session_id"] for s in result["items"]]
         assert len(ids) == 2
         assert "SESSION-2026-02-15-CC-REAL" in ids
-        assert "SESSION-2026-02-14-CHAT-FULL-LIFECYCLE" in ids
+        assert "SESSION-2026-02-14-CHAT-DASHBOARD-WORK" in ids
         assert "SESSION-FAIL" not in ids
 
     @patch("governance.services.sessions.get_all_sessions_from_typedb")
