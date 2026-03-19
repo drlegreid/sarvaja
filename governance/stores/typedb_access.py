@@ -322,6 +322,7 @@ def _session_to_dict(session) -> Dict[str, Any]:
         "cc_tool_count": getattr(session, 'cc_tool_count', None),
         "cc_thinking_chars": getattr(session, 'cc_thinking_chars', None),
         "cc_compaction_count": getattr(session, 'cc_compaction_count', None),
+        "cc_external_name": getattr(session, 'cc_external_name', None),
         "project_id": getattr(session, 'project_id', None),
         # P0-2: Server-computed duration — single source of truth
         "duration": compute_session_duration_from_timestamps(

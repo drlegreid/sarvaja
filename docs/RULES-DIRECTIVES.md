@@ -109,6 +109,7 @@
 | REPORT-OBJ-01-v1 | (new) | Objective Reporting | HIGH | ACTIVE |
 | ARCH-MCP-PARITY-01-v1 | (new) | MCP-REST API Feature Parity | MEDIUM | ACTIVE |
 | ARCH-BACKFILL-01-v1 | (new) | Backfill Tool Registration | MEDIUM | ACTIVE |
+| UI-REFRESH-01-v1 | (new) | Smart Dashboard Auto-Refresh | HIGH | ACTIVE |
 
 ---
 

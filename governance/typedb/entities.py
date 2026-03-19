@@ -100,6 +100,7 @@ class Session:
     cc_tool_count: Optional[int] = None
     cc_thinking_chars: Optional[int] = None
     cc_compaction_count: Optional[int] = None
+    cc_external_name: Optional[str] = None
     project_id: Optional[str] = None
 
 

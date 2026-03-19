@@ -38,12 +38,16 @@ class SessionCRUDOperations(SessionMutationOperations):
         description: str = None,
         file_path: str = None,
         agent_id: str = None,
+        start_time: str = None,
+        end_time: str = None,
+        status: str = None,
         cc_session_uuid: str = None,
         cc_project_slug: str = None,
         cc_git_branch: str = None,
         cc_tool_count: int = None,
         cc_thinking_chars: int = None,
         cc_compaction_count: int = None,
+        cc_external_name: str = None,
     ) -> Optional[Session]:
         """
         Insert a new session into TypeDB.
@@ -96,6 +100,9 @@ class SessionCRUDOperations(SessionMutationOperations):
                         # BUG-306-SES-001: Backslash-first escape
                         branch_esc = cc_git_branch.replace('\\', '\\\\').replace('"', '\\"')
                         insert_parts.append(f'has cc-git-branch "{branch_esc}"')
+                    if cc_external_name:
+                        name_esc = cc_external_name.replace('\\', '\\\\').replace('"', '\\"')
+                        insert_parts.append(f'has cc-external-name "{name_esc}"')
                     # BUG-306-SES-003: Coerce integer fields to prevent TypeQL injection
                     if cc_tool_count is not None:
                         insert_parts.append(f'has cc-tool-count {int(cc_tool_count)}')
@@ -104,9 +111,24 @@ class SessionCRUDOperations(SessionMutationOperations):
                     if cc_compaction_count is not None:
                         insert_parts.append(f'has cc-compaction-count {int(cc_compaction_count)}')
 
-                    now = datetime.now()
-                    timestamp_str = now.strftime('%Y-%m-%dT%H:%M:%S')
-                    insert_parts.append(f'has started-at {timestamp_str}')
+                    # P2-10c: Use provided start_time or fall back to now()
+                    if start_time:
+                        ts_str = start_time[:19].replace("Z", "")
+                        insert_parts.append(f'has started-at {ts_str}')
+                    else:
+                        now = datetime.now()
+                        timestamp_str = now.strftime('%Y-%m-%dT%H:%M:%S')
+                        insert_parts.append(f'has started-at {timestamp_str}')
+
+                    # P2-10c: Set completed-at from end_time
+                    if end_time:
+                        et_str = end_time[:19].replace("Z", "")
+                        insert_parts.append(f'has completed-at {et_str}')
+
+                    # P2-10c: Set status if provided
+                    if status:
+                        status_esc = status.replace('\\', '\\\\').replace('"', '\\"')
+                        insert_parts.append(f'has session-status "{status_esc}"')
 
                     insert_query = f"""
                         insert $s isa work-session,

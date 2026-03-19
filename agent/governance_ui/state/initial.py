@@ -256,6 +256,10 @@ def get_initial_state() -> Dict[str, Any]:
         'backlog_per_page': 10,
         'backlog_per_page_options': [10, 25, 50],
 
+        # Sessions auto-refresh (P2-10c: UI-REFRESH-01-v1)
+        'sessions_auto_refresh': False,
+        'sessions_refresh_interval': 10,  # seconds
+
         # Sessions filter state (F.1: dynamic column filters)
         'sessions_search_query': '',
         'sessions_filter_status': None,
@@ -354,6 +358,7 @@ def get_initial_state() -> Dict[str, Any]:
         # Sessions table headers (pattern: projects_headers)
         'sessions_headers': [
             {"title": "Session ID", "key": "session_id", "width": "180px", "sortable": True},
+            {"title": "Name", "key": "cc_external_name", "width": "140px", "sortable": True},
             {"title": "Source", "key": "source_type", "width": "70px", "sortable": True},
             {"title": "Project", "key": "cc_project_slug", "width": "120px", "sortable": True},
             {"title": "Start", "key": "start_time", "width": "130px", "sortable": True},

@@ -61,12 +61,25 @@ def ingest_single_session(
 
     session_id = build_session_id(meta, project_slug)
 
-    # Check if session already exists
+    # Check if session already exists — update end_time if changed
     try:
-        from governance.services.sessions import get_session
+        from governance.services.sessions import get_session, update_session
         existing = get_session(session_id)
         if existing:
-            logger.debug("Session %s already exists, skipping create", session_id)
+            new_end = meta.get("last_ts", "")
+            old_end = existing.get("end_time") or ""
+            new_title = meta.get("custom_title")
+            old_title = existing.get("cc_external_name")
+            if (new_end and new_end != old_end) or (new_title and new_title != old_title):
+                update_kwargs = {"session_id": session_id, "source": "watcher"}
+                if new_end and new_end != old_end:
+                    update_kwargs["end_time"] = new_end
+                if new_title and new_title != old_title:
+                    update_kwargs["cc_external_name"] = new_title
+                update_session(**update_kwargs)
+                logger.info("Updated session %s (end_time/name changed)", session_id)
+                return get_session(session_id) or existing
+            logger.debug("Session %s already exists, no changes", session_id)
             return existing
     except Exception:
         pass  # Service layer may not be available
@@ -100,6 +113,7 @@ def ingest_single_session(
             "user_count": meta.get("user_count", 0),
             "assistant_count": meta.get("assistant_count", 0),
             "models": meta.get("models", []),
+            "cc_external_name": meta.get("custom_title"),
             "jsonl_path": str(jsonl_path),
             "file_size": meta.get("file_size", 0),
         }

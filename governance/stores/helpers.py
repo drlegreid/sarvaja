@@ -13,6 +13,11 @@ from typing import Dict, Any, Optional, List
 from governance.client import Task as TypeDBTask, Session as TypeDBSession
 
 
+def _str_or_none(val) -> str | None:
+    """Coerce to str or None — guards against MagicMock/non-string values."""
+    return val if isinstance(val, str) else None
+
+
 # =============================================================================
 # DURATION HELPER (P0-2: Single source of truth for session duration)
 # =============================================================================
@@ -201,6 +206,7 @@ def session_to_response(session: TypeDBSession):
         cc_tool_count=getattr(session, 'cc_tool_count', None),
         cc_thinking_chars=getattr(session, 'cc_thinking_chars', None),
         cc_compaction_count=getattr(session, 'cc_compaction_count', None),
+        cc_external_name=_str_or_none(getattr(session, 'cc_external_name', None)),
         project_id=getattr(session, 'project_id', None),
         duration=compute_session_duration_from_timestamps(
             session.started_at, session.completed_at),

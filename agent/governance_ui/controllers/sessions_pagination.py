@@ -3,10 +3,12 @@ Session Pagination & Filter Controllers.
 
 Per DOC-SIZE-01-v1: Extracted from sessions.py (397 lines).
 Pagination, column filters, reactive handlers, pivot view.
+Per UI-REFRESH-01-v1: Smart auto-refresh polling.
 """
 
+import asyncio
 import httpx
-from typing import Any, Callable
+from typing import Any, Callable, Optional
 
 from agent.governance_ui.trace_bar.transforms import add_error_trace
 from agent.governance_ui.utils import (
@@ -262,5 +264,48 @@ def register_sessions_pagination(
         except Exception as e:
             add_error_trace(state, f"Compute pivot failed: {e}", "/api/sessions")
             state.sessions_pivot_data = []
+
+    # --- Smart auto-refresh (UI-REFRESH-01-v1) ---
+    _sessions_polling_task: Optional[asyncio.Task] = None
+
+    @ctrl.trigger("toggle_sessions_auto_refresh")
+    def toggle_sessions_auto_refresh():
+        """Toggle auto-refresh polling for sessions list.
+
+        Per UI-REFRESH-01-v1: Only polls when list tab is active and
+        detail view is NOT open. Pauses when user is viewing a session.
+        """
+        nonlocal _sessions_polling_task
+
+        state.sessions_auto_refresh = not state.sessions_auto_refresh
+
+        if state.sessions_auto_refresh:
+            async def polling_loop():
+                while state.sessions_auto_refresh:
+                    interval = getattr(state, 'sessions_refresh_interval', 10)
+                    await asyncio.sleep(interval)
+                    # Guard: only refresh when sessions LIST is active
+                    if not state.sessions_auto_refresh:
+                        break
+                    if getattr(state, 'active_view', '') != 'sessions':
+                        continue  # Skip, user is on another tab
+                    if getattr(state, 'show_session_detail', False):
+                        continue  # Skip, user is viewing a session detail
+                    load_sessions_page()
+                    state.flush()
+
+            try:
+                loop = asyncio.get_event_loop()
+                if _sessions_polling_task and not _sessions_polling_task.done():
+                    _sessions_polling_task.cancel()
+                _sessions_polling_task = loop.create_task(polling_loop())
+            except Exception as e:
+                add_error_trace(state, f"Start sessions auto-refresh failed: {e}",
+                                "sessions/auto-refresh")
+                state.sessions_auto_refresh = False
+        else:
+            if _sessions_polling_task and not _sessions_polling_task.done():
+                _sessions_polling_task.cancel()
+                _sessions_polling_task = None
 
     return load_sessions_page

@@ -118,6 +118,7 @@ entity work-session,
     owns cc-tool-count,                          # Total tool invocations
     owns cc-thinking-chars,                      # Reasoning token volume
     owns cc-compaction-count,                    # Context compressions
+    owns cc-external-name,                       # Claude Code session name (customTitle)
     plays completed-in:hosting-session,
     plays has-evidence:evidence-session,
     plays session-applied-rule:applying-session,
@@ -363,6 +364,7 @@ attribute cc-git-branch, value string;         # Git branch at session time
 attribute cc-tool-count, value integer;           # Total tool invocations
 attribute cc-thinking-chars, value integer;       # Reasoning token volume
 attribute cc-compaction-count, value integer;     # Context compressions
+attribute cc-external-name, value string;        # Claude Code session name (customTitle)
 
 # Project hierarchy attributes (GOV-PROJECT-01-v1)
 attribute project-id, value string;

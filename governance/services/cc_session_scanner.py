@@ -53,6 +53,7 @@ def scan_jsonl_metadata(filepath: Path) -> Optional[Dict[str, Any]]:
         thinking_chars = 0
         compaction_count = 0
         models_seen = set()
+        custom_title = None
 
         # BUG-209-SCANNER-ENCODING-001: Specify encoding for non-UTF-8 locales
         with open(filepath, "r", encoding="utf-8") as f:
@@ -93,6 +94,9 @@ def scan_jsonl_metadata(filepath: Path) -> Optional[Dict[str, Any]]:
                                     tool_use_count += 1
                                 elif block.get("type") == "thinking":
                                     thinking_chars += len(block.get("thinking", ""))
+                elif entry_type == "custom-title":
+                    # P2-10c: Extract session name (last one wins if renamed)
+                    custom_title = obj.get("customTitle") or custom_title
                 elif entry_type == "system" and obj.get("compactMetadata"):
                     compaction_count += 1
 
@@ -111,6 +115,7 @@ def scan_jsonl_metadata(filepath: Path) -> Optional[Dict[str, Any]]:
             "thinking_chars": thinking_chars,
             "compaction_count": compaction_count,
             "models": sorted(models_seen),
+            "custom_title": custom_title,
             "file_path": str(filepath),
             "file_size": file_size,
         }

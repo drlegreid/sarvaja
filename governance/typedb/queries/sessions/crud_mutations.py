@@ -36,6 +36,7 @@ class SessionMutationOperations:
         cc_tool_count: Optional[int] = None,
         cc_thinking_chars: Optional[int] = None,
         cc_compaction_count: Optional[int] = None,
+        cc_external_name: Optional[str] = None,
     ) -> Optional[Session]:
         """
         Update a session's attributes in TypeDB.
@@ -185,6 +186,7 @@ class SessionMutationOperations:
                         "cc-session-uuid": cc_session_uuid,
                         "cc-project-slug": cc_project_slug,
                         "cc-git-branch": cc_git_branch,
+                        "cc-external-name": cc_external_name,
                     }
                     for attr, val in cc_str_fields.items():
                         if val is not None:

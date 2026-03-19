@@ -39,6 +39,7 @@ class SessionReadQueries:
             ("match $s isa work-session, has session-id $id, has cc-session-uuid $v; select $id, $v;", "v", "cc_session_uuid"),
             ("match $s isa work-session, has session-id $id, has cc-project-slug $v; select $id, $v;", "v", "cc_project_slug"),
             ("match $s isa work-session, has session-id $id, has cc-git-branch $v; select $id, $v;", "v", "cc_git_branch"),
+            ("match $s isa work-session, has session-id $id, has cc-external-name $v; select $id, $v;", "v", "cc_external_name"),
         ]
         # CC integer attributes (separate to handle type)
         cc_int_queries = [
@@ -192,7 +193,7 @@ class SessionReadQueries:
         if agent_results:
             session.agent_id = agent_results[0].get("agent")
         # Claude Code session attributes (SESSION-CC-01-v1)
-        for attr, field in [("cc-session-uuid", "cc_session_uuid"), ("cc-project-slug", "cc_project_slug"), ("cc-git-branch", "cc_git_branch")]:
+        for attr, field in [("cc-session-uuid", "cc_session_uuid"), ("cc-project-slug", "cc_project_slug"), ("cc-git-branch", "cc_git_branch"), ("cc-external-name", "cc_external_name")]:
             try:
                 r = self._execute_query(f'match $s isa work-session, has session-id "{sid}", has {attr} $v; select $v;')
                 if r:

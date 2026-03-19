@@ -144,6 +144,7 @@ def list_sessions(
             or q in (s.get("agent_id") or "").lower()
             or q in (s.get("cc_project_slug") or "").lower()
             or q in (s.get("cc_git_branch") or "").lower()
+            or q in (s.get("cc_external_name") or "").lower()
         ]
 
     valid_sort_fields = ["started_at", "session_id", "status", "start_time"]
@@ -177,12 +178,17 @@ def create_session(
     description: str = "",
     agent_id: Optional[str] = None,
     source: str = "rest",
+    start_time: Optional[str] = None,
+    end_time: Optional[str] = None,
+    status: Optional[str] = None,
     cc_session_uuid: Optional[str] = None,
     cc_project_slug: Optional[str] = None,
     cc_git_branch: Optional[str] = None,
     cc_tool_count: Optional[int] = None,
     cc_thinking_chars: Optional[int] = None,
     cc_compaction_count: Optional[int] = None,
+    cc_external_name: Optional[str] = None,
+    **kwargs,
 ) -> Dict[str, Any]:
     """Create a session in TypeDB with fallback to in-memory store.
 
@@ -202,12 +208,16 @@ def create_session(
                 session_id=session_id,
                 description=description,
                 agent_id=agent_id,
+                start_time=start_time,
+                end_time=end_time,
+                status=status,
                 cc_session_uuid=cc_session_uuid,
                 cc_project_slug=cc_project_slug,
                 cc_git_branch=cc_git_branch,
                 cc_tool_count=cc_tool_count,
                 cc_thinking_chars=cc_thinking_chars,
                 cc_compaction_count=cc_compaction_count,
+                cc_external_name=cc_external_name,
             )
             if created:
                 record_audit("CREATE", "session", session_id,
@@ -231,8 +241,9 @@ def create_session(
 
     session_data = {
         "session_id": session_id,
-        "start_time": datetime.now().isoformat(),
-        "status": "ACTIVE",
+        "start_time": start_time or datetime.now().isoformat(),
+        "end_time": end_time,
+        "status": status or "ACTIVE",
         "tasks_completed": 0,
         "description": description,
         "agent_id": agent_id,
@@ -242,6 +253,7 @@ def create_session(
         "cc_tool_count": cc_tool_count,
         "cc_thinking_chars": cc_thinking_chars,
         "cc_compaction_count": cc_compaction_count,
+        "cc_external_name": cc_external_name,
         "persistence_status": "memory_only",
     }
     _sessions_store[session_id] = session_data
@@ -278,6 +290,7 @@ def update_session(
     cc_tool_count: Optional[int] = None,
     cc_thinking_chars: Optional[int] = None,
     cc_compaction_count: Optional[int] = None,
+    cc_external_name: Optional[str] = None,
 ) -> Optional[Dict[str, Any]]:
     """Update session fields in TypeDB with fallback.
 
@@ -305,6 +318,7 @@ def update_session(
                 cc_tool_count=cc_tool_count,
                 cc_thinking_chars=cc_thinking_chars,
                 cc_compaction_count=cc_compaction_count,
+                cc_external_name=cc_external_name,
             )
             if updated:
                 old_status = getattr(existing, 'status', None) if hasattr(existing, 'status') else existing.get("status")
@@ -352,6 +366,8 @@ def update_session(
         session["cc_thinking_chars"] = cc_thinking_chars
     if cc_compaction_count is not None:
         session["cc_compaction_count"] = cc_compaction_count
+    if cc_external_name is not None:
+        session["cc_external_name"] = cc_external_name
 
     # BUG-AUDIT-NULL-001: Use old_status when status is None (matches TypeDB path)
     record_audit("UPDATE", "session", session_id,
@@ -397,8 +413,12 @@ def sync_pending_sessions() -> Dict[str, Any]:
                 cc_tool_count=session_data.get("cc_tool_count"),
                 cc_thinking_chars=session_data.get("cc_thinking_chars"),
                 cc_compaction_count=session_data.get("cc_compaction_count"),
+                cc_external_name=session_data.get("cc_external_name"),
+                start_time=session_data.get("start_time"),
+                end_time=session_data.get("end_time"),
+                status=session_data.get("status"),
             )
-            # Sync status if present (not accepted by insert_session)
+            # Sync status if present (handled by insert_session now but kept for compat)
             status_val = session_data.get("status")
             if status_val:
                 try:

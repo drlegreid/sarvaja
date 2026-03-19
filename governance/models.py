@@ -186,6 +186,7 @@ class SessionResponse(BaseModel):
     cc_tool_count: Optional[int] = None
     cc_thinking_chars: Optional[int] = None
     cc_compaction_count: Optional[int] = None
+    cc_external_name: Optional[str] = None
     project_id: Optional[str] = None
     # P0-2: Server-computed duration (single source of truth)
     duration: Optional[str] = None
