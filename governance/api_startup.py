@@ -95,113 +95,61 @@ async def cleanup_orphaned_chat_sessions(_sessions_store):
 async def discover_cc_sessions():
     """Auto-discover and ingest CC sessions on API startup.
 
-    Per GAP-SESSION-CC-AUTO-DISCOVERY: Scans ~/.claude/projects/ for JSONL
-    files, creates missing project entities, and ingests CC sessions so they
-    appear in the API without waiting for the dashboard to load.
+    Per P2-10: Now delegates to IngestionScheduler for periodic scans.
+    Per P2-10a: Also starts ClaudeWatcher for event-driven JSONL monitoring.
 
-    Runs ingestion in a background thread to avoid blocking startup.
+    Architecture: ClaudeWatcher (event-driven, <5s latency) + Scheduler (periodic fallback).
     """
-    import asyncio
-    import concurrent.futures
-    import threading
+    from governance.services.ingestion_scheduler import get_scheduler
 
-    def _discover_and_ingest():
-        try:
-            from governance.services.cc_session_scanner import (
-                discover_cc_projects,
-                discover_filesystem_projects,
-            )
-            from governance.services.cc_session_ingestion import ingest_all
-            from governance.services.projects import create_project, get_project
-            from governance.services.workspace_registry import detect_project_type
-            from pathlib import Path
+    try:
+        scheduler = get_scheduler()
+        scheduler.start()
+        logger.info("Ingestion scheduler started (replaces one-shot discovery)")
+    except Exception as e:
+        logger.warning("Scheduler start failed, falling back to one-shot: %s", type(e).__name__, exc_info=True)
+        # Fallback: run single scan in thread pool
+        import asyncio
+        import concurrent.futures
+        from governance.services.ingestion_scheduler import run_discovery_scan
 
-            cc_projects = discover_cc_projects()
-            if not cc_projects:
-                logger.info("CC auto-discovery: no CC projects found")
-                return
+        loop = asyncio.get_running_loop()
+        loop.run_in_executor(
+            concurrent.futures.ThreadPoolExecutor(max_workers=1),
+            run_discovery_scan,
+        )
 
-            created_projects = 0
-            ingested_sessions = 0
+    # P2-10a: Start event-driven JSONL watcher alongside scheduler
+    try:
+        from governance.services.claude_watcher import get_claude_watcher
+        from governance.services.cc_session_scanner import DEFAULT_CC_DIR
 
-            for cc_proj in cc_projects:
-                pid = cc_proj["project_id"]
-
-                # Create project if missing
-                existing = get_project(pid)
-                if not existing:
-                    proj_path = cc_proj.get("path", "")
-                    proj_type = "generic"
-                    try:
-                        proj_type = detect_project_type(proj_path)
-                    except Exception:
-                        pass
-                    create_project(
-                        project_id=pid,
-                        name=cc_proj["name"],
-                        path=proj_path,
-                        project_type=proj_type,
-                    )
-                    created_projects += 1
-
-                # Ingest sessions
-                cc_dir = cc_proj.get("cc_directory")
-                if cc_dir:
-                    slug = pid.replace("PROJ-", "").lower()
-                    results = ingest_all(
-                        directory=Path(cc_dir),
-                        project_slug=slug,
-                        project_id=pid,
-                        dry_run=False,
-                    )
-                    ingested_sessions += len(results)
-
-            # Also discover filesystem projects (game projects etc.)
-            try:
-                existing_paths = {cc_proj.get("path", "") for cc_proj in cc_projects}
-                existing_ids = {cc_proj["project_id"] for cc_proj in cc_projects}
-                scan_dirs = set()
-                for cc_proj in cc_projects:
-                    p = cc_proj.get("path", "")
-                    if p:
-                        scan_dirs.add(str(Path(p).parent))
-
-                fs_projects = discover_filesystem_projects(
-                    scan_dirs=list(scan_dirs),
-                    existing_paths=existing_paths,
-                    existing_ids=existing_ids,
-                )
-                for fs_proj in fs_projects:
-                    existing = get_project(fs_proj["project_id"])
-                    if not existing:
-                        create_project(
-                            project_id=fs_proj["project_id"],
-                            name=fs_proj["name"],
-                            path=fs_proj["path"],
-                            project_type=fs_proj.get("project_type", "generic"),
-                        )
-                        created_projects += 1
-            except Exception as e:
-                logger.debug(f"FS project discovery failed: {e}")
-
-            if created_projects or ingested_sessions:
-                logger.info(
-                    f"CC auto-discovery: {created_projects} projects created, "
-                    f"{ingested_sessions} sessions ingested"
-                )
+        watcher = get_claude_watcher(
+            watch_path=str(DEFAULT_CC_DIR),
+            debounce_seconds=3.0,
+        )
+        if watcher:
+            started = await watcher.start()
+            if started:
+                logger.info("ClaudeWatcher started (event-driven JSONL monitoring)")
             else:
-                logger.info("CC auto-discovery: all sessions already ingested")
-        except Exception as e:
-            # BUG-474-AST-1: Sanitize logger message + add exc_info for stack trace preservation
-            logger.warning(f"CC auto-discovery failed: {type(e).__name__}", exc_info=True)
+                logger.warning("ClaudeWatcher failed to start (watchdog unavailable?)")
+    except Exception as e:
+        logger.warning("ClaudeWatcher startup failed: %s", type(e).__name__, exc_info=True)
 
-    # Run in thread pool to not block API startup
-    # BUG-225-STARTUP-001: Use get_running_loop() (get_event_loop deprecated in 3.10+)
-    loop = asyncio.get_running_loop()
-    loop.run_in_executor(
-        concurrent.futures.ThreadPoolExecutor(max_workers=1),
-        _discover_and_ingest,
-    )
+
+async def stop_claude_watcher():
+    """Gracefully stop the ClaudeWatcher on API shutdown.
+
+    Per P2-10a: Companion shutdown handler for discover_cc_sessions().
+    """
+    try:
+        from governance.services.claude_watcher import get_claude_watcher
+        watcher = get_claude_watcher()
+        if watcher and watcher.is_running:
+            await watcher.stop()
+    except Exception as e:
+        logger.debug("ClaudeWatcher shutdown: %s", e)
 
 
 def mcp_readiness_handler(api_base_url_unused=None):

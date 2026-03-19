@@ -139,11 +139,19 @@ def register_session_core_tools(mcp) -> None:
 
     @mcp.tool()
     def session_end(topic: str) -> str:
-        """End session and generate evidence artifacts."""
+        """End session and generate evidence artifacts.
+
+        Returns session_id prominently so user can find it in the dashboard.
+        Per SESSION-REPORT-01-v1.
+        """
         if not SESSION_COLLECTOR_AVAILABLE:
             return format_mcp_result({"error": "SessionCollector not available"})
 
         try:
+            # Build session_id before ending (same logic as registry.py)
+            from datetime import date as _date
+            session_id = f"SESSION-{_date.today()}-{topic.upper()}"
+
             log_path = end_session(topic)
 
             if log_path:
@@ -152,17 +160,19 @@ def register_session_core_tools(mcp) -> None:
                     log_monitor_event(
                         event_type="session_event",
                         source="mcp-session-end",
-                        details={"topic": topic, "log_path": log_path, "action": "end"}
+                        details={"session_id": session_id, "topic": topic, "log_path": log_path, "action": "end"}
                     )
                 return format_mcp_result({
+                    "session_id": session_id,
                     "topic": topic,
                     "log_path": log_path,
                     "synced_to_chromadb": True,
-                    "message": f"Session ended. Log: {log_path}"
+                    "dashboard_url": f"http://localhost:8081 → Sessions → {session_id}",
+                    "message": f"Session ended: {session_id}. Log: {log_path}"
                 })
             else:
                 return format_mcp_result({
-                    "error": f"Session for topic '{topic}' not found"
+                    "error": f"Session for topic '{topic}' not found (expected {session_id})"
                 })
         except Exception as e:
             return format_mcp_result({"error": f"session_end failed: {e}"})

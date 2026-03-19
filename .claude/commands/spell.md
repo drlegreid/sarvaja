@@ -50,6 +50,9 @@ Translation:
 ```
 === SESSION CLOSING ===
 
+Session ID: {SESSION-YYYY-MM-DD-TOPIC}
+Dashboard:  http://localhost:8081 → Sessions → {session_id}
+
 Bugs Fixed: {N}
 Tests Added: {N}
 Files Modified: {N}
@@ -66,5 +69,5 @@ Session Stats:
 
 "{zen koan}"
 
-Session ended. Until next time!
+Session ended: {session_id}. Until next time!
 ```

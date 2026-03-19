@@ -145,11 +145,36 @@ class TestSessionEnd:
             result = json.loads(tools["session_end"](topic="test"))
         assert result["log_path"] == "/path/to/log.md"
 
+    def test_success_includes_session_id(self):
+        """Per SESSION-REPORT-01-v1: session_end must return session_id."""
+        tools = _register()
+        with patch(f"{_P}.end_session", return_value="/path/to/log.md"):
+            result = json.loads(tools["session_end"](topic="mywork"))
+        assert "session_id" in result
+        assert result["session_id"].startswith("SESSION-")
+        assert result["session_id"].endswith("-MYWORK")
+
+    def test_success_includes_dashboard_url(self):
+        """Per SESSION-REPORT-01-v1: session_end must include dashboard hint."""
+        tools = _register()
+        with patch(f"{_P}.end_session", return_value="/path/to/log.md"):
+            result = json.loads(tools["session_end"](topic="test"))
+        assert "dashboard_url" in result
+        assert "localhost:8081" in result["dashboard_url"]
+
+    def test_success_message_contains_session_id(self):
+        """Per SESSION-REPORT-01-v1: message should mention session_id."""
+        tools = _register()
+        with patch(f"{_P}.end_session", return_value="/path/to/log.md"):
+            result = json.loads(tools["session_end"](topic="test"))
+        assert "SESSION-" in result["message"]
+
     def test_not_found(self):
         tools = _register()
         with patch(f"{_P}.end_session", return_value=None):
             result = json.loads(tools["session_end"](topic="unknown"))
         assert "error" in result
+        assert "SESSION-" in result["error"]  # Error now includes expected session_id
 
     def test_collector_unavailable(self):
         tools = _register(collector=False)

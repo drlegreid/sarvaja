@@ -11,6 +11,7 @@ Per REPORT-HUMOR-01-v1 (RULE-046) & REPORT-ISSUE-01-v1 (RULE-049).
 
 Generate a session summary that includes:
 
+0. **Session ID** - Display the governance session ID prominently at the top (e.g., `SESSION-2026-03-19-TOPIC`). Query via `session_list` or derive from today's date + topic. This lets the user find the session in the dashboard at http://localhost:8081 → Sessions.
 1. **Tasks Completed** - List all tasks marked done this session
 2. **Gaps Resolved** - Any gaps closed during the session
 3. **Decisions Made** - Key decisions recorded
@@ -51,6 +52,8 @@ Generate epoch: `date +%s`
 ```markdown
 ## Status: {TOPIC}
 
+**Session ID:** {SESSION-YYYY-MM-DD-TOPIC}
+**Dashboard:** http://localhost:8081 → Sessions → {session_id}
 **Epoch:** {timestamp}
 **Mode:** DEV | SLEEP
 **Koan:** {wisdom_name}

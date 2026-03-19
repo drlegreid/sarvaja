@@ -45,6 +45,7 @@ from governance.routes.proposals import router as proposals_router  # GOV-BICAM-
 from governance.routes.infra import router as infra_router  # EPIC-7.1: Container logs
 from governance.routes.capabilities import router as capabilities_router  # Entity chain: Agent → Rules
 from governance.routes.workspaces import router as workspaces_router  # Entity chain: Project → Workspace
+from governance.routes.ingestion import router as ingestion_router  # P2-10: Event-driven ingestion
 from governance.stores import (
     _tasks_store, _sessions_store, _agents_store,
     generate_chat_session_id, synthesize_execution_events,
@@ -174,6 +175,7 @@ app.include_router(taxonomy_router, prefix="/api")  # META-TAXON-01-v1: Task/rul
 app.include_router(infra_router)  # EPIC-7.1: Container logs via podman socket
 app.include_router(capabilities_router, prefix="/api")  # Entity chain: Agent → Capabilities (rules)
 app.include_router(workspaces_router, prefix="/api")  # Entity chain: Project → Workspace → Agent
+app.include_router(ingestion_router, prefix="/api")  # P2-10: Event-driven ingestion scheduler
 
 
 # =============================================================================
@@ -203,8 +205,23 @@ async def reload_persisted_sessions():
 
 @app.on_event("startup")
 async def auto_discover_cc_sessions():
-    """GAP-SESSION-CC-AUTO-DISCOVERY: Ingest CC sessions on API startup."""
+    """P2-10: Start ingestion scheduler (replaces one-shot discovery)."""
     await _discover_cc_sessions()
+
+
+@app.on_event("shutdown")
+async def stop_ingestion_scheduler():
+    """P2-10: Gracefully stop the ingestion scheduler."""
+    from governance.services.ingestion_scheduler import get_scheduler
+    scheduler = get_scheduler()
+    await scheduler.stop()
+
+
+@app.on_event("shutdown")
+async def _stop_claude_watcher():
+    """P2-10a: Gracefully stop the JSONL file watcher."""
+    from governance.api_startup import stop_claude_watcher
+    await stop_claude_watcher()
 
 
 # =============================================================================
