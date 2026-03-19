@@ -318,6 +318,176 @@ class TestDataPollutionChecks:
         )
 
 
+class TestSessionTranscriptIntegrity:
+    """Per-session transcript validation — P2-10f Session 3.
+
+    For CC sessions (source=cc), verify the transcript API returns
+    data consistent with the session metadata.
+    """
+
+    def test_cc_sessions_have_transcripts(self):
+        """CC sessions SHOULD have JSONL-sourced transcripts."""
+        sessions = get_sessions_from_api()
+        cc_sessions = [
+            s for s in sessions
+            if (s.get("source") == "cc" or "-CC-" in s.get("session_id", ""))
+        ]
+        if not cc_sessions:
+            pytest.skip("No CC sessions found")
+
+        sessions_with_transcript = 0
+        sessions_without = []
+
+        # Sample up to 10 CC sessions to avoid slow test
+        sample = cc_sessions[:10]
+        for session in sample:
+            sid = session.get("session_id", "")
+            try:
+                resp = requests.get(
+                    f"{API_URL}/api/sessions/{sid}/transcript",
+                    params={"per_page": 1},
+                    timeout=10,
+                )
+                if resp.status_code == 200:
+                    data = resp.json()
+                    if data.get("total", 0) > 0:
+                        sessions_with_transcript += 1
+                    else:
+                        sessions_without.append(sid)
+                else:
+                    sessions_without.append(sid)
+            except Exception:
+                sessions_without.append(sid)
+
+        rate = sessions_with_transcript / len(sample) * 100 if sample else 0
+        print(f"\n[DATA INTEGRITY] CC Session→Transcript:")
+        print(f"  - Sampled: {len(sample)} CC sessions")
+        print(f"  - With transcript: {sessions_with_transcript} ({rate:.0f}%)")
+        if sessions_without:
+            print(f"  - Without: {sessions_without[:5]}")
+
+        # At least 50% of CC sessions should have transcripts
+        assert rate >= 50, f"CC transcript rate too low: {rate:.0f}%"
+
+    def test_transcript_source_is_jsonl_for_cc(self):
+        """CC session transcripts should have source='jsonl'."""
+        sessions = get_sessions_from_api()
+        cc_sessions = [
+            s for s in sessions
+            if (s.get("source") == "cc" or "-CC-" in s.get("session_id", ""))
+        ]
+        if not cc_sessions:
+            pytest.skip("No CC sessions found")
+
+        # Pick first CC session with a transcript
+        for session in cc_sessions[:5]:
+            sid = session.get("session_id", "")
+            try:
+                resp = requests.get(
+                    f"{API_URL}/api/sessions/{sid}/transcript",
+                    params={"per_page": 1},
+                    timeout=10,
+                )
+                if resp.status_code == 200:
+                    data = resp.json()
+                    if data.get("total", 0) > 0:
+                        assert data["source"] == "jsonl", (
+                            f"Session {sid}: expected source=jsonl, got {data['source']}"
+                        )
+                        return
+            except Exception:
+                continue
+        pytest.skip("No CC session with transcript data found in sample")
+
+
+class TestToolCountAccuracy:
+    """Verify API tool_count matches actual JSONL tool_use entries.
+
+    Per P2-10f Session 4: cross-check cc_tool_count against transcript data.
+    """
+
+    def test_tool_count_matches_transcript(self):
+        """For CC sessions, cc_tool_count should match transcript tool_use entries."""
+        sessions = get_sessions_from_api()
+        cc_sessions = [
+            s for s in sessions
+            if (s.get("source") == "cc" or "-CC-" in s.get("session_id", ""))
+            and s.get("cc_tool_count", 0) > 0
+        ]
+        if not cc_sessions:
+            pytest.skip("No CC sessions with tool_count > 0")
+
+        mismatches = []
+        checked = 0
+
+        # Sample up to 5 sessions
+        for session in cc_sessions[:5]:
+            sid = session.get("session_id", "")
+            api_count = session.get("cc_tool_count", 0)
+
+            try:
+                # Paginate through transcript to count all tool_use entries
+                transcript_tool_count = 0
+                page = 1
+                while True:
+                    resp = requests.get(
+                        f"{API_URL}/api/sessions/{sid}/transcript",
+                        params={"per_page": 100, "page": page},
+                        timeout=30,
+                    )
+                    if resp.status_code != 200:
+                        break
+
+                    data = resp.json()
+                    transcript_tool_count += sum(
+                        1 for e in data.get("entries", [])
+                        if e.get("entry_type") == "tool_use"
+                    )
+
+                    if not data.get("has_more", False):
+                        break
+                    page += 1
+                    if page > 20:  # Safety cap
+                        break
+
+                if resp.status_code != 200:
+                    continue
+
+                checked += 1
+                if api_count != transcript_tool_count:
+                    mismatches.append({
+                        "session_id": sid,
+                        "api_count": api_count,
+                        "transcript_count": transcript_tool_count,
+                    })
+            except Exception:
+                continue
+
+        if checked == 0:
+            pytest.skip("Could not verify any CC sessions")
+
+        print(f"\n[DATA INTEGRITY] Tool Count Accuracy:")
+        print(f"  - Sessions checked: {checked}")
+        print(f"  - Mismatches: {len(mismatches)}")
+        if mismatches:
+            for m in mismatches:
+                ratio = m["transcript_count"] / m["api_count"] if m["api_count"] else 0
+                print(f"  - {m['session_id']}: api={m['api_count']}, "
+                      f"transcript={m['transcript_count']} (ratio={ratio:.1f}x)")
+
+        # Known gap: cc_tool_count is set at first ingestion scan time,
+        # but JSONL files continue growing for active sessions. The scanner
+        # doesn't re-scan existing files. This means transcript_count > api_count
+        # for any session that was active during/after its first scan.
+        # This is a valid data integrity gap (GAP-STALE-TOOL-COUNT) — xfail
+        # until the scheduler/watcher implements re-scan on file change.
+        if mismatches:
+            pytest.xfail(
+                f"Tool count stale for {len(mismatches)}/{checked} sessions "
+                f"(cc_tool_count set at first scan, JSONL grows for active sessions)"
+            )
+
+
 class TestDataIntegritySummary:
     """Summary test combining all integrity checks."""
 

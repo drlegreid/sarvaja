@@ -14,6 +14,53 @@ from typing import Any, Dict, Optional, Union
 
 logger = logging.getLogger(__name__)
 
+# ---------------------------------------------------------------------------
+# Schema detection constants — expected JSONL field names per entry type.
+# When Claude Code adds/removes fields, scan_jsonl_metadata() logs a
+# diagnostic warning but continues gracefully. Per P2-10f Session 3.
+# ---------------------------------------------------------------------------
+
+EXPECTED_COMMON_FIELDS: frozenset = frozenset({
+    "type", "uuid", "parentUuid", "isSidechain", "timestamp",
+    "userType", "cwd", "sessionId", "version", "gitBranch",
+})
+"""Fields present on most CC JSONL entries (user, assistant)."""
+
+EXPECTED_FIELDS_BY_TYPE: dict[str, frozenset] = {
+    "user": frozenset({"message"}),
+    "assistant": frozenset({"message", "requestId"}),
+    "system": frozenset({"compactMetadata"}),
+    "custom-title": frozenset({"customTitle"}),
+}
+"""Additional expected fields per entry type (beyond common fields)."""
+
+
+def detect_entry_schema(entry: dict) -> dict:
+    """Classify fields in a single JSONL entry for schema diagnostics.
+
+    Returns dict with: entry_type, all_fields, unknown_fields,
+    missing_fields, version.
+    """
+    entry_type = entry.get("type", "unknown")
+    all_fields = set(entry.keys())
+    version = entry.get("version")
+
+    # Build the full expected set for this entry type
+    type_specific = EXPECTED_FIELDS_BY_TYPE.get(entry_type, frozenset())
+    expected = EXPECTED_COMMON_FIELDS | type_specific
+
+    unknown_fields = all_fields - expected
+    missing_fields = EXPECTED_COMMON_FIELDS - all_fields
+
+    return {
+        "entry_type": entry_type,
+        "all_fields": all_fields,
+        "unknown_fields": unknown_fields,
+        "missing_fields": missing_fields,
+        "version": version,
+    }
+
+
 # Default CC project directory — check env var first (container use)
 _env_cc_dir = os.environ.get("CLAUDE_PROJECT_LOG_DIR")
 DEFAULT_CC_DIR = Path(_env_cc_dir) if _env_cc_dir else Path.home() / ".claude" / "projects"
@@ -55,6 +102,13 @@ def scan_jsonl_metadata(filepath: Path) -> Optional[Dict[str, Any]]:
         models_seen = set()
         custom_title = None
 
+        # Schema detection accumulators (P2-10f Session 3)
+        _schema_versions: set = set()
+        _schema_entry_types: set = set()
+        _schema_all_fields: set = set()
+        _schema_unknown_fields: set = set()
+        _schema_missing_fields: set = set()
+
         # BUG-209-SCANNER-ENCODING-001: Specify encoding for non-UTF-8 locales
         with open(filepath, "r", encoding="utf-8") as f:
             for line in f:
@@ -66,6 +120,16 @@ def scan_jsonl_metadata(filepath: Path) -> Optional[Dict[str, Any]]:
                 except json.JSONDecodeError:
                     continue
 
+                # --- Schema detection (per-entry) ---
+                schema = detect_entry_schema(obj)
+                _schema_entry_types.add(schema["entry_type"])
+                _schema_all_fields.update(schema["all_fields"])
+                _schema_unknown_fields.update(schema["unknown_fields"])
+                _schema_missing_fields.update(schema["missing_fields"])
+                if schema["version"]:
+                    _schema_versions.add(schema["version"])
+
+                # --- Existing metadata extraction (unchanged) ---
                 ts = obj.get("timestamp")
                 if ts:
                     if first_ts is None:
@@ -103,6 +167,13 @@ def scan_jsonl_metadata(filepath: Path) -> Optional[Dict[str, Any]]:
         if not first_ts:
             return None
 
+        # Log schema diagnostics (info level — not a failure)
+        if _schema_unknown_fields:
+            logger.info(
+                "Schema: %s has unknown fields: %s",
+                filepath.name, sorted(_schema_unknown_fields),
+            )
+
         return {
             "slug": slug,
             "session_uuid": session_uuid,
@@ -118,6 +189,13 @@ def scan_jsonl_metadata(filepath: Path) -> Optional[Dict[str, Any]]:
             "custom_title": custom_title,
             "file_path": str(filepath),
             "file_size": file_size,
+            "schema_info": {
+                "versions": sorted(_schema_versions),
+                "entry_types": sorted(_schema_entry_types),
+                "all_fields": sorted(_schema_all_fields),
+                "unknown_fields": _schema_unknown_fields,
+                "missing_fields": _schema_missing_fields,
+            },
         }
     except Exception as e:
         # BUG-415-SCN-001: Add exc_info for stack trace preservation
