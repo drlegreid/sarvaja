@@ -76,9 +76,7 @@
         "-y",
         "@playwright/mcp@latest",
         "--browser",
-        "firefox",
-        "--executable-path",
-        "/home/oderid/.cache/ms-playwright/firefox-1497/firefox/firefox"
+        "chromium"
       ],
       "env": {
         "PLAYWRIGHT_BROWSERS_PATH": "/home/oderid/.cache/ms-playwright"

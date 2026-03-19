@@ -31,19 +31,23 @@ def _parse_timeout(timeout: str) -> timedelta:
 # "text" = text content match; "testid" = data-testid attribute.
 # Use "testid" for tabs whose heading text is ambiguous (e.g. "Tasks").
 _TAB_EXPECTATIONS = {
+    "chat": ("testid", "chat-view"),
     "rules": ("text", "Governance Rules"),
     "agents": ("text", "Registered Agents"),
     "tasks": ("testid", "tasks-list"),
     "sessions": ("text", "Session Evidence"),
-    "trust": ("text", "Agent Trust Dashboard"),
-    "infra": ("text", "Infrastructure Health"),
+    "executive": ("text", "Executive"),
     "decisions": ("text", "Decisions"),
-    "heuristics": ("text", "Heuristic"),
-    "workflows": ("text", "Workflow"),
-    "proposals": ("text", "Proposal"),
-    "projects": ("text", "Project"),
-    "audit": ("text", "Audit"),
-    "tests": ("text", "Test"),
+    "impact": ("testid", "impact-analyzer"),
+    "trust": ("text", "Agent Trust Dashboard"),
+    "workflow": ("testid", "workflow-dashboard"),
+    "audit": ("testid", "audit-dashboard"),
+    "monitor": ("testid", "monitor-dashboard"),
+    "infra": ("text", "Infrastructure Health"),
+    "metrics": ("testid", "metrics-dashboard"),
+    "tests": ("testid", "tests-dashboard"),
+    "projects": ("testid", "projects-list"),
+    "workspaces": ("testid", "workspaces-list"),
 }
 
 
