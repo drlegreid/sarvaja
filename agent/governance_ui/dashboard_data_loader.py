@@ -94,10 +94,12 @@ def _load_sessions(state, client, api_base_url, get_sessions, page_size) -> None
         state.sessions_metrics_duration = metrics["duration"]
         state.sessions_metrics_avg_tasks = metrics["avg_tasks"]
 
+        # P0-2: Prefer server-computed duration, fallback to local
         for item in items:
-            item["duration"] = compute_session_duration(
-                item.get("start_time", ""), item.get("end_time", ""),
-            )
+            if not item.get("duration"):
+                item["duration"] = compute_session_duration(
+                    item.get("start_time", ""), item.get("end_time", ""),
+                )
             # BUG-SESSION-END-001: Show meaningful text for missing end_time
             if not item.get("end_time"):
                 status = (item.get("status") or "").upper()

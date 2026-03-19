@@ -312,12 +312,10 @@ class TestPlatformHealthE2E:
         result = check_dashboard_health()
         assert result["healthy"], f"Dashboard unhealthy: {result.get('error')}"
 
-    @pytest.mark.skip(reason="API is optional service")
     def test_api_responds(self):
-        """API endpoint responds (optional)."""
+        """API endpoint responds — API on :8082 is a core service."""
         result = check_api_health()
-        if not result.get("optional"):
-            assert result["healthy"], f"API unhealthy: {result.get('error')}"
+        assert result["healthy"], f"API unhealthy: {result.get('error')}"
 
     def test_mcp_core_services(self):
         """MCP CORE services can start (per MCP-HEALTH-01-v1)."""

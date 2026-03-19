@@ -15,6 +15,7 @@ from .data_stores import (
     _tasks_store,
     _sessions_store,
 )
+from .helpers import compute_session_duration_from_timestamps
 from .retry import retry_on_transient
 
 logger = logging.getLogger(__name__)
@@ -295,7 +296,11 @@ def _task_to_dict(task) -> Dict[str, Any]:
 
 
 def _session_to_dict(session) -> Dict[str, Any]:
-    """Convert TypeDB Session entity to dict format."""
+    """Convert TypeDB Session entity to dict format.
+
+    P0-2: Duration computed server-side via compute_session_duration_from_timestamps
+    to ensure identical results across all API paths (list, detail, update).
+    """
     return {
         "session_id": session.id,
         # BUG-226-TYPEDB-003: Use stable sentinel instead of non-deterministic datetime.now()
@@ -318,4 +323,7 @@ def _session_to_dict(session) -> Dict[str, Any]:
         "cc_thinking_chars": getattr(session, 'cc_thinking_chars', None),
         "cc_compaction_count": getattr(session, 'cc_compaction_count', None),
         "project_id": getattr(session, 'project_id', None),
+        # P0-2: Server-computed duration — single source of truth
+        "duration": compute_session_duration_from_timestamps(
+            session.started_at, session.completed_at),
     }

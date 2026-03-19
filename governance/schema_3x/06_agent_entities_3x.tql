@@ -23,7 +23,9 @@ entity agent,
     plays proposes:proposer,
     plays vote:voter,
     plays dispute:disputer,
-    plays agent-action:acting-agent;
+    plays agent-action:acting-agent,
+    plays agent-capability:capable-agent,         # P2-12: rule→agent bindings
+    plays workspace-has-agent:assigned-agent;     # P2-12: workspace→agent links
 
 # =============================================================================
 # PROPOSAL ENTITY

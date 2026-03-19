@@ -56,7 +56,7 @@ def _is_backfilled_session(session: dict) -> bool:
     # Classic backfill/stale detection
     if "backfill" in desc or "stale" in desc:
         return True
-    if agent.endswith("-test"):
+    if agent.endswith("-test") or "-test-" in agent or agent.startswith("test-"):
         return True
     # BUG-HEURISTIC-002: Use dynamic 30-day window instead of hardcoded date
     from datetime import datetime, timedelta

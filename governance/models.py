@@ -187,6 +187,8 @@ class SessionResponse(BaseModel):
     cc_thinking_chars: Optional[int] = None
     cc_compaction_count: Optional[int] = None
     project_id: Optional[str] = None
+    # P0-2: Server-computed duration (single source of truth)
+    duration: Optional[str] = None
 
 class SessionCreate(BaseModel):
     """Request model for creating a session."""

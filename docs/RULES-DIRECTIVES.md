@@ -1,6 +1,6 @@
 # Rules Directives - Index
 
-**Status:** Active | **Updated:** 2026-02-14 | **Rules:** 62 (59 ACTIVE, 3 DRAFT/DISABLED)
+**Status:** Active | **Updated:** 2026-03-18 | **Rules:** 89 (86 ACTIVE, 2 DRAFT, 1 DISABLED)
 
 > **Taxonomy:** [META-TAXON-01-v1](rules/leaf/META-TAXON-01-v1.md) | **Migration:** [RULE-MIGRATION.md](rules/RULE-MIGRATION.md)
 
@@ -93,6 +93,33 @@
 | TEST-SPEC-01-v1 | (new) | 3-Tier Validation Specifications | HIGH | ACTIVE |
 | COMM-PROGRESS-01-v1 | (new) | Communication & Progress Reporting | MANDATORY | ACTIVE |
 | TASK-EPIC-01-v1 | (new) | EPIC-Driven Task Comprehension | CRITICAL | ACTIVE |
+| WORKFLOW-RD-02-v1 | (new) | R&D Workflow with Approval Gate | CRITICAL | ACTIVE |
+| SAFETY-HEALTH-02-v1 | (new) | MCP Health Verification | CRITICAL | ACTIVE |
+| RECOVER-AMNES-02-v1 | (new) | AMNESIA Hierarchical Recovery | CRITICAL | ACTIVE |
+| UI-VUE-IMPL-01-v1 | (new) | Vue.js / Trame UI Implementation Patterns | CRITICAL | ACTIVE |
+| SESSION-DSP-NOTIFY-01-v1 | (new) | DSP Prompting and Blocking | HIGH | ACTIVE |
+| DOC-SOURCE-01-v1 | (new) | Official Documentation Sources First | HIGH | ACTIVE |
+| TASK-VALID-01-v1 | (new) | Task Completion Validation Protocol | HIGH | ACTIVE |
+| UI-NAV-01-v1 | (new) | Entity Navigation Context | HIGH | ACTIVE |
+| UI-DESIGN-02-v1 | (new) | UI/UX Design Standards | HIGH | ACTIVE |
+| UI-CLAUDE-CODE-01-v1 | (new) | Claude Code Integration Patterns | HIGH | ACTIVE |
+| DATA-LINK-01-v1 | (new) | Task-Session Auto-Linking | HIGH | ACTIVE |
+| DATA-COMPLETE-01-v1 | (new) | Session Data Completeness | HIGH | ACTIVE |
+| WORKFLOW-DSP-01-v1 | (new) | DSP Workflow Stability Requirements | HIGH | ACTIVE |
+| REPORT-OBJ-01-v1 | (new) | Objective Reporting | HIGH | ACTIVE |
+| ARCH-MCP-PARITY-01-v1 | (new) | MCP-REST API Feature Parity | MEDIUM | ACTIVE |
+| ARCH-BACKFILL-01-v1 | (new) | Backfill Tool Registration | MEDIUM | ACTIVE |
+
+---
+
+## TypeDB ID Aliases
+
+Some rules have different IDs in TypeDB vs documentation (legacy migration artifacts):
+
+| TypeDB ID | Docs ID | Resolution |
+|-----------|---------|------------|
+| ARCH-EBMSF-01-v1 | ARCH-BEST-01-v1 | Same rule — TypeDB uses legacy EBMSF prefix |
+| REPORT-EXEC-01-v1 | SAFETY-INTEG-01-v1 | Same rule — recategorized from SAFETY to REPORT |
 
 ---
 
@@ -100,19 +127,21 @@
 
 | Domain | Description | Count | Rules |
 |--------|-------------|-------|-------|
-| **SESSION** | Session management | 3 | EVID-01, DSM-01, PROMPT-01 |
-| **REPORT** | Reporting & decisions | 4 | DEC-01, DEC-02, HUMOR-01, ISSUE-01, SUMM-01 |
+| **SESSION** | Session management | 4 | EVID-01, DSM-01, PROMPT-01, DSP-NOTIFY-01 |
+| **REPORT** | Reporting & decisions | 5 | DEC-01, DEC-02, HUMOR-01, ISSUE-01, OBJ-01 |
 | **GOV** | Governance & trust | 10 | TRUST-01/02, BICAM-01, PROP-01/02/03, RULE-01/02/03, MODE-01, BIND-01 |
-| **ARCH** | Architecture | 6 | BEST-01, MCP-01/02, INFRA-01/02, YAGNI-01 |
-| **UI** | User interface | 4 | TRAME-01, LOADER-01, TRACE-01, COLOR-01 |
-| **WORKFLOW** | Workflow & autonomy | 8 | AUTO-01/02, RD-01, SEQ-01, SHELL-01, HOTRELOAD-01, SFDC-01, ORCH-01 |
-| **RECOVER** | Recovery & resilience | 3 | MEM-01, AMNES-01, CRASH-01 |
+| **ARCH** | Architecture | 8 | BEST-01, MCP-01/02, INFRA-01/02, YAGNI-01, MCP-PARITY-01, BACKFILL-01 |
+| **UI** | User interface | 8 | TRAME-01, LOADER-01, TRACE-01, COLOR-01, VUE-IMPL-01, NAV-01, DESIGN-02, CLAUDE-CODE-01 |
+| **WORKFLOW** | Workflow & autonomy | 10 | AUTO-01/02, RD-01/02, SEQ-01, SHELL-01, HOTRELOAD-01, SFDC-01, ORCH-01, DSP-01 |
+| **RECOVER** | Recovery & resilience | 4 | MEM-01, AMNES-01/02, CRASH-01 |
 | **TEST** | Testing & validation | 10 | GUARD-01, COMP-01/02, DISCOVERY-01, E2E-01, FIX-01, EXEC-01, UI-VERIFY-01, BDD-01, SPEC-01 |
-| **SAFETY** | Safety & prevention | 3 | HEALTH-01, INTEG-01, DESTR-01 |
+| **SAFETY** | Safety & prevention | 4 | HEALTH-01/02, INTEG-01, DESTR-01 |
 | **CONTAINER** | Container operations | 5 | DEV-01/02, RESTART-01, SHELL-01, TYPEDB-01, MGMT-01 |
-| **DOC** | Documentation | 4 | SIZE-01, PARTIAL-01, LINK-01, GAP-ARCHIVE-01 |
+| **DOC** | Documentation | 5 | SIZE-01, PARTIAL-01, LINK-01, GAP-ARCHIVE-01, SOURCE-01 |
 | **META** | Meta-rules | 1 | TAXON-01 |
-| **TASK** | Task management | 2 | TECH-01, LIFE-01 |
+| **TASK** | Task management | 3 | TECH-01, LIFE-01, VALID-01 |
+| **DATA** | Data quality | 2 | LINK-01, COMPLETE-01 |
+| **COMM** | Communication | 1 | PROGRESS-01 |
 | **INTENT** | Intent verification | 1 | CHECK-01 |
 | **FEEDBACK** | Feedback rules | 1 | LOGIC-01 |
 | **PKG** | Package management | 1 | LATEST-01 |
@@ -125,9 +154,11 @@
 
 | Level | Meaning | Count | Key Rules |
 |-------|---------|-------|-----------|
-| **CRITICAL** | Must enforce always | 17 | SESSION-EVID, GOV-BICAM, GOV-MCP-FIRST, WORKFLOW-AUTO, RECOVER-AMNES, TEST-COMP-02, SAFETY-HEALTH |
-| **HIGH** | Enforce in normal ops | 27 | ARCH-*, GOV-BIND-01, TEST-COMP-01, TEST-DISCOVERY-01, CONTAINER-*, DOC-* |
-| **MEDIUM** | Advisory | 1 | GOV-TRUST-01 |
+| **CRITICAL** | Must enforce always | 24 | SESSION-EVID, GOV-BICAM/RULE-01/MCP-FIRST, WORKFLOW-AUTO-01/02/RD-01/02/ORCH-01, RECOVER-AMNES-01/02/CRASH-01, TEST-GUARD/COMP-02/E2E/FIX, SAFETY-HEALTH-01/02/DESTR, CONTAINER-DEV-01, DOC-LINK, TASK-EPIC, UI-VUE-IMPL, ARCH-INFRA-01 |
+| **HIGH** | Enforce in normal ops | 54 | ARCH-*, GOV-BIND/PROP/RULE/TRUST-02, TEST-COMP-01/DISCOVERY/BDD/SPEC, CONTAINER-*, DOC-*, UI-*, WORKFLOW-*, DATA-*, REPORT-*, SESSION-DSP-NOTIFY/PROMPT |
+| **MANDATORY** | Always enforce | 1 | COMM-PROGRESS-01 |
+| **MEDIUM** | Advisory | 6 | GOV-TRUST-01, DOC-GAP-ARCHIVE, TASK-TECH, UI-TRACE, ARCH-MCP-PARITY/BACKFILL |
+| **LOW** | Optional | 1 | REPORT-HUMOR-01 |
 
 ---
 

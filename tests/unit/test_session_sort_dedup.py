@@ -135,6 +135,30 @@ class TestExcludeTestArtifacts:
         for sid in integration_ids:
             assert _is_test_artifact({"session_id": sid}) is True, f"Expected {sid} to be test artifact"
 
+    def test_is_test_artifact_detects_cc_test_probe_patterns(self):
+        """CC test probe sessions should be detected (P2-10e)."""
+        from governance.services.sessions import _is_test_artifact
+        cc_test_ids = [
+            "SESSION-2026-03-19-CC-TEST-INGESTION-PROBE",
+            "SESSION-2026-03-19-CC-TEST-INCREMENTAL",
+            "SESSION-2026-03-19-CC-PROBE-SCANNER",
+            "SESSION-2026-03-19-CC-PROBE-SESSION-01",
+        ]
+        for sid in cc_test_ids:
+            assert _is_test_artifact({"session_id": sid}) is True, f"Expected {sid} to be test artifact"
+
+    def test_is_test_artifact_allows_real_cc_sessions(self):
+        """Real CC sessions must NOT be false-positived (P2-10e)."""
+        from governance.services.sessions import _is_test_artifact
+        real_cc_ids = [
+            "SESSION-2026-02-15-CC-E0E0A53E-60BC",
+            "SESSION-2026-01-20-CC-176AB4A6-F892",
+            "SESSION-2026-03-19-CC-2E58AAA5",
+            "SESSION-2026-03-19-CC-MY-FEATURE-WORK",
+        ]
+        for sid in real_cc_ids:
+            assert _is_test_artifact({"session_id": sid}) is False, f"Expected {sid} to be real CC session"
+
     def test_is_test_artifact_allows_real_sessions(self):
         """Real sessions should not be detected as test artifacts."""
         from governance.services.sessions import _is_test_artifact

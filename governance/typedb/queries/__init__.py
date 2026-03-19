@@ -13,6 +13,7 @@ from .rules import RuleQueries
 from .agents import AgentQueries
 from .projects import ProjectQueries
 from .proposals import ProposalQueries
+from .capabilities import CapabilityQueries
 
 __all__ = [
     "TaskQueries",
@@ -21,4 +22,5 @@ __all__ = [
     "AgentQueries",
     "ProjectQueries",
     "ProposalQueries",
+    "CapabilityQueries",
 ]

@@ -4,13 +4,14 @@ Agent Capabilities Panel Component.
 Per RULE-012: Single Responsibility - only agent capability bindings.
 Per RULE-032: File size limit (<300 lines).
 Shows which governance rules are bound to the selected agent.
+Interactive: toggle status, unbind rules, add new bindings.
 """
 
 from trame.widgets import vuetify3 as v3, html
 
 
 def build_agent_capabilities_card() -> None:
-    """Build agent capabilities card showing rule→agent bindings."""
+    """Build agent capabilities card showing rule→agent bindings with controls."""
     with v3.VCard(
         variant="outlined",
         classes="mb-4",
@@ -81,6 +82,45 @@ def build_agent_capabilities_card() -> None:
                             "{{ cap.category || 'general' }}"
                         )
                     with html.Template(v_slot_append=True):
+                        # Toggle status button
+                        v3.VBtn(
+                            icon=True,
+                            size="x-small",
+                            variant="text",
+                            click=(
+                                "trigger('toggle_capability_status', "
+                                "[selected_agent.agent_id, cap.rule_id, cap.status])"
+                            ),
+                            __properties=["data-testid"],
+                            **{"data-testid": "capability-toggle-btn"},
+                        )
+                        with v3.Template():
+                            v3.VIcon(
+                                v_if="cap.status === 'active'",
+                                icon="mdi-pause-circle-outline",
+                                size="x-small",
+                                color="warning",
+                            )
+                            v3.VIcon(
+                                v_else=True,
+                                icon="mdi-play-circle-outline",
+                                size="x-small",
+                                color="success",
+                            )
+                        # Unbind button
+                        v3.VBtn(
+                            icon="mdi-link-off",
+                            size="x-small",
+                            variant="text",
+                            color="error",
+                            click=(
+                                "trigger('unbind_capability', "
+                                "[selected_agent.agent_id, cap.rule_id])"
+                            ),
+                            __properties=["data-testid"],
+                            **{"data-testid": "capability-unbind-btn"},
+                        )
+                        # Status chip
                         v3.VChip(
                             v_text="cap.status || 'active'",
                             size="x-small",
@@ -89,3 +129,54 @@ def build_agent_capabilities_card() -> None:
                             ),
                             variant="tonal",
                         )
+
+            # Add capability section
+            _build_add_capability_row()
+
+
+def _build_add_capability_row() -> None:
+    """Build the add-capability input row."""
+    with html.Div(
+        classes="d-flex align-center ga-2 mt-3",
+        __properties=["data-testid"],
+        **{"data-testid": "add-capability-row"}
+    ):
+        v3.VTextField(
+            v_model=("new_capability_rule_id", ""),
+            label="Rule ID",
+            density="compact",
+            variant="outlined",
+            hide_details=True,
+            style="max-width: 180px;",
+            __properties=["data-testid"],
+            **{"data-testid": "add-capability-rule-input"},
+        )
+        v3.VSelect(
+            v_model=("new_capability_category", "general"),
+            items=(
+                "['general', 'coding', 'testing', "
+                "'governance', 'research', 'security', 'infrastructure']"
+            ),
+            label="Category",
+            density="compact",
+            variant="outlined",
+            hide_details=True,
+            style="max-width: 160px;",
+            __properties=["data-testid"],
+            **{"data-testid": "add-capability-category-select"},
+        )
+        v3.VBtn(
+            "Bind",
+            size="small",
+            color="primary",
+            variant="tonal",
+            prepend_icon="mdi-link-plus",
+            click=(
+                "trigger('bind_capability', "
+                "[selected_agent.agent_id, "
+                "new_capability_rule_id, "
+                "new_capability_category])"
+            ),
+            __properties=["data-testid"],
+            **{"data-testid": "add-capability-bind-btn"},
+        )

@@ -3,14 +3,14 @@ Workspace Detail View Component.
 
 Per RULE-012: Single Responsibility - only workspace detail UI.
 Per RULE-032: File size limit (<300 lines).
-Shows workspace info, assigned agents, and linked rules.
+Shows workspace info with edit/delete actions, assigned agents, and linked rules.
 """
 
 from trame.widgets import vuetify3 as v3, html
 
 
 def build_workspace_detail_view() -> None:
-    """Build workspace detail view with agents and config."""
+    """Build workspace detail view with edit/delete and agents."""
     with v3.VCard(
         v_if="active_view === 'workspaces' && show_workspace_detail "
              "&& selected_workspace",
@@ -23,7 +23,11 @@ def build_workspace_detail_view() -> None:
             v3.VBtn(
                 icon="mdi-arrow-left",
                 variant="text",
-                click="show_workspace_detail = false; selected_workspace = null",
+                click=(
+                    "show_workspace_detail = false; "
+                    "selected_workspace = null; "
+                    "edit_workspace_mode = false"
+                ),
                 __properties=["data-testid"],
                 **{"data-testid": "workspace-detail-back-btn"}
             )
@@ -33,12 +37,37 @@ def build_workspace_detail_view() -> None:
                 v3.VIcon("mdi-briefcase-outline", color="white", size="small")
             html.Span(
                 "{{ selected_workspace.name }}",
+                v_if="!edit_workspace_mode",
                 __properties=["data-testid"],
                 **{"data-testid": "workspace-detail-name"}
             )
+            html.Span(
+                "Editing Workspace",
+                v_if="edit_workspace_mode",
+                classes="text-grey",
+            )
             v3.VSpacer()
+            # Action buttons (view mode)
+            with html.Div(v_if="!edit_workspace_mode"):
+                v3.VBtn(
+                    icon="mdi-pencil",
+                    variant="text",
+                    color="primary",
+                    click="trigger('edit_workspace')",
+                    __properties=["data-testid"],
+                    **{"data-testid": "workspace-edit-btn"},
+                )
+                v3.VBtn(
+                    icon="mdi-delete",
+                    variant="text",
+                    color="error",
+                    click="trigger('confirm_delete_workspace')",
+                    __properties=["data-testid"],
+                    **{"data-testid": "workspace-delete-btn"},
+                )
             v3.VChip(
                 v_text="selected_workspace.status || 'active'",
+                v_if="!edit_workspace_mode",
                 color=(
                     "selected_workspace.status === 'active' ? 'success' : 'grey'",
                 ),
@@ -47,8 +76,75 @@ def build_workspace_detail_view() -> None:
             )
 
         with v3.VCardText():
+            # Error alert
+            v3.VAlert(
+                v_if="has_error",
+                type_="error",
+                variant="tonal",
+                classes="mb-4",
+                v_text="error_message",
+                closable=True,
+                **{"@click:close": "has_error = false"},
+            )
+
+            # ── Edit mode ───────────────────────────────────────
+            with v3.VCard(
+                v_if="edit_workspace_mode",
+                variant="outlined",
+                classes="mb-4",
+            ):
+                v3.VCardTitle("Edit Workspace", density="compact")
+                with v3.VCardText():
+                    v3.VTextField(
+                        v_model="edit_workspace_name",
+                        label="Name *",
+                        density="compact",
+                        classes="mb-3",
+                        __properties=["data-testid"],
+                        **{"data-testid": "workspace-edit-name"},
+                    )
+                    v3.VTextarea(
+                        v_model="edit_workspace_description",
+                        label="Description",
+                        density="compact",
+                        rows=3,
+                        auto_grow=True,
+                        classes="mb-3",
+                        __properties=["data-testid"],
+                        **{"data-testid": "workspace-edit-description"},
+                    )
+                    v3.VSelect(
+                        v_model="edit_workspace_status",
+                        label="Status",
+                        items=["active", "archived"],
+                        density="compact",
+                        __properties=["data-testid"],
+                        **{"data-testid": "workspace-edit-status"},
+                    )
+                with v3.VCardActions():
+                    v3.VSpacer()
+                    v3.VBtn(
+                        "Cancel",
+                        variant="text",
+                        click="trigger('cancel_workspace_edit')",
+                    )
+                    v3.VBtn(
+                        "Save",
+                        color="primary",
+                        click="trigger('submit_workspace_edit')",
+                        loading=("is_loading",),
+                        disabled=("!edit_workspace_name",),
+                        __properties=["data-testid"],
+                        **{"data-testid": "workspace-edit-save-btn"},
+                    )
+
+            # ── View mode ───────────────────────────────────────
             # Info card
-            with v3.VCard(variant="outlined", classes="mb-4"):
+            with v3.VCard(
+                v_if="!edit_workspace_mode",
+                variant="outlined",
+                classes="mb-4",
+            ):
                 v3.VCardTitle("Workspace Info", density="compact")
                 with v3.VCardText():
                     with v3.VRow(dense=True):
@@ -78,8 +174,12 @@ def build_workspace_detail_view() -> None:
                         )
                     )
 
-            # Assigned agents
-            with v3.VCard(variant="outlined", classes="mb-4"):
+            # Assigned agents (shown in both modes)
+            with v3.VCard(
+                v_if="!edit_workspace_mode",
+                variant="outlined",
+                classes="mb-4",
+            ):
                 with v3.VCardTitle(
                     classes="d-flex align-center", density="compact"
                 ):
@@ -96,13 +196,11 @@ def build_workspace_detail_view() -> None:
                         variant="tonal",
                     )
                 with v3.VCardText():
-                    # Empty state
                     html.Div(
                         v_if="!selected_workspace.agent_ids || "
                              "selected_workspace.agent_ids.length === 0",
                         classes="text-grey text-center py-2"
                     ).add_child(html.Span("No agents assigned"))
-                    # Agent chips
                     with html.Div(
                         v_if="selected_workspace.agent_ids && "
                              "selected_workspace.agent_ids.length > 0"
@@ -122,7 +220,11 @@ def build_workspace_detail_view() -> None:
                         )
 
             # Linked rules
-            with v3.VCard(variant="outlined", classes="mb-4"):
+            with v3.VCard(
+                v_if="!edit_workspace_mode",
+                variant="outlined",
+                classes="mb-4",
+            ):
                 with v3.VCardTitle(
                     classes="d-flex align-center", density="compact"
                 ):
@@ -131,7 +233,7 @@ def build_workspace_detail_view() -> None:
                     v3.VSpacer()
                     v3.VChip(
                         v_text=(
-                            "(selected_workspace.rule_ids || []).length "
+                            "(selected_workspace.default_rules || []).length "
                             "+ ' rules'"
                         ),
                         size="x-small",
@@ -140,16 +242,16 @@ def build_workspace_detail_view() -> None:
                     )
                 with v3.VCardText():
                     html.Div(
-                        v_if="!selected_workspace.rule_ids || "
-                             "selected_workspace.rule_ids.length === 0",
+                        v_if="!selected_workspace.default_rules || "
+                             "selected_workspace.default_rules.length === 0",
                         classes="text-grey text-center py-2"
                     ).add_child(html.Span("No default rules"))
                     with html.Div(
-                        v_if="selected_workspace.rule_ids && "
-                             "selected_workspace.rule_ids.length > 0"
+                        v_if="selected_workspace.default_rules && "
+                             "selected_workspace.default_rules.length > 0"
                     ):
                         v3.VChip(
-                            v_for="rid in selected_workspace.rule_ids",
+                            v_for="rid in selected_workspace.default_rules",
                             v_text="rid",
                             **{":key": "rid"},
                             size="small",
@@ -161,3 +263,35 @@ def build_workspace_detail_view() -> None:
                                 "active_view = 'rules'"
                             ),
                         )
+
+        # Delete confirmation dialog
+        with v3.VDialog(
+            v_model="show_workspace_delete_confirm",
+            max_width="400px",
+            __properties=["data-testid"],
+            **{"data-testid": "workspace-delete-dialog"}
+        ):
+            with v3.VCard():
+                v3.VCardTitle("Delete Workspace?")
+                v3.VCardText(
+                    "Are you sure you want to delete workspace "
+                    "'{{ selected_workspace.name }}'? "
+                    "This cannot be undone."
+                )
+                with v3.VCardActions():
+                    v3.VSpacer()
+                    v3.VBtn(
+                        "Cancel",
+                        variant="text",
+                        click="trigger('cancel_delete_workspace')",
+                        __properties=["data-testid"],
+                        **{"data-testid": "workspace-delete-cancel-btn"},
+                    )
+                    v3.VBtn(
+                        "Delete",
+                        color="error",
+                        click="trigger('delete_workspace')",
+                        loading=("is_loading",),
+                        __properties=["data-testid"],
+                        **{"data-testid": "workspace-delete-confirm-btn"},
+                    )

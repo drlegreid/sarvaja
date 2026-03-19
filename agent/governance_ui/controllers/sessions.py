@@ -65,11 +65,13 @@ def register_sessions_controllers(state: Any, ctrl: Any, api_base_url: str) -> N
             resp = httpx.get(f"{api_base_url}/api/sessions/{session_id}", timeout=10.0)
             if resp.status_code == 200:
                 session_data = resp.json()
-                from agent.governance_ui.utils import compute_session_duration
-                session_data["duration"] = compute_session_duration(
-                    session_data.get("start_time", ""),
-                    session_data.get("end_time", ""),
-                )
+                # P0-2: Prefer server-computed duration, fallback to local
+                if not session_data.get("duration"):
+                    from agent.governance_ui.utils import compute_session_duration
+                    session_data["duration"] = compute_session_duration(
+                        session_data.get("start_time", ""),
+                        session_data.get("end_time", ""),
+                    )
                 # BUG-UI-SESSIONS-DETAIL-001: Derive source_type for detail view
                 if not session_data.get("source_type"):
                     sid = session_data.get("session_id", "")

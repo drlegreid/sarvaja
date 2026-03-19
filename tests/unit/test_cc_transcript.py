@@ -10,6 +10,8 @@ from pathlib import Path
 
 import pytest
 
+from tests.fixtures.cc_jsonl_factory import write_jsonl_temp
+
 from governance.services.cc_transcript import (
     _extract_user_text,
     _extract_tool_result_content,
@@ -19,17 +21,6 @@ from governance.services.cc_transcript import (
     build_synthetic_transcript,
 )
 from governance.session_metrics.models import TranscriptEntry
-
-
-# ---------- helpers ----------
-
-def _write_jsonl(lines: list) -> Path:
-    """Write JSONL lines to a temp file, return path."""
-    f = tempfile.NamedTemporaryFile(mode="w", suffix=".jsonl", delete=False)
-    for line in lines:
-        f.write(json.dumps(line) + "\n")
-    f.close()
-    return Path(f.name)
 
 
 # ---------- _extract_user_text ----------
@@ -108,7 +99,7 @@ class TestStreamTranscript:
             {"type": "user", "timestamp": "2026-02-15T10:00:00Z",
              "message": {"content": "Hello Claude"}},
         ]
-        path = _write_jsonl(lines)
+        path = write_jsonl_temp(lines)
         entries = list(stream_transcript(path))
         assert len(entries) == 1
         assert entries[0].entry_type == "user_prompt"
@@ -121,7 +112,7 @@ class TestStreamTranscript:
                  {"type": "text", "text": "Tell me about Python"},
              ]}},
         ]
-        path = _write_jsonl(lines)
+        path = write_jsonl_temp(lines)
         entries = list(stream_transcript(path))
         assert len(entries) == 1
         assert entries[0].entry_type == "user_prompt"
@@ -132,7 +123,7 @@ class TestStreamTranscript:
             {"type": "user", "timestamp": "2026-02-15T10:00:00Z",
              "message": {"content": "secret"}},
         ]
-        path = _write_jsonl(lines)
+        path = write_jsonl_temp(lines)
         entries = list(stream_transcript(path, include_user_content=False))
         # Only tool_results would survive, no user_prompt
         assert all(e.entry_type != "user_prompt" for e in entries)
@@ -145,7 +136,7 @@ class TestStreamTranscript:
                   "content": "file contents here"},
              ]}},
         ]
-        path = _write_jsonl(lines)
+        path = write_jsonl_temp(lines)
         entries = list(stream_transcript(path))
         assert len(entries) == 1
         assert entries[0].entry_type == "tool_result"
@@ -160,7 +151,7 @@ class TestStreamTranscript:
                   "content": "Command failed", "is_error": True},
              ]}},
         ]
-        path = _write_jsonl(lines)
+        path = write_jsonl_temp(lines)
         entries = list(stream_transcript(path))
         assert entries[0].is_error is True
 
@@ -171,7 +162,7 @@ class TestStreamTranscript:
                  {"type": "text", "text": "Here is my response."},
              ], "model": "claude-opus-4-6"}},
         ]
-        path = _write_jsonl(lines)
+        path = write_jsonl_temp(lines)
         entries = list(stream_transcript(path))
         assert len(entries) == 1
         assert entries[0].entry_type == "assistant_text"
@@ -186,7 +177,7 @@ class TestStreamTranscript:
                   "input": {"command": "ls -la"}},
              ]}},
         ]
-        path = _write_jsonl(lines)
+        path = write_jsonl_temp(lines)
         entries = list(stream_transcript(path))
         assert len(entries) == 1
         assert entries[0].entry_type == "tool_use"
@@ -202,7 +193,7 @@ class TestStreamTranscript:
                   "input": {"description": "New task"}},
              ]}},
         ]
-        path = _write_jsonl(lines)
+        path = write_jsonl_temp(lines)
         entries = list(stream_transcript(path))
         assert entries[0].is_mcp is True
         assert entries[0].tool_name == "mcp__gov-tasks__task_create"
@@ -214,7 +205,7 @@ class TestStreamTranscript:
                  {"type": "thinking", "thinking": "Let me analyze this..."},
              ]}},
         ]
-        path = _write_jsonl(lines)
+        path = write_jsonl_temp(lines)
         entries = list(stream_transcript(path))
         assert len(entries) == 1
         assert entries[0].entry_type == "thinking"
@@ -228,7 +219,7 @@ class TestStreamTranscript:
                  {"type": "text", "text": "visible response"},
              ]}},
         ]
-        path = _write_jsonl(lines)
+        path = write_jsonl_temp(lines)
         entries = list(stream_transcript(path, include_thinking=False))
         assert len(entries) == 1
         assert entries[0].entry_type == "assistant_text"
@@ -239,7 +230,7 @@ class TestStreamTranscript:
              "compactMetadata": {"tokens": 5000},
              "message": {"content": "compaction"}},
         ]
-        path = _write_jsonl(lines)
+        path = write_jsonl_temp(lines)
         entries = list(stream_transcript(path))
         assert len(entries) == 1
         assert entries[0].entry_type == "compaction"
@@ -250,7 +241,7 @@ class TestStreamTranscript:
             {"type": "progress", "timestamp": "2026-02-15T10:00:00Z"},
             {"type": "file-history-snapshot", "timestamp": "2026-02-15T10:00:00Z"},
         ]
-        path = _write_jsonl(lines)
+        path = write_jsonl_temp(lines)
         entries = list(stream_transcript(path))
         assert len(entries) == 0
 
@@ -266,7 +257,7 @@ class TestStreamTranscript:
             {"type": "user", "timestamp": "2026-02-15T10:00:00Z",
              "message": {"content": long_content}},
         ]
-        path = _write_jsonl(lines)
+        path = write_jsonl_temp(lines)
         entries = list(stream_transcript(path, content_limit=100))
         assert entries[0].is_truncated is True
         assert entries[0].content_length == 5000
@@ -279,7 +270,7 @@ class TestStreamTranscript:
             }
             for i in range(10)
         ]
-        path = _write_jsonl(lines)
+        path = write_jsonl_temp(lines)
         entries = list(stream_transcript(path, max_entries=3))
         assert len(entries) == 3
 
@@ -290,7 +281,7 @@ class TestStreamTranscript:
             }
             for i in range(5)
         ]
-        path = _write_jsonl(lines)
+        path = write_jsonl_temp(lines)
         entries = list(stream_transcript(path, start_index=3))
         assert len(entries) == 2
         assert entries[0].index == 3
@@ -306,7 +297,7 @@ class TestGetTranscriptPage:
             }
             for i in range(10)
         ]
-        path = _write_jsonl(lines)
+        path = write_jsonl_temp(lines)
         result = get_transcript_page(path, page=1, per_page=3)
         assert len(result["entries"]) == 3
         assert result["total"] == 10
@@ -320,7 +311,7 @@ class TestGetTranscriptPage:
             }
             for i in range(5)
         ]
-        path = _write_jsonl(lines)
+        path = write_jsonl_temp(lines)
         result = get_transcript_page(path, page=2, per_page=3)
         assert len(result["entries"]) == 2
         assert result["has_more"] is False
@@ -386,7 +377,7 @@ class TestTranscriptEntryToDict:
                  {"type": "text", "text": "All 5 tests passed!"},
              ], "model": "claude-opus-4-6"}},
         ]
-        path = _write_jsonl(lines)
+        path = write_jsonl_temp(lines)
         entries = list(stream_transcript(path))
 
         types = [e.entry_type for e in entries]
@@ -415,7 +406,7 @@ class TestMixedUserContent:
                   "content": "output data"},
              ]}},
         ]
-        path = _write_jsonl(lines)
+        path = write_jsonl_temp(lines)
         entries = list(stream_transcript(path))
         assert len(entries) == 2
         assert entries[0].entry_type == "user_prompt"
@@ -431,7 +422,7 @@ class TestMixedUserContent:
                   "content": "rule data"},
              ]}},
         ]
-        path = _write_jsonl(lines)
+        path = write_jsonl_temp(lines)
         entries = list(stream_transcript(path))
         assert entries[0].server_name == "gov-core"
 
@@ -444,7 +435,7 @@ class TestMixedUserContent:
                  {"type": "text", "text": "Real content"},
              ]}},
         ]
-        path = _write_jsonl(lines)
+        path = write_jsonl_temp(lines)
         entries = list(stream_transcript(path))
         assert len(entries) == 1
         assert entries[0].content == "Real content"

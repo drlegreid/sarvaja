@@ -64,87 +64,22 @@ def unique_id():
 
 @pytest.fixture(scope="session", autouse=True)
 def cleanup_test_data():
+    """Session-scoped cleanup — delegates to shared conftest helper.
+
+    Per RULE-004: Clean test environment.
+    The actual cleanup logic lives in conftest.cleanup_test_entities().
     """
-    Session-scoped cleanup fixture that removes TEST-* entities.
+    from tests.e2e.conftest import cleanup_test_entities
 
-    Per RULE-004: Clean test environment
-    - Runs BEFORE tests (yield) to clean existing pollution
-    - Runs AFTER all tests to clean up created data
-    """
-    client = httpx.Client(base_url=API_BASE_URL, timeout=30.0)
+    pre = cleanup_test_entities(API_BASE_URL)
+    if sum(pre.values()) > 0:
+        print(f"\n[CRUD pre-test cleanup] Removed: {pre}")
 
-    def do_cleanup():
-        """Remove all TEST-* entities from the database."""
-        cleaned = {"tasks": 0, "sessions": 0, "rules": 0}
+    yield
 
-        # Cleanup tasks
-        try:
-            tasks_resp = client.get("/api/tasks")
-            if tasks_resp.status_code == 200:
-                data = tasks_resp.json()
-                # Handle paginated response {"items": [...]} or direct list
-                tasks = data.get("items", data) if isinstance(data, dict) else data
-                for task in tasks:
-                    task_id = task.get("task_id", "")
-                    if task_id.startswith("TEST-"):
-                        del_resp = client.delete(f"/api/tasks/{task_id}")
-                        if del_resp.status_code == 204:
-                            cleaned["tasks"] += 1
-        except Exception as e:
-            print(f"Task cleanup error: {e}")
-
-        # Cleanup sessions - END only (preserve data per user preference)
-        # Sessions may contain important context, so we only mark them complete
-        try:
-            sessions_resp = client.get("/api/sessions")
-            if sessions_resp.status_code == 200:
-                data = sessions_resp.json()
-                # Handle paginated response {"items": [...]} or direct list
-                sessions = data.get("items", data) if isinstance(data, dict) else data
-                for session in sessions:
-                    session_id = session.get("session_id", "")
-                    if session_id.startswith("TEST-"):
-                        # Only end, don't delete - preserves session history
-                        try:
-                            client.put(f"/api/sessions/{session_id}/end")
-                            cleaned["sessions"] += 1
-                        except Exception:
-                            pass
-        except Exception as e:
-            print(f"Session cleanup error: {e}")
-
-        # Cleanup rules (TypeDB)
-        if TYPEDB_AVAILABLE:
-            try:
-                rules_resp = client.get("/api/rules")
-                if rules_resp.status_code == 200:
-                    for rule in rules_resp.json():
-                        rule_id = rule.get("id", "")
-                        if rule_id.startswith("TEST-"):
-                            del_resp = client.delete(
-                                f"/api/rules/{rule_id}",
-                                params={"archive": "false"}
-                            )
-                            if del_resp.status_code == 204:
-                                cleaned["rules"] += 1
-            except Exception as e:
-                print(f"Rule cleanup error: {e}")
-
-        return cleaned
-
-    # Pre-test cleanup (clean existing pollution)
-    pre_cleaned = do_cleanup()
-    if sum(pre_cleaned.values()) > 0:
-        print(f"\n[Pre-test cleanup] Removed: {pre_cleaned}")
-
-    yield  # Run all tests
-
-    # Post-test cleanup
-    post_cleaned = do_cleanup()
-    if sum(post_cleaned.values()) > 0:
-        print(f"\n[Post-test cleanup] Removed: {post_cleaned}")
-
-    client.close()
+    post = cleanup_test_entities(API_BASE_URL)
+    if sum(post.values()) > 0:
+        print(f"\n[CRUD post-test cleanup] Removed: {post}")
 
 
 class TestHealthCheck:

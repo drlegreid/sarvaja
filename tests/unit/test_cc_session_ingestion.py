@@ -11,6 +11,8 @@ from pathlib import Path
 from unittest.mock import patch, MagicMock
 from tempfile import NamedTemporaryFile, TemporaryDirectory
 
+from tests.fixtures.cc_jsonl_factory import CCJsonlFactory
+
 from governance.services.cc_session_ingestion import (
     _derive_project_slug,
     _scan_jsonl_metadata,
@@ -48,11 +50,6 @@ class TestDeriveProjectSlug:
 class TestScanJsonlMetadata:
     """Tests for _scan_jsonl_metadata()."""
 
-    def _write_jsonl(self, filepath, entries):
-        with open(filepath, "w") as f:
-            for entry in entries:
-                f.write(json.dumps(entry) + "\n")
-
     def test_empty_file(self, tmp_path):
         f = tmp_path / "empty.jsonl"
         f.write_text("")
@@ -60,12 +57,12 @@ class TestScanJsonlMetadata:
 
     def test_no_timestamp(self, tmp_path):
         f = tmp_path / "notime.jsonl"
-        self._write_jsonl(f, [{"type": "user"}])
+        CCJsonlFactory.write_jsonl([{"type": "user"}], f)
         assert _scan_jsonl_metadata(f) is None
 
     def test_basic_scan(self, tmp_path):
         f = tmp_path / "session-abc.jsonl"
-        self._write_jsonl(f, [
+        CCJsonlFactory.write_jsonl([
             {"type": "user", "timestamp": "2026-02-11T10:00:00Z",
              "sessionId": "uuid-123", "gitBranch": "master"},
             {"type": "assistant", "timestamp": "2026-02-11T10:01:00Z",
@@ -73,7 +70,7 @@ class TestScanJsonlMetadata:
                  {"type": "tool_use", "name": "Read"},
                  {"type": "thinking", "thinking": "Let me think..."},
              ], "model": "claude-opus-4-6"}},
-        ])
+        ], f)
         meta = _scan_jsonl_metadata(f)
         assert meta is not None
         assert meta["slug"] == "session-abc"
@@ -89,13 +86,13 @@ class TestScanJsonlMetadata:
 
     def test_compaction_count(self, tmp_path):
         f = tmp_path / "compact.jsonl"
-        self._write_jsonl(f, [
+        CCJsonlFactory.write_jsonl([
             {"type": "user", "timestamp": "2026-02-11T10:00:00Z"},
             {"type": "system", "timestamp": "2026-02-11T10:05:00Z",
              "compactMetadata": {"tokensRemoved": 5000}},
             {"type": "system", "timestamp": "2026-02-11T10:10:00Z",
              "compactMetadata": {"tokensRemoved": 3000}},
-        ])
+        ], f)
         meta = _scan_jsonl_metadata(f)
         assert meta["compaction_count"] == 2
 
@@ -112,9 +109,9 @@ class TestScanJsonlMetadata:
 
     def test_file_path_and_size_included(self, tmp_path):
         f = tmp_path / "size.jsonl"
-        self._write_jsonl(f, [
+        CCJsonlFactory.write_jsonl([
             {"type": "user", "timestamp": "2026-02-11T10:00:00Z"},
-        ])
+        ], f)
         meta = _scan_jsonl_metadata(f)
         assert meta["file_path"] == str(f)
         assert meta["file_size"] > 0
@@ -143,18 +140,10 @@ class TestBuildSessionId:
 class TestIngestSession:
     """Tests for ingest_session()."""
 
+    _factory = CCJsonlFactory(session_id="uuid-abc", git_branch="master")
+
     def _make_jsonl(self, tmp_path, name="test-session.jsonl"):
-        f = tmp_path / name
-        entries = [
-            {"type": "user", "timestamp": "2026-02-11T10:00:00Z",
-             "sessionId": "uuid-abc", "gitBranch": "master"},
-            {"type": "assistant", "timestamp": "2026-02-11T10:01:00Z",
-             "message": {"content": [{"type": "tool_use", "name": "Read"}]}},
-        ]
-        with open(f, "w") as fh:
-            for e in entries:
-                fh.write(json.dumps(e) + "\n")
-        return f
+        return self._factory.write_session_file(tmp_path, name=name, turns=2)
 
     @patch("governance.services.cc_session_ingestion.session_service")
     def test_ingest_dry_run(self, mock_svc, tmp_path):
@@ -195,7 +184,10 @@ class TestIngestSession:
             result = ingest_session(
                 f, project_slug="test", project_id="PROJ-TEST",
             )
-            mock_link.assert_called_once_with("PROJ-TEST", "SESSION-2026-02-11-CC-TEST-SESSION")
+            # Factory timestamp starts at 2026-03-19; session name from file stem
+            args = mock_link.call_args
+            assert args[0][0] == "PROJ-TEST"
+            assert args[0][1].startswith("SESSION-2026-03-19-CC-")
 
     def test_ingest_empty_file(self, tmp_path):
         f = tmp_path / "empty.jsonl"

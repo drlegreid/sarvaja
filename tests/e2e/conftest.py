@@ -12,6 +12,7 @@ Provides shared configuration for all E2E tests including:
 """
 
 import pytest
+import httpx
 
 # Optional pytest-playwright import - not required for API-only tests
 try:
@@ -26,6 +27,109 @@ from shared.constants import APP_TITLE, DASHBOARD_URL, API_BASE_URL
 
 # Re-export for backward compatibility
 API_URL = API_BASE_URL
+
+
+def _is_test_artifact(entity_id: str) -> bool:
+    """Return True if entity_id is a CRUD test artifact (not a real governance rule).
+
+    Test artifacts: TEST-9A3E0F65, TEST-00534A6E-SORT-A (uuid-based)
+    Real rules: TEST-BUGFIX-01-v1, TEST-DISCOVERY-01-v1 (semantic IDs)
+    """
+    if not entity_id.startswith("TEST-"):
+        return False
+    # Real semantic IDs have version suffix like -v1, -v2
+    if "-v" in entity_id.split("TEST-", 1)[1]:
+        return False
+    return True
+
+
+def cleanup_test_entities(base_url: str = API_BASE_URL) -> dict:
+    """Remove all TEST-* test artifacts from the database.
+
+    Paginates through all pages. Skips real governance rules with TEST- prefix
+    (e.g. TEST-BUGFIX-01-v1). Returns counts of cleaned entities per type.
+    """
+    cleaned = {"tasks": 0, "rules": 0, "sessions": 0}
+    client = httpx.Client(base_url=base_url, timeout=30.0)
+    try:
+        # Cleanup tasks — collect all IDs first, then delete
+        # (offset pagination shifts during deletion, so collect-then-delete is safer)
+        try:
+            test_task_ids = []
+            offset = 0
+            while True:
+                resp = client.get("/api/tasks", params={"limit": 200, "offset": offset})
+                if resp.status_code != 200:
+                    break
+                data = resp.json()
+                tasks = data.get("items", data) if isinstance(data, dict) else data
+                if not tasks:
+                    break
+                for task in tasks:
+                    task_id = task.get("task_id", "")
+                    if _is_test_artifact(task_id):
+                        test_task_ids.append(task_id)
+                pagination = data.get("pagination", {}) if isinstance(data, dict) else {}
+                if not pagination.get("has_more", False):
+                    break
+                offset += len(tasks)
+            for task_id in test_task_ids:
+                if client.delete(f"/api/tasks/{task_id}").status_code == 204:
+                    cleaned["tasks"] += 1
+        except Exception as e:
+            print(f"Task cleanup error: {e}")
+
+        # Cleanup rules
+        try:
+            resp = client.get("/api/rules")
+            if resp.status_code == 200:
+                data = resp.json()
+                rules = data.get("items", data) if isinstance(data, dict) else data
+                for rule in rules:
+                    rule_id = rule.get("id", "")
+                    if _is_test_artifact(rule_id):
+                        if client.delete(
+                            f"/api/rules/{rule_id}",
+                            params={"archive": "false"},
+                        ).status_code == 204:
+                            cleaned["rules"] += 1
+        except Exception as e:
+            print(f"Rule cleanup error: {e}")
+
+        # Cleanup sessions — end only, preserve history
+        try:
+            resp = client.get("/api/sessions")
+            if resp.status_code == 200:
+                data = resp.json()
+                sessions = data.get("items", data) if isinstance(data, dict) else data
+                for session in sessions:
+                    session_id = session.get("session_id", "")
+                    if _is_test_artifact(session_id):
+                        try:
+                            client.put(f"/api/sessions/{session_id}/end")
+                            cleaned["sessions"] += 1
+                        except Exception:
+                            pass
+        except Exception as e:
+            print(f"Session cleanup error: {e}")
+    finally:
+        client.close()
+
+    return cleaned
+
+
+@pytest.fixture(scope="session", autouse=True)
+def cleanup_test_data_global():
+    """Session-scoped cleanup that removes TEST-* entities before and after all E2E tests."""
+    pre = cleanup_test_entities()
+    if sum(pre.values()) > 0:
+        print(f"\n[Pre-test cleanup] Removed: {pre}")
+
+    yield
+
+    post = cleanup_test_entities()
+    if sum(post.values()) > 0:
+        print(f"\n[Post-test cleanup] Removed: {post}")
 
 
 @pytest.fixture

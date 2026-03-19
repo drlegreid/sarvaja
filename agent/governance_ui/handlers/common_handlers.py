@@ -85,9 +85,11 @@ def register_common_handlers(ctrl: Any, state: Any) -> None:
                         data = sessions_response.json()
                         items = data.get("items", data) if isinstance(data, dict) else data
                         # F.2: Add duration column
+                        # P0-2: Prefer server-computed duration, fallback to local
                         for item in items:
-                            item["duration"] = compute_session_duration(
-                                item.get("start_time", ""), item.get("end_time", ""))
+                            if not item.get("duration"):
+                                item["duration"] = compute_session_duration(
+                                    item.get("start_time", ""), item.get("end_time", ""))
                             # BUG-UI-SESSIONS-003: Derive source_type
                             if not item.get("source_type"):
                                 sid = item.get("session_id", "")

@@ -128,9 +128,11 @@ def register_refresh_controllers(
                         metrics = compute_session_metrics(items)
                         state.sessions_metrics_duration = metrics["duration"]
                         state.sessions_metrics_avg_tasks = metrics["avg_tasks"]
+                        # P0-2: Prefer server-computed duration, fallback to local
                         for item in items:
-                            item["duration"] = compute_session_duration(
-                                item.get("start_time", ""), item.get("end_time", ""))
+                            if not item.get("duration"):
+                                item["duration"] = compute_session_duration(
+                                    item.get("start_time", ""), item.get("end_time", ""))
                         tl_vals, tl_labels = compute_timeline_data(items)
                         state.sessions_timeline_data = tl_vals
                         state.sessions_timeline_labels = tl_labels
@@ -183,9 +185,11 @@ def register_refresh_controllers(
                     data = response.json()
                     items = data.get("items", data) if isinstance(data, dict) else data
                     # F.2: Add duration to each session item
+                    # P0-2: Prefer server-computed duration, fallback to local
                     for item in items:
-                        item["duration"] = compute_session_duration(
-                            item.get("start_time", ""), item.get("end_time", ""))
+                        if not item.get("duration"):
+                            item["duration"] = compute_session_duration(
+                                item.get("start_time", ""), item.get("end_time", ""))
                         # BUG-UI-SESSIONS-003: Derive source_type
                         if not item.get("source_type"):
                             sid = item.get("session_id", "")

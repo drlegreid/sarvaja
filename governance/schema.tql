@@ -34,7 +34,8 @@ entity rule-entity,
     plays document-references-rule:referenced-rule, # RULE-013: rules referenced by docs
     plays entity-vector:embedded-entity,   # P7.1: vector embeddings
     plays implements-rule:implemented-rule,  # P11.3: tasks implement rules
-    plays session-applied-rule:applied-rule; # P11.3: sessions apply rules
+    plays session-applied-rule:applied-rule, # P11.3: sessions apply rules
+    plays agent-capability:governing-rule;   # P2-12: rule→agent capability bindings
 
 entity decision,
     owns decision-id,
@@ -285,7 +286,9 @@ entity agent,
     plays proposes:proposer,
     plays vote:voter,
     plays dispute:disputer,
-    plays agent-action:acting-agent;
+    plays agent-action:acting-agent,
+    plays agent-capability:capable-agent,         # P2-12: rule→agent bindings
+    plays workspace-has-agent:assigned-agent;     # P2-12: workspace→agent links
 
 # Proposal for rule changes
 entity proposal,
@@ -691,6 +694,26 @@ relation agent-action,
 relation requires-escalation,
     relates escalated-proposal,
     relates escalation-reason;
+
+# =============================================================================
+# WORKSPACE & CAPABILITY RELATIONS (P2-12)
+# =============================================================================
+
+# Capability attributes (on the agent-capability relation)
+attribute capability-category value string;
+attribute capability-status value string;
+
+# Agent → Rule capability binding
+relation agent-capability,
+    relates capable-agent,
+    relates governing-rule,
+    owns capability-category,
+    owns capability-status;
+
+# Workspace → Agent assignment
+relation workspace-has-agent,
+    relates agent-workspace,
+    relates assigned-agent;
 
 # =============================================================================
 # INFERENCE RULES

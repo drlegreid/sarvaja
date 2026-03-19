@@ -1,8 +1,9 @@
 """
-Tests for workspace list and detail view components.
+Tests for workspace list, detail, and form view components.
 
-Tests for agent/governance_ui/views/workspaces/list.py
-and agent/governance_ui/views/workspaces/detail.py.
+Tests for agent/governance_ui/views/workspaces/list.py,
+agent/governance_ui/views/workspaces/detail.py, and
+agent/governance_ui/views/workspaces/form.py.
 """
 import inspect
 
@@ -205,16 +206,21 @@ class TestWorkspacesListStructure:
         source = inspect.getsource(ws_list)
         assert "trigger('load_workspaces')" in source
 
-    def test_has_trigger_create_workspace_dialog(self):
+    def test_has_trigger_show_create_workspace_form(self):
         from agent.governance_ui.views.workspaces import list as ws_list
         source = inspect.getsource(ws_list)
-        assert "trigger('create_workspace_dialog')" in source
+        assert "trigger('show_create_workspace_form')" in source
 
     def test_has_status_filter_items(self):
         from agent.governance_ui.views.workspaces import list as ws_list
         source = inspect.getsource(ws_list)
         assert '"active"' in source
         assert '"archived"' in source
+
+    def test_list_hidden_when_form_open(self):
+        from agent.governance_ui.views.workspaces import list as ws_list
+        source = inspect.getsource(ws_list)
+        assert "show_workspace_form" in source
 
     def test_module_docstring_present(self):
         from agent.governance_ui.views.workspaces import list as ws_list
@@ -274,6 +280,26 @@ class TestWorkspaceDetailTestIds:
         source = inspect.getsource(detail)
         assert "workspace-detail-status" in source
 
+    def test_has_workspace_edit_btn_testid(self):
+        from agent.governance_ui.views.workspaces import detail
+        source = inspect.getsource(detail)
+        assert "workspace-edit-btn" in source
+
+    def test_has_workspace_delete_btn_testid(self):
+        from agent.governance_ui.views.workspaces import detail
+        source = inspect.getsource(detail)
+        assert "workspace-delete-btn" in source
+
+    def test_has_workspace_delete_dialog_testid(self):
+        from agent.governance_ui.views.workspaces import detail
+        source = inspect.getsource(detail)
+        assert "workspace-delete-dialog" in source
+
+    def test_has_workspace_edit_save_btn_testid(self):
+        from agent.governance_ui.views.workspaces import detail
+        source = inspect.getsource(detail)
+        assert "workspace-edit-save-btn" in source
+
 
 class TestWorkspaceDetailContent:
     """Verify UI content strings and icons in the detail view."""
@@ -313,6 +339,16 @@ class TestWorkspaceDetailContent:
         source = inspect.getsource(detail)
         assert "mdi-gavel" in source
 
+    def test_has_pencil_icon(self):
+        from agent.governance_ui.views.workspaces import detail
+        source = inspect.getsource(detail)
+        assert "mdi-pencil" in source
+
+    def test_has_delete_icon(self):
+        from agent.governance_ui.views.workspaces import detail
+        source = inspect.getsource(detail)
+        assert "mdi-delete" in source
+
     def test_has_id_label(self):
         from agent.governance_ui.views.workspaces import detail
         source = inspect.getsource(detail)
@@ -342,6 +378,17 @@ class TestWorkspaceDetailContent:
         from agent.governance_ui.views.workspaces import detail
         source = inspect.getsource(detail)
         assert "No default rules" in source
+
+    def test_has_delete_confirmation_text(self):
+        from agent.governance_ui.views.workspaces import detail
+        source = inspect.getsource(detail)
+        assert "Delete Workspace?" in source
+        assert "cannot be undone" in source
+
+    def test_has_edit_workspace_title(self):
+        from agent.governance_ui.views.workspaces import detail
+        source = inspect.getsource(detail)
+        assert "Edit Workspace" in source
 
 
 class TestWorkspaceDetailStructure:
@@ -377,6 +424,26 @@ class TestWorkspaceDetailStructure:
         source = inspect.getsource(detail)
         assert "VAvatar(" in source
 
+    def test_uses_vdialog(self):
+        from agent.governance_ui.views.workspaces import detail
+        source = inspect.getsource(detail)
+        assert "VDialog(" in source
+
+    def test_uses_vtextfield_in_edit(self):
+        from agent.governance_ui.views.workspaces import detail
+        source = inspect.getsource(detail)
+        assert "VTextField(" in source
+
+    def test_uses_vtextarea_in_edit(self):
+        from agent.governance_ui.views.workspaces import detail
+        source = inspect.getsource(detail)
+        assert "VTextarea(" in source
+
+    def test_uses_vselect_in_edit(self):
+        from agent.governance_ui.views.workspaces import detail
+        source = inspect.getsource(detail)
+        assert "VSelect(" in source
+
     def test_has_selected_workspace_binding(self):
         from agent.governance_ui.views.workspaces import detail
         source = inspect.getsource(detail)
@@ -403,10 +470,10 @@ class TestWorkspaceDetailStructure:
         source = inspect.getsource(detail)
         assert "selected_workspace.agent_ids" in source
 
-    def test_has_rule_ids_binding(self):
+    def test_has_default_rules_binding(self):
         from agent.governance_ui.views.workspaces import detail
         source = inspect.getsource(detail)
-        assert "selected_workspace.rule_ids" in source
+        assert "selected_workspace.default_rules" in source
 
     def test_has_v_for_agents(self):
         from agent.governance_ui.views.workspaces import detail
@@ -417,7 +484,7 @@ class TestWorkspaceDetailStructure:
     def test_has_v_for_rules(self):
         from agent.governance_ui.views.workspaces import detail
         source = inspect.getsource(detail)
-        assert "rid in selected_workspace.rule_ids" in source
+        assert "rid in selected_workspace.default_rules" in source
 
     def test_has_trigger_select_agent(self):
         from agent.governance_ui.views.workspaces import detail
@@ -428,6 +495,31 @@ class TestWorkspaceDetailStructure:
         from agent.governance_ui.views.workspaces import detail
         source = inspect.getsource(detail)
         assert "trigger('select_rule'" in source
+
+    def test_has_trigger_edit_workspace(self):
+        from agent.governance_ui.views.workspaces import detail
+        source = inspect.getsource(detail)
+        assert "trigger('edit_workspace')" in source
+
+    def test_has_trigger_submit_workspace_edit(self):
+        from agent.governance_ui.views.workspaces import detail
+        source = inspect.getsource(detail)
+        assert "trigger('submit_workspace_edit')" in source
+
+    def test_has_trigger_cancel_workspace_edit(self):
+        from agent.governance_ui.views.workspaces import detail
+        source = inspect.getsource(detail)
+        assert "trigger('cancel_workspace_edit')" in source
+
+    def test_has_trigger_confirm_delete_workspace(self):
+        from agent.governance_ui.views.workspaces import detail
+        source = inspect.getsource(detail)
+        assert "trigger('confirm_delete_workspace')" in source
+
+    def test_has_trigger_delete_workspace(self):
+        from agent.governance_ui.views.workspaces import detail
+        source = inspect.getsource(detail)
+        assert "trigger('delete_workspace')" in source
 
     def test_has_agent_navigation(self):
         from agent.governance_ui.views.workspaces import detail
@@ -464,7 +556,293 @@ class TestWorkspaceDetailStructure:
         source = inspect.getsource(detail)
         assert "selected_workspace.created_at || 'Unknown'" in source
 
+    def test_has_edit_workspace_mode_guard(self):
+        from agent.governance_ui.views.workspaces import detail
+        source = inspect.getsource(detail)
+        assert "edit_workspace_mode" in source
+
+    def test_has_edit_workspace_name_binding(self):
+        from agent.governance_ui.views.workspaces import detail
+        source = inspect.getsource(detail)
+        assert "edit_workspace_name" in source
+
+    def test_has_edit_workspace_description_binding(self):
+        from agent.governance_ui.views.workspaces import detail
+        source = inspect.getsource(detail)
+        assert "edit_workspace_description" in source
+
+    def test_has_edit_workspace_status_binding(self):
+        from agent.governance_ui.views.workspaces import detail
+        source = inspect.getsource(detail)
+        assert "edit_workspace_status" in source
+
+    def test_has_delete_confirm_dialog_binding(self):
+        from agent.governance_ui.views.workspaces import detail
+        source = inspect.getsource(detail)
+        assert "show_workspace_delete_confirm" in source
+
     def test_module_docstring_present(self):
         from agent.governance_ui.views.workspaces import detail
         assert detail.__doc__ is not None
         assert "Workspace" in detail.__doc__
+
+
+# ---------------------------------------------------------------------------
+# Workspace Form View
+# ---------------------------------------------------------------------------
+
+
+class TestWorkspaceFormComponents:
+    """Verify the form build function exists and is callable."""
+
+    def test_build_workspace_form_view_callable(self):
+        from agent.governance_ui.views.workspaces.form import (
+            build_workspace_form_view,
+        )
+        assert callable(build_workspace_form_view)
+
+    def test_form_build_function_takes_no_args(self):
+        from agent.governance_ui.views.workspaces.form import (
+            build_workspace_form_view,
+        )
+        sig = inspect.signature(build_workspace_form_view)
+        assert len(sig.parameters) == 0
+
+    def test_form_build_function_has_docstring(self):
+        from agent.governance_ui.views.workspaces.form import (
+            build_workspace_form_view,
+        )
+        assert build_workspace_form_view.__doc__ is not None
+        assert "workspace" in build_workspace_form_view.__doc__.lower()
+
+
+class TestWorkspaceFormTestIds:
+    """Verify data-testid attributes for E2E targeting."""
+
+    def test_has_workspace_form_testid(self):
+        from agent.governance_ui.views.workspaces import form
+        source = inspect.getsource(form)
+        assert "workspace-form" in source
+
+    def test_has_workspace_form_cancel_btn_testid(self):
+        from agent.governance_ui.views.workspaces import form
+        source = inspect.getsource(form)
+        assert "workspace-form-cancel-btn" in source
+
+    def test_has_workspace_form_submit_btn_testid(self):
+        from agent.governance_ui.views.workspaces import form
+        source = inspect.getsource(form)
+        assert "workspace-form-submit-btn" in source
+
+    def test_has_workspace_form_name_testid(self):
+        from agent.governance_ui.views.workspaces import form
+        source = inspect.getsource(form)
+        assert "workspace-form-name" in source
+
+    def test_has_workspace_form_type_testid(self):
+        from agent.governance_ui.views.workspaces import form
+        source = inspect.getsource(form)
+        assert "workspace-form-type" in source
+
+    def test_has_workspace_form_description_testid(self):
+        from agent.governance_ui.views.workspaces import form
+        source = inspect.getsource(form)
+        assert "workspace-form-description" in source
+
+    def test_has_workspace_form_project_testid(self):
+        from agent.governance_ui.views.workspaces import form
+        source = inspect.getsource(form)
+        assert "workspace-form-project" in source
+
+    def test_has_workspace_create_form_testid(self):
+        from agent.governance_ui.views.workspaces import form
+        source = inspect.getsource(form)
+        assert "workspace-create-form" in source
+
+
+class TestWorkspaceFormContent:
+    """Verify UI content strings and field labels in the form view."""
+
+    def test_has_create_workspace_title(self):
+        from agent.governance_ui.views.workspaces import form
+        source = inspect.getsource(form)
+        assert "Create Workspace" in source
+
+    def test_has_name_label(self):
+        from agent.governance_ui.views.workspaces import form
+        source = inspect.getsource(form)
+        assert "Workspace Name" in source
+
+    def test_has_type_label(self):
+        from agent.governance_ui.views.workspaces import form
+        source = inspect.getsource(form)
+        assert "Workspace Type" in source
+
+    def test_has_description_label(self):
+        from agent.governance_ui.views.workspaces import form
+        source = inspect.getsource(form)
+        assert "Description" in source
+
+    def test_has_project_label(self):
+        from agent.governance_ui.views.workspaces import form
+        source = inspect.getsource(form)
+        assert "Project ID" in source
+
+    def test_has_cancel_button(self):
+        from agent.governance_ui.views.workspaces import form
+        source = inspect.getsource(form)
+        assert '"Cancel"' in source
+
+    def test_has_create_button(self):
+        from agent.governance_ui.views.workspaces import form
+        source = inspect.getsource(form)
+        assert '"Create"' in source
+
+
+class TestWorkspaceFormStructure:
+    """Verify Vuetify components and bindings in the form view."""
+
+    def test_uses_vcard(self):
+        from agent.governance_ui.views.workspaces import form
+        source = inspect.getsource(form)
+        assert "VCard(" in source
+
+    def test_uses_vtextfield(self):
+        from agent.governance_ui.views.workspaces import form
+        source = inspect.getsource(form)
+        assert "VTextField(" in source
+
+    def test_uses_vtextarea(self):
+        from agent.governance_ui.views.workspaces import form
+        source = inspect.getsource(form)
+        assert "VTextarea(" in source
+
+    def test_uses_vselect(self):
+        from agent.governance_ui.views.workspaces import form
+        source = inspect.getsource(form)
+        assert "VSelect(" in source
+
+    def test_uses_vform(self):
+        from agent.governance_ui.views.workspaces import form
+        source = inspect.getsource(form)
+        assert "VForm(" in source
+
+    def test_uses_vbtn(self):
+        from agent.governance_ui.views.workspaces import form
+        source = inspect.getsource(form)
+        assert "VBtn(" in source
+
+    def test_has_form_name_binding(self):
+        from agent.governance_ui.views.workspaces import form
+        source = inspect.getsource(form)
+        assert "form_workspace_name" in source
+
+    def test_has_form_type_binding(self):
+        from agent.governance_ui.views.workspaces import form
+        source = inspect.getsource(form)
+        assert "form_workspace_type" in source
+
+    def test_has_form_description_binding(self):
+        from agent.governance_ui.views.workspaces import form
+        source = inspect.getsource(form)
+        assert "form_workspace_description" in source
+
+    def test_has_form_project_binding(self):
+        from agent.governance_ui.views.workspaces import form
+        source = inspect.getsource(form)
+        assert "form_workspace_project_id" in source
+
+    def test_has_trigger_create_workspace(self):
+        from agent.governance_ui.views.workspaces import form
+        source = inspect.getsource(form)
+        assert "trigger('create_workspace')" in source
+
+    def test_has_trigger_cancel_workspace_form(self):
+        from agent.governance_ui.views.workspaces import form
+        source = inspect.getsource(form)
+        assert "trigger('cancel_workspace_form')" in source
+
+    def test_has_active_view_guard(self):
+        from agent.governance_ui.views.workspaces import form
+        source = inspect.getsource(form)
+        assert "active_view === 'workspaces'" in source
+
+    def test_has_show_workspace_form_guard(self):
+        from agent.governance_ui.views.workspaces import form
+        source = inspect.getsource(form)
+        assert "show_workspace_form" in source
+
+    def test_has_loading_state(self):
+        from agent.governance_ui.views.workspaces import form
+        source = inspect.getsource(form)
+        assert "is_loading" in source
+
+    def test_has_error_alert(self):
+        from agent.governance_ui.views.workspaces import form
+        source = inspect.getsource(form)
+        assert "has_error" in source
+
+    def test_has_submit_disabled_when_empty(self):
+        from agent.governance_ui.views.workspaces import form
+        source = inspect.getsource(form)
+        assert "form_workspace_name" in source
+
+    def test_module_docstring_present(self):
+        from agent.governance_ui.views.workspaces import form
+        assert form.__doc__ is not None
+        assert "Workspace" in form.__doc__
+
+
+# ---------------------------------------------------------------------------
+# Workspaces View Entry Point
+# ---------------------------------------------------------------------------
+
+
+class TestWorkspacesViewEntryPoint:
+    """Verify the top-level workspaces_view.py entry point."""
+
+    def test_build_workspaces_view_callable(self):
+        from agent.governance_ui.views.workspaces_view import (
+            build_workspaces_view,
+        )
+        assert callable(build_workspaces_view)
+
+    def test_workspaces_view_has_docstring(self):
+        from agent.governance_ui.views.workspaces_view import (
+            build_workspaces_view,
+        )
+        assert build_workspaces_view.__doc__ is not None
+
+    def test_workspaces_view_imports_all_subviews(self):
+        from agent.governance_ui.views import workspaces_view
+        source = inspect.getsource(workspaces_view)
+        assert "build_workspaces_list_view" in source
+        assert "build_workspace_detail_view" in source
+        assert "build_workspace_form_view" in source
+
+
+# ---------------------------------------------------------------------------
+# Workspaces __init__.py exports
+# ---------------------------------------------------------------------------
+
+
+class TestWorkspacesPackageExports:
+    """Verify __init__.py exports all view builders."""
+
+    def test_exports_list_view(self):
+        from agent.governance_ui.views.workspaces import (
+            build_workspaces_list_view,
+        )
+        assert callable(build_workspaces_list_view)
+
+    def test_exports_detail_view(self):
+        from agent.governance_ui.views.workspaces import (
+            build_workspace_detail_view,
+        )
+        assert callable(build_workspace_detail_view)
+
+    def test_exports_form_view(self):
+        from agent.governance_ui.views.workspaces import (
+            build_workspace_form_view,
+        )
+        assert callable(build_workspace_form_view)

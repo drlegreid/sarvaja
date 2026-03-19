@@ -266,40 +266,37 @@ class TestDataPollutionChecks:
     """
 
     def test_no_test_prefix_rules(self):
-        """Per WORKFLOW-RD-01-v1 Amendment A: TEST-* rules should be cleaned up.
+        """Per WORKFLOW-RD-01-v1 Amendment A: TEST-* artifact rules should be cleaned up.
 
-        E2E tests create TEST-* entities but cleanup fixture should remove them.
-        This test reports TEST-* rule count - 0 expected when run standalone.
+        Actively cleans CRUD test artifacts, then asserts 0 remain.
+        Real rules with TEST- prefix (e.g. TEST-BUGFIX-01-v1) are excluded.
         """
+        from tests.e2e.conftest import cleanup_test_entities, _is_test_artifact
+        cleanup_test_entities()
+
         response = requests.get(f"{API_URL}/api/rules", timeout=10)
         if response.status_code != 200:
             pytest.skip("Rules API unavailable")
 
         data = response.json()
         rules = data.get("items", data) if isinstance(data, dict) else data
-        test_rules = [r for r in rules if r.get("id", "").startswith("TEST-")]
-
-        # Report count - when run as part of suite, other tests may have created garbage
-        if test_rules:
-            print(f"\n[DATA POLLUTION] Found {len(test_rules)} TEST-* rules")
-            print(f"  Sample: {[r['id'] for r in test_rules[:5]]}")
-            # If running standalone (no other tests created garbage), this should be 0
-            # xfail if non-zero during suite run - cleanup happens at session end
-            if len(test_rules) > 0:
-                pytest.xfail(f"{len(test_rules)} TEST-* rules exist (cleanup pending at session end)")
+        test_rules = [r for r in rules if _is_test_artifact(r.get("id", ""))]
+        assert len(test_rules) == 0, (
+            f"Found {len(test_rules)} TEST-* artifact rules after cleanup: "
+            f"{[r['id'] for r in test_rules[:5]]}"
+        )
 
     def test_no_test_prefix_tasks(self):
-        """No TEST-* tasks should remain after test runs."""
-        tasks = get_tasks_from_api()
-        test_tasks = [t for t in tasks if (t.get("task_id") or "").startswith("TEST-")]
+        """No TEST-* artifact tasks should remain after cleanup."""
+        from tests.e2e.conftest import cleanup_test_entities, _is_test_artifact
+        cleanup_test_entities()
 
-        # Report count
-        if test_tasks:
-            print(f"\n[DATA POLLUTION] Found {len(test_tasks)} TEST-* tasks")
-            print(f"  Sample: {[t.get('task_id') for t in test_tasks[:5]]}")
-            # xfail if non-zero during suite run - cleanup happens at session end
-            if len(test_tasks) > 0:
-                pytest.xfail(f"{len(test_tasks)} TEST-* tasks exist (cleanup pending at session end)")
+        tasks = get_tasks_from_api()
+        test_tasks = [t for t in tasks if _is_test_artifact(t.get("task_id") or "")]
+        assert len(test_tasks) == 0, (
+            f"Found {len(test_tasks)} TEST-* artifact tasks after cleanup: "
+            f"{[t.get('task_id') for t in test_tasks[:5]]}"
+        )
 
     def test_rules_use_semantic_ids(self):
         """Per META-TAXON-01-v1: All rules MUST use semantic IDs.

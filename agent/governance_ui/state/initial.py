@@ -321,10 +321,23 @@ def get_initial_state() -> Dict[str, Any]:
         'workspaces_status_filter': None,
         'workspace_types': [],
         'workspace_type_options': [],
+        # Workspace CRUD form state
+        'show_workspace_form': False,
+        'form_workspace_name': '',
+        'form_workspace_type': 'generic',
+        'form_workspace_description': '',
+        'form_workspace_project_id': '',
+        'edit_workspace_mode': False,
+        'edit_workspace_name': '',
+        'edit_workspace_description': '',
+        'edit_workspace_status': 'active',
+        'show_workspace_delete_confirm': False,
 
         # Agent Capabilities state (rule→agent bindings)
         'agent_capabilities': [],
         'agent_capabilities_loading': False,
+        'new_capability_rule_id': '',
+        'new_capability_category': 'general',
 
         # Projects state (GOV-PROJECT-01-v1)
         'projects': [],

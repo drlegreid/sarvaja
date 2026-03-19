@@ -103,9 +103,11 @@ def register_sessions_pagination(
                         if not item.get("start_time") and item.get("date"):
                             item["start_time"] = item["date"]
                     # F.2: Add duration column to each item
+                    # P0-2: Prefer server-computed duration, fallback to local
                     for item in items:
-                        item["duration"] = compute_session_duration(
-                            item.get("start_time", ""), item.get("end_time", ""))
+                        if not item.get("duration"):
+                            item["duration"] = compute_session_duration(
+                                item.get("start_time", ""), item.get("end_time", ""))
                     # F.3: Timeline + metrics from ALL sessions (BUG-UI-SESSIONS-001)
                     _update_timeline_and_metrics(client, api_base_url)
                     # F.1: Extract unique agent options for filter dropdown

@@ -14,7 +14,7 @@ Created: 2024-12-28
 
 from .entities import Rule, Task, Session, Agent, Decision, InferenceResult
 from .base import TypeDBBaseClient
-from .queries import TaskQueries, SessionQueries, RuleQueries, AgentQueries
+from .queries import TaskQueries, SessionQueries, RuleQueries, AgentQueries, CapabilityQueries
 
 __all__ = [
     # Entities
@@ -31,4 +31,5 @@ __all__ = [
     "SessionQueries",
     "RuleQueries",
     "AgentQueries",
+    "CapabilityQueries",
 ]

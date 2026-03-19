@@ -29,6 +29,7 @@ def _ensure_response(result) -> SessionResponse:
     Service layer may return a SessionResponse (from TypeDB path)
     or a dict (from in-memory fallback). Handle both.
     Fills required defaults for malformed memory-only sessions.
+    P0-2: Computes duration from start/end if not already present.
     """
     if isinstance(result, SessionResponse):
         return result
@@ -38,6 +39,11 @@ def _ensure_response(result) -> SessionResponse:
         if not data.get("start_time"):
             data["start_time"] = "1970-01-01T00:00:00"
         data.setdefault("status", "ACTIVE")
+        # P0-2: Compute duration if not already set (in-memory fallback path)
+        if "duration" not in data or data["duration"] is None:
+            from governance.stores.helpers import compute_session_duration_from_timestamps
+            data["duration"] = compute_session_duration_from_timestamps(
+                data.get("start_time"), data.get("end_time"))
         return SessionResponse(**data)
     return SessionResponse(**result)
 

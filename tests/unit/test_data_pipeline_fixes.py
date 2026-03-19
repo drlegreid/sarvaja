@@ -199,9 +199,11 @@ class TestTimelineAllSessions:
     def test_paginated_20_misses_days(self):
         """If only 20 items from one day, timeline shows just one bar."""
         from agent.governance_ui.utils import compute_timeline_data
+        from datetime import datetime
 
-        # All 20 items on same day
-        items = [{"start_time": "2026-02-12T10:00:00"} for _ in range(20)]
+        # All 20 items on today (must be within the 14-day window)
+        today = datetime.now().strftime("%Y-%m-%d")
+        items = [{"start_time": f"{today}T10:00:00"} for _ in range(20)]
         values, labels = compute_timeline_data(items)
         non_zero = [v for v in values if v > 0]
         assert len(non_zero) == 1, "Single-day data = one bar only"

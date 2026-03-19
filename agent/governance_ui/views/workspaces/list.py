@@ -12,7 +12,7 @@ from trame.widgets import vuetify3 as v3, html
 def build_workspaces_list_view() -> None:
     """Build the Workspaces list view."""
     with v3.VCard(
-        v_if="active_view === 'workspaces' && !show_workspace_detail",
+        v_if="active_view === 'workspaces' && !show_workspace_detail && !show_workspace_form",
         classes="fill-height",
         __properties=["data-testid"],
         **{"data-testid": "workspaces-list"}
@@ -25,7 +25,7 @@ def build_workspaces_list_view() -> None:
                 prepend_icon="mdi-plus",
                 color="primary",
                 size="small",
-                click="trigger('create_workspace_dialog')",
+                click="trigger('show_create_workspace_form')",
                 classes="mr-2",
                 __properties=["data-testid"],
                 **{"data-testid": "workspace-create-btn"}

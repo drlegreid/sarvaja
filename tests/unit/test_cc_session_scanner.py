@@ -9,6 +9,8 @@ import pytest
 from pathlib import Path
 from unittest.mock import patch, MagicMock
 
+from tests.fixtures.cc_jsonl_factory import CCJsonlFactory
+
 from governance.services.cc_session_scanner import (
     DEFAULT_CC_DIR,
     derive_project_slug,
@@ -62,11 +64,6 @@ class TestDeriveProjectSlug:
 class TestScanJsonlMetadata:
     """Tests for scan_jsonl_metadata()."""
 
-    def _write_jsonl(self, filepath, entries):
-        with open(filepath, "w") as f:
-            for entry in entries:
-                f.write(json.dumps(entry) + "\n")
-
     def test_empty_file_returns_none(self, tmp_path):
         f = tmp_path / "empty.jsonl"
         f.write_text("")
@@ -79,12 +76,12 @@ class TestScanJsonlMetadata:
 
     def test_no_timestamps_returns_none(self, tmp_path):
         f = tmp_path / "notime.jsonl"
-        self._write_jsonl(f, [{"type": "user"}])
+        CCJsonlFactory.write_jsonl([{"type": "user"}], f)
         assert scan_jsonl_metadata(f) is None
 
     def test_basic_metadata_extraction(self, tmp_path):
         f = tmp_path / "session.jsonl"
-        self._write_jsonl(f, [
+        CCJsonlFactory.write_jsonl([
             {"type": "user", "timestamp": "2026-02-11T10:00:00Z",
              "sessionId": "uuid-1", "gitBranch": "feature-x"},
             {"type": "assistant", "timestamp": "2026-02-11T10:05:00Z",
@@ -93,7 +90,7 @@ class TestScanJsonlMetadata:
                  {"type": "tool_use", "name": "Write"},
                  {"type": "thinking", "thinking": "analyzing..."},
              ], "model": "claude-opus-4-6"}},
-        ])
+        ], f)
         meta = scan_jsonl_metadata(f)
         assert meta is not None
         assert meta["slug"] == "session"
@@ -109,13 +106,13 @@ class TestScanJsonlMetadata:
 
     def test_compaction_counting(self, tmp_path):
         f = tmp_path / "compact.jsonl"
-        self._write_jsonl(f, [
+        CCJsonlFactory.write_jsonl([
             {"type": "user", "timestamp": "2026-02-11T10:00:00Z"},
             {"type": "system", "timestamp": "2026-02-11T10:05:00Z",
              "compactMetadata": {"tokensRemoved": 5000}},
             {"type": "system", "timestamp": "2026-02-11T10:10:00Z",
              "compactMetadata": {"tokensRemoved": 3000}},
-        ])
+        ], f)
         meta = scan_jsonl_metadata(f)
         assert meta["compaction_count"] == 2
 
@@ -132,31 +129,31 @@ class TestScanJsonlMetadata:
 
     def test_file_path_and_size(self, tmp_path):
         f = tmp_path / "info.jsonl"
-        self._write_jsonl(f, [
+        CCJsonlFactory.write_jsonl([
             {"type": "user", "timestamp": "2026-02-11T10:00:00Z"},
-        ])
+        ], f)
         meta = scan_jsonl_metadata(f)
         assert meta["file_path"] == str(f)
         assert meta["file_size"] > 0
 
     def test_multiple_models_tracked(self, tmp_path):
         f = tmp_path / "multi.jsonl"
-        self._write_jsonl(f, [
+        CCJsonlFactory.write_jsonl([
             {"type": "user", "timestamp": "2026-02-11T10:00:00Z"},
             {"type": "assistant", "timestamp": "2026-02-11T10:01:00Z",
              "message": {"content": [], "model": "claude-opus-4-6"}},
             {"type": "assistant", "timestamp": "2026-02-11T10:02:00Z",
              "message": {"content": [], "model": "claude-sonnet-4-5-20250929"}},
-        ])
+        ], f)
         meta = scan_jsonl_metadata(f)
         assert len(meta["models"]) == 2
         assert "claude-opus-4-6" in meta["models"]
 
     def test_slug_from_stem(self, tmp_path):
         f = tmp_path / "my-custom-name.jsonl"
-        self._write_jsonl(f, [
+        CCJsonlFactory.write_jsonl([
             {"type": "user", "timestamp": "2026-02-11T10:00:00Z"},
-        ])
+        ], f)
         meta = scan_jsonl_metadata(f)
         assert meta["slug"] == "my-custom-name"
 

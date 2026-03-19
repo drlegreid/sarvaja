@@ -32,7 +32,8 @@ entity rule-entity,
     plays document-references-rule:referenced-rule, # RULE-013: rules referenced by docs
     plays entity-vector:embedded-entity,   # P7.1: vector embeddings
     plays implements-rule:implemented-rule,  # P11.3: tasks implement rules
-    plays session-applied-rule:applied-rule; # P11.3: sessions apply rules
+    plays session-applied-rule:applied-rule, # P11.3: sessions apply rules
+    plays agent-capability:governing-rule;   # P2-12: rule→agent capability bindings
 
 # =============================================================================
 # DECISION ENTITY

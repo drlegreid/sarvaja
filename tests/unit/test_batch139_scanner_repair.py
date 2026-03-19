@@ -7,6 +7,8 @@ from unittest.mock import patch, MagicMock
 
 import pytest
 
+from tests.fixtures.cc_jsonl_factory import write_jsonl_temp
+
 
 # ===== Module 1: cc_session_scanner.py =======================================
 
@@ -38,20 +40,13 @@ class TestDeriveProjectSlug:
 
 
 class TestScanJsonlMetadata:
-    def _write_jsonl(self, lines):
-        f = tempfile.NamedTemporaryFile(suffix=".jsonl", mode="w", delete=False)
-        for line in lines:
-            f.write(json.dumps(line) + "\n")
-        f.close()
-        return Path(f.name)
-
     def test_empty_file(self):
         f = tempfile.NamedTemporaryFile(suffix=".jsonl", delete=False)
         f.close()
         assert scan_jsonl_metadata(Path(f.name)) is None
 
     def test_basic_scan(self):
-        p = self._write_jsonl([
+        p = write_jsonl_temp([
             {"type": "user", "timestamp": "2026-02-12T10:00:00Z", "sessionId": "abc-123"},
             {"type": "assistant", "timestamp": "2026-02-12T10:01:00Z",
              "message": {"content": [{"type": "tool_use", "name": "Read"}], "model": "claude-3"}},
@@ -70,7 +65,7 @@ class TestScanJsonlMetadata:
         p.unlink()
 
     def test_compaction_counted(self):
-        p = self._write_jsonl([
+        p = write_jsonl_temp([
             {"type": "user", "timestamp": "2026-01-01T00:00:00Z"},
             {"type": "system", "compactMetadata": {"tokens": 100}, "timestamp": "2026-01-01T01:00:00Z"},
             {"type": "system", "compactMetadata": {"tokens": 200}, "timestamp": "2026-01-01T02:00:00Z"},
@@ -80,7 +75,7 @@ class TestScanJsonlMetadata:
         p.unlink()
 
     def test_git_branch_extracted(self):
-        p = self._write_jsonl([
+        p = write_jsonl_temp([
             {"type": "user", "timestamp": "2026-01-01T00:00:00Z", "gitBranch": "feature/x"},
         ])
         meta = scan_jsonl_metadata(p)
@@ -88,7 +83,7 @@ class TestScanJsonlMetadata:
         p.unlink()
 
     def test_no_timestamp_returns_none(self):
-        p = self._write_jsonl([
+        p = write_jsonl_temp([
             {"type": "user"},  # no timestamp
         ])
         assert scan_jsonl_metadata(p) is None
@@ -106,7 +101,7 @@ class TestScanJsonlMetadata:
         Path(f.name).unlink()
 
     def test_models_tracked(self):
-        p = self._write_jsonl([
+        p = write_jsonl_temp([
             {"type": "user", "timestamp": "2026-01-01T00:00:00Z"},
             {"type": "assistant", "timestamp": "2026-01-01T00:01:00Z",
              "message": {"content": [], "model": "claude-3-opus"}},

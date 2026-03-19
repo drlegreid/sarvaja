@@ -81,6 +81,8 @@ def _is_test_artifact(session: dict) -> bool:
         "-CHAT-AAA", "-CHAT-BBB", "-CHAT-CCC",
         "-CHAT-HEURISTIC-", "-CHAT-SESSION-BRIDGE",
         "-INTTEST-", "E2E-TEST-",
+        # CC test probe patterns (P2-10e)
+        "-CC-TEST-", "-CC-PROBE-",
     )
     if any(p in sid for p in test_patterns):
         return True

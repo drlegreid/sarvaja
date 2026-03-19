@@ -134,6 +134,8 @@ def discover_cc_projects() -> list[Dict[str, Any]]:
     """Discover projects from CC directory structure.
 
     Scans ~/.claude/projects/ for subdirectories and derives project metadata.
+    When CLAUDE_PROJECT_LOG_DIR is set (container), also handles flat mount
+    where the directory IS the project (JSONL files at root level).
     Returns list of dicts with project_id, name, path, session_count.
     """
     if not DEFAULT_CC_DIR.is_dir():
@@ -148,6 +150,26 @@ def discover_cc_projects() -> list[Dict[str, Any]]:
         # BUG-462-SCN-002: Sanitize logger message — exc_info=True already captures full stack
         logger.warning(f"CC directory iteration failed: {type(e).__name__}", exc_info=True)
         return []
+
+    # Per P2-10: Handle flat mount (container) where CLAUDE_PROJECT_LOG_DIR
+    # points directly to a project dir with JSONL files at root level.
+    root_jsonl = [e for e in entries if e.is_file() and e.suffix == ".jsonl"]
+    has_project_subdirs = any(
+        e.is_dir() and e.name.startswith("-") for e in entries
+    )
+    if root_jsonl and not has_project_subdirs and _env_cc_dir:
+        slug = derive_project_slug(DEFAULT_CC_DIR)
+        name_parts = slug.split("-")
+        name = " ".join(p.capitalize() for p in name_parts)
+        projects.append({
+            "project_id": f"PROJ-{slug.upper()}",
+            "name": name,
+            "path": str(DEFAULT_CC_DIR),
+            "cc_directory": str(DEFAULT_CC_DIR),
+            "session_count": len(root_jsonl),
+        })
+        return projects
+
     for d in entries:
         if not d.is_dir() or d.name.startswith("."):
             continue

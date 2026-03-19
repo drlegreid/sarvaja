@@ -14,6 +14,48 @@ from governance.client import Task as TypeDBTask, Session as TypeDBSession
 
 
 # =============================================================================
+# DURATION HELPER (P0-2: Single source of truth for session duration)
+# =============================================================================
+
+def compute_session_duration_from_timestamps(start, end) -> Optional[str]:
+    """Compute human-readable duration from start/end timestamps.
+
+    Accepts datetime objects or ISO strings. Returns None if unable to compute.
+    Used by both session_to_response() and _session_to_dict() to ensure
+    identical duration calculation across all API paths.
+    """
+    if not start:
+        return None
+    if not end:
+        return "ongoing"
+    try:
+        # Convert to strings if datetime objects
+        st_str = start.isoformat() if hasattr(start, 'isoformat') else str(start)
+        et_str = end.isoformat() if hasattr(end, 'isoformat') else str(end)
+        # Normalize: take first 19 chars, strip Z
+        st = st_str[:19].replace("Z", "")
+        et = et_str[:19].replace("Z", "")
+        delta = datetime.strptime(et, "%Y-%m-%dT%H:%M:%S") - datetime.strptime(st, "%Y-%m-%dT%H:%M:%S")
+        total_seconds = delta.total_seconds()
+        if total_seconds < 0:
+            total_seconds = abs(total_seconds)
+        total_minutes = int(total_seconds / 60)
+        if total_minutes > 1440:  # >24h
+            return ">24h"
+        # Detect repair-generated artificial timestamps (T09:00:00 → T13:00:00)
+        if "T09:00:00" in st and "T13:00:00" in et:
+            return "~4h (est)"
+        if total_minutes < 1:
+            return "<1m"
+        hours, mins = divmod(total_minutes, 60)
+        if hours > 0:
+            return f"{hours}h {mins}m"
+        return f"{mins}m"
+    except Exception:
+        return None
+
+
+# =============================================================================
 # TASK HELPERS
 # =============================================================================
 
@@ -133,7 +175,11 @@ def synthesize_execution_events(task_id: str, task_data: Any) -> List[Dict[str, 
 # =============================================================================
 
 def session_to_response(session: TypeDBSession):
-    """Convert TypeDB Session to dict for SessionResponse."""
+    """Convert TypeDB Session to dict for SessionResponse.
+
+    P0-2: Duration computed server-side via compute_session_duration_from_timestamps
+    to ensure identical results across all API paths (list, detail, update).
+    """
     from governance.models import SessionResponse
     return SessionResponse(
         session_id=session.id,
@@ -156,6 +202,8 @@ def session_to_response(session: TypeDBSession):
         cc_thinking_chars=getattr(session, 'cc_thinking_chars', None),
         cc_compaction_count=getattr(session, 'cc_compaction_count', None),
         project_id=getattr(session, 'project_id', None),
+        duration=compute_session_duration_from_timestamps(
+            session.started_at, session.completed_at),
     )
 
 
