@@ -1,14 +1,7 @@
-"""Workspace Service — Real entity CRUD for workspaces.
+"""Workspace Service — CRUD with TypeDB dual-write + disk fallback.
 
-Completes the chain: Project → **Workspace** → Agent → Capabilities → Tasks → Sessions
-
-A workspace is an organizational context within a project. It defines:
-- Which agents operate in it
-- Which workspace type governs its defaults (rules, capabilities, MCP servers)
-- Where tasks and sessions are created
-
-Backed by in-memory store + disk persistence (same pattern as agent_metrics).
-Builds on workspace_registry.py for type definitions.
+Per EPIC-GOV-TASKS-V2 Phase 3: Workspace TypeDB Promotion.
+Chain: Project → Workspace → Agent → Capabilities → Tasks → Sessions.
 """
 
 import json
@@ -26,6 +19,26 @@ from governance.services.workspace_registry import (
 )
 
 logger = logging.getLogger(__name__)
+
+
+def _get_typedb_client():
+    """Get TypeDB client with workspace support. Returns None if unavailable."""
+    try:
+        from governance.stores.config import get_typedb_client
+        return get_typedb_client()
+    except Exception:
+        return None
+
+
+def _typedb_sync(action: str, workspace_id: str, fn, *args, **kwargs):
+    """Best-effort TypeDB sync. Logs warning on failure, never raises."""
+    client = _get_typedb_client()
+    if not client:
+        return
+    try:
+        fn(client, *args, **kwargs)
+    except Exception as e:
+        logger.warning(f"TypeDB {action} failed for workspace {workspace_id}: {type(e).__name__}", exc_info=True)
 
 
 def _monitor(action: str, workspace_id: str, source: str = "service", **extra):
@@ -107,6 +120,16 @@ def create_workspace(
     }
     _workspaces_store[workspace_id] = ws
     _save()
+
+    # TypeDB dual-write (best-effort, disk is fallback)
+    def _create_in_typedb(c):
+        c.insert_workspace(workspace_id=workspace_id, name=name,
+                           workspace_type=workspace_type,
+                           description=ws.get("description"), status="active")
+        if project_id:
+            c.link_workspace_to_project(workspace_id=workspace_id, project_id=project_id)
+    _typedb_sync("create", workspace_id, _create_in_typedb)
+
     record_audit("CREATE", "workspace", workspace_id,
                  metadata={"name": name, "type": workspace_type, "source": source})
     _monitor("create", workspace_id, source=source, workspace_type=workspace_type)
@@ -114,8 +137,18 @@ def create_workspace(
 
 
 def get_workspace(workspace_id: str) -> Optional[Dict[str, Any]]:
-    """Get a workspace by ID."""
+    """Get a workspace by ID. Prefers TypeDB, falls back to disk."""
     _load()
+    # Try TypeDB first
+    client = _get_typedb_client()
+    if client:
+        try:
+            tdb_ws = client.get_workspace(workspace_id)
+            if tdb_ws:
+                return tdb_ws
+        except Exception:
+            pass
+    # Fallback to disk/memory
     return _workspaces_store.get(workspace_id)
 
 
@@ -169,6 +202,12 @@ def update_workspace(
     if agent_ids is not None:
         ws["agent_ids"] = agent_ids
     _save()
+
+    _typedb_sync("update", workspace_id,
+                 lambda c: c.update_workspace_attrs(
+                     workspace_id=workspace_id, name=name,
+                     description=description, status=status))
+
     record_audit("UPDATE", "workspace", workspace_id, metadata={"source": source})
     _monitor("update", workspace_id, source=source)
     return ws
@@ -181,6 +220,9 @@ def delete_workspace(workspace_id: str, source: str = "service") -> bool:
         return False
     del _workspaces_store[workspace_id]
     _save()
+
+    _typedb_sync("delete", workspace_id, lambda c: c.delete_workspace(workspace_id))
+
     record_audit("DELETE", "workspace", workspace_id, metadata={"source": source})
     _monitor("delete", workspace_id, source=source)
     return True
@@ -201,6 +243,9 @@ def assign_agent_to_workspace(
         _save()
         record_audit("UPDATE", "workspace", workspace_id,
                      metadata={"action": "assign_agent", "agent_id": agent_id, "source": source})
+        _typedb_sync("assign_agent", workspace_id,
+                     lambda c: c.link_workspace_to_agent(
+                         workspace_id=workspace_id, agent_id=agent_id))
     return ws
 
 
@@ -220,6 +265,9 @@ def remove_agent_from_workspace(
         _save()
         record_audit("UPDATE", "workspace", workspace_id,
                      metadata={"action": "remove_agent", "agent_id": agent_id, "source": source})
+        _typedb_sync("remove_agent", workspace_id,
+                     lambda c: c.unlink_agent_from_workspace(
+                         workspace_id=workspace_id, agent_id=agent_id))
     return ws
 
 

@@ -38,6 +38,7 @@ from governance.typedb.queries import (
     ProjectQueries,
     ProposalQueries,
     CapabilityQueries,
+    WorkspaceQueries,
 )
 
 
@@ -50,6 +51,7 @@ class TypeDBClient(
     ProjectQueries,
     ProposalQueries,
     CapabilityQueries,
+    WorkspaceQueries,
 ):
     """
     High-level TypeDB client for governance queries.

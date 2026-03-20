@@ -14,6 +14,7 @@ from .agents import AgentQueries
 from .projects import ProjectQueries
 from .proposals import ProposalQueries
 from .capabilities import CapabilityQueries
+from .workspaces import WorkspaceQueries
 
 __all__ = [
     "TaskQueries",
@@ -23,4 +24,5 @@ __all__ = [
     "ProjectQueries",
     "ProposalQueries",
     "CapabilityQueries",
+    "WorkspaceQueries",
 ]
