@@ -180,20 +180,18 @@ def build_dashboard_layout(server, navigation_items):
 
             build_all_dialogs()
 
-        # Loading overlay (GAP-UI-005)
-        with v3.VOverlay(
-            v_model="is_loading",
-            persistent=True,
-            classes="align-center justify-center",
+        # Loading indicator — non-blocking (GAP-OVERLAY-SCRIM fix)
+        # Replaced VOverlay (which created pointer-blocking scrims) with
+        # VProgressLinear that doesn't block user interaction.
+        v3.VProgressLinear(
+            v_if=("is_loading",),
+            indeterminate=True,
+            color="deep-purple",
+            height=3,
+            style="position: fixed; top: 0; left: 0; right: 0; z-index: 2000;",
             __properties=["data-testid"],
             **{"data-testid": "loading-overlay"}
-        ):
-            v3.VProgressCircular(
-                indeterminate=True,
-                size=64,
-                __properties=["data-testid"],
-                **{"data-testid": "loading-spinner"}
-            )
+        )
 
         # Error banner (GAP-UI-005)
         v3.VSnackbar(

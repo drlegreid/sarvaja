@@ -139,6 +139,7 @@ class GovernanceDashboard:
             load_audit_trail = loaders['load_audit_trail']
             load_rules = loaders.get('load_rules')
             load_tasks_page = loaders.get('load_tasks_page')
+            load_workspaces = loaders.get('load_workspaces')
 
             # Auto-load data on view change (P11.1 fix / GAP-UI-035)
             @self._state.change("active_view")
@@ -152,6 +153,9 @@ class GovernanceDashboard:
                 self._state.show_session_form = False
                 self._state.show_rule_form = False
                 self._state.show_decision_form = False
+                # GAP-OVERLAY-SCRIM: Also reset workspace state on tab switch
+                self._state.show_workspace_detail = False
+                self._state.show_workspace_form = False
                 self._state.has_error = False
                 self._state.error_message = ''
                 if active_view == 'trust':
@@ -184,6 +188,9 @@ class GovernanceDashboard:
                 elif active_view == 'rules':
                     if load_rules:
                         load_rules()
+                elif active_view == 'workspaces':
+                    if load_workspaces:
+                        load_workspaces()
 
             # Build layout (extracted per DOC-SIZE-01-v1)
             build_dashboard_layout(self._server, NAVIGATION_ITEMS)

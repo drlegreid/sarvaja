@@ -65,6 +65,10 @@ def build_error_dialog() -> None:
 
 
 def build_loading_overlay() -> None:
-    """Build a loading overlay."""
-    with v3.VOverlay(v_model="is_loading", persistent=True):
-        v3.VProgressCircular(indeterminate=True, size="64")
+    """Loading indicator is now a non-blocking VProgressLinear in layout.
+
+    GAP-OVERLAY-SCRIM: The previous VOverlay created a .v-overlay__scrim
+    that blocked all pointer events during data loading, causing E2E test
+    flakiness. The layout now uses VProgressLinear instead.
+    """
+    pass

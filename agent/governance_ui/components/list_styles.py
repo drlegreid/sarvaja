@@ -92,6 +92,13 @@ def inject_list_styles() -> None:
             padding-top: 8px !important;
             padding-bottom: 8px !important;
         }
+
+        /* GAP-OVERLAY-SCRIM: Prevent non-dialog overlay scrims from
+           blocking pointer events. Dialog scrims (.v-dialog) are excluded
+           so modals still work correctly. */
+        .v-overlay:not(.v-dialog) > .v-overlay__scrim {
+            pointer-events: none !important;
+        }
         """
     )
 

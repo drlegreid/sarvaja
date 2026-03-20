@@ -5,7 +5,7 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="-1">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
-<meta content="Robot Framework 7.3.2 (Python 3.12.6 on win32)" name="Generator">
+<meta content="Robot Framework 7.4.1 (Python 3.13.7 on linux)" name="Generator">
 <link rel="icon" type="image/x-icon" href="data:image/x-icon;base64,AAABAAEAEBAAAAEAIABoBAAAFgAAACgAAAAQAAAAIAAAAAEAIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAKcAAAD/AAAA/wAAAP8AAAD/AAAA/wAAAP8AAAD/AAAA/wAAAP8AAAD/AAAAqAAAAAAAAAAAAAAAAAAAALIAAAD/AAAA4AAAANwAAADcAAAA3AAAANwAAADcAAAA3AAAANwAAADcAAAA4AAAAP8AAACxAAAAAAAAAKYAAAD/AAAAuwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAC/AAAA/wAAAKkAAAD6AAAAzAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAN8AAAD/AAAA+gAAAMMAAAAAAAAAAgAAAGsAAABrAAAAawAAAGsAAABrAAAAawAAAGsAAABrAAAADAAAAAAAAADaAAAA/wAAAPoAAADDAAAAAAAAAIsAAAD/AAAA/wAAAP8AAAD/AAAA/wAAAP8AAAD/AAAA/wAAANEAAAAAAAAA2gAAAP8AAAD6AAAAwwAAAAAAAAAAAAAAMgAAADIAAAAyAAAAMgAAADIAAAAyAAAAMgAAADIAAAAFAAAAAAAAANoAAAD/AAAA+gAAAMMAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADaAAAA/wAAAPoAAADDAAAAAAAAADwAAAB8AAAAAAAAAGAAAABcAAAAAAAAAH8AAABKAAAAAAAAAAAAAAAAAAAA2gAAAP8AAAD6AAAAwwAAAAAAAADCAAAA/wAAACkAAADqAAAA4QAAAAAAAAD7AAAA/wAAALAAAAAGAAAAAAAAANoAAAD/AAAA+gAAAMMAAAAAAAAAIwAAAP4AAAD/AAAA/wAAAGAAAAAAAAAAAAAAAMkAAAD/AAAAigAAAAAAAADaAAAA/wAAAPoAAADDAAAAAAAAAAAAAAAIAAAAcAAAABkAAAAAAAAAAAAAAAAAAAAAAAAAEgAAAAAAAAAAAAAA2gAAAP8AAAD7AAAAywAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAN4AAAD/AAAAqwAAAP8AAACvAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAALIAAAD/AAAAsgAAAAAAAAC5AAAA/wAAAMoAAADAAAAAwAAAAMAAAADAAAAAwAAAAMAAAADAAAAAwAAAAMkAAAD/AAAAvAAAAAAAAAAAAAAAAAAAAKwAAAD/AAAA/wAAAP8AAAD/AAAA/wAAAP8AAAD/AAAA/wAAAP8AAAD/AAAArQAAAAAAAAAAwAMAAIABAAAf+AAAP/wAAD/8AAAgBAAAP/wAAD/8AAA//AAAJIwAADHEAAA//AAAP/wAAB/4AACAAQAAwAMAAA==">
 <style media="all">
 :root {
@@ -116,15 +116,16 @@ select {
 #header {
     width: 65em;
     height: 3em;
-    margin: 20px 0 6px 0;
+    margin: 1em 0 0 0;
 }
 h1 {
     float: left;
-    margin: 0 0 0.5em 0;
+    margin: 0 0 1em 0;
     width: 75%;
 }
 h2 {
     clear: left;
+    margin: 1.5em 0 0.5em 0;
 }
 #generated {
     float: right;
@@ -168,7 +169,13 @@ h2 {
     background-color: var(--primary-color);
     border-radius: 3px;
 }
-.label.debug, .label.trace, .label.error, .label.keyword {
+/* https://stackoverflow.com/questions/75238633 */
+@supports (-moz-appearance: none) {
+    .label {
+        padding-top: 4px;
+    }
+}
+.label.debug, .label.trace, .label.error {
     letter-spacing: 0;
 }
 .label.pass, .label.fail, .label.error, .label.skip, .label.warn {
@@ -354,19 +361,6 @@ th.stats-col-graph:hover {
 [data-theme="dark"] .light-mode-icon,
 [data-theme="light"] .dark-mode-icon {
     display: block;
-}
-@keyframes highlight {
-    0% {
-        background: var(--primary-color)
-    }
-    100% {
-        background: var(--target-color);
-    }
-}
-:target {
-    background: var(--target-color);
-    transition: background 0.3s;
-    animation: highlight 4s;
 }
 </style>
 <style media="all">
@@ -957,7 +951,7 @@ window.model = (function () {
         kw.type = data.type;
         kw.template = 'keywordTemplate';
         kw.arguments = data.args;
-        kw.assign = data.assign + (data.assign ? ' =  ' : '');
+        kw.assign = data.assign;
         kw.tags = data.tags;
         kw.timeout = data.timeout;
         kw.populateKeywords = createIterablePopulator('Keyword');
@@ -1696,7 +1690,7 @@ function addStatistics() {
         '<th class="stats-col-elapsed">Elapsed</th>' +
         '<th class="stats-col-graph">Pass / Fail / Skip</th>';
     var statTable =
-        '<h2>{Test} Statistics</h2>' +
+        '<h2>Statistics</h2>' +
         '<table class="statistics" id="total-stats"><thead><tr>' +
         '<th class="stats-col-name">Total Statistics</th>' + statHeaders +
         '</tr></thead></table>' +
@@ -1706,7 +1700,7 @@ function addStatistics() {
         '<table class="statistics" id="suite-stats"><thead><tr>' +
         '<th class="stats-col-name">Statistics by Suite</th>' + statHeaders +
         '</tr></thead></table>';
-    $(testOrTask(statTable)).appendTo('#statistics-container');
+    $(statTable).appendTo('#statistics-container');
     util.map(['total', 'tag', 'suite'], addStatTable);
     addTooltipsToElapsedTimes();
     enableStatisticsSorter();
@@ -1887,22 +1881,22 @@ storage = function () {
 window.output = {};
 </script>
 <script type="text/javascript">
-window.output["suite"] = [0,1,2,3,[],[0,0,52892],[],[[4,5,6,[7,8,9],[1,2419,63],[]],[10,5,11,[7,8],[1,2485,17],[]],[12,5,13,[14,7,15],[0,2507,30071,16],[]],[17,5,18,[19,7,15],[0,32579,10089,20],[]],[21,5,22,[23,7,24,15],[0,42671,84,25],[]],[26,5,27,[28,29,7,15],[0,42759,10071,30],[]]],[],[6,2,4,0]];
+window.output["suite"] = [1,0,0,0,[],[0,0,423889],[[2,3,4,5,[],[0,22,182434],[],[[6,0,7,[8,9,10,11,12,13,14,15,16,17],[1,2326,713],[]],[18,0,19,[8,9,10,11,12,13,14,16,17],[0,3042,10671,20],[]],[21,0,22,[8,9,10,11,12,13,14,16,17],[1,13714,586],[]],[23,0,24,[8,9,10,11,12,13,14,16,17],[0,14302,20693,25],[]],[26,0,27,[8,9,10,11,12,13,14,16,17],[1,34996,3094],[]],[28,0,29,[8,9,10,11,12,13,14,16,17],[0,38091,21752,30],[]],[31,0,32,[8,9,10,11,12,13,14,16,17],[1,59844,854],[]],[33,0,34,[8,9,10,11,12,13,14,16,17],[1,60699,3847],[]],[35,0,36,[8,9,10,11,13,37,14,16,17],[0,64547,13063,38],[]],[39,0,40,[8,9,10,11,13,37,14,16,17],[1,77612,2934],[]],[41,0,42,[8,9,10,11,13,37,14,16,17],[1,80547,2905],[]],[43,0,44,[8,9,10,11,13,37,14,16,17],[1,83453,2892],[]],[45,0,46,[8,9,10,11,13,37,14,16,17],[1,86346,2995],[]],[47,0,48,[8,9,10,11,13,37,14,16,17],[1,89342,3075],[]],[49,0,50,[8,9,10,11,13,14,51,16,17],[0,92419,13059,52],[]],[53,0,54,[8,9,10,11,13,14,51,16,17],[1,105480,2965],[]],[55,0,56,[8,9,10,11,13,14,51,16,17],[0,108447,13063,57],[]],[58,0,59,[8,9,10,11,13,14,16,60,17],[1,121511,2990],[]],[61,0,62,[8,9,10,11,13,14,16,60,17],[1,124501,2970],[]],[63,0,64,[8,9,10,11,13,14,16,60,17],[1,127472,2899],[]],[65,0,66,[8,9,10,11,67,13,14,16,17],[0,130373,12932,38],[]],[68,0,69,[8,9,10,11,67,13,14,16,17],[0,143306,13085,52],[]],[70,0,71,[8,9,10,11,67,13,14,16,17],[0,156393,8226,72],[]],[73,0,74,[8,9,10,11,67,13,14,16,17],[1,164620,3153],[]],[75,0,76,[8,9,10,11,77,13,14,16,17],[1,167774,2932],[]],[78,0,79,[8,9,10,11,77,13,14,16,17],[1,170708,2900],[]],[80,0,81,[8,9,10,11,77,13,14,16,17],[1,173609,2935],[]],[82,0,83,[8,9,10,11,77,13,14,16,17],[1,176545,2918],[]],[84,0,85,[8,9,10,11,77,13,14,16,17],[1,179465,2949],[]]],[],[29,20,9,0]],[86,87,88,89,[],[0,182459,98028],[],[[90,0,91,[8,11,92,13,93,94,15,51],[0,184112,13253,95],[]],[96,0,97,[8,11,92,13,93,94,51],[1,197366,3174],[]],[98,0,99,[8,100,11,92,13,93,94,51],[0,200543,13141,95],[]],[101,0,102,[8,11,103,92,13,104,93,94,51],[0,213685,13206,95],[]],[105,0,106,[8,11,103,107,92,13,104,93,94,51],[2,226893,3190,108],[]],[109,0,110,[8,11,92,12,13,104,93,94,51],[2,230084,3176,108],[]],[111,0,112,[8,11,92,12,13,104,93,94,51],[2,233262,3094,108],[]],[113,0,114,[8,100,11,92,12,13,104,93,94,51],[2,236357,3155,108],[]],[115,0,116,[117,8,11,92,13,93,94,51],[0,239513,37775,30],[]],[118,0,119,[8,11,92,12,13,120,93,94,51],[2,277290,3168,108],[]]],[],[10,1,4,5]],[121,122,123,124,[],[0,280490,143395],[],[[125,0,126,[8,127,11,15,16,17,128],[1,282355,3194],[]],[129,0,130,[8,127,11,16,17,128],[1,285551,2892],[]],[131,0,132,[8,127,11,16,17,128],[1,288445,2866],[]],[133,0,134,[8,127,11,135,16,17,128],[1,291312,2865],[]],[136,0,137,[8,127,11,16,17,128],[1,294179,2865],[]],[138,0,139,[8,127,100,11,16,17,128],[1,297046,2904],[]],[140,0,141,[8,127,100,11,16,17,128],[1,299951,2968],[]],[142,0,143,[144,8,11,15,16,17,128],[1,302920,2974],[]],[145,0,146,[144,8,11,16,17,128],[1,305895,2903],[]],[147,0,148,[144,8,11,16,17,128],[1,308800,2865],[]],[149,0,150,[144,8,100,11,16,17,128],[0,311665,12950,151],[]],[152,0,153,[144,8,100,11,16,17,128],[0,324617,13131,154],[]],[155,0,156,[144,8,100,11,16,17,128],[0,337750,13164,157],[]],[158,0,159,[8,11,160,15,16,17,128],[0,350916,10995,161],[]],[163,0,164,[8,11,160,16,17,128],[0,361912,10932,161],[]],[165,0,166,[8,11,167,15,16,17,128],[1,372845,3014],[]],[168,0,169,[8,11,167,16,17,128],[1,375861,2971],[]],[170,0,171,[8,11,167,16,17,128],[1,378833,2939],[]],[172,0,173,[8,11,167,16,17,128],[1,381774,2884],[]],[174,0,175,[8,11,176,37,160,16,17,128],[0,384659,13971,38],[]],[177,0,178,[8,11,12,104,15,16,17,128],[0,398631,25229,162],[]]],[],[21,14,7,0]]],[],[],[60,35,20,5]];
 </script>
 <script type="text/javascript">
 window.output["strings"] = [];
 </script>
 <script type="text/javascript">
-window.output["strings"] = window.output["strings"].concat(["*Rules Crud","*C:\\Users\\natik\\Documents\\Vibe\\sim-ai\\sim-ai\\tests\\ui\\rules_crud.robot","*../tests/ui/rules_crud.robot","eNp1kUGPmzAQhe/9FXPMHpyw26qVUBQJBbJFJcEioG1PlYOHxa3ByDZd7b/vANlD2/QC8vh9M+95tsOuGDU62BdVDMlDAiU674DBecCaHZR1Hso4hlWRxMBb4fAOOFooqixhQfAhBC6eEfLLD6w9HI1EDSueHxdVlbJDWpxLduZFeirZU158OWT507qT4d8TJn1yKtPyG4t4ygg9RnwWTg4Be6/8KziCVKNq4ZXpt5th92477MoWHYKfnUtsVE+HFiH5ypN9Sb4v2IpfylgwzXyxRK7SNexHa6mzfgXVwxRxmCJSfKH1teH5c15lMRyiNIORTGgCQXWDxo5IlOs3F49icCCktOgcynApj5o+Wu0eIz5FCoL7EE4GpPCCTf2VBOG9VZeRTrCaxmpD6Yx1d9sNgX/SDzM9L6sxtiNiXyRRmWwqHtNvsXwLfL+MRS8ogLRKaybNSz/tNYrf6v+lP4bXN9OKttUp51T/DJZK3ylAbfTY9TewTyFkE2DNi4PeeKi1qn+Ki8Z/xffB7HDpBc5YTyNuyJb3a5T2aEmxaUSNtAVwKGzdXoENPftvqAPnxA==","*Rules Tab Loads Successfully","*1 minute","*<p>Smoke test: Rules tab loads without errors\x3c/p>","*list","*P0","*smoke","*Rules List Shows All Rules","*<p>Rules list displays expected number of rules\x3c/p>","*Rules List Has Rule ID Column","*<p>GAP-UI-006: Rule ID column should be visible\x3c/p>","*gap-ui-006","*will-fail","*TimeoutError: locator.waitFor: Timeout 30000ms exceeded.\nCall log:\n  - waiting for locator('[data-testid=\"rule-col-id\"]') to be visible\n","*Rules List Has All Expected Columns","*<p>List should have all DSM-specified columns\x3c/p>","*dsm","*TimeoutError: locator.waitFor: Timeout 10000ms exceeded.\nCall log:\n  - waiting for locator('[data-testid=\"rule-col-id\"]') to be visible\n","*Rules List Rows Are Clickable","*<p>GAP-UI-007: Clicking rule row navigates to detail\x3c/p>","*gap-ui-007","*navigation","eNrtlsFu2zAMhu99CsKHOgFqr+m2bkuRQ5qmwA4FgiTbpehBkRlHiCwFEu0mKAbsafZge5JRTtHUQ4sNxQ4LUJ9sUhL5/ZQlDp2zrgvaSkHWpbdC0WUwDLd2T05JgsJmCJWyWpCy5mF4K77OBImE0JPKepErNSbO3kY3R5BWydYnZhqBZjbbALnarpWnRBEWcRsceqsrzIAsdE4BNRZoyHcPgJ9OGw41nWWqAl5GmQzXvSg5icBZjb3IrkI2EQinROJ5qiTkLMiVGIHUwvte9CgaPHpPEiFJVdi0aWWWTYsRFRtowVkFd76gpj9D4xVtEmmLFa/YdFqDYcnfgjhbMkjWNFaBwRAruaboMKezn99/BPQ3zB4+QSwF5EjnmzGjt+ItenwEd2BEgV2Ix6y9j+Fbu1bu5EXKzYX2fyHdPst0gVJ5tu2kevsq1dNSTdA3lXr3qtTTSk2FX+5kev+fypSmaZ3fNVxxZUWOIK0hPm3BVuiAVwCtCkWwEB5miIYP54JdWQo39cTTHdgWJUQJQZ5J+885ZTgXpX6udPfVSo5fWq8pj2jFw/VKWxfuqw1M+aaCfkm2qG+y/mD6+esw3tbtw37iXQ1G8KUu58hZstLqBtXHPaXircf1EiaDADgJf5Lm6A22T/vJ1ndywTMllU5oOA9bcuRCPyLRN/g6x/sJONkY+bAbL8b9y+k9UDiCDgZCa+4g89DjJRA6TmVymFv379rKXwxUwCc=","*Rules List Has Add Button","*<p>GAP-UI-002: Add Rule button should be visible\x3c/p>","*crud","*gap-ui-002","*TimeoutError: locator.waitFor: Timeout 10000ms exceeded.\nCall log:\n  - waiting for locator('[data-testid=\"rules-add-btn\"]') to be visible\n"]);
+window.output["strings"] = window.output["strings"].concat(["*","*Dashboard Browser &amp; Session Task Navigation &amp; Views Coverage","*Dashboard Browser","*/home/oderid/Documents/Vibe/sarvaja/platform/tests/robot/e2e/dashboard_browser.robot","*../../tests/robot/e2e/dashboard_browser.robot","*<p>E2E Browser Tests for Governance Dashboard Per: RF-007 Robot Framework Migration Migrated from tests/e2e/test_dashboard_e2e.py Uses robotframework-browser (Playwright-based)\x3c/p>","*Dashboard Loads With Header","*<p>Dashboard loads with header and navigation\x3c/p>","*browser","*critical","*dashboard","*e2e","*navigation","*read","*session","*smoke","*TEST-BDD-01-v1","*ui","*Header Shows Stats","*<p>Header displays rule and decision counts\x3c/p>","*TimeoutError: locator.waitFor: Timeout 10000ms exceeded.\nCall log:\n  - waiting for locator('text=/\\\\d+ Rules \\\\| \\\\d+ Decisions/') to be visible\n","*Navigation Tabs Present","*<p>All navigation tabs are visible\x3c/p>","*Navigate To Rules","*<p>Can navigate to Rules view\x3c/p>","*TimeoutError: locator.waitFor: Timeout 20000ms exceeded.\nCall log:\n  - waiting for locator('text=/\\\\d+ rules loaded/') to be visible\n","*Navigate To Agents","*<p>Can navigate to Agents view\x3c/p>","*Navigate To Tasks","*<p>Can navigate to Tasks view\x3c/p>","*TimeoutError: locator.waitFor: Timeout 20000ms exceeded.\nCall log:\n  - waiting for locator('text=/\\\\d+ tasks loaded/') to be visible\n","*Navigate To Sessions","*<p>Can navigate to Sessions view\x3c/p>","*Navigate To Trust","*<p>Can navigate to Trust view\x3c/p>","*Rules List Loads","*<p>Rules list shows rule count\x3c/p>","*rules","*TimeoutError: locator.waitFor: Timeout 10000ms exceeded.\nCall log:\n  - waiting for locator('text=/\\\\d+ rules loaded/') to be visible\n","*Add Rule Button Present","*<p>Add Rule button is visible\x3c/p>","*Rules Search Input Present","*<p>Search input is available\x3c/p>","*Rule List Items Clickable","*<p>Rule items in list are clickable\x3c/p>","*Click Rule Shows Detail","*<p>Clicking a rule shows detail view\x3c/p>","*Rule Detail Shows Directive","*<p>Rule detail view shows directive text\x3c/p>","*Tasks List Loads","*<p>Tasks list shows task count\x3c/p>","*tasks","*TimeoutError: locator.waitFor: Timeout 10000ms exceeded.\nCall log:\n  - waiting for locator('text=/\\\\d+ tasks loaded/') to be visible\n","*Add Task Button Present","*<p>Add Task button is visible\x3c/p>","*Task Shows Status","*<p>Tasks show status badges\x3c/p>","*TimeoutError: locator.waitFor: Timeout 10000ms exceeded.\nCall log:\n  - waiting for locator('text=/completed|OPEN|CLOSED|IN_PROGRESS/').first() to be visible\n","*Trust Dashboard Loads","*<p>Trust dashboard shows stats cards\x3c/p>","*trust","*Trust Refresh Button Present","*<p>Refresh button is available\x3c/p>","*Trust Leaderboard Present","*<p>Trust leaderboard section is visible\x3c/p>","*Rules View Has Pagination","*<p>Test Rules view has pagination UI\x3c/p>","*pagination","*Tasks View Has Pagination","*<p>Test Tasks view has pagination UI\x3c/p>","*Sessions View Has Pagination","*<p>Test Sessions view has pagination\x3c/p>","*TimeoutError: locator.waitFor: Timeout 5000ms exceeded.\nCall log:\n  - waiting for locator('text=/\\\\d+ sessions loaded/') to be visible\n","*Agents View Has Pagination","*<p>Test Agents view has pagination\x3c/p>","*Infra Dashboard Loads","*<p>Infrastructure dashboard loads with header\x3c/p>","*infra","*Infra Shows Service Cards","*<p>Service status cards are displayed\x3c/p>","*Infra Shows Stats","*<p>System stats are displayed\x3c/p>","*Infra Refresh Button Clickable","*<p>Refresh button is clickable\x3c/p>","*Infra Recovery Actions Present","*<p>Recovery action buttons are present\x3c/p>","*Session Task Navigation","*/home/oderid/Documents/Vibe/sarvaja/platform/tests/robot/e2e/session_task_navigation.robot","*../../tests/robot/e2e/session_task_navigation.robot","*<p>E2E Browser Tests for Session-Task Navigation Per: RF-007 Robot Framework Migration Migrated from tests/e2e/test_session_task_navigation_e2e.py Regression tests for GAP-UI-SESSION-TASKS-001\x3c/p>","*Sessions View Loads","*<p>Sessions view loads with session list\x3c/p>","*medium","*SESSION-EVID-01-v1","*sessions","*TimeoutError: locator.waitFor: Timeout 10000ms exceeded.\nCall log:\n  - waiting for locator('text=/\\\\d+ sessions loaded/') to be visible\n","*Session Has Click Handler","*<p>Session items in list are clickable\x3c/p>","*Click Session Shows Detail","*<p>Clicking a session opens detail view\x3c/p>","*detail","*Session Detail Shows Tasks Section","*<p>Session detail shows completed tasks section (GAP-UI-SESSION-TASKS-001)\x3c/p>","*GAP-UI-SESSION-TASKS-001","*regression","*Known Session Shows Linked Tasks","*<p>Test session should show linked tasks (GAP-UI-SESSION-TASKS-001)\x3c/p>","*linked","*Test session SESSION-2026-01-10-INTENT-TEST not visible","*Task In Session Detail Is Clickable","*<p>Task items in session detail have click handlers\x3c/p>","*Click Task Navigates To Tasks View","*<p>Clicking task in session navigates to Tasks tab\x3c/p>","*Task Detail Opens After Navigation","*<p>After clicking task, task detail panel opens\x3c/p>","*Task Shows Linked Sessions","*<p>Task detail shows linked sessions field\x3c/p>","*bidirectional","*Round Trip Navigation","*<p>Sessions -&gt; Session Detail -&gt; Task -&gt; Tasks View\x3c/p>","*roundtrip","*Views Coverage","*/home/oderid/Documents/Vibe/sarvaja/platform/tests/robot/e2e/views_coverage.robot","*../../tests/robot/e2e/views_coverage.robot","*<p>RF-010: Extended View Coverage Tests Per GAP-UI-AUDIT-002: Cover untested dashboard views Views: Decisions, Agents detail, Search, Executive Per ARCH-EBMSF-01-v1: Evidence-based assertions with msg=\x3c/p>","*Decisions View Loads","*<p>Decision Log view loads with header\x3c/p>","*decisions","*views","*Decisions Shows Count","*<p>Decision Log shows number of decisions\x3c/p>","*Decisions Add Button Present","*<p>Record Decision button is visible\x3c/p>","*Decisions Session Filter Present","*<p>Session filter dropdown is visible\x3c/p>","*filter","*Decision List Has Items","*<p>Decision log shows at least one decision item\x3c/p>","*Click Decision Shows Detail","*<p>Clicking a decision opens detail view\x3c/p>","*Decision Detail Shows Status","*<p>Decision detail shows status chip\x3c/p>","*Agents View Loads","*<p>Agents view loads with registered agents header\x3c/p>","*agents","*Agents Shows Count","*<p>Agents view shows agent count\x3c/p>","*Agent List Has Items","*<p>At least one agent is listed\x3c/p>","*Click Agent Shows Detail","*<p>Clicking an agent shows detail view with metrics\x3c/p>","*TimeoutError: locator.waitFor: Timeout 10000ms exceeded.\nCall log:\n  - waiting for locator('[data-testid=\\'agent-metrics-card\\']') to be visible\n","*Agent Detail Shows Trust Score","*<p>Agent detail shows trust score metric\x3c/p>","*TimeoutError: locator.waitFor: Timeout 10000ms exceeded.\nCall log:\n  - waiting for locator('[data-testid=\\'agent-metrics-card\\']').locator('text=Trust Score') to be visible\n","*Agent Detail Shows Trust History","*<p>Agent detail shows trust history card\x3c/p>","*TimeoutError: locator.waitFor: Timeout 10000ms exceeded.\nCall log:\n  - waiting for locator('[data-testid=\\'agent-trust-history-card\\']') to be visible\n","*Search View Loads","*<p>Search view loads with Evidence Search header\x3c/p>","*search","*Setup failed:\nTimeoutError: locator.click: Timeout 10000ms exceeded.\nCall log:\n  - waiting for locator('[data-testid=\\'nav-search\\']')\n","*TimeoutError: locator.click: Timeout 10000ms exceeded.\nCall log:\n  - waiting for locator('[data-testid=\\'nav-search\\']')\n","*Search Has Input Field","*<p>Search view has a text input for queries\x3c/p>","*Executive View Loads","*<p>Executive view loads with report header\x3c/p>","*executive","*Executive Shows Summary","*<p>Executive view shows Executive Summary section\x3c/p>","*Executive Shows Compliance","*<p>Executive view shows Compliance Status section\x3c/p>","*Executive Shows Stat Cards","*<p>Executive view shows stat cards (Rules, Agents, Tasks)\x3c/p>","*Rules Search Input Accepts Text","*<p>Rules search input can receive text\x3c/p>","*functional","*Navigate All Major Views In Sequence","*<p>Navigate through all major views without errors\x3c/p>"]);
 </script>
 <script type="text/javascript">
-window.output["stats"] = [[{"elapsed":"00:00:50","fail":4,"label":"All Tests","pass":2,"skip":0}],[{"elapsed":"00:00:10","fail":1,"label":"crud","pass":0,"skip":0},{"elapsed":"00:00:10","fail":1,"label":"dsm","pass":0,"skip":0},{"elapsed":"00:00:10","fail":1,"label":"gap-ui-002","pass":0,"skip":0},{"elapsed":"00:00:30","fail":1,"label":"gap-ui-006","pass":0,"skip":0},{"elapsed":"00:00:00","fail":1,"label":"gap-ui-007","pass":0,"skip":0},{"elapsed":"00:00:50","fail":4,"label":"list","pass":2,"skip":0},{"elapsed":"00:00:00","fail":1,"label":"navigation","pass":0,"skip":0},{"elapsed":"00:00:00","fail":0,"label":"P0","pass":2,"skip":0},{"elapsed":"00:00:00","fail":0,"label":"smoke","pass":1,"skip":0},{"elapsed":"00:00:50","fail":4,"label":"will-fail","pass":0,"skip":0}],[{"elapsed":"00:00:53","fail":4,"id":"s1","label":"Rules Crud","name":"Rules Crud","pass":2,"skip":0}]];
+window.output["stats"] = [[{"elapsed":"00:06:58","fail":20,"label":"All Tests","pass":35,"skip":5}],[{"elapsed":"00:00:48","fail":3,"label":"agents","pass":3,"skip":0},{"elapsed":"00:00:38","fail":1,"label":"bidirectional","pass":0,"skip":0},{"elapsed":"00:06:58","fail":20,"label":"browser","pass":35,"skip":5},{"elapsed":"00:03:00","fail":9,"label":"critical","pass":20,"skip":0},{"elapsed":"00:03:00","fail":9,"label":"dashboard","pass":20,"skip":0},{"elapsed":"00:00:21","fail":0,"label":"decisions","pass":7,"skip":0},{"elapsed":"00:01:01","fail":4,"label":"detail","pass":2,"skip":1},{"elapsed":"00:06:58","fail":20,"label":"e2e","pass":35,"skip":5},{"elapsed":"00:00:12","fail":0,"label":"executive","pass":4,"skip":0},{"elapsed":"00:00:03","fail":0,"label":"filter","pass":1,"skip":0},{"elapsed":"00:00:14","fail":1,"label":"functional","pass":0,"skip":0},{"elapsed":"00:00:16","fail":1,"label":"GAP-UI-SESSION-TASKS-001","pass":0,"skip":1},{"elapsed":"00:00:15","fail":0,"label":"infra","pass":5,"skip":0},{"elapsed":"00:00:03","fail":0,"label":"linked","pass":0,"skip":1},{"elapsed":"00:01:36","fail":4,"label":"medium","pass":1,"skip":5},{"elapsed":"00:01:40","fail":4,"label":"navigation","pass":5,"skip":4},{"elapsed":"00:00:37","fail":3,"label":"pagination","pass":1,"skip":0},{"elapsed":"00:04:36","fail":13,"label":"read","pass":21,"skip":5},{"elapsed":"00:00:51","fail":2,"label":"regression","pass":0,"skip":4},{"elapsed":"00:00:03","fail":0,"label":"roundtrip","pass":0,"skip":1},{"elapsed":"00:00:42","fail":2,"label":"rules","pass":5,"skip":0},{"elapsed":"00:00:36","fail":3,"label":"search","pass":0,"skip":0},{"elapsed":"00:03:00","fail":9,"label":"session","pass":20,"skip":0},{"elapsed":"00:01:36","fail":4,"label":"SESSION-EVID-01-v1","pass":1,"skip":5},{"elapsed":"00:01:36","fail":4,"label":"sessions","pass":1,"skip":5},{"elapsed":"00:00:59","fail":3,"label":"smoke","pass":4,"skip":0},{"elapsed":"00:02:05","fail":6,"label":"tasks","pass":2,"skip":5},{"elapsed":"00:05:22","fail":16,"label":"TEST-BDD-01-v1","pass":34,"skip":0},{"elapsed":"00:00:09","fail":0,"label":"trust","pass":3,"skip":0},{"elapsed":"00:05:22","fail":16,"label":"ui","pass":34,"skip":0},{"elapsed":"00:02:21","fail":7,"label":"views","pass":14,"skip":0}],[{"elapsed":"00:07:04","fail":20,"id":"s1","label":"Dashboard Browser &amp; Session Task Navigation &amp; Views Coverage","name":"Dashboard Browser &amp; Session Task Navigation &amp; Views Coverage","pass":35,"skip":5},{"elapsed":"00:03:02","fail":9,"id":"s1-s1","label":"Dashboard Browser &amp; Session Task Navigation &amp; Views Coverage.Dashboard Browser","name":"Dashboard Browser","pass":20,"skip":0},{"elapsed":"00:01:38","fail":4,"id":"s1-s2","label":"Dashboard Browser &amp; Session Task Navigation &amp; Views Coverage.Session Task Navigation","name":"Session Task Navigation","pass":1,"skip":5},{"elapsed":"00:02:23","fail":7,"id":"s1-s3","label":"Dashboard Browser &amp; Session Task Navigation &amp; Views Coverage.Views Coverage","name":"Views Coverage","pass":14,"skip":0}]];
 </script>
 <script type="text/javascript">
-window.output["baseMillis"] = 1766683777998;
+window.output["baseMillis"] = 1773993668846;
 </script>
 <script type="text/javascript">
-window.output["generated"] = 52904;
+window.output["generated"] = 423953;
 </script>
 <script type="text/javascript">
 window.output["expand_keywords"] = null;
@@ -2285,7 +2279,7 @@ function hideHiddenDetailsColumns(elem) {
 </script>
 
 <script type="text/x-jquery-tmpl" id="summaryTableTemplate">
-  <h2>Summary Information</h2>
+  <h2>Summary</h2>
   <table class="details">
     <tr>
       <th>Status:</th>
@@ -2382,7 +2376,7 @@ function hideHiddenDetailsColumns(elem) {
 </script>
 
 <script type="text/x-jquery-tmpl" id="detailsHeaderTemplate">
-  <h2 id="${linkTarget}">{{= testOrTask('{Test} Details')}}</h2>
+  <h2 id="${linkTarget}">Details</h2>
   <ul id="detail-tabs">
     <li class="${totalTabStatus} detail-tab">
       <a href="#totals" onclick="renderTotalSelector()"

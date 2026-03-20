@@ -220,4 +220,4 @@ Navigate All Major Views In Sequence
     Click    [data-testid='nav-search']
     Wait For Elements State    text=Evidence Search    visible    timeout=${ELEMENT_TIMEOUT}
     # Header still visible
-    Wait For Elements State    text=${APP_TITLE}    visible
+    Wait For Elements State    ${APP_BAR_TITLE}    visible

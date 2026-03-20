@@ -16,7 +16,7 @@ ${TEST_SESSION_ID}       SESSION-2026-01-10-INTENT-TEST
 Click First Session Item
     [Documentation]    Click first session item in the list
     # Ensure we're on sessions list
-    ${list_count}=    Get Element Count    text=Session Evidence
+    ${list_count}=    Get Element Count    button:has-text("Add Session")
     IF    ${list_count} == 0
         Click    [data-testid='nav-sessions']
         ${back_count}=    Get Element Count    [data-testid='session-detail-back-btn']
@@ -28,7 +28,7 @@ Click First Session Item
                 Click    button:has-text("󰁍") >> nth=0
             END
         END
-        Wait For Elements State    text=Session Evidence    visible    timeout=20s
+        Wait For Elements State    button:has-text("Add Session")    visible    timeout=20s
     END
     # Session list uses card items - click the first one
     Wait For Elements State    text=/\\d+ sessions loaded/    visible    timeout=${ELEMENT_TIMEOUT}
@@ -69,7 +69,7 @@ Navigate To Tasks List
     [Documentation]    Navigate to Tasks list (handles detail-open state)
     Go To    ${DASHBOARD_URL}
     Reload
-    Wait For Elements State    text=${APP_TITLE}    visible    timeout=20s
+    Wait For Elements State    ${APP_BAR_TITLE}    visible    timeout=20s
     Click    [data-testid='nav-tasks']
     # Wait for SPA view transition to complete
     Sleep    2s
@@ -114,7 +114,7 @@ Navigate To Tasks List
 Sessions View Loads
     [Documentation]    Sessions view loads with session list
     [Tags]    e2e    browser    sessions    smoke
-    Wait For Elements State    text=Session Evidence    visible
+    Wait For Elements State    button:has-text("Add Session")    visible
     Wait For Elements State    text=/\\d+ sessions loaded/    visible    timeout=${ELEMENT_TIMEOUT}
 
 Session Has Click Handler

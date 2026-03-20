@@ -34,7 +34,7 @@ Navigate To Agents View
 Dashboard Loads With Header
     [Documentation]    Dashboard loads with header and navigation
     [Tags]    e2e    browser    navigation    smoke
-    Wait For Elements State    text=${APP_TITLE}    visible
+    Wait For Elements State    ${APP_BAR_TITLE}    visible
     Wait For Elements State    [data-testid='nav-rules']    visible
 
 Header Shows Stats
