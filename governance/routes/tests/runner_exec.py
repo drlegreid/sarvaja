@@ -261,12 +261,37 @@ def parse_robot_xml(test_root: str) -> dict:
 # CVP AUTO-REMEDIATION (RELIABILITY-PLAN-01-v1 Priority 3)
 # =============================================================================
 
-from governance.services.tasks_mutations import update_task
+from governance.services.tasks_mutations import update_task, link_task_to_session
+from governance.services.tasks import _get_active_session_id
+
+
+def _remediate_session_linkage(task_id: str) -> None:
+    """Auto-link orphan task to the current active session (H-TASK-005).
+
+    Raises ValueError if no active session, RuntimeError if linking fails.
+    """
+    active_sid = _get_active_session_id()
+    if not active_sid:
+        raise ValueError(f"No active session for auto-linking task {task_id}")
+    result = link_task_to_session(task_id, active_sid)
+    if not result:
+        raise RuntimeError(f"Failed to link task {task_id} to session {active_sid}")
+
+
+def _remediate_workspace_assignment(task_id: str) -> None:
+    """Auto-assign orphan task to default workspace (H-TASK-006).
+
+    Uses 'default' workspace as fallback for tasks without workspace_id.
+    """
+    update_task(task_id, workspace_id="default")
+
 
 # Map heuristic check IDs to remediation actions
 _REMEDIATION_MAP = {
     "H-TASK-003": lambda task_id: update_task(task_id, status="DONE"),
     "H-TASK-002": lambda task_id: update_task(task_id, agent_id="code-agent", status="IN_PROGRESS"),
+    "H-TASK-005": lambda task_id: _remediate_session_linkage(task_id),
+    "H-TASK-006": lambda task_id: _remediate_workspace_assignment(task_id),
 }
 
 

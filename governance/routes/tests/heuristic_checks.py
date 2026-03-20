@@ -131,6 +131,44 @@ def check_task_session_linkage(api_base_url: str) -> dict:
     }
 
 
+def check_task_workspace_assignment(api_base_url: str) -> dict:
+    """H-TASK-006: Worked tasks should have workspace_id (EPIC-GOV-TASKS-V2 Phase 4).
+
+    Tasks that are IN_PROGRESS or DONE should be assigned to a workspace
+    for organizational grouping. OPEN/TODO tasks may not yet have workspaces.
+    """
+    tasks = _api_get(api_base_url, "/api/tasks?limit=200")
+    worked_statuses = ("IN_PROGRESS", "DONE", "COMPLETED")
+    relevant = [
+        t for t in tasks
+        if not (t.get("task_id", "").startswith("TEST-"))
+        and t.get("status") in worked_statuses
+    ]
+    if not relevant:
+        return {
+            "status": "SKIP",
+            "message": "No IN_PROGRESS/DONE tasks to check",
+            "violations": [],
+        }
+    violations = [
+        t.get("task_id", "unknown")
+        for t in relevant
+        if not t.get("workspace_id")
+    ]
+    total_tasks = len([t for t in tasks if not t.get("task_id", "").startswith("TEST-")])
+    return {
+        "status": "FAIL" if violations else "PASS",
+        "message": (
+            f"{len(violations)}/{len(relevant)} worked tasks have no workspace_id"
+            f" ({total_tasks} total tasks, {total_tasks - len(relevant)} not yet worked)"
+            if violations
+            else f"All {len(relevant)} worked tasks assigned to workspaces"
+            f" ({total_tasks - len(relevant)} OPEN/TODO not checked)"
+        ),
+        "violations": violations[:20],
+    }
+
+
 # ===== SESSION DOMAIN =====
 
 def check_session_agent_id(api_base_url: str) -> dict:
@@ -249,6 +287,7 @@ HEURISTIC_CHECKS = [
     {"id": "H-TASK-003", "domain": "TASK", "name": "DONE completion timestamps", "check_fn": check_done_completed_at},
     {"id": "H-TASK-004", "domain": "TASK", "name": "No TEST-* task artifacts", "check_fn": check_no_test_tasks},
     {"id": "H-TASK-005", "domain": "TASK", "name": "Task-session linkage (DATA-LINK-01)", "check_fn": check_task_session_linkage},
+    {"id": "H-TASK-006", "domain": "TASK", "name": "Task workspace assignment", "check_fn": check_task_workspace_assignment},
     {"id": "H-SESSION-001", "domain": "SESSION", "name": "Active session agent_id", "check_fn": check_session_agent_id},
     {"id": "H-SESSION-004", "domain": "SESSION", "name": "No TEST-* session artifacts", "check_fn": check_no_test_sessions},
     {"id": "H-RULE-003", "domain": "RULE", "name": "Rule directive content", "check_fn": check_rule_directives},
