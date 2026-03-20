@@ -47,6 +47,7 @@ def register_tasks_navigation(state: Any, ctrl: Any, api_base_url: str) -> None:
         state.edit_task_mode = False
         state.task_execution_log = []
         state.show_task_execution = False
+        state.show_task_execution_inline = False  # BUG-TASK-POPUP-001
 
         # Try to find task in existing list
         found = False

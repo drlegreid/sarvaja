@@ -38,7 +38,8 @@ def register_tasks_controllers(state: Any, ctrl: Any, api_base_url: str) -> dict
         # BUG-UI-STALE-DETAIL-004: Clear prior task detail state before loading
         state.edit_task_mode = False
         state.task_execution_log = []
-        state.show_task_execution = False
+        state.show_task_execution = False  # Close chat dialog if open
+        state.show_task_execution_inline = False  # BUG-TASK-POPUP-001
         state.nav_source_view = None
         state.nav_source_id = None
         state.nav_source_label = None
@@ -65,7 +66,7 @@ def register_tasks_controllers(state: Any, ctrl: Any, api_base_url: str) -> dict
         try:
             state.task_execution_loading = True
             state.task_execution_log = []
-            state.show_task_execution = True
+            state.show_task_execution_inline = True  # BUG-TASK-POPUP-001: Use inline, not dialog
             with httpx.Client(timeout=10.0) as client:
                 response = client.get(f"{api_base_url}/api/tasks/{task_id}/execution")
                 if response.status_code == 200:
@@ -90,6 +91,7 @@ def register_tasks_controllers(state: Any, ctrl: Any, api_base_url: str) -> dict
         state.edit_task_body = ''
         state.task_execution_log = []
         state.show_task_execution = False
+        state.show_task_execution_inline = False  # BUG-TASK-POPUP-001
         state.nav_source_view = None
         state.nav_source_id = None
         state.nav_source_label = None

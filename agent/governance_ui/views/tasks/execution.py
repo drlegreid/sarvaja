@@ -107,16 +107,16 @@ def build_task_execution_log() -> None:
                 icon=True,
                 variant="text",
                 size="small",
-                click="show_task_execution = !show_task_execution",
+                click="show_task_execution_inline = !show_task_execution_inline",
             ):
                 v3.VIcon(
                     v_bind_icon=(
-                        "show_task_execution ? 'mdi-chevron-up' : 'mdi-chevron-down'",
+                        "show_task_execution_inline ? 'mdi-chevron-up' : 'mdi-chevron-down'",
                     )
                 )
 
         with v3.VExpandTransition():
-            with html.Div(v_if="show_task_execution"):
+            with html.Div(v_if="show_task_execution_inline"):
                 with v3.VCardText():
                     # Loading state
                     with v3.VProgressLinear(

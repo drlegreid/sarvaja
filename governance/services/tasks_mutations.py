@@ -171,6 +171,7 @@ def update_task(
                 "linked_sessions": getattr(task_obj, 'linked_sessions', []) or [],
                 "linked_commits": getattr(task_obj, 'linked_commits', []) or [],
                 "linked_documents": getattr(task_obj, 'linked_documents', []) or [],
+                "workspace_id": getattr(task_obj, 'workspace_id', None),  # EPIC-GOV-TASKS-V2 Phase 6c
             }
         else:
             return None

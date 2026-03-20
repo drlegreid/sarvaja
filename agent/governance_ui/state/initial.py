@@ -420,7 +420,8 @@ def get_initial_state() -> Dict[str, Any]:
         # Task Execution Viewer (ORCH-007)
         'task_execution_log': [],
         'task_execution_loading': False,
-        'show_task_execution': False,
+        'show_task_execution': False,  # Chat dialog (chat/execution.py)
+        'show_task_execution_inline': False,  # Task detail inline (tasks/execution.py)
 
         # Infrastructure Health (GAP-INFRA-004, UI-AUDIT-008)
         'infra_services': {},

@@ -291,7 +291,8 @@ def _task_to_dict(task) -> Dict[str, Any]:
         "linked_documents": task.linked_documents or [],
         "gap_id": task.gap_id,
         "evidence": task.evidence,
-        "document_path": task.document_path
+        "document_path": task.document_path,
+        "workspace_id": getattr(task, 'workspace_id', None),  # EPIC-GOV-TASKS-V2 Phase 6c
     }
 
 
