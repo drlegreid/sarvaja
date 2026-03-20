@@ -2,17 +2,19 @@
 TypeDB Workspace Linking Operations.
 
 Per EPIC-GOV-TASKS-V2 Phase 3: Workspace TypeDB Promotion.
+Per EPIC-GOV-TASKS-V2 Phase 4: Task-Workspace Bidirectional Linking.
 Per DOC-SIZE-01-v1: File Size Limit (< 300 lines)
 
 Handles:
 - project-has-workspace relation
 - workspace-has-agent relation
+- workspace-has-task relation (Phase 4)
 
 Created: 2026-03-20
 """
 
 import logging
-from typing import List
+from typing import List, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -196,3 +198,139 @@ class WorkspaceLinkingOperations:
                 exc_info=True,
             )
             return []
+
+    # ── Task-Workspace Linking (EPIC-GOV-TASKS-V2 Phase 4) ──────
+
+    def link_task_to_workspace(
+        self, workspace_id: str, task_id: str
+    ) -> bool:
+        """Link a task to a workspace via workspace-has-task relation.
+
+        Args:
+            workspace_id: Workspace ID
+            task_id: Task ID
+
+        Returns:
+            True if link created, False otherwise
+        """
+        from typedb.driver import TransactionType
+
+        wid = _escape(workspace_id)
+        tid = _escape(task_id)
+
+        try:
+            with self._driver.transaction(
+                self.database, TransactionType.WRITE
+            ) as tx:
+                query = f"""
+                    match
+                        $w isa workspace, has workspace-id "{wid}";
+                        $t isa task, has task-id "{tid}";
+                    insert
+                        (task-workspace: $w, assigned-task: $t)
+                            isa workspace-has-task;
+                """
+                tx.query(query).resolve()
+                tx.commit()
+            return True
+        except Exception as e:
+            logger.error(
+                f"Failed to link task {task_id} to workspace "
+                f"{workspace_id}: {type(e).__name__}",
+                exc_info=True,
+            )
+            return False
+
+    def unlink_task_from_workspace(
+        self, workspace_id: str, task_id: str
+    ) -> bool:
+        """Remove task from workspace (delete workspace-has-task relation).
+
+        Args:
+            workspace_id: Workspace ID
+            task_id: Task ID
+
+        Returns:
+            True if unlinked, False otherwise
+        """
+        from typedb.driver import TransactionType
+
+        wid = _escape(workspace_id)
+        tid = _escape(task_id)
+
+        try:
+            with self._driver.transaction(
+                self.database, TransactionType.WRITE
+            ) as tx:
+                query = f"""
+                    match
+                        $w isa workspace, has workspace-id "{wid}";
+                        $t isa task, has task-id "{tid}";
+                        $rel (task-workspace: $w, assigned-task: $t)
+                            isa workspace-has-task;
+                    delete $rel;
+                """
+                tx.query(query).resolve()
+                tx.commit()
+            return True
+        except Exception as e:
+            logger.error(
+                f"Failed to unlink task {task_id} from workspace "
+                f"{workspace_id}: {type(e).__name__}",
+                exc_info=True,
+            )
+            return False
+
+    def get_tasks_for_workspace(self, workspace_id: str) -> List[str]:
+        """Get all task IDs linked to a workspace.
+
+        Args:
+            workspace_id: Workspace ID
+
+        Returns:
+            List of task IDs
+        """
+        wid = _escape(workspace_id)
+        try:
+            results = self._execute_query(
+                f'match $w isa workspace, has workspace-id "{wid}";'
+                f' (task-workspace: $w, assigned-task: $t)'
+                f' isa workspace-has-task;'
+                f' $t has task-id $tid; select $tid;'
+            )
+            return [r.get("tid", "") for r in results]
+        except Exception as e:
+            logger.error(
+                f"Failed to get tasks for workspace {workspace_id}: "
+                f"{type(e).__name__}",
+                exc_info=True,
+            )
+            return []
+
+    def get_workspace_for_task(self, task_id: str) -> Optional[str]:
+        """Get workspace ID for a task (reverse lookup).
+
+        Args:
+            task_id: Task ID
+
+        Returns:
+            Workspace ID or None if task has no workspace
+        """
+        tid = _escape(task_id)
+        try:
+            results = self._execute_query(
+                f'match $t isa task, has task-id "{tid}";'
+                f' (task-workspace: $w, assigned-task: $t)'
+                f' isa workspace-has-task;'
+                f' $w has workspace-id $wid; select $wid;'
+            )
+            if results:
+                return results[0].get("wid")
+            return None
+        except Exception as e:
+            logger.error(
+                f"Failed to get workspace for task {task_id}: "
+                f"{type(e).__name__}",
+                exc_info=True,
+            )
+            return None

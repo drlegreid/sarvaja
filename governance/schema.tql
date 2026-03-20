@@ -87,7 +87,8 @@ entity task,
     plays task-related:related-task-a,
     plays task-related:related-task-b,
     plays task-commit:implemented-task,  # GAP-TASK-LINK-002
-    plays epic-contains-task:epic-task;  # Project hierarchy (GOV-PROJECT-01-v1)
+    plays epic-contains-task:epic-task,  # Project hierarchy (GOV-PROJECT-01-v1)
+    plays workspace-has-task:assigned-task;  # EPIC-GOV-TASKS-V2 Phase 4: workspace linking
 
 entity gap,
     owns gap-id,
@@ -162,7 +163,8 @@ entity workspace,
     owns workspace-status,                       # "active", "archived"
     owns workspace-created-at,
     plays project-has-workspace:workspace-member,
-    plays workspace-has-agent:agent-workspace;
+    plays workspace-has-agent:agent-workspace,
+    plays workspace-has-task:task-workspace;  # EPIC-GOV-TASKS-V2 Phase 4: task linking
 
 # Plan entity - a planned body of work within a project
 entity plan,
@@ -753,6 +755,11 @@ relation project-has-workspace,
 relation workspace-has-agent,
     relates agent-workspace,
     relates assigned-agent;
+
+# Workspace → Task assignment (EPIC-GOV-TASKS-V2 Phase 4)
+relation workspace-has-task,
+    relates task-workspace,
+    relates assigned-task;
 
 # =============================================================================
 # INFERENCE RULES

@@ -89,6 +89,7 @@ class TaskResponse(BaseModel):
     gap_id: Optional[str] = None
     evidence: Optional[str] = None  # May include [Verification: L1/L2/L3] prefix
     document_path: Optional[str] = None
+    workspace_id: Optional[str] = None  # EPIC-GOV-TASKS-V2 Phase 4
 
 class TaskDetailsUpdate(BaseModel):
     """Request model for updating task detail sections (TASK-TECH-01-v1)."""

@@ -95,7 +95,8 @@ entity task,
     plays task-related:related-task-a,
     plays task-related:related-task-b,
     plays task-commit:implemented-task,  # GAP-TASK-LINK-002
-    plays document-references-task:referenced-task;  # Task document management
+    plays document-references-task:referenced-task,  # Task document management
+    plays workspace-has-task:assigned-task;  # EPIC-GOV-TASKS-V2 Phase 4: workspace linking
 
 # =============================================================================
 # GAP ENTITY

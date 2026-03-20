@@ -72,6 +72,7 @@ class TestMCPTaskUpdateServiceRouting:
             phase=None,
             priority=None,
             task_type=None,
+            workspace_id=None,
             source="mcp",
         )
         parsed = json.loads(result)

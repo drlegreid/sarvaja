@@ -91,7 +91,8 @@ def task_to_response(task: TypeDBTask):
         linked_documents=task.linked_documents or [],
         gap_id=task.gap_id,
         evidence=task.evidence,
-        document_path=task.document_path
+        document_path=task.document_path,
+        workspace_id=task.workspace_id,
     )
 
 

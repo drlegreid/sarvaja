@@ -76,6 +76,8 @@ class Task:
     document_path: Optional[str] = None  # Path to source document
     # Task document management: multiple linked documents
     linked_documents: Optional[List[str]] = None
+    # EPIC-GOV-TASKS-V2 Phase 4: workspace assignment
+    workspace_id: Optional[str] = None
 
 
 @dataclass

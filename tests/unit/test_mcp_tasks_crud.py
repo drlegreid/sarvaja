@@ -202,7 +202,8 @@ class TestTaskUpdate:
         assert "updated successfully" in result["message"]
         mock_svc.assert_called_once_with(
             task_id="T-1", status="DONE", description=None,
-            phase=None, priority=None, task_type=None, source="mcp",
+            phase=None, priority=None, task_type=None,
+            workspace_id=None, source="mcp",
         )
 
     @patch(f"{_MOD}.log_monitor_event")

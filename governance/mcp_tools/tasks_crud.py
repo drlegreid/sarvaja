@@ -30,12 +30,14 @@ def register_task_crud_tools(mcp) -> None:
     def task_create(name: str, task_id: str = "", description: str = "", status: str = "OPEN",
                     priority: str = "MEDIUM", task_type: str = "feature",
                     phase: str = "P10",
-                    session_id: Optional[str] = None) -> str:
+                    session_id: Optional[str] = None,
+                    workspace_id: Optional[str] = None) -> str:
         """
         Create a new task in TypeDB.
 
         Per META-TAXON-01-v1: task_id is auto-generated from task_type if omitted.
         Per DATA-LINK-01-v1: Tasks can be linked to a session at creation time.
+        Per EPIC-GOV-TASKS-V2 Phase 4: Tasks can be assigned to a workspace.
 
         Args:
             name: Human-readable task name
@@ -46,6 +48,7 @@ def register_task_crud_tools(mcp) -> None:
             task_type: Task type (bug, feature, chore, research, gap, epic, test)
             phase: Phase identifier (e.g., "P10", "P11", "RD")
             session_id: Optional session ID to link this task to (per DATA-LINK-01-v1)
+            workspace_id: Optional workspace ID to assign this task to
 
         Returns:
             JSON with created task details or error
@@ -62,6 +65,7 @@ def register_task_crud_tools(mcp) -> None:
                 priority=priority or "MEDIUM",
                 task_type=task_type or None,
                 linked_sessions=linked_sessions,
+                workspace_id=workspace_id,
                 source="mcp",
             )
             # BUG-INTTEST-001: result is Pydantic TaskResponse, not dict
@@ -109,13 +113,15 @@ def register_task_crud_tools(mcp) -> None:
     @mcp.tool()
     def task_update(task_id: str, status: Optional[str] = None, name: Optional[str] = None,
                     phase: Optional[str] = None, priority: Optional[str] = None,
-                    task_type: Optional[str] = None) -> str:
+                    task_type: Optional[str] = None,
+                    workspace_id: Optional[str] = None) -> str:
         """
         Update an existing task in TypeDB.
 
         Per BUG-TASK-TAXONOMY-001: priority and task_type are first-class fields.
         Per EPIC-GOV-TASKS-V2 Phase 2: Routes through service layer for
         auto-linking, audit, and monitoring parity.
+        Per EPIC-GOV-TASKS-V2 Phase 4: workspace_id assignment.
 
         Args:
             task_id: Task identifier to update
@@ -124,11 +130,12 @@ def register_task_crud_tools(mcp) -> None:
             phase: New phase identifier
             priority: Priority level (LOW, MEDIUM, HIGH, CRITICAL)
             task_type: Task type (bug, feature, chore, research)
+            workspace_id: Workspace ID to assign this task to
 
         Returns:
             JSON with updated task details or error
         """
-        if not any([status, name, phase, priority, task_type]):
+        if not any([status, name, phase, priority, task_type, workspace_id]):
             return format_mcp_result({"error": "No update fields provided"})
 
         try:
@@ -139,6 +146,7 @@ def register_task_crud_tools(mcp) -> None:
                 phase=phase,
                 priority=priority,
                 task_type=task_type,
+                workspace_id=workspace_id,
                 source="mcp",
             )
             if result:

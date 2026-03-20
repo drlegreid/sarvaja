@@ -25,6 +25,7 @@ __all__ = [
     "link_task_to_document",
     # BUG-214-011: Was missing from __all__ despite being defined at line 252
     "unlink_task_from_document",
+    "link_task_to_workspace",  # EPIC-GOV-TASKS-V2 Phase 4
 ]
 
 
@@ -59,6 +60,7 @@ def update_task(
     linked_sessions: Optional[List[str]] = None,
     linked_documents: Optional[List[str]] = None,
     gap_id: Optional[str] = None,
+    workspace_id: Optional[str] = None,
     source: str = "rest",
 ) -> Optional[Dict[str, Any]]:
     """Update task fields in TypeDB with fallback.
@@ -126,6 +128,12 @@ def update_task(
                         # BUG-MUTATIONS-002: Link failures are data integrity issues
                         # BUG-464-TM-004: Sanitize logger message + add exc_info for stack trace
                         logger.warning(f"TypeDB document link {task_id}->{doc_path}: {type(le).__name__}", exc_info=True)
+            # EPIC-GOV-TASKS-V2 Phase 4: Persist workspace link
+            if workspace_id:
+                try:
+                    client.link_task_to_workspace(task_id, workspace_id)
+                except Exception as le:
+                    logger.warning(f"TypeDB workspace link {task_id}->{workspace_id}: {type(le).__name__}", exc_info=True)
         except Exception as e:
             # BUG-408-TM-001: Add exc_info for stack trace preservation
             # BUG-464-TM-005: Sanitize logger message — exc_info=True already captures full stack
@@ -181,6 +189,7 @@ def update_task(
         "agent_id": agent_id, "body": body, "evidence": evidence,
         "linked_rules": linked_rules, "linked_sessions": linked_sessions,
         "linked_documents": linked_documents, "gap_id": gap_id,
+        "workspace_id": workspace_id,
     }
     for field, val in updates.items():
         if val is not None:
@@ -296,4 +305,24 @@ def unlink_task_from_document(task_id: str, document_path: str, source: str = "r
         # BUG-404-TM-006: Add exc_info for stack trace preservation
         # BUG-464-TM-010: Sanitize logger message — exc_info=True already captures full stack
         logger.error(f"Failed to unlink document {document_path} from task {task_id}: {type(e).__name__}", exc_info=True)
+        return False
+
+
+def link_task_to_workspace(task_id: str, workspace_id: str, source: str = "rest") -> bool:
+    """Link task to workspace via workspace-has-task relation.
+
+    Per EPIC-GOV-TASKS-V2 Phase 4: Task-Workspace Bidirectional Linking.
+    """
+    client = get_typedb_client()
+    if not client:
+        return False
+    try:
+        if not client.get_task(task_id):
+            return False
+        result = client.link_task_to_workspace(task_id, workspace_id)
+        if result:
+            _monitor("link_workspace", task_id, source=source, workspace_id=workspace_id)
+        return bool(result)
+    except Exception as e:
+        logger.error(f"Failed to link task {task_id} to workspace {workspace_id}: {type(e).__name__}", exc_info=True)
         return False

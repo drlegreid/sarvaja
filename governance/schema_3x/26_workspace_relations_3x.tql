@@ -39,3 +39,12 @@ relation agent-capability,
 relation project-has-session,
     relates session-project,
     relates project-session;
+
+# =============================================================================
+# WORKSPACE → TASK RELATION (EPIC-GOV-TASKS-V2 Phase 4)
+# Bidirectional: workspace knows its tasks, tasks know their workspace
+# =============================================================================
+
+relation workspace-has-task,
+    relates task-workspace,
+    relates assigned-task;

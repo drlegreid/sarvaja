@@ -35,4 +35,5 @@ entity workspace,
     owns workspace-status,      # "active", "archived"
     owns workspace-created-at,
     plays project-has-workspace:workspace-member,
-    plays workspace-has-agent:agent-workspace;
+    plays workspace-has-agent:agent-workspace,
+    plays workspace-has-task:task-workspace;  # EPIC-GOV-TASKS-V2 Phase 4: task linking

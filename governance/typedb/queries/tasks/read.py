@@ -175,6 +175,21 @@ class TaskReadQueries:
                     task_map[tid].linked_documents.append(r.get("dpath"))
         except Exception:
             pass
+        # EPIC-GOV-TASKS-V2 Phase 4: workspace assignment
+        try:
+            ws_results = self._execute_query("""
+                match
+                    $t isa task, has task-id $tid;
+                    (task-workspace: $w, assigned-task: $t) isa workspace-has-task;
+                    $w has workspace-id $wid;
+                select $tid, $wid;
+            """)
+            for r in ws_results:
+                tid = r.get("tid")
+                if tid in task_map:
+                    task_map[tid].workspace_id = r.get("wid")
+        except Exception:
+            pass
 
     def get_available_tasks(self) -> List[Task]:
         """Get tasks available for agents (status TODO/pending, no agent assigned)."""
@@ -247,6 +262,13 @@ class TaskReadQueries:
             match $t isa task, has task-id "{task_id}";
                 (referencing-document: $d, referenced-task: $t) isa document-references-task;
                 $d has document-path $dpath; select $dpath;''', "dpath")
+        # EPIC-GOV-TASKS-V2 Phase 4: workspace assignment
+        ws_ids = self._fetch_task_relation(task_id, '''
+            match $t isa task, has task-id "{task_id}";
+                (task-workspace: $w, assigned-task: $t) isa workspace-has-task;
+                $w has workspace-id $wid; select $wid;''', "wid")
+        if ws_ids:
+            task.workspace_id = ws_ids[0]
 
         return task
 

@@ -128,6 +128,7 @@ def create_task(
     linked_rules: Optional[List[str]] = None,
     linked_sessions: Optional[List[str]] = None,
     linked_documents: Optional[List[str]] = None,
+    workspace_id: Optional[str] = None,
     source: str = "rest",
 ) -> Dict[str, Any]:
     """Create a task in TypeDB with fallback to in-memory store.
@@ -171,6 +172,7 @@ def create_task(
                 phase=phase, body=body, gap_id=gap_id,
                 linked_rules=linked_rules, linked_sessions=linked_sessions,
                 agent_id=agent_id, priority=priority, task_type=task_type,
+                workspace_id=workspace_id,
             )
             if created:
                 # Link documents after creation
@@ -207,6 +209,7 @@ def create_task(
         # BUG-214-003: Normalize list fields to [] to prevent NoneType iteration errors
         "linked_rules": linked_rules or [], "linked_sessions": linked_sessions or [],
         "linked_documents": linked_documents or [], "gap_id": gap_id,
+        "workspace_id": workspace_id,
         "created_at": datetime.now().isoformat(),
     }
     _tasks_store[task_id] = task_data
