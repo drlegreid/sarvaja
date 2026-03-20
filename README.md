@@ -2,9 +2,9 @@
 
 > **Sarvaja** (Sanskrit: सर्वज) = "All-Knowing" / Omniscient
 
-Multi-agent governance platform with TypeDB, LiteLLM, and ChromaDB. Provides AI-assisted task management, rule-based governance, and session tracking.
+A governance platform that makes AI-assisted development visible, traceable, and intelligent. Sarvaja automatically discovers your Claude Code sessions, links them to rules, tasks, and decisions in a TypeDB graph, and surfaces everything through a 15-view dashboard — so every conversation, tool call, and design choice becomes a first-class governance entity.
 
-**Version**: 1.3.1 | **Updated**: 2026-02-08
+**Version**: 1.0-GA | **Updated**: 2026-03-20 | [Release Notes](docs/releases/V1.0-GA.md) | [Changelog](CHANGELOG.md)
 
 ## Architecture
 
@@ -82,6 +82,19 @@ The platform exposes governance functionality via Model Context Protocol (MCP):
 | `gov-agents` | Agent trust | `agents_list`, `agent_trust_update` |
 | `gov-sessions` | Session tracking | `session_start`, `session_decision` |
 | `gov-tasks` | Task management | `task_create`, `task_verify`, `backlog_get` |
+
+## Flagship Feature: Sessions Management for Claude Code
+
+Sarvaja v1's headline capability — full lifecycle tracking of Claude Code development sessions.
+
+- **Auto-Discovery**: Scans `~/.claude/projects/` on startup, ingests all JSONL session files
+- **Streaming Ingestion**: Handles 600MB+ files with ~60MB peak memory
+- **Transcript Viewing**: Color-coded conversation cards with 4-tier fallback
+- **Zoom-Level Detail**: Progressive disclosure from summary to full thinking content
+- **Entity Linking**: Sessions ↔ rules, decisions, tasks, evidence in TypeDB
+- **Validation**: CVP heuristic checks for data integrity
+
+See the full [Sessions Management Guide](docs/features/SESSIONS-MANAGEMENT.md).
 
 ## Key Features
 
@@ -166,7 +179,7 @@ platform/
 │   ├── gaps/               # Gap tracking (GAP-INDEX.md)
 │   └── DEVOPS.md           # Infrastructure guide
 ├── tests/
-│   ├── unit/               # 1426 Python unit tests
+│   ├── unit/               # 10,500+ Python unit tests
 │   ├── robot/              # Robot Framework E2E tests
 │   └── e2e/                # End-to-end integration tests
 ├── evidence/               # Session evidence files
@@ -180,13 +193,15 @@ platform/
 | [CLAUDE.md](CLAUDE.md) | Project rules and session protocols |
 | [docs/DEVOPS.md](docs/DEVOPS.md) | Infrastructure and deployment |
 | [docs/gaps/GAP-INDEX.md](docs/gaps/GAP-INDEX.md) | Open gaps and improvements |
-| [docs/RULES-DIRECTIVES.md](docs/RULES-DIRECTIVES.md) | All 55 governance rules |
+| [docs/RULES-DIRECTIVES.md](docs/RULES-DIRECTIVES.md) | All 56 governance rules |
+| [docs/features/SESSIONS-MANAGEMENT.md](docs/features/SESSIONS-MANAGEMENT.md) | Sessions feature deep dive |
+| [docs/releases/V1.0-GA.md](docs/releases/V1.0-GA.md) | v1 release notes |
 | [.claude/MCP.md](.claude/MCP.md) | MCP server configuration |
 
 ## Test Suite
 
 ```bash
-# Unit tests (1426 tests)
+# Unit tests (10,500+ tests)
 .venv/bin/python3 -m pytest tests/unit/ -q
 
 # Heuristic integrity checks (27 checks)
@@ -196,19 +211,20 @@ curl -X POST http://localhost:8082/api/tests/heuristic/run
 .venv/bin/python3 -m pytest tests/e2e/ -v
 ```
 
-## Current Status (2026-02-08)
+## Current Status (v1.0-GA, 2026-03-20)
 
-- [x] TypeDB integration with 48 governance rules
+- [x] **Sessions Management** — CC auto-discovery, JSONL ingestion, transcripts, entity linking
+- [x] TypeDB integration with 56 governance rules (50 in TypeDB)
 - [x] Governance dashboard with 15 views (Trame/Vue 3)
-- [x] MCP servers for all domains (core, agents, sessions, tasks)
+- [x] 4 MCP servers with 100+ tools (core, agents, sessions, tasks)
 - [x] REST API with full CRUD + audit trail
-- [x] Document viewer for rule source files
-- [x] Session evidence attachment and viewing
+- [x] Streaming ingestion pipeline for 600MB+ session files
 - [x] 27 heuristic data integrity checks (6 domains)
-- [x] 1426 unit tests passing
-- [x] LangGraph DSP workflow with loop-back validation
-- [x] Agent trust scoring and governance proposals
+- [x] 10,500+ unit tests passing (98% governance coverage)
+- [x] Orchestrator workflow with dynamic ROI-based budget
+- [x] Agent trust scoring, governance proposals, and voting
 - [x] Chat with natural language + command interface
+- [x] Workspaces & capabilities management
 
 ## Troubleshooting
 

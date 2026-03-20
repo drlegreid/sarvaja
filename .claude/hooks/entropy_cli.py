@@ -5,11 +5,13 @@ Entropy CLI Wrapper
 Standalone CLI entry point for entropy monitoring.
 
 Per GAP-ENTROPY-HOOK-001: Enables PostToolUse hook integration.
+Per P3-13: --auto-save flag triggers ChromaDB context save at threshold.
 
 Usage:
-    python entropy_cli.py --increment    # PostToolUse hook
-    python entropy_cli.py --status       # Status check
-    python entropy_cli.py --reset        # Reset for new session
+    python entropy_cli.py --increment              # PostToolUse hook
+    python entropy_cli.py --increment --auto-save   # With auto-save at threshold
+    python entropy_cli.py --status                  # Status check
+    python entropy_cli.py --reset                   # Reset for new session
 
 Exit codes:
     0 - OK (no warning)
@@ -74,8 +76,39 @@ def get_entropy_level(tool_count: int) -> str:
     return "LOW"
 
 
-def increment_and_check(quiet: bool = False) -> int:
-    """Increment tool count and check for warnings."""
+def _try_auto_save(state: dict, trigger: str) -> bool:
+    """Attempt auto-save to ChromaDB if not recently saved.
+
+    Returns True if save was performed or skipped (already saved recently).
+    """
+    last_save = state.get("last_save")
+    if last_save:
+        try:
+            last_dt = datetime.fromisoformat(last_save)
+            minutes_since = (datetime.now() - last_dt).total_seconds() / 60
+            if minutes_since < 10:
+                return False  # Saved within last 10 min, skip
+        except Exception:
+            pass
+
+    try:
+        from auto_save import auto_save_context
+        doc_id = auto_save_context(trigger=trigger)
+        if doc_id:
+            state["last_save"] = datetime.now().isoformat()
+            return True
+    except Exception:
+        pass
+    return False
+
+
+def increment_and_check(quiet: bool = False, auto_save: bool = False) -> int:
+    """Increment tool count and check for warnings.
+
+    Args:
+        quiet: Suppress non-warning output.
+        auto_save: When True, auto-save to ChromaDB at HIGH/CRITICAL thresholds.
+    """
     state = load_state()
     state["tool_count"] = state.get("tool_count", 0) + 1
     state["check_count"] = state.get("check_count", 0) + 1
@@ -101,8 +134,14 @@ def increment_and_check(quiet: bool = False) -> int:
     is_critical_interval = tool_count >= CRITICAL_THRESHOLD and tool_count - last_warning_at >= 10
 
     if is_first_critical or is_critical_interval:
+        # Auto-save at CRITICAL if enabled
+        saved = False
+        if auto_save:
+            saved = _try_auto_save(state, trigger=f"entropy_critical_{tool_count}")
+
+        save_note = " (auto-saved to ChromaDB)" if saved else ""
         warning_msg = (
-            f"⚠️ [CONTEXT ENTROPY CRITICAL] {tool_count} tool calls, {session_minutes}m session.\n"
+            f"⚠️ [CONTEXT ENTROPY CRITICAL] {tool_count} tool calls, {session_minutes}m session.{save_note}\n"
             f"🛑 SAVE CONTEXT NOW! Use chroma_save_session_context() before compaction.\n"
             f"💡 Run /entropy to check status, /save to preserve work."
         )
@@ -112,8 +151,14 @@ def increment_and_check(quiet: bool = False) -> int:
 
     # HIGH threshold - strong suggestion (every 15 calls, reduced from 20)
     elif tool_count >= HIGH_THRESHOLD and tool_count - last_warning_at >= 15:
+        # Auto-save at HIGH if enabled (first crossing only)
+        saved = False
+        if auto_save and last_warning_at < HIGH_THRESHOLD:
+            saved = _try_auto_save(state, trigger=f"entropy_high_{tool_count}")
+
+        save_note = " (auto-saved to ChromaDB)" if saved else ""
         warning_msg = (
-            f"[CONTEXT ENTROPY HIGH] {tool_count} tool calls, {session_minutes}m session.\n"
+            f"[CONTEXT ENTROPY HIGH] {tool_count} tool calls, {session_minutes}m session.{save_note}\n"
             f"Run /save before complex tasks to preserve context."
         )
         state["last_warning_at"] = tool_count
@@ -132,9 +177,12 @@ def increment_and_check(quiet: bool = False) -> int:
 
     # Add to history if warning
     if warning_msg:
+        event = f"WARNING_{get_entropy_level(tool_count)}"
+        if auto_save and "auto-saved" in (warning_msg or ""):
+            event += "_AUTO_SAVED"
         state.setdefault("history", []).append({
             "timestamp": datetime.now().isoformat(),
-            "event": f"WARNING_{get_entropy_level(tool_count)}",
+            "event": event,
             "tool_count": tool_count
         })
         # Keep history bounded
@@ -232,12 +280,16 @@ def main():
         "--quiet", "-q", action="store_true",
         help="Suppress non-warning output"
     )
+    parser.add_argument(
+        "--auto-save", action="store_true",
+        help="Auto-save to ChromaDB at HIGH/CRITICAL entropy thresholds"
+    )
 
     args = parser.parse_args()
 
     try:
         if args.increment:
-            sys.exit(increment_and_check(quiet=args.quiet))
+            sys.exit(increment_and_check(quiet=args.quiet, auto_save=args.auto_save))
         elif args.status:
             sys.exit(show_status())
         elif args.reset:

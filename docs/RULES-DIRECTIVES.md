@@ -1,6 +1,6 @@
 # Rules Directives - Index
 
-**Status:** Active | **Updated:** 2026-03-18 | **Rules:** 89 (86 ACTIVE, 2 DRAFT, 1 DISABLED)
+**Status:** Active | **Updated:** 2026-03-20 | **Rules:** 92 (89 ACTIVE, 2 DRAFT, 1 DISABLED)
 
 > **Taxonomy:** [META-TAXON-01-v1](rules/leaf/META-TAXON-01-v1.md) | **Migration:** [RULE-MIGRATION.md](rules/RULE-MIGRATION.md)
 
@@ -110,6 +110,9 @@
 | ARCH-MCP-PARITY-01-v1 | (new) | MCP-REST API Feature Parity | MEDIUM | ACTIVE |
 | ARCH-BACKFILL-01-v1 | (new) | Backfill Tool Registration | MEDIUM | ACTIVE |
 | UI-REFRESH-01-v1 | (new) | Smart Dashboard Auto-Refresh | HIGH | ACTIVE |
+| TEST-FIXTURE-01-v1 | (new) | Production-Faithful Test Fixtures | CRITICAL | ACTIVE |
+| SESSION-REPORT-01-v1 | (new) | Session ID Output at Session End | HIGH | ACTIVE |
+| SESSION-EVENT-01-v1 | (new) | Event-Driven Session Data Updates | HIGH | ACTIVE |
 
 ---
 

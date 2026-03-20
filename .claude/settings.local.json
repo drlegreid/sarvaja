@@ -122,8 +122,8 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python3 \"$CLAUDE_PROJECT_DIR/.claude/hooks/entropy_cli.py\" --increment -q",
-            "timeout": 1
+            "command": "python3 \"$CLAUDE_PROJECT_DIR/.claude/hooks/entropy_cli.py\" --increment --auto-save -q",
+            "timeout": 3
           },
           {
             "type": "command",

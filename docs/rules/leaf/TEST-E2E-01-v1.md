@@ -84,6 +84,26 @@ Tier 3 visual verification follows a strict 5-step process:
 
 ---
 
+## Mandatory E2E Scenarios (Added 2026-03-20)
+
+The following scenarios MUST have E2E test coverage. These are not optional — they represent critical data pipeline paths proven by P2-10 work.
+
+| # | Scenario | What to Test | Test File |
+|---|----------|-------------|-----------|
+| 1 | JSONL Ingestion Pipeline | Scan CC sessions, extract metadata, stream transcript entries | `tests/e2e/test_ingestion_pipeline_e2e.py` |
+| 2 | Transcript Rendering (4 tiers) | JSONL → synthetic → evidence → empty, with correct `source` attribution | `tests/e2e/test_session_transcript_e2e.py` |
+| 3 | Scheduler Discovery | Drop JSONL file → watcher/scheduler detects → session appears in API + dashboard | `tests/e2e/test_scheduler_discovery_e2e.py` |
+| 4 | Schema Resilience | Unknown entry types + extra fields do NOT crash ingestion | `tests/e2e/test_scheduler_discovery_e2e.py` (schema tests) |
+| 5 | Data Integrity | CC sessions have JSONL transcripts, tool counts match, timestamps valid | `tests/e2e/test_data_integrity_e2e.py` |
+
+### Evidence (P2-10f, 2026-03-19)
+
+- 76 E2E tests across 4 test files (all pass/skip/xfail — 0 unexpected)
+- Schema detection: `cc_session_scanner.py` with `detect_entry_schema()` + 27 TDD unit tests
+- Factory: `tests/fixtures/cc_jsonl_factory.py` with 8 builder methods (per TEST-FIXTURE-01-v1)
+
+---
+
 ## Trigger Conditions
 
 This rule applies when ANY of these are modified:

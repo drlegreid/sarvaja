@@ -1,12 +1,12 @@
 # Gap Index - Sarvaja
 
-**Last Updated:** 2026-02-11 | **Source of Truth:** TypeDB via `backlog_get()`
+**Last Updated:** 2026-03-20 | **Source of Truth:** TypeDB via `backlog_get()`
 
 | Status | Count |
 |--------|-------|
-| OPEN | 0 |
+| OPEN | 2 |
 | PARTIAL | 0 |
-| DEFERRED | 1 |
+| DEFERRED | 2 |
 | MITIGATED | 1 |
 | RESOLVED | 262+ |
 
@@ -34,6 +34,9 @@
 | GAP-GOVSESS-DURATION-001 | MEDIUM | RESOLVED | gov-sessions | [evidence](evidence/GAP-GOVSESS-CAPTURE-001.md) | 15 pytest |
 | GAP-LANGGRAPH-QUALITY-001 | MEDIUM | DEFERRED | enhancement | [evidence](evidence/GAP-LANGGRAPH-QUALITY-001.md) | - |
 | GAP-MCP-PAGING-001 | MEDIUM | MITIGATED | tooling | [evidence](evidence/GAP-MCP-PAGING-001.md) | - |
+| GAP-STALE-TOOL-COUNT | MEDIUM | OPEN | data-integrity | Watcher doesn't update tool_count on re-scan | 1 xfail E2E |
+| GAP-TASK-SESSION-LINK | MEDIUM | OPEN | data-integrity | update_task() lacks auto-linking on status transition | H-TASK-005 |
+| GAP-SESSION-DISCOVERY | HIGH | DEFERRED | ingestion | Only 78/1911 JSONL files discovered; content indexer non-functional | H-INGESTION-001 |
 
 > **Notes:**
 > - GAP-GOVSESS-CAPTURE-001: RESOLVED (2026-02-11) - MCP auto-session tracker (`auto_session.py`) captures non-chat tool calls. Chat bridge + MCP tracker = full coverage. 13 new tests.
@@ -48,6 +51,9 @@
 > - GAP-SESSION-METRICS-UI: RESOLVED (2026-01-29) - REST API routes + dashboard view + navigation + controller with 14 route + 6 data access tests
 > - GAP-MCP-PAGING-001: MITIGATED - External MCP tools, workarounds documented
 > - GAP-LANGGRAPH-QUALITY-001: DEFERRED (2026-01-26) - Option C selected, revisit when multi-agent active
+> - GAP-STALE-TOOL-COUNT: OPEN (2026-03-20) - Watcher updates end_time/cc_external_name but NOT cc_tool_count. Fix: add tool_count to update_kwargs in claude_watcher.py
+> - GAP-TASK-SESSION-LINK: OPEN (2026-03-20) - create_task() auto-links correctly, but update_task() does NOT auto-link on status transition. 49/59 worked tasks unlinked, mostly pre-2026-02-09. Fix: add auto-linking to update_task() for IN_PROGRESS/DONE transitions
+> - GAP-SESSION-DISCOVERY: DEFERRED (2026-03-20) - ChromaDB at 2.4% capacity (614 docs, 26MB/1GB). Capacity concern DISMISSED. Real blockers: (a) auto-discovery only found 78 of 1911 JSONL files, (b) sim_ai_session_content collection never created, (c) scheduler ran 39 scans but only 1 session ingested. Revisit when discovery pipeline fixed
 
 ## Recently Resolved (2026-02-11)
 
