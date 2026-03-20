@@ -87,6 +87,55 @@ GET /api/sessions/{id}:
     Body: { session_id: str, tool_calls: list, thoughts: list, ... }
 ```
 
+## MCP Tooling Protocol (MANDATORY)
+
+EDS exploratory testing MUST use the available MCP servers directly — NOT shell wrappers, bare curl, or manual commands.
+
+### 3-MCP Triad
+
+| MCP Server | Purpose in EDS | Key Tools |
+|------------|---------------|-----------|
+| **playwright** | UI exploration + CRUD interaction | `browser_navigate`, `browser_snapshot`, `browser_click`, `browser_fill_form`, `browser_take_screenshot`, `browser_wait_for`, `browser_network_requests`, `browser_console_messages` |
+| **rest-api** | API contract validation | `test_request` (GET/POST/PUT/DELETE against localhost:8082) — structured response with timing, headers, status |
+| **log-analyzer** | Server-side verification | `run_unit_test` (targeted), `analyze_tests`, `search_log_time_based` (check for errors during exploration) |
+
+### EDS Execution Flow
+
+```
+1. SETUP
+   playwright → browser_navigate(url="http://localhost:8081")
+   playwright → browser_snapshot()  ← establishes baseline
+
+2. UI EXPLORATION (per view)
+   playwright → browser_click(ref=nav_item)     ← navigate
+   playwright → browser_snapshot()               ← capture structure (Layer 2/3 data)
+   playwright → browser_take_screenshot(filename="evidence/test-results/EDS-{domain}-{view}.png")
+   playwright → browser_fill_form(fields=[...])  ← CRUD interaction
+   playwright → browser_network_requests()       ← capture API calls made by UI
+
+3. API VALIDATION (per endpoint)
+   rest-api → test_request(method="GET", endpoint="/api/tasks")          ← Layer 3 contract
+   rest-api → test_request(method="POST", endpoint="/api/tasks", body={})← mutation test
+   rest-api → test_request(method="GET", endpoint="/api/workspaces/{id}/tasks") ← relation query
+
+4. SERVER-SIDE VERIFICATION
+   log-analyzer → search_log_time_based(minutes=5, scope="api")  ← check for errors during exploration
+   log-analyzer → run_unit_test(agent="tasks")                   ← targeted regression check
+
+5. EVIDENCE RECORDING
+   gov-sessions → session_test_result(test_id="EDS-{id}", status="passed|failed")
+   gov-sessions → test_evidence_push(test_id="EDS-{id}", fixtures_json="{...}")
+```
+
+### Anti-Patterns
+
+| Don't | Do Instead |
+|-------|-----------|
+| `curl http://localhost:8082/api/tasks` | `mcp__rest-api__test_request(method="GET", endpoint="/api/tasks")` |
+| `bash: python3 -m pytest tests/` | `mcp__log-analyzer__run_unit_test(agent="tasks")` |
+| Screenshot-only validation | `browser_snapshot()` for structure + `browser_take_screenshot()` for evidence |
+| Ignore server logs | `search_log_time_based(minutes=5)` after each CRUD operation |
+
 ## Output Format
 
 Each exploratory session MUST produce a spec file at:

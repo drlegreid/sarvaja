@@ -336,6 +336,9 @@ def get_initial_state() -> Dict[str, Any]:
         'edit_workspace_description': '',
         'edit_workspace_status': 'active',
         'show_workspace_delete_confirm': False,
+        # GAP-WS-DETAIL-UI: Linked tasks
+        'workspace_tasks': [],
+        'workspace_tasks_loading': False,
 
         # Agent Capabilities state (rule→agent bindings)
         'agent_capabilities': [],

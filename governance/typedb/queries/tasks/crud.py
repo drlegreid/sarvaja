@@ -218,20 +218,13 @@ class TaskCRUDOperations:
                         """
                         tx.query(rel_query).resolve()
 
-                # EPIC-GOV-TASKS-V2 Phase 4: Link task to workspace
-                if workspace_id:
-                    wid = workspace_id.replace('\\', '\\\\').replace('"', '\\"')
-                    ws_query = f"""
-                        match
-                            $t isa task, has task-id "{task_id_escaped}";
-                            $w isa workspace, has workspace-id "{wid}";
-                        insert
-                            (task-workspace: $w, assigned-task: $t)
-                                isa workspace-has-task;
-                    """
-                    tx.query(ws_query).resolve()
-
                 tx.commit()
+
+            # BUG-WS-CREATE-001: Link workspace in SEPARATE transaction.
+            # Before: workspace MATCH failure rolled back entire task insert.
+            # After: task persists regardless; link is best-effort.
+            if workspace_id:
+                self.link_task_to_workspace(workspace_id, task_id)
 
             return self.get_task(task_id)
         except Exception as e:

@@ -40,6 +40,7 @@ All governance rules MUST follow the semantic rule ID taxonomy defined in this d
 | `CONTAINER` | Container operations | `SHELL` (shell selection), `DEV` (dev workflow), `RESTART` (restart protocol) |
 | `DOC` | Documentation | `LINK` (linking), `SIZE` (file size), `PARTIAL` (partial tasks) |
 | `UI` | User interface | `TRAME` (trame patterns) |
+| `IDE` | IDE integrations | `VSCODE` (VS Code), `CC` (Claude Code) |
 
 ## Versioning Rules
 

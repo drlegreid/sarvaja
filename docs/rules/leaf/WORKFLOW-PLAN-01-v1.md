@@ -88,6 +88,49 @@ DISPATCH ONLY — do not execute. Review plan, confirm ready phase, output promp
 
 **Boundary rule:** If a session prompt does NOT contain a phase number to execute, the agent MUST NOT write code or tests. It may only read, analyze, and output prompts.
 
+### 9. Exploratory Validation Gate (MANDATORY)
+
+Per TEST-EXPLSPEC-01-v1, every EPIC plan MUST include an **exploratory test phase using the 3-MCP triad** (playwright + rest-api + log-analyzer) before the final phase(s). This is a quality gate — not optional.
+
+**Plan structure requirement:**
+- The plan MUST include an EDS validation phase after implementation phases and before remediation/migration phases
+- This phase uses Playwright MCP to explore the delivered UI/API and produces an EDS spec file
+- The EDS phase validates that all prior phases actually work end-to-end in the running system
+
+**EDS phase template:**
+```
+## Phase N: Exploratory Validation (EDS) — Status: TODO
+
+**Goal**: Validate P1-P(N-1) deliverables via Playwright MCP exploratory testing.
+
+**Output**:
+- `docs/backlog/specs/EDS-{DOMAIN}-{DATE}.eds.md` (3-layer spec)
+- Screenshots in `evidence/test-results/`
+
+**BDD**:
+  Scenario: Navigate to affected UI views and verify new functionality
+  Scenario: Exercise API endpoints for new/changed entities
+  Scenario: Capture EDS 3-layer spec (Business → Actions → Locators)
+
+**Deps**: All implementation phases | **Gate for**: Remaining phases
+```
+
+**Boundary rule:** No remediation or migration phase may start until the EDS gate phase is DONE with ALL scenarios PASS.
+
+### 10. EDS Fail → Bugfix → Revalidate Loop (MANDATORY)
+
+When the EDS gate finds bugs:
+
+1. **Phase Nb**: Insert a bugfix phase immediately after the EDS gate. Include:
+   - Bug IDs with severity (from EDS findings)
+   - TDD tests for each bug fix
+   - Gap items discovered during EDS (missing endpoints, UI sections)
+2. **Phase Nc**: Insert a revalidation phase that re-runs ONLY the failing EDS scenarios
+3. **Pass criteria**: ALL original EDS scenarios must PASS. Any remaining FAIL → loop back to Nb
+4. **No skipping**: The bugfix-revalidate loop MUST complete before downstream phases proceed
+
+This is the quality ratchet — bugs found by EDS are blockers, not backlog items.
+
 ## Anti-Patterns
 
 | Don't | Do Instead |
@@ -98,6 +141,8 @@ DISPATCH ONLY — do not execute. Review plan, confirm ready phase, output promp
 | Skip BDD acceptance criteria | Write Gherkin scenarios for every phase |
 | Leave phase status as TODO after completing | Update to DONE immediately |
 | Execute code in a dispatch session | Output prompt only, execute in new session |
+| Skip exploratory testing before final phases | Run EDS gate per TEST-EXPLSPEC-01-v1 |
+| Treat screenshots alone as validation | Produce full 3-layer EDS spec |
 
 ## Rationale
 

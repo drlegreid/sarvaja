@@ -6,6 +6,10 @@
 data/
 *.db
 
+# Node
+node_modules/
+package-lock.json
+
 # Python
 __pycache__/
 *.py[cod]

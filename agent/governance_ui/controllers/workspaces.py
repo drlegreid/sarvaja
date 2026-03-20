@@ -76,6 +76,8 @@ def register_workspace_controllers(
                 if resp.status_code == 200:
                     state.selected_workspace = resp.json()
                     state.show_workspace_detail = True
+                    # GAP-WS-DETAIL-UI: Fetch linked tasks
+                    _load_workspace_tasks(workspace_id)
                 else:
                     state.status_message = (
                         f"Workspace {workspace_id} not found"
@@ -85,6 +87,32 @@ def register_workspace_controllers(
                 state, f"Load workspace failed: {e}",
                 f"/api/workspaces/{workspace_id}",
             )
+
+    def _load_workspace_tasks(workspace_id):
+        """Fetch tasks linked to a workspace. Per GAP-WS-DETAIL-UI."""
+        state.workspace_tasks_loading = True
+        state.workspace_tasks = []
+        try:
+            with httpx.Client(timeout=10.0) as client:
+                resp = client.get(
+                    f"{api_base_url}/api/workspaces/{workspace_id}/tasks"
+                )
+                add_api_trace(
+                    state,
+                    f"/api/workspaces/{workspace_id}/tasks",
+                    "GET", resp.status_code, 0,
+                )
+                if resp.status_code == 200:
+                    data = resp.json()
+                    state.workspace_tasks = data.get("items", [])
+        except Exception as e:
+            add_error_trace(
+                state,
+                f"Load workspace tasks failed: {e}",
+                f"/api/workspaces/{workspace_id}/tasks",
+            )
+        finally:
+            state.workspace_tasks_loading = False
 
     # ── Create ──────────────────────────────────────────────────
 

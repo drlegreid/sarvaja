@@ -8,6 +8,10 @@ Shows workspace info with edit/delete actions, assigned agents, and linked rules
 
 from trame.widgets import vuetify3 as v3, html
 
+from agent.governance_ui.views.workspaces.linked_tasks import (
+    build_workspace_linked_tasks,
+)
+
 
 def build_workspace_detail_view() -> None:
     """Build workspace detail view with edit/delete and agents."""
@@ -263,6 +267,9 @@ def build_workspace_detail_view() -> None:
                                 "active_view = 'rules'"
                             ),
                         )
+
+        # GAP-WS-DETAIL-UI: Linked tasks section
+        build_workspace_linked_tasks()
 
         # Delete confirmation dialog
         with v3.VDialog(

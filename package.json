@@ -1,0 +1,10 @@
+{
+  "name": "sarvaja-platform",
+  "version": "1.3.1",
+  "private": true,
+  "description": "Sarvaja multi-agent governance platform - Node MCP dependencies",
+  "dependencies": {
+    "dkmaker-mcp-rest-api": "0.4.0",
+    "@playwright/mcp": "0.0.68"
+  }
+}

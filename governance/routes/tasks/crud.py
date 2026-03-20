@@ -75,7 +75,9 @@ async def create_task(task: TaskCreate):
             agent_id=task.agent_id, body=task.body,
             gap_id=task.gap_id, linked_rules=task.linked_rules,
             linked_sessions=task.linked_sessions,
-            linked_documents=task.linked_documents, source="rest-api",
+            linked_documents=task.linked_documents,
+            workspace_id=task.workspace_id,  # BUG-WS-API-001
+            source="rest-api",
         )
         # Service returns TaskResponse directly (via task_to_response)
         if isinstance(result, TaskResponse):
@@ -132,6 +134,7 @@ async def update_task(task_id: str, update: TaskUpdate):
             linked_sessions=update.linked_sessions,
             linked_documents=update.linked_documents,
             gap_id=update.gap_id,
+            workspace_id=update.workspace_id,  # BUG-WS-API-001
             source="rest-api",
         )
         if result is None:

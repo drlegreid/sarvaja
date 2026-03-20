@@ -142,6 +142,9 @@ def create_task(
     Raises:
         ValueError: If task already exists, or no task_id and no task_type.
     """
+    # BUG-STATUS-CASE-001: Normalize status to uppercase at service boundary
+    status = (status or "OPEN").upper()
+
     # Auto-generate task_id from task_type if not provided (META-TAXON-01-v1)
     client = get_typedb_client()
     if not task_id:

@@ -13,12 +13,13 @@
     },
     "rest-api": {
       "type": "stdio",
-      "command": "/home/oderid/.config/nvm/versions/node/v20.19.6/bin/npx",
-      "args": ["-y", "dkmaker-mcp-rest-api"],
+      "command": "bash",
+      "args": ["scripts/mcp-node-runner.sh", "dkmaker-mcp-rest-api"],
+      "cwd": "${workspaceFolder}",
       "env": {
         "REST_BASE_URL": "http://localhost:8082"
       },
-      "_docs": "https://playbooks.com/mcp/dkmaker/mcp-rest-api"
+      "_comment": "Direct node invocation, pinned v0.4.0 in package.json (bypasses npx 3-30s overhead)"
     },
     "gov-core": {
       "type": "stdio",
@@ -71,22 +72,18 @@
     },
     "playwright": {
       "type": "stdio",
-      "command": "/home/oderid/.config/nvm/versions/node/v20.19.6/bin/npx",
-      "args": [
-        "-y",
-        "@playwright/mcp@latest",
-        "--browser",
-        "chromium"
-      ],
+      "command": "bash",
+      "args": ["scripts/mcp-node-runner.sh", "@playwright/mcp", "--browser", "chromium"],
+      "cwd": "${workspaceFolder}",
       "env": {
         "PLAYWRIGHT_BROWSERS_PATH": "/home/oderid/.cache/ms-playwright"
       },
-      "_comment": "E2E UI testing automation"
+      "_comment": "Direct node invocation, pinned v0.0.68 in package.json (bypasses npx 3-30s overhead)"
     },
     "log-analyzer": {
       "type": "stdio",
       "command": "/home/oderid/.local/bin/uvx",
-      "args": ["log-analyzer-mcp"],
+      "args": ["log-analyzer-mcp==0.1.8"],
       "env": {
         "PYTHONUNBUFFERED": "1",
         "PYTHONIOENCODING": "utf-8",

@@ -415,16 +415,17 @@ class TestInsertTaskWorkspaceId:
     """insert_task accepts workspace_id and creates relation."""
 
     def test_insert_with_workspace_id_creates_relation(self):
+        """BUG-WS-CREATE-001: Workspace link now called as separate method after commit."""
         from governance.typedb.queries.tasks.crud import TaskCRUDOperations
 
         client = _make_mock_client()
         tx = _make_tx()
         client._driver.transaction.return_value.__enter__ = MagicMock(return_value=tx)
         client._driver.transaction.return_value.__exit__ = MagicMock(return_value=False)
-        # get_task returns the created task
         from governance.typedb.entities import Task
         created = Task(id="TASK-001", name="Test", status="OPEN", phase="P10", workspace_id="WS-001")
         client.get_task = MagicMock(return_value=created)
+        client.link_task_to_workspace = MagicMock(return_value=True)
 
         op = TaskCRUDOperations.insert_task
         result = op(
@@ -433,12 +434,8 @@ class TestInsertTaskWorkspaceId:
         )
 
         assert result is not None
-        # Check that workspace relation query was issued
-        queries = [c[0][0] for c in tx.query.call_args_list]
-        ws_queries = [q for q in queries if "workspace-has-task" in q]
-        assert len(ws_queries) == 1
-        assert "WS-001" in ws_queries[0]
-        assert "TASK-001" in ws_queries[0]
+        # BUG-WS-CREATE-001: link_task_to_workspace called separately (not in main TX)
+        client.link_task_to_workspace.assert_called_once_with("WS-001", "TASK-001")
 
     def test_insert_without_workspace_id_no_relation(self):
         from governance.typedb.queries.tasks.crud import TaskCRUDOperations
@@ -598,7 +595,7 @@ class TestUpdateTaskWorkspaceId:
             workspace_id="WS-001"
         )
 
-        client.link_task_to_workspace.assert_called_once_with("TASK-001", "WS-001")
+        client.link_task_to_workspace.assert_called_once_with("WS-001", "TASK-001")  # BUG-WS-CREATE-001: correct arg order
 
     @patch("governance.services.tasks_mutations.get_typedb_client")
     @patch("governance.services.tasks_mutations.record_audit")
@@ -636,7 +633,7 @@ class TestServiceLinkTaskToWorkspace:
         result = link_task_to_workspace("TASK-001", "WS-001")
 
         assert result is True
-        client.link_task_to_workspace.assert_called_once_with("TASK-001", "WS-001")
+        client.link_task_to_workspace.assert_called_once_with("WS-001", "TASK-001")  # BUG-WS-CREATE-001: correct arg order
 
     @patch("governance.services.tasks_mutations.get_typedb_client")
     def test_link_task_to_workspace_no_client(self, mock_client):

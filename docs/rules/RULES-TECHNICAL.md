@@ -42,6 +42,12 @@ Rules governing architecture, technology selection, and tooling.
 | **CONTAINER-DEV-01-v1** | DevOps Version Compatibility | CRITICAL |
 | **ARCH-INFRA-02-v1** | Portable Configuration Patterns | HIGH |
 
+### IDE Integration Rules
+
+| Rule | Name | Priority |
+|------|------|----------|
+| **IDE-VSCODE-CC-01-v1** | VSCode Claude Code Permission Bypass Bug & Mitigations | HIGH |
+
 ---
 
 ## Cross-References

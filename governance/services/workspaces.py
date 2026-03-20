@@ -274,3 +274,43 @@ def remove_agent_from_workspace(
 def get_workspace_types_list() -> List[Dict[str, Any]]:
     """Get all workspace types for dropdown."""
     return [workspace_type_to_dict(wt) for wt in list_workspace_types()]
+
+
+def get_workspace_tasks(
+    workspace_id: str,
+    offset: int = 0,
+    limit: int = 50,
+) -> Optional[Dict[str, Any]]:
+    """Get tasks linked to a workspace via workspace-has-task relation.
+
+    Per GAP-WS-TASKS-API / EPIC-GOV-TASKS-V2 Phase 6b.
+
+    Returns:
+        Dict with items + total, or None if workspace not found.
+    """
+    from governance.stores.helpers import task_to_response
+
+    client = _get_typedb_client()
+    if not client:
+        return {"items": [], "total": 0}
+
+    try:
+        task_ids = client.get_tasks_for_workspace(workspace_id)
+        total = len(task_ids)
+        paginated_ids = task_ids[offset:offset + limit]
+
+        items = []
+        for tid in paginated_ids:
+            task_obj = client.get_task(tid)
+            if task_obj:
+                resp = task_to_response(task_obj)
+                items.append(resp if isinstance(resp, dict) else resp.dict())
+
+        return {"items": items, "total": total}
+    except Exception as e:
+        logger.warning(
+            f"Failed to get tasks for workspace {workspace_id}: "
+            f"{type(e).__name__}",
+            exc_info=True,
+        )
+        return {"items": [], "total": 0}

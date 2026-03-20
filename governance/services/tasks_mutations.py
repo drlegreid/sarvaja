@@ -68,6 +68,10 @@ def update_task(
     Returns:
         Updated task dict or None if not found.
     """
+    # BUG-STATUS-CASE-001: Normalize status to uppercase at service boundary
+    if status:
+        status = status.upper()
+
     # Per DATA-LINK-01-v1 / EPIC-GOV-TASKS-V2 Phase 2: Auto-link to active session
     # on status transition when no linked_sessions provided
     if status and not linked_sessions:
@@ -131,7 +135,7 @@ def update_task(
             # EPIC-GOV-TASKS-V2 Phase 4: Persist workspace link
             if workspace_id:
                 try:
-                    client.link_task_to_workspace(task_id, workspace_id)
+                    client.link_task_to_workspace(workspace_id, task_id)  # BUG-WS-CREATE-001: fix arg order
                 except Exception as le:
                     logger.warning(f"TypeDB workspace link {task_id}->{workspace_id}: {type(le).__name__}", exc_info=True)
         except Exception as e:
@@ -319,7 +323,7 @@ def link_task_to_workspace(task_id: str, workspace_id: str, source: str = "rest"
     try:
         if not client.get_task(task_id):
             return False
-        result = client.link_task_to_workspace(task_id, workspace_id)
+        result = client.link_task_to_workspace(workspace_id, task_id)  # BUG-WS-CREATE-001: fix arg order
         if result:
             _monitor("link_workspace", task_id, source=source, workspace_id=workspace_id)
         return bool(result)

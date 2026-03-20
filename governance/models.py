@@ -52,6 +52,7 @@ class TaskCreate(BaseModel):
     linked_sessions: Optional[List[str]] = None
     linked_documents: Optional[List[str]] = None  # Task document management
     gap_id: Optional[str] = None
+    workspace_id: Optional[str] = None  # BUG-WS-API-001: workspace assignment
 
 class TaskUpdate(BaseModel):
     """Request model for updating a task (GAP-UI-107)."""
@@ -66,6 +67,7 @@ class TaskUpdate(BaseModel):
     linked_sessions: Optional[List[str]] = None
     linked_documents: Optional[List[str]] = None  # Task document management
     gap_id: Optional[str] = None
+    workspace_id: Optional[str] = None  # BUG-WS-API-001: workspace assignment
     evidence: Optional[str] = None  # Per EPIC-DR-008
 
 class TaskResponse(BaseModel):

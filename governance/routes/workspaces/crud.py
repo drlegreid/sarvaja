@@ -43,6 +43,19 @@ async def list_workspace_types():
     return [WorkspaceTypeResponse(**wt) for wt in ws_service.get_workspace_types_list()]
 
 
+@router.get("/workspaces/{workspace_id}/tasks")
+async def get_workspace_tasks(
+    workspace_id: str,
+    offset: int = Query(0, ge=0),
+    limit: int = Query(50, ge=1, le=200),
+):
+    """Get tasks linked to a workspace. Per GAP-WS-TASKS-API."""
+    result = ws_service.get_workspace_tasks(workspace_id, offset=offset, limit=limit)
+    if result is None:
+        raise HTTPException(status_code=404, detail="Workspace not found")
+    return result
+
+
 @router.get("/workspaces/{workspace_id}", response_model=WorkspaceResponse)
 async def get_workspace(workspace_id: str):
     """Get a workspace by ID."""
