@@ -113,6 +113,9 @@
 | TEST-FIXTURE-01-v1 | (new) | Production-Faithful Test Fixtures | CRITICAL | ACTIVE |
 | SESSION-REPORT-01-v1 | (new) | Session ID Output at Session End | HIGH | ACTIVE |
 | SESSION-EVENT-01-v1 | (new) | Event-Driven Session Data Updates | HIGH | ACTIVE |
+| TEST-EXPLSPEC-01-v1 | (new) | Exploratory Dynamic Specification (3-layer Gherkin) | HIGH | ACTIVE |
+| SESSION-DISCIPLINE-01-v1 | (new) | Session Duration and Autonomy Limits (max 4h, 10 cycles) | CRITICAL | ACTIVE |
+| SCHEMA-RESILIENCE-01-v1 | (new) | External Data Schema Resilience (graceful unknown fields) | HIGH | ACTIVE |
 
 ---
 
