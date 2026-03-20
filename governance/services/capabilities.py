@@ -20,6 +20,21 @@ from governance.stores.config import get_typedb_client
 
 logger = logging.getLogger(__name__)
 
+
+def _monitor(action: str, entity_id: str, source: str = "service", **extra):
+    """Log capability monitoring event for MCP compliance. Per P3-14."""
+    try:
+        from governance.mcp_tools.common import log_monitor_event
+        log_monitor_event(
+            event_type="capability_event",
+            source=source,
+            details={"entity_id": entity_id, "action": action, **extra},
+            severity="INFO",
+        )
+    except Exception as e:
+        logger.warning(f"Monitor event failed for capability {entity_id}: {type(e).__name__}", exc_info=True)
+
+
 # In-memory store: key = "agent_id::rule_id"
 _capabilities_store: Dict[str, Dict[str, Any]] = {}
 
@@ -59,7 +74,8 @@ def _persist_to_typedb(agent_id: str, rule_id: str, category: str, status: str) 
         if client:
             client.create_capability(agent_id, rule_id, category, status)
     except Exception as e:
-        logger.warning(f"TypeDB persist failed for {agent_id}→{rule_id}: {e}")
+        # P3-14: Add exc_info for stack trace consistency
+        logger.warning(f"TypeDB persist failed for {agent_id}→{rule_id}: {type(e).__name__}", exc_info=True)
 
 
 def _delete_from_typedb(agent_id: str, rule_id: str) -> None:
@@ -69,7 +85,8 @@ def _delete_from_typedb(agent_id: str, rule_id: str) -> None:
         if client:
             client.delete_capability(agent_id, rule_id)
     except Exception as e:
-        logger.warning(f"TypeDB delete failed for {agent_id}→{rule_id}: {e}")
+        # P3-14: Add exc_info for stack trace consistency
+        logger.warning(f"TypeDB delete failed for {agent_id}→{rule_id}: {type(e).__name__}", exc_info=True)
 
 
 def _update_status_in_typedb(agent_id: str, rule_id: str, status: str) -> None:
@@ -79,7 +96,8 @@ def _update_status_in_typedb(agent_id: str, rule_id: str, status: str) -> None:
         if client:
             client.update_capability_status(agent_id, rule_id, status)
     except Exception as e:
-        logger.warning(f"TypeDB status update failed for {agent_id}→{rule_id}: {e}")
+        # P3-14: Add exc_info for stack trace consistency
+        logger.warning(f"TypeDB status update failed for {agent_id}→{rule_id}: {type(e).__name__}", exc_info=True)
 
 
 def _seed_defaults() -> None:
@@ -142,7 +160,8 @@ def load_from_typedb() -> int:
             logger.info(f"Loaded {loaded} capabilities from TypeDB")
         return loaded
     except Exception as e:
-        logger.warning(f"Failed to load capabilities from TypeDB: {e}")
+        # P3-14: Sanitize message + add exc_info for consistency
+        logger.warning(f"Failed to load capabilities from TypeDB: {type(e).__name__}", exc_info=True)
         return 0
 
 
@@ -170,6 +189,7 @@ def bind_rule_to_agent(
     record_audit("CREATE", "capability", k,
                  metadata={"agent_id": agent_id, "rule_id": rule_id, "source": source})
     logger.info(f"Bound rule {rule_id} to agent {agent_id} (category={category})")
+    _monitor("bind", k, source=source, agent_id=agent_id, rule_id=rule_id)
     return entry
 
 
@@ -187,6 +207,7 @@ def unbind_rule_from_agent(
     _delete_from_typedb(agent_id, rule_id)
     record_audit("DELETE", "capability", k,
                  metadata={"agent_id": agent_id, "rule_id": rule_id, "source": source})
+    _monitor("unbind", k, source=source, agent_id=agent_id, rule_id=rule_id)
     return True
 
 
@@ -245,6 +266,7 @@ def update_capability_status(
     record_audit("UPDATE", "capability", k,
                  old_value=old_status, new_value=status,
                  metadata={"source": source})
+    _monitor("status_change", k, source=source, old_status=old_status, new_status=status)
     return _capabilities_store[k]
 
 

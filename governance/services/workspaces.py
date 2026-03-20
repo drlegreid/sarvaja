@@ -27,6 +27,21 @@ from governance.services.workspace_registry import (
 
 logger = logging.getLogger(__name__)
 
+
+def _monitor(action: str, workspace_id: str, source: str = "service", **extra):
+    """Log workspace monitoring event for MCP compliance. Per P3-14."""
+    try:
+        from governance.mcp_tools.common import log_monitor_event
+        log_monitor_event(
+            event_type="workspace_event",
+            source=source,
+            details={"workspace_id": workspace_id, "action": action, **extra},
+            severity="INFO",
+        )
+    except Exception as e:
+        logger.warning(f"Monitor event failed for workspace {workspace_id}: {type(e).__name__}", exc_info=True)
+
+
 _WORKSPACES_FILE = "governance/data/workspaces.json"
 _workspaces_store: Dict[str, Dict[str, Any]] = {}
 _loaded = False
@@ -94,6 +109,7 @@ def create_workspace(
     _save()
     record_audit("CREATE", "workspace", workspace_id,
                  metadata={"name": name, "type": workspace_type, "source": source})
+    _monitor("create", workspace_id, source=source, workspace_type=workspace_type)
     return ws
 
 
@@ -154,6 +170,7 @@ def update_workspace(
         ws["agent_ids"] = agent_ids
     _save()
     record_audit("UPDATE", "workspace", workspace_id, metadata={"source": source})
+    _monitor("update", workspace_id, source=source)
     return ws
 
 
@@ -165,6 +182,7 @@ def delete_workspace(workspace_id: str, source: str = "service") -> bool:
     del _workspaces_store[workspace_id]
     _save()
     record_audit("DELETE", "workspace", workspace_id, metadata={"source": source})
+    _monitor("delete", workspace_id, source=source)
     return True
 
 

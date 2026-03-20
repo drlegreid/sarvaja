@@ -82,12 +82,13 @@ async def update_workspace(workspace_id: str, body: WorkspaceUpdate):
     return WorkspaceResponse(**result)
 
 
-@router.delete("/workspaces/{workspace_id}")
+@router.delete("/workspaces/{workspace_id}", status_code=204)
 async def delete_workspace(workspace_id: str):
     """Delete a workspace."""
     if not ws_service.delete_workspace(workspace_id, source="rest-api"):
         raise HTTPException(status_code=404, detail="Workspace not found")
-    return {"status": "deleted", "workspace_id": workspace_id}
+    # P3-14: HTTP 204 must have empty body per spec
+    return None
 
 
 @router.post("/workspaces/{workspace_id}/agents", response_model=WorkspaceResponse)

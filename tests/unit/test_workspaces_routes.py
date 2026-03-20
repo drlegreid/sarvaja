@@ -214,10 +214,9 @@ class TestWorkspacesRoutes:
     def test_delete_workspace(self, mock_svc, client):
         mock_svc.delete_workspace.return_value = True
         resp = client.delete("/api/workspaces/WS-1")
-        assert resp.status_code == 200
-        data = resp.json()
-        assert data["status"] == "deleted"
-        assert data["workspace_id"] == "WS-1"
+        # P3-14: HTTP 204 No Content (empty body per spec)
+        assert resp.status_code == 204
+        assert resp.content == b""
         mock_svc.delete_workspace.assert_called_once_with(
             "WS-1", source="rest-api",
         )

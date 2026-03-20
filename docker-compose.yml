@@ -178,6 +178,8 @@ services:
       - CHROMA_AUTH_TOKEN=${CHROMA_AUTH_TOKEN:-chroma-token-dev}
       - GOVERNANCE_API_URL=http://localhost:8082
       - CLAUDE_PROJECT_LOG_DIR=/app/claude-logs  # SESSION-METRICS-01-v1: Claude Code JSONL logs
+      - SIBLING_SCAN_DIR=/app/project-siblings   # GAP-GAMEDEV-WS: Sibling project discovery
+      - SIBLING_HOST_DIR=/home/oderid/Documents/Vibe/sarvaja  # GAP-GAMEDEV-WS: Host path mapping
     volumes:
       - ./agent:/app/agent:rw       # Task 0.2: rw for uvicorn --reload
       - ./governance:/app/governance:rw  # Task 0.2: rw for uvicorn --reload
@@ -190,6 +192,7 @@ services:
       - ./CLAUDE.md:/app/CLAUDE.md:ro   # RECOVER-AMNES-01-v1
       - ./TODO.md:/app/TODO.md:ro       # RECOVER-AMNES-01-v1
       - ${HOME}/.claude/projects/-home-oderid-Documents-Vibe-sarvaja-platform:/app/claude-logs:ro
+      - /home/oderid/Documents/Vibe/sarvaja:/app/project-siblings:ro  # GAP-GAMEDEV-WS: Sibling project discovery
       - /tmp/podman-api.sock:/run/podman/podman.sock:ro  # EPIC-7.1: Container logs via podman API
       - /home/oderid/Documents/Docker/chroma_onnx_cache:/root/.cache/chroma:rw  # Cache ONNX embedding model across rebuilds
     depends_on:

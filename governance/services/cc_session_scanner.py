@@ -299,6 +299,36 @@ _PROJECT_MARKERS = [
     "setup.py",        # Python (legacy)
 ]
 
+# GAP-GAMEDEV-WS: Container sibling project discovery.
+# SIBLING_SCAN_DIR = container path to scan for sibling projects
+# SIBLING_HOST_DIR = corresponding host path (stored in project metadata)
+_SIBLING_SCAN_DIR = os.environ.get("SIBLING_SCAN_DIR")
+_SIBLING_HOST_DIR = os.environ.get("SIBLING_HOST_DIR")
+
+
+def get_sibling_scan_dirs() -> list[str]:
+    """Return container-accessible sibling scan directories.
+
+    Per GAP-GAMEDEV-WS: When running in a container, host filesystem paths
+    decoded from CC directory names don't exist. SIBLING_SCAN_DIR provides
+    an explicit mount point for sibling project discovery.
+    """
+    if _SIBLING_SCAN_DIR and Path(_SIBLING_SCAN_DIR).is_dir():
+        return [_SIBLING_SCAN_DIR]
+    return []
+
+
+def _resolve_host_path(container_path: str) -> str:
+    """Map a container path back to the host path for project metadata.
+
+    Per GAP-GAMEDEV-WS: Projects store host paths so Claude Code (running
+    on the host) can access them. Container mount prefix is replaced with
+    the corresponding host prefix.
+    """
+    if _SIBLING_SCAN_DIR and _SIBLING_HOST_DIR and container_path.startswith(_SIBLING_SCAN_DIR):
+        return container_path.replace(_SIBLING_SCAN_DIR, _SIBLING_HOST_DIR, 1)
+    return container_path
+
 
 def discover_filesystem_projects(
     scan_dirs: list[str] = None,
@@ -310,6 +340,8 @@ def discover_filesystem_projects(
     Complements discover_cc_projects() by finding projects that don't have
     CC JSONL files (e.g., Godot games created via Claude Code sessions).
 
+    Per GAP-GAMEDEV-WS: Also scans SIBLING_SCAN_DIR when set (container mode).
+
     Args:
         scan_dirs: List of parent directory paths to scan for subdirectories.
         existing_paths: Paths to exclude (already-known projects).
@@ -319,6 +351,11 @@ def discover_filesystem_projects(
         List of dicts with project_id, name, path, project_type.
     """
     from governance.services.workspace_registry import detect_project_type
+
+    scan_dirs = list(scan_dirs or [])
+
+    # GAP-GAMEDEV-WS: Add container sibling mount if configured
+    scan_dirs.extend(get_sibling_scan_dirs())
 
     if not scan_dirs:
         return []
@@ -349,8 +386,9 @@ def discover_filesystem_projects(
             if not has_marker:
                 continue
 
-            path_str = str(d)
-            if path_str in existing_paths:
+            # Resolve host path for project metadata
+            host_path = _resolve_host_path(str(d))
+            if host_path in existing_paths:
                 continue
 
             # Build project ID from directory name
@@ -360,7 +398,7 @@ def discover_filesystem_projects(
                 continue
 
             # Auto-detect project type
-            proj_type = detect_project_type(path_str)
+            proj_type = detect_project_type(str(d))
 
             # Build human-readable name
             name = d.name.replace("-", " ").replace("_", " ").title()
@@ -368,7 +406,7 @@ def discover_filesystem_projects(
             projects.append({
                 "project_id": project_id,
                 "name": name,
-                "path": path_str,
+                "path": host_path,
                 "project_type": proj_type,
             })
 

@@ -17,6 +17,9 @@ from governance.services.cc_session_scanner import (
     scan_jsonl_metadata,
     build_session_id,
     find_jsonl_for_session,
+    get_sibling_scan_dirs,
+    _resolve_host_path,
+    discover_filesystem_projects,
 )
 
 
@@ -237,3 +240,137 @@ class TestFindJsonlForSession:
                 "session_id": "SESSION-2026-02-11-CHAT-HELLO",
             })
             assert result is None
+
+
+class TestGetSiblingScandDirs:
+    """Tests for get_sibling_scan_dirs() — GAP-GAMEDEV-WS."""
+
+    def test_returns_empty_when_unset(self):
+        with patch("governance.services.cc_session_scanner._SIBLING_SCAN_DIR", None):
+            assert get_sibling_scan_dirs() == []
+
+    def test_returns_empty_when_dir_missing(self, tmp_path):
+        fake = str(tmp_path / "nonexistent")
+        with patch("governance.services.cc_session_scanner._SIBLING_SCAN_DIR", fake):
+            assert get_sibling_scan_dirs() == []
+
+    def test_returns_dir_when_exists(self, tmp_path):
+        with patch("governance.services.cc_session_scanner._SIBLING_SCAN_DIR", str(tmp_path)):
+            result = get_sibling_scan_dirs()
+            assert result == [str(tmp_path)]
+
+
+class TestResolveHostPath:
+    """Tests for _resolve_host_path() — GAP-GAMEDEV-WS."""
+
+    def test_no_mapping_returns_unchanged(self):
+        with patch("governance.services.cc_session_scanner._SIBLING_SCAN_DIR", None), \
+             patch("governance.services.cc_session_scanner._SIBLING_HOST_DIR", None):
+            assert _resolve_host_path("/app/project-siblings/gamedev") == "/app/project-siblings/gamedev"
+
+    def test_maps_container_to_host(self):
+        with patch("governance.services.cc_session_scanner._SIBLING_SCAN_DIR", "/app/project-siblings"), \
+             patch("governance.services.cc_session_scanner._SIBLING_HOST_DIR", "/home/user/projects"):
+            result = _resolve_host_path("/app/project-siblings/gamedev")
+            assert result == "/home/user/projects/gamedev"
+
+    def test_non_matching_prefix_unchanged(self):
+        with patch("governance.services.cc_session_scanner._SIBLING_SCAN_DIR", "/app/project-siblings"), \
+             patch("governance.services.cc_session_scanner._SIBLING_HOST_DIR", "/home/user/projects"):
+            result = _resolve_host_path("/other/path/gamedev")
+            assert result == "/other/path/gamedev"
+
+
+class TestDiscoverFilesystemProjectsSibling:
+    """Tests for discover_filesystem_projects() with sibling scanning — GAP-GAMEDEV-WS."""
+
+    def test_discovers_sibling_with_claude_marker(self, tmp_path):
+        """Sibling dir with CLAUDE.md is discovered."""
+        gamedev = tmp_path / "gamedev"
+        gamedev.mkdir()
+        (gamedev / "CLAUDE.md").write_text("# Gamedev")
+
+        with patch("governance.services.cc_session_scanner._SIBLING_SCAN_DIR", str(tmp_path)), \
+             patch("governance.services.cc_session_scanner._SIBLING_HOST_DIR", "/home/user/sarvaja"):
+            result = discover_filesystem_projects()
+            assert len(result) == 1
+            assert result[0]["project_id"] == "PROJ-GAMEDEV"
+            assert result[0]["name"] == "Gamedev"
+            assert result[0]["path"] == "/home/user/sarvaja/gamedev"
+
+    def test_discovers_godot_project(self, tmp_path):
+        """Sibling dir with project.godot is discovered."""
+        game = tmp_path / "chess-ai"
+        game.mkdir()
+        (game / "project.godot").write_text("[gd_scene]")
+
+        with patch("governance.services.cc_session_scanner._SIBLING_SCAN_DIR", str(tmp_path)), \
+             patch("governance.services.cc_session_scanner._SIBLING_HOST_DIR", "/host/projects"):
+            result = discover_filesystem_projects()
+            assert len(result) == 1
+            assert result[0]["project_id"] == "PROJ-CHESS-AI"
+            assert result[0]["path"] == "/host/projects/chess-ai"
+
+    def test_skips_existing_ids(self, tmp_path):
+        """Already-known project IDs are excluded."""
+        gamedev = tmp_path / "gamedev"
+        gamedev.mkdir()
+        (gamedev / "CLAUDE.md").write_text("# Gamedev")
+
+        with patch("governance.services.cc_session_scanner._SIBLING_SCAN_DIR", str(tmp_path)), \
+             patch("governance.services.cc_session_scanner._SIBLING_HOST_DIR", "/host"):
+            result = discover_filesystem_projects(existing_ids={"PROJ-GAMEDEV"})
+            assert len(result) == 0
+
+    def test_skips_existing_paths(self, tmp_path):
+        """Already-known project paths are excluded (using host path)."""
+        gamedev = tmp_path / "gamedev"
+        gamedev.mkdir()
+        (gamedev / "CLAUDE.md").write_text("# Gamedev")
+
+        with patch("governance.services.cc_session_scanner._SIBLING_SCAN_DIR", str(tmp_path)), \
+             patch("governance.services.cc_session_scanner._SIBLING_HOST_DIR", "/host"):
+            result = discover_filesystem_projects(existing_paths={"/host/gamedev"})
+            assert len(result) == 0
+
+    def test_skips_hidden_dirs(self, tmp_path):
+        """Directories starting with . are skipped."""
+        hidden = tmp_path / ".hidden"
+        hidden.mkdir()
+        (hidden / "CLAUDE.md").write_text("# Hidden")
+
+        with patch("governance.services.cc_session_scanner._SIBLING_SCAN_DIR", str(tmp_path)), \
+             patch("governance.services.cc_session_scanner._SIBLING_HOST_DIR", "/host"):
+            result = discover_filesystem_projects()
+            assert len(result) == 0
+
+    def test_skips_dirs_without_markers(self, tmp_path):
+        """Directories without project markers are skipped."""
+        empty = tmp_path / "empty-dir"
+        empty.mkdir()
+
+        with patch("governance.services.cc_session_scanner._SIBLING_SCAN_DIR", str(tmp_path)), \
+             patch("governance.services.cc_session_scanner._SIBLING_HOST_DIR", "/host"):
+            result = discover_filesystem_projects()
+            assert len(result) == 0
+
+    def test_combines_scan_dirs_with_sibling(self, tmp_path):
+        """Explicit scan_dirs + sibling dir are both scanned."""
+        explicit = tmp_path / "explicit"
+        explicit.mkdir()
+        proj_a = explicit / "proj-a"
+        proj_a.mkdir()
+        (proj_a / "package.json").write_text("{}")
+
+        sibling = tmp_path / "sibling"
+        sibling.mkdir()
+        proj_b = sibling / "proj-b"
+        proj_b.mkdir()
+        (proj_b / "CLAUDE.md").write_text("# B")
+
+        with patch("governance.services.cc_session_scanner._SIBLING_SCAN_DIR", str(sibling)), \
+             patch("governance.services.cc_session_scanner._SIBLING_HOST_DIR", "/host"):
+            result = discover_filesystem_projects(scan_dirs=[str(explicit)])
+            ids = {p["project_id"] for p in result}
+            assert "PROJ-PROJ-A" in ids
+            assert "PROJ-PROJ-B" in ids
