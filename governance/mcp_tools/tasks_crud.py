@@ -6,6 +6,7 @@ from typing import Optional
 from dataclasses import asdict
 
 from governance.mcp_tools.common import typedb_client, format_mcp_result, log_monitor_event
+from governance.services.tasks_mutations import update_task as svc_update_task
 
 logger = logging.getLogger(__name__)
 
@@ -113,6 +114,8 @@ def register_task_crud_tools(mcp) -> None:
         Update an existing task in TypeDB.
 
         Per BUG-TASK-TAXONOMY-001: priority and task_type are first-class fields.
+        Per EPIC-GOV-TASKS-V2 Phase 2: Routes through service layer for
+        auto-linking, audit, and monitoring parity.
 
         Args:
             task_id: Task identifier to update
@@ -129,22 +132,20 @@ def register_task_crud_tools(mcp) -> None:
             return format_mcp_result({"error": "No update fields provided"})
 
         try:
-            with typedb_client() as client:
-                success = client.update_task(
-                    task_id=task_id, status=status, name=name, phase=phase,
-                    priority=priority, task_type=task_type,
-                )
-                if success:
-                    _monitor_task("mcp-task-update", task_id, "update", status=status, phase=phase)
-                    task = client.get_task(task_id)
-                    if task:
-                        result = asdict(task)
-                        result["message"] = f"Task {task_id} updated successfully"
-                        return format_mcp_result(result)
-                    return format_mcp_result({
-                        "task_id": task_id, "message": f"Task {task_id} updated successfully"
-                    })
-                return format_mcp_result({"error": f"Failed to update task {task_id}"})
+            result = svc_update_task(
+                task_id=task_id,
+                status=status,
+                description=name,
+                phase=phase,
+                priority=priority,
+                task_type=task_type,
+                source="mcp",
+            )
+            if result:
+                _monitor_task("mcp-task-update", task_id, "update", status=status, phase=phase)
+                result["message"] = f"Task {task_id} updated successfully"
+                return format_mcp_result(result)
+            return format_mcp_result({"error": f"Task {task_id} not found"})
         except Exception as e:
             # BUG-357-MCP-001: Log full error for debugging
             # BUG-451-TC-003: Sanitize logger message to match response pattern

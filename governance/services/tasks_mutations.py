@@ -9,6 +9,7 @@ from typing import Optional, Dict, Any, List
 from governance.stores import (
     get_typedb_client,
     _tasks_store,
+    _sessions_store,
     task_to_response,
 )
 from governance.stores.audit import record_audit
@@ -65,6 +66,21 @@ def update_task(
     Returns:
         Updated task dict or None if not found.
     """
+    # Per DATA-LINK-01-v1 / EPIC-GOV-TASKS-V2 Phase 2: Auto-link to active session
+    # on status transition when no linked_sessions provided
+    if status and not linked_sessions:
+        from governance.services.tasks import _get_active_session_id
+        # Check if task already has sessions in fallback store
+        existing = _tasks_store.get(task_id, {}).get("linked_sessions", [])
+        if not existing:
+            active_sid = _get_active_session_id()
+            if active_sid:
+                linked_sessions = [active_sid]
+                logger.info(
+                    f"[DATA-LINK-01] Auto-linking task {task_id} to session "
+                    f"{active_sid} on status transition to {status}"
+                )
+
     client = get_typedb_client()
     task_obj = None
     if client:

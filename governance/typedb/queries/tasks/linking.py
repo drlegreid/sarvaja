@@ -85,12 +85,38 @@ class TaskLinkingOperations:
             logger.error(f"Failed to link evidence {evidence_source} to task {task_id}: {type(e).__name__}", exc_info=True)
             return False
 
+    def session_exists(self, session_id: str) -> bool:
+        """Check if a session entity exists in TypeDB.
+
+        Per EPIC-GOV-TASKS-V2 Phase 2: Pre-check before linking.
+
+        Args:
+            session_id: Session ID to check
+
+        Returns:
+            True if session exists, False otherwise
+        """
+        session_id_escaped = session_id.replace('\\', '\\\\').replace('"', '\\"')
+        query = f"""
+            match
+                $s isa work-session, has session-id "{session_id_escaped}";
+            select $s;
+        """
+        results = self._execute_query(query)
+        if not results:
+            logger.warning(
+                f"[LINK-PRECHECK] Session {session_id} not found in TypeDB — "
+                "link will be attempted but may fail"
+            )
+        return bool(results)
+
     def link_task_to_session(self, task_id: str, session_id: str) -> bool:
         """
         Link a task to a session via completed-in relation.
 
         Per P11.3: Entity Linkage - tasks completed in sessions.
         Per GAP-DATA-002: Entity linkage implementation.
+        Per EPIC-GOV-TASKS-V2 Phase 2: Session existence pre-check.
 
         Args:
             task_id: Task ID (e.g., "P10.1")

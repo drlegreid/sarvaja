@@ -192,40 +192,36 @@ class TestTaskUpdate:
 
     @patch(f"{_MOD}.log_monitor_event")
     @patch(f"{_MOD}.format_mcp_result", side_effect=_json_fmt)
-    @patch(f"{_MOD}.typedb_client")
-    def test_successful_update(self, mock_ctx, mock_fmt, mock_log):
+    @patch(f"{_MOD}.svc_update_task")
+    def test_successful_update(self, mock_svc, mock_fmt, mock_log):
+        """Per EPIC-GOV-TASKS-V2 Phase 2: task_update routes through service layer."""
         tools = _register_tools()
-        client = MagicMock()
-        client.update_task.return_value = True
-        client.get_task.return_value = FakeTask(status="DONE")
-        mock_ctx.return_value.__enter__ = MagicMock(return_value=client)
-        mock_ctx.return_value.__exit__ = MagicMock(return_value=False)
+        mock_svc.return_value = {"task_id": "T-1", "status": "DONE"}
 
         result = json.loads(tools["task_update"](task_id="T-1", status="DONE"))
         assert "updated successfully" in result["message"]
+        mock_svc.assert_called_once_with(
+            task_id="T-1", status="DONE", description=None,
+            phase=None, priority=None, task_type=None, source="mcp",
+        )
 
     @patch(f"{_MOD}.log_monitor_event")
     @patch(f"{_MOD}.format_mcp_result", side_effect=_json_fmt)
-    @patch(f"{_MOD}.typedb_client")
-    def test_update_success_task_not_refetched(self, mock_ctx, mock_fmt, mock_log):
+    @patch(f"{_MOD}.svc_update_task")
+    def test_update_success_task_not_refetched(self, mock_svc, mock_fmt, mock_log):
+        """Per EPIC-GOV-TASKS-V2 Phase 2: service returns task dict directly."""
         tools = _register_tools()
-        client = MagicMock()
-        client.update_task.return_value = True
-        client.get_task.return_value = None  # Re-fetch fails
-        mock_ctx.return_value.__enter__ = MagicMock(return_value=client)
-        mock_ctx.return_value.__exit__ = MagicMock(return_value=False)
+        mock_svc.return_value = {"task_id": "T-1", "status": "DONE"}
 
         result = json.loads(tools["task_update"](task_id="T-1", status="DONE"))
         assert result["task_id"] == "T-1"
 
     @patch(f"{_MOD}.format_mcp_result", side_effect=_json_fmt)
-    @patch(f"{_MOD}.typedb_client")
-    def test_update_failure(self, mock_ctx, mock_fmt):
+    @patch(f"{_MOD}.svc_update_task")
+    def test_update_failure(self, mock_svc, mock_fmt):
+        """Per EPIC-GOV-TASKS-V2 Phase 2: service returns None → not found."""
         tools = _register_tools()
-        client = MagicMock()
-        client.update_task.return_value = False
-        mock_ctx.return_value.__enter__ = MagicMock(return_value=client)
-        mock_ctx.return_value.__exit__ = MagicMock(return_value=False)
+        mock_svc.return_value = None
 
         result = json.loads(tools["task_update"](task_id="T-1", status="DONE"))
         assert "error" in result
