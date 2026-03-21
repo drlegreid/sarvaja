@@ -87,7 +87,8 @@ class TestMCPUsageChecker:
 
         with patch.object(mod, "load_state", return_value=state):
             with patch.object(mod, "save_state"):
-                result = mod.track_tool("SomeOtherTool")
+                with patch.object(mod, "check_mcp_health", return_value=True):
+                    result = mod.track_tool("SomeOtherTool")
         assert result is not None
         assert "MCP-FIRST" in result
         assert "mcp__gov-tasks__task_create()" in result

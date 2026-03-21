@@ -1,17 +1,19 @@
 """
-MCP Usage Pattern Checker.
+MCP Usage Pattern Checker with Health-Aware Enforcement.
 
-Per GOV-MCP-FIRST-01-v1: Warn when MCP tools are underused.
+Per GOV-MCP-FIRST-01-v1 (MANDATORY): Enforce MCP-first task management.
 Per WORKFLOW-AUTO-01-v1: Never block, only warn via stderr.
 
-Tracks which MCP tool categories have been used this session.
-Warns if TodoWrite used without corresponding gov-tasks calls.
+When gov-tasks MCP is healthy: warn if TodoWrite used without MCP calls.
+When gov-tasks MCP is down: fallback mode — TodoWrite is legitimate.
 
 Created: 2026-02-12
+Updated: 2026-03-21 (Phase 8 — health-aware enforcement)
 """
 
 import json
 import sys
+import time
 from datetime import datetime
 from pathlib import Path
 from typing import Dict, Any, Optional
@@ -40,6 +42,15 @@ MIN_TOOL_COUNT = 10
 # Maximum warnings per session to avoid noise
 MAX_WARNINGS = 2
 
+# Health check cache TTL in seconds
+HEALTH_CHECK_INTERVAL = 60
+
+# API base for health check
+_API_BASE = "http://localhost:8082"
+
+# In-memory health cache (per-process)
+_health_cache: Dict[str, Any] = {"healthy": None, "timestamp": 0}
+
 
 def _default_state() -> Dict[str, Any]:
     return {
@@ -49,6 +60,7 @@ def _default_state() -> Dict[str, Any]:
         "mcp_categories_used": {},
         "last_warning": None,
         "warnings_issued": 0,
+        "mcp_healthy": None,
     }
 
 
@@ -70,11 +82,39 @@ def save_state(state: Dict[str, Any]) -> None:
         pass
 
 
+def check_mcp_health() -> bool:
+    """Check if gov-tasks MCP/API is reachable.
+
+    Caches result for HEALTH_CHECK_INTERVAL seconds to avoid
+    hitting the API on every tool call (hooks run frequently).
+    """
+    now = time.time()
+    if now - _health_cache.get("timestamp", 0) < HEALTH_CHECK_INTERVAL:
+        return _health_cache.get("healthy", False)
+
+    try:
+        import httpx
+        resp = httpx.get(f"{_API_BASE}/api/health", timeout=1.5)
+        healthy = resp.status_code == 200
+    except Exception:
+        healthy = False
+
+    _health_cache["healthy"] = healthy
+    _health_cache["timestamp"] = now
+    return healthy
+
+
+def is_fallback_mode() -> bool:
+    """Return True when MCP is down and TodoWrite is legitimate."""
+    return not check_mcp_health()
+
+
 def track_tool(tool_name: str) -> Optional[str]:
     """Track a tool call and return warning message if needed.
 
-    Returns a warning string if MCP-first pattern is violated,
-    or None if everything is fine.
+    Health-aware enforcement (Phase 8):
+    - MCP healthy + TodoWrite without gov-tasks → warning
+    - MCP down → fallback mode, no warning
     """
     state = load_state()
     state["tool_count"] = state.get("tool_count", 0) + 1
@@ -98,13 +138,24 @@ def track_tool(tool_name: str) -> Optional[str]:
             and state.get("todowrite_count", 0) >= 2
             and "gov-tasks" not in state.get("mcp_categories_used", {})
             and state.get("warnings_issued", 0) < MAX_WARNINGS):
-        warning = (
-            "[MCP-FIRST] TodoWrite used but gov-tasks MCP not yet called. "
-            "Per GOV-MCP-FIRST-01-v1: Use mcp__gov-tasks__task_create() "
-            "for persistent task management. TodoWrite is display-only."
-        )
-        state["last_warning"] = datetime.now().isoformat()
-        state["warnings_issued"] = state.get("warnings_issued", 0) + 1
+        # Health-aware: only warn when MCP is available
+        mcp_healthy = check_mcp_health()
+        state["mcp_healthy"] = mcp_healthy
+
+        if mcp_healthy:
+            warning = (
+                "[MCP-FIRST] MANDATORY: TodoWrite used but gov-tasks MCP is "
+                "available and not yet called. Per GOV-MCP-FIRST-01-v1: Use "
+                "mcp__gov-tasks__task_create() for persistent task management. "
+                "TodoWrite is display-only."
+            )
+            state["last_warning"] = datetime.now().isoformat()
+            state["warnings_issued"] = state.get("warnings_issued", 0) + 1
+        # else: MCP down → fallback mode, no warning
+    else:
+        # Still record health status periodically for diagnostics
+        if state["tool_count"] % 20 == 0:
+            state["mcp_healthy"] = check_mcp_health()
 
     save_state(state)
     return warning
@@ -112,15 +163,20 @@ def track_tool(tool_name: str) -> Optional[str]:
 
 def reset() -> None:
     """Reset state for new session."""
+    _health_cache["healthy"] = None
+    _health_cache["timestamp"] = 0
     save_state(_default_state())
 
 
 def get_summary() -> Dict[str, Any]:
     """Get current MCP usage summary for healthcheck display."""
     state = load_state()
+    mcp_healthy = state.get("mcp_healthy")
     return {
         "tool_count": state.get("tool_count", 0),
         "todowrite_count": state.get("todowrite_count", 0),
         "mcp_categories": state.get("mcp_categories_used", {}),
         "warnings_issued": state.get("warnings_issued", 0),
+        "mcp_healthy": mcp_healthy,
+        "mode": "enforce" if mcp_healthy else "fallback",
     }

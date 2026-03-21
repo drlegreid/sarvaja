@@ -103,9 +103,9 @@ python3 -m venv .venv
 
 **Passive screenshots are NOT Tier 3.** CRUD interaction with state change verification is required.
 
-## Task Management (GOV-MCP-FIRST-01-v1)
+## Task Management (GOV-MCP-FIRST-01-v1 — MANDATORY)
 
-**MCP tools are PRIMARY for task/rule/session management:**
+**MCP tools are the EXCLUSIVE task interface. TodoWrite/TODO.md are fallback only.**
 
 | Action | Use This | NOT This |
 |--------|----------|----------|
@@ -114,9 +114,11 @@ python3 -m venv .venv
 | Create rule | `mcp__gov-core__rule_create()` | Editing docs/rules/ |
 | Start session | `mcp__gov-sessions__session_start()` | Manual evidence files |
 
+**Enforcement**: `mcp_usage_checker.py` warns when MCP is healthy but unused.
 **TodoWrite** = progress display only (auto-synced to TypeDB via hook).
 **TODO.md** = emergency fallback when MCP services are down.
 **TypeDB** = source of truth for all tasks, rules, sessions.
+**Sync**: `governance/services/todo_sync.py` syncs TypeDB → TODO.md for visibility.
 
 ## Session Start Protocol
 
