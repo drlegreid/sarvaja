@@ -296,11 +296,17 @@ def get_initial_state() -> Dict[str, Any]:
         'tasks_search_query': '',
         'tasks_status_filter': None,
         'tasks_phase_filter': None,
+        'tasks_type_filter': None,       # Phase 9: task_type filter
+        'tasks_priority_filter': None,   # Phase 9: priority filter
+        'tasks_created_after': None,     # Phase 9: date range filters
+        'tasks_created_before': None,
+        'tasks_completed_after': None,
+        'tasks_completed_before': None,
         # Filter dropdown options (must match items= in tasks/list.py)
         'task_status_options': ['TODO', 'IN_PROGRESS', 'DONE', 'BLOCKED'],
         'task_phase_options': ['P10', 'P11', 'P12', 'R&D', 'FH', 'KAN', 'ORCH', 'DOCVIEW'],
         # Task taxonomy dropdowns (META-TAXON-01-v1)
-        'task_type_options': ['bug', 'feature', 'chore', 'research', 'gap', 'epic', 'test'],
+        'task_type_options': ['bug', 'feature', 'chore', 'research', 'gap', 'epic', 'test', 'specification'],
         'task_priority_options': ['CRITICAL', 'HIGH', 'MEDIUM', 'LOW'],
 
         # Tasks pagination state (EPIC-DR-005)

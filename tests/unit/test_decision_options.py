@@ -60,12 +60,12 @@ class TestRulesGridColumns:
 class TestTasksGridColumns:
     """Verify tasks grid has all required columns."""
 
-    def test_tasks_grid_has_description_column(self):
-        """Tasks grid should have Description column matching API field."""
+    def test_tasks_grid_has_summary_column(self):
+        """Tasks grid should have Summary column (Phase 9c: replaces Description)."""
         from agent.governance_ui.views.tasks import list as tasks_list
         source = inspect.getsource(tasks_list)
-        assert 'description' in source, (
-            "Tasks grid should have description column"
+        assert '"Summary"' in source, (
+            "Tasks grid should have Summary column (Phase 9c)"
         )
 
     def test_tasks_grid_has_updated_column(self):

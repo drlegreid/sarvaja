@@ -96,6 +96,7 @@ class TaskReadQueries:
             # BUG-TASK-TAXONOMY-001: Task classification
             ("task-priority", "match $t isa task, has task-id $id, has task-priority $v; select $id, $v;", "v", "priority"),
             ("task-type", "match $t isa task, has task-id $id, has task-type $v; select $id, $v;", "v", "task_type"),
+            ("task-summary", "match $t isa task, has task-id $id, has task-summary $v; select $id, $v;", "v", "summary"),
         ]
 
         for attr_name, query, result_key, task_attr in attr_queries:

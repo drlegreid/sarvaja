@@ -25,15 +25,21 @@ router = APIRouter()
 async def list_tasks(
     offset: int = Query(0, ge=0),
     limit: int = Query(50, ge=1, le=200),
-    sort_by: str = Query("task_id"),
-    order: str = Query("asc"),
+    sort_by: str = Query("created_at"),
+    order: str = Query("desc"),
     phase: Optional[str] = None,
     status: Optional[str] = None,
     agent_id: Optional[str] = None,
+    task_type: Optional[str] = None,
+    priority: Optional[str] = None,
+    created_after: Optional[str] = None,
+    created_before: Optional[str] = None,
+    completed_after: Optional[str] = None,
+    completed_before: Optional[str] = None,
 ):
     """List tasks with pagination, sorting, and filtering. Per GAP-UI-036, EPIC-DR-003."""
     # BUG-237-SORT-001: Whitelist sort_by to prevent unexpected sort keys
-    _valid_sort = {"task_id", "status", "phase", "priority"}
+    _valid_sort = {"task_id", "status", "phase", "priority", "created_at"}
     if sort_by not in _valid_sort:
         raise HTTPException(status_code=422, detail=f"Invalid sort_by: {sort_by}. Must be one of {sorted(_valid_sort)}")
     # BUG-253-INJ-001: Whitelist order direction to prevent injection
@@ -42,6 +48,9 @@ async def list_tasks(
     try:
         result = task_service.list_tasks(
             status=status, phase=phase, agent_id=agent_id,
+            task_type=task_type, priority=priority,
+            created_after=created_after, created_before=created_before,
+            completed_after=completed_after, completed_before=completed_before,
             sort_by=sort_by, order=order, offset=offset, limit=limit,
         )
         pagination = PaginationMeta(
@@ -77,6 +86,7 @@ async def create_task(task: TaskCreate):
             linked_sessions=task.linked_sessions,
             linked_documents=task.linked_documents,
             workspace_id=task.workspace_id,  # BUG-WS-API-001
+            summary=task.summary,  # Phase 9c
             source="rest-api",
         )
         # Service returns TaskResponse directly (via task_to_response)

@@ -81,6 +81,8 @@ attribute task-priority value string;
 
 attribute task-type value string;
 
+attribute task-summary value string;  # Phase 9c: structured one-line intent
+
 # Task detail section attributes (GAP-TASK-LINK-004, TASK-TECH-01-v1)
 attribute task-business value string;
 

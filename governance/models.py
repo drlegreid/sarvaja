@@ -45,9 +45,10 @@ class TaskCreate(BaseModel):
     phase: str = Field(..., min_length=1)
     status: str = "TODO"
     priority: Optional[Literal["LOW", "MEDIUM", "HIGH", "CRITICAL"]] = None  # BUG-TASK-TAXONOMY-001
-    task_type: Optional[Literal["bug", "feature", "chore", "research", "gap", "epic", "test"]] = None  # META-TAXON-01-v1
+    task_type: Optional[Literal["bug", "feature", "chore", "research", "gap", "epic", "test", "specification"]] = None  # META-TAXON-01-v1
     agent_id: Optional[str] = None
     body: Optional[str] = None
+    summary: Optional[str] = None  # Phase 9c: structured one-line intent
     linked_rules: Optional[List[str]] = None
     linked_sessions: Optional[List[str]] = None
     linked_documents: Optional[List[str]] = None  # Task document management
@@ -60,9 +61,10 @@ class TaskUpdate(BaseModel):
     phase: Optional[str] = None
     status: Optional[str] = None
     priority: Optional[Literal["LOW", "MEDIUM", "HIGH", "CRITICAL"]] = None  # BUG-TASK-TAXONOMY-001
-    task_type: Optional[Literal["bug", "feature", "chore", "research", "gap", "epic", "test"]] = None  # META-TAXON-01-v1
+    task_type: Optional[Literal["bug", "feature", "chore", "research", "gap", "epic", "test", "specification"]] = None  # META-TAXON-01-v1
     agent_id: Optional[str] = None
     body: Optional[str] = None
+    summary: Optional[str] = None  # Phase 9c: structured one-line intent
     linked_rules: Optional[List[str]] = None
     linked_sessions: Optional[List[str]] = None
     linked_documents: Optional[List[str]] = None  # Task document management
@@ -79,6 +81,7 @@ class TaskResponse(BaseModel):
     resolution: Optional[str] = None  # NONE, DEFERRED, IMPLEMENTED, VALIDATED, CERTIFIED
     priority: Optional[str] = None  # BUG-TASK-TAXONOMY-001: LOW, MEDIUM, HIGH, CRITICAL
     task_type: Optional[str] = None  # BUG-TASK-TAXONOMY-001: bug, feature, chore, research
+    summary: Optional[str] = None  # Phase 9c: structured one-line intent
     agent_id: Optional[str] = None
     created_at: Optional[str] = None
     claimed_at: Optional[str] = None

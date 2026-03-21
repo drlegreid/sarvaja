@@ -60,6 +60,7 @@ entity task,
     owns task-body,
     owns task-priority,                          # BUG-TASK-TAXONOMY-001: LOW, MEDIUM, HIGH, CRITICAL
     owns task-type,                              # BUG-TASK-TAXONOMY-001: bug, feature, chore, research
+    owns task-summary,                           # Phase 9c: structured one-line intent
     owns phase,
     owns agent-id,                               # Agent assigned to task (E2E tests)
     owns task-evidence,                          # Completion evidence/notes (E2E tests)
@@ -87,6 +88,7 @@ entity task,
     plays task-related:related-task-a,
     plays task-related:related-task-b,
     plays task-commit:implemented-task,  # GAP-TASK-LINK-002
+    plays document-references-task:referenced-task,  # BUG-TASK-DOC-001: task document management
     plays epic-contains-task:epic-task,  # Project hierarchy (GOV-PROJECT-01-v1)
     plays workspace-has-task:assigned-task;  # EPIC-GOV-TASKS-V2 Phase 4: workspace linking
 
@@ -287,7 +289,8 @@ entity document,
     owns content-hash,
     plays document-references-rule:referencing-document,
     plays document-references-decision:referencing-document,
-    plays document-references-gap:referencing-document;
+    plays document-references-gap:referencing-document,
+    plays document-references-task:referencing-document;  # BUG-TASK-DOC-001: task document linking
 
 # =============================================================================
 # MULTI-AGENT GOVERNANCE ENTITIES (RULE-011)
@@ -365,6 +368,7 @@ attribute gap-reference, value string; # P11.3: linked gap ID
 # BUG-TASK-TAXONOMY-001: Task classification attributes
 attribute task-priority, value string;  # LOW, MEDIUM, HIGH, CRITICAL
 attribute task-type, value string;      # bug, feature, chore, research
+attribute task-summary, value string;  # Phase 9c: structured one-line intent
 
 # Task detail section attributes (GAP-TASK-LINK-004, TASK-TECH-01-v1)
 attribute task-business, value string;      # Why - User problem, business value
@@ -660,6 +664,11 @@ relation document-references-decision,
 relation document-references-gap,
     relates referencing-document,
     relates referenced-gap;
+
+# Document references a task (BUG-TASK-DOC-001: task document management)
+relation document-references-task,
+    relates referencing-document,
+    relates referenced-task;
 
 # Rules that conflict with each other
 relation rule-conflict,

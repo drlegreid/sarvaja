@@ -50,6 +50,7 @@ class Task:
     task_type: Optional[str] = None  # BUG-TASK-TAXONOMY-001: bug, feature, chore, research
     description: Optional[str] = None
     body: Optional[str] = None
+    summary: Optional[str] = None  # Phase 9c: structured one-line intent
     agent_id: Optional[str] = None
     gap_id: Optional[str] = None
     linked_rules: Optional[List[str]] = None

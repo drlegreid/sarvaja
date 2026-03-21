@@ -128,6 +128,87 @@ def build_tasks_list_view() -> None:
                 __properties=["data-testid"],
                 **{"data-testid": "tasks-filter-phase"}
             )
+            # Phase 9: task_type + priority filters
+            v3.VSelect(
+                v_model="tasks_type_filter",
+                items=("task_type_options",),
+                label="Type",
+                variant="outlined",
+                density="compact",
+                hide_details=True,
+                clearable=True,
+                style="max-width: 130px; margin-left: 8px",
+                __properties=["data-testid"],
+                **{"data-testid": "tasks-filter-type"}
+            )
+            v3.VSelect(
+                v_model="tasks_priority_filter",
+                items=("task_priority_options",),
+                label="Priority",
+                variant="outlined",
+                density="compact",
+                hide_details=True,
+                clearable=True,
+                style="max-width: 130px; margin-left: 8px",
+                __properties=["data-testid"],
+                **{"data-testid": "tasks-filter-priority"}
+            )
+
+        # Date range filters row (Phase 9)
+        with v3.VToolbar(
+            v_if="!is_loading",
+            density="compact", flat=True,
+            style="min-height: 48px",
+        ):
+            v3.VTextField(
+                v_model="tasks_created_after",
+                label="Created after",
+                type="date",
+                variant="outlined",
+                density="compact",
+                hide_details=True,
+                clearable=True,
+                style="max-width: 170px",
+                __properties=["data-testid"],
+                **{"data-testid": "tasks-filter-created-after"}
+            )
+            v3.VTextField(
+                v_model="tasks_created_before",
+                label="Created before",
+                type="date",
+                variant="outlined",
+                density="compact",
+                hide_details=True,
+                clearable=True,
+                style="max-width: 170px; margin-left: 8px",
+                __properties=["data-testid"],
+                **{"data-testid": "tasks-filter-created-before"}
+            )
+            v3.VSpacer()
+            v3.VTextField(
+                v_model="tasks_completed_after",
+                label="Completed after",
+                type="date",
+                variant="outlined",
+                density="compact",
+                hide_details=True,
+                clearable=True,
+                style="max-width: 170px",
+                __properties=["data-testid"],
+                **{"data-testid": "tasks-filter-completed-after"}
+            )
+            v3.VTextField(
+                v_model="tasks_completed_before",
+                label="Completed before",
+                type="date",
+                variant="outlined",
+                density="compact",
+                hide_details=True,
+                clearable=True,
+                style="max-width: 170px; margin-left: 8px",
+                __properties=["data-testid"],
+                **{"data-testid": "tasks-filter-completed-before"}
+            )
 
         # Tasks data table (PLAN-UI-OVERHAUL-001 Task 1.3: Grid with columns)
         with v3.VCardText(v_if="!is_loading"):
@@ -135,7 +216,7 @@ def build_tasks_list_view() -> None:
                 items=("tasks",),
                 headers=("tasks_headers", [
                     {"title": "Task ID", "key": "task_id", "width": "150px", "sortable": True},
-                    {"title": "Description", "key": "description", "sortable": True},
+                    {"title": "Summary", "key": "summary", "sortable": True},
                     {"title": "Priority", "key": "priority", "width": "90px", "sortable": True},
                     {"title": "Type", "key": "task_type", "width": "80px", "sortable": True},
                     {"title": "Status", "key": "status", "width": "100px", "sortable": True},

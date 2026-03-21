@@ -83,12 +83,21 @@ def list_tasks(
     status: Optional[str] = None,
     phase: Optional[str] = None,
     agent_id: Optional[str] = None,
+    task_type: Optional[str] = None,
+    priority: Optional[str] = None,
+    created_after: Optional[str] = None,
+    created_before: Optional[str] = None,
+    completed_after: Optional[str] = None,
+    completed_before: Optional[str] = None,
     sort_by: str = "task_id",
     order: str = "asc",
     offset: int = 0,
     limit: int = 50,
 ) -> Dict[str, Any]:
     """List tasks with pagination, sorting, filtering.
+
+    Filters: status, phase, agent_id (TypeDB-level), task_type, priority,
+    created_after/before, completed_after/before (post-filter).
 
     Returns:
         Dict with 'items' (list of task dicts) and 'pagination' metadata.
@@ -102,8 +111,14 @@ def list_tasks(
     tasks = get_all_tasks_from_typedb(
         status=status, phase=phase, agent_id=agent_id, allow_fallback=True
     )
+    # Phase 9 post-filters: task_type, priority, date ranges
+    tasks = _apply_post_filters(
+        tasks, task_type=task_type, priority=priority,
+        created_after=created_after, created_before=created_before,
+        completed_after=completed_after, completed_before=completed_before,
+    )
     total = len(tasks)
-    sort_field = sort_by if sort_by in ("task_id", "status", "phase", "name") else "task_id"
+    sort_field = sort_by if sort_by in ("task_id", "status", "phase", "name", "priority", "created_at") else "task_id"
     tasks.sort(key=lambda t: t.get(sort_field) or "", reverse=order.lower() == "desc")
     paginated = tasks[offset: offset + limit]
     return {
@@ -113,6 +128,81 @@ def list_tasks(
         "limit": limit,
         "has_more": (offset + len(paginated)) < total,
     }
+
+
+def _apply_post_filters(
+    tasks: List[Dict[str, Any]],
+    task_type: Optional[str] = None,
+    priority: Optional[str] = None,
+    created_after: Optional[str] = None,
+    created_before: Optional[str] = None,
+    completed_after: Optional[str] = None,
+    completed_before: Optional[str] = None,
+) -> List[Dict[str, Any]]:
+    """Apply post-query filters for task_type, priority, and date ranges."""
+    if task_type:
+        tasks = [t for t in tasks if t.get("task_type") == task_type]
+    if priority:
+        tasks = [t for t in tasks if t.get("priority") == priority]
+    if created_after:
+        tasks = [t for t in tasks if _date_gte(t.get("created_at"), created_after)]
+    if created_before:
+        tasks = [t for t in tasks if _date_lte(t.get("created_at"), created_before)]
+    if completed_after:
+        tasks = [t for t in tasks
+                 if t.get("completed_at") and _date_gte(t["completed_at"], completed_after)]
+    if completed_before:
+        tasks = [t for t in tasks
+                 if t.get("completed_at") and _date_lte(t["completed_at"], completed_before)]
+    return tasks
+
+
+def _date_gte(date_val: Optional[str], threshold: str) -> bool:
+    """Check if date_val >= threshold (ISO date string comparison)."""
+    if not date_val:
+        return False
+    return str(date_val)[:10] >= threshold[:10]
+
+
+def _date_lte(date_val: Optional[str], threshold: str) -> bool:
+    """Check if date_val <= threshold (ISO date string comparison)."""
+    if not date_val:
+        return False
+    return str(date_val)[:10] <= threshold[:10]
+
+
+def _extract_priority_tag(description: str) -> tuple:
+    """Extract [Priority: X] tag from description, return (cleaned_desc, priority_or_None).
+
+    Phase 9c: Parse legacy "[Priority: HIGH]" tags from description text.
+    Only extracts valid priorities: LOW, MEDIUM, HIGH, CRITICAL.
+    """
+    import re
+    valid = {"LOW", "MEDIUM", "HIGH", "CRITICAL"}
+    match = re.search(r'\[(?:P|p)riority:\s*(\w+)\]', description)
+    if match:
+        value = match.group(1).upper()
+        if value in valid:
+            cleaned = re.sub(r'\s*\[(?:P|p)riority:\s*\w+\]\s*', ' ', description).strip()
+            return cleaned, value
+    return description, None
+
+
+def _generate_summary(description: str) -> str:
+    """Auto-generate a structured summary from description.
+
+    Phase 9c: Produces a short (<= 80 char) one-line intent.
+    Strips [Priority: X] tags before summarizing.
+    """
+    if not description:
+        return ""
+    # Strip priority tags
+    import re
+    cleaned = re.sub(r'\s*\[(?:P|p)riority:\s*\w+\]\s*', ' ', description).strip()
+    # Truncate to 80 chars
+    if len(cleaned) <= 80:
+        return cleaned
+    return cleaned[:77] + "..."
 
 
 def create_task(
@@ -129,6 +219,7 @@ def create_task(
     linked_sessions: Optional[List[str]] = None,
     linked_documents: Optional[List[str]] = None,
     workspace_id: Optional[str] = None,
+    summary: Optional[str] = None,
     source: str = "rest",
 ) -> Dict[str, Any]:
     """Create a task in TypeDB with fallback to in-memory store.
@@ -144,6 +235,20 @@ def create_task(
     """
     # BUG-STATUS-CASE-001: Normalize status to uppercase at service boundary
     status = (status or "OPEN").upper()
+
+    # Phase 9c: Extract [Priority: X] tag from description if no explicit priority
+    if description and not priority:
+        description, extracted_priority = _extract_priority_tag(description)
+        if extracted_priority:
+            priority = extracted_priority
+            logger.info(f"[Phase9c] Extracted priority {priority} from description")
+    elif description and priority:
+        # Still clean the tag from description even if explicit priority given
+        description, _ = _extract_priority_tag(description)
+
+    # Phase 9c: Auto-generate summary if not provided
+    if not summary and description:
+        summary = _generate_summary(description)
 
     # Auto-generate task_id from task_type if not provided (META-TAXON-01-v1)
     client = get_typedb_client()
@@ -175,7 +280,7 @@ def create_task(
                 phase=phase, body=body, gap_id=gap_id,
                 linked_rules=linked_rules, linked_sessions=linked_sessions,
                 agent_id=agent_id, priority=priority, task_type=task_type,
-                workspace_id=workspace_id,
+                workspace_id=workspace_id, summary=summary,
             )
             if created:
                 # Link documents after creation
@@ -193,7 +298,22 @@ def create_task(
                              metadata={"phase": phase, "status": status, "source": source})
                 _monitor("create", task_id, source=source, status=status, phase=phase)
                 log_event("task", "create", task_id=task_id, status=status, agent_id=agent_id, source=source)
-                return task_to_response(created)
+                # BUG-TASK-UI-001: Cache in _tasks_store so task is visible
+                # even during transient TypeDB read failures
+                response = task_to_response(created)
+                _tasks_store[task_id] = {
+                    "task_id": task_id, "description": description,
+                    "phase": phase, "status": status, "priority": priority,
+                    "task_type": task_type, "agent_id": agent_id,
+                    "body": body, "gap_id": gap_id,
+                    "linked_rules": linked_rules or [],
+                    "linked_sessions": linked_sessions or [],
+                    "linked_documents": linked_documents or [],
+                    "workspace_id": workspace_id,
+                    "summary": summary,
+                    "created_at": response.get("created_at"),
+                }
+                return response
         except ValueError:
             raise
         except Exception as e:
@@ -208,7 +328,7 @@ def create_task(
     task_data = {
         "task_id": task_id, "description": description, "phase": phase,
         "status": status, "priority": priority, "task_type": task_type,
-        "agent_id": agent_id, "body": body,
+        "agent_id": agent_id, "body": body, "summary": summary,
         # BUG-214-003: Normalize list fields to [] to prevent NoneType iteration errors
         "linked_rules": linked_rules or [], "linked_sessions": linked_sessions or [],
         "linked_documents": linked_documents or [], "gap_id": gap_id,

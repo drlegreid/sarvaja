@@ -88,12 +88,28 @@ def get_all_tasks_from_typedb(
             # Convert to dict format for API compatibility
             result = [_task_to_dict(t) for t in tasks]
             # Merge evidence from in-memory store (EPIC-DR-008 workaround for Python 3.13)
+            typedb_ids = set()
             for task_dict in result:
                 task_id = task_dict.get("task_id")
+                typedb_ids.add(task_id)
                 if task_id and task_id in _tasks_store:
                     mem_evidence = _tasks_store[task_id].get("evidence")
                     if mem_evidence and not task_dict.get("evidence"):
                         task_dict["evidence"] = mem_evidence
+            # BUG-TASK-UI-001: Merge orphan memory tasks (not in TypeDB results)
+            # Same pattern as sessions: get_all_sessions_from_typedb merges orphans
+            for mem_id, mem_task in list(_tasks_store.items()):
+                if mem_id not in typedb_ids:
+                    # Apply same filters as TypeDB query
+                    if status and mem_task.get("status") != status:
+                        continue
+                    if phase and mem_task.get("phase") != phase:
+                        continue
+                    if agent_id and mem_task.get("agent_id") != agent_id:
+                        continue
+                    orphan = dict(mem_task)
+                    orphan["persistence_status"] = "memory_only"
+                    result.append(orphan)
             return result
         except Exception as e:
             # BUG-411-TDB-001: Add exc_info for stack trace preservation
@@ -279,6 +295,7 @@ def _task_to_dict(task) -> Dict[str, Any]:
         "status": task.status,
         "priority": task.priority,  # BUG-TASK-TAXONOMY-001
         "task_type": task.task_type,  # BUG-TASK-TAXONOMY-001
+        "summary": getattr(task, 'summary', None),  # Phase 9c
         "agent_id": task.agent_id,
         "created_at": task.created_at.isoformat() if task.created_at else None,
         "claimed_at": task.claimed_at.isoformat() if task.claimed_at else None,

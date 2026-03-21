@@ -45,7 +45,7 @@ def register_task_crud_tools(mcp) -> None:
             description: Task description/details
             status: Task status per TASK-LIFE-01-v1 (OPEN, IN_PROGRESS, CLOSED)
             priority: Priority level (LOW, MEDIUM, HIGH, CRITICAL)
-            task_type: Task type (bug, feature, chore, research, gap, epic, test)
+            task_type: Task type (bug, feature, chore, research, gap, epic, test, specification)
             phase: Phase identifier (e.g., "P10", "P11", "RD")
             session_id: Optional session ID to link this task to (per DATA-LINK-01-v1)
             workspace_id: Optional workspace ID to assign this task to
@@ -129,7 +129,7 @@ def register_task_crud_tools(mcp) -> None:
             name: New task name
             phase: New phase identifier
             priority: Priority level (LOW, MEDIUM, HIGH, CRITICAL)
-            task_type: Task type (bug, feature, chore, research)
+            task_type: Task type (bug, feature, chore, research, gap, epic, test, specification)
             workspace_id: Workspace ID to assign this task to
 
         Returns:

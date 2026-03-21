@@ -28,7 +28,7 @@ def _strip_ctl(value: str) -> str:
 # BUG-289-ATTR-001: Allowlist of valid TypeQL attribute names to prevent injection
 _ALLOWED_TASK_ATTR_NAMES = frozenset({
     "task-status", "task-name", "phase", "item-type",
-    "document-path", "task-priority", "task-type",
+    "document-path", "task-priority", "task-type", "task-summary",
 })
 
 
@@ -103,6 +103,7 @@ class TaskCRUDOperations:
         priority: str = None,
         task_type: str = None,
         workspace_id: str = None,
+        summary: str = None,
     ) -> Optional[Task]:
         """
         Insert a new task into TypeDB.
@@ -183,6 +184,9 @@ class TaskCRUDOperations:
                 if task_type:
                     task_type_escaped = task_type.replace('\\', '\\\\').replace('"', '\\"')
                     insert_parts.append(f'has task-type "{task_type_escaped}"')
+                if summary:
+                    summary_escaped = summary.replace('\\', '\\\\').replace('"', '\\"')
+                    insert_parts.append(f'has task-summary "{summary_escaped}"')
 
                 insert_query = f"""
                     insert $t isa task,

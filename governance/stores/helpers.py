@@ -80,6 +80,7 @@ def task_to_response(task: TypeDBTask):
         resolution=task.resolution,  # NONE, DEFERRED, IMPLEMENTED, VALIDATED, CERTIFIED
         priority=task.priority,  # BUG-TASK-TAXONOMY-001
         task_type=task.task_type,  # BUG-TASK-TAXONOMY-001
+        summary=task.summary if isinstance(getattr(task, 'summary', None), str) else None,  # Phase 9c
         agent_id=task.agent_id,
         created_at=task.created_at.isoformat() if task.created_at else None,
         claimed_at=task.claimed_at.isoformat() if task.claimed_at else None,
