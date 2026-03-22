@@ -177,24 +177,22 @@ services:
       - CHROMADB_PORT=8000
       - CHROMA_AUTH_TOKEN=${CHROMA_AUTH_TOKEN:-chroma-token-dev}
       - GOVERNANCE_API_URL=http://localhost:8082
-      - CLAUDE_PROJECT_LOG_DIR=/app/claude-logs  # SESSION-METRICS-01-v1: Claude Code JSONL logs
+      - CLAUDE_PROJECT_LOG_DIR=/app/home-claude/projects/-home-oderid-Documents-Vibe-sarvaja-platform  # SESSION-METRICS-01-v1
       - SIBLING_SCAN_DIR=/app/project-siblings   # GAP-GAMEDEV-WS: Sibling project discovery
       - SIBLING_HOST_DIR=/home/oderid/Documents/Vibe/sarvaja  # GAP-GAMEDEV-WS: Host path mapping
     volumes:
-      - ./agent:/app/agent:rw       # Task 0.2: rw for uvicorn --reload
-      - ./governance:/app/governance:rw  # Task 0.2: rw for uvicorn --reload
-      - ./shared:/app/shared:ro     # EPIC-DRY-001: shared constants
-      - ./docs:/app/docs:ro
-      - ./evidence:/app/evidence:rw
-      - ./data:/app/data:rw         # GAP-AUDIT-EMPTY-001: Persist audit trail
-      - ./.claude:/app/.claude:ro   # GAP-UI-EXP-011: Mount hooks/checkers
-      - ./tests:/app/tests:ro       # WORKFLOW-SHELL-01-v1: Enable pytest in container
-      - ./CLAUDE.md:/app/CLAUDE.md:ro   # RECOVER-AMNES-01-v1
-      - ./TODO.md:/app/TODO.md:ro       # RECOVER-AMNES-01-v1
-      - ${HOME}/.claude/projects/-home-oderid-Documents-Vibe-sarvaja-platform:/app/claude-logs:ro
-      - /home/oderid/Documents/Vibe/sarvaja:/app/project-siblings:ro  # GAP-GAMEDEV-WS: Sibling project discovery
-      - /tmp/podman-api.sock:/run/podman/podman.sock:ro  # EPIC-7.1: Container logs via podman API
-      - /home/oderid/Documents/Docker/chroma_onnx_cache:/root/.cache/chroma:rw  # Cache ONNX embedding model across rebuilds
+      # PROJECT ROOT — single mount replaces 10+ individual mounts
+      # Local dev only: function over security (DELIVER-VERIFY-01-v1)
+      # Evidence, screenshots, logs, plans — all accessible without mount changes
+      - .:/app:rw
+      # HOME .claude — plans, session logs, project configs
+      - ${HOME}/.claude:/app/home-claude:ro
+      # Sibling projects for workspace discovery
+      - /home/oderid/Documents/Vibe/sarvaja:/app/project-siblings:ro
+      # Podman API for container management
+      - /tmp/podman-api.sock:/run/podman/podman.sock:ro
+      # ONNX embedding cache
+      - /home/oderid/Documents/Docker/chroma_onnx_cache:/root/.cache/chroma:rw
     depends_on:
       - typedb
       - chromadb

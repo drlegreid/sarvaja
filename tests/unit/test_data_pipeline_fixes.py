@@ -360,7 +360,8 @@ class TestTaskExecutionAutoLoad:
 
         # Verify execution log was populated
         assert state.task_execution_loading is False
-        assert state.show_task_execution is True
+        # BUG-TASK-POPUP-001: show_task_execution replaced by show_task_execution_inline
+        assert state.show_task_execution_inline is True
 
 
 # ── 8. Relations.py endpoint removal ────────────────────────────────

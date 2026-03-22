@@ -89,7 +89,7 @@ def task_to_response(task: TypeDBTask):
         linked_rules=task.linked_rules or [],  # BUG-STORE-002: null-safe
         linked_sessions=task.linked_sessions or [],
         linked_commits=task.linked_commits or [],  # Per GAP-TASK-LINK-002
-        linked_documents=task.linked_documents or [],
+        linked_documents=list(dict.fromkeys(task.linked_documents or [])),  # BUG-TASK-DOC-DUP-001: dedup
         gap_id=task.gap_id,
         evidence=task.evidence,
         document_path=task.document_path,

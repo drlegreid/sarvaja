@@ -220,10 +220,10 @@ def build_task_detail_view() -> None:
             # Edit Form
             build_task_edit_form()
 
-            # Task description (shown when not in edit mode)
+            # Task heading — summary (short) preferred over full description
             html.H2(
-                "{{ selected_task.description || selected_task.title || "
-                "selected_task.name }}",
+                "{{ selected_task.summary || selected_task.description || "
+                "selected_task.title || selected_task.name }}",
                 v_if="!edit_task_mode",
                 __properties=["data-testid"],
                 **{"data-testid": "task-detail-description"}

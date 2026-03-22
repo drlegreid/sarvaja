@@ -208,13 +208,7 @@ def build_task_content_preview() -> None:
 def build_task_linked_items() -> None:
     """Build linked rules/sessions display (GAP-UI-037)."""
     with v3.VCard(
-        v_if=(
-            "!edit_task_mode && "
-            "(selected_task.linked_rules?.length > 0 || "
-            "selected_task.linked_sessions?.length > 0 || "
-            "selected_task.linked_documents?.length > 0 || "
-            "selected_task.gap_id)"
-        ),
+        v_if="!edit_task_mode",
         variant="outlined",
         classes="mb-4",
         __properties=["data-testid"],
@@ -248,18 +242,34 @@ def build_task_linked_items() -> None:
                     classes="mr-1",
                     prepend_icon="mdi-gavel"
                 )
-            # Linked Sessions
-            with html.Div(v_if="selected_task.linked_sessions?.length > 0"):
+            # Linked Sessions — always visible; clickable for cross-entity navigation (Phase 9d)
+            with html.Div(
+                classes="mb-2"
+            ):
                 html.Span("Sessions: ", classes="font-weight-bold")
                 v3.VChip(
                     v_for="session in selected_task.linked_sessions",
+                    v_if="selected_task.linked_sessions?.length > 0",
                     v_text="session",
                     size="small",
                     color="info",
                     classes="mr-1",
-                    prepend_icon="mdi-calendar-clock"
+                    prepend_icon="mdi-calendar-clock",
+                    click=(
+                        "trigger('navigate_to_session', "
+                        "[session, 'tasks', selected_task.task_id || selected_task.id, "
+                        "'Back to Task ' + (selected_task.task_id || selected_task.id)])"
+                    ),
+                    style="cursor: pointer",
+                    __properties=["data-testid"],
+                    **{"data-testid": "task-session-chip"}
                 )
-            # Linked Documents (task document management)
+                html.Span(
+                    "No linked sessions",
+                    v_if="!selected_task.linked_sessions?.length",
+                    classes="text-medium-emphasis text-caption",
+                )
+            # Linked Documents with type icons (Phase 9d: Concern 2)
             with html.Div(
                 v_if="selected_task.linked_documents?.length > 0",
                 classes="mb-2"
@@ -269,24 +279,48 @@ def build_task_linked_items() -> None:
                     v_for="doc in selected_task.linked_documents",
                     v_text="doc.split('/').pop()",
                     size="small",
-                    color="secondary",
+                    v_bind_color=(
+                        "doc.includes('evidence') ? 'teal' : "
+                        "doc.includes('backlog/phases') || doc.includes('plans/') ? 'blue' : "
+                        "doc.includes('specs/') || doc.includes('.gherkin') ? 'purple' : "
+                        "doc.includes('.log') || doc.includes('/logs/') ? 'orange' : "
+                        "'secondary'"
+                    ),
                     classes="mr-1 mb-1",
-                    prepend_icon="mdi-file-document-outline",
+                    v_bind_prepend_icon=(
+                        "doc.includes('evidence') ? 'mdi-beaker-outline' : "
+                        "doc.includes('backlog/phases') || doc.includes('plans/') ? 'mdi-map-outline' : "
+                        "doc.includes('specs/') || doc.includes('.gherkin') ? 'mdi-format-list-checks' : "
+                        "doc.includes('.log') || doc.includes('/logs/') ? 'mdi-text-box-outline' : "
+                        "'mdi-file-document-outline'"
+                    ),
                     click="trigger('load_file_content', [doc])",
                     __properties=["data-testid"],
                     **{"data-testid": "task-document-chip"}
                 )
-            # Attach Document button
+            # Link Document button (references, not uploads)
             v3.VBtn(
-                "Attach Document",
-                prepend_icon="mdi-paperclip",
+                "Link Document",
+                prepend_icon="mdi-file-link",
                 variant="outlined",
                 size="small",
                 click="show_attach_document_dialog = true",
                 v_if="!edit_task_mode",
-                classes="mb-2",
+                classes="mb-2 mr-2",
                 __properties=["data-testid"],
                 **{"data-testid": "task-attach-doc-btn"}
+            )
+            # Link Session button
+            v3.VBtn(
+                "Link Session",
+                prepend_icon="mdi-link-variant",
+                variant="outlined",
+                size="small",
+                click="show_link_session_dialog = true",
+                v_if="!edit_task_mode",
+                classes="mb-2",
+                __properties=["data-testid"],
+                **{"data-testid": "task-link-session-btn"}
             )
             # Legacy single document_path (PLAN-UI-OVERHAUL-001 Task 2.4)
             with html.Div(

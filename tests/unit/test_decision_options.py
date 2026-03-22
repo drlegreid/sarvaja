@@ -72,6 +72,6 @@ class TestTasksGridColumns:
         """Tasks grid should have Updated/Last Changed column."""
         from agent.governance_ui.views.tasks import list as tasks_list
         source = inspect.getsource(tasks_list)
-        assert 'completed_at' in source or 'updated' in source.lower(), (
-            "Tasks grid should have updated/completed_at column"
+        assert 'completed' in source.lower(), (
+            "Tasks grid should have completed/updated column reference"
         )

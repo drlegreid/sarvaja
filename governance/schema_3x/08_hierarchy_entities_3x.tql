@@ -1,0 +1,31 @@
+# Project Hierarchy Entities
+# TypeDB entities for project → plan → epic hierarchy
+# Part of: BUG-TASK-HIER-001 (EPIC-GOV-TASKS-V2 Phase 9a)
+# Created: 2026-03-21
+# Reference: governance/schema.tql lines 140-183
+
+define
+
+# =============================================================================
+# PLAN ENTITY — a planned body of work within a project
+# =============================================================================
+
+entity plan,
+
+    owns plan-id,
+    owns plan-name,
+    owns session-description,
+    plays project-contains-plan:child-plan,
+    plays plan-contains-epic:parent-plan;
+
+# =============================================================================
+# EPIC ENTITY — a large feature/initiative within a plan
+# =============================================================================
+
+entity epic,
+
+    owns epic-id,
+    owns epic-name,
+    owns session-description,
+    plays plan-contains-epic:child-epic,
+    plays epic-contains-task:parent-epic;

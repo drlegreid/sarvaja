@@ -130,6 +130,28 @@ class ProjectLinkingOperations:
             logger.error(f"Failed to get sessions for project {project_id}: {type(e).__name__}", exc_info=True)
             return []
 
+    def get_tasks_for_epic(self, epic_id: str) -> list:
+        """Get all task IDs linked to an epic via epic-contains-task relation.
+
+        Args:
+            epic_id: Epic ID (e.g., "EPIC-GOV-RULES-V3")
+
+        Returns:
+            List of task ID strings linked to the epic
+        """
+        # BUG-TYPEQL-ESCAPE-PROJECT-002: Escape epic_id for TypeQL safety
+        eid = epic_id.replace('"', '\\"')
+        try:
+            results = self._execute_query(
+                f'match $e isa epic, has epic-id "{eid}";'
+                f' (parent-epic: $e, epic-task: $t) isa epic-contains-task;'
+                f' $t has task-id $tid; select $tid;'
+            )
+            return [r.get("tid", "") for r in results]
+        except Exception as e:
+            logger.error(f"Failed to get tasks for epic {epic_id}: {type(e).__name__}", exc_info=True)
+            return []
+
     def get_project_plans(self, project_id: str) -> list:
         """Get all plan IDs linked to a project."""
         # BUG-TYPEQL-ESCAPE-PROJECT-002: Escape project_id for TypeQL safety

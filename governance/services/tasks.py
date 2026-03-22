@@ -89,15 +89,19 @@ def list_tasks(
     created_before: Optional[str] = None,
     completed_after: Optional[str] = None,
     completed_before: Optional[str] = None,
+    session_id: Optional[str] = None,
+    search: Optional[str] = None,
     sort_by: str = "task_id",
     order: str = "asc",
     offset: int = 0,
     limit: int = 50,
 ) -> Dict[str, Any]:
-    """List tasks with pagination, sorting, filtering.
+    """List tasks with pagination, sorting, filtering, and search.
 
     Filters: status, phase, agent_id (TypeDB-level), task_type, priority,
-    created_after/before, completed_after/before (post-filter).
+    created_after/before, completed_after/before, session_id (post-filter).
+    Search: free text across task_id/description/summary/body/gap_id,
+    with optional attribute-prefix syntax (type:bug priority:HIGH).
 
     Returns:
         Dict with 'items' (list of task dicts) and 'pagination' metadata.
@@ -116,7 +120,11 @@ def list_tasks(
         tasks, task_type=task_type, priority=priority,
         created_after=created_after, created_before=created_before,
         completed_after=completed_after, completed_before=completed_before,
+        session_id=session_id,
     )
+    # Phase 9d: Server-side search
+    if search:
+        tasks = _apply_search(tasks, search)
     total = len(tasks)
     sort_field = sort_by if sort_by in ("task_id", "status", "phase", "name", "priority", "created_at") else "task_id"
     tasks.sort(key=lambda t: t.get(sort_field) or "", reverse=order.lower() == "desc")
@@ -138,8 +146,9 @@ def _apply_post_filters(
     created_before: Optional[str] = None,
     completed_after: Optional[str] = None,
     completed_before: Optional[str] = None,
+    session_id: Optional[str] = None,
 ) -> List[Dict[str, Any]]:
-    """Apply post-query filters for task_type, priority, and date ranges."""
+    """Apply post-query filters for task_type, priority, date ranges, session_id."""
     if task_type:
         tasks = [t for t in tasks if t.get("task_type") == task_type]
     if priority:
@@ -154,6 +163,9 @@ def _apply_post_filters(
     if completed_before:
         tasks = [t for t in tasks
                  if t.get("completed_at") and _date_lte(t["completed_at"], completed_before)]
+    # Phase 9d: Filter by linked session
+    if session_id:
+        tasks = [t for t in tasks if session_id in (t.get("linked_sessions") or [])]
     return tasks
 
 
@@ -169,6 +181,76 @@ def _date_lte(date_val: Optional[str], threshold: str) -> bool:
     if not date_val:
         return False
     return str(date_val)[:10] <= threshold[:10]
+
+
+def _detect_doc_type(path: str) -> str:
+    """Detect document type from file path. Phase 9d: Concern 2.
+
+    Returns: 'evidence', 'plan', 'spec', 'log', or 'document'.
+    """
+    p = path.lower()
+    if "evidence" in p:
+        return "evidence"
+    if "backlog/phases" in p or "plans/" in p or p.endswith("-plan.md"):
+        return "plan"
+    if "specs/" in p or "spec" in p and ".gherkin" in p:
+        return "spec"
+    if "log" in p and (p.endswith(".log") or "/logs/" in p):
+        return "log"
+    return "document"
+
+
+def _parse_structured_search(query: str) -> tuple:
+    """Parse attribute-prefix syntax from search query. Phase 9d: Concern 4.
+
+    Extracts 'key:value' pairs and returns remaining free text.
+    Supported prefixes: type, priority, status, phase, agent.
+
+    Returns:
+        (attrs_dict, remaining_text)
+    """
+    import re
+    attrs = {}
+    _VALID_PREFIXES = {"type", "priority", "status", "phase", "agent"}
+    parts = []
+    for token in query.split():
+        match = re.match(r'^(\w+):(\S+)$', token)
+        if match and match.group(1).lower() in _VALID_PREFIXES:
+            attrs[match.group(1).lower()] = match.group(2)
+        else:
+            parts.append(token)
+    return attrs, " ".join(parts)
+
+
+def _apply_search(
+    tasks: List[Dict[str, Any]],
+    search: str,
+) -> List[Dict[str, Any]]:
+    """Server-side search across task fields. Phase 9d: Concern 4.
+
+    Searches task_id, description, summary, body, gap_id (case-insensitive).
+    Supports attribute-prefix syntax: 'type:bug priority:HIGH auth'.
+    """
+    if not search or not search.strip():
+        return tasks
+    attrs, free_text = _parse_structured_search(search.strip())
+    # Apply structured attribute filters
+    _ATTR_MAP = {
+        "type": "task_type", "priority": "priority",
+        "status": "status", "phase": "phase", "agent": "agent_id",
+    }
+    for prefix, value in attrs.items():
+        field = _ATTR_MAP.get(prefix, prefix)
+        tasks = [t for t in tasks if (t.get(field) or "").upper() == value.upper()]
+    # Apply free text search across searchable fields
+    if free_text:
+        needle = free_text.lower()
+        _SEARCH_FIELDS = ("task_id", "description", "summary", "body", "gap_id")
+
+        def matches(t):
+            return any(needle in str(t.get(f) or "").lower() for f in _SEARCH_FIELDS)
+        tasks = [t for t in tasks if matches(t)]
+    return tasks
 
 
 def _extract_priority_tag(description: str) -> tuple:

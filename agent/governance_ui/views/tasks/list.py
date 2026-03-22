@@ -7,6 +7,7 @@ Per GAP-FILE-001: Modularization of governance_dashboard.py.
 """
 
 from trame.widgets import vuetify3 as v3, html
+from .histogram import build_plotly_histogram, has_plotly as has_task_plotly
 
 
 def build_tasks_list_view() -> None:
@@ -90,6 +91,10 @@ def build_tasks_list_view() -> None:
                     with html.Template(v_slot_append=True):
                         v3.VSkeletonLoader(type="chip", width=60, height=24)
 
+        # Task histogram (Phase 9e: interactive type x status chart)
+        if has_task_plotly():
+            build_plotly_histogram()
+
         # Filters toolbar (GAP-UI-EXP-004: search/filter/pagination)
         with v3.VToolbar(v_if="!is_loading", density="compact", flat=True):
             v3.VTextField(
@@ -152,6 +157,19 @@ def build_tasks_list_view() -> None:
                 style="max-width: 130px; margin-left: 8px",
                 __properties=["data-testid"],
                 **{"data-testid": "tasks-filter-priority"}
+            )
+            # Phase 9d: Session filter
+            v3.VTextField(
+                v_model="tasks_session_filter",
+                label="Session ID",
+                variant="outlined",
+                density="compact",
+                hide_details=True,
+                clearable=True,
+                style="max-width: 200px; margin-left: 8px",
+                prepend_inner_icon="mdi-calendar-clock",
+                __properties=["data-testid"],
+                **{"data-testid": "tasks-filter-session"}
             )
 
         # Date range filters row (Phase 9)
@@ -221,14 +239,12 @@ def build_tasks_list_view() -> None:
                     {"title": "Type", "key": "task_type", "width": "80px", "sortable": True},
                     {"title": "Status", "key": "status", "width": "100px", "sortable": True},
                     {"title": "Phase", "key": "phase", "width": "70px", "sortable": True},
+                    {"title": "Session", "key": "first_session", "width": "160px", "sortable": False},
                     {"title": "Agent", "key": "agent_id", "width": "130px", "sortable": True},
                     {"title": "Created", "key": "created_at", "width": "110px", "sortable": True},
-                    {"title": "Completed", "key": "completed_at", "width": "110px", "sortable": True},
-                    {"title": "Gap", "key": "gap_id", "width": "100px", "sortable": True},
                     {"title": "Docs", "key": "doc_count", "width": "70px", "sortable": False},
                 ]),
                 item_value="task_id",
-                search=("tasks_search_query",),
                 density="compact",
                 items_per_page=-1,
                 hover=True,

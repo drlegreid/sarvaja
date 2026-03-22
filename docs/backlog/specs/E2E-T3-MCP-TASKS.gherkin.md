@@ -205,3 +205,79 @@ When I call task_verify with:
   | test_passed         | True                |
 Then the result contains "task_id"
 ```
+
+---
+
+## Phase 9e: Heuristic Gap Categories (TEST-EDS-HEURISTIC-01-v1)
+
+### Feature: DATA_MODEL — Field propagation across layers
+
+```gherkin
+Scenario: New field propagates TypeDB to UI
+  Given task-summary attribute exists in TypeDB schema
+  When I create a task with summary="Fix auth bug"
+  Then GET /api/tasks returns summary="Fix auth bug"
+  And Dashboard task table shows "Fix auth bug" in Summary column
+
+Scenario: Specification task type accepted across all layers
+  When I create a task with task_type="specification"
+  Then TypeDB stores task-type "specification"
+  And API returns task_type="specification"
+  And Dashboard type filter includes "specification"
+```
+
+### Feature: UX_DEFAULTS — Sort and filter defaults
+
+```gherkin
+Scenario: Default sort is newest first
+  Given 10 tasks with different created_at timestamps
+  When I GET /api/tasks without sort parameters
+  Then tasks are ordered by created_at DESC
+
+Scenario: Filter dropdowns match API values
+  When I view the Tasks filter toolbar
+  Then task_type dropdown contains: bug, feature, chore, specification, research, gap, epic, test
+  And priority dropdown contains: CRITICAL, HIGH, MEDIUM, LOW
+```
+
+### Feature: CROSS_NAV — Bidirectional navigation
+
+```gherkin
+Scenario: Task detail session chips are clickable
+  Given task TASK-001 has linked_sessions ["SESSION-A"]
+  When I click the SESSION-A chip in task detail
+  Then the view switches to Sessions
+  And session detail for SESSION-A is displayed
+
+Scenario: Session detail shows linked tasks with back-nav
+  Given session SESSION-A is linked to TASK-001
+  When I view SESSION-A detail and click TASK-001
+  Then the view switches to Tasks with TASK-001 selected
+```
+
+### Feature: SEARCH — Server-side with structured syntax
+
+```gherkin
+Scenario: Search returns results from all pages
+  Given 100 tasks, 5 matching "authentication"
+  When I search "authentication" with limit=20
+  Then pagination.total = 5 (not page-local count)
+
+Scenario: Structured prefix search
+  When I search "type:bug priority:HIGH auth"
+  Then only HIGH priority bugs matching "auth" are returned
+```
+
+### Feature: FIELD_INTEGRITY — No embedded metadata
+
+```gherkin
+Scenario: Priority not embedded in description
+  Given task with body="[Priority: HIGH] Fix login"
+  When priority extraction runs
+  Then priority field = "HIGH"
+  And body no longer contains "[Priority: HIGH]"
+
+Scenario: Status values are normalized
+  When I create a task with status="in_progress"
+  Then stored status is "IN_PROGRESS" (uppercase)
+```

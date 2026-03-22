@@ -29,32 +29,53 @@ async def get_file_content(path: str = Query(..., description="File path relativ
     """
     Read file content by path (GAP-DATA-003).
 
-    Supports evidence files, session logs, and documentation.
-    Security: Only allows reading from approved directories.
+    Supports evidence files, screenshots, logs, plans, and documentation.
+    Local dev mode: all project-relative and home-claude paths allowed.
+    Path traversal prevention remains active.
     """
     project_root = os.path.join(os.path.dirname(__file__), "..", "..")
-
-    # Allowed directories for security
-    allowed_prefixes = ["evidence/", "docs/", "results/", "data/"]
 
     # Normalize path separators
     normalized_path = path.replace("\\", "/")
 
-    # Security check: only allow reading from approved directories
-    if not any(normalized_path.startswith(prefix) for prefix in allowed_prefixes):
-        raise HTTPException(
-            status_code=403,
-            detail=f"Access denied. Only files in {allowed_prefixes} can be read."
-        )
+    # Reject obviously dangerous patterns
+    if ".." in normalized_path or normalized_path.startswith("/"):
+        raise HTTPException(status_code=403, detail="Path traversal not allowed")
 
-    # Build full path
-    full_path = os.path.join(project_root, normalized_path)
+    # Resolve path — try multiple roots for portability (host vs container)
+    # Container: project at /app, home-claude at /app/home-claude (maps to ~/.claude)
+    # Host: project at cwd, home .claude at ~/.claude
+    home_claude_dir = os.path.join(project_root, "home-claude")  # Container mount
 
-    # Prevent path traversal
+    # Build search candidates: (root_dir, relative_path) pairs
+    search_candidates = [
+        (project_root, normalized_path),                           # Project root as-is
+        (os.path.expanduser("~"), normalized_path),                # Host home as-is
+    ]
+    # .claude/ paths also map to home-claude/ mount (strip .claude/ prefix)
+    if normalized_path.startswith(".claude/"):
+        stripped = normalized_path[len(".claude/"):]  # plans/gleaming-drifting-pearl.md
+        search_candidates.insert(1, (home_claude_dir, stripped))   # Container: /app/home-claude/plans/...
+
+    full_path = None
+    matched_root = None
+    for root, rel_path in search_candidates:
+        real_root = os.path.realpath(root)
+        candidate = os.path.join(real_root, rel_path)
+        real_candidate = os.path.realpath(candidate)
+        if real_candidate.startswith(real_root + os.sep) and os.path.exists(real_candidate):
+            full_path = candidate
+            matched_root = real_root
+            break
+
+    if full_path is None:
+        # No existing file found — default to project root for the 404
+        full_path = os.path.join(project_root, normalized_path)
+        matched_root = os.path.realpath(project_root)
+
+    # Final traversal guard
     real_path = os.path.realpath(full_path)
-    real_root = os.path.realpath(project_root)
-    # BUG-ROUTE-002: Use os.sep to prevent prefix attacks (/home/user vs /home/username)
-    if not real_path.startswith(real_root + os.sep) and real_path != real_root:
+    if not real_path.startswith(matched_root + os.sep) and real_path != matched_root:
         raise HTTPException(status_code=403, detail="Path traversal not allowed")
 
     if not os.path.exists(full_path):

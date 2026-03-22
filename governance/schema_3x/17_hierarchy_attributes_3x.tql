@@ -1,0 +1,19 @@
+# Project Hierarchy Attributes
+# TypeDB attributes for project → plan → epic hierarchy
+# Part of: BUG-TASK-HIER-001 (EPIC-GOV-TASKS-V2 Phase 9a)
+# Created: 2026-03-21
+# Reference: governance/schema.tql lines 368-371
+
+define
+
+# =============================================================================
+# HIERARCHY ATTRIBUTES
+# =============================================================================
+
+# Plan attributes
+attribute plan-id, value string;
+attribute plan-name, value string;
+
+# Epic attributes
+attribute epic-id, value string;
+attribute epic-name, value string;

@@ -15,6 +15,12 @@ from typing import Any
 
 from agent.governance_ui.trace_bar.transforms import add_error_trace
 from agent.governance_ui.utils import extract_items_from_response, format_timestamps_in_list
+from agent.governance_ui.views.tasks.histogram import (
+    compute_histogram_data as _compute_histogram,
+    update_plotly_histogram as _update_histogram,
+    has_plotly as _has_task_plotly,
+    extract_filter_from_click as _extract_histogram_filter,
+)
 from .tasks_navigation import register_tasks_navigation  # noqa: F401
 
 
@@ -23,6 +29,14 @@ def _enrich_doc_count(tasks):
     for t in tasks:
         docs = t.get("linked_documents") or []
         t["doc_count"] = len(docs)
+    return tasks
+
+
+def _enrich_first_session(tasks):
+    """Add first_session field to each task for the Session column. Phase 9d."""
+    for t in tasks:
+        sessions = t.get("linked_sessions") or []
+        t["first_session"] = sessions[0] if sessions else ""
     return tasks
 
 
@@ -134,9 +148,9 @@ def register_tasks_controllers(state: Any, ctrl: Any, api_base_url: str) -> dict
                             if isinstance(data, dict) and "items" in data:
                                 state.tasks = data["items"]
                                 state.tasks_pagination = data.get("pagination", {})
-                    state.tasks = _enrich_doc_count(format_timestamps_in_list(
+                    state.tasks = _enrich_first_session(_enrich_doc_count(format_timestamps_in_list(
                         state.tasks, ["created_at", "completed_at", "claimed_at"]
-                    ))
+                    )))
                     state.show_task_detail = False
                     state.selected_task = None
                 else:
@@ -261,9 +275,9 @@ def register_tasks_controllers(state: Any, ctrl: Any, api_base_url: str) -> dict
                             state.tasks_pagination = data.get("pagination", {})
                         else:
                             state.tasks = extract_items_from_response(data)
-                    state.tasks = _enrich_doc_count(format_timestamps_in_list(
+                    state.tasks = _enrich_first_session(_enrich_doc_count(format_timestamps_in_list(
                         state.tasks, ["created_at", "completed_at", "claimed_at"]
-                    ))
+                    )))
                     updated_task = response.json()
                     state.selected_task = updated_task
                     state.edit_task_mode = False
@@ -329,9 +343,9 @@ def register_tasks_controllers(state: Any, ctrl: Any, api_base_url: str) -> dict
                             state.tasks_pagination = data.get("pagination", {})
                         else:
                             state.tasks = extract_items_from_response(data)
-                    state.tasks = _enrich_doc_count(format_timestamps_in_list(
+                    state.tasks = _enrich_first_session(_enrich_doc_count(format_timestamps_in_list(
                         state.tasks, ["created_at", "completed_at", "claimed_at"]
-                    ))
+                    )))
                     # BUG-UI-FORMCLOSE-002: Only close form on success
                     state.show_task_form = False
                     state.form_task_id = ""
@@ -407,6 +421,57 @@ def register_tasks_controllers(state: Any, ctrl: Any, api_base_url: str) -> dict
             state.tasks_page = 1
             load_tasks_page()
 
+    # Phase 9: Reactive handlers for new filters
+    @state.change("tasks_type_filter")
+    def _on_tasks_type_filter(tasks_type_filter, **kwargs):
+        if state.active_view == "tasks":
+            state.tasks_page = 1
+            load_tasks_page()
+
+    @state.change("tasks_priority_filter")
+    def _on_tasks_priority_filter(tasks_priority_filter, **kwargs):
+        if state.active_view == "tasks":
+            state.tasks_page = 1
+            load_tasks_page()
+
+    @state.change("tasks_created_after")
+    def _on_tasks_created_after(tasks_created_after, **kwargs):
+        if state.active_view == "tasks":
+            state.tasks_page = 1
+            load_tasks_page()
+
+    @state.change("tasks_created_before")
+    def _on_tasks_created_before(tasks_created_before, **kwargs):
+        if state.active_view == "tasks":
+            state.tasks_page = 1
+            load_tasks_page()
+
+    @state.change("tasks_completed_after")
+    def _on_tasks_completed_after(tasks_completed_after, **kwargs):
+        if state.active_view == "tasks":
+            state.tasks_page = 1
+            load_tasks_page()
+
+    @state.change("tasks_completed_before")
+    def _on_tasks_completed_before(tasks_completed_before, **kwargs):
+        if state.active_view == "tasks":
+            state.tasks_page = 1
+            load_tasks_page()
+
+    # Phase 9d: Session filter handler
+    @state.change("tasks_session_filter")
+    def _on_tasks_session_filter(tasks_session_filter, **kwargs):
+        if state.active_view == "tasks":
+            state.tasks_page = 1
+            load_tasks_page()
+
+    # Phase 9d: Server-side search handler (debounced via state.change)
+    @state.change("tasks_search_query")
+    def _on_tasks_search_query(tasks_search_query, **kwargs):
+        if state.active_view == "tasks":
+            state.tasks_page = 1
+            load_tasks_page()
+
     @state.change("tasks_filter_type")
     def _on_tasks_filter_type(tasks_filter_type, **kwargs):
         """Map tab selection to status filter (cascades to _on_tasks_status_filter)."""
@@ -434,6 +499,23 @@ def register_tasks_controllers(state: Any, ctrl: Any, api_base_url: str) -> dict
                 params["status"] = tasks_status_filter
             if tasks_phase_filter:
                 params["phase"] = tasks_phase_filter
+            # Phase 9: Pass new filter params to API
+            for param_name, state_key in [
+                ("task_type", "tasks_type_filter"),
+                ("priority", "tasks_priority_filter"),
+                ("created_after", "tasks_created_after"),
+                ("created_before", "tasks_created_before"),
+                ("completed_after", "tasks_completed_after"),
+                ("completed_before", "tasks_completed_before"),
+                ("session_id", "tasks_session_filter"),
+            ]:
+                val = getattr(state, state_key, None)
+                if val:
+                    params[param_name] = val
+            # Phase 9d: Server-side search
+            search_query = getattr(state, 'tasks_search_query', '') or ''
+            if search_query.strip():
+                params["search"] = search_query.strip()
 
             with httpx.Client(timeout=10.0) as client:
                 response = client.get(f"{api_base_url}/api/tasks", params=params)
@@ -454,10 +536,15 @@ def register_tasks_controllers(state: Any, ctrl: Any, api_base_url: str) -> dict
                             "limit": len(data), "has_more": False,
                             "returned": len(data),
                         }
-                    state.tasks = _enrich_doc_count(format_timestamps_in_list(
+                    state.tasks = _enrich_first_session(_enrich_doc_count(format_timestamps_in_list(
                         state.tasks, ["created_at", "completed_at", "claimed_at"]
-                    ))
+                    )))
                     state.status_message = f"Loaded {len(state.tasks)} tasks"
+                    # Phase 9e: Update histogram from loaded tasks
+                    if _has_task_plotly():
+                        hdata = _compute_histogram(state.tasks)
+                        state.tasks_histogram_data = hdata
+                        _update_histogram(hdata)
             state.is_loading = False
         except Exception as e:
             add_error_trace(state, f"Load tasks page failed: {e}", "/api/tasks")
@@ -498,5 +585,14 @@ def register_tasks_controllers(state: Any, ctrl: Any, api_base_url: str) -> dict
         if 1 <= page <= total_pages:
             state.tasks_page = page
             load_tasks_page()
+
+    @ctrl.trigger("histogram_bar_click")
+    def histogram_bar_click(click_data=None):
+        """Phase 9e: Handle histogram bar click to filter table."""
+        payload = _extract_histogram_filter(click_data)
+        if payload:
+            state.tasks_type_filter = payload.get("task_type")
+            state.tasks_status_filter = payload.get("status")
+            # Reactive handlers auto-trigger load_tasks_page()
 
     return {'load_tasks_page': load_tasks_page}

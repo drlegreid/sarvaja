@@ -70,6 +70,10 @@ class TestListTasks:
             )
         mock.assert_called_once_with(
             status="IN_PROGRESS", phase="IMPLEMENT", agent_id="code-agent",
+            task_type=None, priority=None,
+            created_after=None, created_before=None,
+            completed_after=None, completed_before=None,
+            session_id=None, search=None,
             sort_by="task_id", order="desc", offset=0, limit=10,
         )
 

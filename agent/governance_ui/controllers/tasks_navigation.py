@@ -72,6 +72,54 @@ def register_tasks_navigation(state: Any, ctrl: Any, api_base_url: str) -> None:
                 add_error_trace(state, f"Navigate to task failed: {e}", f"/api/tasks/{task_id}")
                 state.error_message = f"Failed to load task {task_id}"
 
+    @ctrl.trigger("navigate_to_session")
+    def navigate_to_session(session_id, source_view=None, source_id=None, source_label=None):
+        """Navigate from task detail to session detail view. Phase 9d: Concern 1.
+
+        Args:
+            session_id: Session to navigate to
+            source_view: View we came from (typically 'tasks')
+            source_id: Task ID for back navigation
+            source_label: Human-readable label for back button
+        """
+        if not session_id:
+            return
+
+        # Capture navigation source for back button (UI-NAV-01-v1)
+        if source_view:
+            state.nav_source_view = source_view
+            state.nav_source_id = source_id
+            state.nav_source_label = source_label or f"Back to {source_view}"
+
+        # Switch to sessions view
+        state.active_view = 'sessions'
+        state.show_task_detail = False
+        state.show_session_detail = False
+
+        # Try to find session in existing list
+        found = False
+        for session in state.sessions:
+            sid = session.get('session_id') or session.get('id')
+            if sid == session_id:
+                state.selected_session = session
+                state.show_session_detail = True
+                found = True
+                break
+
+        # If not found, load from API
+        if not found:
+            try:
+                with httpx.Client(timeout=10.0) as client:
+                    response = client.get(f"{api_base_url}/api/sessions/{session_id}")
+                    if response.status_code == 200:
+                        state.selected_session = response.json()
+                        state.show_session_detail = True
+                    else:
+                        state.error_message = f"Session {session_id} not found"
+            except Exception as e:
+                add_error_trace(state, f"Navigate to session failed: {e}", f"/api/sessions/{session_id}")
+                state.error_message = f"Failed to load session {session_id}"
+
     @ctrl.trigger("navigate_back_to_source")
     def navigate_back_to_source():
         """Navigate back to the source entity (UI-NAV-01-v1)."""

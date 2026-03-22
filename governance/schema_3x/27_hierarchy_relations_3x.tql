@@ -1,0 +1,29 @@
+# Project Hierarchy Relations
+# TypeDB relations for project → plan → epic → task hierarchy
+# Part of: BUG-TASK-HIER-001 (EPIC-GOV-TASKS-V2 Phase 9a)
+# Created: 2026-03-21
+# Reference: governance/schema.tql lines 620-633
+
+define
+
+# =============================================================================
+# PROJECT HIERARCHY RELATIONS (GOV-PROJECT-01-v1)
+# =============================================================================
+
+# Project contains plans
+relation project-contains-plan,
+
+    relates parent-project,
+    relates child-plan;
+
+# Plan contains epics
+relation plan-contains-epic,
+
+    relates parent-plan,
+    relates child-epic;
+
+# Epic contains tasks
+relation epic-contains-task,
+
+    relates parent-epic,
+    relates epic-task;

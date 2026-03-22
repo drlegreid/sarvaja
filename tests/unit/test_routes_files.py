@@ -19,25 +19,24 @@ class TestGetFileContentSecurity(unittest.TestCase):
     def _run(self, coro):
         return asyncio.get_event_loop().run_until_complete(coro)
 
-    def test_disallowed_prefix(self):
-        """Files outside allowed dirs raise 403."""
+    def test_nonexistent_file_returns_404(self):
+        """Files that don't exist return 404 (local dev: no prefix restriction)."""
         from governance.routes.files import get_file_content
         with self.assertRaises(HTTPException) as ctx:
             self._run(get_file_content(path="secrets/api_key.txt"))
-        self.assertEqual(ctx.exception.status_code, 403)
-        self.assertIn("Access denied", ctx.exception.detail)
+        self.assertEqual(ctx.exception.status_code, 404)
 
-    def test_root_path_denied(self):
+    def test_nonexistent_root_file_returns_404(self):
         from governance.routes.files import get_file_content
         with self.assertRaises(HTTPException) as ctx:
-            self._run(get_file_content(path="config.json"))
-        self.assertEqual(ctx.exception.status_code, 403)
+            self._run(get_file_content(path="nonexistent_config_xyz.json"))
+        self.assertEqual(ctx.exception.status_code, 404)
 
-    def test_src_path_denied(self):
+    def test_nonexistent_src_returns_404(self):
         from governance.routes.files import get_file_content
         with self.assertRaises(HTTPException) as ctx:
-            self._run(get_file_content(path="src/main.py"))
-        self.assertEqual(ctx.exception.status_code, 403)
+            self._run(get_file_content(path="src/nonexistent_xyz.py"))
+        self.assertEqual(ctx.exception.status_code, 404)
 
     def test_backslash_normalised(self):
         """Backslash paths get normalized to forward-slash."""
@@ -49,12 +48,18 @@ class TestGetFileContentSecurity(unittest.TestCase):
         self.assertEqual(ctx.exception.status_code, 404)
 
     def test_path_traversal_denied(self):
-        """Path traversal via ../ is caught."""
+        """Path traversal via ../ is caught immediately."""
         from governance.routes.files import get_file_content
         with self.assertRaises(HTTPException) as ctx:
             self._run(get_file_content(path="evidence/../../etc/passwd"))
-        # Could be 403 (traversal check) or 404 (file not found)
-        self.assertIn(ctx.exception.status_code, [403, 404])
+        self.assertEqual(ctx.exception.status_code, 403)
+
+    def test_absolute_path_denied(self):
+        """Absolute paths are rejected."""
+        from governance.routes.files import get_file_content
+        with self.assertRaises(HTTPException) as ctx:
+            self._run(get_file_content(path="/etc/passwd"))
+        self.assertEqual(ctx.exception.status_code, 403)
 
     def test_allowed_prefixes_evidence(self):
         """evidence/ prefix passes the prefix check (may 404)."""
@@ -258,6 +263,76 @@ class TestFileContentResponseModel(unittest.TestCase):
             rendered_html="<h1>Hello</h1>",
         )
         self.assertEqual(resp.rendered_html, "<h1>Hello</h1>")
+
+
+class TestPlanPathAllowed(unittest.TestCase):
+    """BUG-FILE-VIEWER-PLANS-001: .claude/plans/ must be viewable."""
+
+    def _run(self, coro):
+        return asyncio.get_event_loop().run_until_complete(coro)
+
+    def test_claude_plans_not_blocked(self):
+        """Plan files must NOT trigger 403 (traversal or allowlist block)."""
+        from governance.routes.files import get_file_content
+        with self.assertRaises(HTTPException) as ctx:
+            self._run(get_file_content(path=".claude/plans/nonexistent-plan-xyz.md"))
+        # 404 = file not found (good), NOT 403 = blocked (bad)
+        self.assertEqual(ctx.exception.status_code, 404)
+
+    def test_evidence_screenshots_not_blocked(self):
+        """Screenshots in evidence/ must be viewable."""
+        from governance.routes.files import get_file_content
+        with self.assertRaises(HTTPException) as ctx:
+            self._run(get_file_content(path="evidence/screenshots/test.png"))
+        self.assertEqual(ctx.exception.status_code, 404)
+
+    def test_any_project_subdir_not_blocked(self):
+        """Any project-relative path should pass security (local dev)."""
+        from governance.routes.files import get_file_content
+        with self.assertRaises(HTTPException) as ctx:
+            self._run(get_file_content(path="scripts/nonexistent_xyz.py"))
+        self.assertEqual(ctx.exception.status_code, 404)
+
+
+class TestDocumentLinkIdempotency(unittest.TestCase):
+    """BUG-TASK-DOC-DUP-001: Duplicate document links must be prevented."""
+
+    def test_linked_documents_deduplicated_in_response(self):
+        """API response should not contain duplicate document paths."""
+        from governance.stores.helpers import task_to_response
+        from unittest.mock import MagicMock
+        task = MagicMock()
+        task.id = "T-1"
+        task.name = "test"
+        task.description = "test"
+        task.body = "test body"
+        task.phase = "P10"
+        task.status = "OPEN"
+        task.resolution = "NONE"
+        task.priority = "MEDIUM"
+        task.task_type = "feature"
+        task.summary = None
+        task.agent_id = None
+        task.created_at = None
+        task.claimed_at = None
+        task.completed_at = None
+        task.gap_id = None
+        task.evidence = None
+        task.document_path = None
+        task.workspace_id = None
+        task.linked_rules = []
+        task.linked_sessions = []
+        task.linked_commits = []
+        task.linked_documents = [
+            ".claude/plans/plan.md",
+            ".claude/plans/plan.md",
+            "docs/rules/leaf/RULE.md",
+        ]
+        resp = task_to_response(task)
+        # Deduplicated: only unique paths
+        self.assertEqual(len(resp.linked_documents), 2)
+        self.assertIn(".claude/plans/plan.md", resp.linked_documents)
+        self.assertIn("docs/rules/leaf/RULE.md", resp.linked_documents)
 
 
 if __name__ == "__main__":

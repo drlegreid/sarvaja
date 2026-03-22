@@ -36,8 +36,10 @@ async def list_tasks(
     created_before: Optional[str] = None,
     completed_after: Optional[str] = None,
     completed_before: Optional[str] = None,
+    session_id: Optional[str] = None,
+    search: Optional[str] = None,
 ):
-    """List tasks with pagination, sorting, and filtering. Per GAP-UI-036, EPIC-DR-003."""
+    """List tasks with pagination, sorting, filtering, and search. Per GAP-UI-036, EPIC-DR-003, Phase 9d."""
     # BUG-237-SORT-001: Whitelist sort_by to prevent unexpected sort keys
     _valid_sort = {"task_id", "status", "phase", "priority", "created_at"}
     if sort_by not in _valid_sort:
@@ -51,6 +53,7 @@ async def list_tasks(
             task_type=task_type, priority=priority,
             created_after=created_after, created_before=created_before,
             completed_after=completed_after, completed_before=completed_before,
+            session_id=session_id, search=search,
             sort_by=sort_by, order=order, offset=offset, limit=limit,
         )
         pagination = PaginationMeta(
