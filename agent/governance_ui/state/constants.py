@@ -150,8 +150,8 @@ RULE_STATUSES: List[str] = ['ACTIVE', 'DRAFT', 'DEPRECATED']
 TASK_STATUSES: List[str] = ['TODO', 'IN_PROGRESS', 'DONE', 'BLOCKED']
 TASK_PHASES: List[str] = ['P10', 'P11', 'P12', 'R&D', 'FH', 'KAN', 'ORCH', 'DOCVIEW']
 
-# Task Type Taxonomy (META-TAXON-01-v1)
-TASK_TYPES: List[str] = ['bug', 'feature', 'chore', 'research', 'gap', 'epic', 'test', 'specification']
+# Task Type Taxonomy (META-TAXON-01-v1 + SRVJ-FEAT-003)
+TASK_TYPES: List[str] = ['bug', 'feature', 'chore', 'research', 'gap', 'epic', 'test', 'specification', 'spec']
 TASK_PRIORITIES: List[str] = ['CRITICAL', 'HIGH', 'MEDIUM', 'LOW']
 
 # Task type → ID prefix for auto-generation
@@ -164,6 +164,15 @@ TASK_TYPE_PREFIX: Dict[str, str] = {
     'epic': 'EPIC',
     'test': 'TEST',
     'specification': 'SPEC',
+    'spec': 'SPEC',
+}
+
+# Project acronyms mapping (SRVJ-FEAT-004)
+PROJECT_ACRONYMS: Dict[str, str] = {
+    'sarvaja': 'SRVJ',
+    'sarvaja-platform': 'SRVJ',
+    'gamedev': 'GAMD',
+    'jobhunt': 'JBHT',
 }
 
 

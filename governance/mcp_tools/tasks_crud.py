@@ -45,7 +45,7 @@ def register_task_crud_tools(mcp) -> None:
             description: Task description/details
             status: Task status per TASK-LIFE-01-v1 (OPEN, IN_PROGRESS, CLOSED)
             priority: Priority level (LOW, MEDIUM, HIGH, CRITICAL)
-            task_type: Task type (bug, feature, chore, research, gap, epic, test, specification)
+            task_type: Task type (bug, feature, chore, research, gap, epic, test, specification, spec)
             phase: Phase identifier (e.g., "P10", "P11", "RD")
             session_id: Optional session ID to link this task to (per DATA-LINK-01-v1)
             workspace_id: Optional workspace ID to assign this task to
@@ -80,6 +80,11 @@ def register_task_crud_tools(mcp) -> None:
                           priority=priority, session_id=session_id)
             result_dict["message"] = f"Task {actual_id} created successfully"
             return format_mcp_result(result_dict)
+        except ValueError as ve:
+            # SRVJ-FEAT-001: Return structured validation errors
+            error_msg = str(ve)
+            logger.warning(f"task_create validation: {error_msg}")
+            return format_mcp_result({"error": error_msg, "type": "validation"})
         except Exception as e:
             # BUG-357-MCP-001: Log full error for debugging
             # BUG-451-TC-001: Sanitize logger message to match response pattern
@@ -131,7 +136,7 @@ def register_task_crud_tools(mcp) -> None:
             name: New task name
             phase: New phase identifier
             priority: Priority level (LOW, MEDIUM, HIGH, CRITICAL)
-            task_type: Task type (bug, feature, chore, research, gap, epic, test, specification)
+            task_type: Task type (bug, feature, chore, research, gap, epic, test, specification, spec)
             workspace_id: Workspace ID to assign this task to
             summary: One-line task summary (optional)
 
@@ -158,6 +163,11 @@ def register_task_crud_tools(mcp) -> None:
                 result["message"] = f"Task {task_id} updated successfully"
                 return format_mcp_result(result)
             return format_mcp_result({"error": f"Task {task_id} not found"})
+        except ValueError as ve:
+            # SRVJ-FEAT-002: Return structured DONE gate validation errors
+            error_msg = str(ve)
+            logger.warning(f"task_update validation: {error_msg}")
+            return format_mcp_result({"error": error_msg, "type": "validation"})
         except Exception as e:
             # BUG-357-MCP-001: Log full error for debugging
             # BUG-451-TC-003: Sanitize logger message to match response pattern

@@ -370,6 +370,26 @@ def create_task(
         if active_sid:
             linked_sessions = [active_sid]
             logger.info(f"[DATA-LINK-01] Auto-linking task {task_id} to session {active_sid}")
+
+    # SRVJ-FEAT-001: Static rules engine — validate on create
+    from governance.services.task_rules import validate_on_create, format_validation_result
+    create_errors = validate_on_create(
+        task_id=task_id, summary=summary, task_type=task_type,
+        description=description,
+    )
+    if create_errors:
+        # Log warnings but only block on hard errors (RequiredField, TypePrefixMismatch)
+        hard_errors = [e for e in create_errors if e.rule in ("RequiredField", "TypePrefixMismatch")]
+        for err in create_errors:
+            level = "WARNING" if err.rule == "FormatRule" else "ERROR"
+            logger.log(
+                logging.WARNING if level == "WARNING" else logging.ERROR,
+                f"[TASK-RULES] {err.rule}: {err.message}"
+            )
+        if hard_errors:
+            result = format_validation_result(hard_errors)
+            raise ValueError(f"Validation failed: {result}")
+
     if client:
         try:
             if client.get_task(task_id):

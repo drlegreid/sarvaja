@@ -88,6 +88,31 @@ def update_task(
                     f"{active_sid} on status transition to {status}"
                 )
 
+    # SRVJ-FEAT-002: DONE gate — validate mandatory fields on completion
+    if status and status.upper() == "DONE":
+        from governance.services.task_rules import validate_on_complete, format_validation_result
+        # Gather existing task data for validation
+        existing = _tasks_store.get(task_id, {})
+        effective_summary = summary or existing.get("summary")
+        effective_agent = agent_id or existing.get("agent_id")
+        effective_sessions = linked_sessions or existing.get("linked_sessions", [])
+        effective_completed = existing.get("completed_at")
+        effective_docs = linked_documents or existing.get("linked_documents", [])
+
+        done_errors = validate_on_complete(
+            task_id=task_id,
+            summary=effective_summary,
+            agent_id=effective_agent,
+            completed_at=effective_completed,
+            linked_sessions=effective_sessions,
+            linked_documents=effective_docs,
+        )
+        if done_errors:
+            for err in done_errors:
+                logger.warning(f"[DONE-GATE] {err.rule}: {err.message}")
+            result = format_validation_result(done_errors)
+            raise ValueError(f"DONE gate validation failed: {result}")
+
     client = get_typedb_client()
     task_obj = None
     if client:

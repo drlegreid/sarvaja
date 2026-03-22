@@ -27,6 +27,9 @@ class TestUpdateTaskSetsCompletedAt:
             "description": "Test task",
             "status": "IN_PROGRESS",
             "agent_id": "code-agent",
+            "summary": "Test > Done > Completed At > Timestamp",
+            "linked_sessions": ["SESSION-DONE-TEST"],
+            "linked_documents": [],
             "completed_at": None,
         }
 

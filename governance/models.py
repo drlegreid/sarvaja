@@ -45,7 +45,7 @@ class TaskCreate(BaseModel):
     phase: str = Field(..., min_length=1)
     status: str = "TODO"
     priority: Optional[Literal["LOW", "MEDIUM", "HIGH", "CRITICAL"]] = None  # BUG-TASK-TAXONOMY-001
-    task_type: Optional[Literal["bug", "feature", "chore", "research", "gap", "epic", "test", "specification"]] = None  # META-TAXON-01-v1
+    task_type: Optional[Literal["bug", "feature", "chore", "research", "gap", "epic", "test", "specification", "spec"]] = None  # META-TAXON-01-v1 + SRVJ-FEAT-003
     agent_id: Optional[str] = None
     body: Optional[str] = None
     summary: Optional[str] = None  # Phase 9c: structured one-line intent
@@ -61,7 +61,7 @@ class TaskUpdate(BaseModel):
     phase: Optional[str] = None
     status: Optional[str] = None
     priority: Optional[Literal["LOW", "MEDIUM", "HIGH", "CRITICAL"]] = None  # BUG-TASK-TAXONOMY-001
-    task_type: Optional[Literal["bug", "feature", "chore", "research", "gap", "epic", "test", "specification"]] = None  # META-TAXON-01-v1
+    task_type: Optional[Literal["bug", "feature", "chore", "research", "gap", "epic", "test", "specification", "spec"]] = None  # META-TAXON-01-v1 + SRVJ-FEAT-003
     agent_id: Optional[str] = None
     body: Optional[str] = None
     summary: Optional[str] = None  # Phase 9c: structured one-line intent

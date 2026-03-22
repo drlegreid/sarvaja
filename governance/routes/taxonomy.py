@@ -13,6 +13,7 @@ from agent.governance_ui.state.constants import (
     RULE_CATEGORIES,
     RULE_PRIORITIES,
     RULE_STATUSES,
+    PROJECT_ACRONYMS,
 )
 
 router = APIRouter()
@@ -33,4 +34,5 @@ async def get_taxonomy():
         "rule_categories": RULE_CATEGORIES,
         "rule_priorities": RULE_PRIORITIES,
         "rule_statuses": RULE_STATUSES,
+        "project_acronyms": PROJECT_ACRONYMS,
     }

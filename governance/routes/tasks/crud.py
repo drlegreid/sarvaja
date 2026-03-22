@@ -159,6 +159,9 @@ async def update_task(task_id: str, update: TaskUpdate):
         return TaskResponse(**result)
     except HTTPException:
         raise
+    except ValueError as ve:
+        # SRVJ-FEAT-002: DONE gate validation → 422 with structured errors
+        raise HTTPException(status_code=422, detail=str(ve))
     # BUG-365-RT-001: Log full error, return only type name to prevent info disclosure
     except Exception as e:
         # BUG-469-TCR-006: Sanitize logger message — exc_info=True already captures full stack

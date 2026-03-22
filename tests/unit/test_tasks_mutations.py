@@ -34,7 +34,10 @@ def seed_task():
         "description": "Test task",
         "phase": "P10",
         "status": "TODO",
-        "agent_id": None,
+        "agent_id": "code-agent",
+        "summary": "Test > Task > Seed > Fixture",
+        "linked_sessions": ["SESSION-SEED"],
+        "linked_documents": [],
         "created_at": "2026-02-11T10:00:00",
     }
     return _tasks_store["T-001"]
