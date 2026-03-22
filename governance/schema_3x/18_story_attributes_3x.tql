@@ -1,0 +1,17 @@
+# Story Attributes
+# TypeDB attributes for story entity
+# Part of: FIX-HIER-002 (EPIC-TASK-QUALITY-V1 Phase 3)
+# Created: 2026-03-22
+
+define
+
+# =============================================================================
+# STORY ATTRIBUTES
+# =============================================================================
+
+attribute story-id, value string;
+attribute story-name, value string;
+attribute story-description, value string;
+attribute story-status, value string;
+attribute story-priority, value string;
+attribute story-created-at, value datetime;

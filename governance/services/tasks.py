@@ -91,6 +91,7 @@ def list_tasks(
     completed_before: Optional[str] = None,
     session_id: Optional[str] = None,
     search: Optional[str] = None,
+    workspace_id: Optional[str] = None,
     sort_by: str = "task_id",
     order: str = "asc",
     offset: int = 0,
@@ -120,7 +121,7 @@ def list_tasks(
         tasks, task_type=task_type, priority=priority,
         created_after=created_after, created_before=created_before,
         completed_after=completed_after, completed_before=completed_before,
-        session_id=session_id,
+        session_id=session_id, workspace_id=workspace_id,
     )
     # Phase 9d: Server-side search
     if search:
@@ -147,8 +148,9 @@ def _apply_post_filters(
     completed_after: Optional[str] = None,
     completed_before: Optional[str] = None,
     session_id: Optional[str] = None,
+    workspace_id: Optional[str] = None,
 ) -> List[Dict[str, Any]]:
-    """Apply post-query filters for task_type, priority, date ranges, session_id."""
+    """Apply post-query filters for task_type, priority, date ranges, session_id, workspace_id."""
     if task_type:
         tasks = [t for t in tasks if t.get("task_type") == task_type]
     if priority:
@@ -166,6 +168,9 @@ def _apply_post_filters(
     # Phase 9d: Filter by linked session
     if session_id:
         tasks = [t for t in tasks if session_id in (t.get("linked_sessions") or [])]
+    # FIX-COL-006: Filter by workspace_id
+    if workspace_id:
+        tasks = [t for t in tasks if t.get("workspace_id") == workspace_id]
     return tasks
 
 
@@ -332,12 +337,24 @@ def create_task(
     if not summary and description:
         summary = _generate_summary(description)
 
-    # Auto-generate task_id from task_type if not provided (META-TAXON-01-v1)
+    # Auto-generate task_id from task_type if not provided (META-TAXON-01-v1 + FIX-NOM-002)
     client = get_typedb_client()
     if not task_id:
         if task_type:
-            from governance.services.task_id_gen import generate_task_id
-            task_id = generate_task_id(task_type, client)
+            from governance.services.task_id_gen import (
+                generate_task_id, resolve_project_prefix,
+            )
+            # FIX-NOM-002: Auto-prefix with project name when workspace is set
+            project_prefix = ""
+            if workspace_id:
+                try:
+                    from governance.services.workspaces import _workspaces_store
+                    project_prefix = resolve_project_prefix(
+                        workspace_id, _workspaces_store,
+                    )
+                except Exception:
+                    pass
+            task_id = generate_task_id(task_type, client, project_prefix=project_prefix)
             logger.info(f"[META-TAXON-01] Auto-generated task ID: {task_id}")
         else:
             raise ValueError("Either task_id or task_type must be provided for ID generation")

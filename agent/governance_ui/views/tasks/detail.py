@@ -130,13 +130,25 @@ def build_task_detail_view() -> None:
         with v3.VCardTitle(classes="d-flex align-center"):
             # Back to source button (UI-NAV-01-v1) - shown when navigated from another entity
             v3.VBtn(
-                ("nav_source_label",),
                 v_if="nav_source_view",
+                v_text="nav_source_label || 'Back'",
                 prepend_icon="mdi-arrow-left",
                 variant="tonal",
                 color="primary",
                 size="small",
-                click="trigger('navigate_back_to_source')",
+                click=(
+                    "show_task_detail = false; "
+                    "selected_task = null; "
+                    "show_session_detail = false; "
+                    "show_decision_detail = false; "
+                    "edit_task_mode = false; "
+                    "task_execution_log = []; "
+                    "show_task_execution = false; "
+                    "active_view = nav_source_view || 'tasks'; "
+                    "nav_source_view = null; "
+                    "nav_source_id = null; "
+                    "nav_source_label = null"
+                ),
                 __properties=["data-testid"],
                 **{"data-testid": "task-detail-back-to-source"}
             )

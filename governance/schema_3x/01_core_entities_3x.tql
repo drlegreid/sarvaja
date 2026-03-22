@@ -98,7 +98,8 @@ entity task,
     plays task-commit:implemented-task,  # GAP-TASK-LINK-002
     plays document-references-task:referenced-task,  # Task document management
     plays epic-contains-task:epic-task,  # BUG-TASK-HIER-001: Project hierarchy (GOV-PROJECT-01-v1)
-    plays workspace-has-task:assigned-task;  # EPIC-GOV-TASKS-V2 Phase 4: workspace linking
+    plays workspace-has-task:assigned-task,  # EPIC-GOV-TASKS-V2 Phase 4: workspace linking
+    plays story-contains-task:story-task;  # FIX-HIER-002: Story hierarchy
 
 # =============================================================================
 # GAP ENTITY

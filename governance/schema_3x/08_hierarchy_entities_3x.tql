@@ -28,4 +28,5 @@ entity epic,
     owns epic-name,
     owns session-description,
     plays plan-contains-epic:child-epic,
-    plays epic-contains-task:parent-epic;
+    plays epic-contains-task:parent-epic,
+    plays epic-contains-story:parent-epic;

@@ -91,7 +91,8 @@ entity task,
     plays task-commit:implemented-task,  # GAP-TASK-LINK-002
     plays document-references-task:referenced-task,  # BUG-TASK-DOC-001: task document management
     plays epic-contains-task:epic-task,  # Project hierarchy (GOV-PROJECT-01-v1)
-    plays workspace-has-task:assigned-task;  # EPIC-GOV-TASKS-V2 Phase 4: workspace linking
+    plays workspace-has-task:assigned-task,  # EPIC-GOV-TASKS-V2 Phase 4: workspace linking
+    plays story-contains-task:story-task;  # FIX-HIER-002: Story hierarchy
 
 entity gap,
     owns gap-id,
@@ -183,7 +184,19 @@ entity epic,
     owns epic-name,
     owns session-description,
     plays plan-contains-epic:child-epic,
-    plays epic-contains-task:parent-epic;
+    plays epic-contains-task:parent-epic,
+    plays epic-contains-story:parent-epic;
+
+# Story entity - user story/feature within an epic (FIX-HIER-002)
+entity story,
+    owns story-id,
+    owns story-name,
+    owns story-description,
+    owns story-status,
+    owns story-priority,
+    owns story-created-at,
+    plays epic-contains-story:child-story,
+    plays story-contains-task:parent-story;
 
 # Git commit entity (GAP-TASK-LINK-002)
 entity git-commit,
@@ -406,6 +419,14 @@ attribute plan-id, value string;
 attribute plan-name, value string;
 attribute epic-id, value string;
 attribute epic-name, value string;
+
+# Story attributes (FIX-HIER-002)
+attribute story-id, value string;
+attribute story-name, value string;
+attribute story-description, value string;
+attribute story-status, value string;
+attribute story-priority, value string;
+attribute story-created-at, value datetime;
 
 # Workspace attributes (EPIC-GOV-TASKS-V2)
 attribute workspace-id, value string;
@@ -637,6 +658,16 @@ relation plan-contains-epic,
 relation epic-contains-task,
     relates parent-epic,
     relates epic-task;
+
+# Epic contains stories (FIX-HIER-002)
+relation epic-contains-story,
+    relates parent-epic,
+    relates child-story;
+
+# Story contains tasks (FIX-HIER-002)
+relation story-contains-task,
+    relates parent-story,
+    relates story-task;
 
 # Project has sessions (links CC sessions to their project)
 relation project-has-session,

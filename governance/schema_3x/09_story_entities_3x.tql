@@ -1,0 +1,22 @@
+# Story Entities
+# TypeDB entities for story — intermediate between epic and task
+# Part of: FIX-HIER-002 (EPIC-TASK-QUALITY-V1 Phase 3)
+# Created: 2026-03-22
+# Hierarchy: Project → Workspace → Epic → Story → Task → Bug
+
+define
+
+# =============================================================================
+# STORY ENTITY — a user story or feature within an epic
+# =============================================================================
+
+entity story,
+
+    owns story-id,
+    owns story-name,
+    owns story-description,
+    owns story-status,
+    owns story-priority,
+    owns story-created-at,
+    plays epic-contains-story:child-story,
+    plays story-contains-task:parent-story;

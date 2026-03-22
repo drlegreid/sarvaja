@@ -233,15 +233,17 @@ def build_tasks_list_view() -> None:
             v3.VDataTable(
                 items=("tasks",),
                 headers=("tasks_headers", [
+                    {"title": "Project", "key": "project_name", "width": "120px", "sortable": True},
+                    {"title": "Workspace", "key": "workspace_id", "width": "130px", "sortable": True},
                     {"title": "Task ID", "key": "task_id", "width": "150px", "sortable": True},
                     {"title": "Summary", "key": "summary", "sortable": True},
                     {"title": "Priority", "key": "priority", "width": "90px", "sortable": True},
                     {"title": "Type", "key": "task_type", "width": "80px", "sortable": True},
                     {"title": "Status", "key": "status", "width": "100px", "sortable": True},
-                    {"title": "Phase", "key": "phase", "width": "70px", "sortable": True},
                     {"title": "Session", "key": "first_session", "width": "160px", "sortable": False},
                     {"title": "Agent", "key": "agent_id", "width": "130px", "sortable": True},
                     {"title": "Created", "key": "created_at", "width": "110px", "sortable": True},
+                    {"title": "Completed", "key": "completed_at", "width": "110px", "sortable": True},
                     {"title": "Docs", "key": "doc_count", "width": "70px", "sortable": False},
                 ]),
                 item_value="task_id",

@@ -40,6 +40,31 @@ def _enrich_first_session(tasks):
     return tasks
 
 
+def _fetch_workspace_project_map(api_base_url):
+    """Fetch workspace_id → project_id map from API. FIX-HIER-001."""
+    try:
+        with httpx.Client(timeout=5.0) as client:
+            resp = client.get(f"{api_base_url}/api/workspaces")
+            if resp.status_code == 200:
+                return {
+                    ws["workspace_id"]: ws.get("project_id", "")
+                    for ws in resp.json()
+                }
+    except Exception:
+        pass
+    return {}
+
+
+def _enrich_project_name(tasks, ws_project_map):
+    """Add project_name field from workspace→project_id mapping. FIX-HIER-001."""
+    for t in tasks:
+        ws_id = t.get("workspace_id")
+        t["project_name"] = ws_project_map.get(ws_id, "") if ws_id else ""
+    return tasks
+
+
+
+
 def register_tasks_controllers(state: Any, ctrl: Any, api_base_url: str) -> dict:
     """Register task-related controllers with Trame."""
 
@@ -148,9 +173,13 @@ def register_tasks_controllers(state: Any, ctrl: Any, api_base_url: str) -> dict
                             if isinstance(data, dict) and "items" in data:
                                 state.tasks = data["items"]
                                 state.tasks_pagination = data.get("pagination", {})
-                    state.tasks = _enrich_first_session(_enrich_doc_count(format_timestamps_in_list(
-                        state.tasks, ["created_at", "completed_at", "claimed_at"]
-                    )))
+                    _ws_map = _fetch_workspace_project_map(api_base_url)
+                    state.tasks = _enrich_project_name(
+                        _enrich_first_session(_enrich_doc_count(format_timestamps_in_list(
+                            state.tasks, ["created_at", "completed_at", "claimed_at"]
+                        ))),
+                        _ws_map,
+                    )
                     state.show_task_detail = False
                     state.selected_task = None
                 else:
@@ -275,9 +304,13 @@ def register_tasks_controllers(state: Any, ctrl: Any, api_base_url: str) -> dict
                             state.tasks_pagination = data.get("pagination", {})
                         else:
                             state.tasks = extract_items_from_response(data)
-                    state.tasks = _enrich_first_session(_enrich_doc_count(format_timestamps_in_list(
-                        state.tasks, ["created_at", "completed_at", "claimed_at"]
-                    )))
+                    _ws_map = _fetch_workspace_project_map(api_base_url)
+                    state.tasks = _enrich_project_name(
+                        _enrich_first_session(_enrich_doc_count(format_timestamps_in_list(
+                            state.tasks, ["created_at", "completed_at", "claimed_at"]
+                        ))),
+                        _ws_map,
+                    )
                     updated_task = response.json()
                     state.selected_task = updated_task
                     state.edit_task_mode = False
@@ -343,9 +376,13 @@ def register_tasks_controllers(state: Any, ctrl: Any, api_base_url: str) -> dict
                             state.tasks_pagination = data.get("pagination", {})
                         else:
                             state.tasks = extract_items_from_response(data)
-                    state.tasks = _enrich_first_session(_enrich_doc_count(format_timestamps_in_list(
-                        state.tasks, ["created_at", "completed_at", "claimed_at"]
-                    )))
+                    _ws_map = _fetch_workspace_project_map(api_base_url)
+                    state.tasks = _enrich_project_name(
+                        _enrich_first_session(_enrich_doc_count(format_timestamps_in_list(
+                            state.tasks, ["created_at", "completed_at", "claimed_at"]
+                        ))),
+                        _ws_map,
+                    )
                     # BUG-UI-FORMCLOSE-002: Only close form on success
                     state.show_task_form = False
                     state.form_task_id = ""
@@ -536,9 +573,13 @@ def register_tasks_controllers(state: Any, ctrl: Any, api_base_url: str) -> dict
                             "limit": len(data), "has_more": False,
                             "returned": len(data),
                         }
-                    state.tasks = _enrich_first_session(_enrich_doc_count(format_timestamps_in_list(
-                        state.tasks, ["created_at", "completed_at", "claimed_at"]
-                    )))
+                    _ws_map = _fetch_workspace_project_map(api_base_url)
+                    state.tasks = _enrich_project_name(
+                        _enrich_first_session(_enrich_doc_count(format_timestamps_in_list(
+                            state.tasks, ["created_at", "completed_at", "claimed_at"]
+                        ))),
+                        _ws_map,
+                    )
                     state.status_message = f"Loaded {len(state.tasks)} tasks"
                     # Phase 9e: Update histogram from loaded tasks
                     if _has_task_plotly():

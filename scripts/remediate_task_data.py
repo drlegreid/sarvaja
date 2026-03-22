@@ -206,6 +206,47 @@ def report_null_fields(tasks: list) -> dict:
     }
 
 
+# Reverse mapping: prefix → task_type (per TASK_TYPE_PREFIX in constants.py)
+PREFIX_TO_TYPE = {
+    "BUG-": "bug",
+    "FEAT-": "feature",
+    "CHORE-": "chore",
+    "RD-": "research",
+    "GAP-": "gap",
+    "EPIC-": "epic",
+    "TEST-": "test",
+    "SPEC-": "specification",
+    "FIX-": "bug",  # FIX- tasks are bug fixes
+}
+
+
+def backfill_task_type(tasks: list, dry_run: bool = True) -> dict:
+    """Infer task_type from task_id prefix for tasks with null type.
+
+    Per FIX-DATA-004: 68% of tasks have null task_type.
+
+    Returns:
+        {"found": count, "fixed": count, "details": [{"task_id", "task_type"}]}
+    """
+    results = {"found": 0, "fixed": 0, "details": []}
+    for task in tasks:
+        tid = task.get("task_id", "")
+        current_type = task.get("task_type")
+        if current_type:
+            continue
+        inferred = None
+        for prefix, ttype in PREFIX_TO_TYPE.items():
+            if tid.startswith(prefix):
+                inferred = ttype
+                break
+        if inferred:
+            results["found"] += 1
+            results["details"].append({"task_id": tid, "task_type": inferred})
+            if not dry_run:
+                results["fixed"] += 1
+    return results
+
+
 def run_remediation(dry_run: bool = True):
     """Run all remediation checks."""
     print(f"\n{'=' * 60}")

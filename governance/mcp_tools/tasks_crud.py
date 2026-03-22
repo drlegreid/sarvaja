@@ -114,7 +114,8 @@ def register_task_crud_tools(mcp) -> None:
     def task_update(task_id: str, status: Optional[str] = None, name: Optional[str] = None,
                     phase: Optional[str] = None, priority: Optional[str] = None,
                     task_type: Optional[str] = None,
-                    workspace_id: Optional[str] = None) -> str:
+                    workspace_id: Optional[str] = None,
+                    summary: Optional[str] = None) -> str:
         """
         Update an existing task in TypeDB.
 
@@ -122,6 +123,7 @@ def register_task_crud_tools(mcp) -> None:
         Per EPIC-GOV-TASKS-V2 Phase 2: Routes through service layer for
         auto-linking, audit, and monitoring parity.
         Per EPIC-GOV-TASKS-V2 Phase 4: workspace_id assignment.
+        Per FIX-DATA-002: summary is a first-class updatable field.
 
         Args:
             task_id: Task identifier to update
@@ -131,11 +133,12 @@ def register_task_crud_tools(mcp) -> None:
             priority: Priority level (LOW, MEDIUM, HIGH, CRITICAL)
             task_type: Task type (bug, feature, chore, research, gap, epic, test, specification)
             workspace_id: Workspace ID to assign this task to
+            summary: One-line task summary (optional)
 
         Returns:
             JSON with updated task details or error
         """
-        if not any([status, name, phase, priority, task_type, workspace_id]):
+        if not any([status, name, phase, priority, task_type, workspace_id, summary]):
             return format_mcp_result({"error": "No update fields provided"})
 
         try:
@@ -147,6 +150,7 @@ def register_task_crud_tools(mcp) -> None:
                 priority=priority,
                 task_type=task_type,
                 workspace_id=workspace_id,
+                summary=summary,
                 source="mcp",
             )
             if result:

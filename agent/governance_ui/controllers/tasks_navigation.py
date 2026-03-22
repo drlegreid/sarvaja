@@ -85,6 +85,10 @@ def register_tasks_navigation(state: Any, ctrl: Any, api_base_url: str) -> None:
         if not session_id:
             return
 
+        # BUG-011: Save previous view state for rollback on failure
+        previous_view = state.active_view
+        previous_show_task_detail = state.show_task_detail
+
         # Capture navigation source for back button (UI-NAV-01-v1)
         if source_view:
             state.nav_source_view = source_view
@@ -115,8 +119,20 @@ def register_tasks_navigation(state: Any, ctrl: Any, api_base_url: str) -> None:
                         state.selected_session = response.json()
                         state.show_session_detail = True
                     else:
+                        # BUG-011: Restore previous view on failure
+                        state.active_view = previous_view
+                        state.show_task_detail = previous_show_task_detail
+                        state.nav_source_view = None
+                        state.nav_source_id = None
+                        state.nav_source_label = None
                         state.error_message = f"Session {session_id} not found"
             except Exception as e:
+                # BUG-011: Restore previous view on failure
+                state.active_view = previous_view
+                state.show_task_detail = previous_show_task_detail
+                state.nav_source_view = None
+                state.nav_source_id = None
+                state.nav_source_label = None
                 add_error_trace(state, f"Navigate to session failed: {e}", f"/api/sessions/{session_id}")
                 state.error_message = f"Failed to load session {session_id}"
 
@@ -126,9 +142,14 @@ def register_tasks_navigation(state: Any, ctrl: Any, api_base_url: str) -> None:
         source_view = state.nav_source_view
         source_id = state.nav_source_id
 
-        # Clear current detail view
+        # Clear ALL detail view states to prevent ghost views
         state.show_task_detail = False
         state.selected_task = None
+        state.show_session_detail = False
+        state.show_decision_detail = False
+        state.edit_task_mode = False
+        state.task_execution_log = []
+        state.show_task_execution = False
 
         # Clear navigation context
         state.nav_source_view = None
@@ -161,3 +182,9 @@ def register_tasks_navigation(state: Any, ctrl: Any, api_base_url: str) -> None:
                     return
         elif source_view:
             state.active_view = source_view
+        else:
+            state.active_view = 'tasks'
+
+        # Force reactivity — Trame may skip updates if active_view didn't change
+        state.dirty('active_view')
+        state.dirty('show_task_detail')

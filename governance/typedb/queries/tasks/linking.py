@@ -325,6 +325,19 @@ class TaskLinkingOperations:
                     # BUG-477-TLK-3: Sanitize debug/info logger
                     logger.debug(f"Document entity insert for {doc_id} (expected if exists): {type(e).__name__}")
 
+                # FIX-DATA-005: Idempotency guard — check if relation exists before insert
+                check_query = f"""
+                    match
+                        $t isa task, has task-id "{task_id_escaped}";
+                        $d isa document, has document-path "{document_path_escaped}";
+                        (referencing-document: $d, referenced-task: $t) isa document-references-task;
+                """
+                existing = list(tx.query(check_query).resolve())
+                if existing:
+                    logger.debug(f"Document-task link already exists: {task_id} -> {document_path}")
+                    tx.commit()
+                    return True
+
                 # Create document-references-task relation
                 link_query = f"""
                     match

@@ -2,7 +2,7 @@
 Unit tests for Task Navigation Controllers.
 
 Per DOC-SIZE-01-v1: Tests for agent/governance_ui/controllers/tasks_navigation.py.
-Tests: register_tasks_navigation — navigate_to_task, navigate_back_to_source.
+Tests: register_tasks_navigation — navigate_to_task, navigate_to_session, navigate_back_to_source.
 """
 
 from unittest.mock import MagicMock, patch
@@ -44,6 +44,7 @@ class TestRegistration:
     def test_registers_triggers(self):
         _, _, triggers = _setup()
         assert "navigate_to_task" in triggers
+        assert "navigate_to_session" in triggers
         assert "navigate_back_to_source" in triggers
 
 
@@ -133,6 +134,111 @@ class TestNavigateToTask:
 
         triggers["navigate_to_task"]("T-ERR")
         assert state.error_message == "Failed to load task T-ERR"
+
+
+# ── navigate_to_session ──────────────────────────────────
+
+
+class TestNavigateToSession:
+    def test_empty_session_id_returns(self):
+        _, state, triggers = _setup()
+        state.active_view = "tasks"
+        triggers["navigate_to_session"](None)
+        assert state.active_view == "tasks"
+
+    def test_switches_to_sessions_view(self):
+        sessions = [{"session_id": "S-001"}]
+        _, state, triggers = _setup(sessions=sessions)
+        state.active_view = "tasks"
+        triggers["navigate_to_session"]("S-001")
+        assert state.active_view == "sessions"
+        assert state.show_task_detail is False
+
+    def test_captures_source_navigation(self):
+        sessions = [{"session_id": "S-001"}]
+        _, state, triggers = _setup(sessions=sessions)
+        triggers["navigate_to_session"]("S-001", source_view="tasks",
+                                         source_id="T-001", source_label="Back to Task")
+        assert state.nav_source_view == "tasks"
+        assert state.nav_source_id == "T-001"
+        assert state.nav_source_label == "Back to Task"
+
+    def test_default_source_label(self):
+        sessions = [{"session_id": "S-001"}]
+        _, state, triggers = _setup(sessions=sessions)
+        triggers["navigate_to_session"]("S-001", source_view="tasks", source_id="T-1")
+        assert state.nav_source_label == "Back to tasks"
+
+    def test_finds_session_in_list_by_session_id(self):
+        sessions = [{"session_id": "S-001", "name": "Session 1"}]
+        _, state, triggers = _setup(sessions=sessions)
+        triggers["navigate_to_session"]("S-001")
+        assert state.selected_session == {"session_id": "S-001", "name": "Session 1"}
+        assert state.show_session_detail is True
+
+    def test_finds_session_in_list_by_id(self):
+        sessions = [{"id": "S-002", "name": "Session 2"}]
+        _, state, triggers = _setup(sessions=sessions)
+        triggers["navigate_to_session"]("S-002")
+        assert state.selected_session == {"id": "S-002", "name": "Session 2"}
+
+    @patch("agent.governance_ui.controllers.tasks_navigation.httpx.Client")
+    def test_loads_from_api_when_not_in_list(self, MockClient):
+        _, state, triggers = _setup(sessions=[])
+
+        mock_response = MagicMock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = {"session_id": "S-API"}
+        MockClient.return_value.__enter__ = MagicMock(
+            return_value=MagicMock(get=MagicMock(return_value=mock_response))
+        )
+        MockClient.return_value.__exit__ = MagicMock(return_value=False)
+
+        triggers["navigate_to_session"]("S-API")
+        assert state.selected_session == {"session_id": "S-API"}
+        assert state.show_session_detail is True
+        assert state.active_view == "sessions"
+
+    @patch("agent.governance_ui.controllers.tasks_navigation.httpx.Client")
+    def test_bug011_api_not_found_restores_view(self, MockClient):
+        """BUG-011: API 404 must restore previous view state, not strand UI."""
+        _, state, triggers = _setup(sessions=[])
+        state.active_view = "tasks"
+        state.show_task_detail = True
+
+        mock_response = MagicMock()
+        mock_response.status_code = 404
+        MockClient.return_value.__enter__ = MagicMock(
+            return_value=MagicMock(get=MagicMock(return_value=mock_response))
+        )
+        MockClient.return_value.__exit__ = MagicMock(return_value=False)
+
+        triggers["navigate_to_session"]("S-MISSING", source_view="tasks", source_id="T-1")
+        # View must be restored to tasks, not stranded on sessions
+        assert state.active_view == "tasks"
+        assert state.show_task_detail is True
+        assert state.error_message == "Session S-MISSING not found"
+        # Nav source must be cleared to prevent back-button state corruption
+        assert state.nav_source_view is None
+        assert state.nav_source_id is None
+        assert state.nav_source_label is None
+
+    @patch("agent.governance_ui.controllers.tasks_navigation.httpx.Client")
+    def test_bug011_api_exception_restores_view(self, MockClient):
+        """BUG-011: API timeout must restore previous view state."""
+        _, state, triggers = _setup(sessions=[])
+        state.active_view = "tasks"
+        state.show_task_detail = True
+
+        MockClient.side_effect = Exception("connection refused")
+
+        triggers["navigate_to_session"]("S-ERR", source_view="tasks", source_id="T-1")
+        # View must be restored to tasks
+        assert state.active_view == "tasks"
+        assert state.show_task_detail is True
+        assert state.error_message == "Failed to load session S-ERR"
+        # Nav source must be cleared
+        assert state.nav_source_view is None
 
 
 # ── navigate_back_to_source ──────────────────────────────

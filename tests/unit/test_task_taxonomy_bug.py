@@ -219,7 +219,7 @@ class TestServiceLayer:
         update_task("T-1", priority="CRITICAL", task_type="feature")
         client.update_task.assert_called_once_with(
             "T-1", priority="CRITICAL", task_type="feature",
-            name=None, phase=None,
+            name=None, phase=None, summary=None,
         )
 
     @patch("governance.services.tasks_mutations._tasks_store", {})

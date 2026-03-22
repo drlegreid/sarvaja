@@ -1,0 +1,22 @@
+# Story Relations
+# TypeDB relations for epic → story → task hierarchy
+# Part of: FIX-HIER-002 (EPIC-TASK-QUALITY-V1 Phase 3)
+# Created: 2026-03-22
+
+define
+
+# =============================================================================
+# STORY HIERARCHY RELATIONS
+# =============================================================================
+
+# Epic contains stories
+relation epic-contains-story,
+
+    relates parent-epic,
+    relates child-story;
+
+# Story contains tasks
+relation story-contains-task,
+
+    relates parent-story,
+    relates story-task;

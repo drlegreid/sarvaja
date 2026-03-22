@@ -273,13 +273,15 @@ class TaskCRUDOperations:
         item_type: str = None,
         document_path: str = None,
         priority: str = None,
-        task_type: str = None
+        task_type: str = None,
+        summary: str = None,
     ) -> bool:
         """
         Update a task's attributes in TypeDB.
 
         Per P10.7-10.10: General task update method for MCP tools.
         Per GAP-GAPS-TASKS-001: Unified work item support.
+        Per FIX-DATA-002: summary is a first-class updatable field.
 
         Args:
             task_id: Task ID to update
@@ -288,6 +290,7 @@ class TaskCRUDOperations:
             phase: New phase (optional)
             item_type: Work item type - "gap", "task", or "rd" (optional)
             document_path: Path to source document (optional)
+            summary: One-line task summary (optional)
 
         Returns:
             True if update succeeded, False otherwise
@@ -329,6 +332,11 @@ class TaskCRUDOperations:
                     current_task_type = getattr(current, 'task_type', None)
                     if current_task_type != task_type:
                         _update_attribute(tx, task_id, "task-type", current_task_type, task_type)
+                # FIX-DATA-002: summary update support
+                if summary:
+                    current_summary = getattr(current, 'summary', None)
+                    if current_summary != summary:
+                        _update_attribute(tx, task_id, "task-summary", current_summary, summary)
                 tx.commit()
             return True
         except Exception as e:

@@ -74,6 +74,7 @@ class TestListTasks:
             created_after=None, created_before=None,
             completed_after=None, completed_before=None,
             session_id=None, search=None,
+            workspace_id=None,
             sort_by="task_id", order="desc", offset=0, limit=10,
         )
 

@@ -61,6 +61,7 @@ def update_task(
     linked_documents: Optional[List[str]] = None,
     gap_id: Optional[str] = None,
     workspace_id: Optional[str] = None,
+    summary: Optional[str] = None,
     source: str = "rest",
 ) -> Optional[Dict[str, Any]]:
     """Update task fields in TypeDB with fallback.
@@ -100,8 +101,8 @@ def update_task(
                     agent_id or task_obj.agent_id, evidence=evidence,
                 )
                 task_obj = updated or task_obj
-            # BUG-TASK-TAXONOMY-001: Persist priority/task_type/name/phase to TypeDB
-            if task_obj and (priority or task_type or phase or description):
+            # BUG-TASK-TAXONOMY-001: Persist priority/task_type/name/phase/summary to TypeDB
+            if task_obj and (priority or task_type or phase or description or summary):
                 try:
                     client.update_task(
                         task_id,
@@ -109,6 +110,7 @@ def update_task(
                         task_type=task_type,
                         name=description,
                         phase=phase,
+                        summary=summary,
                     )
                 except Exception as ue:
                     # BUG-TASK-TAXONOMY-DEBUG-001: WARNING not DEBUG — data divergence
@@ -194,7 +196,7 @@ def update_task(
         "agent_id": agent_id, "body": body, "evidence": evidence,
         "linked_rules": linked_rules, "linked_sessions": linked_sessions,
         "linked_documents": linked_documents, "gap_id": gap_id,
-        "workspace_id": workspace_id,
+        "workspace_id": workspace_id, "summary": summary,
     }
     for field, val in updates.items():
         if val is not None:
