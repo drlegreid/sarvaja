@@ -172,6 +172,51 @@ def build_tasks_list_view() -> None:
                 **{"data-testid": "tasks-filter-session"}
             )
 
+        # Phase 4: Workspace, Project, Hide Test filters
+        with v3.VToolbar(
+            v_if="!is_loading",
+            density="compact", flat=True,
+            style="min-height: 48px",
+        ):
+            v3.VSelect(
+                v_model="tasks_workspace_filter",
+                items=("task_workspace_options",),
+                label="Workspace",
+                variant="outlined",
+                density="compact",
+                hide_details=True,
+                clearable=True,
+                style="max-width: 200px",
+                item_title="title",
+                item_value="value",
+                __properties=["data-testid"],
+                **{"data-testid": "tasks-filter-workspace"}
+            )
+            v3.VSelect(
+                v_model="tasks_project_filter",
+                items=("task_project_options",),
+                label="Project",
+                variant="outlined",
+                density="compact",
+                hide_details=True,
+                clearable=True,
+                style="max-width: 200px; margin-left: 8px",
+                item_title="title",
+                item_value="value",
+                __properties=["data-testid"],
+                **{"data-testid": "tasks-filter-project"}
+            )
+            v3.VSpacer()
+            v3.VSwitch(
+                v_model="tasks_hide_test",
+                label="Hide test tasks",
+                density="compact",
+                hide_details=True,
+                color="primary",
+                __properties=["data-testid"],
+                **{"data-testid": "tasks-hide-test-toggle"}
+            )
+
         # Date range filters row (Phase 9)
         with v3.VToolbar(
             v_if="!is_loading",

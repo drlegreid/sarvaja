@@ -63,6 +63,26 @@ def _enrich_project_name(tasks, ws_project_map):
     return tasks
 
 
+# Phase 4: Test task prefix patterns
+_TEST_PREFIXES = ("CRUD-", "INTTEST-", "TEST-")
+
+
+def _filter_test_tasks(tasks):
+    """FIX-FILT-001: Remove test tasks from display list.
+
+    Filters out tasks where task_type='test' or task_id starts
+    with test prefixes (CRUD-*, INTTEST-*, TEST-*).
+    """
+    return [
+        t for t in tasks
+        if t.get("task_type") != "test"
+        and not any(
+            (t.get("task_id") or "").startswith(pfx)
+            for pfx in _TEST_PREFIXES
+        )
+    ]
+
+
 
 
 def register_tasks_controllers(state: Any, ctrl: Any, api_base_url: str) -> dict:
@@ -70,6 +90,31 @@ def register_tasks_controllers(state: Any, ctrl: Any, api_base_url: str) -> dict
 
     # Register navigation handlers
     register_tasks_navigation(state, ctrl, api_base_url)
+
+    def _populate_filter_options(ws_map):
+        """Phase 4: Populate workspace and project dropdown options from ws_map."""
+        try:
+            with httpx.Client(timeout=5.0) as client:
+                resp = client.get(f"{api_base_url}/api/workspaces")
+                if resp.status_code == 200:
+                    workspaces = resp.json()
+                    state.task_workspace_options = [
+                        {"title": ws.get("name", ws["workspace_id"]),
+                         "value": ws["workspace_id"]}
+                        for ws in workspaces
+                    ]
+                    # Unique projects from workspaces
+                    projects = {}
+                    for ws in workspaces:
+                        pid = ws.get("project_id")
+                        if pid and pid not in projects:
+                            projects[pid] = pid
+                    state.task_project_options = [
+                        {"title": pid, "value": pid}
+                        for pid in sorted(projects.keys())
+                    ]
+        except Exception:
+            pass
 
     @ctrl.trigger("select_task")
     def select_task(task_id):
@@ -509,6 +554,25 @@ def register_tasks_controllers(state: Any, ctrl: Any, api_base_url: str) -> dict
             state.tasks_page = 1
             load_tasks_page()
 
+    # Phase 4: Workspace + Project + Hide Test filter handlers
+    @state.change("tasks_workspace_filter")
+    def _on_tasks_workspace_filter(tasks_workspace_filter, **kwargs):
+        if state.active_view == "tasks":
+            state.tasks_page = 1
+            load_tasks_page()
+
+    @state.change("tasks_project_filter")
+    def _on_tasks_project_filter(tasks_project_filter, **kwargs):
+        if state.active_view == "tasks":
+            state.tasks_page = 1
+            load_tasks_page()
+
+    @state.change("tasks_hide_test")
+    def _on_tasks_hide_test(tasks_hide_test, **kwargs):
+        if state.active_view == "tasks":
+            state.tasks_page = 1
+            load_tasks_page()
+
     @state.change("tasks_filter_type")
     def _on_tasks_filter_type(tasks_filter_type, **kwargs):
         """Map tab selection to status filter (cascades to _on_tasks_status_filter)."""
@@ -549,6 +613,21 @@ def register_tasks_controllers(state: Any, ctrl: Any, api_base_url: str) -> dict
                 val = getattr(state, state_key, None)
                 if val:
                     params[param_name] = val
+            # Phase 4: Workspace filter (server-side via API)
+            workspace_filter = getattr(state, 'tasks_workspace_filter', None)
+            if workspace_filter:
+                params["workspace_id"] = workspace_filter
+            # Phase 4: Project filter → resolve to workspace_ids
+            project_filter = getattr(state, 'tasks_project_filter', None)
+            if project_filter and not workspace_filter:
+                # Find all workspaces matching this project_id
+                ws_map = _fetch_workspace_project_map(api_base_url)
+                matching_ws = [
+                    ws_id for ws_id, proj in ws_map.items()
+                    if proj == project_filter
+                ]
+                if matching_ws:
+                    params["workspace_id"] = matching_ws[0]
             # Phase 9d: Server-side search
             search_query = getattr(state, 'tasks_search_query', '') or ''
             if search_query.strip():
@@ -574,12 +653,19 @@ def register_tasks_controllers(state: Any, ctrl: Any, api_base_url: str) -> dict
                             "returned": len(data),
                         }
                     _ws_map = _fetch_workspace_project_map(api_base_url)
-                    state.tasks = _enrich_project_name(
+                    enriched = _enrich_project_name(
                         _enrich_first_session(_enrich_doc_count(format_timestamps_in_list(
                             state.tasks, ["created_at", "completed_at", "claimed_at"]
                         ))),
                         _ws_map,
                     )
+                    # Phase 4: Client-side hide test tasks filter
+                    hide_test = getattr(state, 'tasks_hide_test', True)
+                    if hide_test:
+                        enriched = _filter_test_tasks(enriched)
+                    state.tasks = enriched
+                    # Phase 4: Populate workspace/project dropdown options
+                    _populate_filter_options(_ws_map)
                     state.status_message = f"Loaded {len(state.tasks)} tasks"
                     # Phase 9e: Update histogram from loaded tasks
                     if _has_task_plotly():

@@ -304,12 +304,18 @@ def get_initial_state() -> Dict[str, Any]:
         'tasks_completed_after': None,
         'tasks_completed_before': None,
         'tasks_session_filter': None,    # Phase 9d: session_id filter
+        'tasks_workspace_filter': None,  # Phase 4: workspace_id filter
+        'tasks_project_filter': None,    # Phase 4: project_id filter
+        'tasks_hide_test': True,         # Phase 4: hide test tasks by default
         # Filter dropdown options (must match items= in tasks/list.py)
         'task_status_options': ['TODO', 'IN_PROGRESS', 'DONE', 'BLOCKED'],
         'task_phase_options': ['P10', 'P11', 'P12', 'R&D', 'FH', 'KAN', 'ORCH', 'DOCVIEW'],
         # Task taxonomy dropdowns (META-TAXON-01-v1)
         'task_type_options': ['bug', 'feature', 'chore', 'research', 'gap', 'epic', 'test', 'specification'],
         'task_priority_options': ['CRITICAL', 'HIGH', 'MEDIUM', 'LOW'],
+        # Workspace/project dropdown options (populated on load)
+        'task_workspace_options': [],    # Phase 4: [{title, value}]
+        'task_project_options': [],      # Phase 4: [{title, value}]
 
         # Tasks histogram (Phase 9e: Plotly stacked bar)
         'tasks_histogram_data': {},
