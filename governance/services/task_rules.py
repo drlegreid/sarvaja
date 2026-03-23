@@ -108,6 +108,23 @@ def validate_on_create(
     return errors
 
 
+def validate_agent_id(agent_id: Optional[str]) -> List[ValidationError]:
+    """Validate agent_id against registered agents (SRVJ-BUG-023).
+
+    Returns empty list if None (optional) or valid. Returns error if non-null
+    but not in VALID_AGENT_IDS.
+    """
+    if agent_id is None:
+        return []
+    from governance.stores.agents import VALID_AGENT_IDS
+    if agent_id not in VALID_AGENT_IDS:
+        return [ValidationError(
+            "InvalidAgent", "agent_id",
+            f"Invalid agent_id '{agent_id}'. Must be one of: {sorted(VALID_AGENT_IDS)}",
+        )]
+    return []
+
+
 def validate_on_complete(
     task_id: str,
     summary: Optional[str] = None,
@@ -145,6 +162,9 @@ def validate_on_complete(
             "RequiredField", "agent_id",
             "DONE tasks must have an agent_id (who did the work)",
         ))
+    else:
+        # Rule 3b: agent_id must be a registered agent (SRVJ-BUG-023)
+        errors.extend(validate_agent_id(agent_id))
 
     # Rule 4: Must have completed_at (SRVJ-BUG-002)
     if not completed_at:

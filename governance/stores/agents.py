@@ -88,6 +88,13 @@ _AGENT_BASE_CONFIG = {
 }
 
 
+# SRVJ-BUG-023: Exported frozenset of valid agent IDs for write-time validation
+VALID_AGENT_IDS: frozenset = frozenset(_AGENT_BASE_CONFIG.keys())
+
+# DRY: Single source for default auto-assigned agent (H-TASK-002)
+DEFAULT_AGENT_ID: str = "code-agent"
+
+
 def _load_workflow_configs() -> Dict[str, Dict[str, Any]]:
     """Load workflow configs from agents.yaml, keyed by agent store ID."""
     configs = {}

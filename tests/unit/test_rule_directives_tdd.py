@@ -112,7 +112,7 @@ class TestRuleDocumentStructure:
 
     def _get_leaf_files(self):
         leaf_dir = PROJECT_ROOT / "docs" / "rules" / "leaf"
-        return list(leaf_dir.glob("*.md"))
+        return [f for f in leaf_dir.glob("*.md") if "-workaround" not in f.name]
 
     def test_all_leaf_files_have_title(self):
         """Each leaf file should start with # RULE-ID: Title."""

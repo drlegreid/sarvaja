@@ -113,7 +113,7 @@ class TestUpdateTask:
     @patch("governance.services.tasks_mutations.record_audit")
     @patch("governance.services.tasks_mutations.log_event")
     def test_update_records_audit(self, mock_log, mock_audit, mock_client, seed_task):
-        update_task("T-001", status="IN_PROGRESS", agent_id="test-agent")
+        update_task("T-001", status="IN_PROGRESS", agent_id="code-agent")
         mock_audit.assert_called_once()
         call_args = mock_audit.call_args
         assert call_args[0][0] == "UPDATE"

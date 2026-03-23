@@ -42,9 +42,9 @@ class TestGetAllSessions:
         # First call: session IDs; subsequent calls: attributes/relationships
         client._execute_query = MagicMock(side_effect=[
             [{"id": "S-1"}, {"id": "S-2"}],  # get_all_sessions query
-            # _batch_fetch_session_attributes: 8 attr queries + 3 CC int + 1 completed-at
+            # _batch_fetch_session_attributes: 9 attr queries + 3 CC int + 1 completed-at
             [], [], [], [], [],  # name, desc, path, started_at, agent_id
-            [], [], [],  # cc_session_uuid, cc_project_slug, cc_git_branch
+            [], [], [], [],  # cc_session_uuid, cc_project_slug, cc_git_branch, cc_external_name
             [], [], [],  # cc_tool_count, cc_thinking_chars, cc_compaction_count
             [],  # completed-at
             # _batch_fetch_session_relationships: 4 queries
@@ -62,7 +62,7 @@ class TestGetAllSessions:
         client._execute_query = MagicMock(side_effect=[
             [{"id": "S-1"}, {"id": "S-2"}],
             [], [], [], [], [],  # 5 attr queries
-            [], [], [],  # cc_session_uuid, cc_project_slug, cc_git_branch
+            [], [], [], [],  # cc_session_uuid, cc_project_slug, cc_git_branch, cc_external_name
             [], [], [],  # cc_tool_count, cc_thinking_chars, cc_compaction_count
             [{"id": "S-1", "v": "2026-02-11T10:00:00"}],  # completed-at: only S-1
             [], [], [], [],  # relationships
@@ -83,7 +83,7 @@ class TestGetAllSessions:
             [],  # file_path
             [{"id": "S-1", "v": "2026-02-11T08:00:00"}],  # started_at
             [{"id": "S-1", "v": "code-agent"}],  # agent_id
-            [], [], [],  # cc_session_uuid, cc_project_slug, cc_git_branch
+            [], [], [], [],  # cc_session_uuid, cc_project_slug, cc_git_branch, cc_external_name
             [], [], [],  # cc_tool_count, cc_thinking_chars, cc_compaction_count
             [],  # completed-at
             [], [], [], [],  # relationships
@@ -100,7 +100,7 @@ class TestGetAllSessions:
         client._execute_query = MagicMock(side_effect=[
             [{"id": "S-1"}],
             [], [], [], [], [],  # 5 attr queries
-            [], [], [],  # cc_session_uuid, cc_project_slug, cc_git_branch
+            [], [], [], [],  # cc_session_uuid, cc_project_slug, cc_git_branch, cc_external_name
             [], [], [],  # cc_tool_count, cc_thinking_chars, cc_compaction_count
             [],  # completed-at
             [{"sid": "S-1", "rid": "RULE-001"}],  # rules
@@ -125,10 +125,10 @@ class TestGetAllSessions:
             call_count[0] += 1
             if call_count[0] == 1:
                 return [{"id": "S-1"}]
-            # 8 string attr queries + 3 CC int queries = 11 queries (calls 2-12)
-            if call_count[0] <= 12:
+            # 9 string attr queries + 3 CC int queries = 12 queries (calls 2-13)
+            if call_count[0] <= 13:
                 raise Exception("TypeDB attr error")
-            if call_count[0] == 13:
+            if call_count[0] == 14:
                 return []  # completed-at
             return []
 
@@ -143,7 +143,7 @@ class TestGetAllSessions:
         client._execute_query = MagicMock(side_effect=[
             [{"id": "S-1"}, {"id": None}, {"other": "val"}],
             [], [], [], [], [],  # 5 attr queries
-            [], [], [],  # cc string attrs
+            [], [], [], [],  # cc string attrs (incl cc_external_name)
             [], [], [],  # cc int attrs
             [],  # completed-at
             [], [], [], [],  # relationships
@@ -300,6 +300,7 @@ class TestBatchFetchCCAttributes:
             [{"id": "S-1", "v": "abc-123"}],  # cc_session_uuid
             [{"id": "S-1", "v": "sarvaja-platform"}],  # cc_project_slug
             [{"id": "S-1", "v": "master"}],  # cc_git_branch
+            [],  # cc_external_name
             [], [], [],  # cc int attrs
             [],  # completed-at
             [], [], [], [],  # relationships
@@ -315,7 +316,7 @@ class TestBatchFetchCCAttributes:
         client._execute_query = MagicMock(side_effect=[
             [{"id": "S-1"}],
             [], [], [], [], [],  # 5 base attrs
-            [], [], [],  # cc string attrs
+            [], [], [], [],  # cc string attrs (incl cc_external_name)
             [{"id": "S-1", "v": 42}],  # cc_tool_count
             [{"id": "S-1", "v": 15000}],  # cc_thinking_chars
             [{"id": "S-1", "v": 3}],  # cc_compaction_count
@@ -333,7 +334,7 @@ class TestBatchFetchCCAttributes:
         client._execute_query = MagicMock(side_effect=[
             [{"id": "S-1"}],
             [], [], [], [], [],  # 5 base attrs
-            [], [], [],  # cc string attrs (empty)
+            [], [], [], [],  # cc string attrs incl cc_external_name (empty)
             [], [], [],  # cc int attrs (empty)
             [],  # completed-at
             [], [], [], [],  # relationships

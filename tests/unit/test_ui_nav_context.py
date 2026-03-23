@@ -143,8 +143,8 @@ class TestTaskDetailView:
 
         # Should have back-to-source testid
         assert "task-detail-back-to-source" in source
-        # Should trigger navigate_back_to_source
-        assert "navigate_back_to_source" in source
+        # Should navigate back using nav_source_view (inline JS)
+        assert "nav_source_view" in source
 
     def test_conditional_back_buttons(self):
         """Verify both back buttons with correct conditions."""

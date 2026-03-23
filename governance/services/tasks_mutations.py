@@ -73,6 +73,13 @@ def update_task(
     if status:
         status = status.upper()
 
+    # SRVJ-BUG-023: Validate agent_id against registered agents at write boundary
+    if agent_id:
+        from governance.services.task_rules import validate_agent_id
+        agent_errors = validate_agent_id(agent_id)
+        if agent_errors:
+            raise ValueError(f"Invalid agent_id '{agent_id}': {agent_errors[0].message}")
+
     # Per DATA-LINK-01-v1 / EPIC-GOV-TASKS-V2 Phase 2: Auto-link to active session
     # on status transition when no linked_sessions provided
     if status and not linked_sessions:
@@ -171,10 +178,11 @@ def update_task(
             if status and status.upper() == "IN_PROGRESS" and not agent_id:
                 existing_agent = task_obj.agent_id if task_obj else None
                 if not existing_agent:
-                    agent_id = "code-agent"
+                    from governance.stores.agents import DEFAULT_AGENT_ID
+                    agent_id = DEFAULT_AGENT_ID
                     logger.warning(
                         f"[H-TASK-002] Task {task_id} set to IN_PROGRESS without "
-                        f"agent_id, auto-assigning 'code-agent'"
+                        f"agent_id, auto-assigning '{DEFAULT_AGENT_ID}'"
                     )
             if task_obj and (status or evidence):
                 updated = client.update_task_status(
@@ -269,10 +277,11 @@ def update_task(
     if status and status.upper() == "IN_PROGRESS" and not agent_id:
         existing_agent = _tasks_store[task_id].get("agent_id")
         if not existing_agent:
-            agent_id = "code-agent"
+            from governance.stores.agents import DEFAULT_AGENT_ID
+            agent_id = DEFAULT_AGENT_ID
             logger.warning(
                 f"[H-TASK-002] Task {task_id} set to IN_PROGRESS without agent_id, "
-                f"auto-assigning 'code-agent' (fallback path)"
+                f"auto-assigning '{DEFAULT_AGENT_ID}' (fallback path)"
             )
 
     updates = {

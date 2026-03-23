@@ -29,7 +29,7 @@ class TestFileSecurity:
 
     def test_rejects_disallowed_path(self, client):
         response = client.get("/api/files/content?path=secrets/passwords.txt")
-        assert response.status_code == 403
+        assert response.status_code == 404  # Multi-root resolution: no match → 404
 
     def test_rejects_root_path(self, client):
         response = client.get("/api/files/content?path=/etc/passwd")
@@ -37,7 +37,7 @@ class TestFileSecurity:
 
     def test_rejects_no_prefix(self, client):
         response = client.get("/api/files/content?path=random.txt")
-        assert response.status_code == 403
+        assert response.status_code == 404  # Multi-root resolution: no match → 404
 
     def test_rejects_path_traversal(self, client):
         response = client.get("/api/files/content?path=evidence/../../../etc/passwd")

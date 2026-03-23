@@ -323,6 +323,13 @@ def create_task(
     # BUG-STATUS-CASE-001: Normalize status to uppercase at service boundary
     status = (status or "OPEN").upper()
 
+    # SRVJ-BUG-023: Validate agent_id against registered agents at write boundary
+    if agent_id:
+        from governance.services.task_rules import validate_agent_id
+        agent_errors = validate_agent_id(agent_id)
+        if agent_errors:
+            raise ValueError(f"Invalid agent_id '{agent_id}': {agent_errors[0].message}")
+
     # Phase 9c: Extract [Priority: X] tag from description if no explicit priority
     if description and not priority:
         description, extracted_priority = _extract_priority_tag(description)
@@ -367,6 +374,12 @@ def create_task(
             logger.info(f"[SRVJ-FEAT-013] Auto-assigned workspace {workspace_id} to task {task_id or 'TBD'}")
         except ImportError:
             pass
+
+    # SRVJ-BUG-022 / H-TASK-002: Auto-assign agent_id on create with IN_PROGRESS
+    if status == "IN_PROGRESS" and not agent_id:
+        from governance.stores.agents import DEFAULT_AGENT_ID
+        agent_id = DEFAULT_AGENT_ID
+        logger.info(f"[H-TASK-002] Auto-assigned agent_id={DEFAULT_AGENT_ID} on create IN_PROGRESS for {task_id}")
 
     # Auto-trim: if description > 200 chars and no body, split
     if description and len(description) > 200 and not body:

@@ -120,7 +120,8 @@ def register_task_crud_tools(mcp) -> None:
                     phase: Optional[str] = None, priority: Optional[str] = None,
                     task_type: Optional[str] = None,
                     workspace_id: Optional[str] = None,
-                    summary: Optional[str] = None) -> str:
+                    summary: Optional[str] = None,
+                    agent_id: Optional[str] = None) -> str:
         """
         Update an existing task in TypeDB.
 
@@ -129,6 +130,7 @@ def register_task_crud_tools(mcp) -> None:
         auto-linking, audit, and monitoring parity.
         Per EPIC-GOV-TASKS-V2 Phase 4: workspace_id assignment.
         Per FIX-DATA-002: summary is a first-class updatable field.
+        Per SRVJ-BUG-021: agent_id exposed for DONE gate compliance.
 
         Args:
             task_id: Task identifier to update
@@ -139,11 +141,12 @@ def register_task_crud_tools(mcp) -> None:
             task_type: Task type (bug, feature, chore, research, gap, epic, test, specification, spec)
             workspace_id: Workspace ID to assign this task to
             summary: One-line task summary (optional)
+            agent_id: Agent performing the work (must be registered agent)
 
         Returns:
             JSON with updated task details or error
         """
-        if not any([status, name, phase, priority, task_type, workspace_id, summary]):
+        if not any([status, name, phase, priority, task_type, workspace_id, summary, agent_id]):
             return format_mcp_result({"error": "No update fields provided"})
 
         try:
@@ -156,6 +159,7 @@ def register_task_crud_tools(mcp) -> None:
                 task_type=task_type,
                 workspace_id=workspace_id,
                 summary=summary,
+                agent_id=agent_id,
                 source="mcp",
             )
             if result:

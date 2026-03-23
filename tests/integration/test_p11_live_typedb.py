@@ -59,10 +59,10 @@ class TestBug018AgentIdPersistence:
         tid = "P11-INT-018A"
         _create_task(tid)
         try:
-            requests.put(f"{BASE}/tasks/{tid}", json={"agent_id": "explicit-agent"})
+            requests.put(f"{BASE}/tasks/{tid}", json={"agent_id": "research-agent"})
             time.sleep(0.5)
             r = requests.get(f"{BASE}/tasks/{tid}")
-            assert r.json()["agent_id"] == "explicit-agent"
+            assert r.json()["agent_id"] == "research-agent"
         finally:
             _cleanup(tid)
 
@@ -83,12 +83,12 @@ class TestBug018AgentIdPersistence:
         tid = "P11-INT-018C"
         _create_task(tid)
         try:
-            requests.put(f"{BASE}/tasks/{tid}", json={"agent_id": "agent-1"})
+            requests.put(f"{BASE}/tasks/{tid}", json={"agent_id": "code-agent"})
             time.sleep(0.3)
-            requests.put(f"{BASE}/tasks/{tid}", json={"agent_id": "agent-2"})
+            requests.put(f"{BASE}/tasks/{tid}", json={"agent_id": "research-agent"})
             time.sleep(0.5)
             r = requests.get(f"{BASE}/tasks/{tid}")
-            assert r.json()["agent_id"] == "agent-2"
+            assert r.json()["agent_id"] == "research-agent"
         finally:
             _cleanup(tid)
 
@@ -153,6 +153,37 @@ class TestBug020LinkTaskToRuleIdempotency:
             r = requests.get(f"{BASE}/tasks/{tid}")
             rules = r.json().get("linked_rules", [])
             assert len(rules) == 2
+        finally:
+            _cleanup(tid)
+
+
+class TestBug023AgentIdValidation:
+    """SRVJ-BUG-023: invalid agent_id must be rejected at API boundary."""
+
+    def test_invalid_agent_id_rejected(self):
+        """PUT with invalid agent_id must return 4xx/5xx error."""
+        tid = "P11-INT-023A"
+        _create_task(tid)
+        try:
+            r = requests.put(f"{BASE}/tasks/{tid}",
+                             json={"agent_id": "banana", "status": "IN_PROGRESS"})
+            # Should be rejected — either 400/422 or 500 with validation error
+            assert r.status_code >= 400, \
+                f"Invalid agent_id 'banana' should be rejected, got {r.status_code}"
+        finally:
+            _cleanup(tid)
+
+    def test_valid_agent_id_accepted(self):
+        """PUT with valid agent_id must succeed."""
+        tid = "P11-INT-023B"
+        _create_task(tid)
+        try:
+            r = requests.put(f"{BASE}/tasks/{tid}",
+                             json={"agent_id": "research-agent", "status": "IN_PROGRESS"})
+            assert r.status_code == 200
+            time.sleep(0.5)
+            r = requests.get(f"{BASE}/tasks/{tid}")
+            assert r.json()["agent_id"] == "research-agent"
         finally:
             _cleanup(tid)
 
