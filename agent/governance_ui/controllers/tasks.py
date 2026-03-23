@@ -555,6 +555,10 @@ def register_tasks_controllers(state: Any, ctrl: Any, api_base_url: str) -> dict
             add_error_trace(state, f"Link session failed: {e}", f"/api/tasks/{task_id}/sessions/{session_id}")
             state.has_error = True
             state.error_message = f"Link session failed: {type(e).__name__}"
+        finally:
+            # BUG-014: Always close dialog after link attempt
+            state.show_link_session_dialog = False
+            state.link_session_search = ""
 
     # --- Link Document dialog handlers (SRVJ-FEAT-012) ---
 
@@ -567,9 +571,10 @@ def register_tasks_controllers(state: Any, ctrl: Any, api_base_url: str) -> dict
         state.show_link_document_dialog = True
         try:
             with httpx.Client(timeout=10.0) as client:
+                # BUG-015: Use /api/files/list (workspace scan), not /api/documents (404)
                 response = client.get(
-                    f"{api_base_url}/api/documents",
-                    params={"limit": 200}
+                    f"{api_base_url}/api/files/list",
+                    params={"directory": "docs", "pattern": "*.md", "recursive": "true"}
                 )
                 if response.status_code == 200:
                     data = response.json()

@@ -12,12 +12,54 @@ from fastapi import APIRouter, HTTPException, Query
 from datetime import datetime
 import logging
 import os
+from pathlib import Path
 
 logger = logging.getLogger(__name__)
 
 from governance.models import FileContentResponse
 
 router = APIRouter(tags=["Files"])
+
+
+# =============================================================================
+# FILE LISTING ENDPOINT (BUG-015: needed by link document dialog)
+# =============================================================================
+
+@router.get("/files/list")
+async def list_files(
+    directory: str = Query("docs", description="Directory to list (relative to project root)"),
+    pattern: str = Query("*.md", description="Glob pattern"),
+    recursive: str = Query("false", description="Search recursively"),
+):
+    """List files in a directory. Used by link document dialog (SRVJ-FEAT-012)."""
+    project_root = Path(os.path.dirname(__file__)).parent.parent
+    dir_path = project_root / directory
+
+    if not dir_path.exists() or not dir_path.is_dir():
+        raise HTTPException(status_code=404, detail=f"Directory not found: {directory}")
+
+    # Path traversal guard
+    real_root = project_root.resolve()
+    real_dir = dir_path.resolve()
+    if not str(real_dir).startswith(str(real_root)):
+        raise HTTPException(status_code=403, detail="Path traversal not allowed")
+
+    try:
+        is_recursive = recursive.lower() in ("true", "1", "yes")
+        files = list(dir_path.rglob(pattern)) if is_recursive else list(dir_path.glob(pattern))
+        files.sort(key=lambda f: f.stat().st_mtime, reverse=True)
+
+        items = []
+        for f in files[:200]:  # Cap at 200
+            try:
+                rel = f.relative_to(project_root)
+                items.append({"path": str(rel), "name": f.name, "size": f.stat().st_size})
+            except (ValueError, OSError):
+                continue
+        return items
+    except Exception as e:
+        logger.error(f"list_files failed: {type(e).__name__}", exc_info=True)
+        raise HTTPException(status_code=500, detail="Failed to list files")
 
 
 # =============================================================================

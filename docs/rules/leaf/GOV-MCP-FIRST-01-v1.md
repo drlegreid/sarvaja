@@ -1,7 +1,7 @@
 # GOV-MCP-FIRST-01-v1: MCP-First Data Management
 
-**Category:** `governance` | **Priority:** CRITICAL | **Status:** ACTIVE | **Type:** OPERATIONAL
-**Enforcement:** MANDATORY (upgraded from RECOMMENDED — EPIC-GOV-TASKS-V2 Phase 8)
+**Category:** `governance` | **Priority:** LOW | **Status:** SUSPENDED | **Type:** OPERATIONAL
+**Enforcement:** SUSPENDED (2026-03-23 — MCP task system unstable, reverted to TodoWrite)
 
 > **Location:** [RULES-GOVERNANCE.md](../governance/RULES-GOVERNANCE.md)
 > **Tags:** `mcp`, `governance`, `typedb`, `source-of-truth`, `enforcement`

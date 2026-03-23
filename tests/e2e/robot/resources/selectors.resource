@@ -53,6 +53,23 @@ ${TASKS_TABLE_HEADER}           ${TASKS_TABLE} thead
 ${TASKS_TABLE_BODY}             ${TASKS_TABLE} tbody
 ${TASKS_REFRESH_BTN}            [data-testid='refresh-btn']
 
+# ── Task detail: linking dialogs (P8) ──
+${TASK_SESSION_CHIP}            [data-testid='task-session-chip']
+${TASK_LINK_SESSION_BTN}        [data-testid='task-link-session-btn']
+${TASK_LINK_DOCUMENT_BTN}       [data-testid='task-attach-doc-btn']
+${LINK_SESSION_DIALOG}          [data-testid='link-session-dialog']
+${LINK_SESSION_SEARCH}          [data-testid='link-session-search']
+${LINK_SESSION_ITEM}            [data-testid='link-session-item']
+${LINK_SESSION_CLOSE_BTN}       [data-testid='link-session-close-btn']
+${LINK_DOCUMENT_DIALOG}         [data-testid='link-document-dialog']
+${LINK_DOCUMENT_SEARCH}         [data-testid='link-document-search']
+${LINK_DOCUMENT_ITEM}           [data-testid='link-document-item']
+${LINK_DOCUMENT_SUBMIT_BTN}     [data-testid='link-document-submit-btn']
+${LINK_DOCUMENT_CANCEL_BTN}     [data-testid='link-document-cancel-btn']
+# ── Task detail: back/navigation ──
+${TASK_BACK_BTN}                [data-testid='back-to-source-btn']
+${NAV_BACK_BTN}                 text=Back
+
 # ── Sessions view ──
 ${SESSIONS_TABLE}               [data-testid='sessions-table']
 ${SESSIONS_SEARCH}              [data-testid='sessions-search']

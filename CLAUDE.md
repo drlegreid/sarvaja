@@ -83,7 +83,7 @@ python3 -m venv .venv
 | ARCH, UI | Architecture, Infrastructure | [RULES-TECHNICAL.md](docs/rules/RULES-TECHNICAL.md) |
 | WORKFLOW, TEST, SAFETY, CONTAINER, DOC | Operations | [RULES-OPERATIONAL.md](docs/rules/RULES-OPERATIONAL.md) |
 
-**CRITICAL Rules:** SESSION-EVID-01, TEST-GUARD-01, TEST-E2E-01, CONTAINER-DEV-01, GOV-RULE-01, GOV-BICAM-01, GOV-MCP-FIRST-01, TASK-EPIC-01, WORKFLOW-AUTO-01, WORKFLOW-RD-01, ARCH-INFRA-01, SAFETY-HEALTH-01, TEST-COMP-02, RECOVER-AMNES-01, WORKFLOW-AUTO-02, DOC-LINK-01, TEST-FIX-01, RECOVER-CRASH-01, SAFETY-DESTR-01
+**CRITICAL Rules:** SESSION-EVID-01, TEST-GUARD-01, TEST-E2E-01, CONTAINER-DEV-01, GOV-RULE-01, GOV-BICAM-01, TASK-EPIC-01, WORKFLOW-AUTO-01, WORKFLOW-RD-01, ARCH-INFRA-01, SAFETY-HEALTH-01, TEST-COMP-02, RECOVER-AMNES-01, WORKFLOW-AUTO-02, DOC-LINK-01, TEST-FIX-01, RECOVER-CRASH-01, SAFETY-DESTR-01
 
 ## Data Flow Verification (TEST-E2E-01-v1)
 
@@ -103,22 +103,20 @@ python3 -m venv .venv
 
 **Passive screenshots are NOT Tier 3.** CRUD interaction with state change verification is required.
 
-## Task Management (GOV-MCP-FIRST-01-v1 — MANDATORY)
+## Task Management (GOV-MCP-FIRST-01-v1 — SUSPENDED)
 
-**MCP tools are the EXCLUSIVE task interface. TodoWrite/TODO.md are fallback only.**
+**GOV-MCP-FIRST-01 suspended 2026-03-23 — MCP task system unstable.**
+**Use TodoWrite for task tracking. MCP tools optional, not mandatory.**
 
-| Action | Use This | NOT This |
-|--------|----------|----------|
-| Create task | `mcp__gov-tasks__task_create()` | Editing TODO.md |
-| Update status | `mcp__gov-tasks__task_update()` | Editing TODO.md |
-| Create rule | `mcp__gov-core__rule_create()` | Editing docs/rules/ |
-| Start session | `mcp__gov-sessions__session_start()` | Manual evidence files |
+| Action | Use This |
+|--------|----------|
+| Track tasks | `TodoWrite` |
+| Create rule | `mcp__gov-core__rule_create()` (rules MCP stable) |
+| Start session | `mcp__gov-sessions__session_start()` (sessions MCP stable) |
 
-**Enforcement**: `mcp_usage_checker.py` warns when MCP is healthy but unused.
-**TodoWrite** = progress display only (auto-synced to TypeDB via hook).
-**TODO.md** = emergency fallback when MCP services are down.
-**TypeDB** = source of truth for all tasks, rules, sessions.
-**Sync**: `governance/services/todo_sync.py` syncs TypeDB → TODO.md for visibility.
+**TodoWrite** = primary task tracking tool.
+**MCP tasks** = optional, use when stable.
+**TypeDB** = source of truth for rules and sessions only until task MCP stabilized.
 
 ## Session Start Protocol
 
