@@ -15,10 +15,14 @@ from .list import build_tasks_list_view
 from .detail import build_task_detail_view
 from .forms import build_task_create_dialog
 from .attach_dialog import build_attach_document_dialog
+from .link_session_dialog import build_link_session_dialog
+from .link_document_dialog import build_link_document_dialog
 
 __all__ = [
     "build_tasks_list_view",
     "build_task_detail_view",
     "build_task_create_dialog",
     "build_attach_document_dialog",
+    "build_link_session_dialog",
+    "build_link_document_dialog",
 ]

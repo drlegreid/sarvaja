@@ -230,6 +230,19 @@ def get_initial_state() -> Dict[str, Any]:
         'show_attach_document_dialog': False,
         'attach_document_path': '',
 
+        # Link Session dialog (SRVJ-FEAT-011)
+        'show_link_session_dialog': False,
+        'link_session_search': '',
+        'link_session_items': [],
+        'link_session_loading': False,
+
+        # Link Document dialog (SRVJ-FEAT-012)
+        'show_link_document_dialog': False,
+        'link_document_search': '',
+        'link_document_items': [],
+        'link_document_selected': [],
+        'link_document_loading': False,
+
         # Task edit mode (inline editing in detail view)
         'edit_task_mode': False,
         'edit_task_description': '',

@@ -359,6 +359,15 @@ def create_task(
         else:
             raise ValueError("Either task_id or task_type must be provided for ID generation")
 
+    # SRVJ-FEAT-013: Auto-assign default workspace when not provided
+    if not workspace_id:
+        try:
+            from agent.governance_ui.state.constants import DEFAULT_WORKSPACE_ID
+            workspace_id = DEFAULT_WORKSPACE_ID
+            logger.info(f"[SRVJ-FEAT-013] Auto-assigned workspace {workspace_id} to task {task_id or 'TBD'}")
+        except ImportError:
+            pass
+
     # Auto-trim: if description > 200 chars and no body, split
     if description and len(description) > 200 and not body:
         body = description

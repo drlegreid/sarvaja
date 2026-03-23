@@ -136,6 +136,10 @@ def register_tasks_navigation(state: Any, ctrl: Any, api_base_url: str) -> None:
                 add_error_trace(state, f"Navigate to session failed: {e}", f"/api/sessions/{session_id}")
                 state.error_message = f"Failed to load session {session_id}"
 
+        # BUG-013: Force Trame reactivity after cross-view navigation
+        state.dirty('active_view')
+        state.dirty('show_session_detail')
+
     @ctrl.trigger("navigate_back_to_source")
     def navigate_back_to_source():
         """Navigate back to the source entity (UI-NAV-01-v1)."""
@@ -156,7 +160,28 @@ def register_tasks_navigation(state: Any, ctrl: Any, api_base_url: str) -> None:
         state.nav_source_id = None
         state.nav_source_label = None
 
-        if source_view == 'sessions' and source_id:
+        if source_view == 'tasks' and source_id:
+            state.active_view = 'tasks'
+            # Reload task detail — BUG-013 fix
+            for task in state.tasks:
+                if task.get('task_id') == source_id or task.get('id') == source_id:
+                    state.selected_task = task
+                    state.show_task_detail = True
+                    state.dirty('active_view')
+                    state.dirty('show_task_detail')
+                    return
+            try:
+                with httpx.Client(timeout=10.0) as client:
+                    response = client.get(f"{api_base_url}/api/tasks/{source_id}")
+                    if response.status_code == 200:
+                        state.selected_task = response.json()
+                        state.show_task_detail = True
+            except Exception as e:
+                add_error_trace(state, f"Navigate back to task failed: {e}", f"/api/tasks/{source_id}")
+            state.dirty('active_view')
+            state.dirty('show_task_detail')
+            return
+        elif source_view == 'sessions' and source_id:
             state.active_view = 'sessions'
             for session in state.sessions:
                 sid = session.get('session_id') or session.get('id')

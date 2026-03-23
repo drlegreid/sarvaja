@@ -239,6 +239,12 @@ CHAT_STATUS_ICONS: Dict[str, str] = {
 # TASK EXECUTION (ORCH-007)
 # =============================================================================
 
+# =============================================================================
+# DEFAULT WORKSPACE (SRVJ-FEAT-013)
+# =============================================================================
+
+DEFAULT_WORKSPACE_ID: str = "WS-9147535A"
+
 EXECUTION_EVENT_TYPES: Dict[str, Dict[str, str]] = {
     'claimed': {'icon': 'mdi-hand-back-right', 'color': 'info'},
     'started': {'icon': 'mdi-play', 'color': 'primary'},

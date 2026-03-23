@@ -298,25 +298,25 @@ def build_task_linked_items() -> None:
                     __properties=["data-testid"],
                     **{"data-testid": "task-document-chip"}
                 )
-            # Link Document button (references, not uploads)
+            # Link Document button — opens tree browser dialog (SRVJ-FEAT-012)
             v3.VBtn(
                 "Link Document",
                 prepend_icon="mdi-file-link",
                 variant="outlined",
                 size="small",
-                click="show_attach_document_dialog = true",
+                click="trigger('open_link_document_dialog')",
                 v_if="!edit_task_mode",
                 classes="mb-2 mr-2",
                 __properties=["data-testid"],
                 **{"data-testid": "task-attach-doc-btn"}
             )
-            # Link Session button
+            # Link Session button — opens picker dialog (SRVJ-FEAT-011)
             v3.VBtn(
                 "Link Session",
                 prepend_icon="mdi-link-variant",
                 variant="outlined",
                 size="small",
-                click="show_link_session_dialog = true",
+                click="trigger('open_link_session_dialog')",
                 v_if="!edit_task_mode",
                 classes="mb-2",
                 __properties=["data-testid"],

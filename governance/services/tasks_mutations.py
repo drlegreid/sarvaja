@@ -91,6 +91,39 @@ def update_task(
     # SRVJ-FEAT-002: DONE gate — validate mandatory fields on completion
     if status and status.upper() == "DONE":
         from governance.services.task_rules import validate_on_complete, format_validation_result
+        # BUG-DONE-GATE-STALE: Pre-load task from TypeDB into _tasks_store
+        # before DONE gate check. MCP-created tasks may not be in _tasks_store yet.
+        if task_id not in _tasks_store:
+            _preload_client = get_typedb_client()
+            if _preload_client:
+                _preload_obj = _preload_client.get_task(task_id)
+                if _preload_obj:
+                    _claimed = getattr(_preload_obj, 'claimed_at', None)
+                    _completed = getattr(_preload_obj, 'completed_at', None)
+                    _tasks_store[task_id] = {
+                        "task_id": task_id,
+                        "description": _preload_obj.name or getattr(_preload_obj, 'description', '') or "",
+                        "phase": _preload_obj.phase or "",
+                        "status": _preload_obj.status or "TODO",
+                        "agent_id": _preload_obj.agent_id,
+                        "created_at": _preload_obj.created_at.isoformat() if _preload_obj.created_at else None,
+                        "body": getattr(_preload_obj, 'body', None),
+                        "gap_id": getattr(_preload_obj, 'gap_id', None),
+                        "priority": getattr(_preload_obj, 'priority', None),
+                        "task_type": getattr(_preload_obj, 'task_type', None),
+                        "evidence": getattr(_preload_obj, 'evidence', None),
+                        "resolution": getattr(_preload_obj, 'resolution', None),
+                        "claimed_at": _claimed.isoformat() if _claimed else None,
+                        "completed_at": _completed.isoformat() if _completed else None,
+                        "document_path": getattr(_preload_obj, 'document_path', None),
+                        "linked_rules": getattr(_preload_obj, 'linked_rules', []) or [],
+                        "linked_sessions": getattr(_preload_obj, 'linked_sessions', []) or [],
+                        "linked_commits": getattr(_preload_obj, 'linked_commits', []) or [],
+                        "linked_documents": getattr(_preload_obj, 'linked_documents', []) or [],
+                        "summary": getattr(_preload_obj, 'summary', None) or _preload_obj.name,
+                        "workspace_id": getattr(_preload_obj, 'workspace_id', None),
+                    }
+                    logger.info(f"[DONE-GATE] Pre-loaded task {task_id} from TypeDB into _tasks_store")
         # Gather existing task data for validation
         existing = _tasks_store.get(task_id, {})
         effective_summary = summary or existing.get("summary")

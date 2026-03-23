@@ -16,6 +16,7 @@ Module structure (RULE-032 compliant):
 from .tasks import (
     build_tasks_list_view, build_task_detail_view,
     build_task_create_dialog, build_attach_document_dialog,
+    build_link_session_dialog, build_link_document_dialog,
 )
 
 
@@ -30,3 +31,5 @@ def build_tasks_view() -> None:
     build_task_detail_view()
     build_task_create_dialog()
     build_attach_document_dialog()
+    build_link_session_dialog()
+    build_link_document_dialog()
