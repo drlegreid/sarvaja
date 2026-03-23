@@ -13,7 +13,7 @@ Resource    ../resources/api.resource
 
 Suite Setup       Setup Task Quality Suite
 Suite Teardown    Teardown Task Quality Suite
-Test Setup        Setup Task Quality Test
+Test Setup        Setup Task Quality Test Lightweight
 
 Default Tags    e2e    browser    tasks    quality
 
@@ -45,11 +45,17 @@ Teardown Task Quality Suite
     Cleanup Test Task    ${QUAL_HIDE_TASK}
     Cleanup Test Task    ${QUAL_PROJ_TASK}
 
-Setup Task Quality Test
-    [Documentation]    Navigate home and then to tasks view.
-    Test Setup Navigate Home
+Setup Task Quality Test Lightweight
+    [Documentation]    SPA navigation to tasks view — avoids full reload.
+    ...                SRVJ-FEAT-006: Conserves Trame WS connections.
+    ...                Full page reload (Go To) creates new WS per test.
+    ...                With 6+ tests, Trame hits connection limit.
+    # SPA navigation — reuses existing WS connection
     Navigate To Tab    tasks
     Wait For Elements State    [data-testid='tasks-list']    visible    timeout=10s
+    # Clear leftover search from previous test
+    Fill Text    ${TASKS_SEARCH} input    ${EMPTY}
+    Sleep    500ms    reason=Wait for search clear to apply
 
 *** Test Cases ***
 Task Table Renders 12 Columns
@@ -101,12 +107,16 @@ Hide Test Toggle Filters Test Type Tasks
     [Documentation]    Toggle OFF → test task visible. Toggle ON → hidden.
     ...                SRVJ-BUG-006: Fails if filter doesn't re-apply after refresh.
     [Tags]    e2e    browser    tasks    quality    bug-006
-    # Search for our test-type task
-    Fill Text    ${TASKS_SEARCH} input    ${QUAL_HIDE_TASK}
+    # Refresh data first to ensure test tasks are loaded from API
+    Click    ${TASKS_REFRESH_BTN}
+    Sleep    2s    reason=Wait for API refresh to complete
     # Uncheck "Hide test tasks" toggle to show test tasks
     ${toggle}=    Get Element    ${TASKS_HIDE_TEST_TOGGLE}
     Click    ${toggle}
     Sleep    1s    reason=Wait for reactive filter to re-fetch
+    # Now search for our test-type task
+    Fill Text    ${TASKS_SEARCH} input    ${QUAL_HIDE_TASK}
+    Sleep    1s    reason=Wait for search filter to apply
     Wait For Table Rows
     # Verify test task IS visible when toggle is OFF
     ${visible_ids}=    Get Text    ${TASKS_TABLE_BODY}

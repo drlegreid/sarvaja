@@ -15,6 +15,7 @@ from .forms import (
     build_task_linked_items,
 )
 from .execution import build_task_execution_log
+from .evidence_preview import build_task_evidence_preview
 
 
 def build_task_tech_docs() -> None:
@@ -293,6 +294,9 @@ def build_task_detail_view() -> None:
 
             # Technology Solution Documentation (TASK-TECH-01-v1)
             build_task_tech_docs()
+
+            # Evidence Preview (SRVJ-FEAT-009)
+            build_task_evidence_preview()
 
             # Execution Log Section (ORCH-007)
             build_task_execution_log()

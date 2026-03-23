@@ -60,6 +60,7 @@ API_MAX_LIMIT = 200  # API enforces max 200 items per request
 TEST_DATA_PREFIXES = [
     "TEST-", "AGENT-TEST-", "UI-TEST-", "VERIFY-TEST-",
     "LINK-TEST-", "TASK-TEST-", "SESSION-TEST-", "E2E-TEST-",
+    "E2E-", "E2E-QUAL-", "RF-QUAL-", "INTTEST-", "CRUD-",
 ]
 
 

@@ -23,6 +23,7 @@ from .workflow import router as workflow_router
 from .execution import router as execution_router
 from .verification import router as verification_router
 from .details import router as details_router
+from .evidence import router as evidence_router
 
 # Combined router for backward compatibility
 # NOTE: Order matters! Static routes (workflow) must come before dynamic routes (crud)
@@ -32,7 +33,8 @@ router.include_router(workflow_router)  # /available, /claim, /complete first
 router.include_router(execution_router)  # /execution-log
 router.include_router(verification_router)  # /{task_id}/verification
 router.include_router(details_router)  # /{task_id}/details
+router.include_router(evidence_router)  # /{task_id}/evidence (SRVJ-FEAT-009)
 router.include_router(crud_router)  # /{task_id} dynamic routes last
 
 __all__ = ['router', 'crud_router', 'workflow_router', 'execution_router',
-           'verification_router', 'details_router']
+           'verification_router', 'details_router', 'evidence_router']

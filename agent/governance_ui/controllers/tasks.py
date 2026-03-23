@@ -124,6 +124,8 @@ def register_tasks_controllers(state: Any, ctrl: Any, api_base_url: str) -> dict
         state.task_execution_log = []
         state.show_task_execution = False  # Close chat dialog if open
         state.show_task_execution_inline = False  # BUG-TASK-POPUP-001
+        state.task_evidence_files = []  # SRVJ-FEAT-009: Clear evidence
+        state.task_evidence_loading = False
         state.nav_source_view = None
         state.nav_source_id = None
         state.nav_source_label = None
@@ -134,6 +136,7 @@ def register_tasks_controllers(state: Any, ctrl: Any, api_base_url: str) -> dict
                     state.selected_task = response.json()
                     state.show_task_detail = True
                     _auto_load_task_execution(task_id)
+                    _auto_load_task_evidence(task_id)
                     return
         except Exception as e:
             add_error_trace(state, f"Load task detail failed: {e}", f"/api/tasks/{task_id}")
@@ -144,6 +147,7 @@ def register_tasks_controllers(state: Any, ctrl: Any, api_base_url: str) -> dict
                 state.show_task_detail = True
                 break
         _auto_load_task_execution(task_id)
+        _auto_load_task_evidence(task_id)
 
     def _auto_load_task_execution(task_id):
         """Auto-load execution log when a task is selected."""
@@ -161,6 +165,23 @@ def register_tasks_controllers(state: Any, ctrl: Any, api_base_url: str) -> dict
             state.task_execution_log = []
         finally:
             state.task_execution_loading = False
+
+    def _auto_load_task_evidence(task_id):
+        """Auto-load evidence preview when a task is selected (SRVJ-FEAT-009)."""
+        try:
+            state.task_evidence_loading = True
+            state.task_evidence_files = []
+            with httpx.Client(timeout=10.0) as client:
+                response = client.get(
+                    f"{api_base_url}/api/tasks/{task_id}/evidence/rendered"
+                )
+                if response.status_code == 200:
+                    data = response.json()
+                    state.task_evidence_files = data.get("evidence_files", [])
+        except Exception:
+            state.task_evidence_files = []
+        finally:
+            state.task_evidence_loading = False
 
     @ctrl.trigger("close_task_detail")
     def close_task_detail():

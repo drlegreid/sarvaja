@@ -117,6 +117,7 @@ class TaskLinkingOperations:
         Per P11.3: Entity Linkage - tasks completed in sessions.
         Per GAP-DATA-002: Entity linkage implementation.
         Per EPIC-GOV-TASKS-V2 Phase 2: Session existence pre-check.
+        Per SRVJ-BUG-007: Auto-creates session entity if missing in TypeDB.
 
         Args:
             task_id: Task ID (e.g., "P10.1")
@@ -132,6 +133,27 @@ class TaskLinkingOperations:
                 # BUG-254-ESC-002: Escape backslash THEN quotes for TypeQL safety
                 task_id_escaped = task_id.replace('\\', '\\\\').replace('"', '\\"')
                 session_id_escaped = session_id.replace('\\', '\\\\').replace('"', '\\"')
+
+                # SRVJ-BUG-007: Ensure session entity exists before relation insert.
+                # Sessions may be memory-only (not persisted to TypeDB).
+                check_q = f'match $s isa work-session, has session-id "{session_id_escaped}"; select $s;'
+                check_result = tx.query(check_q).resolve()
+                if not list(check_result or []):
+                    ensure_q = f'insert $s isa work-session, has session-id "{session_id_escaped}";'
+                    tx.query(ensure_q).resolve()
+
+                # SRVJ-BUG-010: Idempotency guard — skip if relation already exists
+                check_rel_q = f"""
+                    match
+                        $t isa task, has task-id "{task_id_escaped}";
+                        $s isa work-session, has session-id "{session_id_escaped}";
+                        (completed-task: $t, hosting-session: $s) isa completed-in;
+                """
+                rel_result = tx.query(check_rel_q).resolve()
+                if list(rel_result or []):
+                    tx.commit()
+                    return True
+
                 # Create the completed-in relation
                 link_query = f"""
                     match

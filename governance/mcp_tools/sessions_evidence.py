@@ -59,6 +59,7 @@ def register_session_evidence_tools(mcp) -> None:
         error_message: Optional[str] = None,
         fixtures_json: Optional[str] = None,
         linked_rules: Optional[str] = None,
+        task_id: Optional[str] = None,
     ) -> str:
         """Push test evidence to holographic store. Per FH-001.
 
@@ -71,6 +72,7 @@ def register_session_evidence_tools(mcp) -> None:
             error_message: Error if failed
             fixtures_json: JSON with fixture/request/response data
             linked_rules: Comma-separated rule IDs
+            task_id: Optional task ID — auto-links evidence to task (SRVJ-FEAT-008)
         """
         if not HOLOGRAPHIC_AVAILABLE:
             return format_mcp_result({"error": "HolographicStore not available"})
@@ -97,11 +99,24 @@ def register_session_evidence_tools(mcp) -> None:
             linked_rules=rules,
         )
 
+        # SRVJ-FEAT-008: Auto-link evidence to task if task_id provided
+        linked = False
+        if task_id:
+            try:
+                from governance.stores import get_typedb_client
+                client = get_typedb_client()
+                if client:
+                    evidence_source = f"evidence/test-{evidence_hash}-{test_id.split('::')[-1]}.md"
+                    linked = client.link_evidence_to_task(task_id, evidence_source)
+            except Exception:
+                pass  # Best-effort linking
+
         return format_mcp_result({
             "evidence_hash": evidence_hash,
             "test_id": test_id,
             "status": status,
             "store_count": store.count,
+            "task_linked": linked,
             "message": f"Evidence pushed: {evidence_hash}"
         })
 

@@ -109,3 +109,27 @@ def parse_mcp_result(result: str) -> dict:
     if isinstance(result, dict):
         return result
     return json.loads(result)
+
+
+# ---------------------------------------------------------------------------
+# SRVJ-FEAT-005: Shared task factory fixtures
+# ---------------------------------------------------------------------------
+
+from tests.shared.task_test_factory import (  # noqa: E402
+    task_factory,
+    module_task_factory,
+    purge_test_artifacts,
+)
+
+
+@pytest.fixture(scope="module", autouse=True)
+def sweep_orphans_after_module():
+    """Safety net: purge any orphaned test artifacts after each module.
+
+    SRVJ-FEAT-007: Ensures no test data leaks even if per-test cleanup fails.
+    """
+    yield
+    try:
+        purge_test_artifacts()
+    except Exception:
+        pass  # Best effort — don't fail tests on cleanup errors

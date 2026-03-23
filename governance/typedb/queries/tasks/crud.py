@@ -213,6 +213,14 @@ class TaskCRUDOperations:
                     for session_id in linked_sessions:
                         # BUG-TYPEQL-ESCAPE-TASK-001 + BUG-272-CRUD-001: Escape backslash FIRST, then quotes
                         sid = session_id.replace('\\', '\\\\').replace('"', '\\"')
+                        # SRVJ-BUG-007: Ensure session entity exists before relation insert.
+                        # Sessions may be memory-only (not in TypeDB), so MATCH would find nothing
+                        # and the completed-in relation would silently not be created.
+                        check_q = f'match $s isa work-session, has session-id "{sid}"; select $s;'
+                        check_result = tx.query(check_q).resolve()
+                        if not list(check_result or []):
+                            ensure_q = f'insert $s isa work-session, has session-id "{sid}";'
+                            tx.query(ensure_q).resolve()
                         rel_query = f"""
                             match
                                 $t isa task, has task-id "{task_id_escaped}";

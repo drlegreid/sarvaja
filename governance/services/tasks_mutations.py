@@ -115,6 +115,16 @@ def update_task(
             result = format_validation_result(done_errors)
             raise ValueError(f"DONE gate validation failed: {result}")
 
+    # SRVJ-FEAT-008: Auto-attach evidence summary for test tasks on DONE
+    if status and status.upper() == "DONE":
+        existing = _tasks_store.get(task_id, {})
+        effective_type = task_type or existing.get("task_type")
+        if effective_type == "test" and not evidence:
+            evidence = (
+                f"[Verification: Auto] Test task completed "
+                f"{datetime.now().strftime('%Y-%m-%d %H:%M')}"
+            )
+
     client = get_typedb_client()
     task_obj = None
     if client:
