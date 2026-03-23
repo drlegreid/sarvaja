@@ -29,7 +29,7 @@ class TestUpdateTaskSetsCompletedAt:
             "agent_id": "code-agent",
             "summary": "Test > Done > Completed At > Timestamp",
             "linked_sessions": ["SESSION-DONE-TEST"],
-            "linked_documents": [],
+            "linked_documents": [".claude/plans/test-plan.md"],
             "completed_at": None,
         }
 

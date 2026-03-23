@@ -234,21 +234,65 @@ class TestValidateOnComplete:
             summary="UI > Task > Fix > Bug",
             agent_id=None,
             linked_sessions=["SESSION-123"],
+            linked_documents=[".claude/plans/test.md"],
         )
         agent_errors = [e for e in errors if e.field == "agent_id"]
         assert len(agent_errors) == 1
 
+    def test_missing_completed_at_fails(self):
+        """DONE without completed_at fails (SRVJ-BUG-002)."""
+        errors = validate_on_complete(
+            task_id="SRVJ-BUG-001",
+            summary="UI > Task > Fix > Bug",
+            agent_id="code-agent",
+            completed_at=None,
+            linked_sessions=["SESSION-123"],
+            linked_documents=[".claude/plans/test.md"],
+        )
+        completed_errors = [e for e in errors if e.field == "completed_at"]
+        assert len(completed_errors) == 1
+        assert "completed_at" in completed_errors[0].message
+
+    def test_missing_linked_documents_fails(self):
+        """DONE without linked_documents fails (SRVJ-BUG-002)."""
+        errors = validate_on_complete(
+            task_id="SRVJ-BUG-001",
+            summary="UI > Task > Fix > Bug",
+            agent_id="code-agent",
+            completed_at="2026-03-22T20:36:58",
+            linked_sessions=["SESSION-123"],
+            linked_documents=[],
+        )
+        doc_errors = [e for e in errors if e.field == "linked_documents"]
+        assert len(doc_errors) == 1
+        assert "linked document" in doc_errors[0].message
+
+    def test_none_linked_documents_fails(self):
+        """DONE with None linked_documents fails."""
+        errors = validate_on_complete(
+            task_id="SRVJ-BUG-001",
+            summary="UI > Task > Fix > Bug",
+            agent_id="code-agent",
+            completed_at="2026-03-22T20:36:58",
+            linked_sessions=["SESSION-123"],
+            linked_documents=None,
+        )
+        doc_errors = [e for e in errors if e.field == "linked_documents"]
+        assert len(doc_errors) == 1
+
     def test_all_missing_returns_all_errors(self):
-        """DONE with nothing returns all 3 errors."""
+        """DONE with nothing returns all 5 errors (SRVJ-BUG-002: was 3, now 5)."""
         errors = validate_on_complete(
             task_id="SRVJ-BUG-001",
             summary=None,
             agent_id=None,
+            completed_at=None,
             linked_sessions=None,
+            linked_documents=None,
         )
-        assert len(errors) == 3
+        assert len(errors) == 5
         fields = {e.field for e in errors}
-        assert fields == {"linked_sessions", "summary", "agent_id"}
+        assert fields == {"linked_sessions", "summary", "agent_id", "completed_at", "linked_documents"}
 
 
 # =============================================================================
@@ -576,11 +620,40 @@ class TestUpdateTaskDoneGate:
                 agent_id="code-agent",
                 summary="UI > Test > Done > WithFields",
                 linked_sessions=["SESSION-456"],
+                linked_documents=[".claude/plans/test.md"],
             )
             assert result is not None
             assert result["status"] == "DONE"
         finally:
             _tasks_store.pop("TEST-DONE-003", None)
+
+    @patch("governance.services.tasks_mutations.get_typedb_client")
+    def test_done_without_linked_documents_raises(self, mock_client):
+        """DONE without linked_documents raises ValueError (SRVJ-BUG-002)."""
+        from governance.services.tasks_mutations import update_task
+        from governance.stores import _tasks_store
+        mock_client.return_value = None
+
+        _tasks_store["TEST-DONE-NODOC"] = {
+            "task_id": "TEST-DONE-NODOC",
+            "description": "Test task",
+            "phase": "P10",
+            "status": "IN_PROGRESS",
+            "agent_id": "code-agent",
+            "summary": "UI > Test > Done > NoDocs",
+            "linked_sessions": ["SESSION-123"],
+            "linked_documents": [],
+            "created_at": "2026-03-22T00:00:00",
+        }
+
+        try:
+            with pytest.raises(ValueError, match="DONE gate"):
+                update_task(
+                    task_id="TEST-DONE-NODOC",
+                    status="DONE",
+                )
+        finally:
+            _tasks_store.pop("TEST-DONE-NODOC", None)
 
     @patch("governance.services.tasks_mutations.get_typedb_client")
     def test_non_done_status_no_gate(self, mock_client):

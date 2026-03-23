@@ -240,6 +240,7 @@ class TaskReadQueries:
             ("document-path", "dpath", "document_path"),
             ("task-priority", "pri", "priority"),              # BUG-TASK-TAXONOMY-001
             ("task-type", "ttype", "task_type"),               # BUG-TASK-TAXONOMY-001
+            ("task-summary", "summ", "summary"),               # SRVJ-BUG-007: was missing
         ]
         for attr_name, var_name, task_attr in optional_attrs:
             value = self._fetch_task_attr(task_id, attr_name, var_name)

@@ -101,6 +101,11 @@ async def create_task(task: TaskCreate):
     except ValueError as e:
         # BUG-423-TCR-001: Add exc_info for stack trace preservation
         # BUG-469-TCR-003: Sanitize logger message — exc_info=True already captures full stack
+        # SRVJ-BUG-002: Validation errors → 422, conflicts → 409
+        err_msg = str(e)
+        if "Validation failed" in err_msg or "DONE gate" in err_msg:
+            logger.warning(f"create_task validation: {type(e).__name__}", exc_info=True)
+            raise HTTPException(status_code=422, detail=err_msg)
         logger.warning(f"create_task conflict: {type(e).__name__}", exc_info=True)
         raise HTTPException(status_code=409, detail=f"Task conflict: {type(e).__name__}")
     except Exception as e:

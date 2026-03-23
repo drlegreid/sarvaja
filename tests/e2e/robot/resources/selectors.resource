@@ -47,6 +47,11 @@ ${TASKS_SEARCH}                 [data-testid='tasks-search']
 ${TASKS_ADD_BTN}                text=Add Task
 ${TASK_DETAIL}                  [data-testid='task-detail']
 ${TASK_EDIT_BTN}                [data-testid='task-detail-edit-btn']
+# Task quality selectors (Phase B — EPIC-TASK-QUALITY-V1)
+${TASKS_HIDE_TEST_TOGGLE}       text=Hide test tasks
+${TASKS_TABLE_HEADER}           ${TASKS_TABLE} thead
+${TASKS_TABLE_BODY}             ${TASKS_TABLE} tbody
+${TASKS_REFRESH_BTN}            [data-testid='refresh-btn']
 
 # ── Sessions view ──
 ${SESSIONS_TABLE}               [data-testid='sessions-table']

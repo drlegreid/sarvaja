@@ -66,3 +66,42 @@ Health Check Should Pass
     Create API Session
     ${response}=    API GET    /health
     Response Status Should Be    ${response}    200
+
+# ── Task quality keywords (Phase B — EPIC-TASK-QUALITY-V1) ──
+
+Create Test Task
+    [Documentation]    Create a task via API for E2E testing. Returns response.
+    [Arguments]    ${task_id}    ${summary}    ${task_type}=test    ${priority}=LOW    ${workspace_id}=${None}
+    [Tags]    api    tasks
+    ${payload}=    Create Dictionary
+    ...    task_id=${task_id}
+    ...    description=${summary}
+    ...    summary=${summary}
+    ...    task_type=${task_type}
+    ...    priority=${priority}
+    ...    phase=P10
+    IF    $workspace_id is not None
+        Set To Dictionary    ${payload}    workspace_id=${workspace_id}
+    END
+    ${response}=    API POST    /tasks    ${payload}
+    RETURN    ${response}
+
+Cleanup Test Task
+    [Documentation]    Delete a test task. Ignores 404.
+    [Arguments]    ${task_id}
+    [Tags]    api    tasks
+    ${response}=    API DELETE    /tasks/${task_id}
+    Log    Cleanup ${task_id}: ${response.status_code}
+
+Update Task To Done
+    [Documentation]    PUT task to DONE with all mandatory fields.
+    [Arguments]    ${task_id}    ${summary}    ${session_id}=SESSION-RF-QUAL-TEST    ${doc_path}=.claude/plans/bubbly-enchanting-eagle.md
+    [Tags]    api    tasks
+    ${payload}=    Create Dictionary
+    ...    status=DONE
+    ...    agent_id=code-agent
+    ...    summary=${summary}
+    ...    linked_sessions=${{["${session_id}"]}}
+    ...    linked_documents=${{["${doc_path}"]}}
+    ${response}=    API PUT    /tasks/${task_id}    ${payload}
+    RETURN    ${response}

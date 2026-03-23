@@ -112,7 +112,8 @@ class TestAutoLinkOnStatusTransition:
         _tasks_store["T-2"] = {
             "task_id": "T-2", "description": "Done task", "status": "IN_PROGRESS",
             "phase": "P10", "agent_id": "code-agent", "linked_sessions": [],
-            "summary": "Test > Autolink > Done > Session", "linked_documents": [],
+            "summary": "Test > Autolink > Done > Session",
+            "linked_documents": [".claude/plans/test-plan.md"],
         }
         _setup_sessions_store(_sessions_store, {
             "SESSION-2026-03-20-BETA": {

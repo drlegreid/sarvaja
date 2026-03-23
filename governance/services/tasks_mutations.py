@@ -96,7 +96,9 @@ def update_task(
         effective_summary = summary or existing.get("summary")
         effective_agent = agent_id or existing.get("agent_id")
         effective_sessions = linked_sessions or existing.get("linked_sessions", [])
-        effective_completed = existing.get("completed_at")
+        # SRVJ-BUG-002: Pre-compute completed_at — system auto-sets it on DONE
+        # transition (line 230), so validation should see the future value
+        effective_completed = existing.get("completed_at") or datetime.now().isoformat()
         effective_docs = linked_documents or existing.get("linked_documents", [])
 
         done_errors = validate_on_complete(
@@ -295,6 +297,12 @@ def link_task_to_session(task_id: str, session_id: str, source: str = "rest") ->
             return False
         result = client.link_task_to_session(task_id, session_id)
         if result:
+            # SRVJ-BUG-002: Keep _tasks_store in sync for DONE gate validation
+            if task_id in _tasks_store:
+                sessions = _tasks_store[task_id].get("linked_sessions", [])
+                if session_id not in sessions:
+                    sessions.append(session_id)
+                    _tasks_store[task_id]["linked_sessions"] = sessions
             _monitor("link_session", task_id, source=source, session_id=session_id)
         return bool(result)
     except Exception as e:
@@ -314,6 +322,12 @@ def link_task_to_document(task_id: str, document_path: str, source: str = "rest"
             return False
         result = client.link_task_to_document(task_id, document_path)
         if result:
+            # SRVJ-BUG-002: Keep _tasks_store in sync for DONE gate validation
+            if task_id in _tasks_store:
+                docs = _tasks_store[task_id].get("linked_documents", [])
+                if document_path not in docs:
+                    docs.append(document_path)
+                    _tasks_store[task_id]["linked_documents"] = docs
             _monitor("link_document", task_id, source=source, document_path=document_path)
         return bool(result)
     except Exception as e:

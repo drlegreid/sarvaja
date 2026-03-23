@@ -146,6 +146,20 @@ def validate_on_complete(
             "DONE tasks must have an agent_id (who did the work)",
         ))
 
+    # Rule 4: Must have completed_at (SRVJ-BUG-002)
+    if not completed_at:
+        errors.append(ValidationError(
+            "RequiredField", "completed_at",
+            "DONE tasks must have a completed_at timestamp",
+        ))
+
+    # Rule 5: Must have at least 1 linked document / plan reference (SRVJ-BUG-002)
+    if not linked_documents:
+        errors.append(ValidationError(
+            "RequiredField", "linked_documents",
+            "DONE tasks must have at least 1 linked document (plan reference)",
+        ))
+
     return errors
 
 

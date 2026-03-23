@@ -420,6 +420,7 @@ def create_task(
                 # BUG-TASK-UI-001: Cache in _tasks_store so task is visible
                 # even during transient TypeDB read failures
                 response = task_to_response(created)
+                # SRVJ-BUG-007: response is TaskResponse (Pydantic), not dict
                 _tasks_store[task_id] = {
                     "task_id": task_id, "description": description,
                     "phase": phase, "status": status, "priority": priority,
@@ -430,7 +431,8 @@ def create_task(
                     "linked_documents": linked_documents or [],
                     "workspace_id": workspace_id,
                     "summary": summary,
-                    "created_at": response.get("created_at"),
+                    "created_at": getattr(response, "created_at", None)
+                    or datetime.now().isoformat(),
                 }
                 return response
         except ValueError:

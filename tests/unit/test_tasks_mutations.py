@@ -37,7 +37,7 @@ def seed_task():
         "agent_id": "code-agent",
         "summary": "Test > Task > Seed > Fixture",
         "linked_sessions": ["SESSION-SEED"],
-        "linked_documents": [],
+        "linked_documents": [".claude/plans/test-plan.md"],
         "created_at": "2026-02-11T10:00:00",
     }
     return _tasks_store["T-001"]
