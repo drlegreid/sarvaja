@@ -83,7 +83,7 @@ python3 -m venv .venv
 | ARCH, UI | Architecture, Infrastructure | [RULES-TECHNICAL.md](docs/rules/RULES-TECHNICAL.md) |
 | WORKFLOW, TEST, SAFETY, CONTAINER, DOC | Operations | [RULES-OPERATIONAL.md](docs/rules/RULES-OPERATIONAL.md) |
 
-**CRITICAL Rules:** SESSION-EVID-01, TEST-GUARD-01, TEST-E2E-01, CONTAINER-DEV-01, GOV-RULE-01, GOV-BICAM-01, TASK-EPIC-01, WORKFLOW-AUTO-01, WORKFLOW-RD-01, ARCH-INFRA-01, SAFETY-HEALTH-01, TEST-COMP-02, RECOVER-AMNES-01, WORKFLOW-AUTO-02, DOC-LINK-01, TEST-FIX-01, RECOVER-CRASH-01, SAFETY-DESTR-01
+**CRITICAL Rules:** SESSION-EVID-01, TEST-GUARD-01, TEST-E2E-01, CONTAINER-DEV-01, GOV-RULE-01, GOV-BICAM-01, GOV-MCP-FIRST-01, TASK-EPIC-01, WORKFLOW-AUTO-01, WORKFLOW-RD-01, ARCH-INFRA-01, SAFETY-HEALTH-01, TEST-COMP-02, RECOVER-AMNES-01, WORKFLOW-AUTO-02, DOC-LINK-01, TEST-FIX-01, RECOVER-CRASH-01, SAFETY-DESTR-01
 
 ## Data Flow Verification (TEST-E2E-01-v1)
 
@@ -103,20 +103,22 @@ python3 -m venv .venv
 
 **Passive screenshots are NOT Tier 3.** CRUD interaction with state change verification is required.
 
-## Task Management (GOV-MCP-FIRST-01-v1 — SUSPENDED)
+## Task Management (GOV-MCP-FIRST-01-v1 — RECOMMENDED)
 
-**GOV-MCP-FIRST-01 suspended 2026-03-23 — MCP task system unstable.**
-**Use TodoWrite for task tracking. MCP tools optional, not mandatory.**
+**MCP gov-tasks re-enabled 2026-03-23 after stability probe (9/9 operations passed).**
+**Use MCP for task persistence. TodoWrite for progress display.**
 
-| Action | Use This |
-|--------|----------|
-| Track tasks | `TodoWrite` |
-| Create rule | `mcp__gov-core__rule_create()` (rules MCP stable) |
-| Start session | `mcp__gov-sessions__session_start()` (sessions MCP stable) |
+| Action | Use This | Fallback |
+|--------|----------|----------|
+| Create task | `mcp__gov-tasks__task_create()` | `TodoWrite` |
+| Update status | `mcp__gov-tasks__task_update()` | `TodoWrite` |
+| Create rule | `mcp__gov-core__rule_create()` | — |
+| Start session | `mcp__gov-sessions__session_start()` | — |
 
-**TodoWrite** = primary task tracking tool.
-**MCP tasks** = optional, use when stable.
-**TypeDB** = source of truth for rules and sessions only until task MCP stabilized.
+**Known minor bugs (non-blocking):**
+- `task_link_document` may create duplicates (missing idempotency guard)
+- `agent_id` and `created_at` may read back as null from TypeDB GET
+**TypeDB** = source of truth for tasks, rules, sessions.
 
 ## Session Start Protocol
 

@@ -158,6 +158,20 @@ class GovernanceDashboard:
                 self._state.show_workspace_form = False
                 self._state.has_error = False
                 self._state.error_message = ''
+                # BUG-017b: Clear selected entity to prevent stale detail on return
+                self._state.selected_task = None
+                self._state.selected_session = None
+                # BUG-017c: Clear nav_source to prevent stale "Back to" button
+                self._state.nav_source_view = None
+                self._state.nav_source_id = None
+                self._state.nav_source_label = None
+                # BUG-017: Force Trame reactivity after clearing detail flags.
+                # Without dirty(), Vue may not detect boolean changes from
+                # cross-view navigation (e.g. session chip → tasks tab).
+                self._state.dirty("show_session_detail")
+                self._state.dirty("show_task_detail")
+                self._state.dirty("show_rule_detail")
+                self._state.dirty("show_decision_detail")
                 if active_view == 'trust':
                     load_trust_data()
                 elif active_view == 'monitor':

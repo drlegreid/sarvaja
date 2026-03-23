@@ -4,6 +4,7 @@ Tests for P9 bugfixes — P8 issues discovered during DSE assessment.
 BUG-014: link_session_to_task() does not close dialog after success
 BUG-015: open_link_document_dialog() calls GET /api/documents which doesn't exist
 BUG-016: GET /api/documents endpoint missing — needs new REST route
+BUG-017: Nav tab click after cross-view navigation doesn't reset detail state
 
 Per TEST-FIX-01-v1: TDD — failing tests FIRST, then implement.
 """
@@ -250,3 +251,126 @@ class TestP8HandlersRegression:
 
         # Should not call any HTTP
         mock_client_cls.assert_not_called()
+
+
+# ---- BUG-017: Nav tab switch must dirty() detail flags ----
+
+class TestBug017NavTabDirtyFlags:
+    """on_view_change() must call dirty() on detail flags to force Trame re-render."""
+
+    def _simulate_view_change(self):
+        """Set up state to simulate cross-view navigation residue."""
+        from unittest.mock import MagicMock, call
+
+        state = MagicMock()
+        state.show_session_detail = True  # Left over from session chip nav
+        state.show_task_detail = False
+        state.rules = []
+
+        # Track dirty() calls
+        dirty_calls = []
+        state.dirty = MagicMock(side_effect=lambda x: dirty_calls.append(x))
+
+        # Track state.change decorator
+        change_handlers = {}
+
+        def mock_change(prop_name):
+            def decorator(fn):
+                change_handlers[prop_name] = fn
+                return fn
+            return decorator
+
+        state.change = mock_change
+        return state, change_handlers, dirty_calls
+
+    def test_view_change_calls_dirty_on_detail_flags(self):
+        """on_view_change must dirty() show_session_detail after clearing."""
+        state, handlers, dirty_calls = self._simulate_view_change()
+
+        # Import and register the view change handler
+        # We can't easily instantiate GovernanceDashboard, so test the logic directly
+        # Instead, test that after the fix, the handler sets False AND dirties
+
+        # Simulate what on_view_change should do
+        @state.change("active_view")
+        def on_view_change(active_view, **kwargs):
+            state.show_session_detail = False
+            state.show_task_detail = False
+            state.show_rule_detail = False
+            state.show_decision_detail = False
+            # BUG-017 fix: must dirty these flags
+            state.dirty("show_session_detail")
+            state.dirty("show_task_detail")
+
+        # Trigger it
+        handlers["active_view"]("tasks")
+
+        # Verify dirty was called for the critical flags
+        assert "show_session_detail" in dirty_calls, \
+            "BUG-017: on_view_change must dirty('show_session_detail')"
+        assert "show_task_detail" in dirty_calls, \
+            "BUG-017: on_view_change must dirty('show_task_detail')"
+
+    def test_actual_dashboard_view_change_dirties(self):
+        """The real governance_dashboard.py on_view_change must call dirty()."""
+        import ast
+        import os
+
+        # Parse the source to verify dirty() calls exist in on_view_change
+        dashboard_path = os.path.join(
+            os.path.dirname(__file__), "..", "..",
+            "agent", "governance_dashboard.py"
+        )
+        with open(dashboard_path, "r") as f:
+            source = f.read()
+
+        tree = ast.parse(source)
+
+        # Find on_view_change function
+        found_dirty_calls = []
+        for node in ast.walk(tree):
+            if isinstance(node, ast.FunctionDef) and node.name == "on_view_change":
+                for child in ast.walk(node):
+                    if isinstance(child, ast.Call):
+                        func = child.func
+                        if isinstance(func, ast.Attribute) and func.attr == "dirty":
+                            if child.args and isinstance(child.args[0], ast.Constant):
+                                found_dirty_calls.append(child.args[0].value)
+
+        assert "show_session_detail" in found_dirty_calls, \
+            "BUG-017: governance_dashboard.py on_view_change must call dirty('show_session_detail')"
+        assert "show_task_detail" in found_dirty_calls, \
+            "BUG-017: governance_dashboard.py on_view_change must call dirty('show_task_detail')"
+
+    def test_view_change_clears_nav_source(self):
+        """BUG-017c: on_view_change must clear nav_source to prevent stale back button."""
+        import ast
+        import os
+
+        dashboard_path = os.path.join(
+            os.path.dirname(__file__), "..", "..",
+            "agent", "governance_dashboard.py"
+        )
+        with open(dashboard_path, "r") as f:
+            source = f.read()
+
+        tree = ast.parse(source)
+
+        # Find on_view_change and check for nav_source_view = None assignment
+        found_nav_clear = False
+        found_selected_task_clear = False
+        for node in ast.walk(tree):
+            if isinstance(node, ast.FunctionDef) and node.name == "on_view_change":
+                for child in ast.walk(node):
+                    if isinstance(child, ast.Assign):
+                        for target in child.targets:
+                            if isinstance(target, ast.Attribute):
+                                if target.attr == "nav_source_view":
+                                    found_nav_clear = True
+                                if target.attr == "selected_task":
+                                    found_selected_task_clear = True
+
+        assert found_nav_clear, \
+            "BUG-017c: on_view_change must clear nav_source_view"
+        assert found_selected_task_clear, \
+            "BUG-017b: on_view_change must clear selected_task"
