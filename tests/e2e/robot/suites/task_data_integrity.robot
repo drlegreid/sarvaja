@@ -88,29 +88,29 @@ Agent ID Auto-Assigned On IN_PROGRESS Transition
     ${response}=    API PUT    /tasks/${DI_TASK_018}    ${payload}
     Response Status Should Be    ${response}    200
     Sleep    500ms    reason=Wait for TypeDB write
-    Task GET Should Have Field Value    ${DI_TASK_018}    agent_id    code-agent
+    Task GET Should Have Field Value    ${DI_TASK_018}    agent_id    ${DEFAULT_AGENT}
 
 Agent ID Explicit Update Persists
     [Documentation]    Given task exists,
     ...                When agent_id is explicitly set to "custom-agent",
     ...                Then GET returns agent_id "custom-agent".
     [Tags]    SRVJ-BUG-018    data-integrity    agent-id
-    ${payload}=    Create Dictionary    agent_id=custom-agent    status=IN_PROGRESS
+    ${payload}=    Create Dictionary    agent_id=research-agent    status=IN_PROGRESS
     ${response}=    API PUT    /tasks/${DI_TASK_018}    ${payload}
     Response Status Should Be    ${response}    200
     Sleep    500ms    reason=Wait for TypeDB write
-    Task GET Should Have Field Value    ${DI_TASK_018}    agent_id    custom-agent
+    Task GET Should Have Field Value    ${DI_TASK_018}    agent_id    research-agent
 
 Agent ID Replacement Overwrites Previous
     [Documentation]    Given task has agent_id "custom-agent",
     ...                When agent_id is updated to "replacement-agent",
     ...                Then GET returns agent_id "replacement-agent".
     [Tags]    SRVJ-BUG-018    data-integrity    agent-id
-    ${payload}=    Create Dictionary    agent_id=replacement-agent    status=IN_PROGRESS
+    ${payload}=    Create Dictionary    agent_id=task-orchestrator    status=IN_PROGRESS
     ${response}=    API PUT    /tasks/${DI_TASK_018}    ${payload}
     Response Status Should Be    ${response}    200
     Sleep    500ms    reason=Wait for TypeDB write
-    Task GET Should Have Field Value    ${DI_TASK_018}    agent_id    replacement-agent
+    Task GET Should Have Field Value    ${DI_TASK_018}    agent_id    task-orchestrator
 
 # ── SRVJ-BUG-019: created_at non-null ──
 
@@ -183,7 +183,7 @@ Valid Agent IDs Accepted By API
     ...                When agent_id is a registered agent,
     ...                Then API accepts the update.
     [Tags]    SRVJ-BUG-023    data-integrity    agent-validation
-    FOR    ${agent}    IN    code-agent    task-orchestrator    rules-curator    research-agent    local-assistant
+    FOR    ${agent}    IN    @{VALID_AGENTS}
         ${payload}=    Create Dictionary    agent_id=${agent}    status=IN_PROGRESS
         ${response}=    API PUT    /tasks/${DI_TASK_CRUD}    ${payload}
         Response Status Should Be    ${response}    200
@@ -198,7 +198,7 @@ All Fields Non-Null After Full CRUD Cycle
     ...                When status transitions OPEN → IN_PROGRESS with valid agent,
     ...                Then all key fields are non-null on GET.
     [Tags]    data-integrity    crud    full-cycle
-    ${payload}=    Create Dictionary    status=IN_PROGRESS    agent_id=code-agent
+    ${payload}=    Create Dictionary    status=IN_PROGRESS    agent_id=${DEFAULT_AGENT}
     ${response}=    API PUT    /tasks/${DI_TASK_CRUD}    ${payload}
     Response Status Should Be    ${response}    200
     Sleep    500ms    reason=Wait for TypeDB write

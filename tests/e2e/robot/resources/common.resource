@@ -19,6 +19,11 @@ ${TIMEOUT}         30s
 ${BROWSER}         chromium
 ${HEADLESS}        true
 
+# Agent IDs — sourced from governance/stores/agents.py:_AGENT_BASE_CONFIG
+# DRY: All Robot suites MUST use these variables, not hardcoded strings
+${DEFAULT_AGENT}           code-agent
+@{VALID_AGENTS}            code-agent    task-orchestrator    rules-curator    research-agent    local-assistant
+
 *** Keywords ***
 Suite Setup Open Dashboard
     [Documentation]    Opens browser, navigates to dashboard, injects overlay fix.

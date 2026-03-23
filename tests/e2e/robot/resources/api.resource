@@ -7,6 +7,8 @@ Library    RequestsLibrary
 Library    Collections
 Library    JSONLibrary
 
+Resource    common.resource
+
 *** Variables ***
 ${API_URL}         http://localhost:8082/api
 ${CONTENT_TYPE}    application/json
@@ -99,7 +101,7 @@ Update Task To Done
     [Tags]    api    tasks
     ${payload}=    Create Dictionary
     ...    status=DONE
-    ...    agent_id=code-agent
+    ...    agent_id=${DEFAULT_AGENT}
     ...    summary=${summary}
     ...    linked_sessions=${{["${session_id}"]}}
     ...    linked_documents=${{["${doc_path}"]}}
