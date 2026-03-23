@@ -165,6 +165,17 @@ def update_task(
             task_obj = client.get_task(task_id)
             if not task_obj and task_id not in _tasks_store:
                 return None
+            # SRVJ-BUG-018: Resolve agent_id BEFORE TypeDB writes.
+            # H-TASK-002 was previously after the writes, so auto-assigned
+            # agent_id only went to _tasks_store, never to TypeDB.
+            if status and status.upper() == "IN_PROGRESS" and not agent_id:
+                existing_agent = task_obj.agent_id if task_obj else None
+                if not existing_agent:
+                    agent_id = "code-agent"
+                    logger.warning(
+                        f"[H-TASK-002] Task {task_id} set to IN_PROGRESS without "
+                        f"agent_id, auto-assigning 'code-agent'"
+                    )
             if task_obj and (status or evidence):
                 updated = client.update_task_status(
                     task_id, status or task_obj.status,
@@ -172,7 +183,8 @@ def update_task(
                 )
                 task_obj = updated or task_obj
             # BUG-TASK-TAXONOMY-001: Persist priority/task_type/name/phase/summary to TypeDB
-            if task_obj and (priority or task_type or phase or description or summary):
+            # SRVJ-BUG-018: Also persist agent_id via update_task()
+            if task_obj and (priority or task_type or phase or description or summary or agent_id):
                 try:
                     client.update_task(
                         task_id,
@@ -181,6 +193,7 @@ def update_task(
                         name=description,
                         phase=phase,
                         summary=summary,
+                        agent_id=agent_id,
                     )
                 except Exception as ue:
                     # BUG-TASK-TAXONOMY-DEBUG-001: WARNING not DEBUG — data divergence
@@ -250,14 +263,16 @@ def update_task(
 
     old_status = _tasks_store[task_id].get("status")
 
-    # Per H-TASK-002: IN_PROGRESS tasks must have agent_id
+    # SRVJ-BUG-018: H-TASK-002 fallback for non-client path.
+    # Primary check is now before TypeDB writes (line ~170).
+    # This catches the edge case where client is None.
     if status and status.upper() == "IN_PROGRESS" and not agent_id:
         existing_agent = _tasks_store[task_id].get("agent_id")
         if not existing_agent:
             agent_id = "code-agent"
             logger.warning(
                 f"[H-TASK-002] Task {task_id} set to IN_PROGRESS without agent_id, "
-                f"auto-assigning '{agent_id}'"
+                f"auto-assigning 'code-agent' (fallback path)"
             )
 
     updates = {

@@ -29,6 +29,7 @@ def _strip_ctl(value: str) -> str:
 _ALLOWED_TASK_ATTR_NAMES = frozenset({
     "task-status", "task-name", "phase", "item-type",
     "document-path", "task-priority", "task-type", "task-summary",
+    "agent-id",  # SRVJ-BUG-018: agent_id persistence via update_task()
 })
 
 
@@ -283,6 +284,7 @@ class TaskCRUDOperations:
         priority: str = None,
         task_type: str = None,
         summary: str = None,
+        agent_id: str = None,  # SRVJ-BUG-018: agent_id persistence
     ) -> bool:
         """
         Update a task's attributes in TypeDB.
@@ -345,6 +347,11 @@ class TaskCRUDOperations:
                     current_summary = getattr(current, 'summary', None)
                     if current_summary != summary:
                         _update_attribute(tx, task_id, "task-summary", current_summary, summary)
+                # SRVJ-BUG-018: agent_id persistence via update_task()
+                if agent_id:
+                    current_agent = getattr(current, 'agent_id', None)
+                    if current_agent != agent_id:
+                        _update_attribute(tx, task_id, "agent-id", current_agent, agent_id)
                 tx.commit()
             return True
         except Exception as e:

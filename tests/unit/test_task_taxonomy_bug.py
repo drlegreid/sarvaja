@@ -220,6 +220,7 @@ class TestServiceLayer:
         client.update_task.assert_called_once_with(
             "T-1", priority="CRITICAL", task_type="feature",
             name=None, phase=None, summary=None,
+            agent_id=None,  # SRVJ-BUG-018: now passed through
         )
 
     @patch("governance.services.tasks_mutations._tasks_store", {})

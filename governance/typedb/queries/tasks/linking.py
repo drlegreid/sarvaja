@@ -193,6 +193,21 @@ class TaskLinkingOperations:
                 # BUG-254-ESC-002: Escape backslash THEN quotes for TypeQL safety
                 task_id_escaped = task_id.replace('\\', '\\\\').replace('"', '\\"')
                 rule_id_escaped = rule_id.replace('\\', '\\\\').replace('"', '\\"')
+
+                # SRVJ-BUG-020: Idempotency guard — skip if relation already exists
+                # (Pattern copied from link_task_to_session)
+                check_rel_q = f"""
+                    match
+                        $t isa task, has task-id "{task_id_escaped}";
+                        $r isa rule-entity, has rule-id "{rule_id_escaped}";
+                        (implementing-task: $t, implemented-rule: $r) isa implements-rule;
+                """
+                rel_result = tx.query(check_rel_q).resolve()
+                if list(rel_result or []):
+                    logger.debug(f"Rule-task link already exists: {task_id} -> {rule_id}")
+                    tx.commit()
+                    return True
+
                 # Create the implements-rule relation
                 link_query = f"""
                     match

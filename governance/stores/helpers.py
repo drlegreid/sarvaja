@@ -18,6 +18,21 @@ def _str_or_none(val) -> str | None:
     return val if isinstance(val, str) else None
 
 
+def _dt_to_iso(val) -> str | None:
+    """Convert datetime or string to ISO string. Per SRVJ-BUG-019.
+
+    Handles: datetime objects, ISO strings, None.
+    Guards against TypeDB returning raw concepts or unexpected types.
+    """
+    if val is None:
+        return None
+    if hasattr(val, 'isoformat'):
+        return val.isoformat()
+    if isinstance(val, str):
+        return val
+    return str(val)
+
+
 # =============================================================================
 # DURATION HELPER (P0-2: Single source of truth for session duration)
 # =============================================================================
@@ -82,9 +97,9 @@ def task_to_response(task: TypeDBTask):
         task_type=task.task_type,  # BUG-TASK-TAXONOMY-001
         summary=task.summary if isinstance(getattr(task, 'summary', None), str) else None,  # Phase 9c
         agent_id=task.agent_id,
-        created_at=task.created_at.isoformat() if task.created_at else None,
-        claimed_at=task.claimed_at.isoformat() if task.claimed_at else None,
-        completed_at=task.completed_at.isoformat() if task.completed_at else None,
+        created_at=_dt_to_iso(task.created_at),  # SRVJ-BUG-019: defensive conversion
+        claimed_at=_dt_to_iso(task.claimed_at),
+        completed_at=_dt_to_iso(task.completed_at),
         body=task.body,
         linked_rules=task.linked_rules or [],  # BUG-STORE-002: null-safe
         linked_sessions=task.linked_sessions or [],
