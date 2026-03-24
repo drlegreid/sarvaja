@@ -74,12 +74,27 @@ v3.VBtn(
 
 ---
 
+## Cross-View Navigation (UI-CROSS-NAV-01-v1)
+
+When navigation crosses view boundaries (e.g., tasks view → sessions view), the **guard flag pattern** is required to prevent `on_view_change` from resetting target entity state.
+
+**Key rules:**
+1. Load target entity BEFORE changing `active_view` (load-first pattern)
+2. Set `cross_nav_in_progress = True` before view change
+3. `on_view_change` early-returns when guard is set
+4. NEVER call `dirty('active_view')` (causes double-fire)
+
+See **UI-CROSS-NAV-01-v1** for full implementation pattern and anti-patterns.
+
+---
+
 ## Validation Checklist
 
 - [ ] Navigation trigger passes source context
 - [ ] Target detail view shows contextual back button
 - [ ] Back handler restores source entity selection
 - [ ] Simple back button clears navigation context
+- [ ] Cross-view nav uses guard flag pattern (UI-CROSS-NAV-01-v1)
 
 ---
 

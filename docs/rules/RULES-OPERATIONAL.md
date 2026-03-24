@@ -65,6 +65,43 @@ Rules governing testing, stability, maintenance, and task execution.
 | **TEST-FIX-01-v1** | Fix Validation Protocol | CRITICAL |
 | **SAFETY-DESTR-01-v1** | Destructive Command Prevention | CRITICAL |
 
+### MCP Operational Rules (P18, 2026-03-24)
+
+| Rule | Name | Priority |
+|------|------|----------|
+| **MCP-DOC-01-v1** | MCP Documentation Standard | MEDIUM |
+| **MCP-ERROR-01-v1** | MCP Error Response Format | MEDIUM |
+| **MCP-FORMAT-01-v1** | MCP Output Format Standard | MEDIUM |
+| **MCP-HEALTH-01-v1** | MCP Health Check Standard | MEDIUM |
+| **MCP-LOGGING-01-v1** | MCP Logging Standard | MEDIUM |
+| **MCP-NAMING-01-v1** | MCP Tool Naming Convention | MEDIUM |
+| **MCP-OUTPUT-01-v1** | MCP Output Consistency | MEDIUM |
+| **MCP-PERF-01-v1** | MCP Performance Standard | HIGH |
+| **MCP-PERSIST-01-v1** | MCP Write Persistence Requirement | HIGH |
+
+### Testing Expansions (P18)
+
+| Rule | Name | Priority |
+|------|------|----------|
+| **TEST-CVP-01-v1** | Continuous Validation Pipeline | HIGH |
+| **TEST-EDS-HEURISTIC-01-v1** | EDS Heuristic Check Framework | HIGH |
+| **TEST-EVID-01-v1** | Test Evidence Collection | HIGH |
+| **TEST-HOLO-01-v1** | Holographic Test Approach | MEDIUM |
+| **TEST-LIVE-DB-01-v1** | Live Database Testing Protocol | HIGH |
+| **TEST-QUAL-01-v1** | Test Quality Metrics | HIGH |
+| **TEST-STRUCT-01-v1** | Test Structure Standard | HIGH |
+| **TEST-TAXON-01-v1** | Test Taxonomy | MEDIUM |
+| **TEST-TDD-01-v1** | Test-Driven Development | HIGH |
+| **TEST-TIER-MANDATORY-01-v1** | Mandatory 3-Tier Validation | CRITICAL |
+
+### Delivery & Reliability (P18)
+
+| Rule | Name | Priority |
+|------|------|----------|
+| **DELIVER-VERIFY-01-v1** | Delivery Verification Protocol | CRITICAL |
+| **RELIABILITY-PLAN-01-v1** | Reliability Planning Protocol | HIGH |
+| **WORKFLOW-PLAN-01-v1** | Workflow Planning Standard | HIGH |
+
 ---
 
 ## Cross-References

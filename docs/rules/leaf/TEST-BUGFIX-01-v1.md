@@ -4,7 +4,7 @@
 |-------|-------|
 | **Category** | quality |
 | **Priority** | HIGH |
-| **Status** | ACTIVE |
+| **Status** | DEPRECATED — Consolidated into TEST-FIX-01-v1 (37 code refs, broader scope) |
 | **Applicability** | MANDATORY |
 | **Created** | 2026-02-14 |
 | **References** | TEST-E2E-01-v1, COMM-PROGRESS-01-v1 |

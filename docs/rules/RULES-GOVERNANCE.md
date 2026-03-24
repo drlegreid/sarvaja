@@ -39,6 +39,34 @@ Rules governing process, documentation, and agent collaboration.
 | **GOV-PROP-02-v1** | Proposal Review Process | HIGH |
 | **GOV-PROP-03-v1** | Handoff Protocol | HIGH |
 
+### Governance Expansions (P18, 2026-03-24)
+
+| Rule | Name | Priority |
+|------|------|----------|
+| **GOV-AUDIT-01-v1** | Governance Audit Trail | HIGH (DRAFT) |
+| **GOV-CONSULT-01-v1** | Governance Consultation Protocol | HIGH |
+| **GOV-NOEST-01-v1** | No Time Estimation Rule | HIGH |
+| **GOV-PROJECT-01-v1** | Project Configuration Governance | HIGH |
+| **GOV-TRANSP-01-v1** | Governance Transparency | HIGH |
+
+### Session Expansions (P18)
+
+| Rule | Name | Priority |
+|------|------|----------|
+| **SESSION-CC-01-v1** | CC Session Auto-Discovery | HIGH |
+| **SESSION-HOOK-01-v1** | Session Hook Event Capture | HIGH |
+| **SESSION-METRICS-01-v1** | Session Metrics Collection | HIGH |
+| **REPORT-SUMM-01-v1** | Session Summary Report | HIGH |
+
+### Task Expansions (P18)
+
+| Rule | Name | Priority |
+|------|------|----------|
+| **TASK-HANDOVER-01-v1** | Task Handover Protocol | HIGH |
+| **TASK-NAV-01-v1** | Task Navigation Patterns | HIGH |
+| **TASK-SEARCH-01-v1** | Task Search Implementation | HIGH |
+| **TASK-SUMMARY-01-v1** | Task Summary Requirements | HIGH |
+
 ---
 
 ## Cross-References

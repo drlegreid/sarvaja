@@ -20,18 +20,31 @@ Task lifecycle follows Agile Definition of Ready/Done patterns. Tasks have separ
 |--------|-------------|----------------|
 | `OPEN` | Ready to be worked on | Task created/reopened |
 | `IN_PROGRESS` | Being worked on | Agent claims task |
-| `CLOSED` | Work complete | Task finished |
+| `DONE` | Work completed, pending verification | DONE gate passes (see TASK-VALID-01-v1) |
+| `BLOCKED` | Cannot proceed | External dependency or blocker identified |
+| `CANCELED` | Abandoned without completion | Explicit cancellation (soft delete alternative) |
+| `CLOSED` | Fully verified and accepted | All evidence + verification complete |
 
 ### Valid Transitions
 
 ```
 OPEN → IN_PROGRESS    (Task started)
+OPEN → CANCELED       (Canceled before work begins)
 OPEN → CLOSED         (Quick close, trivial tasks)
-IN_PROGRESS → CLOSED  (Work completed)
+IN_PROGRESS → DONE    (Work completed, DONE gate validates)
+IN_PROGRESS → BLOCKED (Blocker identified)
 IN_PROGRESS → OPEN    (Work paused, unclaim)
+IN_PROGRESS → CANCELED (Abandoned mid-work)
+DONE → CLOSED         (Verification passed)
+DONE → IN_PROGRESS    (Rework needed)
+BLOCKED → IN_PROGRESS (Blocker resolved)
+BLOCKED → CANCELED    (Blocker unresolvable)
+CANCELED → OPEN       (Reopen canceled task)
 CLOSED → OPEN         (Reopen for issues)
 CLOSED → IN_PROGRESS  (Reopen and resume)
 ```
+
+**Canonical source**: `governance/task_lifecycle.py:TaskStatus` enum + `VALID_STATUS_TRANSITIONS` dict.
 
 ---
 
@@ -67,14 +80,25 @@ DEFERRED → IMPLEMENTED     (Resume and complete)
 
 ---
 
+## CANCELED vs DELETE
+
+| Action | When | Reversible | Data |
+|--------|------|------------|------|
+| CANCELED | Task abandoned, context preserved | Yes (reopen) | Kept in TypeDB |
+| DELETE | Only for CANCELED/CLOSED tasks | No | Removed from TypeDB |
+
+**Hard delete is restricted**: Only CANCELED or CLOSED tasks may be deleted. Active tasks (OPEN, IN_PROGRESS, BLOCKED) must be canceled first.
+
+---
+
 ## Backward Compatibility
 
 | Old Status | New Status | Resolution |
 |------------|------------|------------|
 | `TODO` | `OPEN` | `NONE` |
 | `IN_PROGRESS` | `IN_PROGRESS` | `NONE` |
-| `DONE` | `CLOSED` | `IMPLEMENTED` |
-| `BLOCKED` | `IN_PROGRESS` | `NONE` |
+| `DONE` | `DONE` | `NONE` (pending verification) |
+| `BLOCKED` | `BLOCKED` | `NONE` |
 
 ---
 
@@ -82,7 +106,7 @@ DEFERRED → IMPLEMENTED     (Resume and complete)
 
 **TypeDB Schema:**
 ```tql
-task-status sub attribute, value string;     # OPEN, IN_PROGRESS, CLOSED
+task-status sub attribute, value string;     # OPEN, IN_PROGRESS, DONE, BLOCKED, CANCELED, CLOSED
 task-resolution sub attribute, value string; # NONE, DEFERRED, IMPLEMENTED, VALIDATED, CERTIFIED
 ```
 

@@ -5,7 +5,7 @@
 | **Rule ID** | TEST-E2E-FRAMEWORK-01-v1 |
 | **Category** | testing |
 | **Priority** | MANDATORY |
-| **Status** | ACTIVE |
+| **Status** | DEPRECATED — Consolidated into TEST-E2E-01-v1 (includes framework patterns + Gherkin-first) |
 | **Created** | 2026-02-20 |
 
 ## Directive

@@ -48,6 +48,32 @@ Rules governing architecture, technology selection, and tooling.
 |------|------|----------|
 | **IDE-VSCODE-CC-01-v1** | VSCode Claude Code Permission Bypass Bug & Mitigations | HIGH |
 
+### UI Expansions (P18, 2026-03-24)
+
+| Rule | Name | Priority |
+|------|------|----------|
+| **UI-RESP-01-v1** | Responsive UI Design | HIGH |
+| **UI-CROSS-NAV-01-v1** | Cross-View Navigation Guard | HIGH |
+| **HTTP-ERROR-01-v1** | HTTP Exception Handling Protocol | CRITICAL |
+
+### Data & Schema Rules (P18)
+
+| Rule | Name | Priority |
+|------|------|----------|
+| **DATA-CLASSIFY-01-v1** | Data Classification Protocol | HIGH |
+| **DATA-INGEST-01-v1** | Data Ingestion Pipeline Standard | HIGH |
+| **DATA-LAZY-01-v1** | Lazy Loading Data Pattern | HIGH |
+| **DATA-PERSIST-01-v1** | Data Persistence Standard | HIGH |
+| **BACKFILL-OPS-01-v1** | Backfill Operations Protocol | MEDIUM |
+| **SCHEMA-VERIFY-01-v1** | Schema Verification Protocol | HIGH |
+
+### Development Environment Rules (P18)
+
+| Rule | Name | Priority |
+|------|------|----------|
+| **DEV-VENV-01-v1** | Python Virtual Environment | HIGH |
+| **DEP-PIN-01-v1** | Dependency Pinning | HIGH |
+
 ---
 
 ## Cross-References

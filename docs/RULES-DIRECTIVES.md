@@ -1,6 +1,6 @@
 # Rules Directives - Index
 
-**Status:** Active | **Updated:** 2026-03-20 | **Rules:** 92 (89 ACTIVE, 2 DRAFT, 1 DISABLED)
+**Status:** Active | **Updated:** 2026-03-24 | **Rules:** 150 (140 ACTIVE, 3 DRAFT, 1 DISABLED, 6 DEPRECATED)
 
 > **Taxonomy:** [META-TAXON-01-v1](rules/leaf/META-TAXON-01-v1.md) | **Migration:** [RULE-MIGRATION.md](rules/RULE-MIGRATION.md)
 
@@ -117,6 +117,66 @@
 | TEST-EXPLSPEC-01-v1 | (new) | Exploratory Dynamic Specification (3-layer Gherkin) | HIGH | ACTIVE |
 | SESSION-DISCIPLINE-01-v1 | (new) | Session Duration and Autonomy Limits (max 4h, 10 cycles) | CRITICAL | ACTIVE |
 | SCHEMA-RESILIENCE-01-v1 | (new) | External Data Schema Resilience (graceful unknown fields) | HIGH | ACTIVE |
+| SESSION-CC-01-v1 | (new) | CC Session Auto-Discovery | HIGH | ACTIVE |
+| SESSION-HOOK-01-v1 | (new) | Session Hook Event Capture | HIGH | ACTIVE |
+| SESSION-METRICS-01-v1 | (new) | Session Metrics Collection | HIGH | ACTIVE |
+| REPORT-SUMM-01-v1 | (new) | Session Summary Report | HIGH | ACTIVE |
+| GOV-AUDIT-01-v1 | (new) | Governance Audit Trail | HIGH | DRAFT |
+| GOV-CONSULT-01-v1 | (new) | Governance Consultation Protocol | HIGH | ACTIVE |
+| GOV-NOEST-01-v1 | (new) | No Time Estimation Rule | HIGH | ACTIVE |
+| GOV-PROJECT-01-v1 | (new) | Project Configuration Governance | HIGH | ACTIVE |
+| GOV-TRANSP-01-v1 | (new) | Governance Transparency | HIGH | ACTIVE |
+| MCP-DOC-01-v1 | (new) | MCP Documentation Standard | MEDIUM | ACTIVE |
+| MCP-ERROR-01-v1 | (new) | MCP Error Response Format | MEDIUM | ACTIVE |
+| MCP-FORMAT-01-v1 | (new) | MCP Output Format Standard | MEDIUM | ACTIVE |
+| MCP-HEALTH-01-v1 | (new) | MCP Health Check Standard | MEDIUM | ACTIVE |
+| MCP-LOGGING-01-v1 | (new) | MCP Logging Standard | MEDIUM | ACTIVE |
+| MCP-NAMING-01-v1 | (new) | MCP Tool Naming Convention | MEDIUM | ACTIVE |
+| MCP-OUTPUT-01-v1 | (new) | MCP Output Consistency | MEDIUM | ACTIVE |
+| MCP-PERF-01-v1 | (new) | MCP Performance Standard | HIGH | ACTIVE |
+| MCP-PERSIST-01-v1 | (new) | MCP Write Persistence Requirement | HIGH | ACTIVE |
+| DATA-CLASSIFY-01-v1 | (new) | Data Classification Protocol | HIGH | ACTIVE |
+| DATA-INGEST-01-v1 | (new) | Data Ingestion Pipeline Standard | HIGH | ACTIVE |
+| DATA-LAZY-01-v1 | (new) | Lazy Loading Data Pattern | HIGH | ACTIVE |
+| DATA-PERSIST-01-v1 | (new) | Data Persistence Standard | HIGH | ACTIVE |
+| BACKFILL-OPS-01-v1 | (new) | Backfill Operations Protocol | MEDIUM | ACTIVE |
+| TEST-CVP-01-v1 | (new) | Continuous Validation Pipeline | HIGH | ACTIVE |
+| TEST-EDS-HEURISTIC-01-v1 | (new) | EDS Heuristic Check Framework | HIGH | ACTIVE |
+| TEST-EVID-01-v1 | (new) | Test Evidence Collection | HIGH | ACTIVE |
+| TEST-HOLO-01-v1 | (new) | Holographic Test Approach | MEDIUM | ACTIVE |
+| TEST-LIVE-DB-01-v1 | (new) | Live Database Testing Protocol | HIGH | ACTIVE |
+| TEST-QUAL-01-v1 | (new) | Test Quality Metrics | HIGH | ACTIVE |
+| TEST-STRUCT-01-v1 | (new) | Test Structure Standard | HIGH | ACTIVE |
+| TEST-TAXON-01-v1 | (new) | Test Taxonomy | MEDIUM | ACTIVE |
+| TEST-TDD-01-v1 | (new) | Test-Driven Development | HIGH | ACTIVE |
+| TEST-TIER-MANDATORY-01-v1 | (new) | Mandatory 3-Tier Validation | CRITICAL | ACTIVE |
+| TASK-HANDOVER-01-v1 | (new) | Task Handover Protocol | HIGH | ACTIVE |
+| TASK-NAV-01-v1 | (new) | Task Navigation Patterns | HIGH | ACTIVE |
+| TASK-SEARCH-01-v1 | (new) | Task Search Implementation | HIGH | ACTIVE |
+| TASK-SUMMARY-01-v1 | (new) | Task Summary Requirements | HIGH | ACTIVE |
+| UI-RESP-01-v1 | (new) | Responsive UI Design | HIGH | ACTIVE |
+| UI-CROSS-NAV-01-v1 | (new) | Cross-View Navigation Guard | HIGH | ACTIVE |
+| WORKFLOW-PLAN-01-v1 | (new) | Workflow Planning Standard | HIGH | ACTIVE |
+| DEV-VENV-01-v1 | (new) | Python Virtual Environment | HIGH | ACTIVE |
+| DEP-PIN-01-v1 | (new) | Dependency Pinning | HIGH | ACTIVE |
+| IDE-VSCODE-CC-01-v1 | (new) | VSCode Claude Code Integration | HIGH | ACTIVE |
+| DELIVER-VERIFY-01-v1 | (new) | Delivery Verification Protocol | CRITICAL | ACTIVE |
+| SCHEMA-VERIFY-01-v1 | (new) | Schema Verification Protocol | HIGH | ACTIVE |
+| HTTP-ERROR-01-v1 | (new) | HTTP Exception Handling Protocol | CRITICAL | ACTIVE |
+| RELIABILITY-PLAN-01-v1 | (new) | Reliability Planning Protocol | HIGH | ACTIVE |
+
+---
+
+## Deprecated Rules (P18 Consolidation, 2026-03-24)
+
+| Semantic ID | Superseded By | Reason |
+|-------------|---------------|--------|
+| TEST-BUGFIX-01-v1 | TEST-FIX-01-v1 | Same scope; FIX-01 has 37 code references |
+| TEST-E2E-FRAMEWORK-01-v1 | TEST-E2E-01-v1 | Framework patterns merged into E2E-01 |
+| CONTAINER-LIFECYCLE-01-v1 | CONTAINER-RESTART-01-v1 | RESTART-01 is specific and enforced |
+| DATA-MCP-FIRST-01-v1 | GOV-MCP-FIRST-01-v1 | Confirmed alias in leaf file |
+| ARCH-VERSION-01-v1 | CONTAINER-DEV-01-v1 | Duplicate scope |
+| CONTEXT-SAVE-01-v1 | RECOVER-MEM-01-v1 | Merged into MEM-01 |
 
 ---
 
@@ -135,26 +195,33 @@ Some rules have different IDs in TypeDB vs documentation (legacy migration artif
 
 | Domain | Description | Count | Rules |
 |--------|-------------|-------|-------|
-| **SESSION** | Session management | 4 | EVID-01, DSM-01, PROMPT-01, DSP-NOTIFY-01 |
-| **REPORT** | Reporting & decisions | 5 | DEC-01, DEC-02, HUMOR-01, ISSUE-01, OBJ-01 |
-| **GOV** | Governance & trust | 10 | TRUST-01/02, BICAM-01, PROP-01/02/03, RULE-01/02/03, MODE-01, BIND-01 |
+| **SESSION** | Session management | 10 | EVID-01, DSM-01, PROMPT-01, DSP-NOTIFY-01, REPORT-01, EVENT-01, DISCIPLINE-01, CC-01, HOOK-01, METRICS-01 |
+| **REPORT** | Reporting & decisions | 6 | DEC-01/02, HUMOR-01, ISSUE-01, OBJ-01, SUMM-01 |
+| **GOV** | Governance & trust | 17 | TRUST-01/02, BICAM-01, PROP-01/02/03, RULE-01/02/03, BIND-01, MCP-FIRST-01, MODE-01, AUDIT-01, CONSULT-01, NOEST-01, PROJECT-01, TRANSP-01 |
 | **ARCH** | Architecture | 8 | BEST-01, MCP-01/02, INFRA-01/02, YAGNI-01, MCP-PARITY-01, BACKFILL-01 |
-| **UI** | User interface | 8 | TRAME-01, LOADER-01, TRACE-01, COLOR-01, VUE-IMPL-01, NAV-01, DESIGN-02, CLAUDE-CODE-01 |
-| **WORKFLOW** | Workflow & autonomy | 10 | AUTO-01/02, RD-01/02, SEQ-01, SHELL-01, HOTRELOAD-01, SFDC-01, ORCH-01, DSP-01 |
+| **UI** | User interface | 11 | TRAME-01, LOADER-01, TRACE-01, COLOR-01, VUE-IMPL-01, NAV-01, DESIGN-02, CLAUDE-CODE-01, REFRESH-01, RESP-01, CROSS-NAV-01 |
+| **WORKFLOW** | Workflow & autonomy | 11 | AUTO-01/02, RD-01/02, SEQ-01, SHELL-01, HOTRELOAD-01, SFDC-01, ORCH-01, DSP-01, PLAN-01 |
 | **RECOVER** | Recovery & resilience | 4 | MEM-01, AMNES-01/02, CRASH-01 |
-| **TEST** | Testing & validation | 10 | GUARD-01, COMP-01/02, DISCOVERY-01, E2E-01, FIX-01, EXEC-01, UI-VERIFY-01, BDD-01, SPEC-01 |
+| **TEST** | Testing & validation | 23 | GUARD-01, COMP-01/02, DISCOVERY-01, E2E-01, FIX-01, EXEC-01, UI-VERIFY-01, BDD-01, SPEC-01, FIXTURE-01, DATA-01, EXPLSPEC-01, CVP-01, EDS-HEURISTIC-01, EVID-01, HOLO-01, LIVE-DB-01, QUAL-01, STRUCT-01, TAXON-01, TDD-01, TIER-MANDATORY-01 |
 | **SAFETY** | Safety & prevention | 4 | HEALTH-01/02, INTEG-01, DESTR-01 |
-| **CONTAINER** | Container operations | 5 | DEV-01/02, RESTART-01, SHELL-01, TYPEDB-01, MGMT-01 |
+| **CONTAINER** | Container operations | 6 | DEV-01/02, RESTART-01, SHELL-01, TYPEDB-01, MGMT-01 |
 | **DOC** | Documentation | 5 | SIZE-01, PARTIAL-01, LINK-01, GAP-ARCHIVE-01, SOURCE-01 |
 | **META** | Meta-rules | 1 | TAXON-01 |
-| **TASK** | Task management | 3 | TECH-01, LIFE-01, VALID-01 |
-| **DATA** | Data quality | 2 | LINK-01, COMPLETE-01 |
+| **TASK** | Task management | 8 | TECH-01, LIFE-01, VALID-01, EPIC-01, HANDOVER-01, NAV-01, SEARCH-01, SUMMARY-01 |
+| **DATA** | Data quality & pipelines | 7 | LINK-01, COMPLETE-01, CLASSIFY-01, INGEST-01, LAZY-01, PERSIST-01, BACKFILL-OPS-01 |
+| **MCP** | MCP operations | 10 | RESTART-AUTO-01, DOC-01, ERROR-01, FORMAT-01, HEALTH-01, LOGGING-01, NAMING-01, OUTPUT-01, PERF-01, PERSIST-01 |
 | **COMM** | Communication | 1 | PROGRESS-01 |
 | **INTENT** | Intent verification | 1 | CHECK-01 |
 | **FEEDBACK** | Feedback rules | 1 | LOGIC-01 |
 | **PKG** | Package management | 1 | LATEST-01 |
 | **GAP** | Gap documentation | 1 | DOC-01 |
-| **MCP** | MCP operations | 1 | RESTART-AUTO-01 |
+| **SCHEMA** | Schema management | 2 | RESILIENCE-01, VERIFY-01 |
+| **DEV** | Development environment | 1 | VENV-01 |
+| **DEP** | Dependencies | 1 | PIN-01 |
+| **IDE** | IDE integrations | 1 | VSCODE-CC-01 |
+| **DELIVER** | Delivery verification | 1 | VERIFY-01 |
+| **HTTP** | HTTP error handling | 1 | ERROR-01 |
+| **RELIABILITY** | Reliability planning | 1 | PLAN-01 |
 
 ---
 
@@ -162,10 +229,10 @@ Some rules have different IDs in TypeDB vs documentation (legacy migration artif
 
 | Level | Meaning | Count | Key Rules |
 |-------|---------|-------|-----------|
-| **CRITICAL** | Must enforce always | 24 | SESSION-EVID, GOV-BICAM/RULE-01/MCP-FIRST, WORKFLOW-AUTO-01/02/RD-01/02/ORCH-01, RECOVER-AMNES-01/02/CRASH-01, TEST-GUARD/COMP-02/E2E/FIX, SAFETY-HEALTH-01/02/DESTR, CONTAINER-DEV-01, DOC-LINK, TASK-EPIC, UI-VUE-IMPL, ARCH-INFRA-01 |
-| **HIGH** | Enforce in normal ops | 54 | ARCH-*, GOV-BIND/PROP/RULE/TRUST-02, TEST-COMP-01/DISCOVERY/BDD/SPEC, CONTAINER-*, DOC-*, UI-*, WORKFLOW-*, DATA-*, REPORT-*, SESSION-DSP-NOTIFY/PROMPT |
+| **CRITICAL** | Must enforce always | 28 | +HTTP-ERROR-01, TEST-TIER-MANDATORY-01, DELIVER-VERIFY-01, GOV-MCP-FIRST-01 |
+| **HIGH** | Enforce in normal ops | 93 | Majority of rules — architecture, testing, workflow, UI, data |
 | **MANDATORY** | Always enforce | 1 | COMM-PROGRESS-01 |
-| **MEDIUM** | Advisory | 6 | GOV-TRUST-01, DOC-GAP-ARCHIVE, TASK-TECH, UI-TRACE, ARCH-MCP-PARITY/BACKFILL |
+| **MEDIUM** | Advisory | 17 | MCP-DOC/ERROR/FORMAT/HEALTH/LOGGING/NAMING/OUTPUT, BACKFILL-OPS, TEST-HOLO/TAXON, GOV-TRUST-01, UI-TRACE, ARCH-MCP-PARITY/BACKFILL, DOC-GAP-ARCHIVE, TASK-TECH |
 | **LOW** | Optional | 1 | REPORT-HUMOR-01 |
 
 ---
@@ -195,6 +262,7 @@ Rules are enforced via:
 
 | Version | Date | Change |
 |---------|------|--------|
+| 6.0.0 | 2026-03-24 | **P18 Rules Restructure** — 48 orphaned rules indexed, 4 new rules created (HTTP-ERROR-01, UI-CROSS-NAV-01, MCP-PERSIST-01, TEST-TIER-MANDATORY-01), 4 rules updated, 6 deprecated. Total: 150 rules |
 | 5.0.0 | 2026-01-17 | **Sarvaja Rename** - Project renamed from Sim.ai per DECISION-008. Semantic IDs now primary identifiers |
 | 4.0.0 | 2026-01-13 | **Semantic Rule ID Migration** - All rules migrated to `{DOMAIN}-{SUB}-{NN}-v{N}` format per META-TAXON-01-v1 |
 | 3.1.0 | 2026-01-11 | Added RULE-041: Crash Investigation, RULE-042: Destructive Command Prevention |

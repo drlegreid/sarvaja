@@ -61,6 +61,18 @@ The `mcp_usage_checker.py` hook now checks MCP API health before issuing warning
 
 ---
 
+## MCP Write Persistence Requirement (MCP-PERSIST-01-v1)
+
+MCP write operations MUST persist to TypeDB through the service layer. In-memory stores are cache only. See **MCP-PERSIST-01-v1** for full implementation requirements.
+
+**Key rules:**
+1. `session_start` MUST call `create_session()` service layer (writes to TypeDB)
+2. `task_create`/`task_update` MUST go through service layer
+3. In-memory stores (`_sessions_store`, `SessionCollector`) are cache — NOT source of truth
+4. On persistence failure: log WARNING, do NOT block MCP response
+
+---
+
 ## Anti-Patterns
 
 | Don't | Do Instead |
@@ -71,6 +83,7 @@ The `mcp_usage_checker.py` hook now checks MCP API health before issuing warning
 | Assume TodoWrite = persistent storage | MCP tools; TodoWrite is display only |
 | Rely on todo_sync.py as primary sync | Use MCP directly; hook is best-effort backup |
 | Ignore MCP-FIRST warnings | Switch to MCP tools when MCP is healthy |
+| Store only in-memory without TypeDB write | All MCP writes persist through service layer |
 
 ---
 

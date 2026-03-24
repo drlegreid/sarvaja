@@ -1,6 +1,8 @@
 # CONTAINER-LIFECYCLE-01-v1: Container Lifecycle Management Protocol
 
-**Category:** `devops` | **Priority:** HIGH | **Status:** ACTIVE | **Type:** OPERATIONAL
+**Category:** `devops` | **Priority:** HIGH | **Status:** DEPRECATED | **Type:** OPERATIONAL
+
+> **DEPRECATED 2026-03-24**: Consolidated into CONTAINER-RESTART-01-v1 which is specific and actively enforced.
 
 > **Created:** 2026-01-20 (Lesson learned from session)
 > **Tags:** `devops`, `podman`, `lifecycle`, `containers`

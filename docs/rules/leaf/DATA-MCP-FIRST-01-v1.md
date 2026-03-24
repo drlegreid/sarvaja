@@ -5,7 +5,7 @@
 | **Category** | workflow |
 | **Priority** | HIGH |
 | **Applicability** | MANDATORY |
-| **Status** | ACTIVE |
+| **Status** | DEPRECATED — Alias of GOV-MCP-FIRST-01-v1. Use GOV-MCP-FIRST-01-v1 instead. |
 | **Created** | 2026-03-22 |
 
 ## Directive

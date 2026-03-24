@@ -24,6 +24,22 @@ Before marking ANY task as complete, agent MUST verify **integration** not just 
 | 4 | **OUTPUT** | Does it produce expected result? | Test assertion, API response |
 | 5 | **PERSIST** | Is the change deployed/saved? | Container restart, git commit |
 
+## DONE Gate (Automated — `task_rules.py:validate_on_complete()`)
+
+The automated DONE gate runs on every `task_update(status="DONE")` and checks:
+
+| # | Field | Requirement | Source |
+|---|-------|------------|--------|
+| 1 | `linked_sessions` | >= 1 linked session | TypeDB preload |
+| 2 | `summary` | Non-empty string | Task entity |
+| 3 | `agent_id` | Set AND registered in agent registry | Task entity + agent lookup |
+| 4 | `completed_at` | Timestamp auto-set on DONE transition | Task entity |
+| 5 | `linked_documents` | >= 1 linked document | TypeDB preload (P14 fix) |
+
+**Preload requirement**: Fields 1 and 5 are fetched from TypeDB at DONE transition time via `_preload_task_from_typedb()`. In-memory cache is NOT sufficient — live TypeDB state is the gate.
+
+**Implementation**: `governance/services/task_rules.py:validate_on_complete()`
+
 ---
 
 ## Task Type Validation Matrix

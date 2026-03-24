@@ -151,8 +151,9 @@ RULE_STATUSES: List[str] = ['ACTIVE', 'DRAFT', 'DEPRECATED']
 TASK_STATUSES: List[str] = ['TODO', 'IN_PROGRESS', 'DONE', 'BLOCKED', 'CANCELED']
 TASK_PHASES: List[str] = ['P10', 'P11', 'P12', 'R&D', 'FH', 'KAN', 'ORCH', 'DOCVIEW']
 
-# Task Type Taxonomy (META-TAXON-01-v1 + SRVJ-FEAT-003)
-TASK_TYPES: List[str] = ['bug', 'feature', 'chore', 'research', 'gap', 'epic', 'test', 'specification', 'spec']
+# Task Type Taxonomy (META-TAXON-02-v1: EPIC-TASK-TAXONOMY-V2)
+# 6 canonical types — gap/story/specification/epic merged into bug/feature/spec
+TASK_TYPES: List[str] = ['bug', 'feature', 'chore', 'research', 'spec', 'test']
 TASK_PRIORITIES: List[str] = ['CRITICAL', 'HIGH', 'MEDIUM', 'LOW']
 
 # Task type → ID prefix for auto-generation
@@ -161,12 +162,23 @@ TASK_TYPE_PREFIX: Dict[str, str] = {
     'feature': 'FEAT',
     'chore': 'CHORE',
     'research': 'RD',
-    'gap': 'GAP',
-    'epic': 'EPIC',
-    'test': 'TEST',
-    'specification': 'SPEC',
     'spec': 'SPEC',
+    'test': 'TEST',
 }
+
+# Deprecated type aliases — normalized on write, accepted on read (EPIC-TASK-TAXONOMY-V2)
+TASK_TYPE_ALIASES: Dict[str, str] = {
+    'gap': 'bug',
+    'story': 'feature',
+    'specification': 'spec',
+    'epic': 'feature',
+}
+
+# Orthogonal tag dimensions (EPIC-TASK-TAXONOMY-V2)
+# Each dimension is independent — any tag can combine with any type
+TASK_LAYERS: List[str] = ['ui', 'api', 'data', 'infra', 'schema', 'monitoring', 'ci-cd']
+TASK_CONCERNS: List[str] = ['security', 'performance', 'reliability', 'usability', 'data-integrity', 'compliance']
+TASK_METHODS: List[str] = ['spike', 'exploratory', 'automated', 'ai-generated', 'gherkin', 'manual', 'draft']
 
 # Project acronyms mapping (SRVJ-FEAT-004)
 PROJECT_ACRONYMS: Dict[str, str] = {
