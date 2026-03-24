@@ -79,6 +79,8 @@ class Task:
     linked_documents: Optional[List[str]] = None
     # EPIC-GOV-TASKS-V2 Phase 4: workspace assignment
     workspace_id: Optional[str] = None
+    # P17: Resolution narrative (auto-populated on DONE, manually editable)
+    resolution_notes: Optional[str] = None
 
 
 @dataclass

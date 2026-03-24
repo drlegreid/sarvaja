@@ -54,6 +54,7 @@ def update_task(
     gap_id: Optional[str] = None,
     workspace_id: Optional[str] = None,
     summary: Optional[str] = None,
+    resolution_notes: Optional[str] = None,
     source: str = "rest",
 ) -> Optional[Dict[str, Any]]:
     """Update task fields in TypeDB with fallback.
@@ -117,6 +118,28 @@ def update_task(
             result = format_validation_result(done_errors)
             raise ValueError(f"DONE gate validation failed: {result}")
 
+    # P17: Auto-populate resolution_notes on DONE transition (if empty)
+    if status and status.upper() == "DONE" and not resolution_notes:
+        existing = _tasks_store.get(task_id, {})
+        existing_rn = existing.get("resolution_notes")
+        if not existing_rn:
+            from governance.services.resolution_collator import (
+                build_resolution_summary,
+                fetch_session_metadata,
+            )
+            task_snapshot = dict(existing)
+            # Merge in any fields being set in this same call
+            if linked_sessions:
+                task_snapshot["linked_sessions"] = linked_sessions
+            if linked_documents:
+                task_snapshot["linked_documents"] = linked_documents
+            if evidence:
+                task_snapshot["evidence"] = evidence
+            session_ids = task_snapshot.get("linked_sessions") or []
+            session_meta = fetch_session_metadata(session_ids) if session_ids else []
+            resolution_notes = build_resolution_summary(task_snapshot, session_meta)
+            logger.info(f"[P17] Auto-populated resolution_notes for {task_id}")
+
     # SRVJ-FEAT-008: Auto-attach evidence summary for test tasks on DONE
     if status and status.upper() == "DONE":
         existing = _tasks_store.get(task_id, {})
@@ -154,7 +177,7 @@ def update_task(
                 task_obj = updated or task_obj
             # BUG-TASK-TAXONOMY-001: Persist priority/task_type/name/phase/summary to TypeDB
             # SRVJ-BUG-018: Also persist agent_id via update_task()
-            if task_obj and (priority or task_type or phase or description or summary or agent_id):
+            if task_obj and (priority or task_type or phase or description or summary or agent_id or resolution_notes):
                 try:
                     client.update_task(
                         task_id,
@@ -164,6 +187,7 @@ def update_task(
                         phase=phase,
                         summary=summary,
                         agent_id=agent_id,
+                        resolution_notes=resolution_notes,
                     )
                 except Exception as ue:
                     # BUG-TASK-TAXONOMY-DEBUG-001: WARNING not DEBUG — data divergence
@@ -227,6 +251,7 @@ def update_task(
                 "linked_commits": getattr(task_obj, 'linked_commits', []) or [],
                 "linked_documents": getattr(task_obj, 'linked_documents', []) or [],
                 "workspace_id": getattr(task_obj, 'workspace_id', None),  # EPIC-GOV-TASKS-V2 Phase 6c
+                "resolution_notes": getattr(task_obj, 'resolution_notes', None),  # P17
             }
         else:
             return None
@@ -253,6 +278,7 @@ def update_task(
         "linked_rules": linked_rules, "linked_sessions": linked_sessions,
         "linked_documents": linked_documents, "gap_id": gap_id,
         "workspace_id": workspace_id, "summary": summary,
+        "resolution_notes": resolution_notes,
     }
     for field, val in updates.items():
         if val is not None:

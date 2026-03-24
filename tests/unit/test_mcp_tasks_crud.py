@@ -203,7 +203,8 @@ class TestTaskUpdate:
         mock_svc.assert_called_once_with(
             task_id="T-1", status="DONE", description=None,
             phase=None, priority=None, task_type=None,
-            workspace_id=None, summary=None, agent_id=None, source="mcp",
+            workspace_id=None, summary=None, agent_id=None,
+            resolution_notes=None, source="mcp",
         )
 
     @patch(f"{_MOD}.log_monitor_event")

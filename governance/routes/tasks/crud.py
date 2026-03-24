@@ -155,6 +155,7 @@ async def update_task(task_id: str, update: TaskUpdate):
             linked_documents=update.linked_documents,
             gap_id=update.gap_id,
             workspace_id=update.workspace_id,  # BUG-WS-API-001
+            resolution_notes=update.resolution_notes,  # P17
             source="rest-api",
         )
         if result is None:

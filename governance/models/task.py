@@ -37,6 +37,7 @@ class TaskUpdate(BaseModel):
     gap_id: Optional[str] = None
     workspace_id: Optional[str] = None  # BUG-WS-API-001: workspace assignment
     evidence: Optional[str] = None  # Per EPIC-DR-008
+    resolution_notes: Optional[str] = None  # P17: resolution narrative
 
 class TaskResponse(BaseModel):
     """Response model for a task. Per GAP-UI-046, WORKFLOW-SEQ-01-v1."""
@@ -61,6 +62,7 @@ class TaskResponse(BaseModel):
     evidence: Optional[str] = None  # May include [Verification: L1/L2/L3] prefix
     document_path: Optional[str] = None
     workspace_id: Optional[str] = None  # EPIC-GOV-TASKS-V2 Phase 4
+    resolution_notes: Optional[str] = None  # P17: resolution narrative
     warnings: Optional[List[str]] = None  # P16: duplicate detection warnings
 
 class TaskDetailsUpdate(BaseModel):

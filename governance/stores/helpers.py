@@ -109,6 +109,7 @@ def task_to_response(task: TypeDBTask):
         evidence=task.evidence,
         document_path=task.document_path,
         workspace_id=task.workspace_id,
+        resolution_notes=_str_or_none(getattr(task, 'resolution_notes', None)),  # P17
     )
 
 

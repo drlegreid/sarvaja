@@ -121,7 +121,8 @@ def register_task_crud_tools(mcp) -> None:
                     task_type: Optional[str] = None,
                     workspace_id: Optional[str] = None,
                     summary: Optional[str] = None,
-                    agent_id: Optional[str] = None) -> str:
+                    agent_id: Optional[str] = None,
+                    resolution_notes: Optional[str] = None) -> str:
         """
         Update an existing task in TypeDB.
 
@@ -146,7 +147,7 @@ def register_task_crud_tools(mcp) -> None:
         Returns:
             JSON with updated task details or error
         """
-        if not any([status, name, phase, priority, task_type, workspace_id, summary, agent_id]):
+        if not any([status, name, phase, priority, task_type, workspace_id, summary, agent_id, resolution_notes]):
             return format_mcp_result({"error": "No update fields provided"})
 
         try:
@@ -160,6 +161,7 @@ def register_task_crud_tools(mcp) -> None:
                 workspace_id=workspace_id,
                 summary=summary,
                 agent_id=agent_id,
+                resolution_notes=resolution_notes,
                 source="mcp",
             )
             if result:

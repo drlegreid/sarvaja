@@ -101,6 +101,25 @@ def build_task_edit_form() -> None:
                     __properties=["data-testid"],
                     **{"data-testid": "task-edit-agent"}
                 )
+        # P17: Resolution notes textarea (shown for terminal tasks)
+        v3.VTextarea(
+            v_if=(
+                "selected_task.status === 'DONE' || "
+                "selected_task.status === 'CLOSED' || "
+                "selected_task.status === 'CANCELED'"
+            ),
+            v_model="edit_task_resolution_notes",
+            label="Resolution Notes",
+            variant="outlined",
+            density="compact",
+            rows=4,
+            auto_grow=True,
+            classes="mb-3",
+            hint="Markdown-formatted resolution narrative",
+            persistent_hint=True,
+            __properties=["data-testid"],
+            **{"data-testid": "task-edit-resolution-notes"}
+        )
         with html.Div(classes="d-flex justify-end mt-3"):
             v3.VBtn(
                 "Cancel",

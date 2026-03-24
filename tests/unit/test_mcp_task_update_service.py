@@ -75,6 +75,7 @@ class TestMCPTaskUpdateServiceRouting:
             workspace_id=None,
             summary=None,
             agent_id=None,
+            resolution_notes=None,
             source="mcp",
         )
         parsed = json.loads(result)

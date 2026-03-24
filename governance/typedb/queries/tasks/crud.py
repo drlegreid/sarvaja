@@ -30,6 +30,7 @@ _ALLOWED_TASK_ATTR_NAMES = frozenset({
     "task-status", "task-name", "phase", "item-type",
     "document-path", "task-priority", "task-type", "task-summary",
     "agent-id",  # SRVJ-BUG-018: agent_id persistence via update_task()
+    "resolution-notes",  # P17: resolution narrative
 })
 
 
@@ -105,6 +106,7 @@ class TaskCRUDOperations:
         task_type: str = None,
         workspace_id: str = None,
         summary: str = None,
+        resolution_notes: str = None,
     ) -> Optional[Task]:
         """
         Insert a new task into TypeDB.
@@ -188,6 +190,10 @@ class TaskCRUDOperations:
                 if summary:
                     summary_escaped = summary.replace('\\', '\\\\').replace('"', '\\"')
                     insert_parts.append(f'has task-summary "{summary_escaped}"')
+                # P17: Resolution narrative
+                if resolution_notes:
+                    rn_escaped = resolution_notes.replace('\\', '\\\\').replace('"', '\\"')
+                    insert_parts.append(f'has resolution-notes "{rn_escaped}"')
 
                 insert_query = f"""
                     insert $t isa task,
@@ -285,6 +291,7 @@ class TaskCRUDOperations:
         task_type: str = None,
         summary: str = None,
         agent_id: str = None,  # SRVJ-BUG-018: agent_id persistence
+        resolution_notes: str = None,  # P17: resolution narrative
     ) -> bool:
         """
         Update a task's attributes in TypeDB.
@@ -352,6 +359,23 @@ class TaskCRUDOperations:
                     current_agent = getattr(current, 'agent_id', None)
                     if current_agent != agent_id:
                         _update_attribute(tx, task_id, "agent-id", current_agent, agent_id)
+                # P17: resolution narrative persistence (multiline — skip _strip_ctl)
+                if resolution_notes:
+                    current_rn = getattr(current, 'resolution_notes', None)
+                    if current_rn != resolution_notes:
+                        tid_esc = task_id.replace('\\', '\\\\').replace('"', '\\"')
+                        rn_esc = resolution_notes.replace('\\', '\\\\').replace('"', '\\"')
+                        if current_rn is not None:
+                            old_esc = current_rn.replace('\\', '\\\\').replace('"', '\\"')
+                            tx.query(f'''
+                                match $t isa task, has task-id "{tid_esc}", has resolution-notes $v;
+                                    $v == "{old_esc}";
+                                delete has $v of $t;
+                            ''').resolve()
+                        tx.query(f'''
+                            match $t isa task, has task-id "{tid_esc}";
+                            insert $t has resolution-notes "{rn_esc}";
+                        ''').resolve()
                 tx.commit()
             return True
         except Exception as e:

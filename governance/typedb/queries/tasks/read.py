@@ -97,6 +97,8 @@ class TaskReadQueries:
             ("task-priority", "match $t isa task, has task-id $id, has task-priority $v; select $id, $v;", "v", "priority"),
             ("task-type", "match $t isa task, has task-id $id, has task-type $v; select $id, $v;", "v", "task_type"),
             ("task-summary", "match $t isa task, has task-id $id, has task-summary $v; select $id, $v;", "v", "summary"),
+            # P17: Resolution narrative
+            ("resolution-notes", "match $t isa task, has task-id $id, has resolution-notes $v; select $id, $v;", "v", "resolution_notes"),
         ]
 
         for attr_name, query, result_key, task_attr in attr_queries:
@@ -241,6 +243,7 @@ class TaskReadQueries:
             ("task-priority", "pri", "priority"),              # BUG-TASK-TAXONOMY-001
             ("task-type", "ttype", "task_type"),               # BUG-TASK-TAXONOMY-001
             ("task-summary", "summ", "summary"),               # SRVJ-BUG-007: was missing
+            ("resolution-notes", "rnotes", "resolution_notes"),  # P17: resolution narrative
         ]
         for attr_name, var_name, task_attr in optional_attrs:
             value = self._fetch_task_attr(task_id, attr_name, var_name)

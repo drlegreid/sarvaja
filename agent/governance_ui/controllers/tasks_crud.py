@@ -217,6 +217,7 @@ def register_tasks_crud(state: Any, ctrl: Any, api_base_url: str,
                 "summary": (getattr(state, 'edit_task_summary', '') or "").strip() or None,
                 "priority": getattr(state, 'edit_task_priority', None) or None,
                 "task_type": getattr(state, 'edit_task_type', None) or None,
+                "resolution_notes": (getattr(state, 'edit_task_resolution_notes', '') or "").strip() or None,
             }
             with httpx.Client(timeout=10.0) as client:
                 response = client.put(

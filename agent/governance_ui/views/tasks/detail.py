@@ -16,6 +16,7 @@ from .forms import (
 )
 from .execution import build_task_execution_log
 from .evidence_preview import build_task_evidence_preview
+from .resolution import build_task_resolution_section
 
 
 def build_task_tech_docs() -> None:
@@ -186,7 +187,8 @@ def build_task_detail_view() -> None:
                     "edit_task_body = selected_task.body || "
                     "selected_task.content || ''; "
                     "edit_task_priority = selected_task.priority || null; "
-                    "edit_task_type = selected_task.task_type || null"
+                    "edit_task_type = selected_task.task_type || null; "
+                    "edit_task_resolution_notes = selected_task.resolution_notes || ''"
                 ),
                 classes="mr-2",
                 __properties=["data-testid"],
@@ -328,3 +330,6 @@ def build_task_detail_view() -> None:
 
             # Execution Log Section (ORCH-007)
             build_task_execution_log()
+
+            # Resolution Section (P17: Issue Resolution Evidence Trail)
+            build_task_resolution_section()

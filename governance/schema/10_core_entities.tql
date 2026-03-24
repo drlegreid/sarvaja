@@ -65,6 +65,7 @@ entity task,
     owns task-name,
     owns task-status,
     owns task-resolution,                        # GAP-UI-046: NONE, DEFERRED, IMPLEMENTED, VALIDATED, CERTIFIED
+    owns resolution-notes,                       # P17: resolution narrative
     owns task-body,
     owns phase,
     owns agent-id,                               # Agent assigned to task (E2E tests)

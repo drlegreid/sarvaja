@@ -65,6 +65,8 @@ attribute task-status value string;
 
 attribute task-resolution value string;
 
+attribute resolution-notes value string;
+
 attribute task-body value string;
 
 attribute task-evidence value string;

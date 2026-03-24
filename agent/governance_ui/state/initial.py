@@ -257,6 +257,7 @@ def get_initial_state() -> Dict[str, Any]:
         'edit_task_summary': '',       # P15: summary field
         'edit_task_priority': None,    # P15: priority select
         'edit_task_type': None,        # P15: task_type select
+        'edit_task_resolution_notes': '',  # P17: resolution narrative
 
         # Unified Tasks View (UI-AUDIT-2026-01-19: merged backlog)
         'available_tasks': [],
