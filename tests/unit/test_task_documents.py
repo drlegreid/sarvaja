@@ -290,13 +290,13 @@ class TestTaskDocumentController:
         assert "attach_document" in triggers
 
     def test_create_task_includes_body(self):
-        from agent.governance_ui.controllers.tasks import register_tasks_controllers
-        src = inspect.getsource(register_tasks_controllers)
+        from agent.governance_ui.controllers.tasks_crud import register_tasks_crud
+        src = inspect.getsource(register_tasks_crud)
         assert "form_task_body" in src
 
     def test_edit_task_loads_body(self):
-        from agent.governance_ui.controllers.tasks import register_tasks_controllers
-        src = inspect.getsource(register_tasks_controllers)
+        from agent.governance_ui.controllers.tasks_crud import register_tasks_crud
+        src = inspect.getsource(register_tasks_crud)
         assert "edit_task_body" in src
 
 

@@ -86,7 +86,10 @@ class TestSessionSyncTodosIntegration:
     """Integration tests requiring TypeDB."""
 
     def test_sync_creates_tasks(self):
-        """Verify todos are synced to TypeDB."""
+        """Verify todos are synced to TypeDB.
+
+        TEST-DATA-01-v1: Mock typedb_client to prevent writing to production.
+        """
         from governance.mcp_tools.tasks_crud import register_task_crud_tools
 
         mock_mcp = MagicMock()
@@ -106,10 +109,20 @@ class TestSessionSyncTodosIntegration:
             {"content": "Test task 2", "status": "completed"},
         ]
 
-        result = registered_tools["session_sync_todos"](
-            session_id="TEST-SESSION-2026-01-19",
-            todos_json=json.dumps(todos)
-        )
+        # TEST-DATA-01-v1: Mock TypeDB to prevent real task creation
+        mock_client = MagicMock()
+        mock_client.get_task.return_value = None
+        mock_client.insert_task.return_value = True
 
-        # Should return success (may have created or updated)
-        assert "error" not in result or "Failed to connect" in result
+        with patch(
+            "governance.mcp_tools.tasks_crud_verify.typedb_client",
+            return_value=MagicMock(__enter__=MagicMock(return_value=mock_client),
+                                   __exit__=MagicMock(return_value=False)),
+        ):
+            result = registered_tools["session_sync_todos"](
+                session_id="TEST-SESSION-2026-01-19",
+                todos_json=json.dumps(todos)
+            )
+
+        assert "error" not in result
+        assert mock_client.insert_task.call_count == 2

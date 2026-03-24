@@ -122,6 +122,13 @@ def register_task_verify_tools(mcp) -> None:
             return format_mcp_result({"error": f"Too many todos ({len(todos)}); max is {_MAX_TODOS}"})
 
         try:
+            # TEST-DATA-01-v1: Resolve workspace_id to avoid orphaned tasks
+            try:
+                from agent.governance_ui.state.constants import DEFAULT_WORKSPACE_ID
+                workspace_id = DEFAULT_WORKSPACE_ID
+            except ImportError:
+                workspace_id = None
+
             with typedb_client() as client:
                 date_str = datetime.now().strftime("%Y%m%d")
                 created, updated, skipped = 0, 0, 0
@@ -150,7 +157,8 @@ def register_task_verify_tools(mcp) -> None:
                         body = f"[Session: {session_id}] {content}"
                         client.insert_task(
                             task_id=task_id, name=content[:100],
-                            status=status, phase="SESSION", body=body
+                            status=status, phase="SESSION", body=body,
+                            workspace_id=workspace_id,
                         )
                         created += 1
                         synced_tasks.append({"task_id": task_id, "action": "created"})

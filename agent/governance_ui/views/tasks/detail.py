@@ -181,7 +181,12 @@ def build_task_detail_view() -> None:
                     "selected_task.title || ''; "
                     "edit_task_phase = selected_task.phase || 'P10'; "
                     "edit_task_status = selected_task.status || 'TODO'; "
-                    "edit_task_agent = selected_task.agent_id || ''"
+                    "edit_task_agent = selected_task.agent_id || ''; "
+                    "edit_task_summary = selected_task.summary || ''; "
+                    "edit_task_body = selected_task.body || "
+                    "selected_task.content || ''; "
+                    "edit_task_priority = selected_task.priority || null; "
+                    "edit_task_type = selected_task.task_type || null"
                 ),
                 classes="mr-2",
                 __properties=["data-testid"],
@@ -203,9 +208,9 @@ def build_task_detail_view() -> None:
                 __properties=["data-testid"],
                 **{"data-testid": "task-detail-claim-btn"}
             )
-            # Complete button (EPIC-UI-VALUE-001)
+            # P14: "Mark Done" (was "Complete") — EPIC-UI-VALUE-001
             v3.VBtn(
-                "Complete",
+                "Mark Done",
                 v_if=(
                     "!edit_task_mode && "
                     "selected_task.status === 'IN_PROGRESS'"
@@ -218,9 +223,32 @@ def build_task_detail_view() -> None:
                 __properties=["data-testid"],
                 **{"data-testid": "task-detail-complete-btn"}
             )
+            # P14: Cancel button for active (non-terminal) tasks
+            v3.VBtn(
+                "Cancel",
+                v_if=(
+                    "!edit_task_mode && "
+                    "selected_task.status !== 'DONE' && "
+                    "selected_task.status !== 'CLOSED' && "
+                    "selected_task.status !== 'CANCELED'"
+                ),
+                color="warning",
+                prepend_icon="mdi-cancel",
+                variant="outlined",
+                click="trigger('cancel_selected_task')",
+                classes="mr-2",
+                __properties=["data-testid"],
+                **{"data-testid": "task-detail-cancel-btn"}
+            )
+            # P14: Delete only for terminal tasks (CANCELED/CLOSED/DONE)
             v3.VBtn(
                 "Delete",
-                v_if="!edit_task_mode",
+                v_if=(
+                    "!edit_task_mode && "
+                    "(selected_task.status === 'CANCELED' || "
+                    "selected_task.status === 'CLOSED' || "
+                    "selected_task.status === 'DONE')"
+                ),
                 color="error",
                 prepend_icon="mdi-delete",
                 variant="outlined",

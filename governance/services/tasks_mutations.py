@@ -1,6 +1,7 @@
 """Task Service Mutations — update, delete, and linking operations.
 
-Per DOC-SIZE-01-v1: Extracted from tasks.py.
+Per DOC-SIZE-01-v1: Hub module. Preload in tasks_preload.py,
+linking in tasks_mutations_linking.py.
 """
 import logging
 from datetime import datetime
@@ -14,6 +15,14 @@ from governance.stores import (
 )
 from governance.stores.audit import record_audit
 from governance.middleware.event_log import log_event
+from .tasks_preload import _monitor, _preload_task_from_typedb  # noqa: F401
+from .tasks_mutations_linking import (  # noqa: F401
+    link_task_to_rule,
+    link_task_to_session,
+    link_task_to_document,
+    unlink_task_from_document,
+    link_task_to_workspace,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -27,23 +36,6 @@ __all__ = [
     "unlink_task_from_document",
     "link_task_to_workspace",  # EPIC-GOV-TASKS-V2 Phase 4
 ]
-
-
-def _monitor(action: str, task_id: str, source: str = "service", **extra):
-    """Log task monitoring event for MCP compliance."""
-    try:
-        from governance.mcp_tools.common import log_monitor_event
-        log_monitor_event(
-            event_type="task_event",
-            source=source,
-            details={"task_id": task_id, "action": action, **extra},
-            severity="INFO",
-        )
-    except Exception as e:
-        # BUG-MONITOR-SILENT-001: Log instead of silently swallowing
-        # BUG-420-MON-004: Add exc_info for stack trace preservation
-        # BUG-464-TM-001: Sanitize logger message — exc_info=True already captures full stack
-        logger.warning(f"Monitor event failed for task {task_id}: {type(e).__name__}", exc_info=True)
 
 
 def update_task(
@@ -98,39 +90,9 @@ def update_task(
     # SRVJ-FEAT-002: DONE gate — validate mandatory fields on completion
     if status and status.upper() == "DONE":
         from governance.services.task_rules import validate_on_complete, format_validation_result
-        # BUG-DONE-GATE-STALE: Pre-load task from TypeDB into _tasks_store
-        # before DONE gate check. MCP-created tasks may not be in _tasks_store yet.
-        if task_id not in _tasks_store:
-            _preload_client = get_typedb_client()
-            if _preload_client:
-                _preload_obj = _preload_client.get_task(task_id)
-                if _preload_obj:
-                    _claimed = getattr(_preload_obj, 'claimed_at', None)
-                    _completed = getattr(_preload_obj, 'completed_at', None)
-                    _tasks_store[task_id] = {
-                        "task_id": task_id,
-                        "description": _preload_obj.name or getattr(_preload_obj, 'description', '') or "",
-                        "phase": _preload_obj.phase or "",
-                        "status": _preload_obj.status or "TODO",
-                        "agent_id": _preload_obj.agent_id,
-                        "created_at": _preload_obj.created_at.isoformat() if _preload_obj.created_at else None,
-                        "body": getattr(_preload_obj, 'body', None),
-                        "gap_id": getattr(_preload_obj, 'gap_id', None),
-                        "priority": getattr(_preload_obj, 'priority', None),
-                        "task_type": getattr(_preload_obj, 'task_type', None),
-                        "evidence": getattr(_preload_obj, 'evidence', None),
-                        "resolution": getattr(_preload_obj, 'resolution', None),
-                        "claimed_at": _claimed.isoformat() if _claimed else None,
-                        "completed_at": _completed.isoformat() if _completed else None,
-                        "document_path": getattr(_preload_obj, 'document_path', None),
-                        "linked_rules": getattr(_preload_obj, 'linked_rules', []) or [],
-                        "linked_sessions": getattr(_preload_obj, 'linked_sessions', []) or [],
-                        "linked_commits": getattr(_preload_obj, 'linked_commits', []) or [],
-                        "linked_documents": getattr(_preload_obj, 'linked_documents', []) or [],
-                        "summary": getattr(_preload_obj, 'summary', None) or _preload_obj.name,
-                        "workspace_id": getattr(_preload_obj, 'workspace_id', None),
-                    }
-                    logger.info(f"[DONE-GATE] Pre-loaded task {task_id} from TypeDB into _tasks_store")
+        # P14: ALWAYS refresh from TypeDB for DONE gate — linked_documents may
+        # have been added via MCP after initial creation (stale _tasks_store data).
+        _preload_task_from_typedb(task_id)
         # Gather existing task data for validation
         existing = _tasks_store.get(task_id, {})
         effective_summary = summary or existing.get("summary")
@@ -333,109 +295,3 @@ def delete_task(task_id: str, source: str = "rest") -> bool:
         _monitor("delete", task_id, source=source)
         log_event("task", "delete", task_id=task_id, source=source)
     return deleted
-
-
-def link_task_to_rule(task_id: str, rule_id: str, source: str = "rest") -> bool:
-    """Link task to rule via implements-rule relation."""
-    client = get_typedb_client()
-    if not client:
-        return False
-    try:
-        if not client.get_task(task_id):
-            return False
-        result = client.link_task_to_rule(task_id, rule_id)
-        if result:
-            _monitor("link_rule", task_id, source=source, rule_id=rule_id)
-        return bool(result)
-    except Exception as e:
-        # BUG-404-TM-006: Add exc_info for stack trace preservation
-        # BUG-464-TM-007: Sanitize logger message — exc_info=True already captures full stack
-        logger.error(f"Failed to link task {task_id} to rule {rule_id}: {type(e).__name__}", exc_info=True)
-        return False
-
-
-def link_task_to_session(task_id: str, session_id: str, source: str = "rest") -> bool:
-    """Link task to session via completed-in relation."""
-    client = get_typedb_client()
-    if not client:
-        return False
-    try:
-        if not client.get_task(task_id):
-            return False
-        result = client.link_task_to_session(task_id, session_id)
-        if result:
-            # SRVJ-BUG-002: Keep _tasks_store in sync for DONE gate validation
-            if task_id in _tasks_store:
-                sessions = _tasks_store[task_id].get("linked_sessions", [])
-                if session_id not in sessions:
-                    sessions.append(session_id)
-                    _tasks_store[task_id]["linked_sessions"] = sessions
-            _monitor("link_session", task_id, source=source, session_id=session_id)
-        return bool(result)
-    except Exception as e:
-        # BUG-404-TM-006: Add exc_info for stack trace preservation
-        # BUG-464-TM-008: Sanitize logger message — exc_info=True already captures full stack
-        logger.error(f"Failed to link task {task_id} to session {session_id}: {type(e).__name__}", exc_info=True)
-        return False
-
-
-def link_task_to_document(task_id: str, document_path: str, source: str = "rest") -> bool:
-    """Link task to document via document-references-task relation."""
-    client = get_typedb_client()
-    if not client:
-        return False
-    try:
-        if not client.get_task(task_id):
-            return False
-        result = client.link_task_to_document(task_id, document_path)
-        if result:
-            # SRVJ-BUG-002: Keep _tasks_store in sync for DONE gate validation
-            if task_id in _tasks_store:
-                docs = _tasks_store[task_id].get("linked_documents", [])
-                if document_path not in docs:
-                    docs.append(document_path)
-                    _tasks_store[task_id]["linked_documents"] = docs
-            _monitor("link_document", task_id, source=source, document_path=document_path)
-        return bool(result)
-    except Exception as e:
-        # BUG-404-TM-006: Add exc_info for stack trace preservation
-        # BUG-464-TM-009: Sanitize logger message — exc_info=True already captures full stack
-        logger.error(f"Failed to link task {task_id} to document {document_path}: {type(e).__name__}", exc_info=True)
-        return False
-
-
-def unlink_task_from_document(task_id: str, document_path: str, source: str = "rest") -> bool:
-    """Unlink document from task."""
-    client = get_typedb_client()
-    if not client:
-        return False
-    try:
-        result = client.unlink_task_from_document(task_id, document_path)
-        if result:
-            _monitor("unlink_document", task_id, source=source, document_path=document_path)
-        return bool(result)
-    except Exception as e:
-        # BUG-404-TM-006: Add exc_info for stack trace preservation
-        # BUG-464-TM-010: Sanitize logger message — exc_info=True already captures full stack
-        logger.error(f"Failed to unlink document {document_path} from task {task_id}: {type(e).__name__}", exc_info=True)
-        return False
-
-
-def link_task_to_workspace(task_id: str, workspace_id: str, source: str = "rest") -> bool:
-    """Link task to workspace via workspace-has-task relation.
-
-    Per EPIC-GOV-TASKS-V2 Phase 4: Task-Workspace Bidirectional Linking.
-    """
-    client = get_typedb_client()
-    if not client:
-        return False
-    try:
-        if not client.get_task(task_id):
-            return False
-        result = client.link_task_to_workspace(workspace_id, task_id)  # BUG-WS-CREATE-001: fix arg order
-        if result:
-            _monitor("link_workspace", task_id, source=source, workspace_id=workspace_id)
-        return bool(result)
-    except Exception as e:
-        logger.error(f"Failed to link task {task_id} to workspace {workspace_id}: {type(e).__name__}", exc_info=True)
-        return False

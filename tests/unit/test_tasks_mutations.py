@@ -191,18 +191,18 @@ class TestDeleteTask:
 class TestLinkTaskToRule:
     """Tests for link_task_to_rule()."""
 
-    @patch("governance.services.tasks_mutations.get_typedb_client", return_value=None)
+    @patch("governance.services.tasks_mutations_linking.get_typedb_client", return_value=None)
     def test_no_client_returns_false(self, mock_client):
         assert link_task_to_rule("T-001", "RULE-001") is False
 
-    @patch("governance.services.tasks_mutations.get_typedb_client")
+    @patch("governance.services.tasks_mutations_linking.get_typedb_client")
     def test_task_not_found_returns_false(self, mock_client_fn):
         mock_client = MagicMock()
         mock_client.get_task.return_value = None
         mock_client_fn.return_value = mock_client
         assert link_task_to_rule("T-NOPE", "RULE-001") is False
 
-    @patch("governance.services.tasks_mutations.get_typedb_client")
+    @patch("governance.services.tasks_mutations_linking.get_typedb_client")
     def test_successful_link(self, mock_client_fn):
         mock_client = MagicMock()
         mock_client.get_task.return_value = MagicMock()
@@ -211,7 +211,7 @@ class TestLinkTaskToRule:
         assert link_task_to_rule("T-001", "RULE-001") is True
         mock_client.link_task_to_rule.assert_called_once_with("T-001", "RULE-001")
 
-    @patch("governance.services.tasks_mutations.get_typedb_client")
+    @patch("governance.services.tasks_mutations_linking.get_typedb_client")
     def test_link_error_returns_false(self, mock_client_fn):
         mock_client = MagicMock()
         mock_client.get_task.return_value = MagicMock()
@@ -223,18 +223,18 @@ class TestLinkTaskToRule:
 class TestLinkTaskToSession:
     """Tests for link_task_to_session()."""
 
-    @patch("governance.services.tasks_mutations.get_typedb_client", return_value=None)
+    @patch("governance.services.tasks_mutations_linking.get_typedb_client", return_value=None)
     def test_no_client_returns_false(self, mock_client):
         assert link_task_to_session("T-001", "SESSION-001") is False
 
-    @patch("governance.services.tasks_mutations.get_typedb_client")
+    @patch("governance.services.tasks_mutations_linking.get_typedb_client")
     def test_task_not_found_returns_false(self, mock_client_fn):
         mock_client = MagicMock()
         mock_client.get_task.return_value = None
         mock_client_fn.return_value = mock_client
         assert link_task_to_session("T-NOPE", "SESSION-001") is False
 
-    @patch("governance.services.tasks_mutations.get_typedb_client")
+    @patch("governance.services.tasks_mutations_linking.get_typedb_client")
     def test_successful_link(self, mock_client_fn):
         mock_client = MagicMock()
         mock_client.get_task.return_value = MagicMock()
@@ -242,7 +242,7 @@ class TestLinkTaskToSession:
         mock_client_fn.return_value = mock_client
         assert link_task_to_session("T-001", "SESSION-001") is True
 
-    @patch("governance.services.tasks_mutations.get_typedb_client")
+    @patch("governance.services.tasks_mutations_linking.get_typedb_client")
     def test_link_error_returns_false(self, mock_client_fn):
         mock_client = MagicMock()
         mock_client.get_task.return_value = MagicMock()

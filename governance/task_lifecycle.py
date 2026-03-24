@@ -3,23 +3,52 @@ Task Lifecycle Management.
 
 Per GAP-UI-046: Task status/resolution per Agile DoR/DoD
 Per TEST-FIX-01-v1: All fixes need verification evidence
+Per EPIC-TASK-QUALITY-V3 P14: Canonical TaskStatus enum — single source of truth
 
 Agile Definitions:
-- Status (lifecycle): OPEN → IN_PROGRESS → CLOSED
+- Status (lifecycle): OPEN/TODO → IN_PROGRESS → DONE/CLOSED | BLOCKED | CANCELED
 - Resolution (outcome): NONE, DEFERRED, IMPLEMENTED, VALIDATED, CERTIFIED
 
 Created: 2026-01-14
+Updated: 2026-03-24 — P14: Added TODO, DONE, BLOCKED, CANCELED states
 """
 
 from enum import Enum
-from typing import Tuple
+from typing import List, Set, Tuple
 
 
 class TaskStatus(str, Enum):
-    """Task lifecycle status (Definition of Ready)."""
-    OPEN = "OPEN"  # Ready to be worked on
+    """Task lifecycle status — canonical enum, single source of truth.
+
+    Per EPIC-TASK-QUALITY-V3 P14: All layers (TypeDB, MCP, UI) import from here.
+    """
+    OPEN = "OPEN"           # Ready to be worked on
+    TODO = "TODO"           # Backlog / not yet started
     IN_PROGRESS = "IN_PROGRESS"  # Being worked on
-    CLOSED = "CLOSED"  # Work complete
+    BLOCKED = "BLOCKED"     # Waiting on external dependency
+    DONE = "DONE"           # Work complete (legacy synonym for CLOSED)
+    CANCELED = "CANCELED"   # Abandoned / no longer needed
+    CLOSED = "CLOSED"       # Work complete (Agile canonical)
+
+    @classmethod
+    def valid_values(cls) -> Set[str]:
+        """All valid status strings for TypeDB validation."""
+        return {s.value for s in cls}
+
+    @classmethod
+    def ui_edit_values(cls) -> List[str]:
+        """Status values for the UI edit dropdown (excludes CLOSED — use DONE)."""
+        return ["TODO", "IN_PROGRESS", "DONE", "BLOCKED", "CANCELED"]
+
+    @classmethod
+    def terminal_states(cls) -> Set["TaskStatus"]:
+        """States where the task is finished — Delete is allowed here."""
+        return {cls.DONE, cls.CLOSED, cls.CANCELED}
+
+    @property
+    def is_terminal(self) -> bool:
+        """Whether this status represents a finished/abandoned task."""
+        return self in self.terminal_states()
 
 
 class TaskResolution(str, Enum):
@@ -31,11 +60,16 @@ class TaskResolution(str, Enum):
     CERTIFIED = "CERTIFIED"  # User feedback enrolled
 
 
-# Valid transitions
+# Valid transitions — P14: includes TODO, DONE, BLOCKED, CANCELED
 VALID_STATUS_TRANSITIONS = {
-    TaskStatus.OPEN: [TaskStatus.IN_PROGRESS, TaskStatus.CLOSED],
-    TaskStatus.IN_PROGRESS: [TaskStatus.OPEN, TaskStatus.CLOSED],  # Can reopen
-    TaskStatus.CLOSED: [TaskStatus.OPEN, TaskStatus.IN_PROGRESS],  # Can reopen
+    TaskStatus.OPEN: [TaskStatus.IN_PROGRESS, TaskStatus.CLOSED, TaskStatus.CANCELED],
+    TaskStatus.TODO: [TaskStatus.IN_PROGRESS, TaskStatus.CANCELED],
+    TaskStatus.IN_PROGRESS: [TaskStatus.OPEN, TaskStatus.DONE, TaskStatus.CLOSED,
+                             TaskStatus.BLOCKED, TaskStatus.CANCELED],
+    TaskStatus.BLOCKED: [TaskStatus.IN_PROGRESS, TaskStatus.OPEN, TaskStatus.CANCELED],
+    TaskStatus.DONE: [TaskStatus.OPEN, TaskStatus.IN_PROGRESS],  # Reopen
+    TaskStatus.CANCELED: [TaskStatus.OPEN, TaskStatus.TODO],  # Re-activate
+    TaskStatus.CLOSED: [TaskStatus.OPEN, TaskStatus.IN_PROGRESS],  # Reopen
 }
 
 VALID_RESOLUTION_TRANSITIONS = {
@@ -46,12 +80,15 @@ VALID_RESOLUTION_TRANSITIONS = {
     TaskResolution.CERTIFIED: [TaskResolution.VALIDATED],  # Can downgrade if issue found
 }
 
-# Backward compatibility mapping from old to new status values
+# Backward compatibility mapping — P14: all values now canonical enum members
 STATUS_MIGRATION_MAP = {
-    "TODO": TaskStatus.OPEN,
+    "TODO": TaskStatus.TODO,
     "IN_PROGRESS": TaskStatus.IN_PROGRESS,
-    "DONE": TaskStatus.CLOSED,
-    "BLOCKED": TaskStatus.IN_PROGRESS,  # Blocked tasks are still in progress
+    "DONE": TaskStatus.DONE,
+    "BLOCKED": TaskStatus.BLOCKED,
+    "CANCELED": TaskStatus.CANCELED,
+    "OPEN": TaskStatus.OPEN,
+    "CLOSED": TaskStatus.CLOSED,
 }
 
 
@@ -77,12 +114,14 @@ def validate_status_resolution_combo(status: TaskStatus, resolution: TaskResolut
     2. CLOSED tasks must have a resolution (not NONE)
     3. CERTIFIED requires prior VALIDATED state
     """
-    if status in [TaskStatus.OPEN, TaskStatus.IN_PROGRESS]:
+    active_states = [TaskStatus.OPEN, TaskStatus.TODO, TaskStatus.IN_PROGRESS,
+                     TaskStatus.BLOCKED, TaskStatus.CANCELED]
+    if status in active_states:
         if resolution != TaskResolution.NONE:
             return False, f"Active tasks (status={status}) cannot have resolution {resolution}"
-    elif status == TaskStatus.CLOSED:
+    elif status in [TaskStatus.CLOSED, TaskStatus.DONE]:
         if resolution == TaskResolution.NONE:
-            return False, "CLOSED tasks must have a resolution"
+            return False, f"{status} tasks must have a resolution"
     return True, "OK"
 
 

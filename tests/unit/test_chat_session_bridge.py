@@ -66,7 +66,7 @@ class TestStartChatSession:
                     create=True) as mock_create:
             # Patch at the module level where it's imported
             with patch(
-                "governance.services.sessions.get_typedb_client", return_value=None
+                "governance.services.sessions_crud.get_typedb_client", return_value=None
             ):
                 from governance.routes.chat.session_bridge import start_chat_session
                 collector = start_chat_session("agent-test", "TypeDB test")

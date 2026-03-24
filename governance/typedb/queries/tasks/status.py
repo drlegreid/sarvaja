@@ -46,7 +46,8 @@ def update_task_status(
         return None
 
     # BUG-297-STS-001: Validate status and resolution against allowlists
-    _VALID_STATUSES = {"OPEN", "IN_PROGRESS", "DONE", "CLOSED", "TODO"}
+    # P14: CANCELED added; canonical source is governance.task_lifecycle.TaskStatus
+    _VALID_STATUSES = {"OPEN", "IN_PROGRESS", "DONE", "CLOSED", "TODO", "BLOCKED", "CANCELED"}
     if status not in _VALID_STATUSES:
         logger.error(f"update_task_status: invalid status {status!r}")
         return None

@@ -209,7 +209,7 @@ class TestSessionServiceDefense:
         """get_session returns None for non-existent session."""
         from governance.services.sessions import get_session
 
-        with patch("governance.services.sessions.get_session_from_typedb", return_value=None):
+        with patch("governance.services.sessions_crud.get_session_from_typedb", return_value=None):
             result = get_session("NON-EXISTENT")
             assert result is None
 

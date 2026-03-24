@@ -11,12 +11,16 @@ from datetime import datetime
 import pytest
 
 _P = "governance.services.tasks"
+_PQ = "governance.services.tasks_queries"
 
 
 @pytest.fixture(autouse=True)
 def _reset_stores():
-    with patch(f"{_P}._tasks_store", {}) as tasks, \
-         patch(f"{_P}._sessions_store", {}) as sessions, \
+    tasks = {}
+    sessions = {}
+    with patch(f"{_P}._tasks_store", tasks), \
+         patch(f"{_P}._sessions_store", sessions), \
+         patch(f"{_PQ}._tasks_store", tasks), \
          patch(f"{_P}.record_audit"), \
          patch(f"{_P}.log_event"):
         yield tasks, sessions
@@ -71,7 +75,7 @@ class TestListTasks:
             {"task_id": "T-1", "status": "OPEN", "phase": "P10"},
             {"task_id": "T-2", "status": "DONE", "phase": "P11"},
         ]
-        with patch(f"{_P}.get_all_tasks_from_typedb", return_value=tasks_data):
+        with patch(f"{_PQ}.get_all_tasks_from_typedb", return_value=tasks_data):
             result = list_tasks()
         assert result["total"] == 2
         assert result["has_more"] is False
@@ -79,7 +83,7 @@ class TestListTasks:
     def test_pagination(self, _reset_stores):
         from governance.services.tasks import list_tasks
         tasks_data = [{"task_id": f"T-{i}", "status": "OPEN"} for i in range(5)]
-        with patch(f"{_P}.get_all_tasks_from_typedb", return_value=tasks_data):
+        with patch(f"{_PQ}.get_all_tasks_from_typedb", return_value=tasks_data):
             result = list_tasks(offset=0, limit=2)
         assert len(result["items"]) == 2
         assert result["has_more"] is True
@@ -90,14 +94,14 @@ class TestListTasks:
             {"task_id": "T-A", "status": "OPEN"},
             {"task_id": "T-B", "status": "OPEN"},
         ]
-        with patch(f"{_P}.get_all_tasks_from_typedb", return_value=tasks_data):
+        with patch(f"{_PQ}.get_all_tasks_from_typedb", return_value=tasks_data):
             result = list_tasks(sort_by="task_id", order="desc")
         assert result["items"][0]["task_id"] == "T-B"
 
     def test_invalid_sort_field(self, _reset_stores):
         from governance.services.tasks import list_tasks
         tasks_data = [{"task_id": "T-1", "status": "OPEN"}]
-        with patch(f"{_P}.get_all_tasks_from_typedb", return_value=tasks_data):
+        with patch(f"{_PQ}.get_all_tasks_from_typedb", return_value=tasks_data):
             result = list_tasks(sort_by="invalid_field")
         assert result["total"] == 1
 
@@ -182,8 +186,8 @@ class TestGetTask:
         from governance.services.tasks import get_task
         client = MagicMock()
         client.get_task.return_value = {"task_id": "T-1"}
-        with patch(f"{_P}.get_typedb_client", return_value=client), \
-             patch(f"{_P}.task_to_response", side_effect=lambda x: x):
+        with patch(f"{_PQ}.get_typedb_client", return_value=client), \
+             patch(f"{_PQ}.task_to_response", side_effect=lambda x: x):
             result = get_task("T-1")
         assert result["task_id"] == "T-1"
 
@@ -191,7 +195,7 @@ class TestGetTask:
         from governance.services.tasks import get_task
         client = MagicMock()
         client.get_task.return_value = None
-        with patch(f"{_P}.get_typedb_client", return_value=client):
+        with patch(f"{_PQ}.get_typedb_client", return_value=client):
             result = get_task("T-MISS")
         assert result is None
 
@@ -199,7 +203,7 @@ class TestGetTask:
         from governance.services.tasks import get_task
         tasks, _ = _reset_stores
         tasks["T-MEM"] = {"task_id": "T-MEM", "description": "memory"}
-        with patch(f"{_P}.get_typedb_client", return_value=None):
+        with patch(f"{_PQ}.get_typedb_client", return_value=None):
             result = get_task("T-MEM")
         assert result["task_id"] == "T-MEM"
 
@@ -209,12 +213,12 @@ class TestGetTask:
         tasks["T-FB"] = {"task_id": "T-FB"}
         client = MagicMock()
         client.get_task.side_effect = Exception("db error")
-        with patch(f"{_P}.get_typedb_client", return_value=client):
+        with patch(f"{_PQ}.get_typedb_client", return_value=client):
             result = get_task("T-FB")
         assert result["task_id"] == "T-FB"
 
     def test_not_found_anywhere(self, _reset_stores):
         from governance.services.tasks import get_task
-        with patch(f"{_P}.get_typedb_client", return_value=None):
+        with patch(f"{_PQ}.get_typedb_client", return_value=None):
             result = get_task("T-NOWHERE")
         assert result is None

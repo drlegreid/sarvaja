@@ -15,6 +15,7 @@ from governance.routes.tasks.details import router
 
 
 _SVC = "governance.services.tasks"
+_SVQ = "governance.services.tasks_queries"
 
 app = FastAPI()
 app.include_router(router, prefix="/api")
@@ -163,7 +164,7 @@ class TestUpdateTaskDetails:
 
 class TestGetTaskDetailsService:
 
-    @patch(f"{_SVC}.get_typedb_client")
+    @patch(f"{_SVQ}.get_typedb_client")
     def test_typedb_returns_details(self, mock_client):
         mock_db = MagicMock()
         mock_db.get_task_details.return_value = {
@@ -177,10 +178,10 @@ class TestGetTaskDetailsService:
         assert result["task_id"] == "T-1"
         assert result["business"] == "B"
 
-    @patch(f"{_SVC}.get_typedb_client", return_value=None)
+    @patch(f"{_SVQ}.get_typedb_client", return_value=None)
     def test_fallback_to_memory(self, mock_client):
         from governance.services.tasks import get_task_details
-        with patch(f"{_SVC}._tasks_store", {
+        with patch(f"{_SVQ}._tasks_store", {
             "T-1": {"business": "Mem-B", "design": "Mem-D"}
         }):
             result = get_task_details("T-1")
@@ -188,21 +189,21 @@ class TestGetTaskDetailsService:
             assert result["business"] == "Mem-B"
             assert result["design"] == "Mem-D"
 
-    @patch(f"{_SVC}.get_typedb_client", return_value=None)
+    @patch(f"{_SVQ}.get_typedb_client", return_value=None)
     def test_not_found_returns_none(self, mock_client):
         from governance.services.tasks import get_task_details
-        with patch(f"{_SVC}._tasks_store", {}):
+        with patch(f"{_SVQ}._tasks_store", {}):
             result = get_task_details("NOPE")
             assert result is None
 
-    @patch(f"{_SVC}.get_typedb_client")
+    @patch(f"{_SVQ}.get_typedb_client")
     def test_typedb_error_falls_back(self, mock_client):
         mock_db = MagicMock()
         mock_db.get_task_details.side_effect = Exception("TypeDB down")
         mock_client.return_value = mock_db
 
         from governance.services.tasks import get_task_details
-        with patch(f"{_SVC}._tasks_store", {
+        with patch(f"{_SVQ}._tasks_store", {
             "T-1": {"architecture": "fallback-arch"}
         }):
             result = get_task_details("T-1")
@@ -226,7 +227,9 @@ class TestUpdateTaskDetailsService:
         mock_client.return_value = mock_db
 
         from governance.services.tasks import update_task_details
-        result = update_task_details("T-1", business="Updated")
+        # Patch get_typedb_client on queries module too (get_task_details lives there)
+        with patch(f"{_SVQ}.get_typedb_client", return_value=mock_db):
+            result = update_task_details("T-1", business="Updated")
         assert result is not None
         mock_db.update_task_details.assert_called_once()
         mock_monitor.assert_called()
@@ -236,7 +239,9 @@ class TestUpdateTaskDetailsService:
     def test_fallback_update(self, mock_monitor, mock_client):
         from governance.services.tasks import update_task_details
         store = {"T-1": {"business": "Old"}}
-        with patch(f"{_SVC}._tasks_store", store):
+        with patch(f"{_SVC}._tasks_store", store), \
+             patch(f"{_SVQ}._tasks_store", store), \
+             patch(f"{_SVQ}.get_typedb_client", return_value=None):
             result = update_task_details("T-1", business="New")
             assert result is not None
             assert store["T-1"]["business"] == "New"
@@ -244,7 +249,9 @@ class TestUpdateTaskDetailsService:
     @patch(f"{_SVC}.get_typedb_client", return_value=None)
     def test_not_found_returns_none(self, mock_client):
         from governance.services.tasks import update_task_details
-        with patch(f"{_SVC}._tasks_store", {}):
+        with patch(f"{_SVC}._tasks_store", {}), \
+             patch(f"{_SVQ}._tasks_store", {}), \
+             patch(f"{_SVQ}.get_typedb_client", return_value=None):
             result = update_task_details("NOPE", business="X")
             assert result is None
 

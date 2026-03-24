@@ -140,14 +140,17 @@ class TestValidateStatusResolutionCombo:
 class TestMigrateLegacyStatus:
     """Test legacy status migration."""
 
-    def test_todo_to_open(self):
-        assert migrate_legacy_status("TODO") == "OPEN"
+    def test_todo_maps_to_todo(self):
+        # P14: TODO is now a canonical status, maps to itself
+        assert migrate_legacy_status("TODO") == "TODO"
 
-    def test_done_to_closed(self):
-        assert migrate_legacy_status("DONE") == "CLOSED"
+    def test_done_maps_to_done(self):
+        # P14: DONE is now a canonical status, maps to itself
+        assert migrate_legacy_status("DONE") == "DONE"
 
-    def test_blocked_to_in_progress(self):
-        assert migrate_legacy_status("BLOCKED") == "IN_PROGRESS"
+    def test_blocked_maps_to_blocked(self):
+        # P14: BLOCKED is now a canonical status, maps to itself
+        assert migrate_legacy_status("BLOCKED") == "BLOCKED"
 
     def test_in_progress_unchanged(self):
         assert migrate_legacy_status("IN_PROGRESS") == "IN_PROGRESS"

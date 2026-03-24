@@ -31,9 +31,12 @@ class TestTaskCompletionSync:
     """Tests for automatic task completion sync."""
 
     def test_session_sync_handles_completed_status(self):
-        """Verify session_sync_todos handles 'completed' status correctly."""
+        """Verify session_sync_todos handles 'completed' status correctly.
+
+        TEST-DATA-01-v1: Mock typedb_client to prevent writing to production.
+        """
         from governance.mcp_tools.tasks_crud import register_task_crud_tools
-        from unittest.mock import MagicMock
+        from unittest.mock import MagicMock, patch
         import json
 
         mock_mcp = MagicMock()
@@ -55,14 +58,24 @@ class TestTaskCompletionSync:
             {"content": "Third task", "status": "in_progress"},
         ]
 
-        result = registered_tools["session_sync_todos"](
-            session_id="TEST-COMPLETION-SYNC",
-            todos_json=json.dumps(todos)
-        )
+        # TEST-DATA-01-v1: Mock TypeDB to prevent real task creation
+        mock_client = MagicMock()
+        mock_client.get_task.return_value = None  # No existing tasks
+        mock_client.insert_task.return_value = True
 
-        # Tool should process all statuses without error
-        # Note: May fail to connect to TypeDB in unit test
-        assert "error" not in result or "Failed to connect" in result
+        with patch(
+            "governance.mcp_tools.tasks_crud_verify.typedb_client",
+            return_value=MagicMock(__enter__=MagicMock(return_value=mock_client),
+                                   __exit__=MagicMock(return_value=False)),
+        ):
+            result = registered_tools["session_sync_todos"](
+                session_id="TEST-COMPLETION-SYNC",
+                todos_json=json.dumps(todos)
+            )
+
+        # Tool should create all 3 tasks via mocked client
+        assert "error" not in result
+        assert mock_client.insert_task.call_count == 3
 
     @pytest.mark.skip(reason="MCP-002-B: Auto-sync not yet implemented")
     def test_todowrite_completion_triggers_sync(self):

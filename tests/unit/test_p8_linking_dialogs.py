@@ -137,11 +137,12 @@ class TestBug013SessionNavigation:
         assert state.active_view == "tasks"
 
     def test_navigate_to_session_forces_dirty(self):
+        """BUG-012: dirty() on detail flags, NOT active_view."""
         sessions = [{"session_id": "SESSION-001"}]
         _, state, triggers = _setup_nav(sessions=sessions)
         triggers["navigate_to_session"]("SESSION-001", "tasks", "T-001", "Back")
-        state.dirty.assert_any_call('active_view')
         state.dirty.assert_any_call('show_session_detail')
+        state.dirty.assert_any_call('show_task_detail')
 
     @patch("httpx.Client")
     def test_navigate_to_session_restores_on_failure(self, mock_client):
@@ -408,9 +409,11 @@ class TestFeat013AutoAssignWorkspace:
 class TestDoneGatePreload:
     """DONE gate should pre-load task from TypeDB when not in _tasks_store."""
 
+    @patch("governance.services.tasks_preload.get_typedb_client")
     @patch("governance.services.tasks_mutations.get_typedb_client")
-    def test_done_gate_preloads_from_typedb(self, mock_client):
-        from governance.services.tasks_mutations import update_task, _tasks_store
+    def test_done_gate_preloads_from_typedb(self, mock_client, mock_preload_client):
+        from governance.services.tasks_mutations import update_task
+        from governance.stores import _tasks_store
         # Clear _tasks_store for this test
         _tasks_store.pop("T-PRELOAD", None)
 
@@ -446,6 +449,7 @@ class TestDoneGatePreload:
         mock_cl.get_task.return_value = mock_task
         mock_cl.update_task_status.return_value = mock_updated
         mock_client.return_value = mock_cl
+        mock_preload_client.return_value = mock_cl
 
         # Should NOT raise ValueError now that pre-load is in place
         result = update_task("T-PRELOAD", status="DONE")

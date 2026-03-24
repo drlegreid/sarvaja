@@ -19,6 +19,11 @@ ${TIMEOUT}         30s
 ${BROWSER}         chromium
 ${HEADLESS}        true
 
+# Test Data Isolation (TEST-DATA-01-v1)
+# All test entities MUST use sandbox workspace, NEVER production WS-9147535A
+${TEST_WORKSPACE}          WS-TEST-SANDBOX
+${TEST_PROJECT}            sarvaja-test
+
 # Agent IDs — sourced from governance/stores/agents.py:_AGENT_BASE_CONFIG
 # DRY: All Robot suites MUST use these variables, not hardcoded strings
 ${DEFAULT_AGENT}           code-agent
@@ -65,3 +70,31 @@ Take Evidence Screenshot
     [Arguments]    ${name}=screenshot
     ${timestamp}=    Get Current Date    result_format=%Y%m%d_%H%M%S
     Take Screenshot    evidence_${name}_${timestamp}.png
+
+# --- Test Data Lifecycle (TEST-DATA-01-v1) ---
+
+Create Test Task
+    [Documentation]    Create a task in sandbox workspace via REST API.
+    ...                Per TEST-DATA-01-v1: Always uses ${TEST_WORKSPACE}.
+    ...                Returns task_id for cleanup in [Teardown].
+    [Arguments]    ${summary}=RF > Test > Default    ${task_type}=test    ${priority}=LOW
+    ${timestamp}=    Get Current Date    result_format=%Y%m%d%H%M%S
+    ${task_id}=    Set Variable    RF-QUAL-${timestamp}
+    ${body}=    Create Dictionary
+    ...    task_id=${task_id}
+    ...    summary=${summary}
+    ...    description=${summary}
+    ...    task_type=${task_type}
+    ...    priority=${priority}
+    ...    workspace_id=${TEST_WORKSPACE}
+    ...    phase=P10
+    ${resp}=    Http    ${API_URL}/tasks    POST    ${body}
+    Should Be Equal As Integers    ${resp}[status]    201
+    RETURN    ${task_id}
+
+Delete Test Task
+    [Documentation]    Delete a test task by ID. Safe to call on already-deleted tasks.
+    ...                Per TEST-DATA-01-v1: Use in [Teardown] for atomic cleanup.
+    [Arguments]    ${task_id}
+    ${resp}=    Http    ${API_URL}/tasks/${task_id}    DELETE
+    Log    Deleted test task ${task_id}: ${resp}[status]

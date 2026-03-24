@@ -107,7 +107,7 @@ class TestWorkspaceFilter:
         result = _apply_post_filters(tasks, workspace_id=None)
         assert len(result) == 2
 
-    @patch("governance.services.tasks.get_all_tasks_from_typedb")
+    @patch("governance.services.tasks_queries.get_all_tasks_from_typedb")
     def test_list_tasks_passes_workspace_id(self, mock_get):
         """list_tasks forwards workspace_id to _apply_post_filters."""
         mock_get.return_value = [
@@ -119,7 +119,7 @@ class TestWorkspaceFilter:
         assert result["total"] == 1
         assert result["items"][0]["task_id"] == "T-1"
 
-    @patch("governance.services.tasks.get_all_tasks_from_typedb")
+    @patch("governance.services.tasks_queries.get_all_tasks_from_typedb")
     def test_list_tasks_no_workspace_filter(self, mock_get):
         """list_tasks without workspace_id returns all."""
         mock_get.return_value = [

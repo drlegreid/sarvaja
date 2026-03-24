@@ -111,6 +111,7 @@
 | ARCH-BACKFILL-01-v1 | (new) | Backfill Tool Registration | MEDIUM | ACTIVE |
 | UI-REFRESH-01-v1 | (new) | Smart Dashboard Auto-Refresh | HIGH | ACTIVE |
 | TEST-FIXTURE-01-v1 | (new) | Production-Faithful Test Fixtures | CRITICAL | ACTIVE |
+| TEST-DATA-01-v1 | (new) | Test Data Sandbox Isolation | CRITICAL | ACTIVE |
 | SESSION-REPORT-01-v1 | (new) | Session ID Output at Session End | HIGH | ACTIVE |
 | SESSION-EVENT-01-v1 | (new) | Event-Driven Session Data Updates | HIGH | ACTIVE |
 | TEST-EXPLSPEC-01-v1 | (new) | Exploratory Dynamic Specification (3-layer Gherkin) | HIGH | ACTIVE |

@@ -12,7 +12,7 @@ import pytest
 class TestSessionSortNullTimestamps:
     """Tests for list_sessions() null-safe sorting."""
 
-    @patch("governance.services.sessions.get_all_sessions_from_typedb")
+    @patch("governance.services.sessions_crud.get_all_sessions_from_typedb")
     def test_null_timestamps_sort_last_desc(self, mock_get):
         """Sessions with null start_time should appear AFTER sessions with timestamps (desc)."""
         from governance.services.sessions import list_sessions
@@ -34,7 +34,7 @@ class TestSessionSortNullTimestamps:
         assert "S-NULL" in ids[2:]
         assert "S-EMPTY" in ids[2:]
 
-    @patch("governance.services.sessions.get_all_sessions_from_typedb")
+    @patch("governance.services.sessions_crud.get_all_sessions_from_typedb")
     def test_null_timestamps_sort_first_asc(self, mock_get):
         """Sessions with null start_time should appear FIRST when ascending."""
         from governance.services.sessions import list_sessions
@@ -50,7 +50,7 @@ class TestSessionSortNullTimestamps:
         assert ids[0] == "S-NULL"
         assert ids[1] == "S-REAL"
 
-    @patch("governance.services.sessions.get_all_sessions_from_typedb")
+    @patch("governance.services.sessions_crud.get_all_sessions_from_typedb")
     def test_real_sessions_sorted_by_timestamp_desc(self, mock_get):
         """Real sessions should be sorted by timestamp in descending order."""
         from governance.services.sessions import list_sessions
@@ -65,7 +65,7 @@ class TestSessionSortNullTimestamps:
         ids = [s["session_id"] for s in result["items"]]
         assert ids == ["S-NEW", "S-MID", "S-OLD"]
 
-    @patch("governance.services.sessions.get_all_sessions_from_typedb")
+    @patch("governance.services.sessions_crud.get_all_sessions_from_typedb")
     def test_all_null_timestamps(self, mock_get):
         """All sessions with null timestamps should still return without error."""
         from governance.services.sessions import list_sessions
@@ -78,7 +78,7 @@ class TestSessionSortNullTimestamps:
         result = list_sessions(sort_by="started_at", order="desc", limit=100)
         assert result["total"] == 2
 
-    @patch("governance.services.sessions.get_all_sessions_from_typedb")
+    @patch("governance.services.sessions_crud.get_all_sessions_from_typedb")
     def test_mixed_null_and_empty_sort_together(self, mock_get):
         """Both None and empty string timestamps should sort as 'missing'."""
         from governance.services.sessions import list_sessions
@@ -172,7 +172,7 @@ class TestExcludeTestArtifacts:
         for sid in real_ids:
             assert _is_test_artifact({"session_id": sid}) is False, f"Expected {sid} to be real session"
 
-    @patch("governance.services.sessions.get_all_sessions_from_typedb")
+    @patch("governance.services.sessions_crud.get_all_sessions_from_typedb")
     def test_exclude_test_filters_artifacts(self, mock_get):
         """exclude_test=True should filter out test sessions."""
         from governance.services.sessions import list_sessions
@@ -191,7 +191,7 @@ class TestExcludeTestArtifacts:
         assert "SESSION-2026-02-14-CHAT-DASHBOARD-WORK" in ids
         assert "SESSION-FAIL" not in ids
 
-    @patch("governance.services.sessions.get_all_sessions_from_typedb")
+    @patch("governance.services.sessions_crud.get_all_sessions_from_typedb")
     def test_exclude_test_false_keeps_all(self, mock_get):
         """exclude_test=False should keep all sessions."""
         from governance.services.sessions import list_sessions
@@ -208,7 +208,7 @@ class TestExcludeTestArtifacts:
 class TestSessionSearch:
     """Tests for server-side keyword search (GAP-SESSION-SEARCH-001)."""
 
-    @patch("governance.services.sessions.get_all_sessions_from_typedb")
+    @patch("governance.services.sessions_crud.get_all_sessions_from_typedb")
     def test_search_by_session_id(self, mock_get):
         """Search should match session_id substring."""
         from governance.services.sessions import list_sessions
@@ -222,7 +222,7 @@ class TestSessionSearch:
         assert result["total"] == 1
         assert result["items"][0]["session_id"] == "SESSION-2026-02-15-CC-ABC"
 
-    @patch("governance.services.sessions.get_all_sessions_from_typedb")
+    @patch("governance.services.sessions_crud.get_all_sessions_from_typedb")
     def test_search_by_description(self, mock_get):
         """Search should match description substring."""
         from governance.services.sessions import list_sessions
@@ -238,7 +238,7 @@ class TestSessionSearch:
         assert result["total"] == 1
         assert result["items"][0]["session_id"] == "S-1"
 
-    @patch("governance.services.sessions.get_all_sessions_from_typedb")
+    @patch("governance.services.sessions_crud.get_all_sessions_from_typedb")
     def test_search_case_insensitive(self, mock_get):
         """Search should be case-insensitive."""
         from governance.services.sessions import list_sessions
@@ -250,7 +250,7 @@ class TestSessionSearch:
         result = list_sessions(search="chat-hello", limit=100)
         assert result["total"] == 1
 
-    @patch("governance.services.sessions.get_all_sessions_from_typedb")
+    @patch("governance.services.sessions_crud.get_all_sessions_from_typedb")
     def test_search_by_project_slug(self, mock_get):
         """Search should match cc_project_slug."""
         from governance.services.sessions import list_sessions
@@ -266,7 +266,7 @@ class TestSessionSearch:
         assert result["total"] == 1
         assert result["items"][0]["session_id"] == "S-1"
 
-    @patch("governance.services.sessions.get_all_sessions_from_typedb")
+    @patch("governance.services.sessions_crud.get_all_sessions_from_typedb")
     def test_search_by_git_branch(self, mock_get):
         """Search should match cc_git_branch."""
         from governance.services.sessions import list_sessions
@@ -281,7 +281,7 @@ class TestSessionSearch:
         result = list_sessions(search="dark-mode", limit=100)
         assert result["total"] == 1
 
-    @patch("governance.services.sessions.get_all_sessions_from_typedb")
+    @patch("governance.services.sessions_crud.get_all_sessions_from_typedb")
     def test_search_none_returns_all(self, mock_get):
         """search=None should not filter anything."""
         from governance.services.sessions import list_sessions
@@ -294,7 +294,7 @@ class TestSessionSearch:
         result = list_sessions(search=None, limit=100)
         assert result["total"] == 2
 
-    @patch("governance.services.sessions.get_all_sessions_from_typedb")
+    @patch("governance.services.sessions_crud.get_all_sessions_from_typedb")
     def test_search_combined_with_filters(self, mock_get):
         """Search should work together with status and exclude_test filters."""
         from governance.services.sessions import list_sessions
@@ -314,7 +314,7 @@ class TestSessionSearch:
         assert result["total"] == 1
         assert result["items"][0]["session_id"] == "SESSION-2026-CC-ABC"
 
-    @patch("governance.services.sessions.get_all_sessions_from_typedb")
+    @patch("governance.services.sessions_crud.get_all_sessions_from_typedb")
     def test_search_no_match_returns_empty(self, mock_get):
         """Search with no matches should return empty items."""
         from governance.services.sessions import list_sessions

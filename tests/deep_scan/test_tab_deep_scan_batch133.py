@@ -79,13 +79,13 @@ class TestSessionUpdateCCFieldsDefense:
             "status": "ACTIVE",
             "description": "Test",
         }
-        with patch("governance.services.sessions.get_typedb_client", return_value=None), \
-             patch("governance.services.sessions._sessions_store", {
+        with patch("governance.services.sessions_crud.get_typedb_client", return_value=None), \
+             patch("governance.services.sessions_crud._sessions_store", {
                  "SESSION-2026-02-15-TEST": session,
              }), \
-             patch("governance.services.sessions.record_audit"), \
-             patch("governance.services.sessions._monitor"), \
-             patch("governance.services.sessions.log_event"):
+             patch("governance.services.sessions_crud.record_audit"), \
+             patch("governance.services.sessions_crud._monitor"), \
+             patch("governance.services.sessions_crud.log_event"):
             from governance.services.sessions import update_session
             result = update_session(
                 "SESSION-2026-02-15-TEST",
@@ -103,11 +103,11 @@ class TestSessionUpdateCCFieldsDefense:
         mock_client.get_session.return_value = mock_session
         mock_client.update_session.return_value = mock_session
 
-        with patch("governance.services.sessions.get_typedb_client", return_value=mock_client), \
-             patch("governance.services.sessions.session_to_response") as mock_resp, \
-             patch("governance.services.sessions.record_audit"), \
-             patch("governance.services.sessions._monitor"), \
-             patch("governance.services.sessions.log_event"):
+        with patch("governance.services.sessions_crud.get_typedb_client", return_value=mock_client), \
+             patch("governance.services.sessions_crud.session_to_response") as mock_resp, \
+             patch("governance.services.sessions_crud.record_audit"), \
+             patch("governance.services.sessions_crud._monitor"), \
+             patch("governance.services.sessions_crud.log_event"):
             mock_resp.return_value = {"session_id": "S-1", "status": "ACTIVE"}
             from governance.services.sessions import update_session
             result = update_session("S-1", status="COMPLETED")

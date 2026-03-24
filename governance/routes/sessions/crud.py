@@ -110,6 +110,8 @@ async def list_sessions(
             items=items,
             pagination=pagination,
         )
+    except HTTPException:
+        raise
     except (TypeDBUnavailable, ConnectionError) as e:
         # BUG-403-CRD-001: Add exc_info for stack trace preservation
         # BUG-467-SCR-002: Sanitize logger message — exc_info=True already captures full stack
@@ -141,6 +143,8 @@ async def create_session(session: SessionCreate):
         )
         return _ensure_response(result)
     # BUG-381-SES-001: Log full error but return only type name to prevent info disclosure
+    except HTTPException:
+        raise
     except ValueError as e:
         # BUG-403-CRD-001: Add exc_info for stack trace preservation
         # BUG-467-SCR-004: Sanitize logger message — exc_info=True already captures full stack
@@ -166,6 +170,8 @@ async def get_session(session_id: str):
         if session:
             return _ensure_response(session)
         raise HTTPException(status_code=404, detail=f"Session {session_id} not found")
+    except HTTPException:
+        raise
     except (TypeDBUnavailable, ConnectionError) as e:
         # BUG-403-CRD-001: Add exc_info for stack trace preservation
         # BUG-467-SCR-007: Sanitize logger message — exc_info=True already captures full stack

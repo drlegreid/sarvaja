@@ -31,7 +31,7 @@ def clean_stores():
 @pytest.fixture
 def no_typedb():
     """Mock TypeDB -> None to force in-memory fallback (returns dicts)."""
-    with patch("governance.services.sessions.get_typedb_client", return_value=None), \
+    with patch("governance.services.sessions_crud.get_typedb_client", return_value=None), \
          patch("governance.services.tasks.get_typedb_client", return_value=None), \
          patch("governance.services.tasks_mutations.get_typedb_client", return_value=None), \
          patch("governance.services.projects._get_client", return_value=None):

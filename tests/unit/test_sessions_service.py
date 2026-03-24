@@ -9,7 +9,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-_P = "governance.services.sessions"
+_P = "governance.services.sessions_crud"
 
 
 @pytest.fixture(autouse=True)

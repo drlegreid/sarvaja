@@ -1,8 +1,11 @@
 """Session Core MCP Tools. Per RULE-012: DSP Semantic Code Structure."""
 import json
+import logging
 from typing import Optional
 
 from governance.mcp_tools.common import format_mcp_result
+
+logger = logging.getLogger(__name__)
 
 # Monitoring instrumentation per GAP-MONITOR-INSTRUMENT-001
 try:
@@ -41,6 +44,24 @@ def register_session_core_tools(mcp) -> None:
 
         try:
             collector = get_or_create_session(topic, session_type)
+
+            # BUG-012: Persist session to TypeDB so REST API can find it.
+            # SessionCollector is memory-only; without this, MCP-created
+            # sessions are invisible to the dashboard navigation flow.
+            try:
+                from governance.services.sessions import create_session
+                create_session(
+                    session_id=collector.session_id,
+                    description=topic,
+                    source="mcp",
+                )
+            except ValueError:
+                pass  # Session already exists in TypeDB — OK
+            except Exception as persist_err:
+                logger.warning(
+                    "MCP session TypeDB persist failed for %s: %s",
+                    collector.session_id, type(persist_err).__name__,
+                )
 
             # Instrument session start
             if MONITORING_AVAILABLE:

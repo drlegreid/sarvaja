@@ -26,14 +26,14 @@ class TestDocumentButtonWording(unittest.TestCase):
 
     def test_link_document_text_present(self):
         """'Link Document' wording must appear in task forms."""
-        from agent.governance_ui.views.tasks import forms
-        source = inspect.getsource(forms)
+        from agent.governance_ui.views.tasks import forms_linked
+        source = inspect.getsource(forms_linked)
         assert "Link Document" in source
 
     def test_link_icon_is_reference_not_paperclip(self):
         """Icon should suggest referencing (link), not uploading (paperclip)."""
-        from agent.governance_ui.views.tasks import forms
-        source = inspect.getsource(forms)
+        from agent.governance_ui.views.tasks import forms_linked
+        source = inspect.getsource(forms_linked)
         assert "mdi-link-variant" in source or "mdi-file-link" in source
 
 
@@ -42,14 +42,14 @@ class TestSessionLinkVisibility(unittest.TestCase):
 
     def test_link_session_button_exists(self):
         """A 'Link Session' button must exist in task forms."""
-        from agent.governance_ui.views.tasks import forms
-        source = inspect.getsource(forms)
+        from agent.governance_ui.views.tasks import forms_linked
+        source = inspect.getsource(forms_linked)
         assert "Link Session" in source
 
     def test_sessions_section_always_visible(self):
         """Sessions section must render even when linked_sessions is empty."""
-        from agent.governance_ui.views.tasks import forms
-        source = inspect.getsource(forms)
+        from agent.governance_ui.views.tasks import forms_linked
+        source = inspect.getsource(forms_linked)
         # The old pattern: v_if="selected_task.linked_sessions?.length > 0"
         # Should NOT be the only condition — section should always show
         assert "No linked sessions" in source or "no sessions" in source.lower()
@@ -67,8 +67,8 @@ class TestHeadingUsesSummary(unittest.TestCase):
 
     def test_content_preview_shows_body(self):
         """Content section still shows full body text."""
-        from agent.governance_ui.views.tasks import forms
-        source = inspect.getsource(forms)
+        from agent.governance_ui.views.tasks import forms_linked
+        source = inspect.getsource(forms_linked)
         assert "selected_task.body" in source
 
     def test_summary_auto_generated_in_service(self):

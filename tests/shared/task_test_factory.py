@@ -1,6 +1,7 @@
 """Task Test Factory with Auto-Cleanup.
 
 SRVJ-FEAT-005: Shared factory fixture for integration + E2E tests.
+Per TEST-DATA-01-v1: All test entities in WS-TEST-SANDBOX, never production.
 Creates tasks via live API, tracks IDs, auto-cleans on teardown.
 
 Usage (pytest fixture):
@@ -22,6 +23,14 @@ import httpx
 
 logger = logging.getLogger(__name__)
 
+# =============================================================================
+# Test Data Isolation Constants (TEST-DATA-01-v1)
+# =============================================================================
+
+# Sandbox workspace — ALL test entities go here, NEVER in production WS-9147535A
+TEST_WORKSPACE_ID = "WS-TEST-SANDBOX"
+TEST_PROJECT_ID = "sarvaja-test"
+
 # Prefix for factory-created tasks
 FACTORY_PREFIX = "E2E"
 
@@ -30,6 +39,7 @@ ALL_TEST_PREFIXES = [
     "E2E-", "E2E-QUAL-", "RF-QUAL-", "INTTEST-", "CRUD-",
     "TEST-", "AGENT-TEST-", "UI-TEST-", "VERIFY-TEST-",
     "LINK-TEST-", "TASK-TEST-", "SESSION-TEST-", "E2E-TEST-",
+    "TODO-",  # TEST-DATA-01-v1: catch auto-generated IDs
 ]
 
 API_BASE = "http://localhost:8082/api"
@@ -78,9 +88,24 @@ class TaskTestFactory:
         task_id: Optional[str] = None,
         **kwargs,
     ) -> CreatedTask:
-        """Create a task via API and track it for cleanup."""
+        """Create a task via API and track it for cleanup.
+
+        Per TEST-DATA-01-v1: Defaults to sandbox workspace. Validates
+        that task_id uses a registered test prefix.
+        """
         if task_id is None:
             task_id = f"{FACTORY_PREFIX}-{uuid.uuid4().hex[:8].upper()}"
+        else:
+            # Validate prefix (TEST-DATA-01-v1 R2)
+            if not any(task_id.startswith(p) for p in ALL_TEST_PREFIXES):
+                raise ValueError(
+                    f"Test task ID '{task_id}' must use a registered prefix "
+                    f"from ALL_TEST_PREFIXES. Got: {task_id}"
+                )
+
+        # Default to sandbox workspace (TEST-DATA-01-v1 R1)
+        if workspace_id is None:
+            workspace_id = TEST_WORKSPACE_ID
 
         payload = {
             "task_id": task_id,
@@ -89,10 +114,9 @@ class TaskTestFactory:
             "task_type": task_type,
             "priority": priority,
             "phase": "P10",
+            "workspace_id": workspace_id,
             **kwargs,
         }
-        if workspace_id:
-            payload["workspace_id"] = workspace_id
 
         r = self.client.post("/tasks", json=payload)
         if r.status_code == 201:
@@ -133,10 +157,12 @@ class TaskTestFactory:
 def purge_test_artifacts(
     base_url: str = API_BASE,
     prefixes: Optional[list[str]] = None,
+    workspace_id: Optional[str] = TEST_WORKSPACE_ID,
 ) -> dict:
     """One-time purge of all test artifacts from TypeDB.
 
     SRVJ-CHORE-002: Deletes tasks matching test prefixes.
+    Per TEST-DATA-01-v1: Scoped to sandbox workspace by default.
     """
     if prefixes is None:
         prefixes = ALL_TEST_PREFIXES
@@ -144,7 +170,10 @@ def purge_test_artifacts(
     stats = {"checked": 0, "deleted": 0, "failed": 0, "errors": []}
     with httpx.Client(base_url=base_url, timeout=TIMEOUT) as client:
         for _ in range(20):
-            r = client.get("/tasks", params={"limit": 200})
+            params = {"limit": 200}
+            if workspace_id:
+                params["workspace_id"] = workspace_id
+            r = client.get("/tasks", params=params)
             if r.status_code != 200:
                 stats["errors"].append(f"Fetch failed: {r.status_code}")
                 break

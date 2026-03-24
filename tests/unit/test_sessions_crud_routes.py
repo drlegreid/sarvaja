@@ -125,9 +125,8 @@ class TestGetSession:
             from governance.routes.sessions.crud import get_session
             with pytest.raises(HTTPException) as exc_info:
                 await get_session("NONEXISTENT")
-            # The 404 HTTPException gets caught by the catch-all Exception handler
-            # and re-wrapped as 500 (BUG-403-CRD-002)
-            assert exc_info.value.status_code == 500
+            # P12 fix: HTTPException now propagates correctly (not re-wrapped)
+            assert exc_info.value.status_code == 404
 
 
 class TestUpdateSession:

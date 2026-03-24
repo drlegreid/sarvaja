@@ -176,8 +176,8 @@ class TestServiceLinkTaskToDocument:
         """link_task_to_document in service must call client.link_task_to_document."""
         mock_client = MagicMock()
         mock_client.link_task_to_document.return_value = True
-        with patch("governance.services.tasks_mutations.get_typedb_client", return_value=mock_client), \
-             patch("governance.services.tasks_mutations.record_audit"), \
+        with patch("governance.services.tasks_mutations_linking.get_typedb_client", return_value=mock_client), \
+             patch("governance.services.tasks_preload._monitor"), \
              patch("governance.services.tasks_mutations.log_event"):
             from governance.services.tasks_mutations import link_task_to_document
             result = link_task_to_document("T-1", "docs/test.md", source="test")
@@ -186,7 +186,7 @@ class TestServiceLinkTaskToDocument:
 
     def test_service_returns_false_when_no_client(self):
         """link_task_to_document returns False when TypeDB unavailable."""
-        with patch("governance.services.tasks_mutations.get_typedb_client", return_value=None):
+        with patch("governance.services.tasks_mutations_linking.get_typedb_client", return_value=None):
             from governance.services.tasks_mutations import link_task_to_document
             result = link_task_to_document("T-1", "docs/test.md")
         assert result is False

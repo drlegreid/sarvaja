@@ -79,8 +79,8 @@ class TestSessionServiceLayer:
 
     def test_service_has_audit(self):
         """Session service should record audit events."""
-        from governance.services import sessions
-        source = inspect.getsource(sessions)
+        from governance.services import sessions_crud
+        source = inspect.getsource(sessions_crud)
         assert 'record_audit' in source
 
     def test_crud_routes_use_service(self):

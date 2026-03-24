@@ -13,7 +13,7 @@ from governance.services.tasks import get_sessions_for_task
 class TestGetSessionsForTask:
     """Tests for get_sessions_for_task() service function."""
 
-    @patch("governance.services.tasks.get_task")
+    @patch("governance.services.tasks_queries.get_task")
     @patch("governance.services.sessions.get_session")
     def test_returns_full_session_details(self, mock_get_session, mock_get_task):
         """Should resolve session IDs to full session dicts."""
@@ -31,14 +31,14 @@ class TestGetSessionsForTask:
         assert result[0]["session_id"] == "SESSION-A"
         assert result[1]["session_id"] == "SESSION-B"
 
-    @patch("governance.services.tasks.get_task")
+    @patch("governance.services.tasks_queries.get_task")
     def test_returns_empty_for_missing_task(self, mock_get_task):
         """Should return empty list when task not found."""
         mock_get_task.return_value = None
         result = get_sessions_for_task("NONEXIST")
         assert result == []
 
-    @patch("governance.services.tasks.get_task")
+    @patch("governance.services.tasks_queries.get_task")
     def test_returns_empty_for_no_linked_sessions(self, mock_get_task):
         """Should return empty list when task has no linked sessions."""
         mock_get_task.return_value = {
@@ -48,7 +48,7 @@ class TestGetSessionsForTask:
         result = get_sessions_for_task("T-001")
         assert result == []
 
-    @patch("governance.services.tasks.get_task")
+    @patch("governance.services.tasks_queries.get_task")
     def test_returns_empty_for_null_linked_sessions(self, mock_get_task):
         """Should handle None linked_sessions gracefully."""
         mock_get_task.return_value = {
@@ -58,7 +58,7 @@ class TestGetSessionsForTask:
         result = get_sessions_for_task("T-001")
         assert result == []
 
-    @patch("governance.services.tasks.get_task")
+    @patch("governance.services.tasks_queries.get_task")
     @patch("governance.services.sessions.get_session")
     def test_returns_stub_for_missing_sessions(self, mock_get_session, mock_get_task):
         """Should return minimal stub when session not found in service."""
@@ -73,7 +73,7 @@ class TestGetSessionsForTask:
         assert result[0]["session_id"] == "SESSION-GONE"
         assert result[0]["status"] == "UNKNOWN"
 
-    @patch("governance.services.tasks.get_task")
+    @patch("governance.services.tasks_queries.get_task")
     @patch("governance.services.sessions.get_session")
     def test_mixed_found_and_missing(self, mock_get_session, mock_get_task):
         """Should handle mix of found and missing sessions."""

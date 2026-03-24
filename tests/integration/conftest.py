@@ -119,6 +119,7 @@ from tests.shared.task_test_factory import (  # noqa: E402
     task_factory,
     module_task_factory,
     purge_test_artifacts,
+    TEST_WORKSPACE_ID,
 )
 
 
@@ -127,9 +128,10 @@ def sweep_orphans_after_module():
     """Safety net: purge any orphaned test artifacts after each module.
 
     SRVJ-FEAT-007: Ensures no test data leaks even if per-test cleanup fails.
+    Per TEST-DATA-01-v1: Scoped to sandbox workspace only.
     """
     yield
     try:
-        purge_test_artifacts()
+        purge_test_artifacts(workspace_id=TEST_WORKSPACE_ID)
     except Exception:
         pass  # Best effort — don't fail tests on cleanup errors

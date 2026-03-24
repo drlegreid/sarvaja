@@ -147,7 +147,8 @@ RULE_PRIORITIES: List[str] = ['CRITICAL', 'HIGH', 'MEDIUM', 'LOW']
 RULE_STATUSES: List[str] = ['ACTIVE', 'DRAFT', 'DEPRECATED']
 
 # Task filter options (GAP-UI-EXP-004)
-TASK_STATUSES: List[str] = ['TODO', 'IN_PROGRESS', 'DONE', 'BLOCKED']
+# P14: CANCELED added — canonical source is governance.task_lifecycle.TaskStatus
+TASK_STATUSES: List[str] = ['TODO', 'IN_PROGRESS', 'DONE', 'BLOCKED', 'CANCELED']
 TASK_PHASES: List[str] = ['P10', 'P11', 'P12', 'R&D', 'FH', 'KAN', 'ORCH', 'DOCVIEW']
 
 # Task Type Taxonomy (META-TAXON-01-v1 + SRVJ-FEAT-003)

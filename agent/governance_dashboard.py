@@ -1,28 +1,8 @@
 """
-Governance Dashboard UI (P9.2)
-Created: 2024-12-25
-Updated: 2024-12-28 (GAP-FILE-005: Controllers extracted to modules)
+Governance Dashboard UI — Trame view layer.
 
-Trame-based dashboard for viewing governance artifacts:
-- Rules (22 rules from TypeDB)
-- Decisions (strategic decisions)
-- Sessions (evidence files)
-- Tasks (R&D backlog)
-
-Per RULE-019: UI/UX Design Standards
-Per DECISION-003: TypeDB-First Strategy
-Per RULE-012: DSP Semantic Code Structure (300 line limit per file)
 Per DOC-SIZE-01-v1: Layout in governance_dashboard_layout.py.
-
-Structure (per DSP):
-    governance_ui/data_access.py  - Pure MCP data functions
-    governance_ui/state/          - Immutable state, transforms (GAP-FILE-004)
-    governance_ui/controllers/    - Trame controller modules (GAP-FILE-005)
-    governance_ui/views/          - Extracted view modules (12 modules)
-    governance_dashboard.py       - Trame view layer (this file)
-
-Dependencies:
-    pip install trame trame-vuetify trame-client
+Controllers in governance_ui/controllers/, views in governance_ui/views/.
 """
 
 import logging
@@ -62,6 +42,7 @@ from agent.governance_dashboard_layout import build_dashboard_layout  # noqa: F4
 
 # Controller modules (extracted per GAP-FILE-005)
 from agent.governance_ui.controllers import register_all_controllers
+from agent.governance_ui.controllers.routing import register_routing_controller
 
 # Project paths
 EVIDENCE_DIR = PROJECT_ROOT / "evidence"
@@ -105,16 +86,14 @@ class GovernanceDashboard:
             self._server = get_server(client_type="vue3", name="governance-dashboard")
             self._state = self._server.state
 
-            # Serve static JS files
             static_dir = str(Path(__file__).parent / "governance_ui" / "static")
             self._server.serve["govstatic"] = static_dir
             self._inject_html_script("/govstatic/window_isolator.js")
+            self._inject_html_script("/govstatic/route_sync.js")
 
-            # Initialize state
             for key, value in get_initial_state().items():
                 setattr(self._state, key, value)
 
-            # Load initial data via REST API with MCP fallback
             load_initial_data(
                 self._state, API_BASE_URL,
                 get_rules, get_decisions, get_sessions, get_tasks,
@@ -126,6 +105,12 @@ class GovernanceDashboard:
 
             # Register controllers (GAP-FILE-005)
             loaders = register_all_controllers(self._state, ctrl, API_BASE_URL)
+
+            # Register routing controller (FEAT-008: Named URI routing)
+            # Per SRVJ-FEAT-015: api_base_url enables deep link entity loading
+            route_bridge = register_routing_controller(
+                self._state, ctrl, api_base_url=API_BASE_URL,
+            )
 
             load_trust_data = loaders['load_trust_data']
             load_monitor_data = loaders['load_monitor_data']
@@ -144,34 +129,97 @@ class GovernanceDashboard:
             # Auto-load data on view change (P11.1 fix / GAP-UI-035)
             @self._state.change("active_view")
             def on_view_change(active_view, **kwargs):
-                """Auto-load data when view changes."""
-                # BUG-UI-STALE-DETAIL-001: Close all detail views + forms on tab switch
-                self._state.show_session_detail = False
-                self._state.show_task_detail = False
-                self._state.show_rule_detail = False
-                self._state.show_decision_detail = False
-                self._state.show_session_form = False
-                self._state.show_rule_form = False
-                self._state.show_decision_form = False
-                # GAP-OVERLAY-SCRIM: Also reset workspace state on tab switch
-                self._state.show_workspace_detail = False
-                self._state.show_workspace_form = False
-                self._state.has_error = False
-                self._state.error_message = ''
-                # BUG-017b: Clear selected entity to prevent stale detail on return
-                self._state.selected_task = None
-                self._state.selected_session = None
-                # BUG-017c: Clear nav_source to prevent stale "Back to" button
-                self._state.nav_source_view = None
-                self._state.nav_source_id = None
-                self._state.nav_source_label = None
-                # BUG-017: Force Trame reactivity after clearing detail flags.
-                # Without dirty(), Vue may not detect boolean changes from
-                # cross-view navigation (e.g. session chip → tasks tab).
-                self._state.dirty("show_session_detail")
-                self._state.dirty("show_task_detail")
-                self._state.dirty("show_rule_detail")
-                self._state.dirty("show_decision_detail")
+                """Auto-load data when view changes.
+
+                Per BUG-012: Skip reset when cross-nav guard set.
+                Per FEAT-008: Handle _pending_entity_id from browser back/forward.
+                """
+                is_cross_nav = getattr(self._state, 'cross_nav_in_progress', False)
+                pending_id = getattr(self._state, '_pending_entity_id', None)
+
+                if is_cross_nav:
+                    # BUG-012: Skip all side effects — navigate_to_* already
+                    # set state; additional changes cause Trame flush races.
+                    self._state.cross_nav_in_progress = False
+                    # SRVJ-FEAT-016: Push route hash so URL updates after
+                    # cross-nav (navigate_to_session/task). Without this,
+                    # browser back/forward has nothing to go back to.
+                    self._state.route_hash = route_bridge.state_to_hash(
+                        self._state,
+                    )
+                    return
+                elif pending_id:
+                    # FEAT-008: Browser back/forward with pending entity ID
+                    self._state._pending_entity_id = None
+                    self._state.has_error = False
+                    self._state.error_message = ''
+                    _load_pending_entity(active_view, pending_id)
+                else:
+                    # Normal tab switch — reset detail flags (BUG-UI-STALE-DETAIL-001)
+                    self._state.show_session_detail = False
+                    self._state.show_task_detail = False
+                    self._state.show_rule_detail = False
+                    self._state.show_decision_detail = False
+                    self._state.show_session_form = False
+                    self._state.show_rule_form = False
+                    self._state.show_decision_form = False
+                    # GAP-OVERLAY-SCRIM: Also reset workspace state on tab switch
+                    self._state.show_workspace_detail = False
+                    self._state.show_workspace_form = False
+                    self._state.has_error = False
+                    self._state.error_message = ''
+                    # BUG-017b: Clear selected entity to prevent stale detail on return
+                    self._state.selected_task = None
+                    self._state.selected_session = None
+                    # BUG-017c: Clear nav_source to prevent stale "Back to" button
+                    self._state.nav_source_view = None
+                    self._state.nav_source_id = None
+                    self._state.nav_source_label = None
+                    # BUG-017: Force Trame reactivity after clearing detail flags
+                    for _f in ("show_session_detail", "show_task_detail",
+                               "show_rule_detail", "show_decision_detail"):
+                        self._state.dirty(_f)
+
+                # Load data + push route (normal tab switch / pending entity)
+                _load_view_data(active_view)
+                self._state.route_hash = route_bridge.state_to_hash(self._state)
+
+            # SRVJ-FEAT-015: Push route hash when detail view opens/closes.
+            # on_view_change only fires on active_view change, but detail
+            # opens (task row click) don't change active_view.
+            @self._state.change(
+                "show_task_detail", "show_session_detail",
+                "show_rule_detail", "show_decision_detail",
+            )
+            def on_detail_flag_change(**kwargs):
+                # Skip during route-originated changes: hash_to_state sets
+                # _pending_entity_id AND detail flags in one batch. If we
+                # push hash now, selected_* is still None → wrong hash
+                # overwrites the URL and causes a cascade via hashchange.
+                if getattr(self._state, '_pending_entity_id', None):
+                    return
+                self._state.route_hash = route_bridge.state_to_hash(
+                    self._state,
+                )
+
+            def _load_pending_entity(view: str, entity_id: str):
+                """FEAT-008: Load entity from API for browser back/forward."""
+                from agent.governance_ui.controllers.tasks_navigation import (
+                    _load_session_from_api, _load_task_from_api,
+                )
+                if view == 'sessions':
+                    data = _load_session_from_api(API_BASE_URL, entity_id)
+                    if data:
+                        self._state.selected_session = data
+                        self._state.show_session_detail = True
+                elif view == 'tasks':
+                    data = _load_task_from_api(API_BASE_URL, entity_id)
+                    if data:
+                        self._state.selected_task = data
+                        self._state.show_task_detail = True
+
+            def _load_view_data(active_view: str):
+                """Load data lists for the active view."""
                 if active_view == 'trust':
                     load_trust_data()
                 elif active_view == 'monitor':

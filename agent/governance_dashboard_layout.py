@@ -155,6 +155,7 @@ def build_dashboard_layout(server, navigation_items):
                         **{"data-testid": f"nav-{item['value']}"}
                     )
 
+
         # Main content
         with v3.VMain():
             with v3.VContainer(fluid=True, classes="fill-height pa-4"):
@@ -201,6 +202,16 @@ def build_dashboard_layout(server, navigation_items):
             __properties=["data-testid"],
             **{"data-testid": "error-banner"}
         )
+
+        # Warning banner (P16: duplicate detection)
+        with v3.VSnackbar(
+            v_model="has_warning",
+            color="warning",
+            timeout=8000,
+            __properties=["data-testid"],
+            **{"data-testid": "warning-banner"}
+        ):
+            html.Span("{{ warning_message }}")
 
         # Confirm dialog
         with v3.VDialog(

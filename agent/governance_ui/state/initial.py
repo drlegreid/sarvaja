@@ -35,6 +35,8 @@ def get_initial_state() -> Dict[str, Any]:
 
         # Navigation
         'active_view': 'rules',
+        'route_hash': '',  # FEAT-008: Current URL hash (pushed to browser via JS)
+        'cross_nav_in_progress': False,  # BUG-012: Guard for on_view_change during cross-nav
 
         # Data lists (populated by data_access)
         'rules': [],
@@ -154,6 +156,8 @@ def get_initial_state() -> Dict[str, Any]:
         'is_loading': False,
         'has_error': False,
         'error_message': '',
+        'has_warning': False,  # P16: duplicate detection warnings
+        'warning_message': '',  # P16: warning text for snackbar
         'status_message': '',
 
         # Dialogs
@@ -250,6 +254,9 @@ def get_initial_state() -> Dict[str, Any]:
         'edit_task_status': 'TODO',
         'edit_task_agent': '',
         'edit_task_body': '',
+        'edit_task_summary': '',       # P15: summary field
+        'edit_task_priority': None,    # P15: priority select
+        'edit_task_type': None,        # P15: task_type select
 
         # Unified Tasks View (UI-AUDIT-2026-01-19: merged backlog)
         'available_tasks': [],
@@ -321,7 +328,8 @@ def get_initial_state() -> Dict[str, Any]:
         'tasks_project_filter': None,    # Phase 4: project_id filter
         'tasks_hide_test': True,         # Phase 4: hide test tasks by default
         # Filter dropdown options (must match items= in tasks/list.py)
-        'task_status_options': ['TODO', 'IN_PROGRESS', 'DONE', 'BLOCKED'],
+        # P14: Canonical statuses from TaskStatus.ui_edit_values()
+        'task_status_options': ['TODO', 'IN_PROGRESS', 'DONE', 'BLOCKED', 'CANCELED'],
         'task_phase_options': ['P10', 'P11', 'P12', 'R&D', 'FH', 'KAN', 'ORCH', 'DOCVIEW'],
         # Task taxonomy dropdowns (META-TAXON-01-v1)
         'task_type_options': ['bug', 'feature', 'chore', 'research', 'gap', 'epic', 'test', 'specification'],

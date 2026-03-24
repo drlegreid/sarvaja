@@ -11,7 +11,7 @@ import pytest
 class TestSessionDateFilterService:
     """Service layer correctly filters sessions by date range."""
 
-    @patch("governance.services.sessions.get_all_sessions_from_typedb")
+    @patch("governance.services.sessions_crud.get_all_sessions_from_typedb")
     def test_date_from_filters_sessions(self, mock_get):
         from governance.services.sessions import list_sessions
         mock_get.return_value = [
@@ -25,7 +25,7 @@ class TestSessionDateFilterService:
         assert "S-2" in ids
         assert "S-3" in ids
 
-    @patch("governance.services.sessions.get_all_sessions_from_typedb")
+    @patch("governance.services.sessions_crud.get_all_sessions_from_typedb")
     def test_date_to_filters_sessions(self, mock_get):
         from governance.services.sessions import list_sessions
         mock_get.return_value = [
@@ -39,7 +39,7 @@ class TestSessionDateFilterService:
         assert "S-2" in ids
         assert "S-3" not in ids
 
-    @patch("governance.services.sessions.get_all_sessions_from_typedb")
+    @patch("governance.services.sessions_crud.get_all_sessions_from_typedb")
     def test_date_range_filters_sessions(self, mock_get):
         from governance.services.sessions import list_sessions
         mock_get.return_value = [
@@ -52,7 +52,7 @@ class TestSessionDateFilterService:
         assert len(ids) == 1
         assert "S-2" in ids
 
-    @patch("governance.services.sessions.get_all_sessions_from_typedb")
+    @patch("governance.services.sessions_crud.get_all_sessions_from_typedb")
     def test_no_date_filter_returns_all(self, mock_get):
         from governance.services.sessions import list_sessions
         mock_get.return_value = [
@@ -62,7 +62,7 @@ class TestSessionDateFilterService:
         result = list_sessions()
         assert len(result["items"]) == 2
 
-    @patch("governance.services.sessions.get_all_sessions_from_typedb")
+    @patch("governance.services.sessions_crud.get_all_sessions_from_typedb")
     def test_sessions_missing_start_time_excluded_by_date_from(self, mock_get):
         from governance.services.sessions import list_sessions
         mock_get.return_value = [

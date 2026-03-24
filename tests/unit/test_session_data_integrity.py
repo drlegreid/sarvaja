@@ -11,6 +11,7 @@ from datetime import datetime
 
 _STORES = "governance.stores.typedb_access"
 _SERVICE = "governance.services.sessions"
+_SERVICE_CRUD = "governance.services.sessions_crud"
 _BRIDGE = "governance.routes.chat.session_bridge"
 
 
@@ -287,11 +288,11 @@ class TestSyncPendingSessions:
 class TestCreateSessionPersistenceStatus:
     """Verify create_session returns persistence_status field."""
 
-    @patch(f"{_SERVICE}.log_event")
-    @patch(f"{_SERVICE}.record_audit")
-    @patch(f"{_SERVICE}._monitor")
-    @patch(f"{_SERVICE}.get_typedb_client")
-    @patch(f"{_SERVICE}._sessions_store", {})
+    @patch(f"{_SERVICE_CRUD}.log_event")
+    @patch(f"{_SERVICE_CRUD}.record_audit")
+    @patch(f"{_SERVICE_CRUD}._monitor")
+    @patch(f"{_SERVICE_CRUD}.get_typedb_client")
+    @patch(f"{_SERVICE_CRUD}._sessions_store", {})
     def test_persisted_when_typedb_succeeds(self, mock_client_fn, mock_mon, mock_audit, mock_log):
         """create_session via TypeDB returns the response (no persistence_status field).
 
@@ -308,17 +309,17 @@ class TestCreateSessionPersistenceStatus:
         }
         mock_client_fn.return_value = mock_client
 
-        with patch(f"{_SERVICE}.session_to_response", side_effect=lambda x: dict(x)):
+        with patch(f"{_SERVICE_CRUD}.session_to_response", side_effect=lambda x: dict(x)):
             result = create_session(session_id="S-1", description="Test")
         # TypeDB success path delegates to session_to_response; no persistence_status key
         assert result["session_id"] == "S-1"
         assert result["status"] == "ACTIVE"
 
-    @patch(f"{_SERVICE}.log_event")
-    @patch(f"{_SERVICE}.record_audit")
-    @patch(f"{_SERVICE}._monitor")
-    @patch(f"{_SERVICE}.get_typedb_client")
-    @patch(f"{_SERVICE}._sessions_store", {})
+    @patch(f"{_SERVICE_CRUD}.log_event")
+    @patch(f"{_SERVICE_CRUD}.record_audit")
+    @patch(f"{_SERVICE_CRUD}._monitor")
+    @patch(f"{_SERVICE_CRUD}.get_typedb_client")
+    @patch(f"{_SERVICE_CRUD}._sessions_store", {})
     def test_memory_only_when_typedb_fails(self, mock_client_fn, mock_mon, mock_audit, mock_log):
         """create_session should return persistence_status='memory_only' on fallback."""
         from governance.services.sessions import create_session
@@ -330,11 +331,11 @@ class TestCreateSessionPersistenceStatus:
         result = create_session(session_id="S-2", description="Test")
         assert result.get("persistence_status") == "memory_only"
 
-    @patch(f"{_SERVICE}.log_event")
-    @patch(f"{_SERVICE}.record_audit")
-    @patch(f"{_SERVICE}._monitor")
-    @patch(f"{_SERVICE}.get_typedb_client", return_value=None)
-    @patch(f"{_SERVICE}._sessions_store", {})
+    @patch(f"{_SERVICE_CRUD}.log_event")
+    @patch(f"{_SERVICE_CRUD}.record_audit")
+    @patch(f"{_SERVICE_CRUD}._monitor")
+    @patch(f"{_SERVICE_CRUD}.get_typedb_client", return_value=None)
+    @patch(f"{_SERVICE_CRUD}._sessions_store", {})
     def test_memory_only_when_no_client(self, mock_client_fn, mock_mon, mock_audit, mock_log):
         """create_session should return persistence_status='memory_only' with no client."""
         from governance.services.sessions import create_session

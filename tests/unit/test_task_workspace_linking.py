@@ -621,7 +621,7 @@ class TestUpdateTaskWorkspaceId:
 class TestServiceLinkTaskToWorkspace:
     """Service-level link_task_to_workspace function."""
 
-    @patch("governance.services.tasks_mutations.get_typedb_client")
+    @patch("governance.services.tasks_mutations_linking.get_typedb_client")
     def test_link_task_to_workspace_service(self, mock_client):
         from governance.services.tasks_mutations import link_task_to_workspace
 
@@ -635,7 +635,7 @@ class TestServiceLinkTaskToWorkspace:
         assert result is True
         client.link_task_to_workspace.assert_called_once_with("WS-001", "TASK-001")  # BUG-WS-CREATE-001: correct arg order
 
-    @patch("governance.services.tasks_mutations.get_typedb_client")
+    @patch("governance.services.tasks_mutations_linking.get_typedb_client")
     def test_link_task_to_workspace_no_client(self, mock_client):
         from governance.services.tasks_mutations import link_task_to_workspace
 
@@ -643,7 +643,7 @@ class TestServiceLinkTaskToWorkspace:
         result = link_task_to_workspace("TASK-001", "WS-001")
         assert result is False
 
-    @patch("governance.services.tasks_mutations.get_typedb_client")
+    @patch("governance.services.tasks_mutations_linking.get_typedb_client")
     def test_link_task_to_workspace_task_not_found(self, mock_client):
         from governance.services.tasks_mutations import link_task_to_workspace
 

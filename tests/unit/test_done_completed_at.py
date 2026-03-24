@@ -18,6 +18,21 @@ class TestUpdateTaskSetsCompletedAt:
         mock_client = MagicMock()
         mock_client_fn.return_value = mock_client
         mock_client.update_task_status.return_value = True
+        # P14: _preload_task_from_typedb() now always refreshes — mock get_task()
+        task_obj = MagicMock()
+        task_obj.name = "Test task"
+        task_obj.phase = "P14"
+        task_obj.status = "IN_PROGRESS"
+        task_obj.agent_id = "code-agent"
+        task_obj.created_at = datetime(2026, 3, 24)
+        task_obj.claimed_at = None
+        task_obj.completed_at = None
+        task_obj.linked_sessions = ["SESSION-DONE-TEST"]
+        task_obj.linked_documents = [".claude/plans/test-plan.md"]
+        task_obj.linked_rules = []
+        task_obj.linked_commits = []
+        task_obj.summary = "Test > Done > Completed At > Timestamp"
+        mock_client.get_task.return_value = task_obj
 
         from governance.services.tasks_mutations import _tasks_store, update_task
 

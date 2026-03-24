@@ -326,7 +326,9 @@ class TestBug017NavTabDirtyFlags:
 
         tree = ast.parse(source)
 
-        # Find on_view_change function
+        # Find on_view_change function — collect dirty targets from:
+        # 1. Direct: self._state.dirty("show_session_detail")
+        # 2. For-loop: for _f in ("show_session_detail", ...): self._state.dirty(_f)
         found_dirty_calls = []
         for node in ast.walk(tree):
             if isinstance(node, ast.FunctionDef) and node.name == "on_view_change":
@@ -336,6 +338,11 @@ class TestBug017NavTabDirtyFlags:
                         if isinstance(func, ast.Attribute) and func.attr == "dirty":
                             if child.args and isinstance(child.args[0], ast.Constant):
                                 found_dirty_calls.append(child.args[0].value)
+                    # Also find for-loop pattern: for _f in (literals): dirty(_f)
+                    if isinstance(child, ast.For) and isinstance(child.iter, ast.Tuple):
+                        for elt in child.iter.elts:
+                            if isinstance(elt, ast.Constant):
+                                found_dirty_calls.append(elt.value)
 
         assert "show_session_detail" in found_dirty_calls, \
             "BUG-017: governance_dashboard.py on_view_change must call dirty('show_session_detail')"

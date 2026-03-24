@@ -114,10 +114,10 @@ class TestInsertSessionTimestamps:
 class TestCreateSessionPassthrough:
     """create_session() service must forward start_time, end_time, status."""
 
-    @patch("governance.services.sessions.log_event")
-    @patch("governance.services.sessions.record_audit")
-    @patch("governance.services.sessions.session_to_response")
-    @patch("governance.services.sessions.get_typedb_client")
+    @patch("governance.services.sessions_crud.log_event")
+    @patch("governance.services.sessions_crud.record_audit")
+    @patch("governance.services.sessions_crud.session_to_response")
+    @patch("governance.services.sessions_crud.get_typedb_client")
     def test_create_session_passes_start_time(
         self, mock_client_fn, mock_resp, mock_audit, mock_log
     ):
@@ -136,10 +136,10 @@ class TestCreateSessionPassthrough:
         _, kwargs = mock_client.insert_session.call_args
         assert kwargs["start_time"] == "2026-03-19T10:00:00"
 
-    @patch("governance.services.sessions.log_event")
-    @patch("governance.services.sessions.record_audit")
-    @patch("governance.services.sessions.session_to_response")
-    @patch("governance.services.sessions.get_typedb_client")
+    @patch("governance.services.sessions_crud.log_event")
+    @patch("governance.services.sessions_crud.record_audit")
+    @patch("governance.services.sessions_crud.session_to_response")
+    @patch("governance.services.sessions_crud.get_typedb_client")
     def test_create_session_passes_end_time(
         self, mock_client_fn, mock_resp, mock_audit, mock_log
     ):
@@ -158,10 +158,10 @@ class TestCreateSessionPassthrough:
         _, kwargs = mock_client.insert_session.call_args
         assert kwargs["end_time"] == "2026-03-19T12:00:00"
 
-    @patch("governance.services.sessions.log_event")
-    @patch("governance.services.sessions.record_audit")
-    @patch("governance.services.sessions.session_to_response")
-    @patch("governance.services.sessions.get_typedb_client")
+    @patch("governance.services.sessions_crud.log_event")
+    @patch("governance.services.sessions_crud.record_audit")
+    @patch("governance.services.sessions_crud.session_to_response")
+    @patch("governance.services.sessions_crud.get_typedb_client")
     def test_create_session_passes_status(
         self, mock_client_fn, mock_resp, mock_audit, mock_log
     ):
@@ -180,10 +180,10 @@ class TestCreateSessionPassthrough:
         _, kwargs = mock_client.insert_session.call_args
         assert kwargs["status"] == "COMPLETED"
 
-    @patch("governance.services.sessions.log_event")
-    @patch("governance.services.sessions.record_audit")
-    @patch("governance.services.sessions.session_to_response")
-    @patch("governance.services.sessions.get_typedb_client")
+    @patch("governance.services.sessions_crud.log_event")
+    @patch("governance.services.sessions_crud.record_audit")
+    @patch("governance.services.sessions_crud.session_to_response")
+    @patch("governance.services.sessions_crud.get_typedb_client")
     def test_create_session_passes_cc_external_name(
         self, mock_client_fn, mock_resp, mock_audit, mock_log
     ):
@@ -202,10 +202,10 @@ class TestCreateSessionPassthrough:
         _, kwargs = mock_client.insert_session.call_args
         assert kwargs["cc_external_name"] == "sarvaja1_P2-10"
 
-    @patch("governance.services.sessions._sessions_store", {})
-    @patch("governance.services.sessions.log_event")
-    @patch("governance.services.sessions.record_audit")
-    @patch("governance.services.sessions.get_typedb_client")
+    @patch("governance.services.sessions_crud._sessions_store", {})
+    @patch("governance.services.sessions_crud.log_event")
+    @patch("governance.services.sessions_crud.record_audit")
+    @patch("governance.services.sessions_crud.get_typedb_client")
     def test_create_session_fallback_uses_provided_start_time(
         self, mock_client_fn, mock_audit, mock_log
     ):
@@ -219,10 +219,10 @@ class TestCreateSessionPassthrough:
         )
         assert result["start_time"] == "2026-01-15T08:00:00"
 
-    @patch("governance.services.sessions._sessions_store", {})
-    @patch("governance.services.sessions.log_event")
-    @patch("governance.services.sessions.record_audit")
-    @patch("governance.services.sessions.get_typedb_client")
+    @patch("governance.services.sessions_crud._sessions_store", {})
+    @patch("governance.services.sessions_crud.log_event")
+    @patch("governance.services.sessions_crud.record_audit")
+    @patch("governance.services.sessions_crud.get_typedb_client")
     def test_create_session_fallback_uses_provided_end_time(
         self, mock_client_fn, mock_audit, mock_log
     ):
@@ -236,10 +236,10 @@ class TestCreateSessionPassthrough:
         )
         assert result["end_time"] == "2026-01-15T12:00:00"
 
-    @patch("governance.services.sessions._sessions_store", {})
-    @patch("governance.services.sessions.log_event")
-    @patch("governance.services.sessions.record_audit")
-    @patch("governance.services.sessions.get_typedb_client")
+    @patch("governance.services.sessions_crud._sessions_store", {})
+    @patch("governance.services.sessions_crud.log_event")
+    @patch("governance.services.sessions_crud.record_audit")
+    @patch("governance.services.sessions_crud.get_typedb_client")
     def test_create_session_fallback_uses_provided_status(
         self, mock_client_fn, mock_audit, mock_log
     ):

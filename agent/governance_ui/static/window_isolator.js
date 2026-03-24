@@ -197,6 +197,14 @@
         window.__govMarkLocalChange = markLocalChange;
 
         console.log('[GAP-UI-AUDIT-002] Window isolator v7 (Proxy + InitSync) active:', WIN_ID);
+
+        // FEAT-008: Dynamically load route_sync.js for URL routing
+        if (!window.__routeSyncActive) {
+            var script = document.createElement('script');
+            script.src = '/govstatic/route_sync.js';
+            script.async = true;
+            document.head.appendChild(script);
+        }
     }
 
     // Start setup when DOM is ready
