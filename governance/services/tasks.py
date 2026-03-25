@@ -141,6 +141,9 @@ def create_task(
     linked_documents: Optional[List[str]] = None,
     workspace_id: Optional[str] = None,
     summary: Optional[str] = None,
+    layer: Optional[str] = None,
+    concern: Optional[str] = None,
+    method: Optional[str] = None,
     source: str = "rest",
 ) -> Dict[str, Any]:
     """Create a task in TypeDB with fallback to in-memory store.
@@ -156,6 +159,15 @@ def create_task(
     """
     # BUG-STATUS-CASE-001: Normalize status to uppercase at service boundary
     status = (status or "OPEN").upper()
+
+    # EPIC-TASK-TAXONOMY-V2 Session 3: Normalize CLOSED→DONE at service boundary
+    from governance.task_lifecycle import normalize_status
+    status = normalize_status(status)
+
+    # EPIC-TASK-TAXONOMY-V2: Normalize deprecated task_type aliases
+    if task_type:
+        from agent.governance_ui.state.constants import TASK_TYPE_ALIASES
+        task_type = TASK_TYPE_ALIASES.get(task_type, task_type)
 
     # SRVJ-BUG-023: Validate agent_id against registered agents at write boundary
     if agent_id:
@@ -256,6 +268,7 @@ def create_task(
                 linked_rules=linked_rules, linked_sessions=linked_sessions,
                 agent_id=agent_id, priority=priority, task_type=task_type,
                 workspace_id=workspace_id, summary=summary,
+                layer=layer, concern=concern, method=method,
             )
             if created:
                 # Link documents after creation
@@ -287,6 +300,7 @@ def create_task(
                     "linked_documents": linked_documents or [],
                     "workspace_id": workspace_id,
                     "summary": summary,
+                    "layer": layer, "concern": concern, "method": method,
                     "created_at": getattr(response, "created_at", None)
                     or datetime.now().isoformat(),
                 }
@@ -312,6 +326,7 @@ def create_task(
         "linked_rules": linked_rules or [], "linked_sessions": linked_sessions or [],
         "linked_documents": linked_documents or [], "gap_id": gap_id,
         "workspace_id": workspace_id,
+        "layer": layer, "concern": concern, "method": method,
         "created_at": datetime.now().isoformat(),
     }
     _tasks_store[task_id] = task_data

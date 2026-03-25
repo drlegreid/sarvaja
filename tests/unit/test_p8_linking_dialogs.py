@@ -430,7 +430,7 @@ class TestDoneGatePreload:
         mock_task.gap_id = None
         mock_task.priority = "HIGH"
         mock_task.task_type = "bug"
-        mock_task.evidence = None
+        mock_task.evidence = "Tests pass: verified"  # bug DoD requires evidence
         mock_task.resolution = None
         mock_task.document_path = None
         mock_task.linked_rules = []

@@ -28,18 +28,16 @@ except ImportError:
     logger.debug("trame-plotly or plotly not installed, histogram unavailable")
 
 
-# Canonical type order (matches META-TAXON-01-v1)
+# Canonical type order (META-TAXON-02-v1 — EPIC-TASK-TAXONOMY-V2 Session 4)
 TASK_TYPES = [
-    "bug", "feature", "chore", "specification",
-    "research", "gap", "epic", "test", "unknown",
+    "bug", "feature", "chore", "research", "spec", "test", "unknown",
 ]
 
-# Status trace order and colors
+# Status trace order and colors (CLOSED removed — normalized to DONE)
 STATUS_CONFIG = [
     ("OPEN", "#FF9800"),
     ("IN_PROGRESS", "#2196F3"),
     ("DONE", "#4CAF50"),
-    ("CLOSED", "#9E9E9E"),
 ]
 
 

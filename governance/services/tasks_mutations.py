@@ -55,6 +55,9 @@ def update_task(
     workspace_id: Optional[str] = None,
     summary: Optional[str] = None,
     resolution_notes: Optional[str] = None,
+    layer: Optional[str] = None,
+    concern: Optional[str] = None,
+    method: Optional[str] = None,
     source: str = "rest",
 ) -> Optional[Dict[str, Any]]:
     """Update task fields in TypeDB with fallback.
@@ -65,6 +68,16 @@ def update_task(
     # BUG-STATUS-CASE-001: Normalize status to uppercase at service boundary
     if status:
         status = status.upper()
+
+    # EPIC-TASK-TAXONOMY-V2 Session 3: Normalize CLOSED→DONE at service boundary
+    if status:
+        from governance.task_lifecycle import normalize_status
+        status = normalize_status(status)
+
+    # EPIC-TASK-TAXONOMY-V2: Normalize deprecated task_type aliases
+    if task_type:
+        from agent.governance_ui.state.constants import TASK_TYPE_ALIASES
+        task_type = TASK_TYPE_ALIASES.get(task_type, task_type)
 
     # SRVJ-BUG-023: Validate agent_id against registered agents at write boundary
     if agent_id:
@@ -88,6 +101,19 @@ def update_task(
                     f"{active_sid} on status transition to {status}"
                 )
 
+    # SRVJ-FEAT-008: Auto-attach evidence for test tasks BEFORE DONE gate.
+    # Moved from after the gate (where it was dead code) to before it,
+    # so the auto-stamp is visible to validate_on_complete().
+    if status and status.upper() == "DONE":
+        _existing_pre = _tasks_store.get(task_id, {})
+        _eff_type = task_type or _existing_pre.get("task_type")
+        if _eff_type == "test" and not evidence and not _existing_pre.get("evidence"):
+            evidence = (
+                f"[Verification: Auto] Test task completed "
+                f"{datetime.now().strftime('%Y-%m-%d %H:%M')}"
+            )
+            logger.info(f"[SRVJ-FEAT-008] Auto-generated evidence for test task {task_id}")
+
     # SRVJ-FEAT-002: DONE gate — validate mandatory fields on completion
     if status and status.upper() == "DONE":
         from governance.services.task_rules import validate_on_complete, format_validation_result
@@ -103,6 +129,8 @@ def update_task(
         # transition (line 230), so validation should see the future value
         effective_completed = existing.get("completed_at") or datetime.now().isoformat()
         effective_docs = linked_documents or existing.get("linked_documents", [])
+        effective_type = task_type or existing.get("task_type")
+        effective_evidence = evidence or existing.get("evidence")
 
         done_errors = validate_on_complete(
             task_id=task_id,
@@ -111,6 +139,8 @@ def update_task(
             completed_at=effective_completed,
             linked_sessions=effective_sessions,
             linked_documents=effective_docs,
+            task_type=effective_type,
+            evidence=effective_evidence,
         )
         if done_errors:
             for err in done_errors:
@@ -140,16 +170,6 @@ def update_task(
             resolution_notes = build_resolution_summary(task_snapshot, session_meta)
             logger.info(f"[P17] Auto-populated resolution_notes for {task_id}")
 
-    # SRVJ-FEAT-008: Auto-attach evidence summary for test tasks on DONE
-    if status and status.upper() == "DONE":
-        existing = _tasks_store.get(task_id, {})
-        effective_type = task_type or existing.get("task_type")
-        if effective_type == "test" and not evidence:
-            evidence = (
-                f"[Verification: Auto] Test task completed "
-                f"{datetime.now().strftime('%Y-%m-%d %H:%M')}"
-            )
-
     client = get_typedb_client()
     task_obj = None
     if client:
@@ -177,7 +197,7 @@ def update_task(
                 task_obj = updated or task_obj
             # BUG-TASK-TAXONOMY-001: Persist priority/task_type/name/phase/summary to TypeDB
             # SRVJ-BUG-018: Also persist agent_id via update_task()
-            if task_obj and (priority or task_type or phase or description or summary or agent_id or resolution_notes):
+            if task_obj and (priority or task_type or phase or description or summary or agent_id or resolution_notes or layer or concern or method):
                 try:
                     client.update_task(
                         task_id,
@@ -188,6 +208,9 @@ def update_task(
                         summary=summary,
                         agent_id=agent_id,
                         resolution_notes=resolution_notes,
+                        layer=layer,
+                        concern=concern,
+                        method=method,
                     )
                 except Exception as ue:
                     # BUG-TASK-TAXONOMY-DEBUG-001: WARNING not DEBUG — data divergence
@@ -252,6 +275,9 @@ def update_task(
                 "linked_documents": getattr(task_obj, 'linked_documents', []) or [],
                 "workspace_id": getattr(task_obj, 'workspace_id', None),  # EPIC-GOV-TASKS-V2 Phase 6c
                 "resolution_notes": getattr(task_obj, 'resolution_notes', None),  # P17
+                "layer": getattr(task_obj, 'layer', None),
+                "concern": getattr(task_obj, 'concern', None),
+                "method": getattr(task_obj, 'method', None),
             }
         else:
             return None
@@ -279,6 +305,7 @@ def update_task(
         "linked_documents": linked_documents, "gap_id": gap_id,
         "workspace_id": workspace_id, "summary": summary,
         "resolution_notes": resolution_notes,
+        "layer": layer, "concern": concern, "method": method,
     }
     for field, val in updates.items():
         if val is not None:

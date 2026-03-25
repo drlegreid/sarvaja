@@ -81,6 +81,10 @@ class Task:
     workspace_id: Optional[str] = None
     # P17: Resolution narrative (auto-populated on DONE, manually editable)
     resolution_notes: Optional[str] = None
+    # EPIC-TASK-TAXONOMY-V2: Orthogonal tag dimensions (Session 2)
+    layer: Optional[str] = None       # Where: ui, api, data, infra, schema, monitoring, ci-cd
+    concern: Optional[str] = None     # What aspect: security, performance, reliability, etc.
+    method: Optional[str] = None      # How: spike, exploratory, automated, ai-generated, etc.
 
 
 @dataclass

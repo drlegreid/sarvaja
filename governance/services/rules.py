@@ -190,7 +190,8 @@ def get_rule(rule_id: str, source: str = "rest") -> Dict[str, Any]:
     client = _get_client_or_raise()
     _, rule = resolve_rule(client, rule_id)
     doc_paths = get_rule_document_paths(client, [rule.id])
-    return rule_to_response_dict(rule, doc_paths.get(rule.id))
+    linkage_counts = get_rule_linkage_counts(client, [rule.id])
+    return rule_to_response_dict(rule, doc_paths.get(rule.id), linkage_counts.get(rule.id))
 
 
 def create_rule(

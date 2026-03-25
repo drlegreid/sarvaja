@@ -149,11 +149,11 @@ class TestProjectColumnInHeaders:
         ws_idx = keys.index("workspace_id")
         assert proj_idx < ws_idx
 
-    def test_column_count_is_12(self):
-        """12 columns with Project added."""
+    def test_column_count_is_15(self):
+        """15 columns: Project + EPIC-TASK-TAXONOMY-V2 Layer/Concern/Method."""
         from agent.governance_ui.state.initial import get_initial_state
         headers = get_initial_state()["tasks_headers"]
-        assert len(headers) == 12
+        assert len(headers) == 15
 
     def test_project_column_sortable(self):
         """Project column should be sortable."""

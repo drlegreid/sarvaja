@@ -31,9 +31,12 @@ class TestTaxonomyConstants:
         assert 'feature' in TASK_TYPES
         assert 'chore' in TASK_TYPES
         assert 'research' in TASK_TYPES
-        assert 'gap' in TASK_TYPES
-        assert 'epic' in TASK_TYPES
+        assert 'spec' in TASK_TYPES
         assert 'test' in TASK_TYPES
+        # Deprecated types removed (EPIC-TASK-TAXONOMY-V2)
+        assert 'gap' not in TASK_TYPES
+        assert 'epic' not in TASK_TYPES
+        assert 'specification' not in TASK_TYPES
 
     def test_task_priorities_defined(self):
         from agent.governance_ui.state.constants import TASK_PRIORITIES
@@ -47,9 +50,12 @@ class TestTaxonomyConstants:
         assert TASK_TYPE_PREFIX['feature'] == 'FEAT'
         assert TASK_TYPE_PREFIX['chore'] == 'CHORE'
         assert TASK_TYPE_PREFIX['research'] == 'RD'
-        assert TASK_TYPE_PREFIX['gap'] == 'GAP'
-        assert TASK_TYPE_PREFIX['epic'] == 'EPIC'
+        assert TASK_TYPE_PREFIX['spec'] == 'SPEC'
         assert TASK_TYPE_PREFIX['test'] == 'TEST'
+        # Deprecated types removed (EPIC-TASK-TAXONOMY-V2)
+        assert 'gap' not in TASK_TYPE_PREFIX
+        assert 'epic' not in TASK_TYPE_PREFIX
+        assert 'specification' not in TASK_TYPE_PREFIX
 
     def test_all_task_types_have_prefix(self):
         from agent.governance_ui.state.constants import TASK_TYPES, TASK_TYPE_PREFIX
@@ -155,9 +161,17 @@ class TestPydanticModels:
 
     def test_task_create_accepts_valid_task_types(self):
         from governance.models import TaskCreate
-        for tt in ['bug', 'feature', 'chore', 'research', 'gap', 'epic', 'test']:
+        for tt in ['bug', 'feature', 'chore', 'research', 'spec', 'test']:
             task = TaskCreate(description="Test", phase="P10", task_type=tt)
             assert task.task_type == tt
+
+    def test_task_create_rejects_deprecated_types(self):
+        """Deprecated types (gap, epic, specification) are rejected (EPIC-TASK-TAXONOMY-V2)."""
+        from governance.models import TaskCreate
+        from pydantic import ValidationError
+        for tt in ['gap', 'epic', 'specification']:
+            with pytest.raises(ValidationError):
+                TaskCreate(description="Test", phase="P10", task_type=tt)
 
     def test_task_update_rejects_invalid_task_type(self):
         from governance.models import TaskUpdate

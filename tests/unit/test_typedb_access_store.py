@@ -169,6 +169,7 @@ class TestSessionToDict(unittest.TestCase):
 class TestGetAllTasksFromTypedb(unittest.TestCase):
     """Tests for get_all_tasks_from_typedb."""
 
+    @patch("governance.stores.typedb_access._tasks_store", {})
     @patch("governance.stores.typedb_access.get_typedb_client")
     def test_typedb_success(self, mock_get_client):
         client = MagicMock()

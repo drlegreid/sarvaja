@@ -28,7 +28,7 @@ class TestTaskStatusEnum:
     def test_values(self):
         assert TaskStatus.OPEN.value == "OPEN"
         assert TaskStatus.IN_PROGRESS.value == "IN_PROGRESS"
-        assert TaskStatus.CLOSED.value == "CLOSED"
+        assert TaskStatus.DONE.value == "DONE"
 
     def test_str_enum(self):
         """TaskStatus inherits from str."""
@@ -55,23 +55,23 @@ class TestValidateStatusTransition:
     def test_open_to_in_progress(self):
         assert validate_status_transition(TaskStatus.OPEN, TaskStatus.IN_PROGRESS) is True
 
-    def test_open_to_closed(self):
-        assert validate_status_transition(TaskStatus.OPEN, TaskStatus.CLOSED) is True
+    def test_open_to_done(self):
+        assert validate_status_transition(TaskStatus.OPEN, TaskStatus.DONE) is True
 
-    def test_in_progress_to_closed(self):
-        assert validate_status_transition(TaskStatus.IN_PROGRESS, TaskStatus.CLOSED) is True
+    def test_in_progress_to_done(self):
+        assert validate_status_transition(TaskStatus.IN_PROGRESS, TaskStatus.DONE) is True
 
     def test_in_progress_to_open(self):
         """Can reopen from in_progress."""
         assert validate_status_transition(TaskStatus.IN_PROGRESS, TaskStatus.OPEN) is True
 
-    def test_closed_to_open(self):
-        """Can reopen closed tasks."""
-        assert validate_status_transition(TaskStatus.CLOSED, TaskStatus.OPEN) is True
+    def test_done_to_open(self):
+        """Can reopen done tasks."""
+        assert validate_status_transition(TaskStatus.DONE, TaskStatus.OPEN) is True
 
-    def test_closed_to_in_progress(self):
-        """Can resume closed tasks."""
-        assert validate_status_transition(TaskStatus.CLOSED, TaskStatus.IN_PROGRESS) is True
+    def test_done_to_in_progress(self):
+        """Can resume done tasks."""
+        assert validate_status_transition(TaskStatus.DONE, TaskStatus.IN_PROGRESS) is True
 
 
 class TestValidateResolutionTransition:
@@ -123,17 +123,17 @@ class TestValidateStatusResolutionCombo:
         ok, msg = validate_status_resolution_combo(TaskStatus.IN_PROGRESS, TaskResolution.VALIDATED)
         assert ok is False
 
-    def test_closed_none_invalid(self):
-        ok, msg = validate_status_resolution_combo(TaskStatus.CLOSED, TaskResolution.NONE)
+    def test_done_none_invalid(self):
+        ok, msg = validate_status_resolution_combo(TaskStatus.DONE, TaskResolution.NONE)
         assert ok is False
         assert "must have a resolution" in msg
 
-    def test_closed_implemented_valid(self):
-        ok, msg = validate_status_resolution_combo(TaskStatus.CLOSED, TaskResolution.IMPLEMENTED)
+    def test_done_implemented_valid(self):
+        ok, msg = validate_status_resolution_combo(TaskStatus.DONE, TaskResolution.IMPLEMENTED)
         assert ok is True
 
-    def test_closed_certified_valid(self):
-        ok, msg = validate_status_resolution_combo(TaskStatus.CLOSED, TaskResolution.CERTIFIED)
+    def test_done_certified_valid(self):
+        ok, msg = validate_status_resolution_combo(TaskStatus.DONE, TaskResolution.CERTIFIED)
         assert ok is True
 
 
@@ -157,7 +157,7 @@ class TestMigrateLegacyStatus:
 
     def test_already_new_format(self):
         assert migrate_legacy_status("OPEN") == "OPEN"
-        assert migrate_legacy_status("CLOSED") == "CLOSED"
+        assert migrate_legacy_status("CLOSED") == "DONE"
 
     def test_unknown_defaults_to_open(self):
         assert migrate_legacy_status("INVALID") == "OPEN"

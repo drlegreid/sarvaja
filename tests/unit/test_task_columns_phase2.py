@@ -18,7 +18,8 @@ class TestColumnDefinitions:
 
     EXPECTED_KEYS_ORDER = [
         "project_name", "workspace_id", "task_id", "summary", "priority",
-        "task_type", "status", "first_session", "agent_id",
+        "task_type", "layer", "concern", "method",
+        "status", "first_session", "agent_id",
         "created_at", "completed_at", "doc_count",
     ]
 
@@ -57,11 +58,11 @@ class TestColumnDefinitions:
         keys = [h["key"] for h in headers]
         assert "workspace_id" in keys
 
-    def test_column_count_is_12(self):
-        """Target: 12 columns (Phase 3 added Project from workspace→project_id)."""
+    def test_column_count_is_15(self):
+        """Target: 15 columns (Phase 3 Project + EPIC-TASK-TAXONOMY-V2 Layer/Concern/Method)."""
         from agent.governance_ui.state.initial import get_initial_state
         headers = get_initial_state()["tasks_headers"]
-        assert len(headers) == 12
+        assert len(headers) == 15
 
     def test_summary_not_description(self):
         """FIX-COL-003: Summary column, not description."""

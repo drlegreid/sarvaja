@@ -218,7 +218,7 @@ class TestSyncGapsToTypedb:
             result = json.loads(sync_tools["workspace_sync_gaps_to_typedb"](dry_run=True))
 
         assert len(result["to_update"]) == 1
-        assert result["to_update"][0]["new_status"] == "CLOSED"
+        assert result["to_update"][0]["new_status"] == "DONE"
 
     def test_skipped_when_synced(self, sync_tools):
         mock_gap = MagicMock()

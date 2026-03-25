@@ -31,13 +31,17 @@ def register_task_crud_tools(mcp) -> None:
                     priority: str = "MEDIUM", task_type: str = "feature",
                     phase: str = "P10",
                     session_id: Optional[str] = None,
-                    workspace_id: Optional[str] = None) -> str:
+                    workspace_id: Optional[str] = None,
+                    layer: Optional[str] = None,
+                    concern: Optional[str] = None,
+                    method: Optional[str] = None) -> str:
         """
         Create a new task in TypeDB.
 
         Per META-TAXON-01-v1: task_id is auto-generated from task_type if omitted.
         Per DATA-LINK-01-v1: Tasks can be linked to a session at creation time.
         Per EPIC-GOV-TASKS-V2 Phase 4: Tasks can be assigned to a workspace.
+        Per EPIC-TASK-TAXONOMY-V2: Orthogonal tag dimensions (layer, concern, method).
 
         Args:
             name: Human-readable task name
@@ -49,6 +53,9 @@ def register_task_crud_tools(mcp) -> None:
             phase: Phase identifier (e.g., "P10", "P11", "RD")
             session_id: Optional session ID to link this task to (per DATA-LINK-01-v1)
             workspace_id: Optional workspace ID to assign this task to
+            layer: Where — ui, api, data, infra, schema, monitoring, ci-cd (optional)
+            concern: What aspect — security, performance, reliability, etc. (optional)
+            method: How — spike, exploratory, automated, ai-generated, etc. (optional)
 
         Returns:
             JSON with created task details or error
@@ -66,6 +73,9 @@ def register_task_crud_tools(mcp) -> None:
                 task_type=task_type or None,
                 linked_sessions=linked_sessions,
                 workspace_id=workspace_id,
+                layer=layer,
+                concern=concern,
+                method=method,
                 source="mcp",
             )
             # BUG-INTTEST-001: result is Pydantic TaskResponse, not dict
@@ -122,7 +132,11 @@ def register_task_crud_tools(mcp) -> None:
                     workspace_id: Optional[str] = None,
                     summary: Optional[str] = None,
                     agent_id: Optional[str] = None,
-                    resolution_notes: Optional[str] = None) -> str:
+                    evidence: Optional[str] = None,
+                    resolution_notes: Optional[str] = None,
+                    layer: Optional[str] = None,
+                    concern: Optional[str] = None,
+                    method: Optional[str] = None) -> str:
         """
         Update an existing task in TypeDB.
 
@@ -132,6 +146,7 @@ def register_task_crud_tools(mcp) -> None:
         Per EPIC-GOV-TASKS-V2 Phase 4: workspace_id assignment.
         Per FIX-DATA-002: summary is a first-class updatable field.
         Per SRVJ-BUG-021: agent_id exposed for DONE gate compliance.
+        Per Wave-0: evidence exposed for bug/test DONE gate compliance.
 
         Args:
             task_id: Task identifier to update
@@ -143,11 +158,15 @@ def register_task_crud_tools(mcp) -> None:
             workspace_id: Workspace ID to assign this task to
             summary: One-line task summary (optional)
             agent_id: Agent performing the work (must be registered agent)
+            evidence: Verification evidence — test results or manual confirmation (optional)
+            layer: Where — ui, api, data, infra, schema, monitoring, ci-cd (optional)
+            concern: What aspect — security, performance, reliability, etc. (optional)
+            method: How — spike, exploratory, automated, ai-generated, etc. (optional)
 
         Returns:
             JSON with updated task details or error
         """
-        if not any([status, name, phase, priority, task_type, workspace_id, summary, agent_id, resolution_notes]):
+        if not any([status, name, phase, priority, task_type, workspace_id, summary, agent_id, evidence, resolution_notes, layer, concern, method]):
             return format_mcp_result({"error": "No update fields provided"})
 
         try:
@@ -161,7 +180,11 @@ def register_task_crud_tools(mcp) -> None:
                 workspace_id=workspace_id,
                 summary=summary,
                 agent_id=agent_id,
+                evidence=evidence,
                 resolution_notes=resolution_notes,
+                layer=layer,
+                concern=concern,
+                method=method,
                 source="mcp",
             )
             if result:
@@ -222,7 +245,7 @@ def register_task_crud_tools(mcp) -> None:
         """
         Get task/rule taxonomy (types, priorities, statuses, prefixes).
 
-        Per META-TAXON-01-v1: Returns all enum values for validation and auto-ID.
+        Per META-TAXON-02-v1: Returns all enum values for validation and auto-ID.
 
         Returns:
             JSON with task_types, task_priorities, task_type_prefixes,
@@ -232,15 +255,20 @@ def register_task_crud_tools(mcp) -> None:
         try:
             from agent.governance_ui.state.constants import (
                 TASK_TYPES, TASK_PRIORITIES, TASK_TYPE_PREFIX,
-                TASK_STATUSES, TASK_PHASES,
+                TASK_STATUSES, TASK_PHASES, TASK_TYPE_ALIASES,
+                TASK_LAYERS, TASK_CONCERNS, TASK_METHODS,
                 RULE_CATEGORIES, RULE_PRIORITIES, RULE_STATUSES,
             )
             return format_mcp_result({
                 "task_types": TASK_TYPES,
                 "task_priorities": TASK_PRIORITIES,
                 "task_type_prefixes": TASK_TYPE_PREFIX,
+                "task_type_aliases": TASK_TYPE_ALIASES,
                 "task_statuses": TASK_STATUSES,
                 "task_phases": TASK_PHASES,
+                "task_layers": TASK_LAYERS,
+                "task_concerns": TASK_CONCERNS,
+                "task_methods": TASK_METHODS,
                 "rule_categories": RULE_CATEGORIES,
                 "rule_priorities": RULE_PRIORITIES,
                 "rule_statuses": RULE_STATUSES,

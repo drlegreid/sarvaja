@@ -110,6 +110,10 @@ def task_to_response(task: TypeDBTask):
         document_path=task.document_path,
         workspace_id=task.workspace_id,
         resolution_notes=_str_or_none(getattr(task, 'resolution_notes', None)),  # P17
+        # EPIC-TASK-TAXONOMY-V2: Orthogonal tag dimensions (defensive for MagicMock)
+        layer=getattr(task, 'layer', None) if isinstance(getattr(task, 'layer', None), str) else None,
+        concern=getattr(task, 'concern', None) if isinstance(getattr(task, 'concern', None), str) else None,
+        method=getattr(task, 'method', None) if isinstance(getattr(task, 'method', None), str) else None,
     )
 
 

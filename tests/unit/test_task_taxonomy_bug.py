@@ -222,6 +222,7 @@ class TestServiceLayer:
             name=None, phase=None, summary=None,
             agent_id=None,  # SRVJ-BUG-018: now passed through
             resolution_notes=None,  # P17: resolution narrative
+            layer=None, concern=None, method=None,  # EPIC-TASK-TAXONOMY-V2
         )
 
     @patch("governance.services.tasks_mutations._tasks_store", {})

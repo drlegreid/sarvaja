@@ -22,36 +22,48 @@ from datetime import datetime
 class TestSpecificationTaskType:
     """BDD: Add 'specification' to task type taxonomy."""
 
-    def test_task_types_includes_specification(self):
-        """Scenario: specification is a valid task type."""
+    def test_task_types_includes_spec_not_specification(self):
+        """Scenario: 'spec' is canonical; 'specification' removed (EPIC-TASK-TAXONOMY-V2)."""
         from agent.governance_ui.state.constants import TASK_TYPES
-        assert "specification" in TASK_TYPES
+        assert "spec" in TASK_TYPES
+        assert "specification" not in TASK_TYPES
 
     def test_task_type_prefix_has_spec(self):
-        """Scenario: specification maps to SPEC prefix for auto-ID."""
+        """Scenario: 'spec' maps to SPEC prefix for auto-ID."""
         from agent.governance_ui.state.constants import TASK_TYPE_PREFIX
-        assert TASK_TYPE_PREFIX["specification"] == "SPEC"
+        assert TASK_TYPE_PREFIX["spec"] == "SPEC"
+        assert "specification" not in TASK_TYPE_PREFIX
 
-    def test_pydantic_task_create_accepts_specification(self):
-        """Scenario: TaskCreate model validates specification type."""
+    def test_pydantic_task_create_accepts_spec(self):
+        """Scenario: TaskCreate model validates canonical 'spec' type (META-TAXON-02-v1)."""
         from governance.models import TaskCreate
         task = TaskCreate(
             description="Auth spec", phase="P9c",
-            task_type="specification"
+            task_type="spec"
         )
-        assert task.task_type == "specification"
+        assert task.task_type == "spec"
 
-    def test_pydantic_task_update_accepts_specification(self):
-        """Scenario: TaskUpdate model validates specification type."""
+    def test_pydantic_task_create_rejects_specification(self):
+        """Scenario: TaskCreate rejects deprecated 'specification' — use 'spec'."""
+        from governance.models import TaskCreate
+        import pydantic
+        with pytest.raises(pydantic.ValidationError):
+            TaskCreate(description="Old", phase="P9c", task_type="specification")
+
+    def test_pydantic_task_update_accepts_spec(self):
+        """Scenario: TaskUpdate model validates canonical 'spec' type."""
         from governance.models import TaskUpdate
-        update = TaskUpdate(task_type="specification")
-        assert update.task_type == "specification"
+        update = TaskUpdate(task_type="spec")
+        assert update.task_type == "spec"
 
-    def test_initial_state_type_options_includes_specification(self):
-        """Scenario: Dashboard type filter includes specification."""
+    def test_initial_state_type_options_has_canonical_types(self):
+        """Scenario: Dashboard type filter has 6 canonical types (META-TAXON-02-v1)."""
         from agent.governance_ui.state.initial import get_initial_state
         state = get_initial_state()
-        assert "specification" in state["task_type_options"]
+        assert "spec" in state["task_type_options"]
+        assert "specification" not in state["task_type_options"]
+        assert "gap" not in state["task_type_options"]
+        assert "epic" not in state["task_type_options"]
 
     def test_mcp_task_create_docstring_includes_specification(self):
         """Scenario: MCP task_create docstring lists specification as valid type."""

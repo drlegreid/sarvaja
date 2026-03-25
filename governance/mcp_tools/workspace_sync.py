@@ -256,7 +256,7 @@ def register_workspace_sync_tools(mcp) -> None:
 
                 for gap in all_gaps:
                     gap_id = gap.id
-                    task_status = "CLOSED" if gap.is_resolved else "OPEN"
+                    task_status = "DONE" if gap.is_resolved else "OPEN"
                     document_path = f"docs/gaps/evidence/{gap_id}.md"
 
                     if gap_id in existing_tasks:

@@ -64,10 +64,11 @@ class TestGenerateTaskIdWithProject:
         tid = generate_task_id("feature", client=None, project_prefix="GAMEDEV")
         assert tid.startswith("GAMEDEV-FEAT-")
 
-    def test_project_prefix_with_epic(self):
+    def test_project_prefix_with_spec(self):
+        """spec type generates SARVAJA-SPEC-NNN (EPIC-TASK-TAXONOMY-V2)."""
         from governance.services.task_id_gen import generate_task_id
-        tid = generate_task_id("epic", client=None, project_prefix="SARVAJA")
-        assert tid.startswith("SARVAJA-EPIC-")
+        tid = generate_task_id("spec", client=None, project_prefix="SARVAJA")
+        assert tid.startswith("SARVAJA-SPEC-")
 
     def test_project_prefix_sequence_increments(self):
         """Sequence should increment across calls."""

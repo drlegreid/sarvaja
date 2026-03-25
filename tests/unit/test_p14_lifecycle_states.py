@@ -18,10 +18,10 @@ from datetime import datetime
 class TestTaskStatusEnum:
     """TaskStatus enum is the canonical source for all status values."""
 
-    def test_all_seven_values_exist(self):
-        """P14: Enum must have OPEN, TODO, IN_PROGRESS, BLOCKED, DONE, CANCELED, CLOSED."""
+    def test_all_six_values_exist(self):
+        """Enum must have OPEN, TODO, IN_PROGRESS, BLOCKED, DONE, CANCELED (CLOSED removed Session 4)."""
         from governance.task_lifecycle import TaskStatus
-        expected = {"OPEN", "TODO", "IN_PROGRESS", "BLOCKED", "DONE", "CANCELED", "CLOSED"}
+        expected = {"OPEN", "TODO", "IN_PROGRESS", "BLOCKED", "DONE", "CANCELED"}
         actual = {s.value for s in TaskStatus}
         assert actual == expected
 
@@ -42,7 +42,7 @@ class TestTaskStatusEnum:
         vals = TaskStatus.valid_values()
         assert "CANCELED" in vals
         assert "BLOCKED" in vals
-        assert len(vals) == 7
+        assert len(vals) == 6
 
     def test_ui_edit_values_excludes_closed(self):
         """ui_edit_values() returns dropdown list without CLOSED/OPEN."""
@@ -53,11 +53,10 @@ class TestTaskStatusEnum:
         assert "OPEN" not in ui
 
     def test_terminal_states(self):
-        """terminal_states() includes DONE, CLOSED, CANCELED."""
+        """terminal_states() includes DONE, CANCELED (CLOSED removed Session 4)."""
         from governance.task_lifecycle import TaskStatus
         terminal = TaskStatus.terminal_states()
         assert TaskStatus.DONE in terminal
-        assert TaskStatus.CLOSED in terminal
         assert TaskStatus.CANCELED in terminal
         assert TaskStatus.IN_PROGRESS not in terminal
 
@@ -153,11 +152,9 @@ class TestTypeDBValidStatuses:
     """P14: TypeDB _VALID_STATUSES must include CANCELED."""
 
     def test_canceled_in_typedb_valid_statuses(self):
-        """TypeDB status.py must accept CANCELED."""
-        # We can't easily import the local variable, but we test via update_task_status
-        # mock. Instead, verify the enum matches what TypeDB should accept.
+        """TypeDB status.py must accept CANCELED (CLOSED removed Session 4)."""
         from governance.task_lifecycle import TaskStatus
-        typedb_expected = {"OPEN", "IN_PROGRESS", "DONE", "CLOSED", "TODO", "BLOCKED", "CANCELED"}
+        typedb_expected = {"OPEN", "IN_PROGRESS", "DONE", "TODO", "BLOCKED", "CANCELED"}
         assert TaskStatus.valid_values() == typedb_expected
 
 
@@ -351,7 +348,7 @@ class TestDoneGateWithPreload:
 
     @patch("governance.services.tasks_mutations.get_typedb_client")
     def test_done_gate_fails_without_documents(self, mock_get_client):
-        """DONE gate must fail when no linked_documents exist."""
+        """DONE gate must fail when no linked_documents exist (feature type)."""
         from governance.services.tasks_mutations import update_task, _tasks_store
 
         task_obj = self._make_task_obj(
@@ -360,11 +357,23 @@ class TestDoneGateWithPreload:
             summary="No docs",
             agent_id="code-agent",
         )
+        # EPIC-TASK-TAXONOMY-V2: feature type requires linked_documents
+        task_obj.task_type = "feature"
         mock_client = MagicMock()
         mock_client.get_task.return_value = task_obj
         mock_get_client.return_value = mock_client
 
-        _tasks_store.pop("T-DONE-002", None)
+        # Seed _tasks_store so DONE gate can read task_type
+        _tasks_store["T-DONE-002"] = {
+            "task_id": "T-DONE-002",
+            "description": "No docs",
+            "status": "IN_PROGRESS",
+            "task_type": "feature",
+            "linked_documents": [],
+            "linked_sessions": ["SES-001"],
+            "summary": "No docs",
+            "agent_id": "code-agent",
+        }
 
         with pytest.raises(ValueError, match="DONE gate validation failed"):
             update_task(

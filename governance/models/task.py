@@ -1,7 +1,29 @@
 """Task models. Per GAP-UI-046, WORKFLOW-SEQ-01-v1, ORCH-007."""
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 from typing import Dict, Any, List, Literal, Optional
+
+# EPIC-TASK-TAXONOMY-V2: Deprecated aliases → canonical type
+_TASK_TYPE_ALIASES = {"gap": "bug", "story": "feature", "specification": "spec", "epic": "feature"}
+_CANONICAL_TYPES = {"bug", "feature", "chore", "research", "spec", "test"}
+
+
+def _validate_task_type(v: str | None) -> str | None:
+    """Validate task_type with helpful migration hints for deprecated aliases."""
+    if v is None:
+        return v
+    if v in _CANONICAL_TYPES:
+        return v
+    if v in _TASK_TYPE_ALIASES:
+        canonical = _TASK_TYPE_ALIASES[v]
+        raise ValueError(
+            f"'{v}' is deprecated. Use '{canonical}' instead. "
+            f"Valid types: {sorted(_CANONICAL_TYPES)}"
+        )
+    raise ValueError(
+        f"Invalid task_type '{v}'. "
+        f"Valid types: {sorted(_CANONICAL_TYPES)}"
+    )
 
 
 class TaskCreate(BaseModel):
@@ -11,7 +33,7 @@ class TaskCreate(BaseModel):
     phase: str = Field(..., min_length=1)
     status: str = "TODO"
     priority: Optional[Literal["LOW", "MEDIUM", "HIGH", "CRITICAL"]] = None  # BUG-TASK-TAXONOMY-001
-    task_type: Optional[Literal["bug", "feature", "chore", "research", "spec", "test"]] = None  # META-TAXON-02-v1
+    task_type: Optional[str] = None  # META-TAXON-02-v1: validated by _validate_task_type
     agent_id: Optional[str] = None
     body: Optional[str] = None
     summary: Optional[str] = None  # Phase 9c: structured one-line intent
@@ -25,13 +47,18 @@ class TaskCreate(BaseModel):
     concern: Optional[str] = None
     method: Optional[str] = None
 
+    @field_validator("task_type")
+    @classmethod
+    def check_task_type(cls, v):
+        return _validate_task_type(v)
+
 class TaskUpdate(BaseModel):
     """Request model for updating a task (GAP-UI-107)."""
     description: Optional[str] = None
     phase: Optional[str] = None
     status: Optional[str] = None
     priority: Optional[Literal["LOW", "MEDIUM", "HIGH", "CRITICAL"]] = None  # BUG-TASK-TAXONOMY-001
-    task_type: Optional[Literal["bug", "feature", "chore", "research", "spec", "test"]] = None  # META-TAXON-02-v1
+    task_type: Optional[str] = None  # META-TAXON-02-v1: validated by _validate_task_type
     agent_id: Optional[str] = None
     body: Optional[str] = None
     summary: Optional[str] = None  # Phase 9c: structured one-line intent
@@ -46,6 +73,11 @@ class TaskUpdate(BaseModel):
     layer: Optional[str] = None
     concern: Optional[str] = None
     method: Optional[str] = None
+
+    @field_validator("task_type")
+    @classmethod
+    def check_task_type(cls, v):
+        return _validate_task_type(v)
 
 class TaskResponse(BaseModel):
     """Response model for a task. Per GAP-UI-046, WORKFLOW-SEQ-01-v1."""

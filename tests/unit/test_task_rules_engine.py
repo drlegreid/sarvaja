@@ -194,24 +194,26 @@ class TestValidateOnComplete:
         assert errors == []
 
     def test_missing_session_fails(self):
-        """DONE without linked session fails."""
+        """DONE without linked session fails (bug type requires sessions)."""
         errors = validate_on_complete(
             task_id="SRVJ-BUG-001",
             summary="UI > Task > Fix > Bug",
             agent_id="code-agent",
             linked_sessions=[],
+            task_type="bug",
         )
         session_errors = [e for e in errors if e.field == "linked_sessions"]
         assert len(session_errors) == 1
-        assert "linked session" in session_errors[0].message
+        assert "session" in session_errors[0].message.lower()
 
     def test_none_sessions_fails(self):
-        """DONE with None linked_sessions fails."""
+        """DONE with None linked_sessions fails (bug type requires sessions)."""
         errors = validate_on_complete(
             task_id="SRVJ-BUG-001",
             summary="UI > Task > Fix > Bug",
             agent_id="code-agent",
             linked_sessions=None,
+            task_type="bug",
         )
         session_errors = [e for e in errors if e.field == "linked_sessions"]
         assert len(session_errors) == 1
@@ -254,7 +256,7 @@ class TestValidateOnComplete:
         assert "completed_at" in completed_errors[0].message
 
     def test_missing_linked_documents_fails(self):
-        """DONE without linked_documents fails (SRVJ-BUG-002)."""
+        """DONE without linked_documents fails (feature type requires docs)."""
         errors = validate_on_complete(
             task_id="SRVJ-BUG-001",
             summary="UI > Task > Fix > Bug",
@@ -262,13 +264,14 @@ class TestValidateOnComplete:
             completed_at="2026-03-22T20:36:58",
             linked_sessions=["SESSION-123"],
             linked_documents=[],
+            task_type="feature",
         )
         doc_errors = [e for e in errors if e.field == "linked_documents"]
         assert len(doc_errors) == 1
-        assert "linked document" in doc_errors[0].message
+        assert "document" in doc_errors[0].message.lower()
 
     def test_none_linked_documents_fails(self):
-        """DONE with None linked_documents fails."""
+        """DONE with None linked_documents fails (feature type requires docs)."""
         errors = validate_on_complete(
             task_id="SRVJ-BUG-001",
             summary="UI > Task > Fix > Bug",
@@ -276,12 +279,14 @@ class TestValidateOnComplete:
             completed_at="2026-03-22T20:36:58",
             linked_sessions=["SESSION-123"],
             linked_documents=None,
+            task_type="feature",
         )
         doc_errors = [e for e in errors if e.field == "linked_documents"]
         assert len(doc_errors) == 1
 
     def test_all_missing_returns_all_errors(self):
-        """DONE with nothing returns all 5 errors (SRVJ-BUG-002: was 3, now 5)."""
+        """DONE with nothing returns all errors for bug type (5: summary, agent_id,
+        linked_sessions, evidence, completed_at). EPIC-TASK-TAXONOMY-V2: type-specific DoD."""
         errors = validate_on_complete(
             task_id="SRVJ-BUG-001",
             summary=None,
@@ -289,10 +294,12 @@ class TestValidateOnComplete:
             completed_at=None,
             linked_sessions=None,
             linked_documents=None,
+            evidence=None,
+            task_type="bug",
         )
         assert len(errors) == 5
         fields = {e.field for e in errors}
-        assert fields == {"linked_sessions", "summary", "agent_id", "completed_at", "linked_documents"}
+        assert fields == {"linked_sessions", "summary", "agent_id", "completed_at", "evidence"}
 
 
 # =============================================================================
@@ -378,20 +385,21 @@ class TestConstants:
         from agent.governance_ui.state.constants import TASK_TYPES
         assert 'spec' in TASK_TYPES
 
-    def test_specification_still_in_task_types(self):
-        """'specification' remains for backward compat."""
+    def test_specification_removed_from_task_types(self):
+        """'specification' removed — 'spec' is canonical (EPIC-TASK-TAXONOMY-V2)."""
         from agent.governance_ui.state.constants import TASK_TYPES
-        assert 'specification' in TASK_TYPES
+        assert 'spec' in TASK_TYPES
+        assert 'specification' not in TASK_TYPES
 
     def test_spec_has_prefix(self):
         """'spec' maps to 'SPEC' prefix."""
         from agent.governance_ui.state.constants import TASK_TYPE_PREFIX
         assert TASK_TYPE_PREFIX['spec'] == 'SPEC'
 
-    def test_specification_has_same_prefix(self):
-        """'specification' also maps to 'SPEC'."""
+    def test_specification_not_in_prefix(self):
+        """'specification' removed from TASK_TYPE_PREFIX (EPIC-TASK-TAXONOMY-V2)."""
         from agent.governance_ui.state.constants import TASK_TYPE_PREFIX
-        assert TASK_TYPE_PREFIX['specification'] == 'SPEC'
+        assert 'specification' not in TASK_TYPE_PREFIX
 
     def test_project_acronyms_exist(self):
         """PROJECT_ACRONYMS dict is defined and populated."""
@@ -425,15 +433,16 @@ class TestPydanticModels:
         )
         assert task.task_type == "spec"
 
-    def test_task_create_accepts_specification(self):
-        """TaskCreate model still accepts task_type='specification'."""
+    def test_task_create_rejects_specification(self):
+        """TaskCreate model rejects deprecated 'specification' — use 'spec' (META-TAXON-02-v1)."""
         from governance.models import TaskCreate
-        task = TaskCreate(
-            description="Old style",
-            phase="P10",
-            task_type="specification",
-        )
-        assert task.task_type == "specification"
+        import pydantic
+        with pytest.raises(pydantic.ValidationError):
+            TaskCreate(
+                description="Old style",
+                phase="P10",
+                task_type="specification",
+            )
 
     def test_task_update_accepts_spec(self):
         """TaskUpdate model accepts task_type='spec'."""
@@ -641,6 +650,7 @@ class TestUpdateTaskDoneGate:
             "status": "IN_PROGRESS",
             "agent_id": "code-agent",
             "summary": "UI > Test > Done > NoDocs",
+            "task_type": "feature",  # feature requires linked_documents
             "linked_sessions": ["SESSION-123"],
             "linked_documents": [],
             "created_at": "2026-03-22T00:00:00",

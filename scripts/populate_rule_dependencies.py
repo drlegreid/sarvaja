@@ -8,6 +8,7 @@ then creates rule-dependency relations in TypeDB directly.
 Usage:
     .venv/bin/python3 scripts/populate_rule_dependencies.py
     .venv/bin/python3 scripts/populate_rule_dependencies.py --dry-run
+    .venv/bin/python3 scripts/populate_rule_dependencies.py --verify
 """
 
 import argparse
@@ -62,8 +63,33 @@ def build_dependency_graph(rules_dir: Path) -> dict:
     return graph
 
 
+def verify_graph(graph: dict) -> dict:
+    """Verify graph stats including cycle detection.
+
+    Args:
+        graph: Adjacency dict {rule_id: set of dep_ids}
+
+    Returns:
+        Dict with nodes, edges, cycles stats.
+    """
+    from governance.services.dependency_graph import DependencyGraph
+
+    dg = DependencyGraph(graph)
+    cycles = dg.detect_cycles()
+    return {
+        "nodes": dg.node_count,
+        "edges": dg.edge_count,
+        "cycles": cycles,
+        "circular_count": len(cycles),
+        "is_acyclic": dg.is_acyclic,
+    }
+
+
 def populate_via_typedb(graph: dict, existing_rules: set, dry_run: bool = False) -> dict:
-    """Insert rule-dependency relations directly into TypeDB."""
+    """Insert rule-dependency relations directly into TypeDB.
+
+    Idempotent: checks existing dependencies before creating.
+    """
     stats = {"scanned": len(graph), "relations_created": 0, "skipped": 0, "errors": 0}
 
     try:
@@ -80,9 +106,18 @@ def populate_via_typedb(graph: dict, existing_rules: set, dry_run: bool = False)
         if rule_id not in existing_rules:
             continue
 
+        # Idempotency: fetch existing deps for this rule
+        existing_deps = set(client.get_rule_dependencies(rule_id))
+
         for dep_id in sorted(deps):
             if dep_id not in existing_rules:
                 stats["skipped"] += 1
+                continue
+
+            # Skip if relation already exists
+            if dep_id in existing_deps:
+                stats["skipped"] += 1
+                print(f"  [SKIP] {rule_id} -> {dep_id} (already exists)")
                 continue
 
             if dry_run:
@@ -117,6 +152,7 @@ def get_existing_rules_via_api() -> set:
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Populate rule dependencies in TypeDB")
     parser.add_argument("--dry-run", action="store_true", help="Show what would be created")
+    parser.add_argument("--verify", action="store_true", help="Report graph stats and cycles")
     args = parser.parse_args()
 
     if not RULES_DIR.exists():
@@ -132,6 +168,18 @@ if __name__ == "__main__":
     # Show top referencing rules
     for rule_id, deps in sorted(graph.items(), key=lambda x: -len(x[1]))[:10]:
         print(f"  {rule_id}: references {len(deps)} rules")
+
+    if args.verify:
+        stats = verify_graph(graph)
+        print(f"\nGraph verification:")
+        print(f"  Nodes: {stats['nodes']}")
+        print(f"  Edges: {stats['edges']}")
+        print(f"  Acyclic: {stats['is_acyclic']}")
+        print(f"  Circular count: {stats['circular_count']}")
+        if stats['cycles']:
+            for i, cycle in enumerate(stats['cycles'], 1):
+                print(f"  Cycle {i}: {' -> '.join(cycle)}")
+        sys.exit(0)
 
     # Get existing rules
     existing_rules = get_existing_rules_via_api()

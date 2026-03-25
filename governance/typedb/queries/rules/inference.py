@@ -127,6 +127,32 @@ class RuleInferenceQueries:
             logger.warning(f"Failed to create dependency {dependent_id}->{dependency_id}: {type(e).__name__}", exc_info=True)
             return False
 
+    def get_all_dependencies(self) -> Dict[str, List[str]]:
+        """Batch query all rule-dependency relations for full graph construction.
+
+        Returns:
+            Dict mapping dependent rule_id → list of dependency rule_ids.
+        """
+        query = """
+            match
+                $r1 isa rule-entity, has rule-id $id1;
+                $r2 isa rule-entity, has rule-id $id2;
+                (dependent: $r1, dependency: $r2) isa rule-dependency;
+            select $id1, $id2;
+        """
+        try:
+            results = self._execute_query(query, infer=True)
+        except Exception as e:
+            logger.error(f"get_all_dependencies query failed: {type(e).__name__}", exc_info=True)
+            return {}
+        graph: Dict[str, List[str]] = {}
+        for r in results:
+            id1 = r.get("id1")
+            id2 = r.get("id2")
+            if id1 and id2:
+                graph.setdefault(id1, []).append(id2)
+        return graph
+
     def get_decision_impacts(self, decision_id: str) -> List[str]:
         """
         Get all rules affected by a decision (including cascaded supersedes).

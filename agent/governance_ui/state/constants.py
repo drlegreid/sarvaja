@@ -148,15 +148,17 @@ RULE_STATUSES: List[str] = ['ACTIVE', 'DRAFT', 'DEPRECATED']
 
 # Task filter options (GAP-UI-EXP-004)
 # P14: CANCELED added — canonical source is governance.task_lifecycle.TaskStatus
+# EPIC-TASK-TAXONOMY-V2: CLOSED deprecated → DONE. Kept here for backward compat
+# (filter/search may still encounter CLOSED in TypeDB). Session 4 removes.
 TASK_STATUSES: List[str] = ['TODO', 'IN_PROGRESS', 'DONE', 'BLOCKED', 'CANCELED']
 TASK_PHASES: List[str] = ['P10', 'P11', 'P12', 'R&D', 'FH', 'KAN', 'ORCH', 'DOCVIEW']
 
-# Task Type Taxonomy (META-TAXON-02-v1: EPIC-TASK-TAXONOMY-V2)
-# 6 canonical types — gap/story/specification/epic merged into bug/feature/spec
+# Task Type Taxonomy (META-TAXON-02-v1 — EPIC-TASK-TAXONOMY-V2 Session 4)
+# 6 canonical types only — deprecated types (gap, epic, specification, story) removed
 TASK_TYPES: List[str] = ['bug', 'feature', 'chore', 'research', 'spec', 'test']
 TASK_PRIORITIES: List[str] = ['CRITICAL', 'HIGH', 'MEDIUM', 'LOW']
 
-# Task type → ID prefix for auto-generation
+# Task type → ID prefix for auto-generation (6 canonical only)
 TASK_TYPE_PREFIX: Dict[str, str] = {
     'bug': 'BUG',
     'feature': 'FEAT',
@@ -166,7 +168,8 @@ TASK_TYPE_PREFIX: Dict[str, str] = {
     'test': 'TEST',
 }
 
-# Deprecated type aliases — normalized on write, accepted on read (EPIC-TASK-TAXONOMY-V2)
+# Deprecated type aliases — normalized on write at service boundary (EPIC-TASK-TAXONOMY-V2)
+# Kept for backward compat: old types accepted via API, normalized to canonical types
 TASK_TYPE_ALIASES: Dict[str, str] = {
     'gap': 'bug',
     'story': 'feature',

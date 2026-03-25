@@ -31,6 +31,7 @@ _ALLOWED_TASK_ATTR_NAMES = frozenset({
     "document-path", "task-priority", "task-type", "task-summary",
     "agent-id",  # SRVJ-BUG-018: agent_id persistence via update_task()
     "resolution-notes",  # P17: resolution narrative
+    "task-layer", "task-concern", "task-method",  # EPIC-TASK-TAXONOMY-V2: tag dimensions
 })
 
 
@@ -107,6 +108,9 @@ class TaskCRUDOperations:
         workspace_id: str = None,
         summary: str = None,
         resolution_notes: str = None,
+        layer: str = None,
+        concern: str = None,
+        method: str = None,
     ) -> Optional[Task]:
         """
         Insert a new task into TypeDB.
@@ -194,6 +198,16 @@ class TaskCRUDOperations:
                 if resolution_notes:
                     rn_escaped = resolution_notes.replace('\\', '\\\\').replace('"', '\\"')
                     insert_parts.append(f'has resolution-notes "{rn_escaped}"')
+                # EPIC-TASK-TAXONOMY-V2: Orthogonal tag dimensions
+                if layer:
+                    layer_escaped = layer.replace('\\', '\\\\').replace('"', '\\"')
+                    insert_parts.append(f'has task-layer "{layer_escaped}"')
+                if concern:
+                    concern_escaped = concern.replace('\\', '\\\\').replace('"', '\\"')
+                    insert_parts.append(f'has task-concern "{concern_escaped}"')
+                if method:
+                    method_escaped = method.replace('\\', '\\\\').replace('"', '\\"')
+                    insert_parts.append(f'has task-method "{method_escaped}"')
 
                 insert_query = f"""
                     insert $t isa task,
@@ -292,6 +306,9 @@ class TaskCRUDOperations:
         summary: str = None,
         agent_id: str = None,  # SRVJ-BUG-018: agent_id persistence
         resolution_notes: str = None,  # P17: resolution narrative
+        layer: str = None,
+        concern: str = None,
+        method: str = None,
     ) -> bool:
         """
         Update a task's attributes in TypeDB.
@@ -359,6 +376,19 @@ class TaskCRUDOperations:
                     current_agent = getattr(current, 'agent_id', None)
                     if current_agent != agent_id:
                         _update_attribute(tx, task_id, "agent-id", current_agent, agent_id)
+                # EPIC-TASK-TAXONOMY-V2: Orthogonal tag dimensions
+                if layer:
+                    current_layer = getattr(current, 'layer', None)
+                    if current_layer != layer:
+                        _update_attribute(tx, task_id, "task-layer", current_layer, layer)
+                if concern:
+                    current_concern = getattr(current, 'concern', None)
+                    if current_concern != concern:
+                        _update_attribute(tx, task_id, "task-concern", current_concern, concern)
+                if method:
+                    current_method = getattr(current, 'method', None)
+                    if current_method != method:
+                        _update_attribute(tx, task_id, "task-method", current_method, method)
                 # P17: resolution narrative persistence (multiline — skip _strip_ctl)
                 if resolution_notes:
                     current_rn = getattr(current, 'resolution_notes', None)

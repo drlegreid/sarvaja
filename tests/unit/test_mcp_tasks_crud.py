@@ -204,7 +204,9 @@ class TestTaskUpdate:
             task_id="T-1", status="DONE", description=None,
             phase=None, priority=None, task_type=None,
             workspace_id=None, summary=None, agent_id=None,
-            resolution_notes=None, source="mcp",
+            resolution_notes=None,
+            layer=None, concern=None, method=None,
+            source="mcp",
         )
 
     @patch(f"{_MOD}.log_monitor_event")

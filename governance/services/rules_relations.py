@@ -13,6 +13,13 @@ from governance.rule_linker import normalize_rule_id
 
 logger = logging.getLogger(__name__)
 
+# ── Relation name constants (DRY — single source of truth) ──────────────────
+IMPLEMENTS_RULE_RELATION = "implements-rule"
+IMPLEMENTS_RULE_ROLES = ("implementing-task", "implemented-rule")
+
+SESSION_APPLIED_RULE_RELATION = "session-applied-rule"
+SESSION_APPLIED_RULE_ROLES = ("applying-session", "applied-rule")
+
 __all__ = [
     "get_rule_document_paths",
     "get_rule_linkage_counts",
@@ -73,11 +80,12 @@ def get_rule_linkage_counts(client, rule_ids: List[str]) -> Dict[str, Dict[str, 
         return {}
     counts: Dict[str, Dict[str, int]] = {}
     try:
-        query = """
+        task_role, rule_role = IMPLEMENTS_RULE_ROLES
+        query = f"""
         match
           $r isa rule-entity, has rule-id $rid;
-          $t isa task-entity;
-          (linked-rule: $r, linking-task: $t) isa task-rule-link;
+          $t isa task;
+          ({rule_role}: $r, {task_role}: $t) isa {IMPLEMENTS_RULE_RELATION};
         select $rid;
         """
         results = client.execute_query(query)
@@ -90,11 +98,12 @@ def get_rule_linkage_counts(client, rule_ids: List[str]) -> Dict[str, Dict[str, 
         # BUG-477-RRL-1: Sanitize debug/info logger
         logger.debug(f"Failed to query rule-task counts: {type(e).__name__}")
     try:
-        query = """
+        session_role, rule_role = SESSION_APPLIED_RULE_ROLES
+        query = f"""
         match
           $r isa rule-entity, has rule-id $rid;
           $s isa work-session;
-          (linked-rule: $r, linking-session: $s) isa session-rule-link;
+          ({session_role}: $s, {rule_role}: $r) isa {SESSION_APPLIED_RULE_RELATION};
         select $rid;
         """
         results = client.execute_query(query)
@@ -145,29 +154,37 @@ def create_rule_dependency(rule_id: str, dep_id: str, source: str = "rest") -> b
 
 
 def dependency_overview(source: str = "rest") -> Dict[str, Any]:
-    """Global dependency overview: total stats, orphaned rules."""
+    """Global dependency overview: total stats, orphaned rules, real circular count."""
+    from governance.services.dependency_graph import DependencyGraph
+
     client = _get_client_or_raise()
     rules = client.get_all_rules()
     total_rules = len(rules)
     rule_ids = [r.id for r in rules]
 
-    has_deps = set()
-    has_dependents = set()
+    # Build adjacency list from batch query
+    raw_graph = client.get_all_dependencies()
+    adj: Dict[str, set] = {rid: set(deps) for rid, deps in raw_graph.items()}
+
+    # Compute stats from adjacency
+    has_deps = set(adj.keys())
+    has_dependents: set = set()
     total_dependencies = 0
-    for rid in rule_ids:
-        deps = client.get_rule_dependencies(rid)
-        dependents = client.get_rules_depending_on(rid)
-        if deps:
-            has_deps.add(rid)
-            total_dependencies += len(deps)
-        if dependents:
-            has_dependents.add(rid)
+    for deps in adj.values():
+        total_dependencies += len(deps)
+        has_dependents.update(deps)
 
     orphan_rules = [rid for rid in rule_ids if rid not in has_deps and rid not in has_dependents]
+
+    # Real DFS cycle detection (replaces hardcoded 0)
+    graph = DependencyGraph(adj)
+    cycles = graph.detect_cycles()
+
     return {
         "total_rules": total_rules,
         "total_dependencies": total_dependencies,
         "orphan_rules": orphan_rules,
         "orphan_count": len(orphan_rules),
-        "circular_count": 0,
+        "circular_count": len(cycles),
+        "cycles": [[str(n) for n in c] for c in cycles],
     }

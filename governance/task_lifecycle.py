@@ -4,31 +4,32 @@ Task Lifecycle Management.
 Per GAP-UI-046: Task status/resolution per Agile DoR/DoD
 Per TEST-FIX-01-v1: All fixes need verification evidence
 Per EPIC-TASK-QUALITY-V3 P14: Canonical TaskStatus enum — single source of truth
+Per EPIC-TASK-TAXONOMY-V2 Session 4: CLOSED removed — normalized to DONE
 
 Agile Definitions:
-- Status (lifecycle): OPEN/TODO → IN_PROGRESS → DONE/CLOSED | BLOCKED | CANCELED
+- Status (lifecycle): OPEN/TODO → IN_PROGRESS → DONE | BLOCKED | CANCELED
 - Resolution (outcome): NONE, DEFERRED, IMPLEMENTED, VALIDATED, CERTIFIED
 
 Created: 2026-01-14
-Updated: 2026-03-24 — P14: Added TODO, DONE, BLOCKED, CANCELED states
+Updated: 2026-03-24 — Session 4: CLOSED removed from enum, normalize_status() kept
 """
 
 from enum import Enum
-from typing import List, Set, Tuple
+from typing import Dict, List, Set, Tuple
 
 
 class TaskStatus(str, Enum):
     """Task lifecycle status — canonical enum, single source of truth.
 
     Per EPIC-TASK-QUALITY-V3 P14: All layers (TypeDB, MCP, UI) import from here.
+    Per EPIC-TASK-TAXONOMY-V2 Session 4: CLOSED removed. normalize_status() maps CLOSED→DONE.
     """
     OPEN = "OPEN"           # Ready to be worked on
     TODO = "TODO"           # Backlog / not yet started
     IN_PROGRESS = "IN_PROGRESS"  # Being worked on
     BLOCKED = "BLOCKED"     # Waiting on external dependency
-    DONE = "DONE"           # Work complete (legacy synonym for CLOSED)
+    DONE = "DONE"           # Work complete — canonical terminal state
     CANCELED = "CANCELED"   # Abandoned / no longer needed
-    CLOSED = "CLOSED"       # Work complete (Agile canonical)
 
     @classmethod
     def valid_values(cls) -> Set[str]:
@@ -37,13 +38,18 @@ class TaskStatus(str, Enum):
 
     @classmethod
     def ui_edit_values(cls) -> List[str]:
-        """Status values for the UI edit dropdown (excludes CLOSED — use DONE)."""
+        """Status values for the UI edit dropdown."""
         return ["TODO", "IN_PROGRESS", "DONE", "BLOCKED", "CANCELED"]
+
+    @classmethod
+    def canonical_values(cls) -> Set[str]:
+        """All canonical status strings."""
+        return {s.value for s in cls}
 
     @classmethod
     def terminal_states(cls) -> Set["TaskStatus"]:
         """States where the task is finished — Delete is allowed here."""
-        return {cls.DONE, cls.CLOSED, cls.CANCELED}
+        return {cls.DONE, cls.CANCELED}
 
     @property
     def is_terminal(self) -> bool:
@@ -60,16 +66,15 @@ class TaskResolution(str, Enum):
     CERTIFIED = "CERTIFIED"  # User feedback enrolled
 
 
-# Valid transitions — P14: includes TODO, DONE, BLOCKED, CANCELED
+# Valid transitions — CLOSED removed (EPIC-TASK-TAXONOMY-V2 Session 4)
 VALID_STATUS_TRANSITIONS = {
-    TaskStatus.OPEN: [TaskStatus.IN_PROGRESS, TaskStatus.CLOSED, TaskStatus.CANCELED],
+    TaskStatus.OPEN: [TaskStatus.IN_PROGRESS, TaskStatus.DONE, TaskStatus.CANCELED],
     TaskStatus.TODO: [TaskStatus.IN_PROGRESS, TaskStatus.CANCELED],
-    TaskStatus.IN_PROGRESS: [TaskStatus.OPEN, TaskStatus.DONE, TaskStatus.CLOSED,
+    TaskStatus.IN_PROGRESS: [TaskStatus.OPEN, TaskStatus.DONE,
                              TaskStatus.BLOCKED, TaskStatus.CANCELED],
     TaskStatus.BLOCKED: [TaskStatus.IN_PROGRESS, TaskStatus.OPEN, TaskStatus.CANCELED],
     TaskStatus.DONE: [TaskStatus.OPEN, TaskStatus.IN_PROGRESS],  # Reopen
     TaskStatus.CANCELED: [TaskStatus.OPEN, TaskStatus.TODO],  # Re-activate
-    TaskStatus.CLOSED: [TaskStatus.OPEN, TaskStatus.IN_PROGRESS],  # Reopen
 }
 
 VALID_RESOLUTION_TRANSITIONS = {
@@ -80,7 +85,7 @@ VALID_RESOLUTION_TRANSITIONS = {
     TaskResolution.CERTIFIED: [TaskResolution.VALIDATED],  # Can downgrade if issue found
 }
 
-# Backward compatibility mapping — P14: all values now canonical enum members
+# Backward compatibility mapping — CLOSED→DONE (EPIC-TASK-TAXONOMY-V2)
 STATUS_MIGRATION_MAP = {
     "TODO": TaskStatus.TODO,
     "IN_PROGRESS": TaskStatus.IN_PROGRESS,
@@ -88,8 +93,24 @@ STATUS_MIGRATION_MAP = {
     "BLOCKED": TaskStatus.BLOCKED,
     "CANCELED": TaskStatus.CANCELED,
     "OPEN": TaskStatus.OPEN,
-    "CLOSED": TaskStatus.CLOSED,
+    "CLOSED": TaskStatus.DONE,  # Normalized: CLOSED→DONE
 }
+
+# EPIC-TASK-TAXONOMY-V2: Deprecated status aliases — normalized at service boundary
+STATUS_ALIASES: Dict[str, str] = {
+    "CLOSED": "DONE",
+}
+
+
+def normalize_status(status: str) -> str:
+    """Normalize deprecated status values at the service boundary.
+
+    CLOSED → DONE per EPIC-TASK-TAXONOMY-V2 Session 3.
+    """
+    if not status:
+        return status
+    upper = status.upper()
+    return STATUS_ALIASES.get(upper, upper)
 
 
 def validate_status_transition(from_status: TaskStatus, to_status: TaskStatus) -> bool:
@@ -111,7 +132,7 @@ def validate_status_resolution_combo(status: TaskStatus, resolution: TaskResolut
 
     Rules:
     1. OPEN/IN_PROGRESS tasks must have resolution NONE
-    2. CLOSED tasks must have a resolution (not NONE)
+    2. DONE tasks must have a resolution (not NONE)
     3. CERTIFIED requires prior VALIDATED state
     """
     active_states = [TaskStatus.OPEN, TaskStatus.TODO, TaskStatus.IN_PROGRESS,
@@ -119,7 +140,7 @@ def validate_status_resolution_combo(status: TaskStatus, resolution: TaskResolut
     if status in active_states:
         if resolution != TaskResolution.NONE:
             return False, f"Active tasks (status={status}) cannot have resolution {resolution}"
-    elif status in [TaskStatus.CLOSED, TaskStatus.DONE]:
+    elif status == TaskStatus.DONE:
         if resolution == TaskResolution.NONE:
             return False, f"{status} tasks must have a resolution"
     return True, "OK"
@@ -187,6 +208,8 @@ __all__ = [
     'VALID_STATUS_TRANSITIONS',
     'VALID_RESOLUTION_TRANSITIONS',
     'STATUS_MIGRATION_MAP',
+    'STATUS_ALIASES',
+    'normalize_status',
     'validate_status_transition',
     'validate_resolution_transition',
     'validate_status_resolution_combo',

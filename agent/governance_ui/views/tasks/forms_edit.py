@@ -101,11 +101,45 @@ def build_task_edit_form() -> None:
                     __properties=["data-testid"],
                     **{"data-testid": "task-edit-agent"}
                 )
+        # EPIC-TASK-TAXONOMY-V2: Orthogonal tag dimensions
+        with v3.VRow():
+            with v3.VCol(cols=12, sm=4):
+                v3.VCombobox(
+                    v_model="edit_task_layer",
+                    label="Layer (where)",
+                    items=("task_layer_options",),
+                    variant="outlined",
+                    density="compact",
+                    clearable=True,
+                    __properties=["data-testid"],
+                    **{"data-testid": "task-edit-layer"}
+                )
+            with v3.VCol(cols=12, sm=4):
+                v3.VCombobox(
+                    v_model="edit_task_concern",
+                    label="Concern (what aspect)",
+                    items=("task_concern_options",),
+                    variant="outlined",
+                    density="compact",
+                    clearable=True,
+                    __properties=["data-testid"],
+                    **{"data-testid": "task-edit-concern"}
+                )
+            with v3.VCol(cols=12, sm=4):
+                v3.VCombobox(
+                    v_model="edit_task_method",
+                    label="Method (how)",
+                    items=("task_method_options",),
+                    variant="outlined",
+                    density="compact",
+                    clearable=True,
+                    __properties=["data-testid"],
+                    **{"data-testid": "task-edit-method"}
+                )
         # P17: Resolution notes textarea (shown for terminal tasks)
         v3.VTextarea(
             v_if=(
                 "selected_task.status === 'DONE' || "
-                "selected_task.status === 'CLOSED' || "
                 "selected_task.status === 'CANCELED'"
             ),
             v_model="edit_task_resolution_notes",

@@ -16,6 +16,53 @@ from agent.governance_ui.state.constants import (
 
 logger = logging.getLogger(__name__)
 
+# =============================================================================
+# TYPE-SPECIFIC DoD REQUIREMENTS (EPIC-TASK-TAXONOMY-V2 Session 3)
+# =============================================================================
+# Per-type mandatory fields for the DONE gate. Each key is a canonical task type,
+# value is a dict of {field_name: human-readable requirement description}.
+# Fields: summary, agent_id, linked_sessions, linked_documents, evidence
+TYPE_DOD_REQUIREMENTS: Dict[str, Dict[str, str]] = {
+    "bug": {
+        "summary": "Bug summary is required",
+        "agent_id": "Who fixed the bug",
+        "linked_sessions": "At least 1 linked session (work evidence)",
+        "evidence": "Verification evidence (test results or manual confirmation)",
+    },
+    "feature": {
+        "summary": "Feature summary is required",
+        "agent_id": "Who implemented the feature",
+        "linked_sessions": "At least 1 linked session (work evidence)",
+        "linked_documents": "At least 1 linked document (requirements or plan)",
+    },
+    "chore": {
+        "summary": "Chore summary is required",
+        "agent_id": "Who performed the maintenance",
+    },
+    "research": {
+        "summary": "Research summary is required",
+        "agent_id": "Who conducted the research",
+        "evidence": "Findings documentation",
+    },
+    "spec": {
+        "summary": "Spec summary is required",
+        "agent_id": "Who authored the spec",
+        "linked_documents": "At least 1 linked document (the spec itself)",
+    },
+    "test": {
+        "summary": "Test summary is required",
+        "agent_id": "Who wrote/ran the tests",
+        "evidence": "Test results and coverage data",
+    },
+}
+
+# Default DoD for unknown types — minimal gate (same as chore)
+_DEFAULT_DOD_REQUIREMENTS: Dict[str, str] = {
+    "summary": "Task summary is required",
+    "agent_id": "Who did the work",
+}
+
+
 # Laconic summary pattern: domain > entity > action > concern
 # Minimum 3 segments separated by " > " (4th optional for simple tasks)
 LACONIC_PATTERN = re.compile(r"^.+\s*>\s*.+\s*>\s*.+\s*>\s*.+$")
@@ -132,52 +179,49 @@ def validate_on_complete(
     completed_at: Optional[str] = None,
     linked_sessions: Optional[List[str]] = None,
     linked_documents: Optional[List[str]] = None,
+    task_type: Optional[str] = None,
+    evidence: Optional[str] = None,
     **kwargs,
 ) -> List[ValidationError]:
     """Run on_complete validation rules (DONE gate).
 
-    These rules are enforced when a task transitions to DONE status.
+    Per EPIC-TASK-TAXONOMY-V2 Session 3: Type-specific DoD requirements.
+    Falls back to universal gate if task_type is None or unknown.
 
     Returns list of validation errors (empty = valid).
     """
     errors: List[ValidationError] = []
 
-    # Rule 1: Must have at least 1 linked session
-    if not linked_sessions:
-        errors.append(ValidationError(
-            "RequiredField", "linked_sessions",
-            "DONE tasks must have at least 1 linked session",
-        ))
+    # Resolve type-specific requirements (or default)
+    dod = TYPE_DOD_REQUIREMENTS.get(task_type, _DEFAULT_DOD_REQUIREMENTS) if task_type else _DEFAULT_DOD_REQUIREMENTS
 
-    # Rule 2: Must have summary
-    if not summary:
-        errors.append(ValidationError(
-            "RequiredField", "summary",
-            "DONE tasks must have a summary",
-        ))
+    # Build field→value map for requirement checking
+    field_values: Dict[str, Any] = {
+        "summary": summary,
+        "agent_id": agent_id,
+        "linked_sessions": linked_sessions,
+        "linked_documents": linked_documents,
+        "evidence": evidence,
+    }
 
-    # Rule 3: Must have agent_id
-    if not agent_id:
-        errors.append(ValidationError(
-            "RequiredField", "agent_id",
-            "DONE tasks must have an agent_id (who did the work)",
-        ))
-    else:
-        # Rule 3b: agent_id must be a registered agent (SRVJ-BUG-023)
+    # Validate each required field from the DoD
+    for field, requirement_msg in dod.items():
+        val = field_values.get(field)
+        if not val:
+            errors.append(ValidationError(
+                "RequiredField", field,
+                f"DONE gate ({task_type or 'default'}): {requirement_msg}",
+            ))
+
+    # Always validate agent_id format if present (SRVJ-BUG-023)
+    if agent_id:
         errors.extend(validate_agent_id(agent_id))
 
-    # Rule 4: Must have completed_at (SRVJ-BUG-002)
+    # Always require completed_at (SRVJ-BUG-002)
     if not completed_at:
         errors.append(ValidationError(
             "RequiredField", "completed_at",
             "DONE tasks must have a completed_at timestamp",
-        ))
-
-    # Rule 5: Must have at least 1 linked document / plan reference (SRVJ-BUG-002)
-    if not linked_documents:
-        errors.append(ValidationError(
-            "RequiredField", "linked_documents",
-            "DONE tasks must have at least 1 linked document (plan reference)",
         ))
 
     return errors

@@ -16,15 +16,13 @@ import pytest
 # ---------------------------------------------------------------------------
 
 TASK_TYPES = [
-    "bug", "feature", "chore", "specification",
-    "research", "gap", "epic", "test",
+    "bug", "feature", "chore", "research", "spec", "test",
 ]
-STATUSES = ["OPEN", "IN_PROGRESS", "DONE", "CLOSED"]
+STATUSES = ["OPEN", "IN_PROGRESS", "DONE"]
 STATUS_COLORS = {
     "OPEN": "#FF9800",
     "IN_PROGRESS": "#2196F3",
     "DONE": "#4CAF50",
-    "CLOSED": "#9E9E9E",
 }
 
 
@@ -80,16 +78,15 @@ class TestHistogramData:
             _make_task("bug", "DONE", "B-2"),
             _make_task("feature", "OPEN", "F-1"),
             _make_task("feature", "OPEN", "F-2"),
-            _make_task("feature", "CLOSED", "F-3"),
+            _make_task("feature", "DONE", "F-3"),
         ]
         result = compute_histogram_data(tasks)
         open_trace = [t for t in result["data"] if t["name"] == "OPEN"][0]
         done_trace = [t for t in result["data"] if t["name"] == "DONE"][0]
-        closed_trace = [t for t in result["data"] if t["name"] == "CLOSED"][0]
         assert open_trace["y"][open_trace["x"].index("bug")] == 1
         assert open_trace["y"][open_trace["x"].index("feature")] == 2
         assert done_trace["y"][done_trace["x"].index("bug")] == 1
-        assert closed_trace["y"][closed_trace["x"].index("feature")] == 1
+        assert done_trace["y"][done_trace["x"].index("feature")] == 1
 
     def test_empty_tasks_returns_zero_counts(self):
         from agent.governance_ui.views.tasks.histogram import compute_histogram_data

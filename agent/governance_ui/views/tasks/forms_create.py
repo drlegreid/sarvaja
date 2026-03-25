@@ -98,6 +98,41 @@ def build_task_create_dialog() -> None:
                             __properties=["data-testid"],
                             **{"data-testid": "task-create-agent"}
                         )
+                # EPIC-TASK-TAXONOMY-V2: Orthogonal tag dimensions
+                with v3.VRow():
+                    with v3.VCol(cols=12, sm=4):
+                        v3.VCombobox(
+                            v_model="form_task_layer",
+                            label="Layer (where)",
+                            items=("task_layer_options",),
+                            variant="outlined",
+                            density="compact",
+                            clearable=True,
+                            __properties=["data-testid"],
+                            **{"data-testid": "task-create-layer"}
+                        )
+                    with v3.VCol(cols=12, sm=4):
+                        v3.VCombobox(
+                            v_model="form_task_concern",
+                            label="Concern (what aspect)",
+                            items=("task_concern_options",),
+                            variant="outlined",
+                            density="compact",
+                            clearable=True,
+                            __properties=["data-testid"],
+                            **{"data-testid": "task-create-concern"}
+                        )
+                    with v3.VCol(cols=12, sm=4):
+                        v3.VCombobox(
+                            v_model="form_task_method",
+                            label="Method (how)",
+                            items=("task_method_options",),
+                            variant="outlined",
+                            density="compact",
+                            clearable=True,
+                            __properties=["data-testid"],
+                            **{"data-testid": "task-create-method"}
+                        )
             with v3.VCardActions():
                 v3.VSpacer()
                 v3.VBtn(

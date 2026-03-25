@@ -22,13 +22,13 @@ class TestNormalizeStatus:
     """Test status normalization to TASK-LIFE-01-v1 values."""
 
     @pytest.mark.parametrize("input_status,expected", [
-        ("DONE", "CLOSED"),
-        ("CLOSED", "CLOSED"),
-        ("completed", "CLOSED"),
-        ("COMPLETED", "CLOSED"),
+        ("DONE", "DONE"),
+        ("CLOSED", "DONE"),
+        ("completed", "DONE"),
+        ("COMPLETED", "DONE"),
     ])
-    def test_closed_statuses(self, input_status, expected):
-        """Various done/completed statuses map to CLOSED."""
+    def test_done_statuses(self, input_status, expected):
+        """Various done/completed statuses map to DONE (EPIC-TASK-TAXONOMY-V2)."""
         assert normalize_status(input_status) == expected
 
     @pytest.mark.parametrize("input_status,expected", [
@@ -60,7 +60,7 @@ class TestNormalizeStatus:
 
     def test_whitespace_stripped(self):
         """Leading/trailing whitespace is stripped."""
-        assert normalize_status("  DONE  ") == "CLOSED"
+        assert normalize_status("  DONE  ") == "DONE"
         assert normalize_status(" TODO ") == "OPEN"
 
 

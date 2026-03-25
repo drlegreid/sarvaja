@@ -91,6 +91,7 @@ async def create_task(task: TaskCreate):
             linked_documents=task.linked_documents,
             workspace_id=task.workspace_id,  # BUG-WS-API-001
             summary=task.summary,  # Phase 9c
+            layer=task.layer, concern=task.concern, method=task.method,  # EPIC-TASK-TAXONOMY-V2
             source="rest-api",
         )
         # Service returns TaskResponse directly (via task_to_response)
@@ -156,6 +157,7 @@ async def update_task(task_id: str, update: TaskUpdate):
             gap_id=update.gap_id,
             workspace_id=update.workspace_id,  # BUG-WS-API-001
             resolution_notes=update.resolution_notes,  # P17
+            layer=update.layer, concern=update.concern, method=update.method,  # EPIC-TASK-TAXONOMY-V2
             source="rest-api",
         )
         if result is None:

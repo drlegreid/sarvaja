@@ -21,15 +21,15 @@ def normalize_status(status: str) -> str:
     Per GAP-TASK-DATA-QUALITY-001: Map old values to compliant ones.
     """
     status = status.strip()
-    # Map to TASK-LIFE-01-v1 compliant values: OPEN, IN_PROGRESS, CLOSED
+    # Map to canonical values: OPEN, IN_PROGRESS, DONE (EPIC-TASK-TAXONOMY-V2)
     status_map = {
-        # CLOSED mappings (completed work)
-        "✅": "CLOSED",
-        "✅ DONE": "CLOSED",
-        "DONE": "CLOSED",
-        "CLOSED": "CLOSED",
-        "completed": "CLOSED",
-        "COMPLETED": "CLOSED",
+        # DONE mappings (completed work — CLOSED normalized to DONE)
+        "✅": "DONE",
+        "✅ DONE": "DONE",
+        "DONE": "DONE",
+        "CLOSED": "DONE",
+        "completed": "DONE",
+        "COMPLETED": "DONE",
         # IN_PROGRESS mappings (active work)
         "🚧": "IN_PROGRESS",
         "IN PROGRESS": "IN_PROGRESS",
