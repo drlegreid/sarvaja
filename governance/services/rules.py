@@ -11,7 +11,7 @@ import logging
 from typing import Optional, Dict, Any, List, Tuple
 
 from governance.client import get_client
-from governance.rule_linker import LEGACY_TO_SEMANTIC, normalize_rule_id
+from governance.rule_linker import LEGACY_TO_SEMANTIC, SEMANTIC_ONLY_RULES, normalize_rule_id
 from governance.stores.audit import record_audit
 from governance.middleware.event_log import log_event
 from governance.services.rules_relations import (  # noqa: F401
@@ -86,6 +86,9 @@ def resolve_rule(client, rule_id: str) -> Tuple[str, Any]:
     rule = client.get_rule_by_id(rule_id)
     if rule:
         return rule_id, rule
+    # Semantic-only IDs have no legacy equivalent — fail fast
+    if rule_id in SEMANTIC_ONLY_RULES:
+        raise KeyError(f"Rule {rule_id} not found")
     legacy_id = normalize_rule_id(rule_id)
     if legacy_id != rule_id:
         rule = client.get_rule_by_id(legacy_id)

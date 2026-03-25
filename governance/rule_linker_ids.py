@@ -81,18 +81,23 @@ SEMANTIC_TO_LEGACY = {
     "TEST-UI-VERIFY-01-v1": "RULE-052",
     "WORKFLOW-SHELL-01-v1": "RULE-053",
     "CONTAINER-MGMT-01-v1": "RULE-054",
-    # Rules created with semantic ID only (no legacy mapping)
-    "CONTAINER-TYPEDB-01-v1": "CONTAINER-TYPEDB-01-v1",
-    "PKG-LATEST-01-v1": "PKG-LATEST-01-v1",
-    "DOC-GAP-ARCHIVE-01-v1": "DOC-GAP-ARCHIVE-01-v1",
-    "TASK-TECH-01-v1": "TASK-TECH-01-v1",
-    "TASK-LIFE-01-v1": "TASK-LIFE-01-v1",
-    "UI-LOADER-01-v1": "UI-LOADER-01-v1",
-    "UI-TRACE-01-v1": "UI-TRACE-01-v1",
-    "TEST-BDD-01-v1": "TEST-BDD-01-v1",
-    "GAP-DOC-01-v1": "GAP-DOC-01-v1",
-    "TASK-VALID-01-v1": "TASK-VALID-01-v1",
 }
+
+# Rules created with semantic ID only (no legacy mapping).
+# Per EPIC-GOV-RULES-V3 P7: Extracted from SEMANTIC_TO_LEGACY to avoid
+# self-mapped entries that waste lookup cycles and confuse maintainers.
+SEMANTIC_ONLY_RULES = frozenset({
+    "CONTAINER-TYPEDB-01-v1",
+    "PKG-LATEST-01-v1",
+    "DOC-GAP-ARCHIVE-01-v1",
+    "TASK-TECH-01-v1",
+    "TASK-LIFE-01-v1",
+    "UI-LOADER-01-v1",
+    "UI-TRACE-01-v1",
+    "TEST-BDD-01-v1",
+    "GAP-DOC-01-v1",
+    "TASK-VALID-01-v1",
+})
 
 # Reverse mapping
 LEGACY_TO_SEMANTIC = {v: k for k, v in SEMANTIC_TO_LEGACY.items()}
@@ -119,6 +124,10 @@ def normalize_rule_id(rule_id: str) -> str:
     """
     # Already in legacy format
     if re.match(LEGACY_RULE_PATTERN, rule_id):
+        return rule_id
+
+    # Semantic-only rules have no legacy equivalent — return as-is
+    if rule_id in SEMANTIC_ONLY_RULES:
         return rule_id
 
     # Semantic format - convert to legacy

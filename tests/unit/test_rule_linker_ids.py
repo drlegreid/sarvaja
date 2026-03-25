@@ -39,9 +39,10 @@ class TestMappings:
         assert LEGACY_TO_SEMANTIC["RULE-001"] == "SESSION-EVID-01-v1"
         assert LEGACY_TO_SEMANTIC["RULE-032"] == "DOC-SIZE-01-v1"
 
-    def test_identity_mappings(self):
-        # Some semantic IDs map to themselves (no legacy equivalent)
-        assert SEMANTIC_TO_LEGACY["CONTAINER-TYPEDB-01-v1"] == "CONTAINER-TYPEDB-01-v1"
+    def test_no_identity_mappings_in_semantic_to_legacy(self):
+        # Per P7: Self-mapped entries extracted to SEMANTIC_ONLY_RULES
+        for k, v in SEMANTIC_TO_LEGACY.items():
+            assert k != v, f"Self-mapped entry {k} should be in SEMANTIC_ONLY_RULES"
 
     def test_document_map(self):
         assert len(RULE_DOCUMENT_MAP) > 0
@@ -63,7 +64,7 @@ class TestNormalizeRuleId:
     def test_unknown_passthrough(self):
         assert normalize_rule_id("UNKNOWN-THING") == "UNKNOWN-THING"
 
-    def test_identity_semantic(self):
-        # Semantic IDs without legacy mapping return themselves
+    def test_semantic_only_returns_same_id(self):
+        # Per P7: Semantic-only IDs return as-is via SEMANTIC_ONLY_RULES
         result = normalize_rule_id("CONTAINER-TYPEDB-01-v1")
         assert result == "CONTAINER-TYPEDB-01-v1"
