@@ -229,6 +229,10 @@ def get_initial_state() -> Dict[str, Any]:
         'form_task_agent': '',
         'form_task_priority': None,
         'form_task_type': None,
+        # EPIC-TASK-TAXONOMY-V2: Orthogonal tag dimensions
+        'form_task_layer': None,
+        'form_task_concern': None,
+        'form_task_method': None,
 
         # Task document management
         'show_attach_document_dialog': False,
@@ -258,6 +262,10 @@ def get_initial_state() -> Dict[str, Any]:
         'edit_task_priority': None,    # P15: priority select
         'edit_task_type': None,        # P15: task_type select
         'edit_task_resolution_notes': '',  # P17: resolution narrative
+        # EPIC-TASK-TAXONOMY-V2: Orthogonal tag dimensions
+        'edit_task_layer': None,
+        'edit_task_concern': None,
+        'edit_task_method': None,
 
         # Unified Tasks View (UI-AUDIT-2026-01-19: merged backlog)
         'available_tasks': [],
@@ -306,6 +314,9 @@ def get_initial_state() -> Dict[str, Any]:
             {"title": "Summary", "key": "summary", "sortable": True},
             {"title": "Priority", "key": "priority", "width": "90px", "sortable": True},
             {"title": "Type", "key": "task_type", "width": "80px", "sortable": True},
+            {"title": "Layer", "key": "layer", "width": "80px", "sortable": True},
+            {"title": "Concern", "key": "concern", "width": "100px", "sortable": True},
+            {"title": "Method", "key": "method", "width": "80px", "sortable": True},
             {"title": "Status", "key": "status", "width": "100px", "sortable": True},
             {"title": "Session", "key": "first_session", "width": "160px", "sortable": False},
             {"title": "Agent", "key": "agent_id", "width": "130px", "sortable": True},
@@ -332,8 +343,12 @@ def get_initial_state() -> Dict[str, Any]:
         # P14: Canonical statuses from TaskStatus.ui_edit_values()
         'task_status_options': ['TODO', 'IN_PROGRESS', 'DONE', 'BLOCKED', 'CANCELED'],
         'task_phase_options': ['P10', 'P11', 'P12', 'R&D', 'FH', 'KAN', 'ORCH', 'DOCVIEW'],
-        # Task taxonomy dropdowns (META-TAXON-01-v1)
-        'task_type_options': ['bug', 'feature', 'chore', 'research', 'gap', 'epic', 'test', 'specification'],
+        # Task taxonomy dropdowns (META-TAXON-02-v1 — EPIC-TASK-TAXONOMY-V2 Session 4)
+        'task_type_options': ['bug', 'feature', 'chore', 'research', 'spec', 'test'],
+        # Orthogonal tag dimension options (EPIC-TASK-TAXONOMY-V2)
+        'task_layer_options': ['ui', 'api', 'data', 'infra', 'schema', 'monitoring', 'ci-cd'],
+        'task_concern_options': ['security', 'performance', 'reliability', 'usability', 'data-integrity', 'compliance'],
+        'task_method_options': ['spike', 'exploratory', 'automated', 'ai-generated', 'gherkin', 'manual', 'draft'],
         'task_priority_options': ['CRITICAL', 'HIGH', 'MEDIUM', 'LOW'],
         # Workspace/project dropdown options (populated on load)
         'task_workspace_options': [],    # Phase 4: [{title, value}]
@@ -462,6 +477,21 @@ def get_initial_state() -> Dict[str, Any]:
         'task_execution_loading': False,
         'show_task_execution': False,  # Chat dialog (chat/execution.py)
         'show_task_execution_inline': False,  # Task detail inline (tasks/execution.py)
+
+        # Task Session Timeline (EPIC-ISSUE-EVIDENCE P18)
+        'task_timeline_entries': [],
+        'task_timeline_loading': False,
+        'task_timeline_total': 0,
+        'task_timeline_has_more': False,
+        'show_task_timeline_inline': False,
+        'task_timeline_filter_types': [],
+        'task_timeline_page': 1,
+
+        # Task Comments (EPIC-ISSUE-EVIDENCE P19)
+        'task_comments': [],
+        'task_comments_loading': False,
+        'task_comment_input': '',
+        'task_comment_submitting': False,
 
         # Infrastructure Health (GAP-INFRA-004, UI-AUDIT-008)
         'infra_services': {},

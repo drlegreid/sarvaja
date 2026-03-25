@@ -68,6 +68,9 @@ entity task,
     owns resolution-notes,                       # P17: resolution narrative
     owns task-body,
     owns phase,
+    owns task-layer,                             # EPIC-TASK-TAXONOMY-V2: where
+    owns task-concern,                           # EPIC-TASK-TAXONOMY-V2: what aspect
+    owns task-method,                            # EPIC-TASK-TAXONOMY-V2: how
     owns agent-id,                               # Agent assigned to task (E2E tests)
     owns task-evidence,                          # Completion evidence/notes (E2E tests)
     owns task-completed-at,                      # Completion timestamp (E2E tests)
@@ -96,7 +99,8 @@ entity task,
     plays task-blocks-task:blocked-dep-task,
     plays task-related:related-task-a,
     plays task-related:related-task-b,
-    plays task-commit:implemented-task;  # GAP-TASK-LINK-002
+    plays task-commit:implemented-task,  # GAP-TASK-LINK-002
+    plays task-has-comment:commented-task;  # EPIC-ISSUE-EVIDENCE P19
 
 # =============================================================================
 # GAP ENTITY
@@ -114,3 +118,19 @@ entity gap,
     plays gap-rule-reference:referencing-gap,  # RULE-013: gaps reference rules
     plays document-references-gap:referenced-gap, # RULE-013: gaps referenced by docs
     plays references-gap:referenced-gap;       # P10.7: Tasks can reference gaps
+
+# =============================================================================
+# TASK COMMENT ENTITY (EPIC-ISSUE-EVIDENCE P19)
+# =============================================================================
+
+entity task-comment,
+
+    owns comment-id,
+    owns comment-body,
+    owns comment-author,
+    owns comment-created-at,
+    plays task-has-comment:posted-comment;
+
+relation task-has-comment,
+    relates commented-task,
+    relates posted-comment;

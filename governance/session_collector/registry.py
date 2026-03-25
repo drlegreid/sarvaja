@@ -8,11 +8,12 @@ Contains: Global session registry and helper functions.
 
 import json
 import logging
+import time
 from datetime import date
 
 logger = logging.getLogger(__name__)
 from pathlib import Path
-from typing import Dict, List, Optional, TYPE_CHECKING
+from typing import Any, Dict, List, Optional, TYPE_CHECKING
 
 if TYPE_CHECKING:
     from .collector import SessionCollector
@@ -135,8 +136,82 @@ def _auto_link_session_evidence(
 
 
 def list_active_sessions() -> List[str]:
-    """List all active session IDs."""
+    """List all active session IDs (memory only)."""
     return list(_active_sessions.keys())
+
+
+# Two-hour threshold for CC JSONL "active" detection
+_CC_ACTIVE_THRESHOLD_SECS = 2 * 3600
+
+
+def list_all_active_sessions() -> List[Dict[str, Any]]:
+    """List active sessions from all sources: memory, TypeDB, CC JSONL.
+
+    Per FEAT-009: Merges three data sources so session_list() MCP tool
+    can detect running CC sessions, not just MCP-started ones.
+
+    Returns:
+        Deduplicated list of dicts with session_id, source, status.
+        Priority on collision: memory > typedb > cc_jsonl.
+    """
+    seen: Dict[str, Dict[str, Any]] = {}
+
+    # Source 1: In-memory (MCP-created sessions in current process)
+    for sid in _active_sessions:
+        seen[sid] = {"session_id": sid, "source": "memory", "status": "ACTIVE"}
+
+    # Source 2: TypeDB sessions with status ACTIVE
+    try:
+        from governance.stores import get_all_sessions_from_typedb
+        for s in get_all_sessions_from_typedb(allow_fallback=True):
+            if s.get("status") == "ACTIVE":
+                sid = s.get("session_id")
+                if sid and sid not in seen:
+                    seen[sid] = {
+                        "session_id": sid,
+                        "source": "typedb",
+                        "status": "ACTIVE",
+                    }
+    except Exception as e:
+        logger.debug("TypeDB active session lookup failed: %s", e)
+
+    # Source 3: CC JSONL files modified within threshold
+    try:
+        from governance.services.cc_session_scanner import (
+            DEFAULT_CC_DIR,
+            scan_jsonl_metadata,
+            build_session_id,
+            derive_project_slug,
+        )
+        now = time.time()
+        if DEFAULT_CC_DIR.is_dir():
+            for project_dir in DEFAULT_CC_DIR.iterdir():
+                if not project_dir.is_dir():
+                    continue
+                slug = derive_project_slug(project_dir)
+                for jsonl_file in project_dir.glob("*.jsonl"):
+                    try:
+                        mtime = jsonl_file.stat().st_mtime
+                    except OSError:
+                        continue
+                    if (now - mtime) > _CC_ACTIVE_THRESHOLD_SECS:
+                        continue
+                    meta = scan_jsonl_metadata(jsonl_file)
+                    if not meta:
+                        continue
+                    sid = build_session_id(meta, slug)
+                    if sid not in seen:
+                        seen[sid] = {
+                            "session_id": sid,
+                            "source": "cc_jsonl",
+                            "status": "ACTIVE",
+                            "cc_session_uuid": meta.get("session_uuid"),
+                            "file_path": str(jsonl_file),
+                        }
+    except Exception as e:
+        logger.debug("CC JSONL active session scan failed: %s", e)
+
+    return list(seen.values())
 
 
 def get_session(session_id: str) -> Optional["SessionCollector"]:

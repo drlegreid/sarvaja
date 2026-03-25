@@ -77,6 +77,11 @@ attribute phase value string;
 
 attribute gap-reference value string;
 
+# TASK COMMENT ATTRIBUTES (EPIC-ISSUE-EVIDENCE P19)
+attribute comment-id value string;
+attribute comment-body value string;
+attribute comment-author value string;
+attribute comment-created-at value datetime;
 
 # BUG-TASK-TAXONOMY-001: Task classification attributes
 attribute task-priority value string;
@@ -84,6 +89,11 @@ attribute task-priority value string;
 attribute task-type value string;
 
 attribute task-summary value string;  # Phase 9c: structured one-line intent
+
+# EPIC-TASK-TAXONOMY-V2: Orthogonal tag dimensions (Session 2)
+attribute task-layer value string;    # Where: ui, api, data, infra, schema, monitoring, ci-cd
+attribute task-concern value string;  # What aspect: security, performance, reliability, etc.
+attribute task-method value string;   # How: spike, exploratory, automated, ai-generated, etc.
 
 # Task detail section attributes (GAP-TASK-LINK-004, TASK-TECH-01-v1)
 attribute task-business value string;

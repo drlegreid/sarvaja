@@ -70,6 +70,9 @@ entity task,
     owns task-priority,                          # BUG-TASK-TAXONOMY-001: LOW, MEDIUM, HIGH, CRITICAL
     owns task-type,                              # BUG-TASK-TAXONOMY-001: bug, feature, chore, research
     owns task-summary,                           # Phase 9c: structured one-line intent
+    owns task-layer,                             # EPIC-TASK-TAXONOMY-V2: where (ui, api, data, etc.)
+    owns task-concern,                           # EPIC-TASK-TAXONOMY-V2: what aspect (security, perf, etc.)
+    owns task-method,                            # EPIC-TASK-TAXONOMY-V2: how (spike, automated, etc.)
     owns phase,
     owns agent-id,                               # Agent assigned to task (E2E tests)
     owns task-evidence,                          # Completion evidence/notes (E2E tests)
@@ -100,7 +103,8 @@ entity task,
     plays document-references-task:referenced-task,  # Task document management
     plays epic-contains-task:epic-task,  # BUG-TASK-HIER-001: Project hierarchy (GOV-PROJECT-01-v1)
     plays workspace-has-task:assigned-task,  # EPIC-GOV-TASKS-V2 Phase 4: workspace linking
-    plays story-contains-task:story-task;  # FIX-HIER-002: Story hierarchy
+    plays story-contains-task:story-task,  # FIX-HIER-002: Story hierarchy
+    plays task-has-comment:commented-task;  # EPIC-ISSUE-EVIDENCE P19
 
 # =============================================================================
 # GAP ENTITY
@@ -118,3 +122,19 @@ entity gap,
     plays gap-rule-reference:referencing-gap,  # RULE-013: gaps reference rules
     plays document-references-gap:referenced-gap, # RULE-013: gaps referenced by docs
     plays references-gap:referenced-gap;       # P10.7: Tasks can reference gaps
+
+# =============================================================================
+# TASK COMMENT ENTITY (EPIC-ISSUE-EVIDENCE P19)
+# =============================================================================
+
+entity task-comment,
+
+    owns comment-id,
+    owns comment-body,
+    owns comment-author,
+    owns comment-created-at,
+    plays task-has-comment:posted-comment;
+
+relation task-has-comment,
+    relates commented-task,
+    relates posted-comment;

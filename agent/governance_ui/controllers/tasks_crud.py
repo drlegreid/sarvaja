@@ -62,6 +62,8 @@ def register_tasks_crud(state: Any, ctrl: Any, api_base_url: str,
                 break
         _auto_load_task_execution(task_id)
         _auto_load_task_evidence(task_id)
+        _auto_load_task_timeline(task_id)
+        _auto_load_task_comments(task_id)
 
     def _auto_load_task_execution(task_id):
         """Auto-load execution log when a task is selected."""
@@ -97,6 +99,120 @@ def register_tasks_crud(state: Any, ctrl: Any, api_base_url: str,
         finally:
             state.task_evidence_loading = False
 
+    def _auto_load_task_timeline(task_id):
+        """Auto-load multi-session timeline when a task is selected (P18)."""
+        try:
+            state.task_timeline_loading = True
+            state.task_timeline_entries = []
+            state.task_timeline_page = 1
+            state.show_task_timeline_inline = False
+            with httpx.Client(timeout=15.0) as client:
+                response = client.get(
+                    f"{api_base_url}/api/tasks/{task_id}/timeline",
+                    params={"per_page": 50},
+                )
+                if response.status_code == 200:
+                    data = response.json()
+                    state.task_timeline_entries = data.get("entries", [])
+                    state.task_timeline_total = data.get("total", 0)
+                    state.task_timeline_has_more = data.get("has_more", False)
+        except Exception:
+            state.task_timeline_entries = []
+        finally:
+            state.task_timeline_loading = False
+
+    @ctrl.trigger("load_task_timeline")
+    def load_task_timeline(task_id):
+        """Explicit reload of task timeline (refresh button / filter change)."""
+        if not task_id:
+            return
+        try:
+            state.task_timeline_loading = True
+            page = state.task_timeline_page or 1
+            params = {"page": page, "per_page": 50}
+            filter_types = state.task_timeline_filter_types or []
+            if filter_types:
+                params["entry_types"] = ",".join(filter_types)
+            with httpx.Client(timeout=15.0) as client:
+                response = client.get(
+                    f"{api_base_url}/api/tasks/{task_id}/timeline",
+                    params=params,
+                )
+                if response.status_code == 200:
+                    data = response.json()
+                    state.task_timeline_entries = data.get("entries", [])
+                    state.task_timeline_total = data.get("total", 0)
+                    state.task_timeline_has_more = data.get("has_more", False)
+        except Exception as e:
+            add_error_trace(
+                state, f"Timeline load failed: {e}",
+                f"/api/tasks/{task_id}/timeline",
+            )
+        finally:
+            state.task_timeline_loading = False
+
+    def _auto_load_task_comments(task_id):
+        """Auto-load comments when a task is selected (P19)."""
+        try:
+            state.task_comments_loading = True
+            state.task_comments = []
+            with httpx.Client(timeout=10.0) as client:
+                response = client.get(
+                    f"{api_base_url}/api/tasks/{task_id}/comments"
+                )
+                if response.status_code == 200:
+                    state.task_comments = response.json().get("comments", [])
+        except Exception:
+            state.task_comments = []
+        finally:
+            state.task_comments_loading = False
+
+    @ctrl.trigger("load_task_comments")
+    def load_task_comments(task_id):
+        """Explicit reload of task comments."""
+        _auto_load_task_comments(task_id)
+
+    @ctrl.trigger("post_task_comment")
+    def post_task_comment(task_id, body):
+        """Post a new comment to a task."""
+        if not task_id or not body or not body.strip():
+            return
+        try:
+            state.task_comment_submitting = True
+            with httpx.Client(timeout=10.0) as client:
+                response = client.post(
+                    f"{api_base_url}/api/tasks/{task_id}/comments",
+                    json={"body": body.strip(), "author": "code-agent"},
+                )
+                if response.status_code == 201:
+                    state.task_comment_input = ""
+                    _auto_load_task_comments(task_id)
+        except Exception as e:
+            add_error_trace(
+                state, f"Post comment failed: {e}",
+                f"/api/tasks/{task_id}/comments",
+            )
+        finally:
+            state.task_comment_submitting = False
+
+    @ctrl.trigger("delete_task_comment")
+    def delete_task_comment(task_id, comment_id):
+        """Delete a comment from a task."""
+        if not task_id or not comment_id:
+            return
+        try:
+            with httpx.Client(timeout=10.0) as client:
+                response = client.delete(
+                    f"{api_base_url}/api/tasks/{task_id}/comments/{comment_id}"
+                )
+                if response.status_code == 200:
+                    _auto_load_task_comments(task_id)
+        except Exception as e:
+            add_error_trace(
+                state, f"Delete comment failed: {e}",
+                f"/api/tasks/{task_id}/comments/{comment_id}",
+            )
+
     @ctrl.trigger("close_task_detail")
     def close_task_detail():
         """Close task detail view and reset all detail state."""
@@ -111,6 +227,11 @@ def register_tasks_crud(state: Any, ctrl: Any, api_base_url: str,
         state.task_execution_log = []
         state.show_task_execution = False
         state.show_task_execution_inline = False  # BUG-TASK-POPUP-001
+        state.task_timeline_entries = []
+        state.show_task_timeline_inline = False
+        state.task_timeline_page = 1
+        state.task_comments = []
+        state.task_comment_input = ''
         state.nav_source_view = None
         state.nav_source_id = None
         state.nav_source_label = None
@@ -182,6 +303,10 @@ def register_tasks_crud(state: Any, ctrl: Any, api_base_url: str,
             state.edit_task_status = state.selected_task.get('status') or 'TODO'
             state.edit_task_agent = state.selected_task.get('agent_id') or ''
             state.edit_task_body = state.selected_task.get('body') or ''
+            # EPIC-TASK-TAXONOMY-V2: Populate tag fields
+            state.edit_task_layer = state.selected_task.get('layer') or None
+            state.edit_task_concern = state.selected_task.get('concern') or None
+            state.edit_task_method = state.selected_task.get('method') or None
 
     @ctrl.trigger("cancel_task_edit")
     def cancel_task_edit():
@@ -218,6 +343,10 @@ def register_tasks_crud(state: Any, ctrl: Any, api_base_url: str,
                 "priority": getattr(state, 'edit_task_priority', None) or None,
                 "task_type": getattr(state, 'edit_task_type', None) or None,
                 "resolution_notes": (getattr(state, 'edit_task_resolution_notes', '') or "").strip() or None,
+                # EPIC-TASK-TAXONOMY-V2: Orthogonal tag dimensions
+                "layer": getattr(state, 'edit_task_layer', None) or None,
+                "concern": getattr(state, 'edit_task_concern', None) or None,
+                "method": getattr(state, 'edit_task_method', None) or None,
             }
             with httpx.Client(timeout=10.0) as client:
                 response = client.put(
@@ -288,6 +417,10 @@ def register_tasks_crud(state: Any, ctrl: Any, api_base_url: str,
                 "body": getattr(state, 'form_task_body', '') or None,
                 "priority": getattr(state, 'form_task_priority', None),
                 "task_type": task_type,
+                # EPIC-TASK-TAXONOMY-V2: Orthogonal tag dimensions
+                "layer": getattr(state, 'form_task_layer', None) or None,
+                "concern": getattr(state, 'form_task_concern', None) or None,
+                "method": getattr(state, 'form_task_method', None) or None,
             }
             # Only include task_id if user provided one
             if task_id.strip():

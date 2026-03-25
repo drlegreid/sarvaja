@@ -11,7 +11,7 @@ class TaskCreate(BaseModel):
     phase: str = Field(..., min_length=1)
     status: str = "TODO"
     priority: Optional[Literal["LOW", "MEDIUM", "HIGH", "CRITICAL"]] = None  # BUG-TASK-TAXONOMY-001
-    task_type: Optional[Literal["bug", "feature", "chore", "research", "gap", "epic", "test", "specification", "spec"]] = None  # META-TAXON-01-v1 + SRVJ-FEAT-003
+    task_type: Optional[Literal["bug", "feature", "chore", "research", "spec", "test"]] = None  # META-TAXON-02-v1
     agent_id: Optional[str] = None
     body: Optional[str] = None
     summary: Optional[str] = None  # Phase 9c: structured one-line intent
@@ -20,6 +20,10 @@ class TaskCreate(BaseModel):
     linked_documents: Optional[List[str]] = None  # Task document management
     gap_id: Optional[str] = None
     workspace_id: Optional[str] = None  # BUG-WS-API-001: workspace assignment
+    # EPIC-TASK-TAXONOMY-V2: Orthogonal tag dimensions
+    layer: Optional[str] = None
+    concern: Optional[str] = None
+    method: Optional[str] = None
 
 class TaskUpdate(BaseModel):
     """Request model for updating a task (GAP-UI-107)."""
@@ -27,7 +31,7 @@ class TaskUpdate(BaseModel):
     phase: Optional[str] = None
     status: Optional[str] = None
     priority: Optional[Literal["LOW", "MEDIUM", "HIGH", "CRITICAL"]] = None  # BUG-TASK-TAXONOMY-001
-    task_type: Optional[Literal["bug", "feature", "chore", "research", "gap", "epic", "test", "specification", "spec"]] = None  # META-TAXON-01-v1 + SRVJ-FEAT-003
+    task_type: Optional[Literal["bug", "feature", "chore", "research", "spec", "test"]] = None  # META-TAXON-02-v1
     agent_id: Optional[str] = None
     body: Optional[str] = None
     summary: Optional[str] = None  # Phase 9c: structured one-line intent
@@ -38,6 +42,10 @@ class TaskUpdate(BaseModel):
     workspace_id: Optional[str] = None  # BUG-WS-API-001: workspace assignment
     evidence: Optional[str] = None  # Per EPIC-DR-008
     resolution_notes: Optional[str] = None  # P17: resolution narrative
+    # EPIC-TASK-TAXONOMY-V2: Orthogonal tag dimensions
+    layer: Optional[str] = None
+    concern: Optional[str] = None
+    method: Optional[str] = None
 
 class TaskResponse(BaseModel):
     """Response model for a task. Per GAP-UI-046, WORKFLOW-SEQ-01-v1."""
@@ -63,6 +71,10 @@ class TaskResponse(BaseModel):
     document_path: Optional[str] = None
     workspace_id: Optional[str] = None  # EPIC-GOV-TASKS-V2 Phase 4
     resolution_notes: Optional[str] = None  # P17: resolution narrative
+    # EPIC-TASK-TAXONOMY-V2: Orthogonal tag dimensions
+    layer: Optional[str] = None
+    concern: Optional[str] = None
+    method: Optional[str] = None
     warnings: Optional[List[str]] = None  # P16: duplicate detection warnings
 
 class TaskDetailsUpdate(BaseModel):
@@ -98,3 +110,22 @@ class TaskExecutionResponse(BaseModel):
     current_agent: Optional[str] = None
     started_at: Optional[str] = None
     completed_at: Optional[str] = None
+
+
+# ---------------------------------------------------------------------------
+# Task Comments (EPIC-ISSUE-EVIDENCE P19)
+# ---------------------------------------------------------------------------
+
+class TaskComment(BaseModel):
+    """A comment on a task."""
+    comment_id: str
+    task_id: str
+    author: str = "code-agent"
+    body: str
+    created_at: str
+
+
+class TaskCommentCreate(BaseModel):
+    """Request model for adding a comment."""
+    body: str = Field(..., min_length=1, max_length=5000)
+    author: str = Field(default="code-agent")

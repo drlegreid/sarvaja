@@ -200,15 +200,27 @@ def register_session_core_tools(mcp) -> None:
 
     @mcp.tool()
     def session_list() -> str:
-        """List all active sessions."""
+        """List all active sessions (memory + TypeDB + CC JSONL).
+
+        Per FEAT-009: Merges three sources so running CC sessions
+        are detected, not just MCP-started ones.
+        """
         if not SESSION_COLLECTOR_AVAILABLE:
             return format_mcp_result({"error": "SessionCollector not available"})
 
-        sessions = list_active_sessions()
+        try:
+            from governance.session_collector.registry import list_all_active_sessions
+            merged = list_all_active_sessions()
+            session_ids = [s["session_id"] for s in merged]
+        except Exception:
+            # Fallback to memory-only on any import/runtime error
+            session_ids = list_active_sessions()
+            merged = [{"session_id": sid, "source": "memory"} for sid in session_ids]
 
         return format_mcp_result({
-            "active_sessions": sessions,
-            "count": len(sessions)
+            "active_sessions": session_ids,
+            "count": len(session_ids),
+            "sources": merged,
         })
 
     @mcp.tool()

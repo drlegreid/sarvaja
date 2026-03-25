@@ -17,6 +17,8 @@ from .forms import (
 from .execution import build_task_execution_log
 from .evidence_preview import build_task_evidence_preview
 from .resolution import build_task_resolution_section
+from .timeline import build_task_session_timeline
+from .comments import build_task_comments_section
 
 
 def build_task_tech_docs() -> None:
@@ -331,5 +333,11 @@ def build_task_detail_view() -> None:
             # Execution Log Section (ORCH-007)
             build_task_execution_log()
 
+            # Multi-Session Timeline (EPIC-ISSUE-EVIDENCE P18)
+            build_task_session_timeline()
+
             # Resolution Section (P17: Issue Resolution Evidence Trail)
             build_task_resolution_section()
+
+            # Comments Section (EPIC-ISSUE-EVIDENCE P19)
+            build_task_comments_section()
