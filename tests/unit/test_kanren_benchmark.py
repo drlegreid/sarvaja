@@ -5,6 +5,9 @@ Per DOC-SIZE-01-v1: Tests for kanren/benchmark.py module.
 Tests: BenchmarkResult, benchmark decorator, direct_ functions, run_all_benchmarks.
 """
 
+import pytest
+pytest.importorskip("kanren")  # BUG-014: skip if kanren not installed
+
 from governance.kanren.benchmark import (
     BenchmarkResult,
     benchmark,

@@ -5,6 +5,9 @@ Per DOC-SIZE-01-v1: Tests for kanren/assembly.py module.
 Tests: assemble_context().
 """
 
+import pytest
+pytest.importorskip("kanren")  # BUG-014: skip if kanren not installed
+
 from governance.kanren.assembly import assemble_context
 from governance.kanren.models import AgentContext, TaskContext
 

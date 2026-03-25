@@ -34,7 +34,14 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, Optional
 
-import structlog
+# BUG-014: structlog is optional — without it, fall back to stdlib logging.
+# Prevents pytest collection abort in envs without structlog (e.g. hatch).
+try:
+    import structlog
+    _STRUCTLOG_AVAILABLE = True
+except ImportError:
+    structlog = None  # type: ignore[assignment]
+    _STRUCTLOG_AVAILABLE = False
 
 # =============================================================================
 # CUSTOM LOG LEVELS
@@ -87,6 +94,10 @@ def configure_logging():
     if _configured:
         return
 
+    if not _STRUCTLOG_AVAILABLE:
+        _configured = True
+        return
+
     level = LOG_LEVEL_MAP.get(MCP_LOG_LEVEL, logging.ERROR)
 
     # Processors for structured logging
@@ -117,7 +128,7 @@ def configure_logging():
     _configured = True
 
 
-def get_logger(name: str) -> structlog.BoundLogger:
+def get_logger(name: str):
     """
     Get a structured logger for an MCP server.
 
@@ -125,10 +136,12 @@ def get_logger(name: str) -> structlog.BoundLogger:
         name: Server name (e.g., "gov-core", "gov-agents")
 
     Returns:
-        Configured structlog logger
+        Configured structlog logger, or stdlib logger if structlog unavailable.
     """
     configure_logging()
-    return structlog.get_logger(server=name)
+    if _STRUCTLOG_AVAILABLE:
+        return structlog.get_logger(server=name)
+    return logging.getLogger(name)
 
 
 # =============================================================================
@@ -137,7 +150,7 @@ def get_logger(name: str) -> structlog.BoundLogger:
 
 @contextmanager
 def log_tool_call(
-    logger: structlog.BoundLogger,
+    logger,
     tool_name: str,
     args: Optional[Dict[str, Any]] = None
 ):
@@ -181,7 +194,7 @@ def log_tool_call(
 
 
 def log_server_start(
-    logger: structlog.BoundLogger,
+    logger,
     server_name: str,
     tool_count: int,
     version: str = "1.0.0"
@@ -197,7 +210,7 @@ def log_server_start(
     )
 
 
-def log_server_stop(logger: structlog.BoundLogger, server_name: str):
+def log_server_stop(logger, server_name: str):
     """Log MCP server shutdown."""
     logger.info("server_stopped", server=server_name)
 

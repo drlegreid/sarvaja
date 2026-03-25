@@ -8,6 +8,7 @@ Created: 2026-01-30
 """
 
 import pytest
+pytest.importorskip("kanren")  # BUG-014: skip if kanren not installed
 
 from governance.kanren.models import AgentContext, TaskContext, RuleContext
 from governance.kanren.trust import trust_level, requires_supervisor, can_execute_priority

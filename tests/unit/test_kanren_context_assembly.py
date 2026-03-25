@@ -6,6 +6,7 @@ Tests: assemble_context function.
 """
 
 import pytest
+pytest.importorskip("kanren")  # BUG-014: skip if kanren not installed
 
 from governance.kanren.models import AgentContext, TaskContext
 from governance.kanren.assembly import assemble_context

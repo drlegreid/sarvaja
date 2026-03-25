@@ -5,6 +5,9 @@ Per DOC-SIZE-01-v1: Tests for kanren/tasks.py module.
 Tests: task_requires_evidence(), valid_task_assignment(), validate_agent_for_task().
 """
 
+import pytest
+pytest.importorskip("kanren")  # BUG-014: skip if kanren not installed
+
 from governance.kanren.tasks import (
     task_requires_evidence,
     valid_task_assignment,

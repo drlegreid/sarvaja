@@ -7,6 +7,8 @@ Tests: RuleConstraint, load_rules_from_typedb(), populate_kanren_facts(),
 """
 
 import json
+import pytest
+pytest.importorskip("kanren")  # BUG-014: skip if kanren not installed
 
 from governance.kanren.loader import (
     RuleConstraint,

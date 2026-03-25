@@ -8,6 +8,7 @@ Tests: KanrenRAGFilter — search_validated, _results_to_chunks, search_for_task
 from unittest.mock import MagicMock, patch
 
 import pytest
+pytest.importorskip("kanren")  # BUG-014: skip if kanren not installed
 
 from governance.kanren.filter import KanrenRAGFilter
 

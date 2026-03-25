@@ -5,6 +5,9 @@ Per DOC-SIZE-01-v1: Tests for kanren/trust.py module.
 Tests: trust_level(), requires_supervisor(), can_execute_priority().
 """
 
+import pytest
+pytest.importorskip("kanren")  # BUG-014: skip if kanren not installed
+
 from governance.kanren.trust import trust_level, requires_supervisor, can_execute_priority
 
 

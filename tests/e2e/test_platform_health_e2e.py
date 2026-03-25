@@ -18,6 +18,7 @@ Usage:
 
 import json
 import pytest
+pytest.importorskip("kanren")  # BUG-014: skip if kanren not installed
 import requests
 from typing import Dict, Any, List
 

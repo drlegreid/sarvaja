@@ -5,6 +5,9 @@ Per DOC-SIZE-01-v1: Tests for kanren/rag.py module.
 Tests: valid_rag_chunk(), filter_rag_chunks(), ALLOWED_SOURCES, TRUSTED_TYPES.
 """
 
+import pytest
+pytest.importorskip("kanren")  # BUG-014: skip if kanren not installed
+
 from governance.kanren.rag import (
     valid_rag_chunk,
     filter_rag_chunks,
