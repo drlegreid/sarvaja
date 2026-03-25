@@ -11,11 +11,13 @@ from fastapi import APIRouter
 
 from .crud import router as rules_router
 from .decisions import router as decisions_router
+from .compliance import router as compliance_router
 
 # Compose all routers
 router = APIRouter()
 router.include_router(rules_router)
 router.include_router(decisions_router)
+router.include_router(compliance_router)
 
 # Re-export for backward compatibility
 __all__ = ["router"]
