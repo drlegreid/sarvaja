@@ -281,6 +281,7 @@ from governance.routes.tests.heuristic_checks_session import SESSION_EVIDENCE_CH
 from governance.routes.tests.heuristic_checks_exploratory import EXPLORATORY_CHECKS
 from governance.routes.tests.heuristic_checks_cc import CC_PROJECT_CHECKS
 from governance.routes.tests.heuristic_checks_triage import TRIAGE_CHECKS
+from governance.routes.tests.heuristic_checks_rules import RULE_HEURISTIC_CHECKS
 
 HEURISTIC_CHECKS = [
     {"id": "H-TASK-001", "domain": "TASK", "name": "Task descriptions", "check_fn": check_task_descriptions},
@@ -295,4 +296,4 @@ HEURISTIC_CHECKS = [
     {"id": "H-RULE-004", "domain": "RULE", "name": "No TEST-* rule artifacts", "check_fn": check_no_test_rules},
     {"id": "H-AGENT-001", "domain": "AGENT", "name": "Agent trust scores", "check_fn": check_agent_trust_scores},
     {"id": "H-AGENT-002", "domain": "AGENT", "name": "Agent last_active recency", "check_fn": check_agent_last_active},
-] + SESSION_EVIDENCE_CHECKS + CROSS_API_UI_CHECKS + EXPLORATORY_CHECKS + CC_PROJECT_CHECKS + TRIAGE_CHECKS
+] + SESSION_EVIDENCE_CHECKS + CROSS_API_UI_CHECKS + EXPLORATORY_CHECKS + CC_PROJECT_CHECKS + TRIAGE_CHECKS + RULE_HEURISTIC_CHECKS
