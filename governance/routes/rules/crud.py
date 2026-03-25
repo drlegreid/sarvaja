@@ -195,6 +195,8 @@ async def delete_rule(rule_id: str, archive: bool = Query(True, description="Arc
         # BUG-468-RCR-012: Sanitize logger message — exc_info=True already captures full stack
         logger.warning(f"delete_rule validation error for {rule_id}: {type(e).__name__}", exc_info=True)
         raise HTTPException(status_code=422, detail="Invalid rule delete request")
+    except HTTPException:
+        raise
     except Exception as e:
         # BUG-355-RUL-001: Log full error but return generic message
         # BUG-468-RCR-013: Sanitize logger message — exc_info=True already captures full stack
@@ -233,6 +235,8 @@ async def create_rule_dependency(rule_id: str, dep_id: str):
         # BUG-468-RCR-015: Sanitize logger message — exc_info=True already captures full stack
         logger.warning(f"create_rule_dependency not found {rule_id}->{dep_id}: {type(e).__name__}", exc_info=True)
         raise HTTPException(status_code=404, detail="Rule or dependency not found")
+    except HTTPException:
+        raise
     except Exception as e:
         # BUG-355-RUL-001: Log full error but return generic message
         # BUG-468-RCR-016: Sanitize logger message — exc_info=True already captures full stack

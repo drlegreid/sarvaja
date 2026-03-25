@@ -259,6 +259,8 @@ async def get_session_executive_report(session_id: str):
                 session = client.get_session(session_id)
                 if not session:
                     raise HTTPException(status_code=404, detail=f"Session {session_id} not found")
+            except HTTPException:
+                raise
             except Exception as e:
                 # BUG-475-RPT-1: Sanitize HTTPException detail — prevent exception detail leakage to API clients
                 logger.warning(f"Session lookup failed for {session_id}: {type(e).__name__}", exc_info=True)
