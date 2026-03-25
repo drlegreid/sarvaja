@@ -27,6 +27,7 @@ __all__ = [
     "get_rule_dependencies",
     "create_rule_dependency",
     "dependency_overview",
+    "link_session_to_rule",
 ]
 
 
@@ -151,6 +152,33 @@ def create_rule_dependency(rule_id: str, dep_id: str, source: str = "rest") -> b
     if result:
         _monitor("create_dependency", actual_id, source=source, dep_id=dep_actual)
     return bool(result)
+
+
+def link_session_to_rule(session_id: str, rule_id: str, source: str = "auto") -> bool:
+    """Link a session to a rule via session-applied-rule relation (idempotent).
+
+    Per EPIC-GOV-RULES-V3 P5: Service layer for session-rule auto-linking.
+
+    Args:
+        session_id: Session ID
+        rule_id: Rule ID
+        source: Caller context for monitoring
+
+    Returns:
+        True if link created or already exists, False on failure
+    """
+    client = get_client()
+    if not client:
+        logger.warning("TypeDB not connected — cannot link session to rule")
+        return False
+    try:
+        result = client.create_session_rule_link(session_id, rule_id)
+        if result:
+            _monitor("link_session_rule", rule_id, source=source, session_id=session_id)
+        return bool(result)
+    except Exception as e:
+        logger.warning(f"link_session_to_rule failed for {session_id}->{rule_id}: {type(e).__name__}", exc_info=True)
+        return False
 
 
 def dependency_overview(source: str = "rest") -> Dict[str, Any]:

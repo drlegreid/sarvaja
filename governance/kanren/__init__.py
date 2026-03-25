@@ -44,7 +44,7 @@ try:
     from .rag import ALLOWED_SOURCES, TRUSTED_TYPES, valid_rag_chunk, filter_rag_chunks
 
     # Rule conflicts
-    from .conflicts import conflicting_priorities, find_rule_conflicts
+    from .conflicts import conflicting_priorities, find_rule_conflicts, scope_conflict, lifecycle_conflict
 
     # Context assembly
     from .assembly import assemble_context
@@ -107,6 +107,8 @@ if _KANREN_AVAILABLE:
         # Conflicts
         "conflicting_priorities",
         "find_rule_conflicts",
+        "scope_conflict",
+        "lifecycle_conflict",
         # Assembly
         "assemble_context",
         # Filter

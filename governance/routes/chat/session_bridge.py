@@ -13,8 +13,9 @@ Created: 2026-02-01
 Updated: 2026-02-09 - TypeDB persistence via service layer (GAP-GOVSESS-CAPTURE-001)
 """
 import logging
+import re
 from datetime import datetime
-from typing import Optional
+from typing import List, Optional
 
 from governance.session_collector.collector import SessionCollector
 from governance.services.sessions import create_session
@@ -35,6 +36,45 @@ _CC_BUILTIN_TOOLS = frozenset({
 # MCP governance server prefixes
 _GOV_MCP_PREFIXES = ("mcp__gov-core__", "mcp__gov-sessions__",
                       "mcp__gov-tasks__", "mcp__gov-agents__")
+
+
+# Rule ID patterns for auto-linking (reuses rule_linker_ids patterns)
+_RULE_ID_PATTERN = re.compile(
+    r'(?:RULE-\d{3}|[A-Z]+(?:-[A-Z]+)+-\d{2}-v\d+)'
+)
+
+
+def extract_rule_ids_from_text(text: str) -> List[str]:
+    """Extract rule IDs from text (tool args, results).
+
+    Per EPIC-GOV-RULES-V3 P5: Detect rule references for session auto-linking.
+
+    Args:
+        text: Text to scan (may be None)
+
+    Returns:
+        Deduplicated list of rule IDs found
+    """
+    if not text:
+        return []
+    return list(set(_RULE_ID_PATTERN.findall(str(text))))
+
+
+def _auto_link_rules(session_id: str, arguments: dict, result: str) -> None:
+    """Detect rule IDs in tool call args/result and auto-link to session.
+
+    Per EPIC-GOV-RULES-V3 P5: Non-blocking — exceptions are logged, not raised.
+    """
+    try:
+        text = str(arguments or {}) + " " + str(result or "")
+        rule_ids = extract_rule_ids_from_text(text)
+        if not rule_ids:
+            return
+        from governance.services.rules_relations import link_session_to_rule
+        for rid in rule_ids:
+            link_session_to_rule(session_id, rid, source="session-bridge-auto")
+    except Exception as e:
+        logger.debug(f"Auto-link rules failed for {session_id}: {type(e).__name__}")
 
 
 def is_chat_command(text: str) -> bool:
@@ -164,6 +204,9 @@ def record_chat_tool_call(
         duration_ms=duration_ms,
         success=success,
     )
+
+    # Per EPIC-GOV-RULES-V3 P5: Auto-link rule references
+    _auto_link_rules(collector.session_id, arguments, result)
 
     # Per DATA-COMPLETE-01-v1: Sync to _sessions_store for API visibility
     session_id = collector.session_id

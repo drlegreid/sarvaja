@@ -153,6 +153,40 @@ class RuleInferenceQueries:
                 graph.setdefault(id1, []).append(id2)
         return graph
 
+    def create_session_rule_link(self, session_id: str, rule_id: str) -> bool:
+        """Create an idempotent session-applied-rule relation.
+
+        Uses NOT EXISTS to prevent duplicate relations.
+
+        Args:
+            session_id: Session ID (e.g., "SESSION-2026-01-01-TEST")
+            rule_id: Rule ID (e.g., "RULE-001")
+
+        Returns:
+            True if relation created or already exists
+        """
+        from typedb.driver import TransactionType
+
+        try:
+            sid = session_id.replace('\\', '\\\\').replace('"', '\\"').replace('\n', '').replace('\r', '').replace('\t', '')
+            rid = rule_id.replace('\\', '\\\\').replace('"', '\\"').replace('\n', '').replace('\r', '').replace('\t', '')
+            with self._driver.transaction(self.database, TransactionType.WRITE) as tx:
+                query = f"""
+                    match
+                        $s isa work-session, has session-id "{sid}";
+                        $r isa rule-entity, has rule-id "{rid}";
+                        not {{ (applying-session: $s, applied-rule: $r) isa session-applied-rule; }};
+                    insert
+                        (applying-session: $s, applied-rule: $r) isa session-applied-rule;
+                """
+                tx.query(query).resolve()
+                tx.commit()
+            logger.info(f"Created session-rule link: {session_id} -> {rule_id}")
+            return True
+        except Exception as e:
+            logger.warning(f"Failed to create session-rule link {session_id}->{rule_id}: {type(e).__name__}", exc_info=True)
+            return False
+
     def get_decision_impacts(self, decision_id: str) -> List[str]:
         """
         Get all rules affected by a decision (including cascaded supersedes).
