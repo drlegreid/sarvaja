@@ -307,3 +307,26 @@ def register_rule_query_tools(mcp) -> None:
 
         finally:
             client.close()
+
+    @mcp.tool()
+    def rules_sync_verify() -> str:
+        """Verify sync between TypeDB rules, leaf markdown, and RULES-*.md indexes.
+
+        Compares 3 sources and reports discrepancies:
+          - typedb_only: rules in TypeDB but no leaf file
+          - leaf_only: leaf files with no TypeDB entry
+          - index_gaps: known rules missing from RULES-*.md indexes
+
+        Returns:
+            JSON SyncReport with discrepancy lists and counts
+        """
+        from governance.services.rules_sync import SyncVerifier
+
+        try:
+            verifier = SyncVerifier()
+            report = verifier.verify()
+            return format_mcp_result(report.to_dict())
+        except Exception as e:
+            logger.error(f"rules_sync_verify failed: {type(e).__name__}", exc_info=True)
+            return format_mcp_result({"error": f"rules_sync_verify failed: {type(e).__name__}"})
+
