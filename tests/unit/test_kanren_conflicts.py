@@ -47,7 +47,7 @@ class TestFindRuleConflicts:
         assert len(conflicts) == 1
         assert conflicts[0][0] == "R-1"
         assert conflicts[0][1] == "R-2"
-        assert "Priority conflict" in conflicts[0][2]
+        assert "Scope conflict" in conflicts[0][2]
         assert "SESSION" in conflicts[0][2]
 
     def test_multiple_conflicts(self):

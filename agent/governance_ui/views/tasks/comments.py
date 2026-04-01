@@ -8,7 +8,12 @@ from trame.widgets import vuetify3 as v3, html
 
 
 def _build_comment_list() -> None:
-    """Render existing comments as a list."""
+    """Render existing comments as a list.
+
+    Per SRVJ-FEAT-AUDIT-TRAIL-01 P8 (GAP 3): system-audit comments
+    are visually distinct from user comments via data-comment-type
+    attribute and styling (grey italic + "System" chip).
+    """
     with html.Div(
         v_if="(task_comments || []).length > 0",
     ):
@@ -16,19 +21,57 @@ def _build_comment_list() -> None:
             with v3.VListItem(
                 v_for="(cmt, idx) in task_comments",
                 **{":key": "idx"},
-                __properties=["data-testid"],
-                **{"data-testid": "task-comment-item"},
+                __properties=["data-testid", "data-comment-type"],
+                **{
+                    "data-testid": "task-comment-item",
+                    ":data-comment-type": (
+                        "cmt.author === 'system-audit' ? 'system' : 'user'"
+                    ),
+                },
+                **{":classes": (
+                    "cmt.author === 'system-audit'"
+                    " ? 'system-comment bg-grey-lighten-4'"
+                    " : 'user-comment'"
+                )},
             ):
                 with v3.VListItemTitle():
                     with html.Div(classes="d-flex align-center"):
+                        # Icon: system gets robot, user gets comment
                         v3.VIcon(
-                            "mdi-comment-account",
+                            icon=(
+                                "cmt.author === 'system-audit'"
+                                " ? 'mdi-robot-outline'"
+                                " : 'mdi-comment-account'",
+                            ),
                             size="small",
                             classes="mr-2",
+                            color=(
+                                "cmt.author === 'system-audit'"
+                                " ? 'grey' : ''",
+                            ),
                         )
+                        # Author name
                         html.Strong(
                             "{{ cmt.author || 'Unknown' }}",
-                            classes="text-body-2",
+                            **{":classes": (
+                                "'text-body-2' + "
+                                "(cmt.author === 'system-audit'"
+                                " ? ' text-grey font-italic' : '')"
+                            )},
+                        )
+                        # System/User badge chip
+                        v3.VChip(
+                            v_text=(
+                                "cmt.author === 'system-audit'"
+                                " ? 'System' : 'User'",
+                            ),
+                            size="x-small",
+                            variant="tonal",
+                            color=(
+                                "cmt.author === 'system-audit'"
+                                " ? 'grey' : 'primary'",
+                            ),
+                            classes="ml-2",
                         )
                         html.Span(
                             "{{ cmt.created_at ? "
@@ -51,12 +94,15 @@ def _build_comment_list() -> None:
                 with v3.VListItemSubtitle():
                     html.Pre(
                         "{{ cmt.body }}",
-                        style=(
-                            "white-space: pre-wrap; "
+                        **{":style": (
+                            "'white-space: pre-wrap; "
                             "font-size: 0.85rem; "
                             "margin: 4px 0 0 0; "
-                            "padding: 0;"
-                        ),
+                            "padding: 0;' + "
+                            "(cmt.author === 'system-audit'"
+                            " ? ' color: #757575; font-style: italic;'"
+                            " : '')"
+                        )},
                     )
                 v3.VDivider()
 

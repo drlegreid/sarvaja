@@ -11,11 +11,39 @@ Updated: 2026-01-17 (TypeDB 3.x API migration)
 
 import logging
 import os
+import time
 from typing import List, Dict, Any
 
 logger = logging.getLogger(__name__)
 
+try:
+    from prometheus_client import Counter, Histogram
+    _HAS_PROMETHEUS = True
+except ImportError:
+    _HAS_PROMETHEUS = False
+
 from .entities import Rule
+
+# ---------------------------------------------------------------------------
+# Prometheus instruments — TypeDB query metrics (EPIC-PERF-TELEM-V1 P9)
+# No-op when prometheus_client is absent (MCP servers don't need metrics).
+# ---------------------------------------------------------------------------
+
+if _HAS_PROMETHEUS:
+    TYPEDB_QUERY_DURATION = Histogram(
+        "sarvaja_typedb_query_duration_seconds",
+        "TypeDB query duration in seconds",
+        labelnames=["query_type"],
+        buckets=(0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1.0, 2.5, 5.0),
+    )
+    TYPEDB_QUERY_COUNT = Counter(
+        "sarvaja_typedb_query_total",
+        "Total TypeDB queries executed",
+        labelnames=["query_type"],
+    )
+else:
+    TYPEDB_QUERY_DURATION = None
+    TYPEDB_QUERY_COUNT = None
 
 # Configuration
 TYPEDB_HOST = os.getenv("TYPEDB_HOST", "localhost")
@@ -37,6 +65,9 @@ class TypeDBBaseClient:
         self.database = database or DATABASE_NAME
         self._driver = None
         self._connected = False
+        # EPIC-PERF-TELEM-V1 P1: Query timing instrumentation
+        self._query_count = 0
+        self._total_query_ms = 0.0
 
     def connect(self) -> bool:
         """Connect to TypeDB 3.x server.
@@ -117,6 +148,7 @@ class TypeDBBaseClient:
         from typedb.driver import TransactionType
 
         results = []
+        t0 = time.monotonic()
 
         # TypeDB 3.x: driver.transaction(database, type) - no sessions
         with self._driver.transaction(self.database, TransactionType.READ) as tx:
@@ -124,6 +156,7 @@ class TypeDBBaseClient:
             iterator = tx.query(query).resolve()
 
             if iterator is None:
+                self._record_query_timing(t0, query)
                 return results
 
             for result in iterator:
@@ -134,6 +167,7 @@ class TypeDBBaseClient:
                     row[var] = self._concept_to_value(concept)
                 results.append(row)
 
+        self._record_query_timing(t0, query)
         return results
 
     def _concept_to_value(self, concept) -> Any:
@@ -199,8 +233,44 @@ class TypeDBBaseClient:
 
         from typedb.driver import TransactionType
 
+        t0 = time.monotonic()
+
         with self._driver.transaction(self.database, TransactionType.WRITE) as tx:
             tx.query(query).resolve()
             tx.commit()
 
+        self._record_query_timing(t0, query)
         return True
+
+    def _record_query_timing(self, t0: float, query: str) -> None:
+        """Record query duration and log slow queries (>500ms).
+
+        Includes request correlation ID (rid) when available, enabling
+        end-to-end tracing from HTTP request to TypeDB query.
+        (EPIC-PERF-TELEM-V1 Phase 6 + Phase 9 Prometheus)
+        """
+        from governance.middleware.request_context import get_request_id
+
+        duration_s = time.monotonic() - t0
+        duration_ms = duration_s * 1000
+        self._query_count += 1
+        self._total_query_ms += duration_ms
+
+        # Phase 9: Prometheus metrics — classify read vs write
+        if _HAS_PROMETHEUS:
+            query_type = "write" if query.strip().lower().startswith(("insert", "delete", "update")) else "read"
+            TYPEDB_QUERY_DURATION.labels(query_type=query_type).observe(duration_s)
+            TYPEDB_QUERY_COUNT.labels(query_type=query_type).inc()
+
+        if duration_ms > 500:
+            snippet = query.strip()[:120]
+            rid = get_request_id()
+            if rid:
+                logger.warning(
+                    "Slow TypeDB query: %.0fms rid=%s — %s",
+                    duration_ms, rid, snippet,
+                )
+            else:
+                logger.warning(
+                    "Slow TypeDB query: %.0fms — %s", duration_ms, snippet
+                )

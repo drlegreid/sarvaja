@@ -19,6 +19,7 @@ from .evidence_preview import build_task_evidence_preview
 from .resolution import build_task_resolution_section
 from .timeline import build_task_session_timeline
 from .comments import build_task_comments_section
+from .audit_trail import build_task_audit_trail
 
 
 def build_task_tech_docs() -> None:
@@ -341,3 +342,6 @@ def build_task_detail_view() -> None:
 
             # Comments Section (EPIC-ISSUE-EVIDENCE P19)
             build_task_comments_section()
+
+            # Audit Trail Section (SRVJ-FEAT-AUDIT-TRAIL-01 P3)
+            build_task_audit_trail()

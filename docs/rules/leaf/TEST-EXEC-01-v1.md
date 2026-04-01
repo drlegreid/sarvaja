@@ -45,14 +45,20 @@ robot --include rules tests/robot/
 
 ## Report Modes (EPIC-TEST-COMPRESS-001)
 
-Always use `--report-compressed` for LLM-optimized output:
+Always use `--compressed-summary` for LLM-optimized output via holographic store:
 
 | Flag | Output | Use Case |
 |------|--------|----------|
-| `--report-compressed` | `[PASS] 1197/1200 (100%) \| 2.1s` | Default for Claude Code |
+| `--compressed-summary` | `[HOLOGRAPHIC-SUMMARY]` zoom=1 via store | **Default for Claude Code** |
+| `--report-compressed` | `[PASS] 1197/1200 (100%) \| 2.1s` | Legacy compressed output |
 | `--report-minimized` | Trace-minimized failures | Debugging failures |
 | `--report-cert` | JSON evidence in `results/` | CI/CD certification |
 | `--report-minimal` | Dots only (. F S) | Lowest context |
+
+**Holographic store auto-populates on every pytest run** (no flag needed for collection).
+The `--compressed-summary` flag controls whether the summary is printed at session end.
+After any run, query `test_evidence_query(zoom=1)` for context-efficient results.
+Per TEST-HOLO-01-v1: zoom 1 → 2 → 3 escalation on failure investigation only.
 
 ---
 

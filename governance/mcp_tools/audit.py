@@ -190,3 +190,46 @@ def register_audit_tools(mcp) -> None:
         except Exception as e:
             logger.error(f"audit_trace failed: {type(e).__name__}", exc_info=True)
             return format_mcp_result({"error": f"audit_trace failed: {type(e).__name__}"})
+
+    @mcp.tool()
+    def audit_archive_query(
+        entity_id: Optional[str] = None,
+        action_type: Optional[str] = None,
+        date_from: Optional[str] = None,
+        date_to: Optional[str] = None,
+        limit: int = 100
+    ) -> str:
+        """
+        Query cold audit archive (JSONL files from retention).
+
+        Per SRVJ-FEAT-AUDIT-TRAIL-01 P4: Entries older than 7 days are
+        archived to JSONL before deletion. This tool queries those archives.
+
+        Args:
+            entity_id: Filter by entity ID
+            action_type: Filter by action type (CREATE, UPDATE, LINK, etc.)
+            date_from: Start date (YYYY-MM-DD)
+            date_to: End date (YYYY-MM-DD)
+            limit: Maximum entries (default: 100, max: 1000)
+
+        Returns:
+            JSON object with archived audit entries
+        """
+        from governance.stores.audit import query_audit_archive
+
+        try:
+            entries = query_audit_archive(
+                entity_id=entity_id,
+                action_type=action_type,
+                date_from=date_from,
+                date_to=date_to,
+                limit=limit,
+            )
+            return format_mcp_result({
+                "count": len(entries),
+                "entries": entries,
+                "source": "cold_archive",
+            })
+        except Exception as e:
+            logger.error(f"audit_archive_query failed: {type(e).__name__}", exc_info=True)
+            return format_mcp_result({"error": f"audit_archive_query failed: {type(e).__name__}"})

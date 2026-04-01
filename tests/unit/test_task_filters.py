@@ -19,10 +19,9 @@ _TDA = "governance.stores.typedb_access"
 @pytest.fixture(autouse=True)
 def _reset_stores():
     with patch(f"{_SVC}._tasks_store", {}) as tasks, \
-         patch(f"{_SVC}._sessions_store", {}) as sessions, \
          patch(f"{_SVC}.record_audit"), \
          patch(f"{_SVC}.log_event"):
-        yield tasks, sessions
+        yield tasks, {}
 
 
 def _make_task_entity(task_id, **overrides):

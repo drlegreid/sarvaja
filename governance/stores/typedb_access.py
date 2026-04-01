@@ -310,6 +310,8 @@ def _task_to_dict(task) -> Dict[str, Any]:
         "evidence": task.evidence,
         "document_path": task.document_path,
         "workspace_id": getattr(task, 'workspace_id', None),  # EPIC-GOV-TASKS-V2 Phase 6c
+        # SRVJ-BUG-DUAL-WRITE-01: TypeDB entity = persisted by definition
+        "persistence_status": "persisted",
     }
 
 

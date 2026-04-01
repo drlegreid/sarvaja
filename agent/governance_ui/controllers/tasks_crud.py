@@ -4,12 +4,24 @@ Task CRUD Controllers
 Controller functions for task select, create, delete, edit operations.
 
 Per DOC-SIZE-01-v1: Extracted from tasks.py.
+Per EPIC-PERF-TELEM-V1 P4: select_task uses ThreadPoolExecutor for parallel
+sub-loaders. Fixes early-return bug (timeline+comments skipped in success path).
+Per EPIC-PERF-TELEM-V1 P5: All HTTP calls traced via traced_http; log_action
+for select/create/update/delete.
 """
 
 import httpx as _httpx
+from concurrent.futures import ThreadPoolExecutor
 from typing import Any
 
 from agent.governance_ui.trace_bar.transforms import add_error_trace as _add_error_trace
+from agent.governance_ui.controllers.traced_http import (
+    traced_get as _traced_get,
+    traced_post as _traced_post,
+    traced_put as _traced_put,
+    traced_delete as _traced_delete,
+)
+from governance.middleware.dashboard_log import log_action
 from agent.governance_ui.utils import extract_items_from_response, format_timestamps_in_list
 from .tasks_helpers import (
     _enrich_doc_count,
@@ -30,96 +42,181 @@ def register_tasks_crud(state: Any, ctrl: Any, api_base_url: str,
     httpx = httpx_mod if httpx_mod is not None else _httpx
     add_error_trace = error_trace_fn if error_trace_fn is not None else _add_error_trace
 
+    # ── Parallel fetch helpers (pure HTTP, traced via P5) ──────
+
+    def _fetch_task_execution(task_id):
+        """Fetch execution log. Returns data dict. Traced via traced_http."""
+        try:
+            with httpx.Client(timeout=10.0) as client:
+                resp, _ = _traced_get(
+                    state, client, api_base_url,
+                    f"/api/tasks/{task_id}/execution")
+                if resp.status_code == 200:
+                    return {"events": resp.json().get("events", [])}
+        except Exception:
+            pass  # traced_get already called add_error_trace
+        return {}
+
+    def _fetch_task_evidence(task_id):
+        """Fetch evidence files. Returns data dict. Traced via traced_http."""
+        try:
+            with httpx.Client(timeout=10.0) as client:
+                resp, _ = _traced_get(
+                    state, client, api_base_url,
+                    f"/api/tasks/{task_id}/evidence/rendered")
+                if resp.status_code == 200:
+                    return {"evidence_files": resp.json().get("evidence_files", [])}
+        except Exception:
+            pass  # traced_get already called add_error_trace
+        return {}
+
+    def _fetch_task_timeline(task_id):
+        """Fetch timeline entries. Returns data dict. Traced via traced_http."""
+        try:
+            with httpx.Client(timeout=15.0) as client:
+                resp, _ = _traced_get(
+                    state, client, api_base_url,
+                    f"/api/tasks/{task_id}/timeline",
+                    params={"per_page": 50})
+                if resp.status_code == 200:
+                    data = resp.json()
+                    return {
+                        "entries": data.get("entries", []),
+                        "total": data.get("total", 0),
+                        "has_more": data.get("has_more", False),
+                    }
+        except Exception:
+            pass  # traced_get already called add_error_trace
+        return {}
+
+    def _fetch_task_comments(task_id):
+        """Fetch comments. Returns data dict. Traced via traced_http."""
+        try:
+            with httpx.Client(timeout=10.0) as client:
+                resp, _ = _traced_get(
+                    state, client, api_base_url,
+                    f"/api/tasks/{task_id}/comments")
+                if resp.status_code == 200:
+                    return {"comments": resp.json().get("comments", [])}
+        except Exception:
+            pass  # traced_get already called add_error_trace
+        return {}
+
+    def _fetch_task_audit(task_id, page=1, per_page=20, action_type=None):
+        """Fetch audit trail entries. Returns data list. Traced via traced_http."""
+        try:
+            params = {"limit": per_page, "offset": (page - 1) * per_page}
+            if action_type:
+                params["action_type"] = action_type
+            with httpx.Client(timeout=10.0) as client:
+                resp, _ = _traced_get(
+                    state, client, api_base_url,
+                    f"/api/audit/{task_id}", params=params)
+                if resp.status_code == 200:
+                    return {"entries": resp.json()}
+        except Exception:
+            pass  # traced_get already called add_error_trace
+        return {}
+
     @ctrl.trigger("select_task")
     def select_task(task_id):
-        """Handle task selection for detail view."""
+        """Handle task selection for detail view.
+
+        P4: Parallel sub-loaders via ThreadPoolExecutor.
+        Bugfix: Always loads ALL 4 sub-loaders (execution, evidence,
+        timeline, comments) — fixes early-return that skipped timeline+comments.
+        """
         # BUG-UI-STALE-DETAIL-004: Clear prior task detail state before loading
         state.edit_task_mode = False
         state.task_execution_log = []
-        state.show_task_execution = False  # Close chat dialog if open
+        state.show_task_execution = False
         state.show_task_execution_inline = False  # BUG-TASK-POPUP-001
-        state.task_evidence_files = []  # SRVJ-FEAT-009: Clear evidence
-        state.task_evidence_loading = False
+        state.task_evidence_files = []
+        state.task_evidence_loading = True
+        state.task_execution_loading = True
+        state.task_timeline_loading = True
+        state.task_comments_loading = True
+        state.task_audit_entries = []
+        state.task_audit_loading = True
+        state.task_audit_page = 1
+        state.task_audit_filter_action = None
         state.nav_source_view = None
         state.nav_source_id = None
         state.nav_source_label = None
+
+        log_action("tasks", "select", task_id=task_id)
+
+        # Step 1: Synchronous detail fetch (sets selected_task for UI)
+        detail_ok = False
         try:
             with httpx.Client(timeout=10.0) as client:
-                response = client.get(f"{api_base_url}/api/tasks/{task_id}")
+                response, _ = _traced_get(
+                    state, client, api_base_url, f"/api/tasks/{task_id}")
                 if response.status_code == 200:
                     state.selected_task = response.json()
                     state.show_task_detail = True
-                    _auto_load_task_execution(task_id)
-                    _auto_load_task_evidence(task_id)
-                    return
-        except Exception as e:
-            add_error_trace(state, f"Load task detail failed: {e}", f"/api/tasks/{task_id}")
-
-        for task in state.tasks:
-            if task.get('task_id') == task_id or task.get('id') == task_id:
-                state.selected_task = task
-                state.show_task_detail = True
-                break
-        _auto_load_task_execution(task_id)
-        _auto_load_task_evidence(task_id)
-        _auto_load_task_timeline(task_id)
-        _auto_load_task_comments(task_id)
-
-    def _auto_load_task_execution(task_id):
-        """Auto-load execution log when a task is selected."""
-        try:
-            state.task_execution_loading = True
-            state.task_execution_log = []
-            state.show_task_execution_inline = True  # BUG-TASK-POPUP-001: Use inline, not dialog
-            with httpx.Client(timeout=10.0) as client:
-                response = client.get(f"{api_base_url}/api/tasks/{task_id}/execution")
-                if response.status_code == 200:
-                    data = response.json()
-                    state.task_execution_log = data.get("events", [])
-        except Exception as e:
-            add_error_trace(state, f"Load task execution failed: {e}", f"/api/tasks/{task_id}/execution")
-            state.task_execution_log = []
-        finally:
-            state.task_execution_loading = False
-
-    def _auto_load_task_evidence(task_id):
-        """Auto-load evidence preview when a task is selected (SRVJ-FEAT-009)."""
-        try:
-            state.task_evidence_loading = True
-            state.task_evidence_files = []
-            with httpx.Client(timeout=10.0) as client:
-                response = client.get(
-                    f"{api_base_url}/api/tasks/{task_id}/evidence/rendered"
-                )
-                if response.status_code == 200:
-                    data = response.json()
-                    state.task_evidence_files = data.get("evidence_files", [])
+                    detail_ok = True
         except Exception:
-            state.task_evidence_files = []
-        finally:
-            state.task_evidence_loading = False
+            pass  # traced_get already called add_error_trace
 
-    def _auto_load_task_timeline(task_id):
-        """Auto-load multi-session timeline when a task is selected (P18)."""
+        if not detail_ok:
+            for task in state.tasks:
+                if task.get('task_id') == task_id or task.get('id') == task_id:
+                    state.selected_task = task
+                    state.show_task_detail = True
+                    break
+
+        # Step 2: Fire 5 sub-loaders in parallel (ALWAYS — fixes early-return bug)
+        with ThreadPoolExecutor(max_workers=5) as executor:
+            f_exec = executor.submit(_fetch_task_execution, task_id)
+            f_evid = executor.submit(_fetch_task_evidence, task_id)
+            f_time = executor.submit(_fetch_task_timeline, task_id)
+            f_comm = executor.submit(_fetch_task_comments, task_id)
+            f_audit = executor.submit(_fetch_task_audit, task_id)
+
+        # Step 3: Apply results on main thread (Trame state NOT thread-safe)
+        exec_result = f_exec.result()
+        state.task_execution_log = exec_result.get("events", [])
+        state.show_task_execution_inline = True  # BUG-TASK-POPUP-001
+        state.task_execution_loading = False
+
+        evid_result = f_evid.result()
+        state.task_evidence_files = evid_result.get("evidence_files", [])
+        state.task_evidence_loading = False
+
+        time_result = f_time.result()
+        state.task_timeline_entries = time_result.get("entries", [])
+        state.task_timeline_total = time_result.get("total", 0)
+        state.task_timeline_has_more = time_result.get("has_more", False)
+        state.task_timeline_page = 1
+        state.show_task_timeline_inline = False
+        state.task_timeline_loading = False
+
+        comm_result = f_comm.result()
+        state.task_comments = comm_result.get("comments", [])
+        state.task_comments_loading = False
+
+        audit_result = f_audit.result()
+        state.task_audit_entries = audit_result.get("entries", [])
+        state.show_task_audit_inline = True
+        state.task_audit_loading = False
+
+    @ctrl.trigger("load_task_audit")
+    def load_task_audit(task_id):
+        """Explicit reload of task audit trail (refresh / filter / page change)."""
+        if not task_id:
+            return
         try:
-            state.task_timeline_loading = True
-            state.task_timeline_entries = []
-            state.task_timeline_page = 1
-            state.show_task_timeline_inline = False
-            with httpx.Client(timeout=15.0) as client:
-                response = client.get(
-                    f"{api_base_url}/api/tasks/{task_id}/timeline",
-                    params={"per_page": 50},
-                )
-                if response.status_code == 200:
-                    data = response.json()
-                    state.task_timeline_entries = data.get("entries", [])
-                    state.task_timeline_total = data.get("total", 0)
-                    state.task_timeline_has_more = data.get("has_more", False)
+            state.task_audit_loading = True
+            page = state.task_audit_page or 1
+            per_page = state.task_audit_per_page or 20
+            action_filter = state.task_audit_filter_action or None
+            result = _fetch_task_audit(task_id, page, per_page, action_filter)
+            state.task_audit_entries = result.get("entries", [])
         except Exception:
-            state.task_timeline_entries = []
+            state.task_audit_entries = []
         finally:
-            state.task_timeline_loading = False
+            state.task_audit_loading = False
 
     @ctrl.trigger("load_task_timeline")
     def load_task_timeline(task_id):
@@ -134,20 +231,16 @@ def register_tasks_crud(state: Any, ctrl: Any, api_base_url: str,
             if filter_types:
                 params["entry_types"] = ",".join(filter_types)
             with httpx.Client(timeout=15.0) as client:
-                response = client.get(
-                    f"{api_base_url}/api/tasks/{task_id}/timeline",
-                    params=params,
-                )
+                response, _ = _traced_get(
+                    state, client, api_base_url,
+                    f"/api/tasks/{task_id}/timeline", params=params)
                 if response.status_code == 200:
                     data = response.json()
                     state.task_timeline_entries = data.get("entries", [])
                     state.task_timeline_total = data.get("total", 0)
                     state.task_timeline_has_more = data.get("has_more", False)
-        except Exception as e:
-            add_error_trace(
-                state, f"Timeline load failed: {e}",
-                f"/api/tasks/{task_id}/timeline",
-            )
+        except Exception:
+            pass  # traced_get already called add_error_trace
         finally:
             state.task_timeline_loading = False
 
@@ -157,9 +250,9 @@ def register_tasks_crud(state: Any, ctrl: Any, api_base_url: str,
             state.task_comments_loading = True
             state.task_comments = []
             with httpx.Client(timeout=10.0) as client:
-                response = client.get(
-                    f"{api_base_url}/api/tasks/{task_id}/comments"
-                )
+                response, _ = _traced_get(
+                    state, client, api_base_url,
+                    f"/api/tasks/{task_id}/comments")
                 if response.status_code == 200:
                     state.task_comments = response.json().get("comments", [])
         except Exception:
@@ -180,18 +273,15 @@ def register_tasks_crud(state: Any, ctrl: Any, api_base_url: str,
         try:
             state.task_comment_submitting = True
             with httpx.Client(timeout=10.0) as client:
-                response = client.post(
-                    f"{api_base_url}/api/tasks/{task_id}/comments",
-                    json={"body": body.strip(), "author": "code-agent"},
-                )
+                response, _ = _traced_post(
+                    state, client, api_base_url,
+                    f"/api/tasks/{task_id}/comments",
+                    json={"body": body.strip(), "author": "code-agent"})
                 if response.status_code == 201:
                     state.task_comment_input = ""
                     _auto_load_task_comments(task_id)
-        except Exception as e:
-            add_error_trace(
-                state, f"Post comment failed: {e}",
-                f"/api/tasks/{task_id}/comments",
-            )
+        except Exception:
+            pass  # traced_post already called add_error_trace
         finally:
             state.task_comment_submitting = False
 
@@ -202,16 +292,13 @@ def register_tasks_crud(state: Any, ctrl: Any, api_base_url: str,
             return
         try:
             with httpx.Client(timeout=10.0) as client:
-                response = client.delete(
-                    f"{api_base_url}/api/tasks/{task_id}/comments/{comment_id}"
-                )
+                response, _ = _traced_delete(
+                    state, client, api_base_url,
+                    f"/api/tasks/{task_id}/comments/{comment_id}")
                 if response.status_code == 200:
                     _auto_load_task_comments(task_id)
-        except Exception as e:
-            add_error_trace(
-                state, f"Delete comment failed: {e}",
-                f"/api/tasks/{task_id}/comments/{comment_id}",
-            )
+        except Exception:
+            pass  # traced_delete already called add_error_trace
 
     @ctrl.trigger("close_task_detail")
     def close_task_detail():
@@ -232,6 +319,11 @@ def register_tasks_crud(state: Any, ctrl: Any, api_base_url: str,
         state.task_timeline_page = 1
         state.task_comments = []
         state.task_comment_input = ''
+        state.task_audit_entries = []
+        state.task_audit_loading = False
+        state.show_task_audit_inline = False
+        state.task_audit_page = 1
+        state.task_audit_filter_action = None
         state.nav_source_view = None
         state.nav_source_id = None
         state.nav_source_label = None
@@ -250,13 +342,17 @@ def register_tasks_crud(state: Any, ctrl: Any, api_base_url: str,
         try:
             state.is_loading = True
             task_id = state.selected_task.get('id') or state.selected_task.get('task_id')
+            log_action("tasks", "delete", task_id=task_id)
             with httpx.Client(timeout=10.0) as client:
-                response = client.delete(f"{api_base_url}/api/tasks/{task_id}")
+                response, _ = _traced_delete(
+                    state, client, api_base_url, f"/api/tasks/{task_id}")
                 if response.status_code == 204:
                     state.status_message = f"Task {task_id} deleted successfully"
                     page_size = getattr(state, 'tasks_per_page', 20)
                     offset = (getattr(state, 'tasks_page', 1) - 1) * page_size
-                    tasks_response = client.get(f"{api_base_url}/api/tasks", params={"limit": page_size, "offset": offset})
+                    tasks_response, _ = _traced_get(
+                        state, client, api_base_url, "/api/tasks",
+                        params={"limit": page_size, "offset": offset})
                     if tasks_response.status_code == 200:
                         data = tasks_response.json()
                         if isinstance(data, dict) and "items" in data:
@@ -268,7 +364,9 @@ def register_tasks_crud(state: Any, ctrl: Any, api_base_url: str,
                     if not state.tasks and getattr(state, 'tasks_page', 1) > 1:
                         state.tasks_page = max(1, state.tasks_page - 1)
                         offset = (state.tasks_page - 1) * page_size
-                        tasks_response = client.get(f"{api_base_url}/api/tasks", params={"limit": page_size, "offset": offset})
+                        tasks_response, _ = _traced_get(
+                            state, client, api_base_url, "/api/tasks",
+                            params={"limit": page_size, "offset": offset})
                         if tasks_response.status_code == 200:
                             data = tasks_response.json()
                             if isinstance(data, dict) and "items" in data:
@@ -333,6 +431,7 @@ def register_tasks_crud(state: Any, ctrl: Any, api_base_url: str,
         try:
             state.is_loading = True
             task_id = state.selected_task.get('id') or state.selected_task.get('task_id')
+            log_action("tasks", "update", task_id=task_id)
             update_data = {
                 "description": description,
                 "phase": (state.edit_task_phase or "P10").strip(),
@@ -349,15 +448,16 @@ def register_tasks_crud(state: Any, ctrl: Any, api_base_url: str,
                 "method": getattr(state, 'edit_task_method', None) or None,
             }
             with httpx.Client(timeout=10.0) as client:
-                response = client.put(
-                    f"{api_base_url}/api/tasks/{task_id}",
-                    json=update_data
-                )
+                response, _ = _traced_put(
+                    state, client, api_base_url,
+                    f"/api/tasks/{task_id}", json=update_data)
                 if response.status_code == 200:
                     state.status_message = f"Task {task_id} updated successfully"
                     page_size = getattr(state, 'tasks_per_page', 20)
                     offset = (getattr(state, 'tasks_page', 1) - 1) * page_size
-                    tasks_response = client.get(f"{api_base_url}/api/tasks", params={"limit": page_size, "offset": offset})
+                    tasks_response, _ = _traced_get(
+                        state, client, api_base_url, "/api/tasks",
+                        params={"limit": page_size, "offset": offset})
                     if tasks_response.status_code == 200:
                         data = tasks_response.json()
                         if isinstance(data, dict) and "items" in data:
@@ -409,6 +509,7 @@ def register_tasks_crud(state: Any, ctrl: Any, api_base_url: str,
                 return
 
             state.is_loading = True
+            log_action("tasks", "create")
             task_data = {
                 "description": description.strip(),
                 "phase": phase.strip() or "P10",
@@ -427,7 +528,8 @@ def register_tasks_crud(state: Any, ctrl: Any, api_base_url: str,
                 task_data["task_id"] = task_id.strip()
 
             with httpx.Client(timeout=10.0) as client:
-                response = client.post(f"{api_base_url}/api/tasks", json=task_data)
+                response, _ = _traced_post(
+                    state, client, api_base_url, "/api/tasks", json=task_data)
                 if response.status_code == 201:
                     # P16: Check for duplicate warnings in response
                     resp_data = response.json()
@@ -443,7 +545,9 @@ def register_tasks_crud(state: Any, ctrl: Any, api_base_url: str,
                     page_size = getattr(state, 'tasks_per_page', 20)
                     current_page = getattr(state, 'tasks_page', 1)
                     offset = (current_page - 1) * page_size
-                    tasks_response = client.get(f"{api_base_url}/api/tasks", params={"limit": page_size, "offset": offset})
+                    tasks_response, _ = _traced_get(
+                        state, client, api_base_url, "/api/tasks",
+                        params={"limit": page_size, "offset": offset})
                     if tasks_response.status_code == 200:
                         data = tasks_response.json()
                         if isinstance(data, dict) and "items" in data:

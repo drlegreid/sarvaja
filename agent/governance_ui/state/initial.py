@@ -493,6 +493,16 @@ def get_initial_state() -> Dict[str, Any]:
         'task_comment_input': '',
         'task_comment_submitting': False,
 
+        # Task Audit Trail (SRVJ-FEAT-AUDIT-TRAIL-01 P3)
+        'task_audit_entries': [],
+        'task_audit_loading': False,
+        'show_task_audit_inline': False,
+        'task_audit_filter_action': None,
+        'task_audit_page': 1,
+        'task_audit_per_page': 20,
+        'task_audit_total': 0,
+        'task_audit_has_more': False,
+
         # Infrastructure Health (GAP-INFRA-004, UI-AUDIT-008)
         'infra_services': {},
         'infra_stats': {

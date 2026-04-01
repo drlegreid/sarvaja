@@ -470,11 +470,9 @@ class TestCreateTaskRulesIntegration:
     """Tests for rules engine wired into create_task service."""
 
     @patch("governance.services.tasks.get_typedb_client")
-    @patch("governance.services.tasks._get_active_session_id")
-    def test_create_task_missing_summary_and_desc_raises(self, mock_session, mock_client):
+    def test_create_task_missing_summary_and_desc_raises(self, mock_client):
         """create_task with no summary and no description raises ValueError."""
         from governance.services.tasks import create_task
-        mock_session.return_value = None
         mock_client.return_value = None
 
         with pytest.raises(ValueError, match="Validation failed"):
@@ -486,11 +484,9 @@ class TestCreateTaskRulesIntegration:
             )
 
     @patch("governance.services.tasks.get_typedb_client")
-    @patch("governance.services.tasks._get_active_session_id")
-    def test_create_task_type_prefix_mismatch_raises(self, mock_session, mock_client):
+    def test_create_task_type_prefix_mismatch_raises(self, mock_client):
         """create_task with mismatched ID type and task_type raises ValueError."""
         from governance.services.tasks import create_task
-        mock_session.return_value = None
         mock_client.return_value = None
 
         with pytest.raises(ValueError, match="Validation failed"):
@@ -503,11 +499,9 @@ class TestCreateTaskRulesIntegration:
             )
 
     @patch("governance.services.tasks.get_typedb_client")
-    @patch("governance.services.tasks._get_active_session_id")
-    def test_create_task_non_laconic_summary_warns_but_creates(self, mock_session, mock_client):
+    def test_create_task_non_laconic_summary_warns_but_creates(self, mock_client):
         """Non-laconic summary triggers warning but doesn't block (FormatRule is soft)."""
         from governance.services.tasks import create_task
-        mock_session.return_value = None
         mock_client.return_value = None
 
         # Should NOT raise — FormatRule is a warning, not a hard error
@@ -521,11 +515,9 @@ class TestCreateTaskRulesIntegration:
         assert result is not None
 
     @patch("governance.services.tasks.get_typedb_client")
-    @patch("governance.services.tasks._get_active_session_id")
-    def test_create_task_valid_laconic_creates(self, mock_session, mock_client):
+    def test_create_task_valid_laconic_creates(self, mock_client):
         """Valid laconic summary creates task successfully."""
         from governance.services.tasks import create_task
-        mock_session.return_value = None
         mock_client.return_value = None
 
         result = create_task(

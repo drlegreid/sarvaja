@@ -149,12 +149,11 @@ class TestBugWsCreate001ServiceLayer:
     """Service layer must pass workspace_id through and handle link failure."""
 
     @patch("governance.services.tasks._tasks_store", {})
-    @patch("governance.services.tasks._get_active_session_id", return_value=None)
     @patch("governance.services.tasks.get_typedb_client")
     @patch("governance.services.tasks.record_audit")
     @patch("governance.services.tasks.log_event")
     def test_create_task_service_passes_workspace_id(
-        self, mock_log, mock_audit, mock_client_fn, mock_session
+        self, mock_log, mock_audit, mock_client_fn
     ):
         """Service layer must pass workspace_id to TypeDB insert_task."""
         from governance.services.tasks import create_task
@@ -188,12 +187,11 @@ class TestBugStatusCase001:
     """Status values must be normalized to uppercase in service layer."""
 
     @patch("governance.services.tasks._tasks_store", {})
-    @patch("governance.services.tasks._get_active_session_id", return_value=None)
     @patch("governance.services.tasks.get_typedb_client", return_value=None)
     @patch("governance.services.tasks.record_audit")
     @patch("governance.services.tasks.log_event")
     def test_create_task_normalizes_lowercase_status(
-        self, mock_log, mock_audit, mock_client, mock_session
+        self, mock_log, mock_audit, mock_client
     ):
         """create_task('in_progress') should store 'IN_PROGRESS'."""
         from governance.services.tasks import create_task
@@ -207,12 +205,11 @@ class TestBugStatusCase001:
         assert result["status"] == "IN_PROGRESS"
 
     @patch("governance.services.tasks._tasks_store", {})
-    @patch("governance.services.tasks._get_active_session_id", return_value=None)
     @patch("governance.services.tasks.get_typedb_client", return_value=None)
     @patch("governance.services.tasks.record_audit")
     @patch("governance.services.tasks.log_event")
     def test_create_task_normalizes_mixed_case_status(
-        self, mock_log, mock_audit, mock_client, mock_session
+        self, mock_log, mock_audit, mock_client
     ):
         """create_task('Open') should store 'OPEN'."""
         from governance.services.tasks import create_task
@@ -226,12 +223,11 @@ class TestBugStatusCase001:
         assert result["status"] == "OPEN"
 
     @patch("governance.services.tasks._tasks_store", {})
-    @patch("governance.services.tasks._get_active_session_id", return_value=None)
     @patch("governance.services.tasks.get_typedb_client", return_value=None)
     @patch("governance.services.tasks.record_audit")
     @patch("governance.services.tasks.log_event")
     def test_create_task_preserves_already_uppercase_status(
-        self, mock_log, mock_audit, mock_client, mock_session
+        self, mock_log, mock_audit, mock_client
     ):
         """create_task('DONE') should stay 'DONE'."""
         from governance.services.tasks import create_task

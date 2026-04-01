@@ -13,8 +13,6 @@ Created: 2026-01-21
 """
 
 import os
-from datetime import datetime
-from pathlib import Path
 from typing import Optional
 
 import pytest
@@ -22,7 +20,7 @@ import pytest
 from tests.evidence.collector import BDDEvidenceCollector, EvidenceRecord
 from tests.evidence.rule_linker import RuleLinker
 from tests.evidence.trace_capture import TraceCapture, RequestsTraceAdapter, link_traces_to_evidence
-from tests.evidence.summary_compressor import SummaryCompressor
+from tests.evidence.holographic_store import get_global_store, reset_global_store, HolographicTestStore
 
 # Try to import session collector for event-based reporting
 try:
@@ -35,11 +33,12 @@ except ImportError:
 # Global collector instance for the test session
 _collector: Optional[BDDEvidenceCollector] = None
 _rule_linker: Optional[RuleLinker] = None
+_holographic_store: Optional[HolographicTestStore] = None
 _session_reporting_enabled: bool = False
 _trace_capture_enabled: bool = False
 _current_trace_capture: Optional[TraceCapture] = None
 _compressed_summary_enabled: bool = False
-_test_results_for_compression: list = []  # Per EPIC-TEST-COMPRESS-001
+_holographic_html_dir: Optional[str] = None
 
 
 def pytest_addoption(parser):
@@ -82,11 +81,17 @@ def pytest_addoption(parser):
         default=False,
         help="Output compressed test summary for LLM context (per EPIC-TEST-COMPRESS-001)"
     )
+    group.addoption(
+        "--holographic-html",
+        action="store",
+        default=None,
+        help="Output directory for holographic HTML report (per FEAT-009)"
+    )
 
 
 def pytest_configure(config):
     """Configure BDD evidence collection."""
-    global _collector, _rule_linker, _session_reporting_enabled, _trace_capture_enabled, _compressed_summary_enabled, _test_results_for_compression
+    global _collector, _rule_linker, _holographic_store, _session_reporting_enabled, _trace_capture_enabled, _compressed_summary_enabled, _holographic_html_dir
 
     # Register markers
     config.addinivalue_line(
@@ -102,12 +107,17 @@ def pytest_configure(config):
         "intent(description): High-level test purpose for BDD evidence"
     )
 
+    # Always initialize holographic store (per BUG-014 / TEST-HOLO-01-v1)
+    reset_global_store()
+    _holographic_store = get_global_store()
+
     # Check if BDD evidence is enabled
     try:
         bdd_enabled = config.getoption("--bdd-evidence", default=False)
         session_report = config.getoption("--session-report", default=False)
         trace_capture = config.getoption("--trace-capture", default=False)
         compressed_summary = config.getoption("--compressed-summary", default=False)
+        holographic_html = config.getoption("--holographic-html", default=None)
     except (ValueError, AttributeError):
         return
 
@@ -115,7 +125,7 @@ def pytest_configure(config):
     _session_reporting_enabled = session_report and SESSION_COLLECTOR_AVAILABLE
     _trace_capture_enabled = trace_capture
     _compressed_summary_enabled = compressed_summary
-    _test_results_for_compression.clear()  # Reset for new run
+    _holographic_html_dir = holographic_html
 
     if _session_reporting_enabled:
         print("\n[SESSION-REPORT] Event-based reporting enabled (GAP-TEST-EVIDENCE-002)")
@@ -225,32 +235,36 @@ def pytest_runtest_setup(item):
     )
 
 
+def _detect_category(fspath: str) -> str:
+    """Detect test category from file path."""
+    rel_path = str(fspath)
+    if "/e2e/" in rel_path or "_e2e.py" in rel_path:
+        return "e2e"
+    elif "/integration/" in rel_path:
+        return "integration"
+    return "unit"
+
+
 def pytest_runtest_logreport(report):
     """Called after each test phase (setup, call, teardown)."""
-    global _collector, _rule_linker, _session_reporting_enabled, _trace_capture_enabled, _current_trace_capture, _compressed_summary_enabled, _test_results_for_compression
+    global _collector, _rule_linker, _holographic_store, _session_reporting_enabled, _trace_capture_enabled, _current_trace_capture, _compressed_summary_enabled
 
     # Only process 'call' phase (actual test execution) or setup skip
     evidence = None
     if report.when == "call":
-        # Collect for compression (EPIC-TEST-COMPRESS-001)
-        if _compressed_summary_enabled:
-            # Determine category
-            rel_path = str(report.fspath)
-            if "/e2e/" in rel_path or "_e2e.py" in rel_path:
-                category = "e2e"
-            elif "/integration/" in rel_path:
-                category = "integration"
-            else:
-                category = "unit"
+        # Always push to holographic store (per BUG-014 / TEST-HOLO-01-v1)
+        if _holographic_store is not None:
+            category = _detect_category(report.fspath)
+            name = report.nodeid.split("::")[-1] if "::" in report.nodeid else report.nodeid
+            _holographic_store.push_event(
+                test_id=report.nodeid,
+                name=name,
+                status=report.outcome,
+                category=category,
+                duration_ms=report.duration * 1000 if hasattr(report, 'duration') else 0,
+                error_message=str(report.longrepr)[:200] if report.failed else None,
+            )
 
-            _test_results_for_compression.append({
-                "test_id": report.nodeid,
-                "name": report.nodeid.split("::")[-1] if "::" in report.nodeid else report.nodeid,
-                "category": category,
-                "status": report.outcome,
-                "duration_ms": report.duration * 1000 if hasattr(report, 'duration') else 0,
-                "error": str(report.longrepr)[:200] if report.failed else None,
-            })
         # End trace capture if active
         trace_data = None
         if _trace_capture_enabled and _current_trace_capture:
@@ -280,7 +294,20 @@ def pytest_runtest_logreport(report):
             _report_test_to_session(report, evidence)
 
     elif report.when == "setup" and report.skipped:
-        # Test was skipped during setup
+        # Test was skipped during setup — push to holographic store (BUG-014)
+        if _holographic_store is not None:
+            category = _detect_category(report.fspath)
+            name = report.nodeid.split("::")[-1] if "::" in report.nodeid else report.nodeid
+            skip_reason = str(report.longrepr)[:200] if report.longrepr else "Skipped"
+            _holographic_store.push_event(
+                test_id=report.nodeid,
+                name=name,
+                status="skipped",
+                category=category,
+                duration_ms=0.0,
+                error_message=skip_reason,
+            )
+
         skip_reason = str(report.longrepr) if report.longrepr else "Skipped"
         if _collector and _collector.current_test:
             evidence = _collector.end_test(
@@ -347,15 +374,23 @@ def _report_test_to_session(report, evidence: Optional[EvidenceRecord]) -> None:
 
 def pytest_sessionfinish(session, exitstatus):
     """Called after all tests complete."""
-    global _collector, _rule_linker, _compressed_summary_enabled, _test_results_for_compression
+    global _collector, _rule_linker, _holographic_store, _compressed_summary_enabled, _holographic_html_dir
 
-    # Output compressed summary (EPIC-TEST-COMPRESS-001)
-    if _compressed_summary_enabled and _test_results_for_compression:
-        compressor = SummaryCompressor()
-        compressed = compressor.compress_test_list(_test_results_for_compression)
-        print("\n[COMPRESSED-SUMMARY]")
-        print(compressed.format_compact())
-        print(f"  Compression: {compressed.compression_ratio}")
+    # Output compressed summary from holographic store (BUG-014 / TEST-HOLO-01-v1)
+    if _compressed_summary_enabled and _holographic_store and _holographic_store.count > 0:
+        z1 = _holographic_store.query(zoom=1, format="text")
+        if isinstance(z1, str):
+            print(f"\n[HOLOGRAPHIC-SUMMARY] zoom=1")
+            print(z1)
+        elif isinstance(z1, dict) and "summary" in z1:
+            print(f"\n[HOLOGRAPHIC-SUMMARY] zoom=1")
+            print(z1["summary"])
+
+    # Generate HTML report (per FEAT-009)
+    if _holographic_html_dir and _holographic_store and _holographic_store.count > 0:
+        from tests.evidence.holographic_report import save_html_report
+        path = save_html_report(_holographic_store, output_dir=_holographic_html_dir)
+        print(f"\n[HOLOGRAPHIC-HTML] {path}")
 
     if not _collector:
         return

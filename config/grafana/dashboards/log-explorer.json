@@ -1,0 +1,135 @@
+{
+  "uid": "sarvaja-log-explorer",
+  "title": "Log Explorer",
+  "description": "Loki-powered log stream with method/status/slow/rid filters and error panel (EPIC-PERF-TELEM-V1 Phase 11)",
+  "tags": ["sarvaja", "logs", "loki"],
+  "timezone": "browser",
+  "editable": true,
+  "time": {
+    "from": "now-1h",
+    "to": "now"
+  },
+  "refresh": "10s",
+  "templating": {
+    "list": [
+      {
+        "name": "method",
+        "type": "query",
+        "label": "HTTP Method",
+        "datasource": { "type": "loki", "uid": "loki-datasource" },
+        "query": "{job=\"sarvaja-api\"} | json | line_format \"{{.method}}\" | decolorize",
+        "regex": "",
+        "current": { "text": "All", "value": "$__all" },
+        "includeAll": true,
+        "allValue": ".*",
+        "refresh": 2,
+        "sort": 1,
+        "options": [
+          { "text": "All", "value": "$__all", "selected": true },
+          { "text": "GET", "value": "GET", "selected": false },
+          { "text": "POST", "value": "POST", "selected": false },
+          { "text": "PUT", "value": "PUT", "selected": false },
+          { "text": "DELETE", "value": "DELETE", "selected": false }
+        ],
+        "definition": ""
+      },
+      {
+        "name": "status",
+        "type": "custom",
+        "label": "Status Code",
+        "current": { "text": "All", "value": "$__all" },
+        "includeAll": true,
+        "allValue": ".*",
+        "query": "200,201,400,404,500,502,503",
+        "options": [],
+        "sort": 0
+      },
+      {
+        "name": "slow",
+        "type": "custom",
+        "label": "Slow Only",
+        "current": { "text": "All", "value": "$__all" },
+        "includeAll": true,
+        "allValue": ".*",
+        "query": "true,false",
+        "options": [],
+        "sort": 0
+      },
+      {
+        "name": "rid",
+        "type": "textbox",
+        "label": "Request ID (rid)",
+        "current": { "text": "", "value": "" },
+        "query": ""
+      }
+    ]
+  },
+  "panels": [
+    {
+      "id": 1,
+      "title": "API Access Log Stream",
+      "type": "logs",
+      "gridPos": { "h": 12, "w": 24, "x": 0, "y": 0 },
+      "datasource": { "type": "loki", "uid": "loki-datasource" },
+      "targets": [
+        {
+          "expr": "{job=\"sarvaja-api\",method=~\"$method\",status=~\"$status\",slow=~\"$slow\"} |= \"$rid\"",
+          "refId": "A"
+        }
+      ],
+      "options": {
+        "showTime": true,
+        "showLabels": true,
+        "showCommonLabels": false,
+        "wrapLogMessage": true,
+        "prettifyLogMessage": true,
+        "enableLogDetails": true,
+        "sortOrder": "Descending",
+        "dedupStrategy": "none"
+      }
+    },
+    {
+      "id": 2,
+      "title": "Error Logs (5xx + ERROR)",
+      "type": "logs",
+      "gridPos": { "h": 10, "w": 24, "x": 0, "y": 12 },
+      "datasource": { "type": "loki", "uid": "loki-datasource" },
+      "targets": [
+        {
+          "expr": "{job=\"sarvaja-api\"} |~ \"(ERROR|status\\\":\\s*5[0-9]{2})\"",
+          "refId": "A"
+        }
+      ],
+      "options": {
+        "showTime": true,
+        "showLabels": true,
+        "wrapLogMessage": true,
+        "enableLogDetails": true,
+        "sortOrder": "Descending",
+        "dedupStrategy": "none"
+      }
+    },
+    {
+      "id": 3,
+      "title": "Request Correlation Search",
+      "type": "logs",
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 22 },
+      "datasource": { "type": "loki", "uid": "loki-datasource" },
+      "targets": [
+        {
+          "expr": "{job=\"sarvaja-api\"} |= \"$rid\"",
+          "refId": "A"
+        }
+      ],
+      "options": {
+        "showTime": true,
+        "showLabels": true,
+        "wrapLogMessage": true,
+        "enableLogDetails": true,
+        "sortOrder": "Descending"
+      }
+    }
+  ],
+  "schemaVersion": 39,
+  "version": 1
+}

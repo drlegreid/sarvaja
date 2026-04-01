@@ -1,0 +1,15 @@
+# Grafana dashboard provisioning (EPIC-PERF-TELEM-V1 Phase 11)
+# Loads JSON dashboards from /var/lib/grafana/dashboards/ on startup.
+
+apiVersion: 1
+
+providers:
+  - name: Sarvaja
+    orgId: 1
+    folder: ""
+    type: file
+    disableDeletion: false
+    updateIntervalSeconds: 10
+    options:
+      path: /var/lib/grafana/dashboards
+      foldersFromFilesStructure: false

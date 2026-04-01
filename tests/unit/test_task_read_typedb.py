@@ -25,6 +25,29 @@ def _make_client(query_results=None):
 
     client = MockClient()
     client._execute_query = MagicMock(return_value=query_results or [])
+    client._connected = True
+    client._driver = MagicMock()
+    client.database = "test-db"
+    client._query_count = 0
+    client._total_query_ms = 0.0
+
+    def _concept_to_value(concept):
+        if concept is None:
+            return None
+        if hasattr(concept, "get_value"):
+            try:
+                return concept.get_value()
+            except Exception:
+                pass
+        return str(concept)
+
+    def _record_query_timing(t0, query):
+        import time
+        client._query_count += 1
+        client._total_query_ms += (time.monotonic() - t0) * 1000
+
+    client._concept_to_value = _concept_to_value
+    client._record_query_timing = _record_query_timing
     return client
 
 
@@ -226,24 +249,25 @@ class TestGetAllTasks:
 
 
 class TestBuildTaskFromId:
-    """Tests for _build_task_from_id() method."""
+    """Tests for _build_task_from_id() method.
+
+    EPIC-PERF-TELEM-V1 P2: Updated to mock _fetch_all_entity_attrs
+    and _fetch_task_relations_batch (consolidated query approach).
+    """
 
     def test_not_found(self):
-        client = _make_client([])
+        client = _make_client()
+        client._fetch_all_entity_attrs = MagicMock(return_value=None)
         result = client._build_task_from_id("MISSING")
         assert result is None
 
     def test_minimal_task(self):
         client = _make_client()
-        call_count = [0]
-
-        def side_effect(q):
-            call_count[0] += 1
-            if call_count[0] == 1:
-                return [{"name": "Task", "status": "OPEN", "phase": "P1"}]
-            return []
-
-        client._execute_query = MagicMock(side_effect=side_effect)
+        client._fetch_all_entity_attrs = MagicMock(return_value={
+            "task-id": "T-1", "task-name": "Task",
+            "task-status": "OPEN", "phase": "P1",
+        })
+        client._fetch_task_relations_batch = MagicMock()
         task = client._build_task_from_id("T-1")
         assert task.id == "T-1"
         assert task.name == "Task"
@@ -251,36 +275,30 @@ class TestBuildTaskFromId:
 
     def test_fetches_optional_attrs(self):
         client = _make_client()
-
-        def side_effect(q):
-            if "task-name" in q and "task-status" in q:
-                return [{"name": "Task", "status": "OPEN", "phase": "P1"}]
-            if "task-body" in q:
-                return [{"body": "Detailed body"}]
-            if "agent-id" in q and "task-id" in q and "select" in q.lower():
-                return [{"agent": "code-agent"}]
-            return []
-
-        client._execute_query = MagicMock(side_effect=side_effect)
+        client._fetch_all_entity_attrs = MagicMock(return_value={
+            "task-id": "T-1", "task-name": "Task",
+            "task-status": "OPEN", "phase": "P1",
+            "task-body": "Detailed body",
+            "agent-id": "code-agent",
+        })
+        client._fetch_task_relations_batch = MagicMock()
         task = client._build_task_from_id("T-1")
         assert task.body == "Detailed body"
         assert task.agent_id == "code-agent"
 
     def test_fetches_relationships(self):
         client = _make_client()
+        client._fetch_all_entity_attrs = MagicMock(return_value={
+            "task-id": "T-1", "task-name": "Task",
+            "task-status": "OPEN", "phase": "P1",
+        })
 
-        def side_effect(q):
-            if "task-name" in q and "task-status" in q:
-                return [{"name": "Task", "status": "OPEN", "phase": "P1"}]
-            if "implements-rule" in q:
-                return [{"rid": "R-1"}]
-            if "completed-in" in q:
-                return [{"sid": "S-1"}]
-            if "task-commit" in q:
-                return [{"sha": "abc"}]
-            return []
+        def mock_rels(tid, task):
+            task.linked_rules = ["R-1"]
+            task.linked_sessions = ["S-1"]
+            task.linked_commits = ["abc"]
 
-        client._execute_query = MagicMock(side_effect=side_effect)
+        client._fetch_task_relations_batch = MagicMock(side_effect=mock_rels)
         task = client._build_task_from_id("T-1")
         assert task.linked_rules == ["R-1"]
         assert task.linked_sessions == ["S-1"]

@@ -29,6 +29,7 @@ import logging
 
 from governance.client import get_client
 from governance.middleware import AccessLogMiddleware
+from governance.middleware.prometheus_metrics import PrometheusMetricsMiddleware
 from governance.models import (
     APIStatus,
 )
@@ -43,6 +44,7 @@ from governance.routes.audit import router as audit_router  # RD-DEBUG-AUDIT
 from governance.routes.agents.observability import router as observability_router  # GAP-MONITOR-IPC-001
 from governance.routes.proposals import router as proposals_router  # GOV-BICAM-01-v1: LangGraph workflow
 from governance.routes.infra import router as infra_router  # EPIC-7.1: Container logs
+from governance.routes.infra import metrics_prom_router  # P9: Prometheus /metrics
 from governance.routes.capabilities import router as capabilities_router  # Entity chain: Agent → Rules
 from governance.routes.workspaces import router as workspaces_router  # Entity chain: Project → Workspace
 from governance.routes.ingestion import router as ingestion_router  # P2-10: Event-driven ingestion
@@ -140,6 +142,9 @@ app = FastAPI(
 # Add authentication middleware (GAP-SEC-001)
 app.add_middleware(AuthMiddleware)
 
+# Prometheus metrics (P9) — outermost to capture full request duration
+app.add_middleware(PrometheusMetricsMiddleware)
+
 # Structured access logging (L1)
 app.add_middleware(AccessLogMiddleware)
 
@@ -173,6 +178,7 @@ app.include_router(proposals_router, prefix="/api")  # GOV-BICAM-01-v1: LangGrap
 app.include_router(projects_router, prefix="/api")  # GOV-PROJECT-01-v1: Project hierarchy
 app.include_router(taxonomy_router, prefix="/api")  # META-TAXON-01-v1: Task/rule taxonomy
 app.include_router(infra_router)  # EPIC-7.1: Container logs via podman socket
+app.include_router(metrics_prom_router)  # P9: Prometheus /metrics endpoint
 app.include_router(capabilities_router, prefix="/api")  # Entity chain: Agent → Capabilities (rules)
 app.include_router(workspaces_router, prefix="/api")  # Entity chain: Project → Workspace → Agent
 app.include_router(ingestion_router, prefix="/api")  # P2-10: Event-driven ingestion scheduler

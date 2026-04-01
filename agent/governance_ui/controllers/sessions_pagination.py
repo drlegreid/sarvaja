@@ -7,6 +7,7 @@ Per UI-REFRESH-01-v1: Smart auto-refresh polling.
 """
 
 import asyncio
+import time
 import httpx
 from typing import Any, Callable, Optional
 
@@ -18,6 +19,12 @@ from agent.governance_ui.utils import (
 from agent.governance_ui.views.sessions.timeline import (
     compute_timeline_plotly_data, has_plotly, update_plotly_timeline,
 )
+
+# EPIC-PERF-TELEM-V1 P3: Module-level timeline cache with 30s TTL.
+# Keys: "timestamp" (monotonic), "data" (values/labels), "metrics" (duration/avg).
+# Cleared on filter change. Avoids fetching 200 sessions on every page load.
+_timeline_cache: dict = {}
+_TIMELINE_CACHE_TTL = 30  # seconds
 
 
 def register_sessions_pagination(
@@ -41,13 +48,28 @@ def register_sessions_pagination(
         BUG-UI-SESSIONS-001 fix: Metrics must be computed from ALL sessions,
         not just the current page (which may only have test sessions with 0s
         durations, showing '0h' instead of the real 14000+ hours).
+
+        EPIC-PERF-TELEM-V1 P3: Cache with 30s TTL — avoids fetching 200
+        sessions on every page load/filter change.
         """
+        now = time.monotonic()
+        if (_timeline_cache.get("timestamp")
+                and (now - _timeline_cache["timestamp"]) < _TIMELINE_CACHE_TTL):
+            # Cache hit — apply cached metrics/timeline without API call
+            cached = _timeline_cache
+            state.sessions_metrics_duration = cached["metrics"]["duration"]
+            state.sessions_metrics_avg_tasks = cached["metrics"]["avg_tasks"]
+            state.sessions_timeline_data = cached["data"]["values"]
+            state.sessions_timeline_labels = cached["data"]["labels"]
+            return
+
         try:
             resp = client.get(f"{base_url}/api/sessions", params={"limit": 200, "exclude_test": "true"})
             if resp.status_code == 200:
                 data = resp.json()
                 all_items = data.get("items", data) if isinstance(data, dict) else data
                 # Compute metrics from ALL sessions (not just current page)
+                metrics = compute_session_metrics(all_items)
                 _apply_session_metrics(all_items)
                 tl_values, tl_labels = compute_timeline_data(all_items)
                 state.sessions_timeline_data = tl_values
@@ -55,6 +77,10 @@ def register_sessions_pagination(
                 if has_plotly():
                     plotly_data = compute_timeline_plotly_data(all_items)
                     update_plotly_timeline(plotly_data)
+                # Cache the computed results
+                _timeline_cache["timestamp"] = time.monotonic()
+                _timeline_cache["data"] = {"values": tl_values, "labels": tl_labels}
+                _timeline_cache["metrics"] = metrics
         except Exception as e:
             add_error_trace(state, f"Load timeline/metrics failed: {e}", "/api/sessions")
 
@@ -180,35 +206,42 @@ def register_sessions_pagination(
         load_sessions_page()
 
     # F.1: Reactive filter handlers
+    # EPIC-PERF-TELEM-V1 P3: Invalidate timeline cache on filter changes
     @state.change("sessions_filter_status")
     def _on_filter_status_change(sessions_filter_status, **kwargs):
+        _timeline_cache.clear()
         state.sessions_page = 1
         load_sessions_page()
 
     @state.change("sessions_filter_agent")
     def _on_filter_agent_change(sessions_filter_agent, **kwargs):
+        _timeline_cache.clear()
         state.sessions_page = 1
         load_sessions_page()
 
     @state.change("sessions_date_from")
     def _on_date_from_change(sessions_date_from, **kwargs):
+        _timeline_cache.clear()
         state.sessions_page = 1
         load_sessions_page()
 
     @state.change("sessions_date_to")
     def _on_date_to_change(sessions_date_to, **kwargs):
+        _timeline_cache.clear()
         state.sessions_page = 1
         load_sessions_page()
 
     @state.change("sessions_search_query")
     def _on_search_query_change(sessions_search_query, **kwargs):
         """Server-side search: reset to page 1 and reload."""
+        _timeline_cache.clear()
         state.sessions_page = 1
         load_sessions_page()
 
     @state.change("sessions_exclude_test")
     def _on_exclude_test_change(sessions_exclude_test, **kwargs):
         """BUG-3: Reload when test session visibility toggled."""
+        _timeline_cache.clear()
         state.sessions_page = 1
         load_sessions_page()
 

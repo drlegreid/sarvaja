@@ -174,3 +174,24 @@ def register_task_verify_tools(mcp) -> None:
             # BUG-451-TV-002: Sanitize logger message to match response pattern
             logger.error(f"session_sync_todos failed: {type(e).__name__}", exc_info=True)
             return format_mcp_result({"error": f"session_sync_todos failed: {type(e).__name__}"})
+
+    @mcp.tool()
+    def task_sync_pending() -> str:
+        """
+        Sync memory-only tasks to TypeDB.
+
+        Per SRVJ-BUG-DUAL-WRITE-01 / EPIC-TASK-WORKFLOW-HEAL-01 P4:
+        Retries tasks that failed initial TypeDB persistence (created during
+        TypeDB downtime). Safe to call repeatedly — already-persisted tasks
+        are skipped.
+
+        Returns:
+            JSON with synced/failed/already_persisted counts.
+        """
+        try:
+            from governance.services.tasks import sync_pending_tasks
+            result = sync_pending_tasks()
+            return format_mcp_result(result)
+        except Exception as e:
+            logger.error(f"task_sync_pending failed: {type(e).__name__}", exc_info=True)
+            return format_mcp_result({"error": f"task_sync_pending failed: {type(e).__name__}"})

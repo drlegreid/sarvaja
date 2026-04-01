@@ -1,8 +1,13 @@
-"""Task Linking MCP Tools. Per RULE-012, P11.3, GAP-DATA-002. Created: 2026-01-03."""
+"""Task Linking MCP Tools. Per RULE-012, P11.3, GAP-DATA-002. Created: 2026-01-03.
+Per SRVJ-BUG-ERROR-OBS-01: Structured error responses with entity context.
+Per SRVJ-BUG-LINK-IDEM-01: All write ops route through service layer for
+existence checks, idempotency detection, _tasks_store sync, and audit.
+"""
 
 import logging
 
 from governance.mcp_tools.common import get_typedb_client, format_mcp_result
+from governance.services.link_result import LinkResult
 
 logger = logging.getLogger(__name__)
 
@@ -14,104 +19,81 @@ except ImportError:
     MONITORING_AVAILABLE = False
 
 
+def _link_result_to_mcp(result: LinkResult, relation: str, **extra) -> str:
+    """Convert service-layer LinkResult to MCP response format."""
+    if result.success:
+        if MONITORING_AVAILABLE:
+            log_monitor_event(event_type="link_event", source=f"mcp-task-link",
+                details={**extra, "action": "link", "relation": relation})
+        return format_mcp_result({
+            **extra,
+            "relation": relation,
+            "success": True,
+            "already_existed": result.already_existed,
+            "message": result.reason,
+        })
+    else:
+        resp = {"error": result.reason, **extra, "error_code": result.error_code or "LINK_FAILED"}
+        return format_mcp_result(resp)
+
+
 def register_task_linking_tools(mcp) -> None:
     """Register task linking MCP tools."""
 
     @mcp.tool()
     def task_link_session(task_id: str, session_id: str) -> str:
         """Link task to session (completed-in relation). Per P11.3, GAP-DATA-002."""
-        client = get_typedb_client()
+        # BUG-SESSION-POISON-01: Validate session_id at MCP boundary
+        import re as _re
+        if not session_id or not _re.match(r'^[A-Za-z0-9_\-\.\(\)]{1,200}$', session_id):
+            return format_mcp_result({
+                "error": "Invalid session_id: must match [A-Za-z0-9_-.()], 1-200 chars",
+                "task_id": task_id, "error_code": "VALIDATION",
+            })
         try:
-            if not client.connect():
-                return format_mcp_result({"error": "Failed to connect to TypeDB"})
-
-            success = client.link_task_to_session(task_id, session_id)
-
-            if success:
-                if MONITORING_AVAILABLE:
-                    log_monitor_event(event_type="link_event", source="mcp-task-link-session",
-                        details={"task_id": task_id, "session_id": session_id, "action": "link"})
-                return format_mcp_result({
-                    "task_id": task_id,
-                    "session_id": session_id,
-                    "relation": "completed-in",
-                    "message": f"Successfully linked task {task_id} to session {session_id}"
-                })
-            else:
-                return format_mcp_result({
-                    "error": f"Failed to link task {task_id} to session {session_id}"
-                })
-        # BUG-B185-007 + BUG-366-TL-001: Log full error but return only type name
+            from governance.services.tasks_mutations_linking import link_task_to_session as _svc
+            result = _svc(task_id, session_id, source="mcp")
+            return _link_result_to_mcp(result, "completed-in",
+                                       task_id=task_id, session_id=session_id)
         except Exception as e:
-            # BUG-459-TL-001: Sanitize logger message — exc_info=True already captures full stack
             logger.error(f"task_link_session failed: {type(e).__name__}", exc_info=True)
-            return format_mcp_result({"error": f"task_link_session failed: {type(e).__name__}"})
-        finally:
-            client.close()
+            return format_mcp_result({
+                "error": f"task_link_session failed: {type(e).__name__}",
+                "task_id": task_id, "session_id": session_id,
+                "error_code": "EXCEPTION",
+            })
 
     @mcp.tool()
     def task_link_rule(task_id: str, rule_id: str) -> str:
         """Link task to rule (implements-rule relation). Per P11.3, GAP-DATA-002."""
-        client = get_typedb_client()
         try:
-            if not client.connect():
-                return format_mcp_result({"error": "Failed to connect to TypeDB"})
-
-            success = client.link_task_to_rule(task_id, rule_id)
-
-            if success:
-                if MONITORING_AVAILABLE:
-                    log_monitor_event(event_type="link_event", source="mcp-task-link-rule",
-                        details={"task_id": task_id, "rule_id": rule_id, "action": "link"})
-                return format_mcp_result({
-                    "task_id": task_id,
-                    "rule_id": rule_id,
-                    "relation": "implements-rule",
-                    "message": f"Successfully linked task {task_id} to rule {rule_id}"
-                })
-            else:
-                return format_mcp_result({
-                    "error": f"Failed to link task {task_id} to rule {rule_id}"
-                })
-        # BUG-B185-007 + BUG-366-TL-001: Log full error but return only type name
+            from governance.services.tasks_mutations_linking import link_task_to_rule as _svc
+            result = _svc(task_id, rule_id, source="mcp")
+            return _link_result_to_mcp(result, "implements-rule",
+                                       task_id=task_id, rule_id=rule_id)
         except Exception as e:
-            # BUG-459-TL-002: Sanitize logger message — exc_info=True already captures full stack
             logger.error(f"task_link_rule failed: {type(e).__name__}", exc_info=True)
-            return format_mcp_result({"error": f"task_link_rule failed: {type(e).__name__}"})
-        finally:
-            client.close()
+            return format_mcp_result({
+                "error": f"task_link_rule failed: {type(e).__name__}",
+                "task_id": task_id, "rule_id": rule_id,
+                "error_code": "EXCEPTION",
+            })
 
     @mcp.tool()
     def task_link_evidence(task_id: str, evidence_path: str) -> str:
         """Link evidence to task (evidence-supports relation). Per P11.3, GAP-DATA-002."""
-        client = get_typedb_client()
         try:
-            if not client.connect():
-                return format_mcp_result({"error": "Failed to connect to TypeDB"})
-
-            success = client.link_evidence_to_task(task_id, evidence_path)
-
-            if success:
-                if MONITORING_AVAILABLE:
-                    log_monitor_event(event_type="link_event", source="mcp-task-link-evidence",
-                        details={"task_id": task_id, "evidence_path": evidence_path, "action": "link"})
-                return format_mcp_result({
-                    "task_id": task_id,
-                    "evidence_path": evidence_path,
-                    "relation": "evidence-supports",
-                    "message": f"Successfully linked evidence {evidence_path} to task {task_id}"
-                })
-            else:
-                return format_mcp_result({
-                    "error": f"Failed to link evidence {evidence_path} to task {task_id}"
-                })
-        # BUG-B185-007 + BUG-366-TL-001: Log full error but return only type name
+            from governance.services.tasks_mutations_linking import link_task_to_evidence as _svc
+            result = _svc(task_id, evidence_path, source="mcp")
+            return _link_result_to_mcp(result, "evidence-supports",
+                                       task_id=task_id, evidence_path=evidence_path)
         except Exception as e:
-            # BUG-459-TL-003: Sanitize logger message — exc_info=True already captures full stack
             logger.error(f"task_link_evidence failed: {type(e).__name__}", exc_info=True)
-            return format_mcp_result({"error": f"task_link_evidence failed: {type(e).__name__}"})
-        finally:
-            client.close()
+            return format_mcp_result({
+                "error": f"task_link_evidence failed: {type(e).__name__}",
+                "task_id": task_id, "evidence_path": evidence_path,
+                "error_code": "EXCEPTION",
+            })
 
     @mcp.tool()
     def task_get_evidence(task_id: str) -> str:
@@ -132,9 +114,7 @@ def register_task_linking_tools(mcp) -> None:
                 "evidence_files": evidence_files,
                 "count": len(evidence_files)
             })
-        # BUG-B185-007 + BUG-366-TL-001: Log full error but return only type name
         except Exception as e:
-            # BUG-459-TL-004: Sanitize logger message — exc_info=True already captures full stack
             logger.error(f"task_get_evidence failed: {type(e).__name__}", exc_info=True)
             return format_mcp_result({"error": f"task_get_evidence failed: {type(e).__name__}"})
         finally:
@@ -146,35 +126,22 @@ def register_task_linking_tools(mcp) -> None:
         # BUG-381-LNK-001: Validate commit_sha format to prevent injection and garbage data
         import re as _re
         if not commit_sha or not _re.fullmatch(r'[0-9a-fA-F]{7,40}', commit_sha):
-            return format_mcp_result({"error": "commit_sha must be a 7-40 character hex string"})
-        client = get_typedb_client()
+            return format_mcp_result({
+                "error": "commit_sha must be a 7-40 character hex string",
+                "task_id": task_id, "error_code": "VALIDATION",
+            })
         try:
-            if not client.connect():
-                return format_mcp_result({"error": "Failed to connect to TypeDB"})
-
-            success = client.link_task_to_commit(task_id, commit_sha, commit_message)
-
-            if success:
-                if MONITORING_AVAILABLE:
-                    log_monitor_event(event_type="link_event", source="mcp-task-link-commit",
-                        details={"task_id": task_id, "commit_sha": commit_sha, "action": "link"})
-                return format_mcp_result({
-                    "task_id": task_id,
-                    "commit_sha": commit_sha,
-                    "relation": "task-commit",
-                    "message": f"Successfully linked task {task_id} to commit {commit_sha}"
-                })
-            else:
-                return format_mcp_result({
-                    "error": f"Failed to link task {task_id} to commit {commit_sha}"
-                })
-        # BUG-B185-007 + BUG-366-TL-001: Log full error but return only type name
+            from governance.services.tasks_mutations_linking import link_task_to_commit as _svc
+            result = _svc(task_id, commit_sha, commit_message, source="mcp")
+            return _link_result_to_mcp(result, "task-commit",
+                                       task_id=task_id, commit_sha=commit_sha)
         except Exception as e:
-            # BUG-459-TL-005: Sanitize logger message — exc_info=True already captures full stack
             logger.error(f"task_link_commit failed: {type(e).__name__}", exc_info=True)
-            return format_mcp_result({"error": f"task_link_commit failed: {type(e).__name__}"})
-        finally:
-            client.close()
+            return format_mcp_result({
+                "error": f"task_link_commit failed: {type(e).__name__}",
+                "task_id": task_id, "commit_sha": commit_sha,
+                "error_code": "EXCEPTION",
+            })
 
     @mcp.tool()
     def task_get_commits(task_id: str) -> str:
@@ -195,9 +162,7 @@ def register_task_linking_tools(mcp) -> None:
                 "commits": commits,
                 "count": len(commits)
             })
-        # BUG-B185-007 + BUG-366-TL-001: Log full error but return only type name
         except Exception as e:
-            # BUG-459-TL-006: Sanitize logger message — exc_info=True already captures full stack
             logger.error(f"task_get_commits failed: {type(e).__name__}", exc_info=True)
             return format_mcp_result({"error": f"task_get_commits failed: {type(e).__name__}"})
         finally:
@@ -206,34 +171,18 @@ def register_task_linking_tools(mcp) -> None:
     @mcp.tool()
     def task_link_document(task_id: str, document_path: str) -> str:
         """Link a document to a task (document-references-task relation). Task document management."""
-        client = get_typedb_client()
         try:
-            if not client.connect():
-                return format_mcp_result({"error": "Failed to connect to TypeDB"})
-
-            success = client.link_task_to_document(task_id, document_path)
-
-            if success:
-                if MONITORING_AVAILABLE:
-                    log_monitor_event(event_type="link_event", source="mcp-task-link-document",
-                        details={"task_id": task_id, "document_path": document_path, "action": "link"})
-                return format_mcp_result({
-                    "task_id": task_id,
-                    "document_path": document_path,
-                    "relation": "document-references-task",
-                    "message": f"Successfully linked document {document_path} to task {task_id}"
-                })
-            else:
-                return format_mcp_result({
-                    "error": f"Failed to link document {document_path} to task {task_id}"
-                })
-        # BUG-366-TL-001: Log full error but return only type name
+            from governance.services.tasks_mutations_linking import link_task_to_document as _svc
+            result = _svc(task_id, document_path, source="mcp")
+            return _link_result_to_mcp(result, "document-references-task",
+                                       task_id=task_id, document_path=document_path)
         except Exception as e:
-            # BUG-459-TL-007: Sanitize logger message — exc_info=True already captures full stack
             logger.error(f"task_link_document failed: {type(e).__name__}", exc_info=True)
-            return format_mcp_result({"error": f"task_link_document failed: {type(e).__name__}"})
-        finally:
-            client.close()
+            return format_mcp_result({
+                "error": f"task_link_document failed: {type(e).__name__}",
+                "task_id": task_id, "document_path": document_path,
+                "error_code": "EXCEPTION",
+            })
 
     @mcp.tool()
     def task_get_documents(task_id: str) -> str:
@@ -254,9 +203,7 @@ def register_task_linking_tools(mcp) -> None:
                 "documents": documents,
                 "count": len(documents)
             })
-        # BUG-366-TL-001: Log full error but return only type name
         except Exception as e:
-            # BUG-459-TL-008: Sanitize logger message — exc_info=True already captures full stack
             logger.error(f"task_get_documents failed: {type(e).__name__}", exc_info=True)
             return format_mcp_result({"error": f"task_get_documents failed: {type(e).__name__}"})
         finally:
@@ -301,9 +248,7 @@ def register_task_linking_tools(mcp) -> None:
                 return format_mcp_result({
                     "error": f"Failed to update details for task {task_id}"
                 })
-        # BUG-B185-007 + BUG-366-TL-001: Log full error but return only type name
         except Exception as e:
-            # BUG-459-TL-009: Sanitize logger message — exc_info=True already captures full stack
             logger.error(f"task_update_details failed: {type(e).__name__}", exc_info=True)
             return format_mcp_result({"error": f"task_update_details failed: {type(e).__name__}"})
         finally:
@@ -331,9 +276,7 @@ def register_task_linking_tools(mcp) -> None:
                 "task_id": task_id,
                 **details
             })
-        # BUG-B185-007 + BUG-366-TL-001: Log full error but return only type name
         except Exception as e:
-            # BUG-459-TL-010: Sanitize logger message — exc_info=True already captures full stack
             logger.error(f"task_get_details failed: {type(e).__name__}", exc_info=True)
             return format_mcp_result({"error": f"task_get_details failed: {type(e).__name__}"})
         finally:

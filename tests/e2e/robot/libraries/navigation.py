@@ -34,7 +34,7 @@ _TAB_EXPECTATIONS = {
     "chat": ("testid", "chat-view"),
     "rules": ("text", "Governance Rules"),
     "agents": ("text", "Registered Agents"),
-    "tasks": ("testid", "tasks-list"),
+    "tasks": ("testid", "tasks-table"),
     "sessions": ("text", "Session Evidence"),
     "executive": ("text", "Executive"),
     "decisions": ("text", "Decisions"),

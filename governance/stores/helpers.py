@@ -114,6 +114,8 @@ def task_to_response(task: TypeDBTask):
         layer=getattr(task, 'layer', None) if isinstance(getattr(task, 'layer', None), str) else None,
         concern=getattr(task, 'concern', None) if isinstance(getattr(task, 'concern', None), str) else None,
         method=getattr(task, 'method', None) if isinstance(getattr(task, 'method', None), str) else None,
+        # SRVJ-BUG-DUAL-WRITE-01: TypeDB entity = persisted by definition
+        persistence_status="persisted",
     )
 
 

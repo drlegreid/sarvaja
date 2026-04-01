@@ -115,6 +115,17 @@ async def create_task(task: TaskCreate):
         raise HTTPException(status_code=500, detail=f"Failed to create task: {type(e).__name__}")
 
 
+@router.post("/tasks/sync")
+async def sync_pending_tasks():
+    """Sync memory-only tasks to TypeDB. Per SRVJ-BUG-DUAL-WRITE-01."""
+    try:
+        result = task_service.sync_pending_tasks()
+        return result
+    except Exception as e:
+        logger.error(f"sync_pending_tasks failed: {type(e).__name__}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Sync failed: {type(e).__name__}")
+
+
 @router.get("/tasks/{task_id}", response_model=TaskResponse)
 async def get_task(task_id: str):
     """Get a specific task by ID. Per GAP-EXPLOR-API-001."""
@@ -199,9 +210,12 @@ async def link_task_to_rule(task_id: str, rule_id: str):
     """Link task to rule via implements-rule relation. Per GAP-LINK-002."""
     # BUG-402-SVC-001: Wrap service call in try/except
     try:
-        if not task_service.link_task_to_rule(task_id, rule_id, source="rest-api"):
-            raise HTTPException(status_code=400, detail="Failed to create link (task not found or TypeDB unavailable)")
-        return {"task_id": task_id, "rule_id": rule_id, "linked": True}
+        result = task_service.link_task_to_rule(task_id, rule_id, source="rest-api")
+        if not result:
+            detail = result.reason if hasattr(result, 'reason') else "Failed to create link"
+            raise HTTPException(status_code=400, detail=detail)
+        return {"task_id": task_id, "rule_id": rule_id, "linked": True,
+                "success": True, "already_existed": getattr(result, 'already_existed', False)}
     except HTTPException:
         raise
     except Exception as e:
@@ -215,9 +229,12 @@ async def link_task_to_session(task_id: str, session_id: str):
     """Link task to session via completed-in relation. Per GAP-LINK-001."""
     # BUG-402-SVC-002: Wrap service call in try/except
     try:
-        if not task_service.link_task_to_session(task_id, session_id, source="rest-api"):
-            raise HTTPException(status_code=400, detail="Failed to create link (task not found or TypeDB unavailable)")
-        return {"task_id": task_id, "session_id": session_id, "linked": True}
+        result = task_service.link_task_to_session(task_id, session_id, source="rest-api")
+        if not result:
+            detail = result.reason if hasattr(result, 'reason') else "Failed to create link"
+            raise HTTPException(status_code=400, detail=detail)
+        return {"task_id": task_id, "session_id": session_id, "linked": True,
+                "success": True, "already_existed": getattr(result, 'already_existed', False)}
     except HTTPException:
         raise
     except Exception as e:
@@ -257,9 +274,12 @@ async def link_task_to_document(task_id: str, body: dict):
         raise HTTPException(status_code=422, detail="document_path must be a string under 500 chars")
     # BUG-402-SVC-004: Wrap service call in try/except
     try:
-        if not task_service.link_task_to_document(task_id, document_path, source="rest-api"):
-            raise HTTPException(status_code=400, detail="Failed to link document (task not found or TypeDB unavailable)")
-        return {"task_id": task_id, "document_path": document_path, "linked": True}
+        result = task_service.link_task_to_document(task_id, document_path, source="rest-api")
+        if not result:
+            detail = result.reason if hasattr(result, 'reason') else "Failed to link document"
+            raise HTTPException(status_code=400, detail=detail)
+        return {"task_id": task_id, "document_path": document_path, "linked": True,
+                "success": True, "already_existed": getattr(result, 'already_existed', False)}
     except HTTPException:
         raise
     except Exception as e:

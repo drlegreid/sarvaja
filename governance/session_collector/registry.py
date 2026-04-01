@@ -154,62 +154,90 @@ def list_all_active_sessions() -> List[Dict[str, Any]]:
         Deduplicated list of dicts with session_id, source, status.
         Priority on collision: memory > typedb > cc_jsonl.
     """
+    return list_all_sessions(status="ACTIVE")
+
+
+def list_all_sessions(
+    status: Optional[str] = None,
+    limit: int = 50,
+) -> List[Dict[str, Any]]:
+    """List sessions from all sources with optional status filter.
+
+    Per SRVJ-BUG-SESSION-INGEST-01: Extends list_all_active_sessions()
+    to support querying COMPLETED sessions (CC-ingested sessions).
+
+    Args:
+        status: Filter by status ("ACTIVE", "COMPLETED", None for all).
+        limit: Max sessions to return (default 50).
+
+    Returns:
+        Deduplicated list of dicts with session_id, source, status.
+        Priority on collision: memory > typedb > cc_jsonl.
+    """
     seen: Dict[str, Dict[str, Any]] = {}
 
     # Source 1: In-memory (MCP-created sessions in current process)
-    for sid in _active_sessions:
-        seen[sid] = {"session_id": sid, "source": "memory", "status": "ACTIVE"}
+    if status is None or status == "ACTIVE":
+        for sid in _active_sessions:
+            seen[sid] = {"session_id": sid, "source": "memory", "status": "ACTIVE"}
 
-    # Source 2: TypeDB sessions with status ACTIVE
+    # Source 2: TypeDB sessions
     try:
         from governance.stores import get_all_sessions_from_typedb
         for s in get_all_sessions_from_typedb(allow_fallback=True):
-            if s.get("status") == "ACTIVE":
-                sid = s.get("session_id")
-                if sid and sid not in seen:
-                    seen[sid] = {
-                        "session_id": sid,
-                        "source": "typedb",
-                        "status": "ACTIVE",
-                    }
+            s_status = s.get("status")
+            if status and s_status != status:
+                continue
+            sid = s.get("session_id")
+            if sid and sid not in seen:
+                seen[sid] = {
+                    "session_id": sid,
+                    "source": "typedb",
+                    "status": s_status or "UNKNOWN",
+                }
+            if len(seen) >= limit:
+                return list(seen.values())
     except Exception as e:
-        logger.debug("TypeDB active session lookup failed: %s", e)
+        logger.debug("TypeDB session lookup failed: %s", e)
 
-    # Source 3: CC JSONL files modified within threshold
-    try:
-        from governance.services.cc_session_scanner import (
-            DEFAULT_CC_DIR,
-            scan_jsonl_metadata,
-            build_session_id,
-            derive_project_slug,
-        )
-        now = time.time()
-        if DEFAULT_CC_DIR.is_dir():
-            for project_dir in DEFAULT_CC_DIR.iterdir():
-                if not project_dir.is_dir():
-                    continue
-                slug = derive_project_slug(project_dir)
-                for jsonl_file in project_dir.glob("*.jsonl"):
-                    try:
-                        mtime = jsonl_file.stat().st_mtime
-                    except OSError:
+    # Source 3: CC JSONL files (active only — no status in JSONL metadata)
+    if status is None or status == "ACTIVE":
+        try:
+            from governance.services.cc_session_scanner import (
+                DEFAULT_CC_DIR,
+                scan_jsonl_metadata,
+                build_session_id,
+                derive_project_slug,
+            )
+            now = time.time()
+            if DEFAULT_CC_DIR.is_dir():
+                for project_dir in DEFAULT_CC_DIR.iterdir():
+                    if not project_dir.is_dir():
                         continue
-                    if (now - mtime) > _CC_ACTIVE_THRESHOLD_SECS:
-                        continue
-                    meta = scan_jsonl_metadata(jsonl_file)
-                    if not meta:
-                        continue
-                    sid = build_session_id(meta, slug)
-                    if sid not in seen:
-                        seen[sid] = {
-                            "session_id": sid,
-                            "source": "cc_jsonl",
-                            "status": "ACTIVE",
-                            "cc_session_uuid": meta.get("session_uuid"),
-                            "file_path": str(jsonl_file),
-                        }
-    except Exception as e:
-        logger.debug("CC JSONL active session scan failed: %s", e)
+                    slug = derive_project_slug(project_dir)
+                    for jsonl_file in project_dir.glob("*.jsonl"):
+                        try:
+                            mtime = jsonl_file.stat().st_mtime
+                        except OSError:
+                            continue
+                        if (now - mtime) > _CC_ACTIVE_THRESHOLD_SECS:
+                            continue
+                        meta = scan_jsonl_metadata(jsonl_file)
+                        if not meta:
+                            continue
+                        sid = build_session_id(meta, slug)
+                        if sid not in seen:
+                            seen[sid] = {
+                                "session_id": sid,
+                                "source": "cc_jsonl",
+                                "status": "ACTIVE",
+                                "cc_session_uuid": meta.get("session_uuid"),
+                                "file_path": str(jsonl_file),
+                            }
+                        if len(seen) >= limit:
+                            return list(seen.values())
+        except Exception as e:
+            logger.debug("CC JSONL active session scan failed: %s", e)
 
     return list(seen.values())
 

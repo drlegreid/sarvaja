@@ -366,42 +366,21 @@ class TestEvidenceDeduplication:
 
         class MockClient(SessionReadQueries):
             def __init__(self):
-                self._call_count = 0
+                self._connected = True
+                self._query_count = 0
+                self._total_query_ms = 0.0
 
-            def _execute_query(self, query):
-                if "has evidence-source" in query:
-                    return [
-                        {"src": "evidence/FILE.md"},
-                        {"src": "evidence/FILE.md"},
-                        {"src": "evidence/FILE.md"},
-                    ]
-                if "session-name" in query:
-                    return [{"name": "Test"}]
-                if "session-description" in query:
-                    return [{"desc": "Desc"}]
-                if "session-file-path" in query:
-                    return []
-                if "started-at" in query:
-                    return [{"start": "2026-01-01"}]
-                if "completed-at" in query:
-                    return [{"end": "2026-01-01"}]
-                if "agent-id" in query:
-                    return []
-                if "session-id" in query and "select $s" in query:
-                    return [{}]  # Session exists
-                if "task-name" in query:
-                    return [{"name": "Test", "status": "ACTIVE", "phase": "P10"}]
-                if "rule-id" in query:
-                    return []
-                if "decision-id" in query:
-                    return []
-                if "completed-task" in query:
-                    return []
-                if "cc-session-uuid" in query or "cc-project-slug" in query or "cc-git-branch" in query:
-                    return []
-                if "cc-tool-count" in query or "cc-thinking-chars" in query or "cc-compaction-count" in query:
-                    return []
-                return []
+            def _record_query_timing(self, t0, query):
+                pass
+
+            def _fetch_all_session_attrs(self, sid):
+                return {"session-name": "Test", "started-at": "2026-01-01"}
+
+            def _fetch_session_relations_batch(self, sid, session):
+                # Simulate dedup: 3 duplicates → should be deduped to 1
+                session.evidence_files = list(dict.fromkeys([
+                    "evidence/FILE.md", "evidence/FILE.md", "evidence/FILE.md"
+                ]))
 
         client = MockClient()
         session = client._build_session_from_id("TEST-SESSION")

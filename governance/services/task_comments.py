@@ -9,6 +9,8 @@ import uuid
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
 
+from governance.stores.audit import record_audit
+
 logger = logging.getLogger(__name__)
 
 # In-memory store: task_id -> list of comment dicts
@@ -78,16 +80,69 @@ def add_comment(
         except Exception as e:
             logger.debug("TypeDB comment persist failed: %s", e)
 
+    record_audit(
+        "COMMENT", "task", task_id,
+        actor_id=author,
+        metadata={"action": "add", "comment_id": comment["comment_id"]},
+    )
     logger.info("Comment %s added to %s by %s", comment["comment_id"], task_id, author)
     return comment
 
 
-def list_comments(task_id: str) -> List[Dict[str, Any]]:
-    """List all comments for a task, chronologically (oldest first).
+def list_comments(
+    task_id: str,
+    offset: int = 0,
+    limit: int = None,
+) -> List[Dict[str, Any]]:
+    """List comments for a task, chronologically (oldest first).
 
-    Reads from in-memory store (TypeDB is write-through backup).
+    Per SRVJ-FEAT-AUDIT-TRAIL-01 P8 (GAP 2): TypeDB read-through + merge.
+    MCP servers (local processes) write comments to TypeDB but not to the
+    container's in-memory _comments_store. This function merges both sources,
+    deduplicating by comment_id (TypeDB wins on conflict).
+
+    Fallback: if TypeDB is unavailable, returns in-memory only.
+
+    Args:
+        task_id: Task identifier.
+        offset: Skip first N comments (default 0, negative treated as 0).
+        limit: Max comments to return (default None = all).
     """
-    return list(_comments_store.get(task_id, []))
+    memory_comments = _comments_store.get(task_id, [])
+
+    # Try TypeDB read-through
+    typedb_comments = []
+    client = _get_typedb_client()
+    if client:
+        try:
+            typedb_comments = client.get_comments_for_task(task_id)
+        except Exception as e:
+            logger.debug("TypeDB comment read failed for %s: %s", task_id, e)
+
+    # Merge: TypeDB wins on conflict (dedup by comment_id)
+    if typedb_comments:
+        merged = {}
+        # TypeDB first (authoritative)
+        for c in typedb_comments:
+            cid = c.get("comment_id")
+            if cid:
+                merged[cid] = c
+        # In-memory: add only if not already in TypeDB (pending sync)
+        for c in memory_comments:
+            cid = c.get("comment_id")
+            if cid and cid not in merged:
+                merged[cid] = c
+        # Sort chronologically (oldest first)
+        comments = sorted(merged.values(), key=lambda c: c.get("created_at") or "")
+    else:
+        comments = list(memory_comments)
+
+    # Pagination
+    offset = max(0, offset)
+    if limit is not None:
+        limit = max(0, limit)
+        return comments[offset:offset + limit]
+    return comments[offset:]
 
 
 def delete_comment(task_id: str, comment_id: str) -> bool:
@@ -114,6 +169,11 @@ def delete_comment(task_id: str, comment_id: str) -> bool:
         except Exception as e:
             logger.debug("TypeDB comment delete failed: %s", e)
 
+    record_audit(
+        "COMMENT", "task", task_id,
+        actor_id="system",
+        metadata={"action": "delete", "comment_id": comment_id},
+    )
     logger.info("Comment %s deleted from %s", comment_id, task_id)
     return True
 

@@ -472,15 +472,14 @@ class TestServiceBoundaryNormalization:
     def test_create_task_normalizes_closed_to_done(self, mock_client):
         from governance.services.tasks import create_task
         from governance.stores import _tasks_store
-        with patch("governance.services.tasks._get_active_session_id", return_value=None):
-            with patch("governance.services.tasks.record_audit"):
-                with patch("governance.services.tasks.log_event"):
-                    result = create_task(
-                        task_id="SRVJ-CHORE-900",
-                        description="test > normalize > closed > done",
-                        status="CLOSED",
-                        task_type="chore",
-                    )
+        with patch("governance.services.tasks.record_audit"):
+            with patch("governance.services.tasks.log_event"):
+                result = create_task(
+                    task_id="SRVJ-CHORE-900",
+                    description="test > normalize > closed > done",
+                    status="CLOSED",
+                    task_type="chore",
+                )
         assert result["status"] == "DONE"
         _tasks_store.pop("SRVJ-CHORE-900", None)
 

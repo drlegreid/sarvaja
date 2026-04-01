@@ -156,12 +156,11 @@ class TestSummaryField:
 
     @patch("governance.services.tasks.get_typedb_client")
     @patch("governance.services.tasks.get_all_tasks_from_typedb")
-    @patch("governance.services.tasks._get_active_session_id", return_value=None)
     @patch("governance.services.tasks.record_audit")
     @patch("governance.services.tasks._monitor")
     @patch("governance.services.tasks.log_event")
     def test_create_task_auto_generates_summary(
-        self, mock_log, mock_mon, mock_audit, mock_sid, mock_get_all, mock_client
+        self, mock_log, mock_mon, mock_audit, mock_get_all, mock_client
     ):
         """Scenario: Auto-generate summary from description if not provided."""
         mock_client.return_value = None  # Force fallback path
@@ -177,12 +176,11 @@ class TestSummaryField:
 
     @patch("governance.services.tasks.get_typedb_client")
     @patch("governance.services.tasks.get_all_tasks_from_typedb")
-    @patch("governance.services.tasks._get_active_session_id", return_value=None)
     @patch("governance.services.tasks.record_audit")
     @patch("governance.services.tasks._monitor")
     @patch("governance.services.tasks.log_event")
     def test_create_task_preserves_explicit_summary(
-        self, mock_log, mock_mon, mock_audit, mock_sid, mock_get_all, mock_client
+        self, mock_log, mock_mon, mock_audit, mock_get_all, mock_client
     ):
         """Scenario: Explicit summary is preserved, not overwritten."""
         mock_client.return_value = None
@@ -329,12 +327,11 @@ class TestPriorityFieldCleanup:
         assert priority is None  # URGENT is not a valid priority
 
     @patch("governance.services.tasks.get_typedb_client")
-    @patch("governance.services.tasks._get_active_session_id", return_value=None)
     @patch("governance.services.tasks.record_audit")
     @patch("governance.services.tasks._monitor")
     @patch("governance.services.tasks.log_event")
     def test_create_task_extracts_priority_from_description(
-        self, mock_log, mock_mon, mock_audit, mock_sid, mock_client
+        self, mock_log, mock_mon, mock_audit, mock_client
     ):
         """Scenario: create_task auto-extracts [Priority: X] from description."""
         mock_client.return_value = None  # Fallback path
@@ -348,12 +345,11 @@ class TestPriorityFieldCleanup:
         assert "[Priority:" not in result["description"]
 
     @patch("governance.services.tasks.get_typedb_client")
-    @patch("governance.services.tasks._get_active_session_id", return_value=None)
     @patch("governance.services.tasks.record_audit")
     @patch("governance.services.tasks._monitor")
     @patch("governance.services.tasks.log_event")
     def test_create_task_explicit_priority_overrides_tag(
-        self, mock_log, mock_mon, mock_audit, mock_sid, mock_client
+        self, mock_log, mock_mon, mock_audit, mock_client
     ):
         """Scenario: Explicit priority param overrides [Priority: X] tag."""
         mock_client.return_value = None

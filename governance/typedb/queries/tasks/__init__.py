@@ -21,6 +21,7 @@ from .crud import TaskCRUDOperations
 from .linking import TaskLinkingOperations
 from .relationships import TaskRelationshipOperations
 from .details import TaskDetailOperations
+from .comments import TaskCommentQueries  # SRVJ-FEAT-AUDIT-TRAIL-01 P8
 
 
 class TaskQueries(
@@ -28,7 +29,8 @@ class TaskQueries(
     TaskCRUDOperations,
     TaskLinkingOperations,
     TaskRelationshipOperations,
-    TaskDetailOperations
+    TaskDetailOperations,
+    TaskCommentQueries,
 ):
     """
     Combined task query and CRUD operations for TypeDB.

@@ -108,6 +108,10 @@ class TaskResponse(BaseModel):
     concern: Optional[str] = None
     method: Optional[str] = None
     warnings: Optional[List[str]] = None  # P16: duplicate detection warnings
+    # SRVJ-BUG-DUAL-WRITE-01: Track persistence state for sync
+    persistence_status: Optional[str] = None  # "persisted" | "memory_only"
+    # SRVJ-BUG-DONE-GATE-01 (P5): Indicates if DONE gate validated against TypeDB or cache
+    validation_source: Optional[str] = None  # "typedb" | "cache" — only set on DONE transitions
 
 class TaskDetailsUpdate(BaseModel):
     """Request model for updating task detail sections (TASK-TECH-01-v1)."""

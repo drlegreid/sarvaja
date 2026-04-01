@@ -61,33 +61,13 @@ class TestIsBackfilledSession:
         assert result is True
 
 
-class TestGetActiveSessionId:
-    """Verify _get_active_session_id() finds most recent active session."""
+class TestGetActiveSessionIdRemoved:
+    """P9: _get_active_session_id removed (BUG-SESSION-POISON-01)."""
 
-    @patch("governance.services.tasks._sessions_store", {
-        "S-1": {"status": "ACTIVE", "start_time": "2026-02-08T10:00:00"},
-        "S-2": {"status": "ACTIVE", "start_time": "2026-02-08T14:00:00"},
-        "S-3": {"status": "COMPLETED", "start_time": "2026-02-08T15:00:00"},
-    })
-    def test_returns_most_recent_active(self):
-        """Should return the most recent ACTIVE session by start_time."""
-        from governance.services.tasks import _get_active_session_id
-        assert _get_active_session_id() == "S-2"
-
-    @patch("governance.services.tasks._sessions_store", {
-        "S-1": {"status": "COMPLETED"},
-        "S-2": {"status": "COMPLETED"},
-    })
-    def test_no_active_sessions(self):
-        """Should return None when no active sessions exist."""
-        from governance.services.tasks import _get_active_session_id
-        assert _get_active_session_id() is None
-
-    @patch("governance.services.tasks._sessions_store", {})
-    def test_empty_store(self):
-        """Should return None when session store is empty."""
-        from governance.services.tasks import _get_active_session_id
-        assert _get_active_session_id() is None
+    def test_function_removed(self):
+        """_get_active_session_id no longer exists in tasks module."""
+        from governance.services import tasks
+        assert not hasattr(tasks, '_get_active_session_id')
 
 
 class TestTaskSessionAutoLinking:
@@ -95,19 +75,17 @@ class TestTaskSessionAutoLinking:
 
     @patch("governance.services.tasks.record_audit")
     @patch("governance.services.tasks.get_typedb_client", return_value=None)
-    @patch("governance.services.tasks._get_active_session_id", return_value="SESSION-ACTIVE-1")
     @patch("governance.services.tasks._tasks_store", {})
-    def test_auto_links_when_no_sessions_provided(self, mock_sid, mock_client, mock_audit):
-        """Task created without linked_sessions gets auto-linked to active session."""
+    def test_no_auto_link_without_explicit_sessions(self, mock_client, mock_audit):
+        """P9: Task created without linked_sessions gets empty list (no auto-link)."""
         from governance.services.tasks import create_task
-        result = create_task("TEST-AUTO-1", description="Test auto-link")
-        assert result["linked_sessions"] == ["SESSION-ACTIVE-1"]
+        result = create_task("TEST-AUTO-1", description="Test no auto-link")
+        assert result["linked_sessions"] == []
 
     @patch("governance.services.tasks.record_audit")
     @patch("governance.services.tasks.get_typedb_client", return_value=None)
-    @patch("governance.services.tasks._get_active_session_id", return_value="SESSION-ACTIVE-1")
     @patch("governance.services.tasks._tasks_store", {})
-    def test_preserves_explicit_sessions(self, mock_sid, mock_client, mock_audit):
+    def test_preserves_explicit_sessions(self, mock_client, mock_audit):
         """Task created WITH linked_sessions keeps the explicit list."""
         from governance.services.tasks import create_task
         result = create_task(
@@ -118,12 +96,11 @@ class TestTaskSessionAutoLinking:
 
     @patch("governance.services.tasks.record_audit")
     @patch("governance.services.tasks.get_typedb_client", return_value=None)
-    @patch("governance.services.tasks._get_active_session_id", return_value=None)
     @patch("governance.services.tasks._tasks_store", {})
-    def test_no_active_session_no_link(self, mock_sid, mock_client, mock_audit):
-        """When no active session exists, linked_sessions stays None."""
+    def test_no_sessions_returns_empty_list(self, mock_client, mock_audit):
+        """P9: Without explicit sessions, linked_sessions is empty list."""
         from governance.services.tasks import create_task
-        result = create_task("TEST-NOLINK-1", description="No active session")
+        result = create_task("TEST-NOLINK-1", description="No session provided")
         assert result["linked_sessions"] == []
 
 

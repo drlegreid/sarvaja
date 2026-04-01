@@ -185,7 +185,7 @@ class TestSessionList:
             result = json.loads(mcp_tools["session_list"]())
         assert "error" in result
 
-    @patch("governance.session_collector.registry.list_all_active_sessions")
+    @patch("governance.session_collector.registry.list_all_sessions")
     def test_lists_sessions(self, mock_merge, mcp_tools):
         mock_merge.return_value = [
             {"session_id": "SESSION-A", "source": "memory"},
@@ -193,15 +193,15 @@ class TestSessionList:
         ]
         result = json.loads(mcp_tools["session_list"]())
         assert result["count"] == 2
-        assert result["active_sessions"] == ["SESSION-A", "SESSION-B"]
+        assert result["sessions"] == ["SESSION-A", "SESSION-B"]
 
-    @patch("governance.session_collector.registry.list_all_active_sessions")
+    @patch("governance.session_collector.registry.list_all_sessions")
     def test_empty_list(self, mock_merge, mcp_tools):
         mock_merge.return_value = []
         result = json.loads(mcp_tools["session_list"]())
         assert result["count"] == 0
 
-    @patch("governance.session_collector.registry.list_all_active_sessions")
+    @patch("governance.session_collector.registry.list_all_sessions")
     def test_merged_sources(self, mock_merge, mcp_tools):
         """FEAT-009: session_list returns merged sources."""
         mock_merge.return_value = [
@@ -210,21 +210,21 @@ class TestSessionList:
         ]
         result = json.loads(mcp_tools["session_list"]())
         assert result["count"] == 2
-        assert "SESSION-MEM" in result["active_sessions"]
-        assert "SESSION-TDB" in result["active_sessions"]
+        assert "SESSION-MEM" in result["sessions"]
+        assert "SESSION-TDB" in result["sessions"]
         assert "sources" in result
 
-    @patch("governance.session_collector.registry.list_all_active_sessions")
+    @patch("governance.session_collector.registry.list_all_sessions")
     def test_backward_compat_string_list(self, mock_merge, mcp_tools):
-        """FEAT-009: active_sessions is still a list of strings."""
+        """FEAT-009: sessions is a list of strings."""
         mock_merge.return_value = [
             {"session_id": "SESSION-A", "source": "cc_jsonl"},
         ]
         result = json.loads(mcp_tools["session_list"]())
-        assert isinstance(result["active_sessions"], list)
-        assert all(isinstance(s, str) for s in result["active_sessions"])
+        assert isinstance(result["sessions"], list)
+        assert all(isinstance(s, str) for s in result["sessions"])
 
-    @patch("governance.session_collector.registry.list_all_active_sessions",
+    @patch("governance.session_collector.registry.list_all_sessions",
            side_effect=Exception("boom"))
     @patch("governance.mcp_tools.sessions_core.list_active_sessions")
     def test_fallback_on_merge_error(self, mock_list, mock_merge, mcp_tools):
@@ -232,7 +232,35 @@ class TestSessionList:
         mock_list.return_value = ["SESSION-FALLBACK"]
         result = json.loads(mcp_tools["session_list"]())
         assert result["count"] == 1
-        assert result["active_sessions"] == ["SESSION-FALLBACK"]
+        # Fallback uses "sessions" key (status=None default)
+        assert result["sessions"] == ["SESSION-FALLBACK"]
+
+    @patch("governance.session_collector.registry.list_all_sessions")
+    def test_status_completed_filter(self, mock_merge, mcp_tools):
+        """SRVJ-BUG-SESSION-INGEST-01: COMPLETED filter shows CC sessions."""
+        mock_merge.return_value = [
+            {"session_id": "SESSION-2026-03-29-CC-ABCDEF", "source": "typedb"},
+        ]
+        result = json.loads(mcp_tools["session_list"](status="COMPLETED"))
+        mock_merge.assert_called_once_with(status="COMPLETED", limit=50)
+        assert result["count"] == 1
+        assert result["completed_sessions"] == ["SESSION-2026-03-29-CC-ABCDEF"]
+
+    @patch("governance.session_collector.registry.list_all_sessions")
+    def test_status_active_key(self, mock_merge, mcp_tools):
+        """SRVJ-BUG-SESSION-INGEST-01: ACTIVE filter uses active_sessions key."""
+        mock_merge.return_value = [
+            {"session_id": "SESSION-ACTIVE-1", "source": "memory"},
+        ]
+        result = json.loads(mcp_tools["session_list"](status="ACTIVE"))
+        assert result["active_sessions"] == ["SESSION-ACTIVE-1"]
+
+    @patch("governance.session_collector.registry.list_all_sessions")
+    def test_limit_param(self, mock_merge, mcp_tools):
+        """SRVJ-BUG-SESSION-INGEST-01: limit param is forwarded."""
+        mock_merge.return_value = []
+        mcp_tools["session_list"](limit=10)
+        mock_merge.assert_called_once_with(status=None, limit=10)
 
 
 # ---------------------------------------------------------------------------

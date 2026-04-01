@@ -1,0 +1,20 @@
+Metadata-Version: 2.4
+Name: sarvaja-platform
+Version: 1.3.1
+Summary: Sarvaja Multi-Agent Governance Platform
+Requires-Python: >=3.12
+Requires-Dist: fastapi>=0.127.0
+Requires-Dist: uvicorn>=0.38.0
+Requires-Dist: pydantic>=2.0.0
+Requires-Dist: agno>=2.3.0
+Requires-Dist: anthropic>=0.75.0
+Requires-Dist: mcp>=1.24.0
+Requires-Dist: litellm>=1.50.0
+Requires-Dist: chromadb>=0.5.0
+Requires-Dist: sqlalchemy>=2.0.0
+Requires-Dist: httpx>=0.28.0
+Requires-Dist: pyyaml>=6.0.0
+Requires-Dist: trame>=3.0.0
+Requires-Dist: trame-vuetify>=2.0.0
+Requires-Dist: trame-client>=3.0.0
+Requires-Dist: pytest>=8.0.0

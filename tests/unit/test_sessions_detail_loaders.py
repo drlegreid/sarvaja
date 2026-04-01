@@ -28,10 +28,15 @@ class TestLoaderRegistration:
     """Loader factory returns all expected functions."""
 
     def test_returns_dict_with_all_keys(self, loaders):
+        # P4: load_* (state-mutating) + fetch_* (pure HTTP) + build_timeline_data
         expected = {"load_tool_calls", "load_thinking_items", "build_timeline",
                     "load_evidence_rendered", "load_evidence", "load_tasks",
                     "load_transcript", "load_transcript_entry",
-                    "load_validation"}
+                    "load_validation",
+                    "fetch_tool_calls", "fetch_thinking_items",
+                    "fetch_evidence_rendered", "fetch_evidence",
+                    "fetch_tasks", "fetch_transcript", "fetch_validation",
+                    "build_timeline_data"}
         assert set(loaders.keys()) == expected
 
     def test_all_values_callable(self, loaders):

@@ -41,13 +41,12 @@ class TestAliasNormalizationOnCreate:
     """Test that create_task normalizes deprecated task_type values."""
 
     @patch("governance.services.tasks.get_typedb_client")
-    @patch("governance.services.tasks._get_active_session_id", return_value=None)
     @patch("governance.services.tasks.record_audit")
     @patch("governance.services.tasks._monitor")
     @patch("governance.services.tasks.log_event")
     @patch("governance.services.tasks.task_to_response")
     def test_gap_normalized_to_bug_on_create(
-        self, mock_resp, mock_log, mock_mon, mock_audit, mock_session, mock_client
+        self, mock_resp, mock_log, mock_mon, mock_audit, mock_client
     ):
         """task_type='gap' should be normalized to 'bug' before reaching TypeDB."""
         from governance.services.tasks import create_task
@@ -76,13 +75,12 @@ class TestAliasNormalizationOnCreate:
             (call_kwargs[1].get("task_type") == "bug" if len(call_kwargs) > 1 else False)
 
     @patch("governance.services.tasks.get_typedb_client")
-    @patch("governance.services.tasks._get_active_session_id", return_value=None)
     @patch("governance.services.tasks.record_audit")
     @patch("governance.services.tasks._monitor")
     @patch("governance.services.tasks.log_event")
     @patch("governance.services.tasks.task_to_response")
     def test_story_normalized_to_feature_on_create(
-        self, mock_resp, mock_log, mock_mon, mock_audit, mock_session, mock_client
+        self, mock_resp, mock_log, mock_mon, mock_audit, mock_client
     ):
         from governance.services.tasks import create_task
 
@@ -109,13 +107,12 @@ class TestAliasNormalizationOnCreate:
             (call_kwargs[1].get("task_type") == "feature" if len(call_kwargs) > 1 else False)
 
     @patch("governance.services.tasks.get_typedb_client")
-    @patch("governance.services.tasks._get_active_session_id", return_value=None)
     @patch("governance.services.tasks.record_audit")
     @patch("governance.services.tasks._monitor")
     @patch("governance.services.tasks.log_event")
     @patch("governance.services.tasks.task_to_response")
     def test_canonical_type_unchanged_on_create(
-        self, mock_resp, mock_log, mock_mon, mock_audit, mock_session, mock_client
+        self, mock_resp, mock_log, mock_mon, mock_audit, mock_client
     ):
         """Canonical types should pass through without normalization."""
         from governance.services.tasks import create_task

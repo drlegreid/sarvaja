@@ -1,7 +1,60 @@
 """TypeDB Session Read Queries. Per RULE-032. Created: 2026-01-04."""
 
+import time
 from typing import List, Optional
 from ...entities import Session
+
+
+# EPIC-PERF-TELEM-V1 P3: Map TypeDB attribute names → Session dataclass fields
+_SESSION_ATTR_MAP = {
+    "session-name": "name",
+    "session-description": "description",
+    "session-file-path": "file_path",
+    "started-at": "started_at",
+    "completed-at": "completed_at",
+    "agent-id": "agent_id",
+    "cc-session-uuid": "cc_session_uuid",
+    "cc-project-slug": "cc_project_slug",
+    "cc-git-branch": "cc_git_branch",
+    "cc-external-name": "cc_external_name",
+}
+
+# CC integer attributes need int coercion
+_SESSION_INT_ATTRS = {
+    "cc-tool-count": "cc_tool_count",
+    "cc-thinking-chars": "cc_thinking_chars",
+    "cc-compaction-count": "cc_compaction_count",
+}
+
+# EPIC-PERF-TELEM-V1 P3: Relation query templates for batch fetch
+# (query_template, var_name, session_attr, mode: "list"|"dedup"|"count")
+_SESSION_RELATION_QUERIES = [
+    (
+        'match $s isa work-session, has session-id "{sid}"; '
+        '(applying-session: $s, applied-rule: $r) isa session-applied-rule; '
+        '$r has rule-id $rid; select $rid;',
+        "rid", "linked_rules_applied", "list",
+    ),
+    (
+        'match $s isa work-session, has session-id "{sid}"; '
+        '(deciding-session: $s, session-made-decision: $d) isa session-decision; '
+        '$d has decision-id $did; select $did;',
+        "did", "linked_decisions", "list",
+    ),
+    (
+        'match $s isa work-session, has session-id "{sid}"; '
+        '(evidence-session: $s, session-evidence: $e) isa has-evidence; '
+        '$e has evidence-source $src; select $src;',
+        "src", "evidence_files", "dedup",
+    ),
+    (
+        'match $s isa work-session, has session-id "{sid}"; '
+        '(completed-task: $t, hosting-session: $s) isa completed-in; '
+        'select $t;',
+        "t", "tasks_completed", "count",
+    ),
+]
+
 
 class SessionReadQueries:
     """Session read query operations for TypeDB. Mixin pattern for TypeDBClient."""
@@ -164,97 +217,144 @@ class SessionReadQueries:
         except Exception:
             pass
 
+    # ── EPIC-PERF-TELEM-V1 P3: Consolidated query methods ──────────
+
+    def _get_concept_type_label(self, concept) -> Optional[str]:
+        """Extract attribute type label from a TypeDB attribute concept."""
+        try:
+            type_obj = concept.get_type()
+            label = type_obj.get_label()
+            return label.name if hasattr(label, "name") else str(label)
+        except Exception:
+            return None
+
+    def _fetch_all_session_attrs(self, escaped_sid: str) -> Optional[dict]:
+        """Fetch ALL attributes of a session in one TypeDB query.
+
+        Returns {type_label: value} or None if session not found.
+        Replaces 13 individual queries (6 scalar + 7 CC attrs).
+        """
+        query = f'match $s isa work-session, has session-id "{escaped_sid}"; $s has $a; select $a;'
+
+        if not self._connected:
+            return None
+
+        from typedb.driver import TransactionType
+
+        attr_map = {}
+        t0 = time.monotonic()
+
+        try:
+            with self._driver.transaction(self.database, TransactionType.READ) as tx:
+                iterator = tx.query(query).resolve()
+                if iterator is None:
+                    self._record_query_timing(t0, query)
+                    return None
+
+                for result in iterator:
+                    concept = result.get("a")
+                    if concept is None:
+                        continue
+                    type_label = self._get_concept_type_label(concept)
+                    value = self._concept_to_value(concept)
+                    if type_label and value is not None:
+                        attr_map[type_label] = value
+        except Exception:
+            self._record_query_timing(t0, query)
+            return None
+
+        self._record_query_timing(t0, query)
+        return attr_map if attr_map else None
+
+    def _fetch_session_relations_batch(self, escaped_sid: str, session) -> None:
+        """Fetch all 4 relation types in a single TypeDB transaction.
+
+        Replaces 4 individual relation queries with 1 transaction.
+        Handles dedup for evidence_files and count for tasks_completed.
+        """
+        if not self._connected:
+            return
+
+        from typedb.driver import TransactionType
+
+        t0 = time.monotonic()
+
+        try:
+            with self._driver.transaction(self.database, TransactionType.READ) as tx:
+                for query_tpl, var_name, session_attr, mode in _SESSION_RELATION_QUERIES:
+                    try:
+                        query = query_tpl.format(sid=escaped_sid)
+                        iterator = tx.query(query).resolve()
+                        values = []
+                        if iterator:
+                            for result in iterator:
+                                concept = result.get(var_name)
+                                val = self._concept_to_value(concept) if concept else None
+                                if val is not None:
+                                    values.append(val)
+                        if mode == "list":
+                            setattr(session, session_attr, values)
+                        elif mode == "dedup":
+                            setattr(session, session_attr,
+                                    list(dict.fromkeys(values)))
+                        elif mode == "count":
+                            session.tasks_completed = len(values)
+                    except Exception:
+                        if mode in ("list", "dedup"):
+                            setattr(session, session_attr, [])
+        except Exception:
+            pass
+
+        self._record_query_timing(t0, "batch-session-relations")
+
     def _build_session_from_id(self, session_id: str) -> Optional[Session]:
-        """Build a full Session object from TypeDB by ID."""
+        """Build a full Session object from TypeDB by ID.
+
+        EPIC-PERF-TELEM-V1 P3: Consolidated from 19 queries to 2 operations.
+        - Op 1: All attributes via $s has $a (replaces 1 existence + 13 attr queries)
+        - Op 2: All relations in 1 transaction (replaces 4 relation queries)
+        """
         # BUG-310-READ-001: Backslash-first escape order (was quote-only)
         sid = session_id.replace('\\', '\\\\').replace('"', '\\"')
+
+        # Op 1: All attributes in one query
+        attrs = self._fetch_all_session_attrs(sid)
+        if not attrs:
+            return None
+
         session = Session(id=session_id)
-        name_results = self._execute_query(f'match $s isa work-session, has session-id "{sid}", has session-name $name; select $name;')
-        if name_results:
-            session.name = name_results[0].get("name")
-        desc_results = self._execute_query(f'match $s isa work-session, has session-id "{sid}", has session-description $desc; select $desc;')
-        if desc_results:
-            session.description = desc_results[0].get("desc")
-        path_results = self._execute_query(f'match $s isa work-session, has session-id "{sid}", has session-file-path $path; select $path;')
-        if path_results:
-            session.file_path = path_results[0].get("path")
-        start_results = self._execute_query(f'match $s isa work-session, has session-id "{sid}", has started-at $start; select $start;')
-        if start_results:
-            session.started_at = start_results[0].get("start")
-        end_results = self._execute_query(f'match $s isa work-session, has session-id "{sid}", has completed-at $end; select $end;')
-        if end_results:
-            session.completed_at = end_results[0].get("end")
+
+        # Map string attributes from consolidated result
+        for typedb_attr, session_field in _SESSION_ATTR_MAP.items():
+            val = attrs.get(typedb_attr)
+            if val is not None:
+                setattr(session, session_field, val)
+
+        # Map integer attributes with coercion
+        for typedb_attr, session_field in _SESSION_INT_ATTRS.items():
+            val = attrs.get(typedb_attr)
+            if val is not None:
+                try:
+                    setattr(session, session_field, int(val))
+                except (ValueError, TypeError):
+                    pass
+
+        # BUG-SESSIONS-ONGOING-001: Infer status from completed-at
+        if session.completed_at:
             session.status = "COMPLETED"
+        elif session.started_at:
+            session.status = "ACTIVE"
         else:
-            # BUG-SESSIONS-ONGOING-001: Don't blindly default to ACTIVE.
-            # Service/merge layer will check _sessions_store for real status.
-            session.status = "ACTIVE" if session.started_at else "UNKNOWN"
-        agent_results = self._execute_query(f'match $s isa work-session, has session-id "{sid}", has agent-id $agent; select $agent;')
-        if agent_results:
-            session.agent_id = agent_results[0].get("agent")
-        # Claude Code session attributes (SESSION-CC-01-v1)
-        for attr, field in [("cc-session-uuid", "cc_session_uuid"), ("cc-project-slug", "cc_project_slug"), ("cc-git-branch", "cc_git_branch"), ("cc-external-name", "cc_external_name")]:
-            try:
-                r = self._execute_query(f'match $s isa work-session, has session-id "{sid}", has {attr} $v; select $v;')
-                if r:
-                    setattr(session, field, r[0].get("v"))
-            except Exception:
-                pass
-        for attr, field in [("cc-tool-count", "cc_tool_count"), ("cc-thinking-chars", "cc_thinking_chars"), ("cc-compaction-count", "cc_compaction_count")]:
-            try:
-                r = self._execute_query(f'match $s isa work-session, has session-id "{sid}", has {attr} $v; select $v;')
-                if r:
-                    val = r[0].get("v")
-                    setattr(session, field, int(val) if val is not None else None)
-            except Exception:
-                pass
-        rules_query = f"""
-            match
-                $s isa work-session, has session-id "{sid}";
-                (applying-session: $s, applied-rule: $r) isa session-applied-rule;
-                $r has rule-id $rid;
-            select $rid;
-        """
-        rules_results = self._execute_query(rules_query)
-        if rules_results:
-            session.linked_rules_applied = [r.get("rid") for r in rules_results]
-        decisions_query = f"""
-            match
-                $s isa work-session, has session-id "{sid}";
-                (deciding-session: $s, session-made-decision: $d) isa session-decision;
-                $d has decision-id $did;
-            select $did;
-        """
-        decisions_results = self._execute_query(decisions_query)
-        if decisions_results:
-            session.linked_decisions = [r.get("did") for r in decisions_results]
-        evidence_query = f"""
-            match
-                $s isa work-session, has session-id "{sid}";
-                (evidence-session: $s, session-evidence: $e) isa has-evidence;
-                $e has evidence-source $src;
-            select $src;
-        """
-        evidence_results = self._execute_query(evidence_query)
-        if evidence_results:
-            session.evidence_files = list(dict.fromkeys(r.get("src") for r in evidence_results if r.get("src")))
-        tasks_query = f"""
-            match
-                $s isa work-session, has session-id "{sid}";
-                (completed-task: $t, hosting-session: $s) isa completed-in;
-            select $t;
-        """
-        tasks_results = self._execute_query(tasks_query)
-        session.tasks_completed = len(tasks_results)
+            session.status = "UNKNOWN"
+
+        # Op 2: All relations in one transaction
+        self._fetch_session_relations_batch(sid, session)
 
         return session
 
     def get_session(self, session_id: str) -> Optional[Session]:
         """Get a specific session by ID with all attributes."""
-        # BUG-310-READ-001: Backslash-first escape order (was quote-only)
-        sid = session_id.replace('\\', '\\\\').replace('"', '\\"')
-        results = self._execute_query(f'match $s isa work-session, has session-id "{sid}"; select $s;')
-        return self._build_session_from_id(session_id) if results else None
+        return self._build_session_from_id(session_id)
 
     def get_tasks_for_session(self, session_id: str) -> list[dict]:
         """Get all tasks linked to a session via completed-in relation."""

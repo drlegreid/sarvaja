@@ -171,10 +171,10 @@ class TestSelectSessionCallsValidation:
         assert "session_validation_data = None" in source
 
     def test_select_session_calls_load_validation(self):
-        """select_session calls loaders['load_validation']."""
+        """select_session calls loaders['fetch_validation'] (P4: parallel)."""
         from agent.governance_ui.controllers import sessions
         source = inspect.getsource(sessions)
-        assert 'loaders["load_validation"]' in source
+        assert 'loaders["fetch_validation"]' in source
 
 
 def _get_loaders(state):

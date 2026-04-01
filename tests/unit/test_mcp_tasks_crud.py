@@ -204,7 +204,7 @@ class TestTaskUpdate:
             task_id="T-1", status="DONE", description=None,
             phase=None, priority=None, task_type=None,
             workspace_id=None, summary=None, agent_id=None,
-            resolution_notes=None,
+            evidence=None, resolution_notes=None,
             layer=None, concern=None, method=None,
             source="mcp",
         )
@@ -238,29 +238,27 @@ class TestTaskDelete:
 
     @patch(f"{_MOD}.log_monitor_event")
     @patch(f"{_MOD}.format_mcp_result", side_effect=_json_fmt)
-    @patch(f"{_MOD}.typedb_client")
-    def test_successful_delete(self, mock_ctx, mock_fmt, mock_log):
+    @patch("governance.services.tasks_mutations.delete_task")
+    def test_successful_delete(self, mock_svc_delete, mock_fmt, mock_log):
         tools = _register_tools()
-        client = MagicMock()
-        client.delete_task.return_value = True
-        mock_ctx.return_value.__enter__ = MagicMock(return_value=client)
-        mock_ctx.return_value.__exit__ = MagicMock(return_value=False)
+        # SRVJ-BUG-DELETE-GHOST-01: Now routes through service layer
+        mock_svc_delete.return_value = True
 
         # BUG-357-TDL-001: task_delete now requires confirm=True
         result = json.loads(tools["task_delete"](task_id="T-1", confirm=True))
         assert result["deleted"] is True
+        mock_svc_delete.assert_called_once_with("T-1", source="mcp")
 
     @patch(f"{_MOD}.format_mcp_result", side_effect=_json_fmt)
-    @patch(f"{_MOD}.typedb_client")
-    def test_delete_failure(self, mock_ctx, mock_fmt):
+    @patch("governance.services.tasks_mutations.delete_task")
+    def test_delete_not_found(self, mock_svc_delete, mock_fmt):
+        """SRVJ-BUG-DELETE-GHOST-01: service returns False → not found error."""
         tools = _register_tools()
-        client = MagicMock()
-        client.delete_task.return_value = False
-        mock_ctx.return_value.__enter__ = MagicMock(return_value=client)
-        mock_ctx.return_value.__exit__ = MagicMock(return_value=False)
+        mock_svc_delete.return_value = False
 
-        result = json.loads(tools["task_delete"](task_id="T-1"))
+        result = json.loads(tools["task_delete"](task_id="T-1", confirm=True))
         assert "error" in result
+        assert "not found" in result["error"]
 
 
 # ── tasks_list ───────────────────────────────────────────

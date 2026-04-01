@@ -1,0 +1,25 @@
+# Grafana data source provisioning (EPIC-PERF-TELEM-V1 Phase 11)
+# Auto-provisions Prometheus + Loki on first startup.
+
+apiVersion: 1
+
+datasources:
+  - name: Prometheus
+    uid: prometheus-datasource
+    type: prometheus
+    access: proxy
+    url: http://prometheus:9090
+    isDefault: true
+    editable: false
+    jsonData:
+      httpMethod: POST
+      timeInterval: "15s"
+
+  - name: Loki
+    uid: loki-datasource
+    type: loki
+    access: proxy
+    url: http://loki:3100
+    editable: false
+    jsonData:
+      maxLines: 1000

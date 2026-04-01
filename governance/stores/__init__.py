@@ -75,6 +75,7 @@ from .audit import (
     generate_correlation_id,
     record_audit,
     query_audit_trail,
+    query_audit_archive,
     get_audit_summary,
 )
 

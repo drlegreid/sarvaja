@@ -75,9 +75,8 @@ class TestRefreshData:
            return_value="10m")
     @patch("agent.governance_ui.controllers.data_loaders_refresh.format_timestamps_in_list",
            side_effect=lambda items, _: items)
-    @patch("agent.governance_ui.controllers.data_loaders_refresh.add_api_trace")
     @patch("httpx.Client")
-    def test_success_sets_all_state(self, MockClient, mock_trace,
+    def test_success_sets_all_state(self, MockClient,
                                      mock_fmt, mock_dur, mock_metrics,
                                      mock_tl):
         mc = MagicMock()
@@ -98,9 +97,8 @@ class TestRefreshData:
         assert state.status_message == "Data refreshed from API"
         infra["load_infra_status"].assert_called_once()
 
-    @patch("agent.governance_ui.controllers.data_loaders_refresh.add_api_trace")
     @patch("httpx.Client")
-    def test_rules_dict_with_items(self, MockClient, mock_trace):
+    def test_rules_dict_with_items(self, MockClient):
         mc = MagicMock()
         mc.get.side_effect = [
             _mock_response(200, {"items": [{"rule_id": "R-1"}]}),
@@ -118,11 +116,10 @@ class TestRefreshData:
         assert state.rules == [{"rule_id": "R-1", "linked_tasks_count": 0,
                                  "linked_sessions_count": 0}]
 
-    @patch("agent.governance_ui.controllers.data_loaders_refresh.add_api_trace")
     @patch("agent.governance_ui.controllers.data_loaders_refresh.format_timestamps_in_list",
            side_effect=lambda items, _: items)
     @patch("httpx.Client")
-    def test_tasks_dict_with_items_and_pagination(self, MockClient, mock_fmt, mock_trace):
+    def test_tasks_dict_with_items_and_pagination(self, MockClient, mock_fmt):
         mc = MagicMock()
         pagination = {"total": 50, "offset": 0, "limit": 20}
         mc.get.side_effect = [

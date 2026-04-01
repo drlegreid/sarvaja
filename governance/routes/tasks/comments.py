@@ -21,13 +21,24 @@ router = APIRouter()
 
 
 @router.get("/tasks/{task_id}/comments")
-async def get_task_comments(task_id: str):
-    """Get all comments for a task (chronological order)."""
-    comments = list_comments(task_id)
+async def get_task_comments(
+    task_id: str,
+    offset: int = 0,
+    limit: int = None,
+):
+    """Get comments for a task (chronological order).
+
+    Per SRVJ-FEAT-AUDIT-TRAIL-01 P7: Supports pagination via offset/limit.
+    """
+    comments = list_comments(task_id, offset=offset, limit=limit)
+    # Total is full count (before pagination) for UI paging controls
+    all_count = len(list_comments(task_id))
     return {
         "task_id": task_id,
         "comments": comments,
-        "total": len(comments),
+        "total": all_count,
+        "offset": offset,
+        "limit": limit,
     }
 
 

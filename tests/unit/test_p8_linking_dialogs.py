@@ -360,9 +360,8 @@ class TestFeat013AutoAssignWorkspace:
     """FEAT-013: task_create auto-assigns DEFAULT_WORKSPACE_ID."""
 
     @patch("governance.services.tasks.get_typedb_client")
-    @patch("governance.services.tasks._get_active_session_id", return_value=None)
     @patch("governance.services.tasks.task_to_response")
-    def test_create_task_assigns_default_workspace(self, mock_resp, mock_sid, mock_client):
+    def test_create_task_assigns_default_workspace(self, mock_resp, mock_client):
         from governance.services.tasks import create_task
         mock_cl = MagicMock()
         mock_cl.get_task.return_value = None  # Task doesn't exist
@@ -381,9 +380,8 @@ class TestFeat013AutoAssignWorkspace:
         assert call_kwargs.kwargs.get("workspace_id") == "WS-9147535A"
 
     @patch("governance.services.tasks.get_typedb_client")
-    @patch("governance.services.tasks._get_active_session_id", return_value=None)
     @patch("governance.services.tasks.task_to_response")
-    def test_create_task_keeps_explicit_workspace(self, mock_resp, mock_sid, mock_client):
+    def test_create_task_keeps_explicit_workspace(self, mock_resp, mock_client):
         from governance.services.tasks import create_task
         mock_cl = MagicMock()
         mock_cl.get_task.return_value = None

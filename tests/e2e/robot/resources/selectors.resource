@@ -38,12 +38,12 @@ ${TOOLBAR_HEALTH_CHIP}          [data-testid='toolbar-health-chip']
 
 # ── Rules view ──
 ${RULES_TABLE}                  [data-testid='rules-table']
-${RULES_SEARCH}                 [data-testid='rules-search']
+${RULES_SEARCH}                 [data-testid='rules-search'] input
 ${RULES_ADD_BTN}                text=Add Rule
 
 # ── Tasks view ──
 ${TASKS_TABLE}                  [data-testid='tasks-table']
-${TASKS_SEARCH}                 [data-testid='tasks-search']
+${TASKS_SEARCH}                 [data-testid='tasks-search'] input
 ${TASKS_ADD_BTN}                text=Add Task
 ${TASK_DETAIL}                  [data-testid='task-detail']
 ${TASK_EDIT_BTN}                [data-testid='task-detail-edit-btn']
@@ -58,11 +58,11 @@ ${TASK_SESSION_CHIP}            [data-testid='task-session-chip']
 ${TASK_LINK_SESSION_BTN}        [data-testid='task-link-session-btn']
 ${TASK_LINK_DOCUMENT_BTN}       [data-testid='task-attach-doc-btn']
 ${LINK_SESSION_DIALOG}          [data-testid='link-session-dialog']
-${LINK_SESSION_SEARCH}          [data-testid='link-session-search']
+${LINK_SESSION_SEARCH}          [data-testid='link-session-search'] input
 ${LINK_SESSION_ITEM}            [data-testid='link-session-item']
 ${LINK_SESSION_CLOSE_BTN}       [data-testid='link-session-close-btn']
 ${LINK_DOCUMENT_DIALOG}         [data-testid='link-document-dialog']
-${LINK_DOCUMENT_SEARCH}         [data-testid='link-document-search']
+${LINK_DOCUMENT_SEARCH}         [data-testid='link-document-search'] input
 ${LINK_DOCUMENT_ITEM}           [data-testid='link-document-item']
 ${LINK_DOCUMENT_SUBMIT_BTN}     [data-testid='link-document-submit-btn']
 ${LINK_DOCUMENT_CANCEL_BTN}     [data-testid='link-document-cancel-btn']
@@ -72,7 +72,7 @@ ${NAV_BACK_BTN}                 text=Back
 
 # ── Sessions view ──
 ${SESSIONS_TABLE}               [data-testid='sessions-table']
-${SESSIONS_SEARCH}              [data-testid='sessions-search']
+${SESSIONS_SEARCH}              [data-testid='sessions-search'] input
 ${SESSIONS_ADD_BTN}             [data-testid='sessions-add-btn']
 ${SESSION_DETAIL}               [data-testid='session-detail']
 ${SESSION_BACK_BTN}             [data-testid='session-detail-back-btn']

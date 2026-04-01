@@ -54,7 +54,6 @@ class TestStatusNormalization:
 
         with patch("governance.services.tasks.get_typedb_client", return_value=mock_client), \
              patch("governance.services.tasks._tasks_store", {}), \
-             patch("governance.services.tasks._sessions_store", {}), \
              patch("governance.services.tasks.record_audit"), \
              patch("governance.services.tasks.log_event"), \
              patch("governance.services.tasks._monitor"):

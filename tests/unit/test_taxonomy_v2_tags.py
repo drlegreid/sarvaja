@@ -183,13 +183,12 @@ class TestFallbackStoreRoundTrip:
     """Test layer/concern/method survive fallback store round-trip."""
 
     @patch("governance.services.tasks.get_typedb_client", return_value=None)
-    @patch("governance.services.tasks._get_active_session_id", return_value=None)
     @patch("governance.services.tasks.record_audit")
     @patch("governance.services.tasks._monitor")
     @patch("governance.services.tasks.log_event")
     @patch("governance.services.tasks._tasks_store", {})
     def test_create_stores_tags_in_fallback(
-        self, mock_log, mock_mon, mock_audit, mock_session, mock_client
+        self, mock_log, mock_mon, mock_audit, mock_client
     ):
         from governance.services.tasks import create_task, _tasks_store
 

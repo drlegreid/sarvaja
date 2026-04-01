@@ -160,6 +160,9 @@ class TestCreateTask:
             form_task_id="T-NEW", form_task_description="New task",
             form_task_phase="P10", form_task_agent="code-agent",
             is_loading=False, tasks_per_page=20, tasks_page=1,
+            form_task_body="", form_task_priority=None,
+            form_task_type=None, form_task_layer=None,
+            form_task_concern=None, form_task_method=None,
         )
         ctrl = _make_ctrl()
         create_resp = MagicMock(status_code=201)

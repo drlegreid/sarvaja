@@ -6,14 +6,11 @@ Full data refresh and traced GET helper for the dashboard.
 Per DOC-SIZE-01-v1: Extracted from data_loaders.py.
 """
 
-import time
 import httpx
 from typing import Any
 
-from agent.governance_ui.trace_bar.transforms import (
-    add_api_trace,
-    add_error_trace,
-)
+from agent.governance_ui.trace_bar.transforms import add_error_trace
+from agent.governance_ui.controllers.traced_http import traced_get
 from agent.governance_ui.utils import (
     format_timestamps_in_list,
     compute_session_duration,
@@ -41,30 +38,8 @@ def register_refresh_controllers(
     """
 
     def _traced_get(client: httpx.Client, endpoint: str) -> tuple:
-        """Make a traced GET request. Returns (response, duration_ms)."""
-        start = time.time()
-        try:
-            response = client.get(f"{api_base_url}{endpoint}")
-            duration_ms = int((time.time() - start) * 1000)
-
-            response_body = None
-            try:
-                response_body = response.json()
-            except Exception:
-                text = response.text[:500] if response.text else None
-                if text:
-                    response_body = {"_raw_text": text}
-
-            add_api_trace(
-                state, endpoint, "GET", response.status_code, duration_ms,
-                request_body=None,
-                response_body=response_body
-            )
-            return response, duration_ms
-        except Exception as e:
-            duration_ms = int((time.time() - start) * 1000)
-            add_error_trace(state, f"GET {endpoint} failed: {str(e)}", endpoint)
-            raise
+        """Delegated to shared traced_http.traced_get (P5)."""
+        return traced_get(state, client, api_base_url, endpoint)
 
     @ctrl.trigger("refresh_data")
     def refresh_data():

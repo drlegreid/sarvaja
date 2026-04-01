@@ -8,6 +8,8 @@ Created: 2024-12-28
 Updated: 2026-02-01 - Refactored to service layer delegation
 """
 
+import re
+
 from fastapi import APIRouter, HTTPException, Query
 from typing import Optional
 import logging
@@ -21,6 +23,22 @@ from governance.stores import TypeDBUnavailable
 
 logger = logging.getLogger(__name__)
 router = APIRouter(tags=["Sessions"])
+
+# BUG-SESSION-POISON-01: Validate session_id at API boundary to prevent
+# path traversal and injection. Same pattern as UI-layer _SESSION_ID_RE.
+_SESSION_ID_RE = re.compile(r'^[A-Za-z0-9_\-\.\(\)]{1,200}$')
+
+
+def _validate_session_id(session_id: str) -> None:
+    """Reject session IDs containing path traversal or injection patterns.
+
+    Raises HTTPException 422 if invalid.
+    """
+    if not session_id or not _SESSION_ID_RE.match(session_id):
+        raise HTTPException(
+            status_code=422,
+            detail=f"Invalid session_id: must match [A-Za-z0-9_-.()], 1-200 chars",
+        )
 
 
 def _ensure_response(result) -> SessionResponse:
@@ -127,6 +145,8 @@ async def list_sessions(
 @router.post("/sessions", response_model=SessionResponse, status_code=201)
 async def create_session(session: SessionCreate):
     """Create a new session. Per GAP-ARCH-002."""
+    # BUG-SESSION-POISON-01: Validate session_id at API boundary
+    _validate_session_id(session.session_id)
     # BUG-197-001: Add broad exception handler matching other CRUD endpoints
     try:
         result = session_service.create_session(

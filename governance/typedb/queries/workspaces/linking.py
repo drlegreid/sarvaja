@@ -214,6 +214,7 @@ class WorkspaceLinkingOperations:
             True if link created, False otherwise
         """
         from typedb.driver import TransactionType
+        from governance.typedb.queries.tasks.linking import _relation_exists
 
         wid = _escape(workspace_id)
         tid = _escape(task_id)
@@ -222,6 +223,22 @@ class WorkspaceLinkingOperations:
             with self._driver.transaction(
                 self.database, TransactionType.WRITE
             ) as tx:
+                # SRVJ-BUG-IDEMP-LINK-01: Idempotency guard
+                check_q = f"""
+                    match
+                        $w isa workspace, has workspace-id "{wid}";
+                        $t isa task, has task-id "{tid}";
+                        (task-workspace: $w, assigned-task: $t)
+                            isa workspace-has-task;
+                """
+                if _relation_exists(tx, check_q):
+                    logger.debug(
+                        f"Workspace-task link already exists: "
+                        f"{task_id} -> {workspace_id}"
+                    )
+                    tx.commit()
+                    return True
+
                 query = f"""
                     match
                         $w isa workspace, has workspace-id "{wid}";

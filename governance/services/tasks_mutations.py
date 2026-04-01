@@ -10,11 +10,11 @@ from typing import Optional, Dict, Any, List
 from governance.stores import (
     get_typedb_client,
     _tasks_store,
-    _sessions_store,
     task_to_response,
 )
 from governance.stores.audit import record_audit
 from governance.middleware.event_log import log_event
+from governance.services.task_activity_comments import maybe_add_activity_comment
 from .tasks_preload import _monitor, _preload_task_from_typedb  # noqa: F401
 from .tasks_mutations_linking import (  # noqa: F401
     link_task_to_rule,
@@ -86,20 +86,30 @@ def update_task(
         if agent_errors:
             raise ValueError(f"Invalid agent_id '{agent_id}': {agent_errors[0].message}")
 
-    # Per DATA-LINK-01-v1 / EPIC-GOV-TASKS-V2 Phase 2: Auto-link to active session
-    # on status transition when no linked_sessions provided
-    if status and not linked_sessions:
-        from governance.services.tasks import _get_active_session_id
-        # Check if task already has sessions in fallback store
-        existing = _tasks_store.get(task_id, {}).get("linked_sessions", [])
-        if not existing:
-            active_sid = _get_active_session_id()
-            if active_sid:
-                linked_sessions = [active_sid]
-                logger.info(
-                    f"[DATA-LINK-01] Auto-linking task {task_id} to session "
-                    f"{active_sid} on status transition to {status}"
+    # SRVJ-BUG-DEAD-LIFECYCLE-01: Wire status transition validation.
+    # validate_status_transition() had 36+ passing tests but was never called —
+    # any status transition (TODO→DONE, DONE→BLOCKED) was silently accepted.
+    if status:
+        from governance.task_lifecycle import validate_status_transition, TaskStatus
+        current_raw = _tasks_store.get(task_id, {}).get("status")
+        if current_raw:
+            try:
+                from_status = TaskStatus(current_raw)
+                to_status = TaskStatus(status)
+            except ValueError:
+                # Legacy/unknown enum value in store — skip check gracefully
+                logger.warning(
+                    f"[LIFECYCLE] Skipping transition check — unrecognized status: "
+                    f"{current_raw!r} → {status!r}"
                 )
+            else:
+                if not validate_status_transition(from_status, to_status):
+                    raise ValueError(
+                        f"Invalid status transition: {from_status.value} → {to_status.value}"
+                    )
+
+    # P9 (BUG-SESSION-POISON-01): Auto-linking on update REMOVED.
+    # Session must be passed explicitly via linked_sessions parameter.
 
     # SRVJ-FEAT-008: Auto-attach evidence for test tasks BEFORE DONE gate.
     # Moved from after the gate (where it was dead code) to before it,
@@ -115,11 +125,19 @@ def update_task(
             logger.info(f"[SRVJ-FEAT-008] Auto-generated evidence for test task {task_id}")
 
     # SRVJ-FEAT-002: DONE gate — validate mandatory fields on completion
+    # SRVJ-BUG-DONE-GATE-01 (P5): Track whether validation used TypeDB or cache
+    _done_gate_validation_source = None
     if status and status.upper() == "DONE":
         from governance.services.task_rules import validate_on_complete, format_validation_result
         # P14: ALWAYS refresh from TypeDB for DONE gate — linked_documents may
         # have been added via MCP after initial creation (stale _tasks_store data).
-        _preload_task_from_typedb(task_id)
+        _typedb_preloaded = _preload_task_from_typedb(task_id)
+        _done_gate_validation_source = "typedb" if _typedb_preloaded else "cache"
+        if _done_gate_validation_source == "cache":
+            logger.warning(
+                f"[DONE-GATE] validation_source=cache for task {task_id} — "
+                f"TypeDB unreachable, validating against stale _tasks_store data"
+            )
         # Gather existing task data for validation
         existing = _tasks_store.get(task_id, {})
         effective_summary = summary or existing.get("summary")
@@ -172,11 +190,21 @@ def update_task(
 
     client = get_typedb_client()
     task_obj = None
+    # SRVJ-FEAT-AUDIT-TRAIL-01 P8 (GAP 1): Capture pre-update status from TypeDB
+    # BEFORE update_task_status() overwrites it. When task is NOT in _tasks_store
+    # (first update after restart), _tasks_store gets populated from the UPDATED
+    # task_obj, so old_status at line ~309 would see the NEW value. This variable
+    # preserves the TRUE old status for correct field_changes in audit/auto-comments.
+    _pre_update_status = None
+    _task_was_new = task_id not in _tasks_store
     if client:
         try:
             task_obj = client.get_task(task_id)
             if not task_obj and task_id not in _tasks_store:
                 return None
+            # Capture BEFORE any TypeDB writes
+            if task_obj:
+                _pre_update_status = task_obj.status
             # SRVJ-BUG-018: Resolve agent_id BEFORE TypeDB writes.
             # H-TASK-002 was previously after the writes, so auto-assigned
             # agent_id only went to _tasks_store, never to TypeDB.
@@ -197,7 +225,11 @@ def update_task(
                 task_obj = updated or task_obj
             # BUG-TASK-TAXONOMY-001: Persist priority/task_type/name/phase/summary to TypeDB
             # SRVJ-BUG-018: Also persist agent_id via update_task()
-            if task_obj and (priority or task_type or phase or description or summary or agent_id or resolution_notes or layer or concern or method):
+            # SRVJ-BUG-AGENTID-PERSIST-01 (P6): Don't gate on task_obj alone.
+            # If preload fails (task_obj=None) but task exists in _tasks_store,
+            # still attempt the TypeDB write — the task likely exists in TypeDB
+            # and preload was just a transient failure.
+            if (task_obj or task_id in _tasks_store) and (priority or task_type or phase or description or summary or agent_id or resolution_notes or layer or concern or method):
                 try:
                     client.update_task(
                         task_id,
@@ -278,11 +310,19 @@ def update_task(
                 "layer": getattr(task_obj, 'layer', None),
                 "concern": getattr(task_obj, 'concern', None),
                 "method": getattr(task_obj, 'method', None),
+                # SRVJ-BUG-DUAL-WRITE-01: Loaded from TypeDB = persisted
+                "persistence_status": "persisted",
             }
         else:
             return None
 
-    old_status = _tasks_store[task_id].get("status")
+    # SRVJ-FEAT-AUDIT-TRAIL-01 P8 (GAP 1): When task was freshly loaded from
+    # TypeDB (wasn't in _tasks_store), use the pre-update status captured BEFORE
+    # update_task_status(). Otherwise _tasks_store already has the correct old value.
+    if _task_was_new and _pre_update_status is not None:
+        old_status = _pre_update_status
+    else:
+        old_status = _tasks_store[task_id].get("status")
 
     # SRVJ-BUG-018: H-TASK-002 fallback for non-client path.
     # Primary check is now before TypeDB writes (line ~170).
@@ -307,19 +347,61 @@ def update_task(
         "resolution_notes": resolution_notes,
         "layer": layer, "concern": concern, "method": method,
     }
+
+    # SRVJ-FEAT-AUDIT-TRAIL-01 P2: Capture old values BEFORE mutation for field_changes
+    _old_snapshot = {k: _tasks_store[task_id].get(k) for k, v in updates.items() if v is not None}
+    # P8 (GAP 1): When task was freshly loaded from TypeDB, _tasks_store has the
+    # post-update status (populated from updated task_obj). Override with pre-update.
+    if _task_was_new and _pre_update_status is not None and "status" in _old_snapshot:
+        _old_snapshot["status"] = _pre_update_status
+
     for field, val in updates.items():
         if val is not None:
             _tasks_store[task_id][field] = val
             if field == "status" and val == "DONE":
                 _tasks_store[task_id]["completed_at"] = datetime.now().isoformat()
 
+    # SRVJ-FEAT-AUDIT-TRAIL-01 P2: Build field_changes + enriched metadata
+    field_changes = {}
+    for field, new_val in updates.items():
+        if new_val is not None:
+            old_val = _old_snapshot.get(field)
+            if old_val != new_val:
+                field_changes[field] = {"from": old_val, "to": new_val}
+
+    audit_metadata: Dict[str, Any] = {"phase": phase, "source": source}
+    if field_changes:
+        audit_metadata["field_changes"] = field_changes
+    # Session correlation: include session_id when linked_sessions provided
+    if linked_sessions:
+        audit_metadata["session_id"] = linked_sessions[0]
+
+    # Fix: new_value always populated — use status if provided, else summary of changed fields
+    _audit_new_value = status
+    if not _audit_new_value and field_changes:
+        _audit_new_value = ", ".join(f"{k}={v['to']}" for k, v in field_changes.items())
+
     record_audit("UPDATE", "task", task_id,
                  actor_id=agent_id or "system",
-                 old_value=old_status, new_value=status,
-                 metadata={"phase": phase, "source": source})
+                 old_value=old_status, new_value=_audit_new_value,
+                 metadata=audit_metadata)
+    # SRVJ-FEAT-AUDIT-TRAIL-01 P7: Auto-generate human-readable system comment
+    maybe_add_activity_comment(
+        task_id=task_id,
+        action_type="UPDATE",
+        actor_id=agent_id or "system",
+        source=source,
+        old_value=old_status,
+        new_value=_audit_new_value,
+        metadata=audit_metadata,
+    )
     _monitor("update", task_id, source=source, status=status, phase=phase)
     log_event("task", "update", task_id=task_id, old_status=old_status, status=status, source=source)
-    return dict(_tasks_store[task_id])
+    result = dict(_tasks_store[task_id])
+    # SRVJ-BUG-DONE-GATE-01 (P5): Propagate validation_source on DONE transitions
+    if _done_gate_validation_source:
+        result["validation_source"] = _done_gate_validation_source
+    return result
 
 
 def delete_task(task_id: str, source: str = "rest") -> bool:
@@ -345,6 +427,13 @@ def delete_task(task_id: str, source: str = "rest") -> bool:
 
     if deleted:
         record_audit("DELETE", "task", task_id, metadata={"source": source})
+        # SRVJ-FEAT-AUDIT-TRAIL-01 P7: Auto-comment for DELETE
+        maybe_add_activity_comment(
+            task_id=task_id,
+            action_type="DELETE",
+            actor_id="system",
+            source=source,
+        )
         _monitor("delete", task_id, source=source)
         log_event("task", "delete", task_id=task_id, source=source)
     return deleted

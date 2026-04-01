@@ -96,7 +96,9 @@ entity task,
     plays document-references-task:referenced-task,  # BUG-TASK-DOC-001: task document management
     plays epic-contains-task:epic-task,  # Project hierarchy (GOV-PROJECT-01-v1)
     plays workspace-has-task:assigned-task,  # EPIC-GOV-TASKS-V2 Phase 4: workspace linking
-    plays story-contains-task:story-task;  # FIX-HIER-002: Story hierarchy
+    plays story-contains-task:story-task,  # FIX-HIER-002: Story hierarchy
+    plays task-audit:audited-task,         # SRVJ-FEAT-AUDIT-TRAIL-01 P5: audit trail
+    plays task-has-comment:commented-task;  # EPIC-ISSUE-EVIDENCE P19: comment thread
 
 entity gap,
     owns gap-id,
@@ -120,6 +122,7 @@ entity work-session,
     owns session-name,
     owns session-description,
     owns session-file-path,
+    owns session-status,                          # EPIC-PERF-TELEM-V1: Session lifecycle status
     owns agent-id,                               # Agent that created the session (E2E tests)
     owns started-at,
     owns completed-at,
@@ -134,7 +137,8 @@ entity work-session,
     plays has-evidence:evidence-session,
     plays session-applied-rule:applying-session,
     plays session-decision:deciding-session,
-    plays project-has-session:project-session;
+    plays project-has-session:project-session,
+    plays session-audit:audit-session;     # SRVJ-FEAT-AUDIT-TRAIL-01 P5: audit trail
 
 # Evidence file entity for session artifacts
 entity evidence-file,
@@ -408,6 +412,7 @@ attribute commit-message, value string; # Commit message
 # Work Session attributes (P11.3)
 attribute session-description, value string;
 attribute session-file-path, value string;   # Path to session evidence file
+attribute session-status, value string;      # EPIC-PERF-TELEM-V1: Session lifecycle status (ACTIVE, COMPLETED, etc.)
 
 # Claude Code session attributes (SESSION-CC-01-v1)
 attribute cc-session-uuid, value string;       # CC internal UUID
@@ -452,6 +457,12 @@ attribute evidence-source, value string;      # File path
 attribute evidence-type, value string;        # markdown, screenshot, log
 attribute evidence-content-preview, value string;  # First 500 chars
 attribute evidence-created-at, value datetime;
+
+# Comment attributes (schema alignment with modular)
+attribute comment-id, value string;
+attribute comment-body, value string;
+attribute comment-author, value string;
+attribute comment-created-at, value datetime;
 
 # Gap attributes
 attribute gap-id, value string;
@@ -812,6 +823,65 @@ relation workspace-has-agent,
 relation workspace-has-task,
     relates task-workspace,
     relates assigned-task;
+
+# =============================================================================
+# AUDIT TRAIL ENTITIES (SRVJ-FEAT-AUDIT-TRAIL-01 P5)
+# =============================================================================
+
+# Audit entry entity — TypeDB source of truth for mutation history
+entity audit-entry,
+    owns audit-entry-id @key,              # Unique — prevents duplicates
+    owns audit-correlation-id,
+    owns audit-timestamp,                   # datetime (seconds precision)
+    owns audit-actor-id,
+    owns audit-action-type,
+    owns audit-entity-type,
+    owns audit-entity-id,
+    owns audit-session-id,                  # Promoted from metadata
+    owns audit-old-value,
+    owns audit-new-value,
+    owns audit-metadata,                    # JSON-encoded flexible fields
+    plays task-audit:task-audit-entry,
+    plays session-audit:session-audit-entry;
+
+# Audit attributes (prefixed to avoid clashes with existing)
+attribute audit-entry-id, value string;
+attribute audit-correlation-id, value string;
+attribute audit-timestamp, value datetime;
+attribute audit-actor-id, value string;
+attribute audit-action-type, value string;
+attribute audit-entity-type, value string;
+attribute audit-entity-id, value string;
+attribute audit-session-id, value string;
+attribute audit-old-value, value string;
+attribute audit-new-value, value string;
+attribute audit-metadata, value string;
+
+# Audit relations — graph traversal value
+relation task-audit,
+    relates audited-task,
+    relates task-audit-entry;
+
+relation session-audit,
+    relates audit-session,
+    relates session-audit-entry;
+
+# =============================================================================
+# TASK COMMENT ENTITIES (EPIC-ISSUE-EVIDENCE P19 + SRVJ-FEAT-AUDIT-TRAIL-01 P8)
+# =============================================================================
+
+# Task comment entity — resolution/activity comment thread
+entity task-comment,
+    owns comment-id @key,
+    owns comment-body,
+    owns comment-author,
+    owns comment-created-at,
+    plays task-has-comment:posted-comment;
+
+# Task ↔ Comment relation
+relation task-has-comment,
+    relates commented-task,
+    relates posted-comment;
 
 # =============================================================================
 # INFERENCE RULES

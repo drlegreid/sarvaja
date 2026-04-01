@@ -136,6 +136,10 @@ class TestBugSessionsMetricsAllSessions:
         self, MockClient, mock_fmt, mock_metrics, mock_dur, mock_tl, mock_plotly
     ):
         """The second API call must use limit=200 to get all sessions."""
+        # Clear module-level timeline cache from prior tests
+        from agent.governance_ui.controllers.sessions_pagination import _timeline_cache
+        _timeline_cache.clear()
+
         mc = MagicMock()
         mc.get.return_value = _mock_response(200, {"items": []})
         MockClient.return_value.__enter__ = MagicMock(return_value=mc)
@@ -450,11 +454,10 @@ class TestRefreshSourceType:
            return_value={"duration": "0h", "avg_tasks": 0})
     @patch("agent.governance_ui.controllers.data_loaders_refresh.format_timestamps_in_list",
            side_effect=lambda items, _: items)
-    @patch("agent.governance_ui.controllers.data_loaders_refresh.add_api_trace")
     @patch("agent.governance_ui.controllers.data_loaders_refresh.add_error_trace")
     @patch("httpx.Client")
     def test_load_sessions_list_adds_source_type(
-        self, MockClient, mock_err_trace, mock_trace, mock_fmt,
+        self, MockClient, mock_err_trace, mock_fmt,
         mock_metrics, mock_dur, mock_tl
     ):
         """load_sessions_list should derive source_type for each item."""

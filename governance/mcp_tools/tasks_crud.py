@@ -225,15 +225,20 @@ def register_task_crud_tools(mcp) -> None:
                 "hint": "Consider updating status to CLOSED instead of deleting."
             })
         try:
-            with typedb_client() as client:
-                success = client.delete_task(task_id)
-                if success:
-                    _monitor_task("mcp-task-delete", task_id, "delete", severity="WARNING")
-                    return format_mcp_result({
-                        "task_id": task_id, "deleted": True,
-                        "message": f"Task {task_id} deleted successfully"
-                    })
-                return format_mcp_result({"error": f"Failed to delete task {task_id}"})
+            # SRVJ-BUG-DELETE-GHOST-01: Route through service layer for proper
+            # existence check + _tasks_store cleanup (prevents search ghosts)
+            from governance.services.tasks_mutations import delete_task as _svc_delete
+            success = _svc_delete(task_id, source="mcp")
+            if success:
+                _monitor_task("mcp-task-delete", task_id, "delete", severity="WARNING")
+                return format_mcp_result({
+                    "task_id": task_id, "deleted": True,
+                    "message": f"Task {task_id} deleted successfully"
+                })
+            return format_mcp_result({
+                "error": f"Task {task_id} not found",
+                "task_id": task_id,
+            })
         except Exception as e:
             # BUG-357-MCP-001: Log full error for debugging
             # BUG-451-TC-004: Sanitize logger message to match response pattern

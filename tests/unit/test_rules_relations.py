@@ -174,8 +174,7 @@ class TestDependencyOverview:
         mock_rule.id = "R-01"
         mock_client = MagicMock()
         mock_client.get_all_rules.return_value = [mock_rule]
-        mock_client.get_rule_dependencies.return_value = []
-        mock_client.get_rules_depending_on.return_value = []
+        mock_client.get_all_dependencies.return_value = {}
         mock_get.return_value = mock_client
         result = dependency_overview()
         assert result["total_rules"] == 1
@@ -189,8 +188,7 @@ class TestDependencyOverview:
         r2 = MagicMock(); r2.id = "R-02"
         mock_client = MagicMock()
         mock_client.get_all_rules.return_value = [r1, r2]
-        mock_client.get_rule_dependencies.side_effect = [["R-02"], []]
-        mock_client.get_rules_depending_on.side_effect = [[], ["R-01"]]
+        mock_client.get_all_dependencies.return_value = {"R-01": ["R-02"]}
         mock_get.return_value = mock_client
         result = dependency_overview()
         assert result["total_dependencies"] == 1

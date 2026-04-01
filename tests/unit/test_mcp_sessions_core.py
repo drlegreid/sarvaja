@@ -189,15 +189,35 @@ class TestSessionEnd:
 class TestSessionList:
     def test_with_sessions(self):
         tools = _register()
-        with patch(f"{_P}.list_active_sessions", return_value=["S-1", "S-2"]):
+        merged = [{"session_id": "S-1", "source": "memory"},
+                  {"session_id": "S-2", "source": "memory"}]
+        with patch("governance.session_collector.registry.list_all_sessions",
+                   return_value=merged):
             result = json.loads(tools["session_list"]())
         assert result["count"] == 2
 
     def test_empty(self):
         tools = _register()
-        with patch(f"{_P}.list_active_sessions", return_value=[]):
+        with patch("governance.session_collector.registry.list_all_sessions",
+                   return_value=[]):
             result = json.loads(tools["session_list"]())
         assert result["count"] == 0
+
+    def test_status_completed(self):
+        tools = _register()
+        merged = [{"session_id": "S-CC-1", "source": "typedb"}]
+        with patch("governance.session_collector.registry.list_all_sessions",
+                   return_value=merged) as mock_fn:
+            result = json.loads(tools["session_list"](status="COMPLETED"))
+        mock_fn.assert_called_once_with(status="COMPLETED", limit=50)
+        assert result["count"] == 1
+
+    def test_limit_param(self):
+        tools = _register()
+        with patch("governance.session_collector.registry.list_all_sessions",
+                   return_value=[]) as mock_fn:
+            json.loads(tools["session_list"](limit=5))
+        mock_fn.assert_called_once_with(status=None, limit=5)
 
 
 # ── session_tool_call ────────────────────────────────────────────

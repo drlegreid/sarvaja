@@ -181,12 +181,12 @@ class TestServiceLinkTaskToDocument:
              patch("governance.services.tasks_mutations.log_event"):
             from governance.services.tasks_mutations import link_task_to_document
             result = link_task_to_document("T-1", "docs/test.md", source="test")
-        assert result is True
+        assert result  # LinkResult is truthy on success
         mock_client.link_task_to_document.assert_called_once_with("T-1", "docs/test.md")
 
     def test_service_returns_false_when_no_client(self):
-        """link_task_to_document returns False when TypeDB unavailable."""
+        """link_task_to_document returns falsy LinkResult when TypeDB unavailable."""
         with patch("governance.services.tasks_mutations_linking.get_typedb_client", return_value=None):
             from governance.services.tasks_mutations import link_task_to_document
             result = link_task_to_document("T-1", "docs/test.md")
-        assert result is False
+        assert not result  # LinkResult is falsy on failure

@@ -55,31 +55,32 @@ class TaskCommentQueries:
             return False
 
     def get_comments_for_task(self, task_id: str) -> List[Dict[str, Any]]:
-        """Get all comments for a task, ordered by created_at asc."""
-        from typedb.driver import TransactionType
+        """Get all comments for a task, ordered by created_at asc.
 
+        SRVJ-FEAT-AUDIT-TRAIL-01 P8: Uses _execute_query() which manages
+        its own READ transaction — do NOT pass tx= (causes TypeError).
+        """
         try:
-            with self._driver.transaction(self.database, TransactionType.READ) as tx:
-                query = (
-                    f'match $t isa task, has task-id "{task_id}"; '
-                    f'(commented-task: $t, posted-comment: $c) isa task-has-comment; '
-                    f'$c has comment-id $cid, has comment-body $body, '
-                    f'has comment-author $author, has comment-created-at $cat; '
-                    f'select $cid, $body, $author, $cat;'
-                )
-                results = self._execute_query(query, tx=tx)
-                comments = []
-                for r in results:
-                    comments.append({
-                        "comment_id": r.get("cid"),
-                        "task_id": task_id,
-                        "body": r.get("body"),
-                        "author": r.get("author"),
-                        "created_at": str(r.get("cat", "")),
-                    })
-                # Sort by created_at ascending
-                comments.sort(key=lambda c: c.get("created_at") or "")
-                return comments
+            query = (
+                f'match $t isa task, has task-id "{task_id}"; '
+                f'(commented-task: $t, posted-comment: $c) isa task-has-comment; '
+                f'$c has comment-id $cid, has comment-body $body, '
+                f'has comment-author $author, has comment-created-at $cat; '
+                f'select $cid, $body, $author, $cat;'
+            )
+            results = self._execute_query(query)
+            comments = []
+            for r in results:
+                comments.append({
+                    "comment_id": r.get("cid"),
+                    "task_id": task_id,
+                    "body": r.get("body"),
+                    "author": r.get("author"),
+                    "created_at": str(r.get("cat", "")),
+                })
+            # Sort by created_at ascending
+            comments.sort(key=lambda c: c.get("created_at") or "")
+            return comments
         except Exception as e:
             logger.debug("Failed to get comments for %s: %s", task_id, e)
             return []

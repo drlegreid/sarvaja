@@ -262,20 +262,22 @@ def parse_robot_xml(test_root: str) -> dict:
 # =============================================================================
 
 from governance.services.tasks_mutations import update_task, link_task_to_session
-from governance.services.tasks import _get_active_session_id
 
 
 def _remediate_session_linkage(task_id: str) -> None:
-    """Auto-link orphan task to the current active session (H-TASK-005).
+    """Report orphan task — session must be linked explicitly (P9).
 
-    Raises ValueError if no active session, RuntimeError if linking fails.
+    P9 (BUG-SESSION-POISON-01): Auto-linking removed. The previous behavior
+    used _get_active_session_id() which was pollutable. Session linking now
+    requires explicit session_id from the caller.
+
+    Raises ValueError always — remediation must be done by the caller.
     """
-    active_sid = _get_active_session_id()
-    if not active_sid:
-        raise ValueError(f"No active session for auto-linking task {task_id}")
-    result = link_task_to_session(task_id, active_sid)
-    if not result:
-        raise RuntimeError(f"Failed to link task {task_id} to session {active_sid}")
+    raise ValueError(
+        f"Task {task_id} has no linked session. "
+        f"Per P9 (BUG-SESSION-POISON-01): session must be linked explicitly "
+        f"via task_link_session(task_id, session_id)"
+    )
 
 
 def _remediate_workspace_assignment(task_id: str) -> None:

@@ -179,6 +179,41 @@ test_evidence_query(zoom=3, test_id="test_login")
 
 ---
 
+## Agent Workflow (BUG-014)
+
+The holographic store is auto-populated at all test levels. Agents MUST consume
+test output via zoom queries, never raw stdout.
+
+### After Any Test Run
+
+```
+1. test_evidence_query(zoom=1)           → Default: compact summary (~150 tokens)
+2. If failures exist:
+   test_evidence_query(zoom=2, status="failed")  → Which tests failed (~500 tokens)
+3. If reproducing:
+   test_evidence_query(zoom=3, test_id="X")      → Full fixtures (2000+ tokens)
+```
+
+### Wiring (auto, no flags needed)
+
+| Test Level | How It Populates | Activation |
+|------------|-----------------|------------|
+| **Unit** (pytest) | `pytest_plugin.py` → `push_event()` in `pytest_runtest_logreport` | Always on |
+| **Integration** (pytest) | Same pytest plugin, category="integration" from path | Always on |
+| **E2E** (Robot) | `robot_listener.py` → `push_event()` in `end_test` | `--listener tests.evidence.robot_listener.HolographicListener` |
+
+### Before Closing a Task as DONE
+
+```python
+test_evidence_push(
+    test_id="tests/unit/test_X.py::test_Y",
+    name="test_Y", status="passed", category="unit",
+    task_id="BUG-014"  # auto-links evidence to task
+)
+```
+
+---
+
 ## Compression Statistics
 
 | Scenario | Tests | Original | Compressed | Savings |

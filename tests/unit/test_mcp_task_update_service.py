@@ -75,6 +75,7 @@ class TestMCPTaskUpdateServiceRouting:
             workspace_id=None,
             summary=None,
             agent_id=None,
+            evidence=None,
             resolution_notes=None,
             layer=None,
             concern=None,

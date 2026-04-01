@@ -16,10 +16,12 @@ from .transcript import router as transcript_router
 from .validation import router as validation_router
 
 # Compose all routers
+# detail_router FIRST — its static /sessions/cache routes must register
+# before crud_router's /sessions/{session_id} parameterized routes.
 router = APIRouter()
+router.include_router(detail_router)
 router.include_router(crud_router)
 router.include_router(relations_router)
-router.include_router(detail_router)
 router.include_router(transcript_router)
 router.include_router(validation_router)
 

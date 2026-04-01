@@ -14,6 +14,23 @@ from typing import List
 logger = logging.getLogger(__name__)
 
 
+def _relation_exists(tx, match_query: str) -> bool:
+    """Check whether a TypeDB relation already exists within a transaction.
+
+    Shared idempotency helper — DRY extraction per SRVJ-BUG-IDEMP-LINK-01.
+    Used by all link_task_to_* methods to skip duplicate inserts.
+
+    Args:
+        tx: An open TypeDB transaction.
+        match_query: A TypeQL match query that selects the relation.
+
+    Returns:
+        True if the relation exists, False otherwise.
+    """
+    result = tx.query(match_query).resolve()
+    return bool(list(result or []))
+
+
 class TaskLinkingOperations:
     """
     Task linking operations for TypeDB.
@@ -118,6 +135,7 @@ class TaskLinkingOperations:
         Per GAP-DATA-002: Entity linkage implementation.
         Per EPIC-GOV-TASKS-V2 Phase 2: Session existence pre-check.
         Per SRVJ-BUG-007: Auto-creates session entity if missing in TypeDB.
+        Per BUG-SESSION-POISON-01: Validates session_id before auto-creating.
 
         Args:
             task_id: Task ID (e.g., "P10.1")
@@ -126,6 +144,16 @@ class TaskLinkingOperations:
         Returns:
             True if link created successfully, False otherwise
         """
+        # BUG-SESSION-POISON-01: Reject invalid session IDs before they get
+        # auto-created as TypeDB entities (prevents path traversal poisoning)
+        import re as _re
+        if not session_id or not _re.match(r'^[A-Za-z0-9_\-\.\(\)]{1,200}$', session_id):
+            logger.warning(
+                f"[LINK-REJECT] Invalid session_id rejected: "
+                f"{session_id[:50] if session_id else 'None'}..."
+            )
+            return False
+
         from typedb.driver import TransactionType
 
         try:
@@ -149,8 +177,7 @@ class TaskLinkingOperations:
                         $s isa work-session, has session-id "{session_id_escaped}";
                         (completed-task: $t, hosting-session: $s) isa completed-in;
                 """
-                rel_result = tx.query(check_rel_q).resolve()
-                if list(rel_result or []):
+                if _relation_exists(tx, check_rel_q):
                     tx.commit()
                     return True
 
@@ -195,15 +222,13 @@ class TaskLinkingOperations:
                 rule_id_escaped = rule_id.replace('\\', '\\\\').replace('"', '\\"')
 
                 # SRVJ-BUG-020: Idempotency guard — skip if relation already exists
-                # (Pattern copied from link_task_to_session)
                 check_rel_q = f"""
                     match
                         $t isa task, has task-id "{task_id_escaped}";
                         $r isa rule-entity, has rule-id "{rule_id_escaped}";
                         (implementing-task: $t, implemented-rule: $r) isa implements-rule;
                 """
-                rel_result = tx.query(check_rel_q).resolve()
-                if list(rel_result or []):
+                if _relation_exists(tx, check_rel_q):
                     logger.debug(f"Rule-task link already exists: {task_id} -> {rule_id}")
                     tx.commit()
                     return True
@@ -285,6 +310,18 @@ class TaskLinkingOperations:
                 except Exception as e:
                     # BUG-477-TLK-2: Sanitize debug/info logger
                     logger.debug(f"Git commit entity insert for {commit_sha} (expected if exists): {type(e).__name__}")
+
+                # SRVJ-BUG-IDEMP-LINK-01: Idempotency guard — skip if relation exists
+                check_rel_q = f"""
+                    match
+                        $t isa task, has task-id "{task_id_escaped}";
+                        $c isa git-commit, has commit-sha "{commit_sha_escaped}";
+                        (implementing-commit: $c, implemented-task: $t) isa task-commit;
+                """
+                if _relation_exists(tx, check_rel_q):
+                    logger.debug(f"Commit-task link already exists: {task_id} -> {commit_sha}")
+                    tx.commit()
+                    return True
 
                 # Create the task-commit relation
                 link_query = f"""
@@ -369,8 +406,7 @@ class TaskLinkingOperations:
                         $d isa document, has document-path "{document_path_escaped}";
                         (referencing-document: $d, referenced-task: $t) isa document-references-task;
                 """
-                existing = list(tx.query(check_query).resolve())
-                if existing:
+                if _relation_exists(tx, check_query):
                     logger.debug(f"Document-task link already exists: {task_id} -> {document_path}")
                     tx.commit()
                     return True
@@ -410,11 +446,14 @@ class TaskLinkingOperations:
                 # BUG-254-ESC-002: Escape backslash THEN quotes for TypeQL safety
                 task_id_escaped = task_id.replace('\\', '\\\\').replace('"', '\\"')
                 document_path_escaped = document_path.replace('\\', '\\\\').replace('"', '\\"')
+                # TypeDB 3.x: use `links` syntax — the old `$rel (role: $x) isa type`
+                # causes Thing/ThingType conflict on delete (REP1 error).
                 delete_query = f"""
                     match
                         $t isa task, has task-id "{task_id_escaped}";
                         $d isa document, has document-path "{document_path_escaped}";
-                        $rel (referencing-document: $d, referenced-task: $t) isa document-references-task;
+                        $rel isa document-references-task,
+                            links (referencing-document: $d, referenced-task: $t);
                     delete $rel;
                 """
                 tx.query(delete_query).resolve()

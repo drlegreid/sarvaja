@@ -8,6 +8,7 @@ Created: 2026-02-11
 from fastapi import APIRouter, HTTPException, Query
 import logging
 
+from governance.services.cc_session_cache import _session_cache
 from governance.services.cc_session_ingestion import (
     get_session_detail,
     render_markdown,
@@ -16,6 +17,23 @@ from governance.services.cc_session_ingestion import (
 logger = logging.getLogger(__name__)
 router = APIRouter(tags=["Sessions"])
 
+
+# --- Cache management (must be before {session_id} parameterized routes) ---
+
+@router.get("/sessions/cache/stats")
+def cache_stats():
+    """Return JSONL parse cache statistics (hit/miss/eviction/size)."""
+    return _session_cache.stats()
+
+
+@router.delete("/sessions/cache")
+def cache_clear():
+    """Clear the JSONL parse cache and reset stats."""
+    _session_cache.clear()
+    return {"cleared": True}
+
+
+# --- Session detail routes ---
 
 @router.get("/sessions/{session_id}/detail")
 def session_detail(

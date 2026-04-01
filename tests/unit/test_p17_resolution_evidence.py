@@ -411,13 +411,10 @@ class TestTypeDBReadQueries:
         assert "resolution_notes" in source
 
     def test_build_task_from_id_includes_resolution_notes(self):
-        """_build_task_from_id fetches resolution-notes attribute."""
-        from governance.typedb.queries.tasks.read import TaskReadQueries
-        import inspect
-
-        source = inspect.getsource(TaskReadQueries._build_task_from_id)
-        assert "resolution-notes" in source
-        assert "resolution_notes" in source
+        """_build_task_from_id fetches resolution-notes via _TASK_ATTR_MAP."""
+        from governance.typedb.queries.tasks.read import _TASK_ATTR_MAP
+        assert "resolution-notes" in _TASK_ATTR_MAP
+        assert _TASK_ATTR_MAP["resolution-notes"] == "resolution_notes"
 
 
 # ============================================================================

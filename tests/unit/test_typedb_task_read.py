@@ -20,6 +20,24 @@ class _ConcreteTaskReader(TaskReadQueries):
         self._execute_query = MagicMock(return_value=[])
         self._driver = MagicMock()
         self.database = "test-db"
+        self._connected = True
+        self._query_count = 0
+        self._total_query_ms = 0.0
+
+    def _concept_to_value(self, concept):
+        if concept is None:
+            return None
+        if hasattr(concept, "get_value"):
+            try:
+                return concept.get_value()
+            except Exception:
+                pass
+        return str(concept)
+
+    def _record_query_timing(self, t0, query):
+        import time
+        self._query_count += 1
+        self._total_query_ms += (time.monotonic() - t0) * 1000
 
 
 @pytest.fixture()
@@ -119,14 +137,13 @@ class TestGetAvailableTasks:
 
 class TestGetTask:
     def test_returns_task(self, reader):
-        call_count = [0]
-        def _mock_query(q):
-            call_count[0] += 1
-            if call_count[0] == 1:
-                # First call: main task query
-                return [{"name": "My Task", "status": "OPEN", "phase": "P1"}]
-            return []  # Optional attrs and relations
-        reader._execute_query.side_effect = _mock_query
+        # EPIC-PERF-TELEM-V1 P2: _build_task_from_id now uses _fetch_all_entity_attrs
+        from unittest.mock import MagicMock
+        reader._fetch_all_entity_attrs = MagicMock(return_value={
+            "task-id": "T-1", "task-name": "My Task",
+            "task-status": "OPEN", "phase": "P1",
+        })
+        reader._fetch_task_relations_batch = MagicMock()
         task = reader.get_task("T-1")
         assert task is not None
         assert task.id == "T-1"
@@ -134,22 +151,20 @@ class TestGetTask:
         assert task.status == "OPEN"
 
     def test_not_found(self, reader):
-        reader._execute_query.return_value = []
+        from unittest.mock import MagicMock
+        reader._fetch_all_entity_attrs = MagicMock(return_value=None)
         task = reader.get_task("NONEXISTENT")
         assert task is None
 
     def test_with_optional_attrs(self, reader):
-        call_count = [0]
-        def _mock_query(q):
-            call_count[0] += 1
-            if call_count[0] == 1:
-                return [{"name": "My Task", "status": "OPEN", "phase": "P1"}]
-            if "task-body" in q:
-                return [{"body": "Detailed body"}]
-            if "task-resolution" in q:
-                return [{"res": "IMPLEMENTED"}]
-            return []
-        reader._execute_query.side_effect = _mock_query
+        from unittest.mock import MagicMock
+        reader._fetch_all_entity_attrs = MagicMock(return_value={
+            "task-id": "T-1", "task-name": "My Task",
+            "task-status": "OPEN", "phase": "P1",
+            "task-body": "Detailed body",
+            "task-resolution": "IMPLEMENTED",
+        })
+        reader._fetch_task_relations_batch = MagicMock()
         task = reader.get_task("T-1")
         assert task is not None
         assert task.body == "Detailed body"

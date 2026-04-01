@@ -9,6 +9,7 @@ Created: 2026-02-11
 """
 
 import logging
+import os
 import re
 from collections import Counter
 from pathlib import Path
@@ -19,6 +20,11 @@ from governance.session_metrics.parser import (
     parse_log_file,
 )
 from governance.services import sessions as session_service
+from governance.services.cc_session_cache import (
+    _session_cache,
+    check_size_guard,
+    _get_max_size_mb,
+)
 from governance.stores import _sessions_store
 
 # Re-export for backward compatibility
@@ -200,69 +206,105 @@ def get_session_detail(
     jsonl_path = _find_jsonl_for_session(session)
 
     if jsonl_path:
-        # Single-pass parse — collect all data at once
-        include_thinking = zoom >= 3
-        tool_breakdown = Counter()
-        thinking_total = 0
-        all_tool_calls = []
-        all_thinking = []
-        # Correlation maps for latency + server_name (BUG-TOOL-META-001)
-        pending_uses = {}  # tool_use_id → index in all_tool_calls
+        # --- Size guard: skip full parse for files > JSONL_MAX_SIZE_MB ---
+        try:
+            p = Path(jsonl_path) if not isinstance(jsonl_path, Path) else jsonl_path
+            stat = p.stat()
+            file_size = stat.st_size
+            file_mtime = stat.st_mtime
+        except (OSError, TypeError):
+            file_size = 0
+            file_mtime = 0.0
 
-        for entry in parse_log_file(jsonl_path, include_thinking=include_thinking):
-            # Correlate tool_results with pending tool_uses
-            for tr in entry.tool_results:
-                # BUG-INGEST-001: Skip empty tool_use_id to avoid dict key collision
-                if not tr.tool_use_id:
-                    continue
-                idx = pending_uses.pop(tr.tool_use_id, None)
-                if idx is not None and idx < len(all_tool_calls):
-                    call = all_tool_calls[idx]
-                    if tr.server_name:
-                        call["server_name"] = tr.server_name
-                    # Compute latency: result timestamp - use timestamp
-                    use_ts = call.get("_use_ts")
-                    # BUG-INGEST-004: Guard against None entry.timestamp
-                    if use_ts and entry.timestamp:
-                        latency = int((entry.timestamp - use_ts).total_seconds() * 1000)
-                        if latency >= 0:
-                            call["latency_ms"] = latency
+        if check_size_guard(file_size):
+            max_mb = _get_max_size_mb()
+            logger.warning(
+                "JSONL file too large for full parse: %s (%.0f MB, limit %d MB)",
+                jsonl_path, file_size / (1024 * 1024), max_mb,
+            )
+            result["truncated"] = True
+            result["truncated_reason"] = f"File size {file_size / (1024*1024):.0f} MB exceeds {max_mb} MB limit"
+            return result
 
-            for tu in entry.tool_uses:
-                tool_breakdown[tu.name] += 1
-                if zoom >= 2:
-                    call_entry = {
-                        "name": tu.name,
-                        "input_summary": tu.input_summary,
-                        "is_mcp": tu.is_mcp,
-                        # BUG-INGEST-002: Guard against None timestamp
+        # --- Cache lookup: stores UNPAGINATED data, pagination applied after ---
+        cached = _session_cache.get(session_id, zoom, current_mtime=file_mtime)
+        if cached is not None:
+            parsed = cached
+        else:
+            # Single-pass parse — collect all data at once
+            include_thinking = zoom >= 3
+            tool_breakdown = Counter()
+            thinking_total = 0
+            all_tool_calls = []
+            all_thinking = []
+            # Correlation maps for latency + server_name (BUG-TOOL-META-001)
+            pending_uses = {}  # tool_use_id → index in all_tool_calls
+
+            for entry in parse_log_file(jsonl_path, include_thinking=include_thinking):
+                # Correlate tool_results with pending tool_uses
+                for tr in entry.tool_results:
+                    # BUG-INGEST-001: Skip empty tool_use_id to avoid dict key collision
+                    if not tr.tool_use_id:
+                        continue
+                    idx = pending_uses.pop(tr.tool_use_id, None)
+                    if idx is not None and idx < len(all_tool_calls):
+                        call = all_tool_calls[idx]
+                        if tr.server_name:
+                            call["server_name"] = tr.server_name
+                        # Compute latency: result timestamp - use timestamp
+                        use_ts = call.get("_use_ts")
+                        # BUG-INGEST-004: Guard against None entry.timestamp
+                        if use_ts and entry.timestamp:
+                            latency = int((entry.timestamp - use_ts).total_seconds() * 1000)
+                            if latency >= 0:
+                                call["latency_ms"] = latency
+
+                for tu in entry.tool_uses:
+                    tool_breakdown[tu.name] += 1
+                    if zoom >= 2:
+                        call_entry = {
+                            "name": tu.name,
+                            "input_summary": tu.input_summary,
+                            "is_mcp": tu.is_mcp,
+                            # BUG-INGEST-002: Guard against None timestamp
+                            "timestamp": entry.timestamp.isoformat() if entry.timestamp else None,
+                            "tool_category": _classify_tool(tu.name),
+                        }
+                        if tu.tool_use_id:
+                            call_entry["_use_ts"] = entry.timestamp
+                            pending_uses[tu.tool_use_id] = len(all_tool_calls)
+                        all_tool_calls.append(call_entry)
+                thinking_total += entry.thinking_chars
+                if zoom >= 3 and entry.thinking_content:
+                    all_thinking.append({
+                        "content": entry.thinking_content,
+                        "chars": entry.thinking_chars,
+                        # BUG-INGEST-003: Guard against None timestamp (matches line 224)
                         "timestamp": entry.timestamp.isoformat() if entry.timestamp else None,
-                        "tool_category": _classify_tool(tu.name),
-                    }
-                    if tu.tool_use_id:
-                        call_entry["_use_ts"] = entry.timestamp
-                        pending_uses[tu.tool_use_id] = len(all_tool_calls)
-                    all_tool_calls.append(call_entry)
-            thinking_total += entry.thinking_chars
-            if zoom >= 3 and entry.thinking_content:
-                all_thinking.append({
-                    "content": entry.thinking_content,
-                    "chars": entry.thinking_chars,
-                    # BUG-INGEST-003: Guard against None timestamp (matches line 224)
-                    "timestamp": entry.timestamp.isoformat() if entry.timestamp else None,
-                })
+                    })
 
-        # Strip internal _use_ts from output
-        for call in all_tool_calls:
-            call.pop("_use_ts", None)
+            # Strip internal _use_ts from output
+            for call in all_tool_calls:
+                call.pop("_use_ts", None)
 
-        result["tool_breakdown"] = dict(tool_breakdown.most_common(20))
-        result["thinking_summary"] = {
-            "total_chars": thinking_total,
-            "estimated_tokens": thinking_total // 4,
-        }
+            # Build unpaginated parsed data for cache
+            parsed = {
+                "tool_breakdown": dict(tool_breakdown.most_common(20)),
+                "thinking_summary": {
+                    "total_chars": thinking_total,
+                    "estimated_tokens": thinking_total // 4,
+                },
+                "all_tool_calls": all_tool_calls,
+                "all_thinking": all_thinking,
+            }
+            _session_cache.put(session_id, zoom, parsed, mtime=file_mtime)
+
+        # Apply unpaginated data to result
+        result["tool_breakdown"] = parsed.get("tool_breakdown", {})
+        result["thinking_summary"] = parsed.get("thinking_summary", {})
 
         if zoom >= 2:
+            all_tool_calls = parsed.get("all_tool_calls", [])
             total = len(all_tool_calls)
             # BUG-199-INGEST-003: Guard against negative page producing wrong slice
             start = max(0, (page - 1) * per_page)
@@ -271,6 +313,7 @@ def get_session_detail(
             result["tool_calls_page"] = page
 
         if zoom >= 3:
+            all_thinking = parsed.get("all_thinking", [])
             total = len(all_thinking)
             # BUG-199-INGEST-003: Guard against negative page
             start = max(0, (page - 1) * per_page)

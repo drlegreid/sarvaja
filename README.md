@@ -250,6 +250,19 @@ podman ps -a | grep mcp
 podman rm -f <container_name>
 ```
 
+## Limitations
+1. for research purposes only
+2. for sequential use of the API
+3. only for personal use
+
+## Roadmap
+0. implement event 'sourced governor > worker' workflow which should be always sequential
+1. cleanup project
+2. stabilize rules mcp engine
+3. improve test tab - to support GUI test results visualision & authoring
+4. implement guardrails which will enforce limitations
+5. test how it works with local LLM againts a sandbox project
+
 ## License
 
-Private - All rights reserved.
+GPL

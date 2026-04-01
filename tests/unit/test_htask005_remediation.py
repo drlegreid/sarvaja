@@ -47,34 +47,22 @@ class TestHTASK005RemediationLinksSession:
         mock_remediate.assert_any_call("T-ORPHAN-001")
         mock_remediate.assert_any_call("T-ORPHAN-002")
 
-    @patch("governance.routes.tests.runner_exec.link_task_to_session")
-    @patch("governance.routes.tests.runner_exec._get_active_session_id",
-           return_value="SESSION-2026-03-21-CVP")
-    def test_links_to_active_session(self, mock_get_sid, mock_link):
-        """_remediate_session_linkage links task to active session."""
-        mock_link.return_value = True
+    def test_always_raises_valueerror(self):
+        """P9: _remediate_session_linkage always raises ValueError (no auto-linking)."""
         from governance.routes.tests.runner_exec import _remediate_session_linkage
-        _remediate_session_linkage("T-ORPHAN-001")
-
-        mock_get_sid.assert_called_once()
-        mock_link.assert_called_once_with("T-ORPHAN-001", "SESSION-2026-03-21-CVP")
-
-    @patch("governance.routes.tests.runner_exec._get_active_session_id",
-           return_value=None)
-    def test_raises_when_no_active_session(self, mock_get_sid):
-        """Raises ValueError if no active session available."""
-        from governance.routes.tests.runner_exec import _remediate_session_linkage
-        with pytest.raises(ValueError, match="No active session"):
+        with pytest.raises(ValueError, match="no linked session"):
             _remediate_session_linkage("T-ORPHAN-001")
 
-    @patch("governance.routes.tests.runner_exec.link_task_to_session")
-    @patch("governance.routes.tests.runner_exec._get_active_session_id",
-           return_value="SESSION-2026-03-21-CVP")
-    def test_raises_when_link_fails(self, mock_get_sid, mock_link):
-        """Raises if link_task_to_session returns False."""
-        mock_link.return_value = False
+    def test_error_message_includes_task_id(self):
+        """ValueError message includes the task_id for diagnostics."""
         from governance.routes.tests.runner_exec import _remediate_session_linkage
-        with pytest.raises(RuntimeError, match="Failed to link"):
+        with pytest.raises(ValueError, match="T-ORPHAN-002"):
+            _remediate_session_linkage("T-ORPHAN-002")
+
+    def test_error_references_explicit_linking(self):
+        """ValueError message tells caller to use task_link_session explicitly."""
+        from governance.routes.tests.runner_exec import _remediate_session_linkage
+        with pytest.raises(ValueError, match="task_link_session"):
             _remediate_session_linkage("T-ORPHAN-001")
 
 

@@ -12,10 +12,19 @@ import os
 import socket
 import subprocess
 from fastapi import APIRouter, Query
+from fastapi.responses import Response
+try:
+    from prometheus_client import generate_latest, CONTENT_TYPE_LATEST
+    _HAS_PROMETHEUS = True
+except ImportError:
+    _HAS_PROMETHEUS = False
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/infra", tags=["infra"])
+
+# Separate router for /metrics (no prefix — Prometheus convention)
+metrics_prom_router = APIRouter(tags=["metrics"])
 
 # Podman socket paths (checked in order)
 _SOCKET_PATHS = [
@@ -162,3 +171,18 @@ def get_container_logs(
 def list_containers():
     """List available container names."""
     return {"containers": list(CONTAINER_NAMES.keys())}
+
+
+# =============================================================================
+# PROMETHEUS METRICS ENDPOINT (EPIC-PERF-TELEM-V1 Phase 9)
+# =============================================================================
+
+@metrics_prom_router.get("/metrics")
+def prometheus_metrics():
+    """Expose Prometheus metrics in text exposition format."""
+    if not _HAS_PROMETHEUS:
+        return Response(content="# prometheus_client not installed\n", media_type="text/plain")
+    return Response(
+        content=generate_latest(),
+        media_type=CONTENT_TYPE_LATEST,
+    )

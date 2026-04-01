@@ -170,11 +170,12 @@ class TestLinkTaskToWorkspace:
         result = op(client, workspace_id="WS-001", task_id="TASK-001")
 
         assert result is True
-        tx.query.assert_called_once()
-        query = tx.query.call_args[0][0]
-        assert "workspace-has-task" in query
-        assert "WS-001" in query
-        assert "TASK-001" in query
+        # 2 queries: idempotency check + insert (per SRVJ-BUG-IDEMP-LINK-01)
+        assert tx.query.call_count == 2
+        insert_query = tx.query.call_args_list[1][0][0]
+        assert "workspace-has-task" in insert_query
+        assert "WS-001" in insert_query
+        assert "TASK-001" in insert_query
         tx.commit.assert_called_once()
 
     def test_link_task_to_workspace_failure(self):
@@ -365,39 +366,20 @@ class TestBuildTaskWorkspaceId:
     """_build_task_from_id fetches workspace_id."""
 
     def test_workspace_id_fetched_in_build(self):
+        """EPIC-PERF-TELEM-V1 P2: Updated for consolidated query approach."""
+        from unittest.mock import MagicMock
         from governance.typedb.queries.tasks.read import TaskReadQueries
 
         client = _make_mock_client()
+        client._fetch_all_entity_attrs = MagicMock(return_value={
+            "task-id": "TASK-001", "task-name": "Test",
+            "task-status": "OPEN", "phase": "P10",
+        })
 
-        # Base task query
-        def mock_execute_query(query):
-            if "task-name" in query and "task-status" in query:
-                return [{"name": "Test", "status": "OPEN", "phase": "P10"}]
-            return []
+        def mock_rels(tid, task):
+            task.workspace_id = "WS-001"
 
-        client._execute_query.side_effect = mock_execute_query
-
-        # Mock _safe_query for optional attrs + relations
-        def mock_safe_query(query):
-            if "workspace-has-task" in query:
-                return [{"wid": "WS-001"}]
-            return []
-
-        client._safe_query = mock_safe_query
-
-        # _fetch_task_attr needs to work
-        def mock_fetch_attr(task_id, attr_name, var_name):
-            return None
-
-        client._fetch_task_attr = mock_fetch_attr
-
-        # _fetch_task_relation needs to return workspace
-        def mock_fetch_relation(task_id, query, var_name):
-            if "workspace-has-task" in query:
-                return ["WS-001"]
-            return []
-
-        client._fetch_task_relation = mock_fetch_relation
+        client._fetch_task_relations_batch = MagicMock(side_effect=mock_rels)
 
         op = TaskReadQueries._build_task_from_id
         task = op(client, "TASK-001")
@@ -514,11 +496,10 @@ class TestCreateTaskWorkspaceId:
     """create_task accepts workspace_id and links."""
 
     @patch("governance.services.tasks.get_typedb_client")
-    @patch("governance.services.tasks._get_active_session_id", return_value=None)
     @patch("governance.services.tasks.record_audit")
     @patch("governance.services.tasks.log_event")
     def test_create_task_with_workspace_id(
-        self, mock_log, mock_audit, mock_session, mock_client
+        self, mock_log, mock_audit, mock_client
     ):
         from governance.services.tasks import create_task
         from governance.typedb.entities import Task
@@ -545,11 +526,10 @@ class TestCreateTaskWorkspaceId:
                (len(call_kwargs.args) > 0 and "WS-001" in str(call_kwargs))
 
     @patch("governance.services.tasks.get_typedb_client")
-    @patch("governance.services.tasks._get_active_session_id", return_value=None)
     @patch("governance.services.tasks.record_audit")
     @patch("governance.services.tasks.log_event")
     def test_create_task_without_workspace_id(
-        self, mock_log, mock_audit, mock_session, mock_client
+        self, mock_log, mock_audit, mock_client
     ):
         from governance.services.tasks import create_task
         from governance.typedb.entities import Task
@@ -632,7 +612,7 @@ class TestServiceLinkTaskToWorkspace:
 
         result = link_task_to_workspace("TASK-001", "WS-001")
 
-        assert result is True
+        assert result  # LinkResult is truthy on success
         client.link_task_to_workspace.assert_called_once_with("WS-001", "TASK-001")  # BUG-WS-CREATE-001: correct arg order
 
     @patch("governance.services.tasks_mutations_linking.get_typedb_client")
@@ -641,7 +621,7 @@ class TestServiceLinkTaskToWorkspace:
 
         mock_client.return_value = None
         result = link_task_to_workspace("TASK-001", "WS-001")
-        assert result is False
+        assert not result  # LinkResult is falsy on failure
 
     @patch("governance.services.tasks_mutations_linking.get_typedb_client")
     def test_link_task_to_workspace_task_not_found(self, mock_client):
@@ -652,7 +632,7 @@ class TestServiceLinkTaskToWorkspace:
         client.get_task.return_value = None
 
         result = link_task_to_workspace("TASK-MISSING", "WS-001")
-        assert result is False
+        assert not result  # LinkResult is falsy on failure
 
 
 # =============================================================================

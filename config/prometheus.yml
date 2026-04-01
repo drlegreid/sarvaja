@@ -1,0 +1,23 @@
+# Prometheus scrape configuration (EPIC-PERF-TELEM-V1 Phase 9)
+# Scrapes the Sarvaja Governance API /metrics endpoint.
+
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+  external_labels:
+    environment: dev
+    project: sarvaja
+
+scrape_configs:
+  - job_name: "sarvaja-api"
+    metrics_path: "/metrics"
+    static_configs:
+      - targets: ["host.containers.internal:8082"]
+        labels:
+          instance: "governance-api"
+
+  # Prometheus self-monitoring
+  - job_name: "prometheus"
+    static_configs:
+      - targets: ["localhost:9090"]

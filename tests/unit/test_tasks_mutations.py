@@ -66,6 +66,8 @@ class TestUpdateTask:
     @patch("governance.services.tasks_mutations.record_audit")
     @patch("governance.services.tasks_mutations.log_event")
     def test_update_status_done_sets_completed_at(self, mock_log, mock_audit, mock_client, seed_task):
+        # SRVJ-BUG-DEAD-LIFECYCLE-01: Must be IN_PROGRESS before DONE (TODO→DONE is now blocked)
+        seed_task["status"] = "IN_PROGRESS"
         result = update_task("T-001", status="DONE")
         assert result["status"] == "DONE"
         assert "completed_at" in result
@@ -189,18 +191,18 @@ class TestDeleteTask:
 
 
 class TestLinkTaskToRule:
-    """Tests for link_task_to_rule()."""
+    """Tests for link_task_to_rule(). Returns LinkResult (SRVJ-BUG-ERROR-OBS-01)."""
 
     @patch("governance.services.tasks_mutations_linking.get_typedb_client", return_value=None)
     def test_no_client_returns_false(self, mock_client):
-        assert link_task_to_rule("T-001", "RULE-001") is False
+        assert not link_task_to_rule("T-001", "RULE-001")
 
     @patch("governance.services.tasks_mutations_linking.get_typedb_client")
     def test_task_not_found_returns_false(self, mock_client_fn):
         mock_client = MagicMock()
         mock_client.get_task.return_value = None
         mock_client_fn.return_value = mock_client
-        assert link_task_to_rule("T-NOPE", "RULE-001") is False
+        assert not link_task_to_rule("T-NOPE", "RULE-001")
 
     @patch("governance.services.tasks_mutations_linking.get_typedb_client")
     def test_successful_link(self, mock_client_fn):
@@ -208,7 +210,7 @@ class TestLinkTaskToRule:
         mock_client.get_task.return_value = MagicMock()
         mock_client.link_task_to_rule.return_value = True
         mock_client_fn.return_value = mock_client
-        assert link_task_to_rule("T-001", "RULE-001") is True
+        assert link_task_to_rule("T-001", "RULE-001")
         mock_client.link_task_to_rule.assert_called_once_with("T-001", "RULE-001")
 
     @patch("governance.services.tasks_mutations_linking.get_typedb_client")
@@ -217,22 +219,22 @@ class TestLinkTaskToRule:
         mock_client.get_task.return_value = MagicMock()
         mock_client.link_task_to_rule.side_effect = Exception("fail")
         mock_client_fn.return_value = mock_client
-        assert link_task_to_rule("T-001", "RULE-001") is False
+        assert not link_task_to_rule("T-001", "RULE-001")
 
 
 class TestLinkTaskToSession:
-    """Tests for link_task_to_session()."""
+    """Tests for link_task_to_session(). Returns LinkResult (SRVJ-BUG-ERROR-OBS-01)."""
 
     @patch("governance.services.tasks_mutations_linking.get_typedb_client", return_value=None)
     def test_no_client_returns_false(self, mock_client):
-        assert link_task_to_session("T-001", "SESSION-001") is False
+        assert not link_task_to_session("T-001", "SESSION-001")
 
     @patch("governance.services.tasks_mutations_linking.get_typedb_client")
     def test_task_not_found_returns_false(self, mock_client_fn):
         mock_client = MagicMock()
         mock_client.get_task.return_value = None
         mock_client_fn.return_value = mock_client
-        assert link_task_to_session("T-NOPE", "SESSION-001") is False
+        assert not link_task_to_session("T-NOPE", "SESSION-001")
 
     @patch("governance.services.tasks_mutations_linking.get_typedb_client")
     def test_successful_link(self, mock_client_fn):
@@ -240,7 +242,7 @@ class TestLinkTaskToSession:
         mock_client.get_task.return_value = MagicMock()
         mock_client.link_task_to_session.return_value = True
         mock_client_fn.return_value = mock_client
-        assert link_task_to_session("T-001", "SESSION-001") is True
+        assert link_task_to_session("T-001", "SESSION-001")
 
     @patch("governance.services.tasks_mutations_linking.get_typedb_client")
     def test_link_error_returns_false(self, mock_client_fn):
@@ -248,4 +250,4 @@ class TestLinkTaskToSession:
         mock_client.get_task.return_value = MagicMock()
         mock_client.link_task_to_session.side_effect = Exception("fail")
         mock_client_fn.return_value = mock_client
-        assert link_task_to_session("T-001", "SESSION-001") is False
+        assert not link_task_to_session("T-001", "SESSION-001")

@@ -199,26 +199,33 @@ def register_session_core_tools(mcp) -> None:
             return format_mcp_result({"error": f"session_end failed: {e}"})
 
     @mcp.tool()
-    def session_list() -> str:
-        """List all active sessions (memory + TypeDB + CC JSONL).
+    def session_list(status: Optional[str] = None, limit: int = 50) -> str:
+        """List sessions from all sources (memory + TypeDB + CC JSONL).
 
         Per FEAT-009: Merges three sources so running CC sessions
         are detected, not just MCP-started ones.
+        Per SRVJ-BUG-SESSION-INGEST-01: Supports status filter so
+        CC-ingested COMPLETED sessions are visible.
+
+        Args:
+            status: Filter by status — "ACTIVE", "COMPLETED", or None for all.
+            limit: Max sessions to return (default 50).
         """
         if not SESSION_COLLECTOR_AVAILABLE:
             return format_mcp_result({"error": "SessionCollector not available"})
 
         try:
-            from governance.session_collector.registry import list_all_active_sessions
-            merged = list_all_active_sessions()
+            from governance.session_collector.registry import list_all_sessions
+            merged = list_all_sessions(status=status, limit=limit)
             session_ids = [s["session_id"] for s in merged]
         except Exception:
             # Fallback to memory-only on any import/runtime error
             session_ids = list_active_sessions()
             merged = [{"session_id": sid, "source": "memory"} for sid in session_ids]
 
+        key = "sessions" if status is None else f"{(status or 'all').lower()}_sessions"
         return format_mcp_result({
-            "active_sessions": session_ids,
+            key: session_ids,
             "count": len(session_ids),
             "sources": merged,
         })

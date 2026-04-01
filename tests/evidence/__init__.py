@@ -40,6 +40,13 @@ from tests.evidence.certification_report import (
     TestResult,
     generate_certification,
 )
+from tests.evidence.holographic_store import (
+    HolographicTestStore,
+    EvidenceRecord as HolographicEvidenceRecord,
+    get_global_store,
+    reset_global_store,
+)
+from tests.evidence.robot_listener import HolographicListener
 
 __all__ = [
     "BDDEvidenceCollector",
@@ -61,4 +68,9 @@ __all__ = [
     "CertificationReport",
     "TestResult",
     "generate_certification",
+    "HolographicTestStore",
+    "HolographicEvidenceRecord",
+    "get_global_store",
+    "reset_global_store",
+    "HolographicListener",
 ]

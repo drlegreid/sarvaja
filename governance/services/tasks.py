@@ -14,7 +14,6 @@ from governance.stores import (
     get_typedb_client,
     get_all_tasks_from_typedb,  # noqa: F401 — re-export for test patch compat
     _tasks_store,
-    _sessions_store,
     task_to_response,
 )
 from governance.stores.audit import record_audit
@@ -48,6 +47,7 @@ logger = logging.getLogger(__name__)
 __all__ = [
     "list_tasks",
     "create_task",
+    "sync_pending_tasks",
     "get_task",
     "get_task_details",
     "update_task_details",
@@ -69,18 +69,13 @@ __all__ = [
 ]
 
 
-def _get_active_session_id() -> Optional[str]:
-    """Find the most recent active session for auto-linking (DATA-LINK-01-v1)."""
-    active = [
-        # BUG-214-008: Snapshot to prevent RuntimeError on concurrent dict mutation
-        (sid, s) for sid, s in list(_sessions_store.items())
-        if s.get("status") == "ACTIVE"
-    ]
-    if not active:
-        return None
-    # Return most recent by start_time
-    active.sort(key=lambda x: x[1].get("start_time", ""), reverse=True)
-    return active[0][0]
+def _is_valid_session_id(sid: str) -> bool:
+    """Check if session_id is safe for auto-linking (no path traversal/injection).
+
+    BUG-SESSION-POISON-01: Prevents poisoned session IDs from propagating.
+    """
+    import re
+    return bool(sid) and bool(re.match(r'^[A-Za-z0-9_\-\.\(\)]{1,200}$', sid))
 
 
 def _monitor(action: str, task_id: str, source: str = "service", **extra):
@@ -232,12 +227,9 @@ def create_task(
         body = description
         description = description[:197] + "..."
 
-    # Per DATA-LINK-01-v1: Auto-link to active session if none provided
-    if not linked_sessions:
-        active_sid = _get_active_session_id()
-        if active_sid:
-            linked_sessions = [active_sid]
-            logger.info(f"[DATA-LINK-01] Auto-linking task {task_id} to session {active_sid}")
+    # P9 (BUG-SESSION-POISON-01): Auto-linking REMOVED.
+    # Session must be passed explicitly via linked_sessions parameter.
+    # _get_active_session_id() was a pollutable guessing function.
 
     # SRVJ-FEAT-001: Static rules engine — validate on create
     from governance.services.task_rules import validate_on_create, format_validation_result
@@ -303,6 +295,8 @@ def create_task(
                     "layer": layer, "concern": concern, "method": method,
                     "created_at": getattr(response, "created_at", None)
                     or datetime.now().isoformat(),
+                    # SRVJ-BUG-DUAL-WRITE-01: Track persistence for sync
+                    "persistence_status": "persisted",
                 }
                 return _attach_duplicate_warnings(
                     response, summary, description, task_id,
@@ -328,6 +322,8 @@ def create_task(
         "workspace_id": workspace_id,
         "layer": layer, "concern": concern, "method": method,
         "created_at": datetime.now().isoformat(),
+        # SRVJ-BUG-DUAL-WRITE-01: Memory-only fallback — needs sync
+        "persistence_status": "memory_only",
     }
     _tasks_store[task_id] = task_data
     record_audit("CREATE", "task", task_id,
@@ -336,6 +332,74 @@ def create_task(
     _monitor("create", task_id, source=source, status=status, phase=phase)
     log_event("task", "create", task_id=task_id, status=status, agent_id=agent_id, source=source)
     return _attach_duplicate_warnings(task_data, summary, description, task_id)
+
+
+def sync_pending_tasks() -> Dict[str, Any]:
+    """Push memory-only tasks to TypeDB.
+
+    Per SRVJ-BUG-DUAL-WRITE-01 / EPIC-TASK-WORKFLOW-HEAL-01 P4:
+    Retries tasks that failed initial TypeDB persistence.
+    Modeled on sync_pending_sessions() (DRY pattern reuse).
+
+    Returns:
+        Dict with synced/failed/already_persisted counts.
+    """
+    client = get_typedb_client()
+    if not client:
+        return {"error": "TypeDB unavailable", "synced": 0, "failed": 0}
+
+    synced = 0
+    failed = 0
+    already_persisted = 0
+
+    for task_id, task_data in list(_tasks_store.items()):
+        # Skip tasks already persisted
+        status = task_data.get("persistence_status", "")
+        if status == "persisted":
+            already_persisted += 1
+            continue
+
+        try:
+            existing = client.get_task(task_id)
+            if existing:
+                # Already in TypeDB — mark as persisted
+                _tasks_store[task_id]["persistence_status"] = "persisted"
+                already_persisted += 1
+                continue
+
+            client.insert_task(
+                task_id=task_id,
+                name=task_data.get("description", ""),
+                status=task_data.get("status", "OPEN"),
+                phase=task_data.get("phase", "P10"),
+                body=task_data.get("body"),
+                gap_id=task_data.get("gap_id"),
+                linked_rules=task_data.get("linked_rules"),
+                linked_sessions=task_data.get("linked_sessions"),
+                agent_id=task_data.get("agent_id"),
+                priority=task_data.get("priority"),
+                task_type=task_data.get("task_type"),
+                workspace_id=task_data.get("workspace_id"),
+                summary=task_data.get("summary"),
+                layer=task_data.get("layer"),
+                concern=task_data.get("concern"),
+                method=task_data.get("method"),
+            )
+            _tasks_store[task_id]["persistence_status"] = "persisted"
+            synced += 1
+            logger.info(f"[SYNC] Synced pending task to TypeDB: {task_id}")
+        except Exception as e:
+            failed += 1
+            logger.warning(
+                f"[SYNC] Failed to sync task {task_id}: {type(e).__name__}",
+                exc_info=True,
+            )
+
+    return {
+        "synced": synced,
+        "failed": failed,
+        "already_persisted": already_persisted,
+    }
 
 
 def update_task_details(

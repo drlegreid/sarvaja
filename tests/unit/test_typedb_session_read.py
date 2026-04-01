@@ -19,6 +19,12 @@ class _ConcreteSessionReader(SessionReadQueries):
         self._execute_query = MagicMock(return_value=[])
         self._driver = MagicMock()
         self.database = "test-db"
+        self._connected = True
+        self._query_count = 0
+        self._total_query_ms = 0.0
+
+    def _record_query_timing(self, t0, query):
+        pass
 
 
 @pytest.fixture()
@@ -150,21 +156,17 @@ class TestBatchFetchRelationships:
 
 class TestGetSession:
     def test_found(self, reader):
-        call_count = [0]
-        def _mock(q):
-            call_count[0] += 1
-            if call_count[0] == 1:
-                return [{"s": "exists"}]  # Session exists check
-            if "session-name" in q:
-                return [{"name": "Test"}]
-            return []
-        reader._execute_query.side_effect = _mock
+        # Override consolidated attr/relation fetchers
+        reader._fetch_all_session_attrs = MagicMock(return_value={
+            "session-name": "Test",
+        })
+        reader._fetch_session_relations_batch = MagicMock()
         session = reader.get_session("SESSION-2026-02-11-TEST")
         assert session is not None
         assert session.id == "SESSION-2026-02-11-TEST"
 
     def test_not_found(self, reader):
-        reader._execute_query.return_value = []
+        reader._fetch_all_session_attrs = MagicMock(return_value=None)
         session = reader.get_session("NONEXISTENT")
         assert session is None
 

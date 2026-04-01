@@ -24,6 +24,31 @@ def _make_client(query_results=None):
     client = MockClient()
     # Default: return empty list for any query
     client._execute_query = MagicMock(return_value=query_results or [])
+    # EPIC-PERF-TELEM-V1 P3: New consolidated methods need these attributes
+    client._connected = True
+    client._driver = MagicMock()
+    client.database = "test-db"
+    client._query_count = 0
+    client._total_query_ms = 0.0
+
+    import time
+
+    def _concept_to_value(concept):
+        if concept is None:
+            return None
+        if hasattr(concept, "get_value"):
+            try:
+                return concept.get_value()
+            except Exception:
+                pass
+        return str(concept)
+
+    def _record_query_timing(t0, query):
+        client._query_count += 1
+        client._total_query_ms += (time.monotonic() - t0) * 1000
+
+    client._concept_to_value = _concept_to_value
+    client._record_query_timing = _record_query_timing
     return client
 
 
@@ -156,52 +181,50 @@ class TestGetAllSessions:
 
 
 class TestBuildSessionFromId:
-    """Tests for _build_session_from_id() method."""
+    """Tests for _build_session_from_id() method.
+
+    EPIC-PERF-TELEM-V1 P3: Updated to use consolidated query API
+    (_fetch_all_session_attrs + _fetch_session_relations_batch).
+    """
 
     def test_minimal_session(self):
-        """BUG-SESSIONS-ONGOING-001: No attrs at all → UNKNOWN (not blindly ACTIVE)."""
+        """BUG-SESSIONS-ONGOING-001: No started/completed → UNKNOWN."""
         client = _make_client()
-        # All queries return empty (no optional attrs)
-        client._execute_query = MagicMock(return_value=[])
+        client._fetch_all_session_attrs = MagicMock(return_value={
+            "session-id": "S-1",
+        })
+        client._fetch_session_relations_batch = MagicMock()
 
         session = client._build_session_from_id("S-1")
         assert session.id == "S-1"
-        # No started_at and no completed-at → UNKNOWN
         assert session.status == "UNKNOWN"
         assert session.tasks_completed == 0
 
     def test_completed_session(self):
         client = _make_client()
-        call_count = [0]
+        client._fetch_all_session_attrs = MagicMock(return_value={
+            "session-id": "S-1",
+            "started-at": "2026-02-11T08:00:00",
+            "completed-at": "2026-02-11T12:00:00",
+        })
+        client._fetch_session_relations_batch = MagicMock()
 
-        def side_effect(q):
-            call_count[0] += 1
-            if "completed-at" in q:
-                return [{"end": "2026-02-11T12:00:00"}]
-            return []
-
-        client._execute_query = MagicMock(side_effect=side_effect)
         session = client._build_session_from_id("S-1")
         assert session.status == "COMPLETED"
         assert session.completed_at == "2026-02-11T12:00:00"
 
     def test_populates_all_optional_attrs(self):
         client = _make_client()
+        client._fetch_all_session_attrs = MagicMock(return_value={
+            "session-id": "S-1",
+            "session-name": "My Session",
+            "session-description": "A description",
+            "session-file-path": "/tmp/session.jsonl",
+            "started-at": "2026-02-11T08:00:00",
+            "agent-id": "research-agent",
+        })
+        client._fetch_session_relations_batch = MagicMock()
 
-        def side_effect(q):
-            if "session-name" in q:
-                return [{"name": "My Session"}]
-            if "session-description" in q:
-                return [{"desc": "A description"}]
-            if "session-file-path" in q:
-                return [{"path": "/tmp/session.jsonl"}]
-            if "started-at" in q:
-                return [{"start": "2026-02-11T08:00:00"}]
-            if "agent-id" in q:
-                return [{"agent": "research-agent"}]
-            return []
-
-        client._execute_query = MagicMock(side_effect=side_effect)
         session = client._build_session_from_id("S-1")
         assert session.name == "My Session"
         assert session.description == "A description"
@@ -210,19 +233,19 @@ class TestBuildSessionFromId:
 
     def test_populates_relationships(self):
         client = _make_client()
+        client._fetch_all_session_attrs = MagicMock(return_value={
+            "session-id": "S-1",
+            "started-at": "2026-03-01T09:00:00",
+        })
 
-        def side_effect(q):
-            if "session-applied-rule" in q:
-                return [{"rid": "R-1"}, {"rid": "R-2"}]
-            if "session-decision" in q:
-                return [{"did": "D-1"}]
-            if "has-evidence" in q:
-                return [{"src": "evidence/test.md"}]
-            if "completed-in" in q:
-                return [{"t": "mock1"}, {"t": "mock2"}]
-            return []
+        def populate_rels(sid, session):
+            session.linked_rules_applied = ["R-1", "R-2"]
+            session.linked_decisions = ["D-1"]
+            session.evidence_files = ["evidence/test.md"]
+            session.tasks_completed = 2
 
-        client._execute_query = MagicMock(side_effect=side_effect)
+        client._fetch_session_relations_batch = MagicMock(side_effect=populate_rels)
+
         session = client._build_session_from_id("S-1")
         assert session.linked_rules_applied == ["R-1", "R-2"]
         assert session.linked_decisions == ["D-1"]
@@ -234,24 +257,25 @@ class TestBuildSessionFromId:
 
 
 class TestGetSession:
-    """Tests for get_session() method."""
+    """Tests for get_session() method.
+
+    EPIC-PERF-TELEM-V1 P3: get_session now delegates directly to
+    _build_session_from_id (no separate existence check).
+    """
 
     def test_not_found(self):
-        client = _make_client([])
+        client = _make_client()
+        client._fetch_all_session_attrs = MagicMock(return_value=None)
         result = client.get_session("MISSING")
         assert result is None
 
     def test_found_returns_session(self):
         client = _make_client()
-        call_count = [0]
-
-        def side_effect(q):
-            call_count[0] += 1
-            if call_count[0] == 1:
-                return [{"s": "exists"}]  # existence check
-            return []
-
-        client._execute_query = MagicMock(side_effect=side_effect)
+        client._fetch_all_session_attrs = MagicMock(return_value={
+            "session-id": "S-1",
+            "session-name": "Found",
+        })
+        client._fetch_session_relations_batch = MagicMock()
         result = client.get_session("S-1")
         assert result is not None
         assert result.id == "S-1"
@@ -347,27 +371,24 @@ class TestBatchFetchCCAttributes:
 
 
 class TestBuildSessionCCAttributes:
-    """Tests for CC field queries in _build_session_from_id."""
+    """Tests for CC field queries in _build_session_from_id.
+
+    EPIC-PERF-TELEM-V1 P3: Updated to use consolidated query API.
+    """
 
     def test_cc_fields_populated(self):
         client = _make_client()
+        client._fetch_all_session_attrs = MagicMock(return_value={
+            "session-id": "S-1",
+            "cc-session-uuid": "uuid-abc-123",
+            "cc-project-slug": "my-project",
+            "cc-git-branch": "feature-x",
+            "cc-tool-count": 55,
+            "cc-thinking-chars": 20000,
+            "cc-compaction-count": 2,
+        })
+        client._fetch_session_relations_batch = MagicMock()
 
-        def side_effect(q):
-            if "cc-session-uuid" in q:
-                return [{"v": "uuid-abc-123"}]
-            if "cc-project-slug" in q:
-                return [{"v": "my-project"}]
-            if "cc-git-branch" in q:
-                return [{"v": "feature-x"}]
-            if "cc-tool-count" in q:
-                return [{"v": 55}]
-            if "cc-thinking-chars" in q:
-                return [{"v": 20000}]
-            if "cc-compaction-count" in q:
-                return [{"v": 2}]
-            return []
-
-        client._execute_query = MagicMock(side_effect=side_effect)
         session = client._build_session_from_id("S-1")
         assert session.cc_session_uuid == "uuid-abc-123"
         assert session.cc_project_slug == "my-project"
@@ -378,7 +399,11 @@ class TestBuildSessionCCAttributes:
 
     def test_cc_fields_none_when_missing(self):
         client = _make_client()
-        client._execute_query = MagicMock(return_value=[])
+        client._fetch_all_session_attrs = MagicMock(return_value={
+            "session-id": "S-1",
+        })
+        client._fetch_session_relations_batch = MagicMock()
+
         session = client._build_session_from_id("S-1")
         assert session.cc_session_uuid is None
         assert session.cc_project_slug is None

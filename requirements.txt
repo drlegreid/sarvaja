@@ -49,5 +49,6 @@ robotframework-requests>=0.9.0  # REST API testing
 
 # Observability & Logging
 structlog>=25.0.0  # Per MCP-LOGGING-01-v1: Structured JSON logging
+prometheus-client>=0.21.0  # EPIC-PERF-TELEM-V1 P9: Metrics exposition
 # opik>=1.9.0  # Removed per DECISION-001
 # ace-framework[observability]>=0.1.0  # Optional

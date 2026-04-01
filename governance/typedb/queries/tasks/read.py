@@ -1,8 +1,70 @@
 """TypeDB Task Read Queries. Per RULE-032. Created: 2026-01-04."""
 
+import time
 from typing import List, Optional
 
 from ...entities import Task
+
+
+# EPIC-PERF-TELEM-V1 P2: Map TypeDB attribute names → Task dataclass fields
+_TASK_ATTR_MAP = {
+    "task-body": "body",
+    "task-resolution": "resolution",
+    "gap-reference": "gap_id",
+    "agent-id": "agent_id",
+    "task-evidence": "evidence",
+    "task-completed-at": "completed_at",
+    "task-created-at": "created_at",
+    "task-claimed-at": "claimed_at",
+    "task-business": "business",
+    "task-design": "design",
+    "task-architecture": "architecture",
+    "task-test": "test_section",
+    "item-type": "item_type",
+    "document-path": "document_path",
+    "task-priority": "priority",
+    "task-type": "task_type",
+    "task-summary": "summary",
+    "resolution-notes": "resolution_notes",
+    "task-layer": "layer",
+    "task-concern": "concern",
+    "task-method": "method",
+}
+
+# EPIC-PERF-TELEM-V1 P2: Relation query templates for batch fetch
+# (query_template, var_name, task_attr, is_list)
+_RELATION_QUERIES = [
+    (
+        'match $t isa task, has task-id "{tid}"; '
+        '(implementing-task: $t, implemented-rule: $r) isa implements-rule; '
+        '$r has rule-id $rid; select $rid;',
+        "rid", "linked_rules", True,
+    ),
+    (
+        'match $t isa task, has task-id "{tid}"; '
+        '(completed-task: $t, hosting-session: $s) isa completed-in; '
+        '$s has session-id $sid; select $sid;',
+        "sid", "linked_sessions", True,
+    ),
+    (
+        'match $t isa task, has task-id "{tid}"; '
+        '(implementing-commit: $c, implemented-task: $t) isa task-commit; '
+        '$c has commit-sha $sha; select $sha;',
+        "sha", "linked_commits", True,
+    ),
+    (
+        'match $t isa task, has task-id "{tid}"; '
+        '(referencing-document: $d, referenced-task: $t) isa document-references-task; '
+        '$d has document-path $dpath; select $dpath;',
+        "dpath", "linked_documents", True,
+    ),
+    (
+        'match $t isa task, has task-id "{tid}"; '
+        '(task-workspace: $w, assigned-task: $t) isa workspace-has-task; '
+        '$w has workspace-id $wid; select $wid;',
+        "wid", "workspace_id", False,
+    ),
+]
 
 class TaskReadQueries:
     """Task read query operations for TypeDB. Mixin pattern for TypeDBClient."""
@@ -205,82 +267,122 @@ class TaskReadQueries:
         all_available = todo_tasks + pending_tasks
         return [t for t in all_available if not t.agent_id]
 
-    def _build_task_from_id(self, task_id: str) -> Optional[Task]:
-        """Build a full Task object from TypeDB by ID."""
-        # BUG-302-READ-003: Escape backslash FIRST, then quotes (correct order)
-        tid = task_id.replace('\\', '\\\\').replace('"', '\\"')
-        query = f"""
-            match $t isa task, has task-id "{tid}";
-            $t has task-name $name,
-               has task-status $status,
-               has phase $phase;
-            select $name, $status, $phase;
-        """
-        results = self._execute_query(query)
-        if not results:
+    # ── EPIC-PERF-TELEM-V1 P2: Consolidated query methods ──────────
+
+    def _get_concept_type_label(self, concept) -> Optional[str]:
+        """Extract attribute type label from a TypeDB attribute concept."""
+        try:
+            type_obj = concept.get_type()
+            label = type_obj.get_label()
+            return label.name if hasattr(label, "name") else str(label)
+        except Exception:
             return None
 
-        r = results[0]
+    def _fetch_all_entity_attrs(self, escaped_tid: str) -> Optional[dict]:
+        """Fetch ALL attributes of a task in one TypeDB query.
+
+        Returns {type_label: value} or None if task not found.
+        Replaces 22 individual _fetch_task_attr() calls + 1 core query.
+        """
+        query = f'match $t isa task, has task-id "{escaped_tid}"; $t has $a; select $a;'
+
+        if not self._connected:
+            return None
+
+        from typedb.driver import TransactionType
+
+        attr_map = {}
+        t0 = time.monotonic()
+
+        try:
+            with self._driver.transaction(self.database, TransactionType.READ) as tx:
+                iterator = tx.query(query).resolve()
+                if iterator is None:
+                    self._record_query_timing(t0, query)
+                    return None
+
+                for result in iterator:
+                    concept = result.get("a")
+                    if concept is None:
+                        continue
+                    type_label = self._get_concept_type_label(concept)
+                    value = self._concept_to_value(concept)
+                    if type_label and value is not None:
+                        attr_map[type_label] = value
+        except Exception:
+            self._record_query_timing(t0, query)
+            return None
+
+        self._record_query_timing(t0, query)
+        return attr_map if attr_map else None
+
+    def _fetch_task_relations_batch(self, escaped_tid: str, task) -> None:
+        """Fetch all 5 relation types in a single TypeDB transaction.
+
+        Replaces 5 individual _fetch_task_relation() calls with 1 transaction.
+        """
+        if not self._connected:
+            return
+
+        from typedb.driver import TransactionType
+
+        t0 = time.monotonic()
+
+        try:
+            with self._driver.transaction(self.database, TransactionType.READ) as tx:
+                for query_tpl, var_name, task_attr, is_list in _RELATION_QUERIES:
+                    try:
+                        query = query_tpl.format(tid=escaped_tid)
+                        iterator = tx.query(query).resolve()
+                        values = []
+                        if iterator:
+                            for result in iterator:
+                                concept = result.get(var_name)
+                                val = self._concept_to_value(concept) if concept else None
+                                if val is not None:
+                                    values.append(val)
+                        if is_list:
+                            setattr(task, task_attr, values)
+                        elif values:
+                            setattr(task, task_attr, values[0])
+                    except Exception:
+                        if is_list:
+                            setattr(task, task_attr, [])
+        except Exception:
+            pass
+
+        self._record_query_timing(t0, "batch-relations")
+
+    def _build_task_from_id(self, task_id: str) -> Optional[Task]:
+        """Build a full Task object from TypeDB by ID.
+
+        EPIC-PERF-TELEM-V1 P2: Consolidated from 28 queries to 2 operations.
+        - Op 1: All attributes via $t has $a (replaces 1 core + 22 attr queries)
+        - Op 2: All relations in 1 transaction (replaces 5 relation queries)
+        """
+        # BUG-302-READ-003: Escape backslash FIRST, then quotes (correct order)
+        tid = task_id.replace('\\', '\\\\').replace('"', '\\"')
+
+        # Op 1: All attributes in one query
+        attrs = self._fetch_all_entity_attrs(tid)
+        if not attrs:
+            return None
+
         task = Task(
             id=task_id,
-            name=r.get("name"),
-            status=r.get("status"),
-            phase=r.get("phase")
+            name=attrs.get("task-name"),
+            status=attrs.get("task-status"),
+            phase=attrs.get("phase"),
         )
 
-        # Fetch all optional scalar attributes via DRY helper (GAP-UI-EXP-009)
-        optional_attrs = [
-            ("task-body", "body", "body"),
-            ("task-resolution", "res", "resolution"),        # GAP-UI-046
-            ("gap-reference", "gap", "gap_id"),
-            ("agent-id", "agent", "agent_id"),
-            ("task-evidence", "ev", "evidence"),
-            ("task-completed-at", "comp", "completed_at"),
-            ("task-created-at", "created", "created_at"),    # GAP-UI-035
-            ("task-claimed-at", "claimed", "claimed_at"),    # GAP-UI-035
-            ("task-business", "biz", "business"),            # TASK-TECH-01-v1
-            ("task-design", "des", "design"),
-            ("task-architecture", "arch", "architecture"),
-            ("task-test", "test", "test_section"),
-            ("item-type", "itype", "item_type"),             # GAP-GAPS-TASKS-001
-            ("document-path", "dpath", "document_path"),
-            ("task-priority", "pri", "priority"),              # BUG-TASK-TAXONOMY-001
-            ("task-type", "ttype", "task_type"),               # BUG-TASK-TAXONOMY-001
-            ("task-summary", "summ", "summary"),               # SRVJ-BUG-007: was missing
-            ("resolution-notes", "rnotes", "resolution_notes"),  # P17: resolution narrative
-            ("task-layer", "lyr", "layer"),            # EPIC-TASK-TAXONOMY-V2
-            ("task-concern", "cnc", "concern"),        # EPIC-TASK-TAXONOMY-V2
-            ("task-method", "mth", "method"),           # EPIC-TASK-TAXONOMY-V2
-        ]
-        for attr_name, var_name, task_attr in optional_attrs:
-            value = self._fetch_task_attr(task_id, attr_name, var_name)
-            if value is not None:
-                setattr(task, task_attr, value)
+        # Map optional attributes from consolidated result
+        for typedb_attr, task_field in _TASK_ATTR_MAP.items():
+            val = attrs.get(typedb_attr)
+            if val is not None:
+                setattr(task, task_field, val)
 
-        # Fetch relationship lists via DRY helper
-        task.linked_rules = self._fetch_task_relation(task_id, '''
-            match $t isa task, has task-id "{task_id}";
-                (implementing-task: $t, implemented-rule: $r) isa implements-rule;
-                $r has rule-id $rid; select $rid;''', "rid")
-        task.linked_sessions = self._fetch_task_relation(task_id, '''
-            match $t isa task, has task-id "{task_id}";
-                (completed-task: $t, hosting-session: $s) isa completed-in;
-                $s has session-id $sid; select $sid;''', "sid")
-        task.linked_commits = self._fetch_task_relation(task_id, '''
-            match $t isa task, has task-id "{task_id}";
-                (implementing-commit: $c, implemented-task: $t) isa task-commit;
-                $c has commit-sha $sha; select $sha;''', "sha")
-        task.linked_documents = self._fetch_task_relation(task_id, '''
-            match $t isa task, has task-id "{task_id}";
-                (referencing-document: $d, referenced-task: $t) isa document-references-task;
-                $d has document-path $dpath; select $dpath;''', "dpath")
-        # EPIC-GOV-TASKS-V2 Phase 4: workspace assignment
-        ws_ids = self._fetch_task_relation(task_id, '''
-            match $t isa task, has task-id "{task_id}";
-                (task-workspace: $w, assigned-task: $t) isa workspace-has-task;
-                $w has workspace-id $wid; select $wid;''', "wid")
-        if ws_ids:
-            task.workspace_id = ws_ids[0]
+        # Op 2: All relations in one transaction
+        self._fetch_task_relations_batch(tid, task)
 
         return task
 

@@ -2,7 +2,8 @@
 Unit tests for Task Service Layer.
 
 Per DOC-SIZE-01-v1: Tests for governance/services/tasks.py module.
-Tests: _get_active_session_id, _monitor, list_tasks, create_task, get_task.
+Tests: _monitor, list_tasks, create_task, get_task.
+P9: _get_active_session_id removed (BUG-SESSION-POISON-01).
 """
 
 from unittest.mock import patch, MagicMock
@@ -17,36 +18,21 @@ _PQ = "governance.services.tasks_queries"
 @pytest.fixture(autouse=True)
 def _reset_stores():
     tasks = {}
-    sessions = {}
     with patch(f"{_P}._tasks_store", tasks), \
-         patch(f"{_P}._sessions_store", sessions), \
          patch(f"{_PQ}._tasks_store", tasks), \
          patch(f"{_P}.record_audit"), \
          patch(f"{_P}.log_event"):
-        yield tasks, sessions
+        yield tasks, {}
 
 
-# ── _get_active_session_id ───────────────────────────────────────
+# ── _get_active_session_id (REMOVED — P9 BUG-SESSION-POISON-01) ──
 
 
-class TestGetActiveSessionId:
-    def test_no_active(self, _reset_stores):
-        from governance.services.tasks import _get_active_session_id
-        assert _get_active_session_id() is None
-
-    def test_one_active(self, _reset_stores):
-        from governance.services.tasks import _get_active_session_id
-        _, sessions = _reset_stores
-        sessions["S-1"] = {"status": "ACTIVE", "start_time": "2026-02-11T10:00:00"}
-        assert _get_active_session_id() == "S-1"
-
-    def test_multiple_returns_most_recent(self, _reset_stores):
-        from governance.services.tasks import _get_active_session_id
-        _, sessions = _reset_stores
-        sessions["S-1"] = {"status": "ACTIVE", "start_time": "2026-02-11T10:00:00"}
-        sessions["S-2"] = {"status": "ACTIVE", "start_time": "2026-02-11T12:00:00"}
-        sessions["S-3"] = {"status": "COMPLETED", "start_time": "2026-02-11T14:00:00"}
-        assert _get_active_session_id() == "S-2"
+class TestGetActiveSessionIdRemoved:
+    """P9: _get_active_session_id removed (BUG-SESSION-POISON-01)."""
+    def test_function_removed(self):
+        from governance.services import tasks
+        assert not hasattr(tasks, '_get_active_session_id')
 
 
 # ── _monitor ─────────────────────────────────────────────────────
@@ -146,14 +132,13 @@ class TestCreateTask:
             with pytest.raises(ValueError, match="already exists"):
                 create_task(task_id="T-DUP", description="d")
 
-    def test_auto_links_active_session(self, _reset_stores):
+    def test_no_auto_link_without_explicit_sessions(self, _reset_stores):
+        """P9: No auto-linking; linked_sessions empty without explicit param."""
         from governance.services.tasks import create_task
-        _, sessions = _reset_stores
-        sessions["S-ACTIVE"] = {"status": "ACTIVE", "start_time": "2026-02-11T10:00:00"}
         with patch(f"{_P}.get_typedb_client", return_value=None), \
              patch(f"{_P}._monitor"):
             result = create_task(task_id="T-LINK", description="d")
-        assert result["linked_sessions"] == ["S-ACTIVE"]
+        assert result["linked_sessions"] == []
 
     def test_typedb_insert_failure_falls_back(self, _reset_stores):
         from governance.services.tasks import create_task

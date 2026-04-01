@@ -103,6 +103,29 @@ python3 -m venv .venv
 
 **Passive screenshots are NOT Tier 3.** CRUD interaction with state change verification is required.
 
+## Test Output Consumption (TEST-HOLO-01-v1)
+
+**NEVER read raw pytest stdout into context.** Use holographic zoom queries instead (97-99% token savings).
+
+**After every test run**, query the holographic store:
+
+| Situation | Zoom | Command | Tokens |
+|-----------|------|---------|--------|
+| Default / progress check | 1 | `test_evidence_query(zoom=1)` | ~150 |
+| Which tests failed? | 2 | `test_evidence_query(zoom=2, status="failed")` | ~500 |
+| Reproduce specific failure | 3 | `test_evidence_query(zoom=3, test_id="test_x")` | 2000+ |
+| CI badge / one-liner | 0 | `test_evidence_query(zoom=0)` | ~10 |
+
+**Escalation flow:** zoom 1 → 2 → 3 (only escalate on failure investigation).
+
+**Link evidence before closing tasks:**
+```python
+test_evidence_push(test_id="...", name="...", status="passed", category="unit", task_id="BUG-014")
+```
+
+**Pytest flags:** Always add `--compressed-summary` for `[HOLOGRAPHIC-SUMMARY]` output.
+**Robot listener:** `--listener tests.evidence.robot_listener.HolographicListener`
+
 ## Task Management (GOV-MCP-FIRST-01-v1 — RECOMMENDED)
 
 **MCP gov-tasks re-enabled 2026-03-23 after stability probe (9/9 operations passed).**
@@ -115,9 +138,6 @@ python3 -m venv .venv
 | Create rule | `mcp__gov-core__rule_create()` | — |
 | Start session | `mcp__gov-sessions__session_start()` | — |
 
-**Known minor bugs (non-blocking):**
-- `task_link_document` may create duplicates (missing idempotency guard)
-- `agent_id` and `created_at` may read back as null from TypeDB GET
 **TypeDB** = source of truth for tasks, rules, sessions.
 
 ## Session Start Protocol
