@@ -265,4 +265,5 @@ podman rm -f <container_name>
 
 ## License
 
-GPL
+[Apache 2.0 License](LICENSE)
+
